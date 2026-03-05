@@ -1,0 +1,3 @@
+[submodule "legacy"]
+	path = legacy
+	url = https://github.com/tiago2904santos/Automacao-Central-de-Viagens
