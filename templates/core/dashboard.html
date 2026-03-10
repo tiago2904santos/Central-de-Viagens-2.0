@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Painel — Central de Viagens{% endblock %}
+{% block page_title %}Painel{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="dashboard-card-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="bi bi-calendar-event"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="text-muted mb-1">Eventos</h6>
+                            <h3 class="mb-0">{{ total_eventos }}</h3>
+                        </div>
+                    </div>
+                    <a href="{% url 'core:em-breve' %}" class="stretched-link"></a>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="dashboard-card-icon bg-success bg-opacity-10 text-success">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="text-muted mb-1">Ofícios</h6>
+                            <h3 class="mb-0">{{ total_oficios }}</h3>
+                        </div>
+                    </div>
+                    <a href="{% url 'core:em-breve' %}" class="stretched-link"></a>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="dashboard-card-icon bg-info bg-opacity-10 text-info">
+                            <i class="bi bi-file-check"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="text-muted mb-1">Termos</h6>
+                            <h3 class="mb-0">{{ total_termos }}</h3>
+                        </div>
+                    </div>
+                    <a href="{% url 'core:em-breve' %}" class="stretched-link"></a>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="dashboard-card-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="bi bi-exclamation-circle"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="text-muted mb-1">Pendências</h6>
+                            <h3 class="mb-0">{{ total_pendencias }}</h3>
+                        </div>
+                    </div>
+                    <a href="{% url 'core:dashboard' %}" class="stretched-link"></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Bem-vindo ao Central de Viagens</h5>
+                    <p class="card-text text-muted mb-0">
+                        Use o menu lateral para acessar Configurações e o painel. 
+                        Outros módulos estarão disponíveis em breve.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}Configurações do sistema — Central de Viagens{% endblock %}
+{% block page_title %}Configurações do sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="configuracoes-header mb-4">
+        <h2 class="configuracoes-title">Configurações do sistema</h2>
+        <p class="configuracoes-subtitle text-muted">Parâmetros globais do processo de viagens</p>
+    </div>
+
+    <div id="cep-erro-alert" class="alert alert-danger d-none" role="alert"></div>
+
+    <div class="card form-card">
+        <div class="card-body">
+            <form method="post" id="form-configuracoes">
+                {% csrf_token %}
+                <div class="configuracao-section">
+                    <h5 class="configuracao-section-title">Cabeçalho (DIVISÃO, UNIDADE, SIGLA)</h5>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <label for="id_divisao" class="form-label">{{ form.divisao.label }}</label>
+                            {{ form.divisao }}
+                            {% if form.divisao.errors %}<div class="invalid-feedback d-block">{{ form.divisao.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="id_unidade" class="form-label">{{ form.unidade.label }}</label>
+                            {{ form.unidade }}
+                            {% if form.unidade.errors %}<div class="invalid-feedback d-block">{{ form.unidade.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="id_sigla_orgao" class="form-label">{{ form.sigla_orgao.label }}</label>
+                            {{ form.sigla_orgao }}
+                            {% if form.sigla_orgao.errors %}<div class="invalid-feedback d-block">{{ form.sigla_orgao.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="configuracao-section mt-4">
+                    <h5 class="configuracao-section-title">Rodapé — Endereço (preenchimento por CEP)</h5>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-3">
+                            <label for="id_cep" class="form-label">{{ form.cep.label }}</label>
+                            {{ form.cep }}
+                            {% if form.cep.errors %}<div class="invalid-feedback d-block">{{ form.cep.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 col-md-5">
+                            <label for="id_logradouro" class="form-label">{{ form.logradouro.label }}</label>
+                            {{ form.logradouro }}
+                            {% if form.logradouro.errors %}<div class="invalid-feedback d-block">{{ form.logradouro.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label for="id_numero" class="form-label">{{ form.numero.label }}</label>
+                            {{ form.numero }}
+                            {% if form.numero.errors %}<div class="invalid-feedback d-block">{{ form.numero.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="id_bairro" class="form-label">{{ form.bairro.label }}</label>
+                            {{ form.bairro }}
+                            {% if form.bairro.errors %}<div class="invalid-feedback d-block">{{ form.bairro.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="id_cidade_endereco" class="form-label">{{ form.cidade_endereco.label }}</label>
+                            {{ form.cidade_endereco }}
+                            {% if form.cidade_endereco.errors %}<div class="invalid-feedback d-block">{{ form.cidade_endereco.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label for="id_uf" class="form-label">{{ form.uf.label }}</label>
+                            {{ form.uf }}
+                            {% if form.uf.errors %}<div class="invalid-feedback d-block">{{ form.uf.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="configuracao-section mt-4">
+                    <h5 class="configuracao-section-title">Contato</h5>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="id_telefone" class="form-label">{{ form.telefone.label }}</label>
+                            {{ form.telefone }}
+                            {% if form.telefone.errors %}<div class="invalid-feedback d-block">{{ form.telefone.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="id_email" class="form-label">{{ form.email.label }}</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="configuracao-section mt-4">
+                    <h5 class="configuracao-section-title">Assinaturas (Viajantes)</h5>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="id_assinatura_oficio" class="form-label">{{ form.assinatura_oficio.label }}</label>
+                            {{ form.assinatura_oficio }}
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="id_assinatura_justificativas" class="form-label">{{ form.assinatura_justificativas.label }}</label>
+                            {{ form.assinatura_justificativas }}
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="id_assinatura_planos_trabalho" class="form-label">{{ form.assinatura_planos_trabalho.label }}</label>
+                            {{ form.assinatura_planos_trabalho }}
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="id_assinatura_ordens_servico" class="form-label">{{ form.assinatura_ordens_servico.label }}</label>
+                            {{ form.assinatura_ordens_servico }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var apiCepUrl = "{{ api_consulta_cep_url }}";
+    var cepInput = document.getElementById('id_cep');
+    var cepErroAlert = document.getElementById('cep-erro-alert');
+    var divisaoInput = document.getElementById('id_divisao');
+    var unidadeInput = document.getElementById('id_unidade');
+    var siglaOrgaoInput = document.getElementById('id_sigla_orgao');
+
+    function onlyDigits(str) {
+        return (str || '').replace(/\D/g, '');
+    }
+
+    if (divisaoInput) {
+        divisaoInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    if (unidadeInput) {
+        unidadeInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    if (siglaOrgaoInput) {
+        siglaOrgaoInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+
+    if (cepInput) {
+        cepInput.addEventListener('input', function() {
+            if (cepErroAlert) cepErroAlert.classList.add('d-none');
+        });
+
+        function buscaCep() {
+            var cepDigits = onlyDigits(cepInput.value);
+            if (cepDigits.length !== 8) return;
+            if (!apiCepUrl) return;
+            var url = apiCepUrl.replace('00000000', cepDigits);
+            cepErroAlert.classList.add('d-none');
+            fetch(url)
+                .then(function(r) {
+                    if (r.status === 400 || r.status === 404) {
+                        return r.json().then(function(data) {
+                            throw new Error(data.erro || 'CEP inválido ou não encontrado.');
+                        });
+                    }
+                    if (!r.ok) throw new Error('Erro ao consultar CEP.');
+                    return r.json();
+                })
+                .then(function(data) {
+                    var logradouro = document.getElementById('id_logradouro');
+                    var bairro = document.getElementById('id_bairro');
+                    var cidadeEndereco = document.getElementById('id_cidade_endereco');
+                    var uf = document.getElementById('id_uf');
+                    if (logradouro) logradouro.value = data.logradouro || '';
+                    if (bairro) bairro.value = data.bairro || '';
+                    if (cidadeEndereco) cidadeEndereco.value = data.cidade || '';
+                    if (uf) uf.value = (data.uf || '').toUpperCase();
+                    if (cepInput && data.cep) cepInput.value = data.cep;
+                })
+                .catch(function(err) {
+                    if (cepErroAlert) {
+                        cepErroAlert.textContent = err.message || 'CEP inválido ou não encontrado.';
+                        cepErroAlert.classList.remove('d-none');
+                    }
+                });
+        }
+
+        cepInput.addEventListener('blur', buscaCep);
+        cepInput.addEventListener('input', function() {
+            if (onlyDigits(this.value).length === 8) buscaCep();
+        });
+    }
+})();
+</script>
+{% endblock %}

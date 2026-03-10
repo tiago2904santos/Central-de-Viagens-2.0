@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load cadastros_extras %}
+
+{% block title %}Viajantes — Central de Viagens{% endblock %}
+{% block page_title %}Viajantes{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="page-header-cadastro d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Viajantes</h2>
+        <div class="d-flex gap-2">
+            <a href="{% url 'cadastros:cargo-lista' %}" class="btn btn-outline-secondary">Gerenciar Cargos</a>
+            <a href="{% url 'cadastros:unidade-lotacao-lista' %}" class="btn btn-outline-secondary">Gerenciar Unidades de Lotação</a>
+            <a href="{% url 'cadastros:viajante-cadastrar' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Cadastrar</a>
+        </div>
+    </div>
+
+    <div class="card filter-card mb-4">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label small text-muted">Buscar</label>
+                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Nome, cargo, unidade, RG, CPF, telefone ou status" value="{{ form_filter.q }}">
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+                    <a href="{% url 'cadastros:viajante-lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover table-cadastro mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Status</th>
+                        <th>Cargo</th>
+                        <th>Unidade</th>
+                        <th>RG</th>
+                        <th>CPF</th>
+                        <th>Telefone</th>
+                        <th width="140" class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obj in object_list %}
+                    <tr>
+                        <td>{{ obj.nome_display }}</td>
+                        <td><span class="{{ obj.status|status_badge_class }}">{{ obj.status|status_label }}</span></td>
+                        <td>{% if obj.cargo %}{{ obj.cargo.nome }}{% else %}—{% endif %}</td>
+                        <td>{% if obj.unidade_lotacao %}{{ obj.unidade_lotacao.nome }}{% else %}—{% endif %}</td>
+                        <td>{% if obj.sem_rg %}<span class="badge bg-secondary">{{ obj.rg_formatado }}</span>{% else %}{{ obj.rg_formatado }}{% endif %}</td>
+                        <td>{{ obj.cpf_formatado }}</td>
+                        <td>{{ obj.telefone_formatado }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'cadastros:viajante-editar' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <a href="{% url 'cadastros:viajante-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="text-center text-muted py-4">Nenhum viajante encontrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

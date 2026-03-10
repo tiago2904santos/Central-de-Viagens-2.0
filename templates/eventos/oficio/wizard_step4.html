@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Ofício — Step 4: Resumo — Central de Viagens{% endblock %}
+{% block page_title %}Wizard do Ofício — Step 4{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h1 class="h4 mb-0">Ofício — Step 4: Resumo e finalização</h1>
+    <div class="d-flex gap-2">
+      {% if evento %}
+      <a href="{% url 'eventos:guiado-etapa-3' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar para Ofícios do evento</a>
+      <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Painel do evento</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% include 'eventos/oficio/_wizard_stepper.html' with oficio=oficio step=4 %}
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h6">Resumo do ofício</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Número / Ano</dt><dd class="col-sm-9">{{ oficio.numero_formatado|default:"—" }}</dd>
+        <dt class="col-sm-3">Protocolo</dt><dd class="col-sm-9">{{ oficio.protocolo_formatado|default:"—" }}</dd>
+        <dt class="col-sm-3">Motivo</dt><dd class="col-sm-9">{{ oficio.motivo|default:"—"|truncatewords:30 }}</dd>
+        <dt class="col-sm-3">Custeio</dt><dd class="col-sm-9">{{ oficio.get_custeio_tipo_display|default:oficio.custeio_tipo|default:"—" }}</dd>
+        <dt class="col-sm-3">Viajantes</dt><dd class="col-sm-9">{% for v in oficio.viajantes.all %}{{ v.nome }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</dd>
+        <dt class="col-sm-3">Placa / Modelo</dt><dd class="col-sm-9">{{ oficio.placa_formatada|default:"—" }} — {{ oficio.modelo|default:"—" }}</dd>
+        <dt class="col-sm-3">Combustível</dt><dd class="col-sm-9">{{ oficio.combustivel|default:"—" }}</dd>
+        <dt class="col-sm-3">Motorista</dt><dd class="col-sm-9">{% if oficio.motorista_viajante %}{{ oficio.motorista_viajante.nome }}{% elif oficio.motorista %}{{ oficio.motorista }}{% if oficio.motorista_carona %} (Carona){% endif %}{% else %}—{% endif %}</dd>
+        <dt class="col-sm-3">Protocolo do motorista</dt><dd class="col-sm-9">{{ oficio.motorista_protocolo_formatado|default:"—" }}</dd>
+        <dt class="col-sm-3">Status</dt><dd class="col-sm-9"><span class="badge {% if oficio.status == 'FINALIZADO' %}bg-success{% else %}bg-warning text-dark{% endif %}">{{ oficio.get_status_display }}</span></dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="d-flex gap-2 flex-wrap">
+          {% if oficio.status != 'FINALIZADO' %}
+          <button type="submit" name="finalizar" value="1" class="btn btn-success">Finalizar ofício</button>
+          {% endif %}
+          <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger">Excluir ofício</a>
+          {% if evento %}
+          <button type="submit" name="voltar_etapa3" value="1" class="btn btn-primary">Voltar para Ofícios do evento</button>
+          {% endif %}
+          <a href="{% url 'eventos:oficio-step3' oficio.pk %}" class="btn btn-outline-secondary">Voltar (Step 3)</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

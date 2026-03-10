@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir veículo — Central de Viagens{% endblock %}
+{% block page_title %}Excluir veículo{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-body">
+            <p class="mb-3">Deseja realmente excluir o veículo <strong>{{ object.placa }}</strong> — {{ object.modelo }}?</p>
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Excluir</button>
+            </form>
+            <a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

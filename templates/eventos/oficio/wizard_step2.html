@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Ofício — Step 2: Transporte — Central de Viagens{% endblock %}
+{% block page_title %}Wizard do Ofício — Step 2{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h1 class="h4 mb-0">Ofício — Step 2: Transporte</h1>
+    <div class="d-flex gap-2">
+      {% if evento %}
+      <a href="{% url 'eventos:guiado-etapa-3' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar para Ofícios do evento</a>
+      <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Painel do evento</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% include 'eventos/oficio/_wizard_stepper.html' with oficio=oficio step=2 %}
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <p class="text-muted small">Placa, modelo e combustível são obrigatórios. Motorista pode ser um viajante ou carona (informar ofício e protocolo).</p>
+        <div class="row g-3">
+          <div class="col-md-3"><label class="form-label">{{ form.placa.label }}</label>{{ form.placa }}{% if form.placa.errors %}<div class="invalid-feedback d-block">{{ form.placa.errors.0 }}</div>{% endif %}</div>
+          <div class="col-md-4"><label class="form-label">{{ form.modelo.label }}</label>{{ form.modelo }}{% if form.modelo.errors %}<div class="invalid-feedback d-block">{{ form.modelo.errors.0 }}</div>{% endif %}</div>
+          <div class="col-md-3"><label class="form-label">{{ form.combustivel.label }}</label>{{ form.combustivel }}{% if form.combustivel.errors %}<div class="invalid-feedback d-block">{{ form.combustivel.errors.0 }}</div>{% endif %}</div>
+          <div class="col-md-2"><label class="form-label">{{ form.tipo_viatura.label }}</label>{{ form.tipo_viatura }}</div>
+        </div>
+        <hr/>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">{{ form.motorista_viajante.label }}</label>{{ form.motorista_viajante }}</div>
+          <div class="col-md-6"><label class="form-label">{{ form.motorista_nome.label }}</label>{{ form.motorista_nome }}<small class="text-muted">Se não estiver na lista</small></div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-12"><div class="form-check">{{ form.motorista_carona }}<label class="form-check-label" for="{{ form.motorista_carona.id_for_label }}">{{ form.motorista_carona.label }}</label></div></div>
+        </div>
+        <div class="row g-3 mt-1 motorista-carona-fields">
+          <div class="col-md-2"><label class="form-label">{{ form.motorista_oficio_numero.label }}</label>{{ form.motorista_oficio_numero }}{% if form.motorista_oficio_numero.errors %}<div class="invalid-feedback d-block">{{ form.motorista_oficio_numero.errors.0 }}</div>{% endif %}</div>
+          <div class="col-md-2"><label class="form-label">{{ form.motorista_oficio_ano.label }}</label>{{ form.motorista_oficio_ano }}{% if form.motorista_oficio_ano.errors %}<div class="invalid-feedback d-block">{{ form.motorista_oficio_ano.errors.0 }}</div>{% endif %}</div>
+          <div class="col-md-4"><label class="form-label">{{ form.motorista_protocolo.label }}</label>{{ form.motorista_protocolo }}{% if form.motorista_protocolo.errors %}<div class="invalid-feedback d-block">{{ form.motorista_protocolo.errors.0 }}</div>{% endif %}</div>
+        </div>
+        <div class="form-actions mt-4 d-flex gap-2">
+          <button type="submit" name="salvar" value="1" class="btn btn-primary">Salvar</button>
+          <button type="submit" name="avancar" value="1" class="btn btn-success">Salvar e avançar (Step 3)</button>
+          <a href="{% url 'eventos:oficio-step1' oficio.pk %}" class="btn btn-outline-secondary">Voltar (Step 1)</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

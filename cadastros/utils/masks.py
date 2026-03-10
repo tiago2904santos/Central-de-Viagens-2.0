@@ -1,0 +1,43 @@
+"""Compatibilidade: as máscaras agora vivem em ``core.utils.masks``."""
+
+from core.utils.masks import (
+    EMPTY_MASK_DISPLAY,
+    MASK_FORMATTERS,
+    RG_NAO_POSSUI_CANONICAL,
+    RG_NAO_POSSUI_DISPLAY,
+    _normalizar_placa,
+    apply_mask,
+    format_cep,
+    format_cpf,
+    format_masked_display,
+    format_phone,
+    format_placa,
+    format_protocolo,
+    format_rg,
+    format_rg_display,
+    format_telefone,
+    normalize_placa,
+    normalize_protocolo,
+    only_digits,
+)
+
+__all__ = [
+    'EMPTY_MASK_DISPLAY',
+    'MASK_FORMATTERS',
+    'RG_NAO_POSSUI_CANONICAL',
+    'RG_NAO_POSSUI_DISPLAY',
+    '_normalizar_placa',
+    'apply_mask',
+    'format_cep',
+    'format_cpf',
+    'format_masked_display',
+    'format_phone',
+    'format_placa',
+    'format_protocolo',
+    'format_rg',
+    'format_rg_display',
+    'format_telefone',
+    'normalize_placa',
+    'normalize_protocolo',
+    'only_digits',
+]

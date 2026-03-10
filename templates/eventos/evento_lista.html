@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Eventos — Central de Viagens{% endblock %}
+{% block page_title %}Eventos{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="page-header-cadastro">
+        <h1>Eventos</h1>
+        <div class="d-flex gap-2">
+            <a href="{% url 'eventos:guiado-novo' %}" class="btn btn-success"><i class="bi bi-signpost-2"></i> Novo (fluxo guiado)</a>
+        </div>
+    </div>
+
+    <div class="card filter-card">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label small text-muted">Buscar por título</label>
+                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Título do evento" value="{{ form_filter.q }}">
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small text-muted">Status</label>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        {% for valor, label in status_choices %}
+                        <option value="{{ valor }}" {% if form_filter.status == valor %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small text-muted">Tipo de demanda</label>
+                    <select name="tipo_id" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        {% for t in tipos_demanda_list %}
+                        <option value="{{ t.pk }}" {% if form_filter.tipo_id == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+                    <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover table-cadastro mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Título</th>
+                        <th>Tipos</th>
+                        <th>Status</th>
+                        <th>Início</th>
+                        <th>Término</th>
+                        <th>Destinos</th>
+                        <th width="200" class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obj in object_list %}
+                    <tr>
+                        <td>{{ obj.titulo|default:"—" }}</td>
+                        <td>{% if obj.tipos_demanda.exists %}{% for t in obj.tipos_demanda.all %}{{ t.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}—{% endif %}</td>
+                        <td><span class="badge status-evento status-{{ obj.status }}">{{ obj.get_status_display }}</span></td>
+                        <td>{{ obj.data_inicio|date:"d/m/Y" }}</td>
+                        <td>{{ obj.data_fim|date:"d/m/Y" }}</td>
+                        <td>{% if obj.destinos.exists %}{% for d in obj.destinos.all %}{{ d.cidade.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}—{% endif %}</td>
+                        <td class="text-end">
+                            <a href="{% url 'eventos:guiado-painel' obj.pk %}" class="btn btn-sm btn-success">Abrir fluxo guiado</a>
+                            <a href="{% url 'eventos:guiado-etapa-1' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar Etapa 1</a>
+                            <a href="{% url 'eventos:detalhe' obj.pk %}" class="btn btn-sm btn-outline-secondary">Ver</a>
+                            <form method="post" action="{% url 'eventos:excluir' obj.pk %}" class="d-inline" onsubmit="return confirm('Excluir este evento?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">Nenhum evento encontrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

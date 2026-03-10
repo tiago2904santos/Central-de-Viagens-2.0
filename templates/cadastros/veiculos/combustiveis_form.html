@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_create %}Cadastrar Combustível{% else %}Editar Combustível{% endif %} — Central de Viagens{% endblock %}
+{% block page_title %}{% if is_create %}Cadastrar Combustível{% else %}Editar Combustível{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card form-card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label for="id_nome" class="form-label">{{ form.nome.label }}</label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            {{ form.is_padrao }}
+                            <label class="form-check-label" for="id_is_padrao">Definir como padrão</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <a href="{% url 'cadastros:combustivel-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    var nomeInput = document.getElementById('id_nome');
+    if (!nomeInput) return;
+    nomeInput.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() { if (nomeInput.value) nomeInput.value = nomeInput.value.toUpperCase(); });
+    } else if (nomeInput.value) nomeInput.value = nomeInput.value.toUpperCase();
+})();
+</script>
+{% endblock %}

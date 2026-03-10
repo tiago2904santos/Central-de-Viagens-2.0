@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_create %}Cadastrar Viajante{% else %}Editar Viajante{% endif %} — Central de Viagens{% endblock %}
+{% block page_title %}{% if is_create %}Cadastrar Viajante{% else %}Editar Viajante{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'cadastros/_aviso_rascunho.html' %}
+    <div class="card form-card">
+        <div class="card-body">
+            <form method="post" id="form-viajante">
+                {% csrf_token %}
+                <input type="hidden" name="return_url" value="{{ return_url }}">
+                <input type="hidden" name="next" value="{{ next_url|default:'' }}">
+                {% if object %}<input type="hidden" name="viajante_id" value="{{ object.pk }}">{% endif %}
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label for="id_nome" class="form-label">{{ form.nome.label }}</label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="id_cargo" class="form-label">{{ form.cargo.label }}</label>
+                        <div class="d-flex gap-2 align-items-start">
+                            <div class="flex-grow-1">{{ form.cargo }}</div>
+                            <button type="submit" formaction="{% url 'cadastros:viajante-rascunho-ir-cargos' %}" class="btn btn-outline-secondary btn-sm">Gerenciar Cargos</button>
+                        </div>
+                        {% if form.cargo.errors %}<div class="invalid-feedback d-block">{{ form.cargo.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="id_unidade_lotacao" class="form-label">{{ form.unidade_lotacao.label }}</label>
+                        <div class="d-flex gap-2 align-items-start">
+                            <div class="flex-grow-1">{{ form.unidade_lotacao }}</div>
+                            <button type="submit" formaction="{% url 'cadastros:viajante-rascunho-ir-unidades' %}" class="btn btn-outline-secondary btn-sm">Gerenciar Unidades de Lotação</button>
+                        </div>
+                        {% if form.unidade_lotacao.errors %}<div class="invalid-feedback d-block">{{ form.unidade_lotacao.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-check mb-2">
+                            {{ form.sem_rg }}
+                            <label class="form-check-label" for="id_sem_rg">{{ form.sem_rg.label }}</label>
+                        </div>
+                        <label for="id_rg" class="form-label">{{ form.rg.label }}</label>
+                        <input type="text" name="rg" id="id_rg" class="form-control" maxlength="30" placeholder="Ex.: 12.345.678-9" data-mask="rg" value="{% firstof form.initial.rg form.instance.rg '' %}">
+                        {% if form.rg.errors %}<div class="invalid-feedback d-block">{{ form.rg.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="id_cpf" class="form-label">{{ form.cpf.label }}</label>
+                        {{ form.cpf }}
+                        {% if form.cpf.errors %}<div class="invalid-feedback d-block">{{ form.cpf.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="id_telefone" class="form-label">{{ form.telefone.label }}</label>
+                        {{ form.telefone }}
+                        {% if form.telefone.errors %}<div class="invalid-feedback d-block">{{ form.telefone.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    {% if next_url %}
+                    <a href="{{ next_url }}" class="btn btn-outline-secondary">Cancelar</a>
+                    {% else %}
+                    <a href="{% url 'cadastros:viajante-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var nomeInput = document.getElementById('id_nome');
+    var rgInput = document.getElementById('id_rg');
+    var semRgCheck = document.getElementById('id_sem_rg');
+
+    if (nomeInput) {
+        nomeInput.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+        document.addEventListener('DOMContentLoaded', function() { if (nomeInput.value) nomeInput.value = nomeInput.value.toUpperCase(); });
+    }
+
+    if (semRgCheck && rgInput) {
+        function toggleRg(clearValue) {
+            if (semRgCheck.checked) {
+                rgInput.disabled = true;
+                rgInput.value = 'NÃO POSSUI RG';
+                rgInput.setAttribute('readonly', 'readonly');
+            } else {
+                rgInput.removeAttribute('readonly');
+                rgInput.disabled = false;
+                if (clearValue) {
+                    rgInput.value = '';
+                } else if (window.Masks) {
+                    window.Masks.applyMaskToInput(rgInput);
+                }
+            }
+        }
+        semRgCheck.addEventListener('change', function() { toggleRg(true); });
+        toggleRg(false);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (nomeInput && nomeInput.value) nomeInput.value = nomeInput.value.toUpperCase();
+        if (rgInput && rgInput.value && (!semRgCheck || !semRgCheck.checked)) {
+            if (rgInput.value !== 'NAO POSSUI RG' && rgInput.value !== 'NÃO POSSUI RG' && window.Masks) {
+                window.Masks.applyMaskToInput(rgInput);
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

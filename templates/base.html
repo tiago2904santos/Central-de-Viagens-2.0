@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Central de Viagens{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="d-flex {% if not user.is_authenticated %}login-page{% endif %}">
+    {% if user.is_authenticated %}
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'core:dashboard' %}" class="sidebar-brand">
+                <i class="bi bi-geo-alt-fill"></i>
+                <span>Central de Viagens</span>
+            </a>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav">
+            <ul class="nav flex-column">
+                {% for group in sidebar_menu.groups %}
+                    {% for item in group.items %}
+                        {% if item.visible %}
+                        <li class="nav-item">
+                            {% if item.children %}
+                                <a class="nav-link {% if item.active %}active{% endif %}" href="{{ item.url }}">
+                                    {% if item.icon %}<i class="{{ item.icon }}"></i>{% endif %}
+                                    <span>{{ item.label }}</span>
+                                </a>
+                                <ul class="nav flex-column ms-3 small">
+                                    {% for child in item.children %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-1 {% if child.active %}active{% endif %}" href="{{ child.url }}">{{ child.label }}</a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            {% elif item.enabled and item.url %}
+                                <a class="nav-link {% if item.active %}active{% endif %}" href="{{ item.url }}">
+                                    {% if item.icon %}<i class="{{ item.icon }}"></i>{% endif %}
+                                    <span>{{ item.label }}</span>
+                                </a>
+                            {% else %}
+                                <span class="nav-link sidebar-item-disabled" aria-disabled="true">
+                                    {% if item.icon %}<i class="{{ item.icon }}"></i>{% endif %}
+                                    <span>{{ item.label }}</span>
+                                    {% if item.badge %}<span class="sidebar-badge sidebar-badge-em-breve">{{ item.badge }}</span>{% endif %}
+                                </span>
+                            {% endif %}
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if group.id == 'main' and sidebar_menu.groups|length > 1 %}
+                        <li class="nav-item sidebar-divider" aria-hidden="true"></li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-footer-divider" aria-hidden="true"></div>
+            <div class="sidebar-user-block">
+                <span class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</span>
+                <a href="{% url 'core:logout' %}" class="sidebar-logout">Sair</a>
+            </div>
+        </div>
+    </aside>
+    <button type="button" class="sidebar-toggle d-lg-none" id="sidebarToggle" aria-label="Alternar menu">
+        <i class="bi bi-list"></i>
+    </button>
+    {% endif %}
+
+    <div class="main-wrapper flex-grow-1">
+        {% if user.is_authenticated %}
+        <header class="main-header">
+            <div class="container-fluid">
+                <h1 class="page-title mb-0">{% block page_title %}{% endblock %}</h1>
+            </div>
+        </header>
+        {% endif %}
+
+        <main class="main-content">
+            {% if messages %}
+            <div class="container-fluid py-2" id="django-messages-container">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" data-autodismiss="true" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/masks.js' %}"></script>
+    <script>
+        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('show');
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var alerts = document.querySelectorAll('.alert[data-autodismiss="true"]');
+            alerts.forEach(function(el) {
+                setTimeout(function() {
+                    el.classList.add('fade-out');
+                    setTimeout(function() {
+                        if (el.parentNode) el.parentNode.removeChild(el);
+                    }, 500);
+                }, 3000);
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

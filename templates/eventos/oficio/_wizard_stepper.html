@@ -1,0 +1,9 @@
+{% comment %}Incluir em cada step do wizard. step = 1..4, next_step_url opcional.{% endcomment %}
+<nav class="mb-4" aria-label="Etapas do ofício">
+  <ol class="list-unstyled d-flex flex-wrap gap-2 align-items-center">
+    <li><a href="{% url 'eventos:oficio-step1' oficio.pk %}" class="btn btn-sm {% if step == 1 %}btn-primary{% else %}btn-outline-secondary{% endif %}">1. Dados e viajantes</a></li>
+    <li><a href="{% url 'eventos:oficio-step2' oficio.pk %}" class="btn btn-sm {% if step == 2 %}btn-primary{% else %}btn-outline-secondary{% endif %}">2. Transporte</a></li>
+    <li><a href="{% url 'eventos:oficio-step3' oficio.pk %}" class="btn btn-sm {% if step == 3 %}btn-primary{% else %}btn-outline-secondary{% endif %}">3. Trechos</a></li>
+    <li><a href="{% url 'eventos:oficio-step4' oficio.pk %}" class="btn btn-sm {% if step == 4 %}btn-primary{% else %}btn-outline-secondary{% endif %}">4. Resumo</a></li>
+  </ol>
+</nav>
