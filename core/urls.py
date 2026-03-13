@@ -9,6 +9,6 @@ urlpatterns = [
     path('', login_view, name='login'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
-    path('dashboard/', login_required(RedirectView.as_view(pattern_name='eventos:documentos-hub', permanent=False)), name='dashboard'),
+    path('dashboard/', login_required(RedirectView.as_view(pattern_name='documentos:hub', permanent=False)), name='dashboard'),
     path('em-breve/', login_required(em_breve_view), name='em-breve'),
 ]

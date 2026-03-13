@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Central de documentos{% endblock %}
+{% block page_title %}Central de documentos{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row g-3">
+    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Ofícios</h5><p>{{ total_oficios }}</p><a href="{% url 'documentos:oficios' %}">Abrir</a></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Roteiros</h5><p>{{ total_roteiros }}</p><a href="{% url 'documentos:roteiros' %}">Abrir</a></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Planos de trabalho</h5><p>{{ total_planos }}</p><a href="{% url 'documentos:planos-trabalho' %}">Abrir</a></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Ordens de serviço</h5><p>{{ total_ordens }}</p><a href="{% url 'documentos:ordens-servico' %}">Abrir</a></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Justificativas</h5><p>{{ total_justificativas }}</p><a href="{% url 'documentos:justificativas' %}">Abrir</a></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Termos</h5><p>{{ total_termos }}</p><a href="{% url 'documentos:termos' %}">Abrir</a></div></div></div>
+  </div>
+</div>
+{% endblock %}

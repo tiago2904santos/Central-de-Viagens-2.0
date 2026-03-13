@@ -31,7 +31,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'cadastros',
-    'eventos',
     'documentos',
 ]
 
@@ -114,7 +113,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'core:login'
-LOGIN_REDIRECT_URL = 'eventos:documentos-hub'
+LOGIN_REDIRECT_URL = 'documentos:hub'
 LOGOUT_REDIRECT_URL = 'core:login'
 
 # OSRM local (Docker). Sem OSRM = fallback Haversine/corredor.

@@ -14,11 +14,11 @@
                             <i class="bi bi-calendar-event"></i>
                         </div>
                         <div class="ms-3">
-                            <h6 class="text-muted mb-1">Eventos</h6>
-                            <h3 class="mb-0">{{ total_eventos }}</h3>
+                            <h6 class="text-muted mb-1">Documentos</h6>
+                            <h3 class="mb-0">{{ total_oficios|add:total_termos }}</h3>
                         </div>
                     </div>
-                    <a href="{% url 'eventos:documentos-hub' %}" class="stretched-link"></a>
+                    <a href="{% url 'documentos:hub' %}" class="stretched-link"></a>
                 </div>
             </div>
         </div>
@@ -34,7 +34,7 @@
                             <h3 class="mb-0">{{ total_oficios }}</h3>
                         </div>
                     </div>
-                    <a href="{% url 'eventos:oficios-global' %}" class="stretched-link"></a>
+                    <a href="{% url 'documentos:oficios' %}" class="stretched-link"></a>
                 </div>
             </div>
         </div>
@@ -50,7 +50,7 @@
                             <h3 class="mb-0">{{ total_termos }}</h3>
                         </div>
                     </div>
-                    <a href="{% url 'eventos:documentos-termos' %}" class="stretched-link"></a>
+                    <a href="{% url 'documentos:termos' %}" class="stretched-link"></a>
                 </div>
             </div>
         </div>
@@ -66,7 +66,7 @@
                             <h3 class="mb-0">{{ total_pendencias }}</h3>
                         </div>
                     </div>
-                    <a href="{% url 'eventos:documentos-hub' %}" class="stretched-link"></a>
+                    <a href="{% url 'documentos:hub' %}" class="stretched-link"></a>
                 </div>
             </div>
         </div>
@@ -77,7 +77,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Bem-vindo ao Central de Viagens</h5>
                     <p class="card-text text-muted mb-0">
-                        Use o menu lateral para navegar por eventos, oficios, documentos globais, cadastros e ferramentas de apoio.
+                        Use o menu lateral para navegar pelos módulos documentais e pelos cadastros de apoio.
                     </p>
                 </div>
             </div>
