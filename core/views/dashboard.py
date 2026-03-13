@@ -1,6 +1,6 @@
 from django.shortcuts import render
 
-from eventos.models import Evento, EventoTermoParticipante, Oficio
+from eventos.models import Oficio
 from eventos.views import _build_oficio_justificativa_info
 
 
@@ -10,11 +10,9 @@ def dashboard_view(request):
         1 for oficio in oficios if _build_oficio_justificativa_info(oficio)['status_key'] == 'pendente'
     )
     context = {
-        'total_eventos': Evento.objects.count(),
+        'total_eventos': 0,
         'total_oficios': len(oficios),
-        'total_termos': EventoTermoParticipante.objects.count(),
-        'total_pendencias': justificativas_pendentes + EventoTermoParticipante.objects.filter(
-            status=EventoTermoParticipante.STATUS_PENDENTE
-        ).count(),
+        'total_termos': 0,
+        'total_pendencias': justificativas_pendentes,
     }
     return render(request, 'core/dashboard.html', context)

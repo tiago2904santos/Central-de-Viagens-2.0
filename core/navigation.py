@@ -40,7 +40,7 @@ def _item(
 def get_sidebar_config():
     """Retorna a lista plana de itens do menu, na ordem final.
 
-    - Itens diretos: Central de documentos, Eventos, Roteiros, Simulacao de diarias, Configuracoes.
+    - Itens diretos: Central de documentos, Roteiros, Simulacao de diarias, Configuracoes.
     - Itens com submenu: Documentos, Viajantes, Veiculos.
     """
     return [
@@ -54,25 +54,7 @@ def get_sidebar_config():
             active_route_names=['eventos:documentos-hub'],
             active_route_prefixes=[],
         ),
-        # 2. Eventos
-        _item(
-            'eventos',
-            'Eventos',
-            'bi bi-calendar-event',
-            'eventos:lista',
-            order=1,
-            active_route_names=[
-                'eventos:lista',
-                'eventos:cadastrar',
-                'eventos:detalhe',
-                'eventos:editar',
-                'eventos:guiado-novo',
-                'eventos:guiado-etapa-1',
-                'eventos:guiado-painel',
-            ],
-            active_route_prefixes=['eventos:guiado-etapa-2', 'eventos:guiado-etapa-3', 'eventos:guiado-etapa-4', 'eventos:guiado-etapa-5', 'eventos:guiado-etapa-6', 'eventos:guiado-etapa-7'],
-        ),
-        # 3. Roteiros
+        # 2. Roteiros
         _item(
             'roteiros',
             'Roteiros',
@@ -80,9 +62,9 @@ def get_sidebar_config():
             'eventos:roteiros-global',
             order=2,
             active_route_names=['eventos:roteiros-global'],
-            active_route_prefixes=['eventos:trecho-calcular-km', 'eventos:trechos-estimar'],
+            active_route_prefixes=['eventos:trecho-calcular-km', 'eventos:trechos-estimar', 'eventos:roteiro-avulso-'],
         ),
-        # 4. Simulacao de diarias
+        # 3. Simulacao de diarias
         _item(
             'simulacao-diarias',
             'Simulacao de diarias',
@@ -91,7 +73,7 @@ def get_sidebar_config():
             order=3,
             active_route_names=['eventos:simulacao-diarias'],
         ),
-        # 5. Documentos (submenu)
+        # 4. Documentos (submenu)
         _item(
             'documentos',
             'Documentos',
@@ -105,7 +87,7 @@ def get_sidebar_config():
                     'eventos:oficios-global',
                     order=0,
                     active_route_names=['eventos:oficios-global'],
-                    active_route_prefixes=['eventos:oficio-', 'eventos:guiado-etapa-3'],
+                    active_route_prefixes=['eventos:oficio-'],
                 ),
                 _item(
                     'documentos-plano-trabalho',
@@ -141,9 +123,9 @@ def get_sidebar_config():
                 ),
             ],
             order=4,
-            active_route_prefixes=['eventos:documentos-', 'eventos:oficio-', 'eventos:guiado-etapa-3', 'eventos:guiado-etapa-4', 'eventos:guiado-etapa-5', 'eventos:guiado-etapa-6'],
+            active_route_prefixes=['eventos:documentos-', 'eventos:oficio-'],
         ),
-        # 6. Viajantes (submenu)
+        # 5. Viajantes (submenu)
         _item(
             'viajantes',
             'Viajantes',
@@ -178,7 +160,7 @@ def get_sidebar_config():
             order=5,
             active_route_prefixes=['cadastros:viajante-', 'cadastros:cargo-', 'cadastros:unidade-lotacao-'],
         ),
-        # 7. Veiculos (submenu)
+        # 6. Veiculos (submenu)
         _item(
             'veiculos',
             'Veiculos',
@@ -205,7 +187,7 @@ def get_sidebar_config():
             order=6,
             active_route_prefixes=['cadastros:veiculo-', 'cadastros:combustivel-'],
         ),
-        # 8. Configuracoes do sistema
+        # 7. Configuracoes do sistema
         _item(
             'configuracoes',
             'Configuracoes do sistema',

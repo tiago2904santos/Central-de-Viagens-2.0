@@ -505,8 +505,7 @@ def oficio_global_lista(request):
         )
     if filters['status']:
         queryset = queryset.filter(status=filters['status'])
-    if filters['evento_id'].isdigit():
-        queryset = queryset.filter(evento_id=int(filters['evento_id']))
+    
     if filters['ano'].isdigit():
         queryset = queryset.filter(ano=int(filters['ano']))
     if filters['numero'].isdigit():
@@ -533,7 +532,7 @@ def oficio_global_lista(request):
         oficio.viajantes_display = _oficio_viajantes_display(oficio)
         oficio.justificativa_info = _build_oficio_justificativa_info(oficio)
         oficio.process_status = _oficio_process_status_meta(oficio)
-        oficio.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else ''
+        oficio.evento_url = ''
         oficio.edicao_url = reverse('eventos:oficio-editar', kwargs={'pk': oficio.pk})
         oficio.excluir_url = reverse('eventos:oficio-excluir', kwargs={'pk': oficio.pk})
         oficio.card_documents = _build_oficio_document_cards(oficio)
@@ -673,8 +672,7 @@ def roteiro_global_lista(request):
         queryset = queryset.filter(tipo=RoteiroEvento.TIPO_AVULSO)
     elif filters['tipo'] == RoteiroEvento.TIPO_EVENTO:
         queryset = queryset.filter(tipo=RoteiroEvento.TIPO_EVENTO)
-    if filters['evento_id'].isdigit():
-        queryset = queryset.filter(evento_id=int(filters['evento_id']))
+    
 
     page_obj = _paginate(
         queryset.distinct().order_by('-updated_at', '-created_at'),
@@ -695,13 +693,10 @@ def roteiro_global_lista(request):
             roteiro.etapa_url = ''
             roteiro.oficios_url = ''
         else:
-            roteiro.editar_url = reverse(
-                'eventos:guiado-etapa-2-editar',
-                kwargs={'evento_id': roteiro.evento_id, 'pk': roteiro.pk},
-            )
-            roteiro.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': roteiro.evento_id})
-            roteiro.etapa_url = reverse('eventos:guiado-etapa-2', kwargs={'evento_id': roteiro.evento_id})
-            roteiro.oficios_url = reverse('eventos:guiado-etapa-5', kwargs={'evento_id': roteiro.evento_id})
+            roteiro.editar_url = reverse('eventos:roteiro-avulso-editar', kwargs={'pk': roteiro.pk})
+            roteiro.evento_url = ''
+            roteiro.etapa_url = ''
+            roteiro.oficios_url = ''
         roteiro.evento_titulo_display = (
             (roteiro.evento.titulo or '').strip()
             if roteiro.evento_id
@@ -711,8 +706,6 @@ def roteiro_global_lista(request):
         roteiro.actions = _build_roteiro_card_actions(roteiro)
 
     selected_event = None
-    if filters['evento_id'].isdigit():
-        selected_event = Evento.objects.filter(pk=int(filters['evento_id'])).first()
 
     return render(
         request,
@@ -724,16 +717,8 @@ def roteiro_global_lista(request):
             'filters': filters,
             'eventos_choices': _eventos_choices(),
             'status_choices': RoteiroEvento.STATUS_CHOICES,
-            'tipo_choices': [
-                ('', 'Todos'),
-                (RoteiroEvento.TIPO_AVULSO, 'Avulsos'),
-                (RoteiroEvento.TIPO_EVENTO, 'Vinculados a evento'),
-            ],
-            'novo_roteiro_url': (
-                reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': selected_event.pk})
-                if selected_event
-                else ''
-            ),
+            'tipo_choices': [('', 'Todos'), (RoteiroEvento.TIPO_AVULSO, 'Avulsos')],
+            'novo_roteiro_url': '',
             'novo_roteiro_avulso_url': reverse('eventos:roteiro-avulso-cadastrar'),
             'selected_event': selected_event,
         },
@@ -772,8 +757,8 @@ def documentos_hub(request):
         },
         {
             'label': 'Termos',
-            'count': EventoTermoParticipante.objects.count(),
-            'description': 'Situacao global dos termos por participante e evento.',
+            'count': 0,
+            'description': 'Situacao global dos termos por participante.',
             'url': reverse('eventos:documentos-termos'),
         },
     ]
@@ -936,7 +921,7 @@ def _build_documento_derivado_rows(queryset, *, request, tipo_documento, fundame
                 'status': status_info,
                 'oficio_url': reverse('eventos:oficio-editar', kwargs={'pk': oficio.pk}),
                 'documentos_url': reverse('eventos:oficio-documentos', kwargs={'pk': oficio.pk}),
-                'evento_url': reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
+                'evento_url': '' if oficio.evento_id else '',
                 'justificativa_url': _append_next(
                     reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
                     next_url,
@@ -1030,7 +1015,7 @@ def _build_plano_trabalho_footer_actions(oficio):
         actions.append(
             {
                 'label': 'Painel do evento',
-                'url': reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}),
+                'url': '',
                 'style': 'secondary',
             }
         )
@@ -1074,8 +1059,7 @@ def _documento_derivado_global(
             | Q(trechos__destino_cidade__nome__icontains=filters['q'])
             | Q(viajantes__nome__icontains=filters['q'])
         )
-    if filters['evento_id'].isdigit():
-        queryset = queryset.filter(evento_id=int(filters['evento_id']))
+    
     if filters['ano'].isdigit():
         queryset = queryset.filter(ano=int(filters['ano']))
     if filters['oficio_status']:
@@ -1154,8 +1138,7 @@ def planos_trabalho_global(request):
             | Q(trechos__destino_cidade__nome__icontains=filters['q'])
             | Q(viajantes__nome__icontains=filters['q'])
         )
-    if filters['evento_id'].isdigit():
-        queryset = queryset.filter(evento_id=int(filters['evento_id']))
+    
     if filters['ano'].isdigit():
         queryset = queryset.filter(ano=int(filters['ano']))
     if filters['oficio_status']:
@@ -1179,7 +1162,7 @@ def planos_trabalho_global(request):
         fundamentacao = getattr(oficio.evento, 'fundamentacao', None)
         oficio.process_status = process_status
         oficio.status_info = status_info
-        oficio.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id})
+        oficio.evento_url = ''
         oficio.evento_titulo_display = (oficio.evento.titulo or '').strip() or '(sem titulo)'
         oficio.identificacao_display = f'Plano de trabalho - {oficio.numero_formatado}'
         oficio.destinos_display = _oficio_destinos_display(oficio)
@@ -1309,8 +1292,7 @@ def justificativas_global(request):
             | Q(protocolo__icontains=Oficio.normalize_protocolo(filters['q']) or filters['q'])
             | Q(trechos__destino_cidade__nome__icontains=filters['q'])
         )
-    if filters['evento_id'].isdigit():
-        queryset = queryset.filter(evento_id=int(filters['evento_id']))
+    
     if filters['ano'].isdigit():
         queryset = queryset.filter(ano=int(filters['ano']))
 
@@ -1334,7 +1316,7 @@ def justificativas_global(request):
         )
         oficio.documentos_url = reverse('eventos:oficio-documentos', kwargs={'pk': oficio.pk})
         oficio.oficio_url = reverse('eventos:oficio-editar', kwargs={'pk': oficio.pk})
-        oficio.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else ''
+        oficio.evento_url = ''
         oficio.evento_titulo_display = (
             (oficio.evento.titulo or '').strip()
             if oficio.evento_id
@@ -1432,8 +1414,7 @@ def termos_global(request):
             | Q(viajante__nome__icontains=filters['q'])
             | Q(viajante__cargo__nome__icontains=filters['q'])
         )
-    if filters['evento_id'].isdigit():
-        queryset = queryset.filter(evento_id=int(filters['evento_id']))
+    
     if filters['status']:
         queryset = queryset.filter(status=filters['status'])
 
