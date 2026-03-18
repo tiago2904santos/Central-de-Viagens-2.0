@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Justificativas{% endblock %}
+{% block page_title %}Justificativas{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <span class="text-muted">{{ justificativas|length }} justificativa(s)</span>
+  <a href="{% url 'documentos:justificativa-nova' %}" class="btn btn-danger"><i class="bi bi-plus-lg me-1"></i> Nova Justificativa</a>
+</div>
+{% if justificativas %}
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Título</th><th>Status</th><th>Modelo</th><th>Criado em</th><th class="text-end">Ações</th></tr>
+      </thead>
+      <tbody>
+        {% for j in justificativas %}
+        <tr>
+          <td>{{ j.titulo|default:"(sem título)" }}</td>
+          <td>{% if j.status == 'FINALIZADO' %}<span class="badge bg-success">Finalizado</span>{% else %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}</td>
+          <td>{{ j.modelo|default:"—" }}</td>
+          <td>{{ j.criado_em|date:"d/m/Y" }}</td>
+          <td class="text-end">
+            <a href="{% url 'documentos:justificativa-editar' pk=j.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'documentos:justificativa-excluir' pk=j.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-journal-text fs-1 text-muted"></i>
+  <p class="text-muted mt-2">Nenhuma justificativa cadastrada.</p>
+  <a href="{% url 'documentos:justificativa-nova' %}" class="btn btn-danger">Criar primeira justificativa</a>
+</div>
+{% endif %}
+{% endblock %}

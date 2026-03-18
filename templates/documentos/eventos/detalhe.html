@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}{{ evento.nome }}{% endblock %}
+{% block page_title %}{{ evento.nome }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-end gap-2 mb-4">
+  <a href="{% url 'documentos:evento-editar' pk=evento.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i> Editar</a>
+  <a href="{% url 'documentos:evento-excluir' pk=evento.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i> Excluir</a>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-light fw-semibold">Dados do evento</div>
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-3">Nome</dt><dd class="col-sm-9">{{ evento.nome }}</dd>
+      <dt class="col-sm-3">Status</dt>
+      <dd class="col-sm-9">{% if evento.status == 'FINALIZADO' %}<span class="badge bg-success">Finalizado</span>{% else %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}</dd>
+      <dt class="col-sm-3">Data início</dt><dd class="col-sm-9">{{ evento.data_inicio|date:"d/m/Y"|default:"—" }}</dd>
+      <dt class="col-sm-3">Data fim</dt><dd class="col-sm-9">{{ evento.data_fim|date:"d/m/Y"|default:"—" }}</dd>
+      {% if evento.descricao %}<dt class="col-sm-3">Descrição</dt><dd class="col-sm-9">{{ evento.descricao }}</dd>{% endif %}
+    </dl>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-light fw-semibold">Ofícios ({{ oficios|length }})</div>
+      <ul class="list-group list-group-flush">
+        {% for o in oficios %}
+        <li class="list-group-item"><a href="{% url 'documentos:oficio-step1' pk=o.pk %}">{{ o.identificacao }}</a></li>
+        {% empty %}
+        <li class="list-group-item text-muted small">Nenhum ofício.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-light fw-semibold">Roteiros ({{ roteiros|length }})</div>
+      <ul class="list-group list-group-flush">
+        {% for r in roteiros %}
+        <li class="list-group-item"><a href="{% url 'documentos:roteiro-editar' pk=r.pk %}">{{ r.nome|default:r }}</a></li>
+        {% empty %}
+        <li class="list-group-item text-muted small">Nenhum roteiro.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-light fw-semibold">Termos ({{ termos|length }})</div>
+      <ul class="list-group list-group-flush">
+        {% for t in termos %}
+        <li class="list-group-item"><a href="{% url 'documentos:termo-editar' pk=t.pk %}">{{ t.titulo|default:t }}</a></li>
+        {% empty %}
+        <li class="list-group-item text-muted small">Nenhum termo.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

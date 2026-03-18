@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Eventos{% endblock %}
+{% block page_title %}Eventos{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <span class="text-muted">{{ eventos|length }} evento(s)</span>
+  <a href="{% url 'documentos:evento-novo' %}" class="btn btn-warning"><i class="bi bi-plus-lg me-1"></i> Novo Evento</a>
+</div>
+{% if eventos %}
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Nome</th><th>Status</th><th>Data início</th><th>Data fim</th><th>Criado em</th><th class="text-end">Ações</th></tr>
+      </thead>
+      <tbody>
+        {% for ev in eventos %}
+        <tr>
+          <td><a href="{% url 'documentos:evento-detalhe' pk=ev.pk %}" class="text-decoration-none fw-semibold">{{ ev.nome }}</a></td>
+          <td>{% if ev.status == 'FINALIZADO' %}<span class="badge bg-success">Finalizado</span>{% else %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}</td>
+          <td>{{ ev.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+          <td>{{ ev.data_fim|date:"d/m/Y"|default:"—" }}</td>
+          <td>{{ ev.criado_em|date:"d/m/Y" }}</td>
+          <td class="text-end">
+            <a href="{% url 'documentos:evento-detalhe' pk=ev.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'documentos:evento-editar' pk=ev.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'documentos:evento-excluir' pk=ev.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-calendar-event fs-1 text-muted"></i>
+  <p class="text-muted mt-2">Nenhum evento cadastrado.</p>
+  <a href="{% url 'documentos:evento-novo' %}" class="btn btn-warning">Criar primeiro evento</a>
+</div>
+{% endif %}
+{% endblock %}

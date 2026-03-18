@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}{% if oficio %}Ofício {{ oficio.identificacao }}{% else %}Novo Ofício{% endif %} — Dados gerais{% endblock %}
+{% block page_title %}{% if oficio %}Ofício {{ oficio.identificacao }}{% else %}Novo Ofício{% endif %}{% endblock %}
+{% block content %}
+{% include 'documentos/oficios/_stepper.html' %}
+
+<form method="post">
+  {% csrf_token %}
+  {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Identificação</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Número</label>
+          <input type="text" name="numero" class="form-control" value="{{ oficio.numero|default:'' }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Ano</label>
+          <input type="number" name="ano" class="form-control" value="{{ oficio.ano|default:'' }}" placeholder="{% now 'Y' %}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Protocolo</label>
+          <input type="text" name="protocolo" class="form-control" value="{{ oficio.protocolo|default:'' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Data de criação</label>
+          <input type="date" name="data_criacao" class="form-control" value="{{ oficio.data_criacao|date:'Y-m-d'|default:'' }}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Motivo</div>
+    <div class="card-body">
+      <div class="mb-3">
+        <label class="form-label">Modelo de motivo</label>
+        <select name="modelo_motivo" id="id_modelo_motivo" class="form-select">
+          <option value="">— Selecionar modelo —</option>
+          {% for m in modelos_motivo %}
+          <option value="{{ m.pk }}" data-texto="{{ m.texto }}" {% if oficio.modelo_motivo_id == m.pk %}selected{% endif %}>{{ m.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-0">
+        <label class="form-label">Motivo</label>
+        <textarea name="motivo" id="id_motivo" class="form-control" rows="4">{{ oficio.motivo|default:'' }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Custeio e destino</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label d-block">Tipo de custeio</label>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="custeio_tipo" id="custeio_proprio" value="PROPRIO" {% if oficio.custeio_tipo != 'EXTERNO' %}checked{% endif %} onchange="toggleCusteio()">
+            <label class="form-check-label" for="custeio_proprio">Próprio</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="custeio_tipo" id="custeio_externo" value="EXTERNO" {% if oficio.custeio_tipo == 'EXTERNO' %}checked{% endif %} onchange="toggleCusteio()">
+            <label class="form-check-label" for="custeio_externo">Externo</label>
+          </div>
+          <div id="div_instituicao" class="mt-2" {% if oficio.custeio_tipo != 'EXTERNO' %}style="display:none"{% endif %}>
+            <input type="text" name="nome_instituicao_custeio" class="form-control" placeholder="Nome da instituição custeante" value="{{ oficio.nome_instituicao_custeio|default:'' }}">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label d-block">Tipo de destino</label>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="tipo_destino" value="NACIONAL" {% if oficio.tipo_destino != 'INTERNACIONAL' %}checked{% endif %}>
+            <label class="form-check-label">Nacional</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="tipo_destino" value="INTERNACIONAL" {% if oficio.tipo_destino == 'INTERNACIONAL' %}checked{% endif %}>
+            <label class="form-check-label">Internacional</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Evento (opcional)</div>
+    <div class="card-body">
+      <select name="evento_id" id="id_evento_id" class="form-select mb-2" onchange="toggleNovoEvento()">
+        <option value="">— Nenhum —</option>
+        {% for ev in eventos %}
+        <option value="{{ ev.pk }}" {% if oficio.evento_id == ev.pk %}selected{% endif %}>{{ ev.nome }}</option>
+        {% endfor %}
+        <option value="novo">+ Criar novo evento</option>
+      </select>
+      <div id="div_novo_evento" style="display:none">
+        <input type="text" name="evento_nome_novo" class="form-control" placeholder="Nome do novo evento">
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Viajantes</div>
+    <div class="card-body">
+      <input type="text" id="busca_viajante" class="form-control mb-3" placeholder="Buscar viajante...">
+      <div style="max-height:300px;overflow-y:auto" class="border rounded p-2">
+        {% for v in todos_viajantes %}
+        {% with selected_ids=viajantes_selecionados|default:'' %}
+        <div class="form-check viajante-item" data-nome="{{ v.nome|lower }}">
+          <input class="form-check-input" type="checkbox" name="viajante_ids" value="{{ v.pk }}" id="v_{{ v.pk }}"
+            {% for vs in viajantes_selecionados %}{% if vs.viajante_id == v.pk %}checked{% endif %}{% endfor %}>
+          <label class="form-check-label" for="v_{{ v.pk }}">{{ v.nome }}</label>
+        </div>
+        {% endwith %}
+        {% empty %}
+        <p class="text-muted small mb-0">Nenhum viajante ativo cadastrado.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Próximo <i class="bi bi-chevron-right"></i></button>
+    <a href="{% url 'documentos:oficios' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+
+<script>
+function toggleCusteio() {
+  var ext = document.getElementById('custeio_externo').checked;
+  document.getElementById('div_instituicao').style.display = ext ? '' : 'none';
+}
+function toggleNovoEvento() {
+  var val = document.getElementById('id_evento_id').value;
+  document.getElementById('div_novo_evento').style.display = val === 'novo' ? '' : 'none';
+}
+document.getElementById('busca_viajante').addEventListener('input', function() {
+  var q = this.value.toLowerCase();
+  document.querySelectorAll('.viajante-item').forEach(function(el) {
+    el.style.display = el.dataset.nome.includes(q) ? '' : 'none';
+  });
+});
+document.getElementById('id_modelo_motivo').addEventListener('change', function() {
+  var opt = this.options[this.selectedIndex];
+  var texto = opt.dataset.texto;
+  if (texto) {
+    var ta = document.getElementById('id_motivo');
+    if (!ta.value) ta.value = texto;
+  }
+});
+</script>
+{% endblock %}

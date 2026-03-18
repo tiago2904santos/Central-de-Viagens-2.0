@@ -11,21 +11,25 @@ def _item(id_, label, icon, url_name=None, children=None, order=0, active_route_
 def get_sidebar_config():
     return [
         _item('central-documentos', 'Central de documentos', 'bi bi-folder2-open', 'documentos:hub', order=0, active_route_prefixes=['documentos:hub']),
-        _item('roteiros', 'Roteiros', 'bi bi-signpost-2', 'documentos:roteiros', order=1, active_route_prefixes=['documentos:roteiros']),
         _item(
-            'documentos', 'Documentos', 'bi bi-folder2-open', None, order=2,
-            children=[
-                _item('documentos-oficios', 'Ofícios', 'bi bi-file-earmark-text', 'documentos:oficios', order=0, active_route_prefixes=['documentos:oficios']),
-                _item('documentos-plano-trabalho', 'Plano de trabalho', 'bi bi-clipboard2-check', 'documentos:planos-trabalho', order=1),
-                _item('documentos-ordem-servico', 'Ordem de serviço', 'bi bi-card-checklist', 'documentos:ordens-servico', order=2),
-                _item('documentos-justificativas', 'Justificativas', 'bi bi-journal-text', 'documentos:justificativas', order=3),
-                _item('documentos-termos', 'Termos', 'bi bi-file-check', 'documentos:termos', order=4),
-            ],
-            active_route_prefixes=['documentos:'],
+            'oficios', 'Ofícios', 'bi bi-file-earmark-text', 'documentos:oficios', order=1,
+            active_route_prefixes=['documentos:oficio'],
         ),
-        _item('viajantes', 'Viajantes', 'bi bi-people', 'cadastros:viajante-lista', order=3, active_route_prefixes=['cadastros:viajante-']),
-        _item('veiculos', 'Veículos', 'bi bi-truck', 'cadastros:veiculo-lista', order=4, active_route_prefixes=['cadastros:veiculo-']),
-        _item('configuracoes', 'Configurações do sistema', 'bi bi-gear', 'cadastros:configuracoes', order=5, active_route_prefixes=['cadastros:configuracoes']),
+        _item('roteiros', 'Roteiros', 'bi bi-signpost-2', 'documentos:roteiros', order=2, active_route_prefixes=['documentos:roteiro']),
+        _item(
+            'documentos', 'Documentos', 'bi bi-folder2-open', None, order=3,
+            children=[
+                _item('documentos-plano-trabalho', 'Planos de trabalho', 'bi bi-clipboard2-check', 'documentos:planos-trabalho', order=0),
+                _item('documentos-ordem-servico', 'Ordens de serviço', 'bi bi-card-checklist', 'documentos:ordens-servico', order=1),
+                _item('documentos-justificativas', 'Justificativas', 'bi bi-journal-text', 'documentos:justificativas', order=2),
+                _item('documentos-termos', 'Termos', 'bi bi-file-check', 'documentos:termos', order=3),
+            ],
+            active_route_prefixes=['documentos:plano', 'documentos:ordem', 'documentos:justificativa', 'documentos:termo'],
+        ),
+        _item('eventos', 'Eventos', 'bi bi-calendar-event', 'documentos:eventos', order=4, active_route_prefixes=['documentos:evento']),
+        _item('viajantes', 'Viajantes', 'bi bi-people', 'cadastros:viajante-lista', order=5, active_route_prefixes=['cadastros:viajante-']),
+        _item('veiculos', 'Veículos', 'bi bi-truck', 'cadastros:veiculo-lista', order=6, active_route_prefixes=['cadastros:veiculo-']),
+        _item('configuracoes', 'Configurações do sistema', 'bi bi-gear', 'cadastros:configuracoes', order=7, active_route_prefixes=['cadastros:configuracoes']),
     ]
 
 

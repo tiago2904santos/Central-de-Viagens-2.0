@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}{% if ordem %}Editar ordem{% else %}Nova ordem de serviço{% endif %}{% endblock %}
+{% block page_title %}{% if ordem %}Editar ordem{% else %}Nova ordem de serviço{% endif %}{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm" style="max-width:700px">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
+      <div class="mb-3">
+        <label class="form-label">Título</label>
+        <input type="text" name="titulo" class="form-control" value="{{ ordem.titulo|default:'' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Conteúdo</label>
+        <textarea name="conteudo" class="form-control" rows="8">{{ ordem.conteudo|default:'' }}</textarea>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-secondary">Salvar</button>
+        <a href="{% url 'documentos:ordens-servico' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

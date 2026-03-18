@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Ofício {{ oficio.identificacao }} — Roteiro e Diárias{% endblock %}
+{% block page_title %}Ofício {{ oficio.identificacao }} — Roteiro e Diárias{% endblock %}
+{% block content %}
+{% include 'documentos/oficios/_stepper.html' %}
+
+<form method="post">
+  {% csrf_token %}
+  {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Roteiro</div>
+    <div class="card-body">
+      <div class="mb-3">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="roteiro_opcao" value="nenhum" id="rot_nenhum"
+            {% if not oficio.roteiro_id %}checked{% endif %} onchange="toggleRoteiro()">
+          <label class="form-check-label" for="rot_nenhum">Nenhum</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="roteiro_opcao" value="existente" id="rot_existente"
+            {% if oficio.roteiro_id %}checked{% endif %} onchange="toggleRoteiro()">
+          <label class="form-check-label" for="rot_existente">Usar roteiro existente</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="roteiro_opcao" value="novo" id="rot_novo" onchange="toggleRoteiro()">
+          <label class="form-check-label" for="rot_novo">Criar novo roteiro</label>
+        </div>
+      </div>
+      <div id="div_roteiro_existente" {% if not oficio.roteiro_id %}style="display:none"{% endif %}>
+        <select name="roteiro_id" class="form-select">
+          <option value="">— Selecionar —</option>
+          {% for r in roteiros %}
+          <option value="{{ r.pk }}" {% if oficio.roteiro_id == r.pk %}selected{% endif %}>{{ r.nome|default:r }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div id="div_roteiro_novo" style="display:none">
+        <input type="text" name="roteiro_nome_novo" class="form-control" placeholder="Nome do novo roteiro">
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Diárias</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Quantidade de diárias</label>
+          <input type="number" name="quantidade_diarias" class="form-control" step="0.5" value="{{ oficio.quantidade_diarias|default:'' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Valor (R$)</label>
+          <input type="number" name="valor_diarias" class="form-control" step="0.01" value="{{ oficio.valor_diarias|default:'' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Valor por extenso</label>
+          <input type="text" name="valor_diarias_extenso" class="form-control" value="{{ oficio.valor_diarias_extenso|default:'' }}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold d-flex justify-content-between align-items-center">
+      Trechos
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="addTrecho()">
+        <i class="bi bi-plus-lg me-1"></i> Adicionar trecho
+      </button>
+    </div>
+    <div class="card-body" id="trechos_container">
+      {% for t in trechos %}
+      <div class="row g-2 mb-3 trecho-row border rounded p-2">
+        <div class="col-md-3">
+          <label class="form-label small">Origem</label>
+          <input type="text" name="trecho_origem" class="form-control form-control-sm" value="{{ t.origem_nome }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small">Destino</label>
+          <input type="text" name="trecho_destino" class="form-control form-control-sm" value="{{ t.destino_nome }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small">Data saída</label>
+          <input type="date" name="trecho_data_saida" class="form-control form-control-sm" value="{{ t.data_saida|date:'Y-m-d'|default:'' }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small">Data chegada</label>
+          <input type="date" name="trecho_data_chegada" class="form-control form-control-sm" value="{{ t.data_chegada|date:'Y-m-d'|default:'' }}">
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="trecho_retorno" value="{{ forloop.counter }}" {% if t.is_retorno %}checked{% endif %}>
+            <label class="form-check-label small">Retorno</label>
+          </div>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTrecho(this)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+      {% empty %}
+      <div class="row g-2 mb-3 trecho-row border rounded p-2">
+        <div class="col-md-3">
+          <label class="form-label small">Origem</label>
+          <input type="text" name="trecho_origem" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small">Destino</label>
+          <input type="text" name="trecho_destino" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small">Data saída</label>
+          <input type="date" name="trecho_data_saida" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small">Data chegada</label>
+          <input type="date" name="trecho_data_chegada" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="trecho_retorno" value="1">
+            <label class="form-check-label small">Retorno</label>
+          </div>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTrecho(this)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a href="{% url 'documentos:oficio-step2' pk=oficio.pk %}" class="btn btn-outline-secondary"><i class="bi bi-chevron-left"></i> Anterior</a>
+    <button type="submit" class="btn btn-primary">Próximo <i class="bi bi-chevron-right"></i></button>
+  </div>
+</form>
+
+<script>
+function toggleRoteiro() {
+  var val = document.querySelector('input[name="roteiro_opcao"]:checked').value;
+  document.getElementById('div_roteiro_existente').style.display = val === 'existente' ? '' : 'none';
+  document.getElementById('div_roteiro_novo').style.display = val === 'novo' ? '' : 'none';
+}
+function getTrechoCount() {
+  return document.querySelectorAll('#trechos_container .trecho-row').length + 1;
+}
+function addTrecho() {
+  var container = document.getElementById('trechos_container');
+  var idx = getTrechoCount();
+  var tpl = '<div class="row g-2 mb-3 trecho-row border rounded p-2">' +
+    '<div class="col-md-3"><label class="form-label small">Origem</label><input type="text" name="trecho_origem" class="form-control form-control-sm"></div>' +
+    '<div class="col-md-3"><label class="form-label small">Destino</label><input type="text" name="trecho_destino" class="form-control form-control-sm"></div>' +
+    '<div class="col-md-2"><label class="form-label small">Data saída</label><input type="date" name="trecho_data_saida" class="form-control form-control-sm"></div>' +
+    '<div class="col-md-2"><label class="form-label small">Data chegada</label><input type="date" name="trecho_data_chegada" class="form-control form-control-sm"></div>' +
+    '<div class="col-md-1 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" name="trecho_retorno" value="' + idx + '"><label class="form-check-label small">Retorno</label></div></div>' +
+    '<div class="col-md-1 d-flex align-items-end"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTrecho(this)"><i class="bi bi-trash"></i></button></div>' +
+    '</div>';
+  container.insertAdjacentHTML('beforeend', tpl);
+  reindexTrechos();
+}
+function reindexTrechos() {
+  document.querySelectorAll('#trechos_container .trecho-row').forEach(function(row, i) {
+    var cb = row.querySelector('input[name="trecho_retorno"]');
+    if (cb) cb.value = String(i + 1);
+  });
+}
+function removeTrecho(btn) {
+  btn.closest('.trecho-row').remove();
+  reindexTrechos();
+}
+</script>
+{% endblock %}

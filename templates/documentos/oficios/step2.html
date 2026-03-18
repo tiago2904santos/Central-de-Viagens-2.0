@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Ofício {{ oficio.identificacao }} — Transporte{% endblock %}
+{% block page_title %}Ofício {{ oficio.identificacao }} — Transporte{% endblock %}
+{% block content %}
+{% include 'documentos/oficios/_stepper.html' %}
+
+<form method="post">
+  {% csrf_token %}
+  {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Veículo</div>
+    <div class="card-body">
+      <div class="mb-3">
+        <label class="form-label">Selecionar veículo cadastrado</label>
+        <select name="veiculo_id" id="id_veiculo_id" class="form-select" onchange="toggleVeiculoManual()">
+          <option value="">— Inserir manualmente —</option>
+          {% for v in veiculos %}
+          <option value="{{ v.pk }}" {% if oficio.veiculo_id == v.pk %}selected{% endif %}>{{ v.placa }} — {{ v.modelo }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div id="div_veiculo_manual" {% if oficio.veiculo_id %}style="display:none"{% endif %}>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Placa</label>
+            <input type="text" name="placa" class="form-control" value="{{ oficio.placa|default:'' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Modelo</label>
+            <input type="text" name="modelo_veiculo" class="form-control" value="{{ oficio.modelo_veiculo|default:'' }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Combustível</label>
+            <input type="text" name="combustivel_snapshot" class="form-control" value="{{ oficio.combustivel_snapshot|default:'' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Tipo de viatura</label>
+            <input type="text" name="tipo_viatura" class="form-control" value="{{ oficio.tipo_viatura|default:'' }}">
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="porte_transporte_armas" id="id_armas" {% if oficio.porte_transporte_armas %}checked{% endif %}>
+          <label class="form-check-label" for="id_armas">Porte/transporte de armas</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Motorista</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Motorista</label>
+          <select name="motorista_id" class="form-select">
+            <option value="">— Nenhum —</option>
+            {% for m in motoristas %}
+            <option value="{{ m.pk }}" {% if oficio.motorista_id == m.pk %}selected{% endif %}>{{ m.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="motorista_carona" id="id_carona" {% if oficio.motorista_carona %}checked{% endif %}>
+            <label class="form-check-label" for="id_carona">Motorista como carona</label>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Nº ofício do motorista</label>
+          <input type="text" name="motorista_oficio_numero" class="form-control" value="{{ oficio.motorista_oficio_numero|default:'' }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Ano</label>
+          <input type="number" name="motorista_oficio_ano" class="form-control" value="{{ oficio.motorista_oficio_ano|default:'' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Protocolo do motorista</label>
+          <input type="text" name="motorista_protocolo" class="form-control" value="{{ oficio.motorista_protocolo|default:'' }}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a href="{% url 'documentos:oficio-step1' pk=oficio.pk %}" class="btn btn-outline-secondary"><i class="bi bi-chevron-left"></i> Anterior</a>
+    <button type="submit" class="btn btn-primary">Próximo <i class="bi bi-chevron-right"></i></button>
+  </div>
+</form>
+
+<script>
+function toggleVeiculoManual() {
+  var val = document.getElementById('id_veiculo_id').value;
+  document.getElementById('div_veiculo_manual').style.display = val ? 'none' : '';
+}
+</script>
+{% endblock %}

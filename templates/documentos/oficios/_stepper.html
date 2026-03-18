@@ -1,0 +1,19 @@
+<div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+  {% if oficio %}
+  <a href="{% url 'documentos:oficio-step1' pk=oficio.pk %}" class="badge text-decoration-none px-3 py-2 fs-6 {% if step == 1 %}bg-primary{% else %}bg-success{% endif %}">1. Dados gerais</a>
+  <i class="bi bi-chevron-right text-muted"></i>
+  {% if step >= 2 %}<a href="{% url 'documentos:oficio-step2' pk=oficio.pk %}" class="badge text-decoration-none px-3 py-2 fs-6 {% if step == 2 %}bg-primary{% else %}bg-success{% endif %}">2. Transporte</a>{% else %}<span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">2. Transporte</span>{% endif %}
+  <i class="bi bi-chevron-right text-muted"></i>
+  {% if step >= 3 %}<a href="{% url 'documentos:oficio-step3' pk=oficio.pk %}" class="badge text-decoration-none px-3 py-2 fs-6 {% if step == 3 %}bg-primary{% else %}bg-success{% endif %}">3. Roteiro</a>{% else %}<span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">3. Roteiro</span>{% endif %}
+  <i class="bi bi-chevron-right text-muted"></i>
+  {% if step >= 4 %}<a href="{% url 'documentos:oficio-step4' pk=oficio.pk %}" class="badge text-decoration-none px-3 py-2 fs-6 {% if step == 4 %}bg-primary{% else %}bg-success{% endif %}">4. Resumo</a>{% else %}<span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">4. Resumo</span>{% endif %}
+  {% else %}
+  <span class="badge bg-primary px-3 py-2 fs-6">1. Dados gerais</span>
+  <i class="bi bi-chevron-right text-muted"></i>
+  <span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">2. Transporte</span>
+  <i class="bi bi-chevron-right text-muted"></i>
+  <span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">3. Roteiro</span>
+  <i class="bi bi-chevron-right text-muted"></i>
+  <span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">4. Resumo</span>
+  {% endif %}
+</div>

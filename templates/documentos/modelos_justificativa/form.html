@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}{% if modelo %}Editar modelo de justificativa{% else %}Novo modelo de justificativa{% endif %}{% endblock %}
+{% block page_title %}{% if modelo %}Editar modelo de justificativa{% else %}Novo modelo de justificativa{% endif %}{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm" style="max-width:700px">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">Nome <span class="text-danger">*</span></label>
+        <input type="text" name="nome" class="form-control" required value="{{ modelo.nome|default:'' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Texto da justificativa</label>
+        <textarea name="texto" class="form-control" rows="6">{{ modelo.texto|default:'' }}</textarea>
+      </div>
+      <div class="mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="is_padrao" id="id_padrao" {% if modelo.is_padrao %}checked{% endif %}>
+          <label class="form-check-label" for="id_padrao">Definir como padrão</label>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a href="{% url 'documentos:modelos-justificativa' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

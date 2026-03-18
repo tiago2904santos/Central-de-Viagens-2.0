@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Ofícios{% endblock %}
+{% block page_title %}Ofícios{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <span class="text-muted">{{ oficios|length }} ofício(s)</span>
+  <a href="{% url 'documentos:oficio-novo-step1' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i> Novo Ofício
+  </a>
+</div>
+
+{% if oficios %}
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Identificação</th>
+          <th>Status</th>
+          <th>Data criação</th>
+          <th>Viajantes</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in oficios %}
+        <tr>
+          <td>
+            <a href="{% url 'documentos:oficio-step1' pk=o.pk %}" class="text-decoration-none fw-semibold">
+              {{ o.identificacao }}
+            </a>
+            {% if o.motivo %}<div class="small text-muted text-truncate" style="max-width:300px">{{ o.motivo }}</div>{% endif %}
+          </td>
+          <td>
+            {% if o.status == 'FINALIZADO' %}
+              <span class="badge bg-success">Finalizado</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">Rascunho</span>
+            {% endif %}
+          </td>
+          <td>{{ o.data_criacao|date:"d/m/Y" }}</td>
+          <td><span class="badge bg-secondary">{{ o.viajantes.count }}</span></td>
+          <td class="text-end">
+            <a href="{% url 'documentos:oficio-step1' pk=o.pk %}" class="btn btn-sm btn-outline-primary me-1">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'documentos:oficio-excluir' pk=o.pk %}" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-file-earmark-text fs-1 text-muted"></i>
+  <p class="text-muted mt-2">Nenhum ofício cadastrado.</p>
+  <a href="{% url 'documentos:oficio-novo-step1' %}" class="btn btn-primary">Criar primeiro ofício</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Roteiros{% endblock %}
+{% block page_title %}Roteiros{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <span class="text-muted">{{ roteiros|length }} roteiro(s)</span>
+  <a href="{% url 'documentos:roteiro-novo' %}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i> Novo Roteiro</a>
+</div>
+{% if roteiros %}
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Nome</th><th>Status</th><th>Evento</th><th>Criado em</th><th class="text-end">Ações</th></tr>
+      </thead>
+      <tbody>
+        {% for r in roteiros %}
+        <tr>
+          <td>{{ r.nome|default:"(sem nome)" }}</td>
+          <td>{% if r.status == 'FINALIZADO' %}<span class="badge bg-success">Finalizado</span>{% else %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}</td>
+          <td>{{ r.evento|default:"—" }}</td>
+          <td>{{ r.criado_em|date:"d/m/Y" }}</td>
+          <td class="text-end">
+            <a href="{% url 'documentos:roteiro-editar' pk=r.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'documentos:roteiro-excluir' pk=r.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-signpost-2 fs-1 text-muted"></i>
+  <p class="text-muted mt-2">Nenhum roteiro cadastrado.</p>
+  <a href="{% url 'documentos:roteiro-novo' %}" class="btn btn-success">Criar primeiro roteiro</a>
+</div>
+{% endif %}
+{% endblock %}

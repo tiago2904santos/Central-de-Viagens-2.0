@@ -2,14 +2,125 @@
 {% block title %}Central de documentos{% endblock %}
 {% block page_title %}Central de documentos{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <div class="row g-3">
-    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Ofícios</h5><p>{{ total_oficios }}</p><a href="{% url 'documentos:oficios' %}">Abrir</a></div></div></div>
-    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Roteiros</h5><p>{{ total_roteiros }}</p><a href="{% url 'documentos:roteiros' %}">Abrir</a></div></div></div>
-    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Planos de trabalho</h5><p>{{ total_planos }}</p><a href="{% url 'documentos:planos-trabalho' %}">Abrir</a></div></div></div>
-    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Ordens de serviço</h5><p>{{ total_ordens }}</p><a href="{% url 'documentos:ordens-servico' %}">Abrir</a></div></div></div>
-    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Justificativas</h5><p>{{ total_justificativas }}</p><a href="{% url 'documentos:justificativas' %}">Abrir</a></div></div></div>
-    <div class="col-md-4"><div class="card"><div class="card-body"><h5>Termos</h5><p>{{ total_termos }}</p><a href="{% url 'documentos:termos' %}">Abrir</a></div></div></div>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-file-earmark-text fs-2 text-primary me-3"></i>
+          <div>
+            <h5 class="mb-0">Ofícios</h5>
+            <span class="badge bg-primary">{{ total_oficios }}</span>
+          </div>
+        </div>
+        <div class="mt-auto d-flex gap-2">
+          <a href="{% url 'documentos:oficios' %}" class="btn btn-sm btn-outline-primary">Ver todos</a>
+          <a href="{% url 'documentos:oficio-novo-step1' %}" class="btn btn-sm btn-primary">Novo</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-signpost-2 fs-2 text-success me-3"></i>
+          <div>
+            <h5 class="mb-0">Roteiros</h5>
+            <span class="badge bg-success">{{ total_roteiros }}</span>
+          </div>
+        </div>
+        <div class="mt-auto d-flex gap-2">
+          <a href="{% url 'documentos:roteiros' %}" class="btn btn-sm btn-outline-success">Ver todos</a>
+          <a href="{% url 'documentos:roteiro-novo' %}" class="btn btn-sm btn-success">Novo</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-calendar-event fs-2 text-warning me-3"></i>
+          <div>
+            <h5 class="mb-0">Eventos</h5>
+            <span class="badge bg-warning text-dark">{{ total_eventos }}</span>
+          </div>
+        </div>
+        <div class="mt-auto d-flex gap-2">
+          <a href="{% url 'documentos:eventos' %}" class="btn btn-sm btn-outline-warning">Ver todos</a>
+          <a href="{% url 'documentos:evento-novo' %}" class="btn btn-sm btn-warning">Novo</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-clipboard2-check fs-2 text-info me-3"></i>
+          <div>
+            <h5 class="mb-0">Planos de trabalho</h5>
+            <span class="badge bg-info">{{ total_planos }}</span>
+          </div>
+        </div>
+        <div class="mt-auto d-flex gap-2">
+          <a href="{% url 'documentos:planos-trabalho' %}" class="btn btn-sm btn-outline-info">Ver todos</a>
+          <a href="{% url 'documentos:plano-novo' %}" class="btn btn-sm btn-info">Novo</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-card-checklist fs-2 text-secondary me-3"></i>
+          <div>
+            <h5 class="mb-0">Ordens de serviço</h5>
+            <span class="badge bg-secondary">{{ total_ordens }}</span>
+          </div>
+        </div>
+        <div class="mt-auto d-flex gap-2">
+          <a href="{% url 'documentos:ordens-servico' %}" class="btn btn-sm btn-outline-secondary">Ver todos</a>
+          <a href="{% url 'documentos:ordem-nova' %}" class="btn btn-sm btn-secondary">Nova</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-journal-text fs-2 text-danger me-3"></i>
+          <div>
+            <h5 class="mb-0">Justificativas</h5>
+            <span class="badge bg-danger">{{ total_justificativas }}</span>
+          </div>
+        </div>
+        <div class="mt-auto d-flex gap-2">
+          <a href="{% url 'documentos:justificativas' %}" class="btn btn-sm btn-outline-danger">Ver todos</a>
+          <a href="{% url 'documentos:justificativa-nova' %}" class="btn btn-sm btn-danger">Nova</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-file-check fs-2 text-dark me-3"></i>
+          <div>
+            <h5 class="mb-0">Termos</h5>
+            <span class="badge bg-dark">{{ total_termos }}</span>
+          </div>
+        </div>
+        <div class="mt-auto d-flex gap-2">
+          <a href="{% url 'documentos:termos' %}" class="btn btn-sm btn-outline-dark">Ver todos</a>
+          <a href="{% url 'documentos:termo-novo' %}" class="btn btn-sm btn-dark">Novo</a>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

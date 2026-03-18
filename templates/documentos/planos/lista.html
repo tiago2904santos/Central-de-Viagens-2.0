@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Planos de trabalho{% endblock %}
+{% block page_title %}Planos de trabalho{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <span class="text-muted">{{ planos|length }} plano(s)</span>
+  <a href="{% url 'documentos:plano-novo' %}" class="btn btn-info"><i class="bi bi-plus-lg me-1"></i> Novo Plano</a>
+</div>
+{% if planos %}
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Título</th><th>Status</th><th>Criado em</th><th class="text-end">Ações</th></tr>
+      </thead>
+      <tbody>
+        {% for p in planos %}
+        <tr>
+          <td>{{ p.titulo|default:"(sem título)" }}</td>
+          <td>{% if p.status == 'FINALIZADO' %}<span class="badge bg-success">Finalizado</span>{% else %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}</td>
+          <td>{{ p.criado_em|date:"d/m/Y" }}</td>
+          <td class="text-end">
+            <a href="{% url 'documentos:plano-editar' pk=p.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'documentos:plano-excluir' pk=p.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-clipboard2-check fs-1 text-muted"></i>
+  <p class="text-muted mt-2">Nenhum plano de trabalho cadastrado.</p>
+  <a href="{% url 'documentos:plano-novo' %}" class="btn btn-info">Criar primeiro plano</a>
+</div>
+{% endif %}
+{% endblock %}
