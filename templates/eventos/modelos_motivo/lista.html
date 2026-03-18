@@ -9,7 +9,7 @@
         <h2 class="mb-0">Modelos de motivo</h2>
         <div class="d-flex gap-2">
             {% if volta_step1 %}
-            <a href="{% url 'eventos:oficio-step1' volta_step1 %}" class="btn btn-outline-secondary">Voltar para Step 1</a>
+            <a href="{% url 'eventos:oficio-step1' volta_step1 %}" class="btn btn-outline-secondary">Voltar ao Ofício</a>
             {% endif %}
             <a href="{% url 'eventos:modelos-motivo-cadastrar' %}{% if volta_step1 %}?volta_step1={{ volta_step1 }}{% endif %}" class="btn btn-primary">Cadastrar</a>
         </div>

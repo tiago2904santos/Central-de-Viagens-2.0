@@ -5,7 +5,7 @@
 {% block page_title %}Roteiro e diárias{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 oficio-wizard-page">
+<div class="container-fluid pt-0 pb-4 oficio-wizard-page">
   {% include 'eventos/oficio/_wizard_header.html' %}
 
   <div class="row g-4 oficio-wizard-layout">
@@ -483,6 +483,38 @@
     if (!element) return;
     const text = String(value || '').trim();
     element.textContent = text || '—';
+  }
+
+  function ensureJustificativaStep(url) {
+    if (!url) {
+      return;
+    }
+    const stepper = document.querySelector('.oficio-stepper');
+    if (!stepper) {
+      return;
+    }
+    const existing = stepper.querySelector('[data-step-key="justificativa"]');
+    if (existing) {
+      existing.setAttribute('href', url);
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = url;
+    link.className = 'oficio-stepper-link';
+    link.setAttribute('data-step-key', 'justificativa');
+    link.setAttribute('data-autosave-link', '1');
+    link.setAttribute('aria-current', 'false');
+    const label = document.createElement('span');
+    label.className = 'oficio-stepper-label';
+    label.textContent = 'Justificativa';
+    link.appendChild(label);
+
+    const summary = stepper.querySelector('[data-step-key="summary"]');
+    if (summary) {
+      stepper.insertBefore(link, summary);
+    } else {
+      stepper.appendChild(link);
+    }
   }
 
   function buildPreviewPeriod(state) {
@@ -1133,11 +1165,11 @@
         const prefix = data.justificativa_required ? 'Sim' : 'Não';
         setPreviewValue('preview-justificativa', prefix + ' · ' + data.justificativa_status_label);
       }
-      scheduleAutosave();
       if (data.justificativa_required && data.justificativa_url) {
-        window.location.href = data.justificativa_url;
-        return;
+        ensureJustificativaStep(data.justificativa_url);
+        $('diarias-status').textContent = 'Cálculo atualizado. Justificativa habilitada no menu.';
       }
+      scheduleAutosave();
     } catch (error) {
       $('diarias-error').textContent = error.message || 'Erro ao calcular as diarias.';
       $('diarias-error').classList.remove('d-none');

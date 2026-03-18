@@ -24,7 +24,10 @@
     var headerOffset = parseFloat(
       window.getComputedStyle(document.documentElement).getPropertyValue('--oficio-sticky-header-height') || '0'
     ) || 0;
-    var topOffset = Math.max(Math.ceil(headerOffset + 8), 0);
+    var stickyGap = parseFloat(
+      window.getComputedStyle(document.documentElement).getPropertyValue('--oficio-sticky-gap') || '12'
+    ) || 12;
+    var topOffset = Math.max(Math.ceil(headerOffset + stickyGap), 0);
     var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
     var viewportBottomGap = 12;
     reports.forEach(function(report) {

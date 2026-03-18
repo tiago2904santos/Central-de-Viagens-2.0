@@ -36,6 +36,7 @@ from eventos.models import (
     RoteiroEvento,
     RoteiroEventoDestino,
     RoteiroEventoTrecho,
+    TermoAutorizacao,
     TipoDemandaEvento,
 )
 from eventos.services.justificativa import get_prazo_justificativa_dias, oficio_exige_justificativa
@@ -4555,6 +4556,16 @@ class OficioStep1AcceptanceTest(TestCase):
         modelos_url = reverse('eventos:modelos-motivo-lista')
         self.assertContains(response, f'{modelos_url}?volta_step1={oficio.pk}')
 
+    def test_modelos_motivo_via_wizard_remove_header_duplicado_e_usa_botao_volta_ao_oficio(self):
+        oficio = self._criar_oficio(ano=2026)
+        response = self.client.get(
+            f"{reverse('eventos:modelos-motivo-lista')}?volta_step1={oficio.pk}"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, '<header class="main-header">', html=True)
+        self.assertContains(response, 'Voltar ao Ofício')
+        self.assertNotContains(response, 'Voltar para Step 1')
+
     def test_modelo_motivo_texto_api_retorna_texto(self):
         modelo = ModeloMotivoViagem.objects.create(
             codigo='api_modelo',
@@ -4933,6 +4944,44 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertIn(reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}), payload['justificativa_url'])
         self.assertEqual(RoteiroEvento.objects.filter(evento=self.evento).count(), 1)
 
+    def test_step3_template_nao_forca_redirecionamento_automatico_para_justificativa(self):
+        oficio = self._criar_oficio(ano=2026)
+        response = self.client.get(reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'window.location.href = data.justificativa_url;')
+
+    def test_step3_exibe_etapa_justificativa_no_stepper_apos_calculo_quando_obrigatoria(self):
+        ConfiguracaoSistema.objects.create(cidade_sede_padrao=self.cidade, prazo_justificativa_dias=10)
+        oficio = self._criar_oficio(ano=2026)
+        Oficio.objects.filter(pk=oficio.pk).update(data_criacao=date(2026, 10, 5))
+        oficio.refresh_from_db()
+        cidade_destino = Cidade.objects.create(nome='Destino Stepper Justificativa', estado=self.estado, codigo_ibge='4113788')
+        self._salvar_steps_1_e_2(oficio)
+        self.client.post(
+            reverse('eventos:oficio-step3-calcular-diarias', kwargs={'pk': oficio.pk}),
+            data=self._payload_step3(
+                [cidade_destino],
+                trechos=[
+                    {
+                        'saida_data': '2026-10-10',
+                        'saida_hora': '08:00',
+                        'chegada_data': '2026-10-10',
+                        'chegada_hora': '12:00',
+                    }
+                ],
+                retorno={
+                    'saida_data': '2026-10-11',
+                    'saida_hora': '09:00',
+                    'chegada_data': '2026-10-11',
+                    'chegada_hora': '13:30',
+                },
+            ),
+        )
+
+        reaberta = self.client.get(reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}))
+        self.assertEqual(reaberta.status_code, 200)
+        self.assertContains(reaberta, 'data-step-key="justificativa"')
+
     def test_step3_valida_retorno_obrigatorio(self):
         oficio = self._criar_oficio(ano=2026)
         cidade_destino = Cidade.objects.create(nome='Ponta Grossa Step3', estado=self.estado, codigo_ibge='4119906')
@@ -5193,8 +5242,9 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Relatório rápido')
         self.assertContains(response, 'Gerar termo de autorização já preenchido?')
-
-        self.assertContains(response, 'Salvar ofício')
+        self.assertContains(response, 'Finalizar Ofício')
+        self.assertContains(response, 'Baixar DOCX')
+        self.assertContains(response, 'Baixar PDF')
         self.assertContains(
             response,
             reverse(
@@ -5327,6 +5377,46 @@ class OficioStep1AcceptanceTest(TestCase):
         oficio.refresh_from_db()
         self.assertEqual(oficio.status, Oficio.STATUS_FINALIZADO)
         self.assertGreater(oficio.updated_at, before_update)
+
+    def test_step4_finalizar_com_termo_sim_gera_um_termo_por_viajante(self):
+        oficio = self._criar_oficio(ano=2026)
+        self._salvar_oficio_finalizavel(oficio, destino=self._criar_destino('Destino Termos Sim'))
+        viajante_extra = Viajante.objects.create(
+            nome='Servidor Extra Termo',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=self.cargo,
+            cpf='55544433322',
+            rg='22334455',
+            unidade_lotacao=self.unidade,
+            telefone='41999991111',
+        )
+        oficio.viajantes.add(viajante_extra)
+
+        response = self.client.post(
+            reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+            data={'finalizar': '1', 'gerar_termo_preenchido': '1'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('eventos:oficios-global'))
+        oficio.refresh_from_db()
+        self.assertEqual(oficio.status, Oficio.STATUS_FINALIZADO)
+        self.assertEqual(TermoAutorizacao.objects.filter(oficio=oficio).count(), 2)
+
+    def test_step4_finalizar_com_termo_nao_nao_gera_termos(self):
+        oficio = self._criar_oficio(ano=2026)
+        self._salvar_oficio_finalizavel(oficio, destino=self._criar_destino('Destino Termos Nao'))
+
+        response = self.client.post(
+            reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+            data={'finalizar': '1', 'gerar_termo_preenchido': '0'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('eventos:oficios-global'))
+        oficio.refresh_from_db()
+        self.assertEqual(oficio.status, Oficio.STATUS_FINALIZADO)
+        self.assertFalse(TermoAutorizacao.objects.filter(oficio=oficio).exists())
 
     def test_oficio_finalizado_permanece_editavel_nos_steps_1_2_e_3(self):
         oficio = self._criar_oficio(ano=2026)

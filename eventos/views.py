@@ -12,7 +12,6 @@ from django.db.models import Max, Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django.utils.html import format_html, format_html_join
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.utils.text import slugify
@@ -1088,7 +1087,11 @@ def modelos_motivo_lista(request):
     """Lista de modelos de motivo para uso no Step 1 do Ofício."""
     volta_step1 = request.GET.get('volta_step1', '')
     lista = ModeloMotivoViagem.objects.all().order_by('nome')
-    context = {'object_list': lista, 'volta_step1': volta_step1}
+    context = {
+        'object_list': lista,
+        'volta_step1': volta_step1,
+        'hide_page_header': True,
+    }
     return render(request, 'eventos/modelos_motivo/lista.html', context)
 
 
@@ -1101,7 +1104,12 @@ def modelos_motivo_cadastrar(request):
         form.save()
         messages.success(request, 'Modelo de motivo salvo com sucesso.')
         return redirect(_modelos_motivo_lista_url(volta_step1))
-    context = {'form': form, 'object': None, 'volta_step1': volta_step1}
+    context = {
+        'form': form,
+        'object': None,
+        'volta_step1': volta_step1,
+        'hide_page_header': True,
+    }
     return render(request, 'eventos/modelos_motivo/form.html', context)
 
 
@@ -1115,7 +1123,12 @@ def modelos_motivo_editar(request, pk):
         form.save()
         messages.success(request, 'Modelo de motivo atualizado com sucesso.')
         return redirect(_modelos_motivo_lista_url(volta_step1))
-    context = {'form': form, 'object': obj, 'volta_step1': volta_step1}
+    context = {
+        'form': form,
+        'object': obj,
+        'volta_step1': volta_step1,
+        'hide_page_header': True,
+    }
     return render(request, 'eventos/modelos_motivo/form.html', context)
 
 
@@ -1129,7 +1142,11 @@ def modelos_motivo_excluir(request, pk):
         obj.delete()
         messages.success(request, f'Modelo "{nome}" excluído com sucesso.')
         return redirect(_modelos_motivo_lista_url(volta_step1))
-    context = {'object': obj, 'volta_step1': volta_step1}
+    context = {
+        'object': obj,
+        'volta_step1': volta_step1,
+        'hide_page_header': True,
+    }
     return render(request, 'eventos/modelos_motivo/excluir_confirm.html', context)
 
 
@@ -1952,7 +1969,7 @@ def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None):
             {
                 'key': 'summary',
                 'number': 5,
-                'label': 'Resumo',
+                'label': 'Resumo e termos',
                 'url': resumo_url,
             }
         )
@@ -1961,7 +1978,7 @@ def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None):
             {
                 'key': 'summary',
                 'number': 4,
-                'label': 'Resumo',
+                'label': 'Resumo e termos',
                 'url': resumo_url,
             }
         )
@@ -4456,28 +4473,33 @@ def oficio_step4(request, pk):
                         justificativa_info=context.get('justificativa_info'),
                     ),
                 )
-            oficio.status = Oficio.STATUS_FINALIZADO
-            oficio.save(update_fields=['status', 'updated_at'])
-            messages.success(request, 'Ofício finalizado.')
+            termos = []
+            termos_created = False
+            with transaction.atomic():
+                if termo_changed:
+                    _save_oficio_preserving_status(oficio, ['gerar_termo_preenchido'])
+                oficio.status = Oficio.STATUS_FINALIZADO
+                oficio.save(update_fields=['status', 'updated_at'])
+                if gerar_termo_preenchido:
+                    termos, termos_created = _get_or_create_termos_from_oficio(oficio, user=request.user)
+
+            messages.success(request, 'Ofício finalizado com sucesso.')
             if gerar_termo_preenchido:
-                termo_context = _build_oficio_termo_autorizacao_context(oficio)
-                if termo_context['actions']:
-                    links = format_html_join(
-                        ' ',
-                        '<a href="{}" class="alert-link">Baixar {}</a>',
-                        ((action['url'], action['label']) for action in termo_context['actions']),
+                if termos and termos_created:
+                    messages.success(
+                        request,
+                        f'{len(termos)} termo(s) de autorização gerado(s) e vinculado(s) ao ofício.',
                     )
+                elif termos:
                     messages.info(
                         request,
-                        format_html('Termo de autorização pronto para geração: {}.', links),
+                        f'{len(termos)} termo(s) de autorização já existente(s) para este ofício.',
                     )
                 else:
-                    motivo = (
-                        termo_context['errors'][0]
-                        if termo_context['errors']
-                        else 'O termo de autorização ainda não está disponível para este ofício.'
+                    messages.warning(
+                        request,
+                        'Não foi possível gerar termos de autorização para este ofício.',
                     )
-                    messages.warning(request, motivo)
         return redirect('eventos:oficios-global')
     context = _build_oficio_step4_context(oficio)
     return render(

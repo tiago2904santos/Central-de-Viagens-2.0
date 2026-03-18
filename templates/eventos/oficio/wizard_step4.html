@@ -5,7 +5,7 @@
 {% block page_title %}Resumo{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 oficio-wizard-page">
+<div class="container-fluid pt-0 pb-4 oficio-wizard-page">
   {% include 'eventos/oficio/_wizard_header.html' %}
 
   {% if finalize_validation and finalize_validation.sections %}
@@ -175,12 +175,10 @@
     </section>
 
     <section class="oficio-summary-section">
-      <h2>Finalização</h2>
-      <form method="post" id="oficio-step4-form" class="d-grid gap-4">
+      <h2>Termos de autorização</h2>
+      <form method="post" id="oficio-step4-form" class="d-grid gap-3">
         {% csrf_token %}
-
         <div>
-          <div class="small text-muted text-uppercase fw-semibold mb-2">Termo de autorização</div>
           <label class="form-label fw-semibold">Gerar termo de autorização já preenchido?</label>
           <div class="oficio-choice-group">
             <div class="oficio-choice-card">
@@ -188,7 +186,7 @@
                 <input class="form-check-input" type="radio" name="gerar_termo_preenchido" id="id_gerar_termo_sim" value="1" {% if oficio.gerar_termo_preenchido %}checked{% endif %}>
                 <label class="form-check-label" for="id_gerar_termo_sim">
                   <span class="oficio-choice-title">Sim</span>
-                  <span class="text-muted small">Ao finalizar, o sistema já deixa o termo preenchido pronto para geração com base nos dados do ofício.</span>
+                  <span class="text-muted small">Ao finalizar, será gerado 1 termo por servidor/viajante e persistido no banco.</span>
                 </label>
               </div>
             </div>
@@ -197,53 +195,45 @@
                 <input class="form-check-input" type="radio" name="gerar_termo_preenchido" id="id_gerar_termo_nao" value="0" {% if not oficio.gerar_termo_preenchido %}checked{% endif %}>
                 <label class="form-check-label" for="id_gerar_termo_nao">
                   <span class="oficio-choice-title">Não</span>
-                  <span class="text-muted small">Finaliza o ofício normalmente, sem preparar o termo de autorização automaticamente.</span>
+                  <span class="text-muted small">Finaliza o ofício sem gerar termos neste momento.</span>
                 </label>
               </div>
             </div>
           </div>
           <div class="small text-muted mt-2">
             {% if termo_autorizacao.available %}
-              Disponível para geração:
-              {% for action in termo_autorizacao.actions %}
-              {{ action.label }}{% if not forloop.last %}, {% endif %}
-              {% endfor %}
+              Há termo(s) disponível(is) para download.
             {% elif termo_autorizacao.errors %}
               {{ termo_autorizacao.errors.0 }}
             {% else %}
-              O termo de autorização será disponibilizado quando todos os dados necessários estiverem consistentes.
+              O termo de autorização será habilitado quando os dados obrigatórios estiverem consistentes.
             {% endif %}
           </div>
         </div>
-
-        <div class="oficio-summary-actions">
-          <div class="oficio-summary-actions-group">
-            <button type="submit" name="salvar_oficio" value="1" class="btn btn-primary" data-autosave-bypass="1">Salvar ofício</button>
-            {% for action in oficio_downloads.actions %}
-            <a
-              href="{{ action.url }}"
-              class="btn {% if action.available %}btn-outline-primary{% else %}btn-outline-secondary{% endif %}"
-              data-autosave-link="1"
-            >
-              {{ action.download_label }}
-            </a>
-            {% endfor %}
-          </div>
-          {% if oficio_downloads.errors %}
-          <div class="oficio-summary-actions-note">
-            {{ oficio_downloads.errors.0 }}
-          </div>
-          {% endif %}
-        </div>
-
-        <div class="d-flex gap-2 flex-wrap">
-          {% if oficio.status != 'FINALIZADO' %}
-          <button type="submit" name="finalizar" value="1" class="btn btn-success" data-autosave-bypass="1">Finalizar ofício</button>
-          {% endif %}
-          <a href="{{ justificativa_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Editar justificativa</a>
-        </div>
       </form>
     </section>
+  </div>
+
+  <div class="oficio-summary-actions mt-4 p-3 border rounded bg-white">
+    <div class="oficio-summary-actions-group">
+      {% if oficio.status != 'FINALIZADO' %}
+      <button type="submit" form="oficio-step4-form" name="finalizar" value="1" class="btn btn-success" data-autosave-bypass="1">Finalizar Ofício</button>
+      {% endif %}
+      {% for action in oficio_downloads.actions %}
+      <a
+        href="{{ action.url }}"
+        class="btn {% if action.available %}btn-outline-primary{% else %}btn-outline-secondary{% endif %}"
+        data-autosave-link="1"
+      >
+        {{ action.download_label }}
+      </a>
+      {% endfor %}
+    </div>
+    {% if oficio_downloads.errors %}
+    <div class="oficio-summary-actions-note">
+      {{ oficio_downloads.errors.0 }}
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
@@ -256,7 +246,7 @@
     if (!form || !window.OficioWizard) {
       return;
     }
-    window.OficioWizard.createAutosave({ form: form });
+    window.OficioWizard.createAutosave({ form: form, captureSubmit: false });
   })();
 </script>
 {% endblock %}

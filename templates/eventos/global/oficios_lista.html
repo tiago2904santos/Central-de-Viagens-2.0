@@ -1,148 +1,243 @@
 {% extends 'base.html' %}
 
-{% block title %}Lista de ofícios - Central de Viagens{% endblock %}
-{% block page_title %}Lista de ofícios{% endblock %}
+{% block title %}Lista de oficios - Central de Viagens{% endblock %}
+{% block page_title %}Lista de oficios{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="page-header-cadastro">
+<div class="container-fluid py-4 oficios-list-page">
+    <div class="oficios-list-hero">
         <div>
-            <h1 class="mb-1">Lista de ofícios</h1>
-            <p class="text-muted mb-0">Acompanhe cada processo em um card único, com os documentos relacionados organizados em subcards.</p>
+            <p class="oficios-list-hero__eyebrow">Central documental</p>
+            <h1 class="mb-1">Lista de oficios</h1>
+            <p class="text-muted mb-0">Cards menores, filtros enxutos e contexto sem repeticao entre oficio, justificativa e termos.</p>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'eventos:oficio-novo' %}" class="btn btn-primary">
+        <div class="oficios-list-hero__actions">
+            <a href="{% url 'eventos:oficio-novo' %}" class="btn btn-primary btn-lg oficios-list-hero__primary">
                 <i class="bi bi-plus-lg me-1"></i>
-                Cadastro de ofício
+                Novo oficio
             </a>
         </div>
     </div>
 
-    <div class="card filter-card">
-        <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end">
-                <div class="col-12 col-xl-3">
-                    <label class="form-label small text-muted">Busca ampla</label>
-                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, motivo, viajante ou destino">
+    <div class="card oficios-filter-card">
+        <div class="card-body">
+            <form method="get" class="oficios-filter-form">
+                <div class="oficios-filter-search">
+                    <label for="oficios-search" class="form-label small text-muted">Busca ampla</label>
+                    <input
+                        id="oficios-search"
+                        type="text"
+                        name="q"
+                        class="form-control"
+                        value="{{ filters.q }}"
+                        placeholder="Numero, protocolo, evento, viajante, destino, veiculo ou motorista"
+                    >
                 </div>
-                <div class="col-6 col-md-3 col-xl-2">
-                    <label class="form-label small text-muted">Evento</label>
-                    <select name="evento_id" class="form-select form-select-sm">
-                        <option value="">Todos</option>
-                        {% for evento in eventos_choices %}
-                        <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem título)" }}</option>
-                        {% endfor %}
-                    </select>
+
+                <div class="oficios-filter-groups">
+                    <div class="oficios-filter-group">
+                        <span class="oficios-filter-group__label">Status do oficio</span>
+                        <div class="oficios-filter-checks">
+                            {% for value, label in status_filter_options %}
+                            <label class="oficios-filter-check">
+                                <input type="checkbox" name="status" value="{{ value }}" {% if value in filters.status %}checked{% endif %}>
+                                <span>{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="oficios-filter-group">
+                        <span class="oficios-filter-group__label">Contexto</span>
+                        <div class="oficios-filter-checks">
+                            {% for value, label in context_filter_options %}
+                            <label class="oficios-filter-check">
+                                <input type="checkbox" name="contexto" value="{{ value }}" {% if value in filters.contexto %}checked{% endif %}>
+                                <span>{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="oficios-filter-group">
+                        <span class="oficios-filter-group__label">Status da viagem</span>
+                        <div class="oficios-filter-checks">
+                            {% for value, label in viagem_filter_options %}
+                            <label class="oficios-filter-check">
+                                <input type="checkbox" name="viagem_status" value="{{ value }}" {% if value in filters.viagem_status %}checked{% endif %}>
+                                <span>{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="oficios-filter-group">
+                        <span class="oficios-filter-group__label">Justificativa</span>
+                        <div class="oficios-filter-checks">
+                            {% for value, label in presence_filter_options %}
+                            <label class="oficios-filter-check">
+                                <input type="checkbox" name="justificativa" value="{{ value }}" {% if value in filters.justificativa %}checked{% endif %}>
+                                <span>{{ label }} justificativa</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="oficios-filter-group">
+                        <span class="oficios-filter-group__label">Termo</span>
+                        <div class="oficios-filter-checks">
+                            {% for value, label in presence_filter_options %}
+                            <label class="oficios-filter-check">
+                                <input type="checkbox" name="termo" value="{{ value }}" {% if value in filters.termo %}checked{% endif %}>
+                                <span>{{ label }} termo</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
-                <div class="col-6 col-md-3 col-xl-1">
-                    <label class="form-label small text-muted">Status</label>
-                    <select name="status" class="form-select form-select-sm">
-                        <option value="">Todos</option>
-                        {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-2 col-xl-1">
-                    <label class="form-label small text-muted">Ano</label>
-                    <input type="text" name="ano" class="form-control form-control-sm" value="{{ filters.ano }}" placeholder="2026">
-                </div>
-                <div class="col-6 col-md-2 col-xl-1">
-                    <label class="form-label small text-muted">Número</label>
-                    <input type="text" name="numero" class="form-control form-control-sm" value="{{ filters.numero }}" placeholder="15">
-                </div>
-                <div class="col-6 col-md-3 col-xl-2">
-                    <label class="form-label small text-muted">Protocolo</label>
-                    <input type="text" name="protocolo" class="form-control form-control-sm" value="{{ filters.protocolo }}" placeholder="12.345.678-9">
-                </div>
-                <div class="col-6 col-md-3 col-xl-2">
-                    <label class="form-label small text-muted">Destino</label>
-                    <input type="text" name="destino" class="form-control form-control-sm" value="{{ filters.destino }}" placeholder="Curitiba, Capital, DF...">
-                </div>
-                <div class="col-12 col-md-auto">
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-                    <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+
+                <div class="oficios-filter-footer">
+                    <div class="oficios-filter-result">
+                        {{ page_obj.paginator.count }} oficio(s) encontrado(s)
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-primary">Filtrar</button>
+                        <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary">Limpar</a>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="oficio-process-list">
+    <div class="oficio-list-grid">
         {% for oficio in object_list %}
-        <article class="oficio-process-card {{ oficio.process_status.css_class }}">
-            <div class="oficio-process-card__header">
-                <div class="oficio-process-card__title-block">
-                    <h2 class="oficio-process-card__title">{{ oficio.numero_formatado }}</h2>
-                    <div class="oficio-process-card__subtitle">
+        <article class="oficio-list-card" id="oficio-card-{{ oficio.pk }}">
+            <div class="oficio-list-card__top">
+                <div class="oficio-list-card__identity">
+                    <div class="oficio-list-card__title-row">
+                        <h2 class="oficio-list-card__title">Oficio {{ oficio.numero_formatado }}</h2>
+                        <span class="oficio-list-card__protocol">Protocolo {{ oficio.protocolo_formatado }}</span>
+                    </div>
+                    <div class="oficio-list-card__context">
                         {% if oficio.evento_url %}
-                        <a href="{{ oficio.evento_url }}" class="text-decoration-none">{{ oficio.evento_titulo_display }}</a>
+                        <a href="{{ oficio.evento_url }}" class="text-decoration-none">{{ oficio.evento_titulo }}</a>
                         {% else %}
-                        <span>{{ oficio.evento_titulo_display }}</span>
+                        <span>{{ oficio.evento_titulo }}</span>
                         {% endif %}
                     </div>
                 </div>
-                <span class="oficio-process-status {{ oficio.process_status.css_class }}">{{ oficio.process_status.label }}</span>
-            </div>
 
-            <div class="oficio-process-card__meta">
-                <div class="oficio-process-meta-item">
-                    <span class="oficio-process-meta-label">Protocolo</span>
-                    <span class="oficio-process-meta-value">{{ oficio.protocolo_formatado|default:"—" }}</span>
-                </div>
-                <div class="oficio-process-meta-item">
-                    <span class="oficio-process-meta-label">Destino principal</span>
-                    <span class="oficio-process-meta-value">{{ oficio.destinos_display|default:"—" }}</span>
-                </div>
-                <div class="oficio-process-meta-item">
-                    <span class="oficio-process-meta-label">Período</span>
-                    <span class="oficio-process-meta-value">{{ oficio.periodo_display|default:"—" }}</span>
-                </div>
-                <div class="oficio-process-meta-item">
-                    <span class="oficio-process-meta-label">Atualizado</span>
-                    <span class="oficio-process-meta-value">{{ oficio.updated_at|date:"d/m/Y H:i" }}</span>
+                <div class="oficio-list-card__badges">
+                    <span class="oficio-list-badge {{ oficio.contexto.css_class }}">{{ oficio.contexto.label }}</span>
+                    <span class="oficio-list-badge {{ oficio.oficio_status.css_class }}">{{ oficio.oficio_status.label }}</span>
+                    <span class="oficio-list-badge {{ oficio.viagem_status.css_class }}">{{ oficio.viagem_status.label }}</span>
                 </div>
             </div>
 
-            <div class="oficio-document-grid">
-                {% for documento in oficio.card_documents %}
-                <section class="oficio-document-card">
-                    <div class="oficio-document-card__header">
-                        <h3 class="oficio-document-card__title">{{ documento.title }}</h3>
-                        <span class="oficio-document-status {{ documento.status_css_class }}">{{ documento.status_label }}</span>
-                    </div>
+            <div class="oficio-list-card__relative">{{ oficio.viagem_status.relative_label }}</div>
 
-                    <div class="oficio-document-card__summary">
-                        {% for item in documento.summary_items %}
-                        <div class="oficio-document-summary-item">
-                            <span class="oficio-document-summary-label">{{ item.label }}</span>
-                            <span class="oficio-document-summary-value">{{ item.value|default:"—" }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    {% if documento.detail %}
-                    <p class="oficio-document-card__detail">{{ documento.detail }}</p>
-                    {% endif %}
-
-                    <div class="oficio-document-card__actions">
-                        <a href="{{ documento.edit_url }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                        {% for action in documento.actions %}
-                        <a href="{{ action.url }}" class="btn btn-sm btn-outline-secondary{% if not action.available %} opacity-75{% endif %}">{{ action.label }}</a>
-                        {% endfor %}
-                    </div>
-                </section>
+            <div class="oficio-list-card__meta">
+                {% for item in oficio.meta_items %}
+                <div class="oficio-list-meta-item">
+                    <span class="oficio-list-meta-item__label">{{ item.label }}</span>
+                    <span class="oficio-list-meta-item__value">{{ item.value }}</span>
+                </div>
                 {% endfor %}
             </div>
 
-            <div class="oficio-process-card__footer">
-                <a href="{{ oficio.edicao_url }}" class="btn btn-sm btn-outline-primary">Abrir wizard</a>
-                <a href="{{ oficio.excluir_url }}" class="btn btn-sm btn-outline-danger">Excluir</a>
+            {% if oficio.justificativa or oficio.termos %}
+            <div class="oficio-list-card__secondary">
+                {% if oficio.justificativa %}
+                <section class="oficio-list-subcard">
+                    <div class="oficio-list-subcard__header">
+                        <div>
+                            <h3 class="oficio-list-subcard__title">Justificativa</h3>
+                            {% if oficio.justificativa.created_at_display != '-' %}
+                            <p class="oficio-list-subcard__subtitle">Criada em {{ oficio.justificativa.created_at_display }}</p>
+                            {% endif %}
+                        </div>
+                        <span class="oficio-list-badge {{ oficio.justificativa.status_css_class }}">{{ oficio.justificativa.status_label }}</span>
+                    </div>
+
+                    <p class="oficio-list-subcard__text">{{ oficio.justificativa.texto_resumido }}</p>
+
+                    <div class="oficio-list-subcard__actions">
+                        <a href="{{ oficio.justificativa.detail_url }}" class="btn btn-sm btn-outline-primary">Abrir</a>
+                        <a href="{{ oficio.justificativa.edit_url }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                        {% for action in oficio.justificativa.downloads %}
+                        {% if action.available %}
+                        <a href="{{ action.url }}" class="btn btn-sm btn-outline-secondary">{{ action.label }}</a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+
+                {% if oficio.termos %}
+                <section class="oficio-list-subcard oficio-list-subcard--wide">
+                    <div class="oficio-list-subcard__header">
+                        <div>
+                            <h3 class="oficio-list-subcard__title">Termos de autorizacao</h3>
+                            <p class="oficio-list-subcard__subtitle">{{ oficio.termos.summary }}</p>
+                        </div>
+                        <a href="{{ oficio.termos.manage_url }}" class="btn btn-sm btn-outline-secondary">Gerenciar</a>
+                    </div>
+
+                    <div class="oficio-list-term-grid">
+                        {% for termo in oficio.termos.subcards %}
+                        <div class="oficio-list-term-card">
+                            <div class="oficio-list-term-card__header">
+                                <strong>{{ termo.traveler_name }}</strong>
+                                <span class="oficio-list-badge {{ termo.status.css_class }}">{{ termo.status.label }}</span>
+                            </div>
+
+                            {% if termo.vehicle %}
+                            <div class="oficio-list-term-card__meta">Veiculo: {{ termo.vehicle }}</div>
+                            {% endif %}
+
+                            {% if termo.created_at_display %}
+                            <div class="oficio-list-term-card__meta">Criado em {{ termo.created_at_display }}</div>
+                            {% endif %}
+
+                            <div class="oficio-list-term-card__actions">
+                                {% if termo.detail_url %}
+                                <a href="{{ termo.detail_url }}" class="btn btn-sm btn-outline-primary">Ver</a>
+                                {% endif %}
+                                {% if termo.download_docx_url %}
+                                <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-outline-secondary">DOCX</a>
+                                {% endif %}
+                                {% if termo.download_pdf_url %}
+                                <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-outline-secondary">PDF</a>
+                                {% endif %}
+                                {% if termo.edit_url %}
+                                <a href="{{ termo.edit_url }}" class="btn btn-sm btn-outline-secondary">{% if termo.is_saved %}Editar{% else %}Abrir{% endif %}</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="oficio-list-card__footer">
+                <div class="oficio-list-card__footer-actions">
+                    <a href="{{ oficio.wizard_url }}" class="btn btn-sm btn-primary">Abrir wizard</a>
+                    <a href="{{ oficio.documentos_url }}" class="btn btn-sm btn-outline-secondary">Documentos</a>
+                    {% for action in oficio.downloads %}
+                    {% if action.available %}
+                    <a href="{{ action.url }}" class="btn btn-sm btn-outline-secondary">{{ action.label }}</a>
+                    {% endif %}
+                    {% endfor %}
+                    <a href="{{ oficio.excluir_url }}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                </div>
             </div>
         </article>
         {% empty %}
         <div class="card">
             <div class="card-body text-center text-muted py-5">
-                Nenhum ofício encontrado com os filtros atuais.
+                Nenhum oficio encontrado com os filtros atuais.
             </div>
         </div>
         {% endfor %}
