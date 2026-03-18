@@ -168,8 +168,8 @@
 
       <div class="mt-4">
         <h3 class="h6 mb-3">Texto da justificativa</h3>
-        <div class="oficio-text-preview{% if not oficio.justificativa_texto %} text-muted{% endif %}">
-          {{ oficio.justificativa_texto|default:"Nenhuma justificativa preenchida até o momento." }}
+        <div class="oficio-text-preview{% if not justificativa_info.texto %} text-muted{% endif %}">
+          {{ justificativa_info.texto|default:"Nenhuma justificativa preenchida até o momento." }}
         </div>
       </div>
     </section>

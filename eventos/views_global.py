@@ -321,11 +321,7 @@ def _build_oficio_document_cards(oficio):
     )
 
     justificativa_info = oficio.justificativa_info
-    justificativa_exists = (
-        justificativa_info['required']
-        or justificativa_info['filled']
-        or bool((oficio.justificativa_texto or '').strip())
-    )
+    justificativa_exists = justificativa_info['required'] or justificativa_info['filled']
     if justificativa_exists:
         justificativa_document = _build_oficio_document_actions(oficio, DocumentoOficioTipo.JUSTIFICATIVA)
         justificativa_status = _document_card_status_meta(
@@ -843,12 +839,12 @@ def justificativas_global(request):
         'ano': _clean(request.GET.get('ano')),
         'status': _clean(request.GET.get('status')),
     }
-    queryset = Oficio.objects.select_related('evento').prefetch_related('trechos').all()
+    queryset = Oficio.objects.select_related('evento', 'justificativa').prefetch_related('trechos').all()
     if filters['q']:
         queryset = queryset.filter(
             Q(evento__titulo__icontains=filters['q'])
             | Q(motivo__icontains=filters['q'])
-            | Q(justificativa_texto__icontains=filters['q'])
+            | Q(justificativa__texto__icontains=filters['q'])
             | Q(protocolo__icontains=Oficio.normalize_protocolo(filters['q']) or filters['q'])
             | Q(trechos__destino_cidade__nome__icontains=filters['q'])
         )

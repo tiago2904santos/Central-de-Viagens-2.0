@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from cadastros.models import Viajante, Veiculo
 from eventos.services.oficio_schema import oficio_justificativa_schema_available
+from eventos.services.justificativa import get_oficio_justificativa, get_oficio_justificativa_texto
 from eventos.termos import build_termo_context, build_termo_preview_payload
 from .models import (
     Evento,
@@ -571,20 +572,23 @@ class OficioJustificativaForm(FormComErroInvalidMixin, forms.Form):
         if not oficio_justificativa_schema_available():
             self.fields['modelo_justificativa'].queryset = ModeloJustificativa.objects.none()
             return
+        justificativa = get_oficio_justificativa(self.oficio)
+        justificativa_modelo_id = getattr(justificativa, 'modelo_id', None)
         queryset = ModeloJustificativa.objects.filter(
-            Q(ativo=True) | Q(pk=self.oficio.justificativa_modelo_id)
+            Q(ativo=True) | Q(pk=justificativa_modelo_id)
         ).order_by('nome').distinct()
         self.fields['modelo_justificativa'].queryset = queryset
         if self.is_bound:
             return
 
-        modelo_inicial = self.oficio.justificativa_modelo
+        modelo_inicial = getattr(justificativa, 'modelo', None)
         if not modelo_inicial:
             modelo_inicial = queryset.filter(padrao=True).first()
         if modelo_inicial:
             self.initial.setdefault('modelo_justificativa', modelo_inicial.pk)
-        if (self.oficio.justificativa_texto or '').strip():
-            self.initial.setdefault('justificativa_texto', self.oficio.justificativa_texto)
+        justificativa_texto = get_oficio_justificativa_texto(self.oficio)
+        if justificativa_texto:
+            self.initial.setdefault('justificativa_texto', justificativa_texto)
         elif modelo_inicial:
             self.initial.setdefault('justificativa_texto', modelo_inicial.texto)
 

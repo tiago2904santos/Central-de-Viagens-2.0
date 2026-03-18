@@ -64,6 +64,7 @@ from .services.diarias import (
 )
 from .services.justificativa import (
     get_dias_antecedencia_oficio,
+    get_oficio_justificativa_texto,
     get_prazo_justificativa_dias,
     get_primeira_saida_oficio,
     oficio_exige_justificativa,
@@ -3633,7 +3634,8 @@ def _build_oficio_justificativa_info(oficio):
     primeira_saida = get_primeira_saida_oficio(oficio)
     dias_antecedencia = get_dias_antecedencia_oficio(oficio)
     exige = oficio_exige_justificativa(oficio)
-    preenchida = oficio_tem_justificativa(oficio)
+    texto = get_oficio_justificativa_texto(oficio)
+    preenchida = bool(texto)
 
     if dias_antecedencia is None:
         status_key = 'indefinida'
@@ -3659,6 +3661,7 @@ def _build_oficio_justificativa_info(oficio):
         'primeira_saida_display': primeira_saida.strftime('%d/%m/%Y %H:%M') if primeira_saida else '',
         'status_key': status_key,
         'status_label': status_label,
+        'texto': texto,
     }
 
 

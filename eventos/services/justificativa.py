@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from django.core.exceptions import ObjectDoesNotExist
+
 from cadastros.models import ConfiguracaoSistema
 
 
@@ -46,8 +48,19 @@ def oficio_exige_justificativa(oficio):
     return dias_antecedencia < get_prazo_justificativa_dias()
 
 
-def oficio_tem_justificativa(oficio):
+def get_oficio_justificativa(oficio):
     try:
-        return bool((oficio.justificativa.texto or '').strip())
-    except Exception:
-        return False
+        return oficio.justificativa
+    except ObjectDoesNotExist:
+        return None
+
+
+def get_oficio_justificativa_texto(oficio):
+    justificativa = get_oficio_justificativa(oficio)
+    if not justificativa:
+        return ''
+    return (justificativa.texto or '').strip()
+
+
+def oficio_tem_justificativa(oficio):
+    return bool(get_oficio_justificativa_texto(oficio))

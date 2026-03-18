@@ -17,6 +17,7 @@ from eventos.services.diarias import (
 )
 from eventos.services.justificativa import (
     get_dias_antecedencia_oficio,
+    get_oficio_justificativa_texto,
     get_prazo_justificativa_dias,
     get_primeira_saida_oficio,
     oficio_exige_justificativa,
@@ -226,10 +227,7 @@ def _build_custeio_context(oficio):
 
 
 def _get_oficio_justificativa_texto(oficio):
-    try:
-        return _text_or_empty(oficio.justificativa.texto)
-    except Exception:
-        return ''
+    return _text_or_empty(get_oficio_justificativa_texto(oficio))
 
 
 def get_assinaturas_documento(tipo_documento):
