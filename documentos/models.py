@@ -283,9 +283,13 @@ class OficioTrecho(models.Model):
 
 
 class TermoAutorizacao(models.Model):
-    """Termo de autorização — entidade independente."""
+    """Termo de autorização — entidade documental própria e independente."""
+    numero = models.CharField('Número', max_length=20, blank=True, default='')
+    ano = models.PositiveSmallIntegerField('Ano', null=True, blank=True)
+    data_criacao = models.DateField('Data de criação', default=timezone.now)
     titulo = models.CharField('Título', max_length=200, blank=True, default='')
-    conteudo = models.TextField('Conteúdo', blank=True, default='')
+    texto = models.TextField('Texto do termo', blank=True, default='')
+    observacoes = models.TextField('Observações', blank=True, default='')
     oficio = models.ForeignKey(
         Oficio, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='termos', verbose_name='Ofício (opcional)',
@@ -293,6 +297,14 @@ class TermoAutorizacao(models.Model):
     evento = models.ForeignKey(
         Evento, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='termos', verbose_name='Evento (opcional)',
+    )
+    roteiro = models.ForeignKey(
+        Roteiro, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='termos', verbose_name='Roteiro (opcional)',
+    )
+    viajante = models.ForeignKey(
+        'cadastros.Viajante', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='termos', verbose_name='Viajante (opcional)',
     )
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_RASCUNHO)
     criado_em = models.DateTimeField(auto_now_add=True)
@@ -304,21 +316,24 @@ class TermoAutorizacao(models.Model):
         verbose_name_plural = 'Termos de autorização'
 
     def __str__(self):
+        if self.numero and self.ano:
+            return f'Termo {self.numero}/{self.ano}'
         return self.titulo or f'Termo #{self.pk}'
 
 
 class Justificativa(models.Model):
-    """Justificativa — entidade independente ou vinculada a ofício."""
-    titulo = models.CharField('Título', max_length=200, blank=True, default='')
-    texto = models.TextField('Texto', blank=True, default='')
+    """Justificativa — entidade documental satélite do Ofício."""
     oficio = models.ForeignKey(
-        Oficio, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='justificativas', verbose_name='Ofício (opcional)',
+        Oficio, on_delete=models.CASCADE, null=False, blank=False,
+        related_name='justificativas', verbose_name='Ofício',
     )
+    titulo = models.CharField('Título / assunto', max_length=200, blank=True, default='')
     modelo = models.ForeignKey(
         ModeloJustificativa, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='justificativas', verbose_name='Modelo (opcional)',
     )
+    texto = models.TextField('Texto', blank=True, default='')
+    observacoes = models.TextField('Observações', blank=True, default='')
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_RASCUNHO)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
@@ -329,7 +344,7 @@ class Justificativa(models.Model):
         verbose_name_plural = 'Justificativas'
 
     def __str__(self):
-        return self.titulo or f'Justificativa #{self.pk}'
+        return self.titulo or f'Justificativa #{self.pk} — {self.oficio}'
 
 
 class PlanoTrabalho(models.Model):

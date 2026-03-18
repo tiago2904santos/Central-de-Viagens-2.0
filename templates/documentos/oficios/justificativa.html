@@ -24,12 +24,12 @@
   </div>
   {% endif %}
 
-  <input type="hidden" name="modelo_id" id="id_modelo_id" value="{{ oficio.modelo_justificativa_id|default:'' }}">
+  <input type="hidden" name="modelo_id" id="id_modelo_id" value="{{ just.modelo_id|default:oficio.modelo_justificativa_id|default:'' }}">
 
   <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-light fw-semibold">Texto da justificativa</div>
     <div class="card-body">
-      <textarea name="justificativa_texto" id="id_justificativa_texto" class="form-control" rows="8">{{ oficio.justificativa_texto|default:'' }}</textarea>
+      <textarea name="justificativa_texto" id="id_justificativa_texto" class="form-control" rows="8">{{ just.texto|default:oficio.justificativa_texto|default:'' }}</textarea>
     </div>
   </div>
 

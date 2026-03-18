@@ -2,30 +2,80 @@
 {% block title %}{% if termo %}Editar termo{% else %}Novo termo{% endif %}{% endblock %}
 {% block page_title %}{% if termo %}Editar termo{% else %}Novo termo{% endif %}{% endblock %}
 {% block content %}
-<div class="card border-0 shadow-sm" style="max-width:700px">
+<div class="card border-0 shadow-sm" style="max-width:800px">
   <div class="card-body">
     <form method="post">
       {% csrf_token %}
       {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label class="form-label">Número</label>
+          <input type="text" name="numero" class="form-control" value="{{ termo.numero|default:'' }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Ano</label>
+          <input type="number" name="ano" class="form-control" value="{{ termo.ano|default:'' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Data de criação</label>
+          <input type="date" name="data_criacao" class="form-control" value="{{ termo.data_criacao|date:'Y-m-d'|default:'' }}">
+        </div>
+      </div>
       <div class="mb-3">
         <label class="form-label">Título</label>
         <input type="text" name="titulo" class="form-control" value="{{ termo.titulo|default:'' }}">
       </div>
       <div class="mb-3">
-        <label class="form-label">Conteúdo</label>
-        <textarea name="conteudo" class="form-control" rows="6">{{ termo.conteudo|default:'' }}</textarea>
+        <label class="form-label">Texto do termo</label>
+        <textarea name="texto" class="form-control" rows="6">{{ termo.texto|default:'' }}</textarea>
       </div>
       <div class="mb-3">
-        <label class="form-label">Ofício vinculado (opcional)</label>
-        <select name="oficio_id" class="form-select">
-          <option value="">— Nenhum —</option>
-          {% for o in oficios %}
-          <option value="{{ o.pk }}" {% if termo.oficio_id == o.pk %}selected{% endif %}>{{ o.identificacao }}</option>
-          {% endfor %}
-        </select>
+        <label class="form-label">Observações</label>
+        <textarea name="observacoes" class="form-control" rows="3">{{ termo.observacoes|default:'' }}</textarea>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Ofício vinculado (opcional)</label>
+          <select name="oficio_id" class="form-select">
+            <option value="">— Nenhum —</option>
+            {% for o in oficios %}
+            <option value="{{ o.pk }}" {% if termo.oficio_id == o.pk %}selected{% endif %}>{{ o.identificacao }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Evento vinculado (opcional)</label>
+          <select name="evento_id" class="form-select">
+            <option value="">— Nenhum —</option>
+            {% for e in eventos %}
+            <option value="{{ e.pk }}" {% if termo.evento_id == e.pk %}selected{% endif %}>{{ e.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Roteiro vinculado (opcional)</label>
+          <select name="roteiro_id" class="form-select">
+            <option value="">— Nenhum —</option>
+            {% for r in roteiros %}
+            <option value="{{ r.pk }}" {% if termo.roteiro_id == r.pk %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Viajante vinculado (opcional)</label>
+          <select name="viajante_id" class="form-select">
+            <option value="">— Nenhum —</option>
+            {% for v in viajantes %}
+            <option value="{{ v.pk }}" {% if termo.viajante_id == v.pk %}selected{% endif %}>{{ v.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
       <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-dark">Salvar</button>
+        <button type="submit" name="acao" value="rascunho" class="btn btn-dark">Salvar rascunho</button>
+        <button type="submit" name="acao" value="finalizar" class="btn btn-success">Finalizar</button>
         <a href="{% url 'documentos:termos' %}" class="btn btn-outline-secondary">Cancelar</a>
       </div>
     </form>

@@ -8,27 +8,51 @@
       {% csrf_token %}
       {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
       <div class="mb-3">
-        <label class="form-label">Título</label>
+        <label class="form-label fw-semibold">Ofício <span class="text-danger">*</span></label>
+        <select name="oficio_id" class="form-select" required>
+          <option value="">— Selecione o ofício —</option>
+          {% for o in oficios %}
+          <option value="{{ o.pk }}" {% if just.oficio_id == o.pk %}selected{% endif %}>{{ o.identificacao }}</option>
+          {% endfor %}
+        </select>
+        <div class="form-text">A justificativa pertence ao Ofício e não pode existir sem ele.</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Título / assunto</label>
         <input type="text" name="titulo" class="form-control" value="{{ just.titulo|default:'' }}">
       </div>
       <div class="mb-3">
         <label class="form-label">Modelo (opcional)</label>
-        <select name="modelo_id" class="form-select">
+        <select name="modelo_id" class="form-select" id="id_modelo_select">
           <option value="">— Nenhum —</option>
           {% for m in modelos %}
-          <option value="{{ m.pk }}" {% if just.modelo_id == m.pk %}selected{% endif %}>{{ m.nome }}</option>
+          <option value="{{ m.pk }}" data-texto="{{ m.texto }}" {% if just.modelo_id == m.pk %}selected{% endif %}>{{ m.nome }}</option>
           {% endfor %}
         </select>
       </div>
       <div class="mb-3">
         <label class="form-label">Texto</label>
-        <textarea name="texto" class="form-control" rows="6">{{ just.texto|default:'' }}</textarea>
+        <textarea name="texto" class="form-control" rows="6" id="id_texto">{{ just.texto|default:'' }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Observações</label>
+        <textarea name="observacoes" class="form-control" rows="3">{{ just.observacoes|default:'' }}</textarea>
       </div>
       <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-danger">Salvar</button>
+        <button type="submit" name="acao" value="rascunho" class="btn btn-danger">Salvar rascunho</button>
+        <button type="submit" name="acao" value="finalizar" class="btn btn-success">Finalizar</button>
         <a href="{% url 'documentos:justificativas' %}" class="btn btn-outline-secondary">Cancelar</a>
       </div>
     </form>
   </div>
 </div>
+<script>
+document.getElementById('id_modelo_select').addEventListener('change', function() {
+  var opt = this.options[this.selectedIndex];
+  var texto = opt.getAttribute('data-texto');
+  if (texto) {
+    document.getElementById('id_texto').value = texto;
+  }
+});
+</script>
 {% endblock %}

@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from datetime import date
 
 from .models import (
     Oficio, OficioViajante, OficioTrecho,
@@ -68,7 +69,6 @@ def oficio_step1(request, pk=None):
         data_str = request.POST.get('data_criacao', '').strip()
         if data_str:
             try:
-                from datetime import date
                 oficio.data_criacao = date.fromisoformat(data_str)
             except ValueError:
                 pass
@@ -223,7 +223,6 @@ def oficio_step3(request, pk):
         for idx, (orig, dest) in enumerate(zip(origens, destinos), start=1):
             if not orig and not dest:
                 continue
-            from datetime import date
             ds = None
             dc = None
             try:
@@ -285,28 +284,42 @@ def oficio_step4(request, pk):
 
 @login_required
 def oficio_justificativa(request, pk):
-    """Justificativa do ofício."""
+    """Justificativa do ofício — gerencia o registro Justificativa vinculado ao ofício."""
     oficio = get_object_or_404(Oficio, pk=pk)
     modelos = ModeloJustificativa.objects.all()
+    # Obtém ou inicializa a justificativa vinculada
+    just = oficio.justificativas.order_by('criado_em').first()
 
     if request.method == 'POST':
         modelo_id = request.POST.get('modelo_id')
+        texto = request.POST.get('justificativa_texto', '').strip()
+        modelo = None
         if modelo_id:
             try:
                 modelo = ModeloJustificativa.objects.get(pk=int(modelo_id))
-                oficio.modelo_justificativa = modelo
-                if not oficio.justificativa_texto:
-                    oficio.justificativa_texto = modelo.texto
+                if not texto:
+                    texto = modelo.texto
             except (ValueError, ModeloJustificativa.DoesNotExist):
                 pass
-        oficio.justificativa_texto = request.POST.get('justificativa_texto', '').strip()
+
+        if just is None:
+            just = Justificativa(oficio=oficio)
+        just.texto = texto
+        just.modelo = modelo
+        just.save()
+
+        # Manter compatibilidade: sincroniza snapshot em Oficio
+        oficio.justificativa_texto = texto
+        oficio.modelo_justificativa = modelo
         oficio.gerar_termo_preenchido = bool(request.POST.get('gerar_termo_preenchido'))
         oficio.save()
+
         messages.success(request, 'Justificativa salva.')
         return redirect('documentos:oficio-step4', pk=oficio.pk)
 
     return render(request, 'documentos/oficios/justificativa.html', {
         'oficio': oficio,
+        'just': just,
         'modelos': modelos,
         'step': 'justificativa',
     })
@@ -380,10 +393,30 @@ def termo_form(request, pk=None):
     if request.method == 'POST':
         if not termo:
             termo = TermoAutorizacao()
+        termo.numero = request.POST.get('numero', '').strip()
+        try:
+            termo.ano = int(request.POST.get('ano') or 0) or None
+        except (ValueError, TypeError):
+            termo.ano = None
+        data_criacao = request.POST.get('data_criacao', '').strip()
+        if data_criacao:
+            try:
+                termo.data_criacao = date.fromisoformat(data_criacao)
+            except ValueError:
+                pass
         termo.titulo = request.POST.get('titulo', '').strip()
-        termo.conteudo = request.POST.get('conteudo', '').strip()
+        termo.texto = request.POST.get('texto', '').strip()
+        termo.observacoes = request.POST.get('observacoes', '').strip()
         oficio_id = request.POST.get('oficio_id')
         termo.oficio_id = int(oficio_id) if oficio_id else None
+        evento_id = request.POST.get('evento_id')
+        termo.evento_id = int(evento_id) if evento_id else None
+        roteiro_id = request.POST.get('roteiro_id')
+        termo.roteiro_id = int(roteiro_id) if roteiro_id else None
+        viajante_id = request.POST.get('viajante_id')
+        termo.viajante_id = int(viajante_id) if viajante_id else None
+        acao = request.POST.get('acao', 'rascunho')
+        termo.status = 'FINALIZADO' if acao == 'finalizar' else 'RASCUNHO'
         termo.save()
         messages.success(request, 'Termo salvo.')
         if return_to:
@@ -391,8 +424,16 @@ def termo_form(request, pk=None):
         return redirect('documentos:termos')
 
     oficios = Oficio.objects.all().order_by('-criado_em')
+    eventos = Evento.objects.all().order_by('nome')
+    roteiros = Roteiro.objects.all().order_by('-criado_em')
+    viajantes = Viajante.objects.filter(status='FINALIZADO').order_by('nome')
     return render(request, 'documentos/termos/form.html', {
-        'termo': termo, 'oficios': oficios, 'return_to': return_to,
+        'termo': termo,
+        'oficios': oficios,
+        'eventos': eventos,
+        'roteiros': roteiros,
+        'viajantes': viajantes,
+        'return_to': return_to,
     })
 
 
@@ -410,7 +451,7 @@ def termo_excluir(request, pk):
 
 @login_required
 def justificativa_lista(request):
-    justificativas = Justificativa.objects.all().order_by('-criado_em')
+    justificativas = Justificativa.objects.select_related('oficio', 'modelo').order_by('-criado_em')
     return render(request, 'documentos/justificativas/lista.html', {'justificativas': justificativas})
 
 
@@ -418,15 +459,34 @@ def justificativa_lista(request):
 def justificativa_form(request, pk=None):
     just = get_object_or_404(Justificativa, pk=pk) if pk else None
     modelos = ModeloJustificativa.objects.all()
+    oficios = Oficio.objects.all().order_by('-criado_em')
     return_to = _next_safe(request)
 
     if request.method == 'POST':
+        oficio_id = request.POST.get('oficio_id')
+        if not oficio_id:
+            messages.error(request, 'O Ofício é obrigatório para uma justificativa.')
+            return render(request, 'documentos/justificativas/form.html', {
+                'just': just, 'modelos': modelos, 'oficios': oficios, 'return_to': return_to,
+            })
+        try:
+            oficio = Oficio.objects.get(pk=int(oficio_id))
+        except (ValueError, Oficio.DoesNotExist):
+            messages.error(request, 'Ofício inválido.')
+            return render(request, 'documentos/justificativas/form.html', {
+                'just': just, 'modelos': modelos, 'oficios': oficios, 'return_to': return_to,
+            })
         if not just:
-            just = Justificativa()
+            just = Justificativa(oficio=oficio)
+        else:
+            just.oficio = oficio
         just.titulo = request.POST.get('titulo', '').strip()
         just.texto = request.POST.get('texto', '').strip()
+        just.observacoes = request.POST.get('observacoes', '').strip()
         modelo_id = request.POST.get('modelo_id')
         just.modelo_id = int(modelo_id) if modelo_id else None
+        acao = request.POST.get('acao', 'rascunho')
+        just.status = 'FINALIZADO' if acao == 'finalizar' else 'RASCUNHO'
         just.save()
         messages.success(request, 'Justificativa salva.')
         if return_to:
@@ -434,7 +494,7 @@ def justificativa_form(request, pk=None):
         return redirect('documentos:justificativas')
 
     return render(request, 'documentos/justificativas/form.html', {
-        'just': just, 'modelos': modelos, 'return_to': return_to,
+        'just': just, 'modelos': modelos, 'oficios': oficios, 'return_to': return_to,
     })
 
 
@@ -558,13 +618,11 @@ def evento_form(request, pk=None):
         data_inicio = request.POST.get('data_inicio', '').strip()
         data_fim = request.POST.get('data_fim', '').strip()
         if data_inicio:
-            from datetime import date
             try:
                 evento.data_inicio = date.fromisoformat(data_inicio)
             except ValueError:
                 pass
         if data_fim:
-            from datetime import date
             try:
                 evento.data_fim = date.fromisoformat(data_fim)
             except ValueError:
