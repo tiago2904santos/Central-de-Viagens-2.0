@@ -14,6 +14,7 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods
 
 from .forms import (
+    JustificativaForm,
     OrdemServicoForm,
     PlanoTrabalhoForm,
     TermoAutorizacaoEdicaoForm,
@@ -22,6 +23,8 @@ from .forms import (
 from .models import (
     Evento,
     EventoTermoParticipante,
+    Justificativa,
+    ModeloJustificativa,
     OrdemServico,
     Oficio,
     OficioTrecho,
@@ -835,63 +838,125 @@ def ordem_servico_download(request, pk, formato):
 def justificativas_global(request):
     filters = {
         'q': _clean(request.GET.get('q')),
-        'evento_id': _clean(request.GET.get('evento_id')),
-        'ano': _clean(request.GET.get('ano')),
-        'status': _clean(request.GET.get('status')),
+        'oficio_id': _clean(request.GET.get('oficio_id')),
     }
-    queryset = Oficio.objects.select_related('evento', 'justificativa').prefetch_related('trechos').all()
+    queryset = (
+        Justificativa.objects.select_related(
+            'oficio',
+            'oficio__evento',
+            'modelo',
+        ).order_by('-updated_at', '-created_at')
+    )
     if filters['q']:
         queryset = queryset.filter(
-            Q(evento__titulo__icontains=filters['q'])
-            | Q(motivo__icontains=filters['q'])
-            | Q(justificativa__texto__icontains=filters['q'])
-            | Q(protocolo__icontains=Oficio.normalize_protocolo(filters['q']) or filters['q'])
-            | Q(trechos__destino_cidade__nome__icontains=filters['q'])
-        )
-    if filters['evento_id'].isdigit():
-        queryset = queryset.filter(evento_id=int(filters['evento_id']))
-    if filters['ano'].isdigit():
-        queryset = queryset.filter(ano=int(filters['ano']))
+            Q(texto__icontains=filters['q'])
+            | Q(oficio__protocolo__icontains=filters['q'])
+            | Q(oficio__motivo__icontains=filters['q'])
+            | Q(oficio__evento__titulo__icontains=filters['q'])
+        ).distinct()
+    if filters['oficio_id'].isdigit():
+        queryset = queryset.filter(oficio_id=int(filters['oficio_id']))
 
-    next_url = request.get_full_path()
-    rows = []
-    for oficio in queryset.distinct().order_by('-updated_at', '-created_at'):
-        info = _build_oficio_justificativa_info(oficio)
-        if filters['status'] and info['status_key'] != filters['status']:
-            continue
-        rows.append(
-            {
-                'oficio': oficio,
-                'evento': oficio.evento,
-                'info': info,
-                'destinos_display': _oficio_destinos_display(oficio),
-                'justificativa_url': _append_next(
-                    reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
-                    next_url,
-                ),
-                'documentos_url': reverse('eventos:oficio-documentos', kwargs={'pk': oficio.pk}),
-                'oficio_url': reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
-                'evento_url': reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
-            }
+    page_obj = _paginate(queryset, request.GET.get('page'))
+    object_list = []
+    for just in page_obj.object_list:
+        just.detail_url = reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': just.pk})
+        just.edicao_url = reverse('eventos:documentos-justificativas-editar', kwargs={'pk': just.pk})
+        just.excluir_url = reverse('eventos:documentos-justificativas-excluir', kwargs={'pk': just.pk})
+        just.oficio_url = reverse('eventos:oficio-step4', kwargs={'pk': just.oficio_id})
+        just.evento_url = (
+            reverse('eventos:guiado-painel', kwargs={'pk': just.oficio.evento_id})
+            if just.oficio.evento_id else ''
         )
-    page_obj = _paginate(rows, request.GET.get('page'))
+        object_list.append(just)
+
     return render(
         request,
-        'eventos/global/justificativas_lista.html',
+        'eventos/documentos/justificativas_lista.html',
         {
-            'object_list': list(page_obj.object_list),
+            'object_list': object_list,
             'page_obj': page_obj,
             'pagination_query': _query_without_page(request),
             'filters': filters,
-            'eventos_choices': _eventos_choices(),
-            'status_choices': [
-                ('pendente', 'Pendentes'),
-                ('preenchida', 'Preenchidas'),
-                ('nao_exigida', 'Nao exigidas'),
-                ('indefinida', 'Aguardando roteiro'),
-                ('indisponivel', 'Indisponiveis'),
-            ],
+            'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
         },
+    )
+
+
+@require_http_methods(['GET', 'POST'])
+def justificativa_nova(request):
+    return_to = _get_safe_return_to(request, reverse('eventos:documentos-justificativas'))
+    _preselected_event, preselected_oficio = _resolve_preselected_context(request)
+    if not preselected_oficio:
+        oid = _parse_int(request.GET.get('oficio_id') or request.POST.get('oficio_id'))
+        if oid:
+            preselected_oficio = Oficio.objects.filter(pk=oid).first()
+    form = JustificativaForm(request.POST or None, preselected_oficio=preselected_oficio)
+    if request.method == 'POST' and form.is_valid():
+        obj = form.save()
+        messages.success(request, 'Justificativa criada com sucesso.')
+        return redirect(return_to or reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': obj.pk}))
+    return render(
+        request,
+        'eventos/documentos/justificativas_form.html',
+        {
+            'form': form,
+            'object': None,
+            'return_to': return_to,
+            'preselected_oficio': preselected_oficio,
+        },
+    )
+
+
+@require_http_methods(['GET'])
+def justificativa_detalhe(request, pk):
+    obj = get_object_or_404(
+        Justificativa.objects.select_related('oficio', 'oficio__evento', 'modelo'),
+        pk=pk,
+    )
+    return render(
+        request,
+        'eventos/documentos/justificativas_detalhe.html',
+        {'object': obj},
+    )
+
+
+@require_http_methods(['GET', 'POST'])
+def justificativa_editar(request, pk):
+    obj = get_object_or_404(
+        Justificativa.objects.select_related('oficio', 'oficio__evento', 'modelo'),
+        pk=pk,
+    )
+    return_to = _get_safe_return_to(request, reverse('eventos:documentos-justificativas'))
+    form = JustificativaForm(request.POST or None, instance=obj)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Justificativa atualizada com sucesso.')
+        return redirect(return_to or reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': obj.pk}))
+    return render(
+        request,
+        'eventos/documentos/justificativas_form.html',
+        {
+            'form': form,
+            'object': obj,
+            'return_to': return_to,
+            'preselected_oficio': obj.oficio,
+        },
+    )
+
+
+@require_http_methods(['GET', 'POST'])
+def justificativa_excluir(request, pk):
+    obj = get_object_or_404(Justificativa.objects.select_related('oficio'), pk=pk)
+    return_to = _get_safe_return_to(request, reverse('eventos:documentos-justificativas'))
+    if request.method == 'POST':
+        obj.delete()
+        messages.success(request, 'Justificativa excluída com sucesso.')
+        return redirect(return_to)
+    return render(
+        request,
+        'eventos/documentos/justificativas_excluir.html',
+        {'object': obj, 'return_to': return_to},
     )
 
 

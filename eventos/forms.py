@@ -12,6 +12,7 @@ from .models import (
     Evento,
     EventoFinalizacao,
     EventoParticipante,
+    Justificativa,
     ModeloJustificativa,
     ModeloMotivoViagem,
     OrdemServico,
@@ -602,6 +603,55 @@ class OficioJustificativaForm(FormComErroInvalidMixin, forms.Form):
         texto = (data.get('justificativa_texto') or '').strip()
         if modelo and not texto:
             data['justificativa_texto'] = (modelo.texto or '').strip()
+        return data
+
+
+class JustificativaForm(FormComErroInvalidMixin, forms.ModelForm):
+    """Formulário independente de Justificativa — com seletor de Ofício."""
+
+    class Meta:
+        model = Justificativa
+        fields = ['oficio', 'modelo', 'texto']
+        widgets = {
+            'oficio': forms.Select(attrs={'class': 'form-select'}),
+            'modelo': forms.Select(attrs={'class': 'form-select'}),
+            'texto': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        preselected_oficio = kwargs.pop('preselected_oficio', None)
+        super().__init__(*args, **kwargs)
+        self.fields['oficio'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
+        self.fields['modelo'].required = False
+        self.fields['texto'].required = False
+        self.fields['modelo'].queryset = ModeloJustificativa.objects.filter(ativo=True).order_by('nome')
+        if preselected_oficio and not self.instance.pk:
+            self.initial.setdefault('oficio', preselected_oficio.pk)
+        elif not self.instance.pk and not self.initial.get('oficio'):
+            # Pre-fill from modelo padrão when available
+            modelo_padrao = ModeloJustificativa.objects.filter(ativo=True, padrao=True).first()
+            if modelo_padrao:
+                self.initial.setdefault('modelo', modelo_padrao.pk)
+                self.initial.setdefault('texto', modelo_padrao.texto)
+
+    def clean_oficio(self):
+        oficio = self.cleaned_data.get('oficio')
+        if not oficio:
+            raise forms.ValidationError('Selecione o ofício vinculado.')
+        if not self.instance.pk:
+            if Justificativa.objects.filter(oficio=oficio).exists():
+                raise forms.ValidationError(
+                    f'Já existe uma justificativa para o ofício {oficio.numero_formatado}. '
+                    'Use a opção de editar a existente.'
+                )
+        return oficio
+
+    def clean(self):
+        data = super().clean()
+        modelo = data.get('modelo')
+        texto = (data.get('texto') or '').strip()
+        if modelo and not texto:
+            data['texto'] = (modelo.texto or '').strip()
         return data
 
 

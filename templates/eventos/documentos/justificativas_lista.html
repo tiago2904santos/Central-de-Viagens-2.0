@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Justificativas — Central de Viagens{% endblock %}
+{% block page_title %}Justificativas{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="page-header-cadastro">
+        <div>
+            <h1 class="mb-1">Lista de justificativas</h1>
+            <p class="text-muted mb-0">Justificativas documentais vinculadas aos ofícios.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'eventos:documentos-hub' %}" class="btn btn-outline-secondary">Documentos</a>
+            <a href="{% url 'eventos:documentos-justificativas-nova' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>
+                Nova justificativa
+            </a>
+        </div>
+    </div>
+
+    <div class="card filter-card">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-xl-4">
+                    <label class="form-label small text-muted">Busca</label>
+                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Texto, protocolo ou evento">
+                </div>
+                <div class="col-12 col-md-4 col-xl-3">
+                    <label class="form-label small text-muted">Ofício</label>
+                    <select name="oficio_id" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        {% for oficio in oficios_choices %}
+                        <option value="{{ oficio.pk }}" {% if filters.oficio_id == oficio.pk|stringformat:"s" %}selected{% endif %}>{{ oficio.numero_formatado }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+                    <a href="{% url 'eventos:documentos-justificativas' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="termo-list-grid">
+        {% for just in object_list %}
+        <article class="termo-list-card">
+            <div class="termo-list-card__top">
+                <div>
+                    <div class="termo-list-card__title-row">
+                        <h2 class="termo-list-card__title">JT-{{ just.pk|stringformat:"04d" }}</h2>
+                        {% if just.modelo %}
+                        <span class="oficio-process-status is-finalizado">{{ just.modelo.nome }}</span>
+                        {% else %}
+                        <span class="oficio-process-status is-rascunho">Sem modelo</span>
+                        {% endif %}
+                    </div>
+                    <div class="termo-list-card__subtitle">
+                        <a href="{{ just.oficio_url }}" class="text-decoration-none">
+                            {{ just.oficio.numero_formatado }}
+                            {% if just.oficio.evento %}— {{ just.oficio.evento.titulo|default:"(sem título)" }}{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="termo-list-card__meta">
+                <div class="termo-list-meta-item">
+                    <span class="termo-list-meta-item__label">Ofício</span>
+                    <span class="termo-list-meta-item__value">{{ just.oficio.numero_formatado }}</span>
+                </div>
+                <div class="termo-list-meta-item">
+                    <span class="termo-list-meta-item__label">Modelo</span>
+                    <span class="termo-list-meta-item__value">{{ just.modelo.nome|default:"—" }}</span>
+                </div>
+                <div class="termo-list-meta-item">
+                    <span class="termo-list-meta-item__label">Texto</span>
+                    <span class="termo-list-meta-item__value">{{ just.texto|truncatechars:80|default:"—" }}</span>
+                </div>
+                {% if just.evento_url %}
+                <div class="termo-list-meta-item">
+                    <span class="termo-list-meta-item__label">Evento</span>
+                    <span class="termo-list-meta-item__value">
+                        <a href="{{ just.evento_url }}" class="text-decoration-none">{{ just.oficio.evento.titulo|default:"—" }}</a>
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="termo-list-card__footer">
+                <div class="small text-muted">Atualizado em {{ just.updated_at|date:"d/m/Y H:i" }}</div>
+                <div class="termo-list-card__actions">
+                    <a href="{{ just.detail_url }}" class="btn btn-sm btn-outline-primary">Ver</a>
+                    <a href="{{ just.edicao_url }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                    <a href="{{ just.excluir_url }}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                </div>
+            </div>
+        </article>
+        {% empty %}
+        <div class="card">
+            <div class="card-body text-center text-muted py-5">
+                <p class="mb-2">Nenhuma justificativa encontrada.</p>
+                <a href="{% url 'eventos:documentos-justificativas-nova' %}" class="btn btn-primary btn-sm">Criar a primeira justificativa</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% include 'includes/pagination.html' %}
+</div>
+{% endblock %}

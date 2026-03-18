@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalhe da justificativa — Central de Viagens{% endblock %}
+{% block page_title %}Detalhe da justificativa{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="page-header-cadastro">
+        <div>
+            <h1 class="mb-1">JT-{{ object.pk|stringformat:"04d" }}</h1>
+            <p class="text-muted mb-0">
+                Justificativa do {{ object.oficio.numero_formatado }}
+                {% if object.oficio.evento %} — {{ object.oficio.evento.titulo|default:"" }}{% endif %}
+            </p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'eventos:documentos-justificativas' %}" class="btn btn-outline-secondary">Voltar</a>
+            <a href="{% url 'eventos:documentos-justificativas-editar' object.pk %}" class="btn btn-outline-primary">Editar</a>
+            <a href="{% url 'eventos:documentos-justificativas-excluir' object.pk %}" class="btn btn-outline-danger">Excluir</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <article class="oficio-process-card">
+                <div class="oficio-process-card__header">
+                    <div class="oficio-process-card__title-block">
+                        <h2 class="oficio-process-card__title">Conteúdo da justificativa</h2>
+                        <div class="oficio-process-card__subtitle">
+                            {% if object.modelo %}{{ object.modelo.nome }}{% else %}Sem modelo{% endif %}
+                        </div>
+                    </div>
+                    {% if object.texto %}
+                    <span class="oficio-process-status is-finalizado">Preenchida</span>
+                    {% else %}
+                    <span class="oficio-process-status is-pending">Vazia</span>
+                    {% endif %}
+                </div>
+
+                <div class="oficio-process-card__meta">
+                    <div class="oficio-process-meta-item">
+                        <span class="oficio-process-meta-label">Ofício</span>
+                        <span class="oficio-process-meta-value">
+                            <a href="{% url 'eventos:oficio-step4' object.oficio.pk %}" class="text-decoration-none">
+                                {{ object.oficio.numero_formatado }}
+                            </a>
+                        </span>
+                    </div>
+                    <div class="oficio-process-meta-item">
+                        <span class="oficio-process-meta-label">Modelo</span>
+                        <span class="oficio-process-meta-value">{{ object.modelo.nome|default:"—" }}</span>
+                    </div>
+                    <div class="oficio-process-meta-item">
+                        <span class="oficio-process-meta-label">Evento</span>
+                        <span class="oficio-process-meta-value">
+                            {% if object.oficio.evento %}
+                            <a href="{% url 'eventos:guiado-painel' object.oficio.evento.pk %}" class="text-decoration-none">
+                                {{ object.oficio.evento.titulo|default:"(sem título)" }}
+                            </a>
+                            {% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="oficio-process-meta-item">
+                        <span class="oficio-process-meta-label">Criada em</span>
+                        <span class="oficio-process-meta-value">{{ object.created_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="oficio-process-meta-item">
+                        <span class="oficio-process-meta-label">Atualizada em</span>
+                        <span class="oficio-process-meta-value">{{ object.updated_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+
+                {% if object.texto %}
+                <div class="mt-4">
+                    <div class="small text-muted text-uppercase mb-2">Texto da justificativa</div>
+                    <div class="border rounded p-3 bg-light-subtle" style="white-space: pre-wrap; font-size: .95rem;">{{ object.texto }}</div>
+                </div>
+                {% else %}
+                <div class="mt-4">
+                    <div class="alert alert-warning py-2 small">
+                        Nenhum texto preenchido ainda.
+                        <a href="{% url 'eventos:documentos-justificativas-editar' object.pk %}" class="alert-link">Preencher agora</a>
+                    </div>
+                </div>
+                {% endif %}
+            </article>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card termo-side-card">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase mb-2">Ações rápidas</div>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'eventos:documentos-justificativas-editar' object.pk %}" class="btn btn-outline-primary btn-sm">
+                            Editar justificativa
+                        </a>
+                        <a href="{% url 'eventos:oficio-justificativa' object.oficio.pk %}" class="btn btn-outline-secondary btn-sm">
+                            Ver no contexto do ofício
+                        </a>
+                        <a href="{% url 'eventos:oficio-documentos' object.oficio.pk %}" class="btn btn-outline-secondary btn-sm">
+                            Documentos do ofício
+                        </a>
+                    </div>
+                    {% if object.oficio.evento %}
+                    <hr>
+                    <div class="small text-muted text-uppercase mb-2">Evento vinculado</div>
+                    <div class="fw-semibold">{{ object.oficio.evento.titulo|default:"(sem título)" }}</div>
+                    <a href="{% url 'eventos:guiado-painel' object.oficio.evento.pk %}" class="btn btn-outline-secondary btn-sm mt-2">
+                        Painel do evento
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

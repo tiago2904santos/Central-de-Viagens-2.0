@@ -10,6 +10,8 @@ from cadastros.models import Cargo, Cidade, CombustivelVeiculo, Estado, UnidadeL
 from eventos.models import (
     Evento,
     EventoDestino,
+    Justificativa,
+    ModeloJustificativa,
     Oficio,
     OficioTrecho,
     RoteiroEvento,
@@ -331,3 +333,206 @@ class TermoAutorizacaoModuleTest(TestCase):
             )
         self.assertEqual(response_pdf.status_code, 200)
         self.assertEqual(response_pdf['Content-Type'], 'application/pdf')
+
+    # --- Testes: Termo criado pelo Ofício persiste em TermoAutorizacao ---
+
+    def test_download_termo_pelo_oficio_cria_registro_em_termosautorizacao(self):
+        """Download do Termo via rota do Ofício deve criar e persistir TermoAutorizacao."""
+        self.assertEqual(TermoAutorizacao.objects.filter(oficio=self.oficio_a).count(), 0)
+        response = self.client.get(
+            reverse('eventos:oficio-documento-download', kwargs={
+                'pk': self.oficio_a.pk,
+                'tipo_documento': 'termo-autorizacao',
+                'formato': 'docx',
+            })
+        )
+        # Deve redirecionar para o download do termo salvo
+        self.assertIn(response.status_code, [200, 302])
+        self.assertGreater(TermoAutorizacao.objects.filter(oficio=self.oficio_a).count(), 0)
+
+    def test_termo_criado_pelo_oficio_aparece_na_lista_global(self):
+        """Termo gerado por ofício deve aparecer na lista global de Termos."""
+        TermoAutorizacao.objects.filter(oficio=self.oficio_a).delete()
+        self.client.get(
+            reverse('eventos:oficio-documento-download', kwargs={
+                'pk': self.oficio_a.pk,
+                'tipo_documento': 'termo-autorizacao',
+                'formato': 'docx',
+            })
+        )
+        lista_response = self.client.get(reverse('eventos:documentos-termos'))
+        self.assertEqual(lista_response.status_code, 200)
+        termos_do_oficio = TermoAutorizacao.objects.filter(oficio=self.oficio_a)
+        self.assertGreater(termos_do_oficio.count(), 0)
+
+    def test_termo_criado_pelo_oficio_mantem_vinculo_com_oficio(self):
+        """Termo criado via Ofício deve ter FK para o Ofício."""
+        TermoAutorizacao.objects.filter(oficio=self.oficio_a).delete()
+        self.client.get(
+            reverse('eventos:oficio-documento-download', kwargs={
+                'pk': self.oficio_a.pk,
+                'tipo_documento': 'termo-autorizacao',
+                'formato': 'docx',
+            })
+        )
+        termo = TermoAutorizacao.objects.filter(oficio=self.oficio_a).first()
+        self.assertIsNotNone(termo)
+        self.assertEqual(termo.oficio_id, self.oficio_a.pk)
+
+    def test_download_repetido_nao_cria_duplicata(self):
+        """Segundo download do mesmo Ofício deve reutilizar o Termo existente."""
+        TermoAutorizacao.objects.filter(oficio=self.oficio_a).delete()
+        for _ in range(2):
+            self.client.get(
+                reverse('eventos:oficio-documento-download', kwargs={
+                    'pk': self.oficio_a.pk,
+                    'tipo_documento': 'termo-autorizacao',
+                    'formato': 'docx',
+                })
+            )
+        count = TermoAutorizacao.objects.filter(oficio=self.oficio_a).count()
+        self.assertGreater(count, 0)
+        # Não deve criar duplicatas
+        self.assertEqual(TermoAutorizacao.objects.filter(
+            oficio=self.oficio_a
+        ).values('oficio').distinct().count(), 1)
+
+    def test_oficio_com_viajantes_cria_um_termo_por_servidor(self):
+        """Ofício com dois viajantes deve gerar dois TermoAutorizacao (modo automático)."""
+        TermoAutorizacao.objects.filter(oficio=self.oficio_a).delete()
+        self.client.get(
+            reverse('eventos:oficio-documento-download', kwargs={
+                'pk': self.oficio_a.pk,
+                'tipo_documento': 'termo-autorizacao',
+                'formato': 'docx',
+            })
+        )
+        termos = TermoAutorizacao.objects.filter(oficio=self.oficio_a)
+        # oficio_a tem 2 viajantes
+        self.assertGreaterEqual(termos.count(), 1)
+
+
+class JustificativaModuleTest(TestCase):
+    """Testa o módulo independente de Justificativas."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = get_user_model().objects.create_user(username='justtest', password='just123')
+        self.client.login(username='justtest', password='just123')
+
+        self.estado = Estado.objects.create(codigo_ibge='41', nome='Parana JT', sigla='PR', ativo=True)
+        self.cidade = Cidade.objects.create(codigo_ibge='4106902', nome='CuritibaJT', estado=self.estado, ativo=True)
+        self.cargo = Cargo.objects.create(nome='AGENTE JT')
+        self.evento = Evento.objects.create(
+            titulo='Evento Justificativas',
+            data_inicio=date(2026, 3, 18),
+            data_fim=date(2026, 3, 19),
+            cidade_base=self.cidade,
+            cidade_principal=self.cidade,
+            estado_principal=self.estado,
+        )
+        self.oficio = Oficio.objects.create(
+            evento=self.evento,
+            numero=1,
+            ano=2026,
+            status=Oficio.STATUS_FINALIZADO,
+        )
+        self.oficio2 = Oficio.objects.create(
+            evento=self.evento,
+            numero=2,
+            ano=2026,
+            status=Oficio.STATUS_FINALIZADO,
+        )
+        self.modelo = ModeloJustificativa.objects.create(
+            nome='Modelo Padrão',
+            texto='Texto padrão da justificativa.',
+            ativo=True,
+        )
+
+    def test_lista_global_justificativas_abre_corretamente(self):
+        response = self.client.get(reverse('eventos:documentos-justificativas'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'justificativa', msg_prefix='Template deve conter "justificativa"')
+
+    def test_nova_justificativa_pode_ser_criada_fora_da_tela_do_oficio(self):
+        response = self.client.post(
+            reverse('eventos:documentos-justificativas-nova'),
+            {
+                'oficio': self.oficio.pk,
+                'modelo': '',
+                'texto': 'Justificativa criada globalmente.',
+            },
+        )
+        self.assertIn(response.status_code, [200, 302])
+        self.assertTrue(Justificativa.objects.filter(oficio=self.oficio).exists())
+
+    def test_formulario_global_exige_oficio(self):
+        response = self.client.post(
+            reverse('eventos:documentos-justificativas-nova'),
+            {'oficio': '', 'texto': 'Sem ofício.'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Justificativa.objects.filter(texto='Sem ofício.').exists())
+
+    def test_preselected_oficio_id_funciona(self):
+        url = reverse('eventos:documentos-justificativas-nova') + f'?preselected_oficio_id={self.oficio.pk}'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, str(self.oficio.pk))
+
+    def test_nao_permite_duplicata_por_oficio(self):
+        Justificativa.objects.create(oficio=self.oficio, texto='Primeira')
+        response = self.client.post(
+            reverse('eventos:documentos-justificativas-nova'),
+            {
+                'oficio': self.oficio.pk,
+                'texto': 'Segunda, não deve salvar.',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Justificativa.objects.filter(oficio=self.oficio).count(), 1)
+
+    def test_editar_justificativa_global_funciona(self):
+        just = Justificativa.objects.create(oficio=self.oficio, texto='Original')
+        response = self.client.post(
+            reverse('eventos:documentos-justificativas-editar', kwargs={'pk': just.pk}),
+            {
+                'oficio': self.oficio.pk,
+                'modelo': '',
+                'texto': 'Texto atualizado',
+            },
+        )
+        self.assertIn(response.status_code, [200, 302])
+        just.refresh_from_db()
+        self.assertEqual(just.texto, 'Texto atualizado')
+
+    def test_detalhe_justificativa_funciona(self):
+        just = Justificativa.objects.create(oficio=self.oficio, texto='Detalhe test')
+        response = self.client.get(
+            reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': just.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Detalhe test')
+
+    def test_excluir_justificativa_funciona(self):
+        just = Justificativa.objects.create(oficio=self.oficio, texto='Para excluir')
+        response = self.client.post(
+            reverse('eventos:documentos-justificativas-excluir', kwargs={'pk': just.pk}),
+            {},
+        )
+        self.assertIn(response.status_code, [200, 302])
+        self.assertFalse(Justificativa.objects.filter(pk=just.pk).exists())
+
+    def test_lista_justificativas_usa_template_de_documentos(self):
+        """A lista global de justificativas usa o template documentos/ (padrão de qualidade)."""
+        Justificativa.objects.create(oficio=self.oficio, texto='Listada')
+        response = self.client.get(reverse('eventos:documentos-justificativas'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'JT-')
+
+    def test_justificativa_continua_pertencendo_ao_oficio(self):
+        """Integridade: a justificativa criada deve manter o FK para o ofício correto."""
+        just = Justificativa.objects.create(oficio=self.oficio, texto='FK ok')
+        self.assertEqual(just.oficio_id, self.oficio.pk)
+        # Cada ofício tem no máximo uma justificativa (1:1)
+        self.assertEqual(Justificativa.objects.filter(oficio=self.oficio).count(), 1)

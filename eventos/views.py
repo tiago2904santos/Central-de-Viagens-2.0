@@ -1,3 +1,4 @@
+import uuid
 from copy import deepcopy
 from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
@@ -37,6 +38,7 @@ from .models import (
     RoteiroEvento,
     RoteiroEventoDestino,
     RoteiroEventoTrecho,
+    TermoAutorizacao,
     TipoDemandaEvento,
 )
 from .forms import (
@@ -95,6 +97,7 @@ from .services.documentos.termo_autorizacao import (
     render_evento_participante_termo_docx,
     validate_evento_participante_termo_data,
 )
+from .termos import build_termo_context as _build_termo_context_for_oficio
 from .utils import (
     buscar_viajantes_finalizados,
     buscar_veiculo_finalizado_por_placa,
@@ -4309,12 +4312,76 @@ def oficio_documentos(request, pk):
     )
 
 
+def _get_or_create_termos_from_oficio(oficio, user=None):
+    """
+    Obtém ou cria registros TermoAutorizacao vinculados a este Ofício.
+    Retorna (lista_de_termos, created_bool).
+    """
+    existing = list(TermoAutorizacao.objects.filter(oficio=oficio).order_by('created_at'))
+    if existing:
+        return existing, False
+
+    context = _build_termo_context_for_oficio(oficios=[oficio])
+    viajantes = list(context['viajantes'])
+    veiculo = context['veiculo_inferido']
+    modo = TermoAutorizacao.infer_modo_geracao(
+        has_servidores=bool(viajantes),
+        has_viatura=bool(veiculo),
+    )
+    lote = uuid.uuid4() if modo != TermoAutorizacao.MODO_RAPIDO else None
+    common = {
+        'evento': context['evento'],
+        'roteiro': context['roteiro'],
+        'oficio': oficio,
+        'destino': context['destino'] or '',
+        'data_evento': context['data_evento'],
+        'data_evento_fim': context['data_evento_fim'],
+        'criado_por': user,
+        'veiculo': veiculo,
+        'status': TermoAutorizacao.STATUS_GERADO,
+        'modo_geracao': modo,
+        'template_variant': TermoAutorizacao.template_variant_for_mode(modo),
+    }
+    termos = []
+    if modo == TermoAutorizacao.MODO_RAPIDO:
+        termo = TermoAutorizacao(**common)
+        termo.populate_snapshots_from_relations(force=True)
+        termo.save()
+        termo.oficios.add(oficio)
+        termos.append(termo)
+    else:
+        for viajante in viajantes:
+            termo = TermoAutorizacao(**common, viajante=viajante, lote_uuid=lote)
+            termo.populate_snapshots_from_relations(force=True)
+            termo.save()
+            termo.oficios.add(oficio)
+            termos.append(termo)
+    return termos, True
+
+
 def _download_oficio_documento(request, oficio, tipo_documento, formato):
     try:
         meta = get_document_type_meta(tipo_documento)
         formato = DocumentoFormato(formato)
     except (KeyError, ValueError):
         raise Http404('Documento inválido.')
+    # Termo de Autorização: cria registro persistente e redireciona para download oficial
+    if meta.tipo == DocumentoOficioTipo.TERMO_AUTORIZACAO:
+        termos, created = _get_or_create_termos_from_oficio(oficio, user=request.user)
+        if not termos:
+            messages.error(request, 'Não foi possível registrar o termo de autorização para este ofício.')
+            return redirect('eventos:oficio-documentos', pk=oficio.pk)
+        if created:
+            messages.success(
+                request,
+                f'{len(termos)} termo(s) de autorização registrado(s) e vinculado(s) ao ofício.',
+            )
+        return redirect(
+            reverse(
+                'eventos:documentos-termos-download',
+                kwargs={'pk': termos[0].pk, 'formato': formato.value},
+            )
+        )
     status_info = get_document_generation_status(oficio, meta.tipo, formato)
     if status_info['status'] != 'available':
         messages.error(
