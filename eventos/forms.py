@@ -415,10 +415,11 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
 
     def save_terms(self, *, user=None):
         cleaned = self.cleaned_data
+        oficio_legacy = self.cleaned_oficios[0] if len(self.cleaned_oficios) == 1 else None
         common_kwargs = {
             'evento': cleaned.get('evento') or self.context_data['evento'],
             'roteiro': cleaned.get('roteiro') or self.context_data['roteiro'],
-            'oficio': self.cleaned_oficios[0] if self.cleaned_oficios else None,
+            'oficio': oficio_legacy,
             'destino': cleaned.get('destino') or self.context_data['destino'],
             'data_evento': cleaned.get('data_evento') or self.context_data['data_evento'],
             'data_evento_fim': cleaned.get('data_evento_fim') or self.context_data['data_evento_fim'],
@@ -505,7 +506,7 @@ class TermoAutorizacaoEdicaoForm(FormComErroInvalidMixin, forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         oficios = list(self.cleaned_data.get('oficios') or [])
-        instance.oficio = oficios[0] if oficios else None
+        instance.oficio = oficios[0] if len(oficios) == 1 else None
         if commit:
             instance.full_clean()
             instance.save()

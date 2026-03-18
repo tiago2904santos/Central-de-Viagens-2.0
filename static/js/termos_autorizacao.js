@@ -44,27 +44,6 @@
     }
   }
 
-  function renderTags(selector, items, emptyLabel) {
-    var wrapper = document.querySelector(selector);
-    if (!wrapper) {
-      return;
-    }
-    wrapper.innerHTML = '';
-    if (!items.length) {
-      var emptyTag = document.createElement('span');
-      emptyTag.className = 'termo-summary-tag termo-summary-tag--muted';
-      emptyTag.textContent = emptyLabel;
-      wrapper.appendChild(emptyTag);
-      return;
-    }
-    items.forEach(function(item) {
-      var tag = document.createElement('span');
-      tag.className = 'termo-summary-tag';
-      tag.textContent = item;
-      wrapper.appendChild(tag);
-    });
-  }
-
   function inferMode(travelersCount, hasVehicle) {
     if (travelersCount > 0 && hasVehicle) {
       return 'AUTOMATICO_COM_VIATURA';
@@ -86,6 +65,8 @@
     var eventoSelect = document.getElementById('id_evento');
     var oficiosSelect = document.getElementById('id_oficios');
     var roteiroSelect = document.getElementById('id_roteiro');
+    var oficiosSelectionList = document.querySelector('[data-oficios-selection-list]');
+    var oficiosEmptyText = document.querySelector('[data-oficios-empty-text]');
     var destinoInput = document.getElementById('id_destino');
     var dataEventoInput = document.getElementById('id_data_evento');
     var dataEventoFimInput = document.getElementById('id_data_evento_fim');
@@ -111,6 +92,20 @@
         travelerSelected.set(String(item.id), item);
       }
     });
+
+    function selectedOficios() {
+      if (!oficiosSelect) {
+        return [];
+      }
+      return Array.prototype.slice.call(oficiosSelect.options)
+        .filter(function(option) { return option.selected; })
+        .map(function(option) {
+          return {
+            id: option.value,
+            label: option.textContent
+          };
+        });
+    }
 
     function selectedOptionValues(select) {
       if (!select) {
@@ -175,6 +170,47 @@
       }
     }
 
+    function renderOficiosSelection() {
+      if (!oficiosSelectionList || !oficiosEmptyText) {
+        return;
+      }
+      oficiosSelectionList.innerHTML = '';
+      var selected = selectedOficios();
+      if (!selected.length) {
+        oficiosEmptyText.classList.remove('d-none');
+        return;
+      }
+      oficiosEmptyText.classList.add('d-none');
+
+      selected.forEach(function(item) {
+        var chip = document.createElement('span');
+        chip.className = 'termo-selection-chip';
+
+        var label = document.createElement('span');
+        label.textContent = item.label || 'Oficio';
+        chip.appendChild(label);
+
+        if (!readOnly) {
+          var removeButton = document.createElement('button');
+          removeButton.type = 'button';
+          removeButton.className = 'btn btn-sm border-0 bg-transparent text-danger p-0';
+          removeButton.innerHTML = '&times;';
+          removeButton.addEventListener('click', function() {
+            Array.prototype.slice.call(oficiosSelect.options).forEach(function(option) {
+              if (String(option.value) === String(item.id)) {
+                option.selected = false;
+              }
+            });
+            renderOficiosSelection();
+            fetchPreview();
+          });
+          chip.appendChild(removeButton);
+        }
+
+        oficiosSelectionList.appendChild(chip);
+      });
+    }
+
     function renderVehicleSelection() {
       if (!vehicleWrapper) {
         return;
@@ -208,37 +244,26 @@
 
     function renderSummary() {
       var travelerItems = Array.from(travelerSelected.values());
-      var vehicleItems = (latestPreview.veiculos || []).map(function(item) {
-        return item.label || item.modelo || item.placa_formatada || 'Viatura';
-      });
+      var selectedOficiosList = selectedOficios();
       var modeKey = inferMode(travelerItems.length, Boolean(selectedVehicle && selectedVehicle.id));
       var modeMeta = MODE_META[modeKey];
       var estimatedTerms = travelerItems.length > 0 ? travelerItems.length : 1;
 
-      setText('[data-summary-evento]', latestPreview.evento ? latestPreview.evento.label : '-');
-      setText('[data-summary-oficios]', latestPreview.oficios && latestPreview.oficios.length ? latestPreview.oficios.length + ' selecionado(s)' : '-');
-      setText('[data-summary-roteiro]', latestPreview.roteiro ? latestPreview.roteiro.label : '-');
-      setText('[data-summary-periodo]', latestPreview.periodo_display || '-');
-      setText('[data-summary-destinos]', latestPreview.destinos && latestPreview.destinos.length ? latestPreview.destinos.join(', ') : '-');
-      setText('[data-summary-servidores]', String(travelerItems.length));
-      setText('[data-summary-viaturas]', String(latestPreview.total_viaturas || 0));
-      setText('[data-summary-modelo]', modeMeta.label);
-      setText('[data-summary-modelo-side]', modeMeta.label);
-      setText('[data-summary-template]', modeMeta.template);
-      setText('[data-summary-template-side]', modeMeta.template);
-      setText('[data-summary-estimativa]', String(estimatedTerms));
-      setText('[data-summary-estimativa-side]', String(estimatedTerms));
+      setText('[data-compact-periodo]', latestPreview.periodo_display || '-');
+      setText('[data-compact-destinos]', latestPreview.destinos && latestPreview.destinos.length ? latestPreview.destinos.join(', ') : '-');
+      setText('[data-compact-servidores]', String(travelerItems.length));
+      setText('[data-compact-viaturas]', String(latestPreview.total_viaturas || 0));
+      setText('[data-inference-modelo]', modeMeta.label);
+      setText('[data-inference-template]', modeMeta.template);
+      setText('[data-inference-estimativa]', String(estimatedTerms));
 
-      renderTags(
-        '[data-summary-traveler-tags]',
-        travelerItems.slice(0, 4).map(function(item) { return item.nome || item.label || 'Servidor'; }),
-        'Nenhum servidor'
-      );
-      renderTags(
-        '[data-summary-vehicle-tags]',
-        vehicleItems.slice(0, 3),
-        'Nenhuma viatura'
-      );
+      if (oficiosEmptyText) {
+        if (selectedOficiosList.length) {
+          oficiosEmptyText.classList.add('d-none');
+        } else {
+          oficiosEmptyText.classList.remove('d-none');
+        }
+      }
     }
 
     function applyPreview(payload) {
@@ -277,6 +302,7 @@
 
       renderTravelerSelection();
       renderVehicleSelection();
+      renderOficiosSelection();
       renderSummary();
     }
 
@@ -405,10 +431,24 @@
       field.addEventListener('change', fetchPreview);
     });
 
+    if (oficiosSelect && !readOnly) {
+      oficiosSelect.addEventListener('mousedown', function(event) {
+        var option = event.target;
+        if (!option || option.tagName !== 'OPTION') {
+          return;
+        }
+        event.preventDefault();
+        option.selected = !option.selected;
+        renderOficiosSelection();
+        fetchPreview();
+      });
+    }
+
     syncHiddenTravelers();
     syncHiddenVehicle();
     renderTravelerSelection();
     renderVehicleSelection();
+    renderOficiosSelection();
     renderSummary();
     fetchPreview();
   }

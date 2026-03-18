@@ -13,7 +13,7 @@
                 {% if object %}
                 Atualize o contexto documental mantendo o termo coerente com os dados consolidados.
                 {% else %}
-                Preencha o contexto e o sistema consolida datas, destinos, servidores e viaturas para inferir o modelo automaticamente.
+                Preencha o contexto e gere os termos com consolidacao automatica de datas, destinos, servidores e viaturas.
                 {% endif %}
             </p>
         </div>
@@ -22,234 +22,181 @@
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-xl-8">
-            <div class="card form-card">
-                <div class="card-body">
-                    <form method="post" id="termo-form" data-preview-url="{{ preview_url }}" data-read-only-context="{% if read_only_context %}true{% else %}false{% endif %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="return_to" value="{{ return_to }}">
-                        <input type="hidden" name="context_source" value="{{ context_source }}">
-                        <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
-                        <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
-                        {% if 'viajantes_ids' in form.fields %}{{ form.viajantes_ids }}{% endif %}
-                        {% if 'veiculo_id' in form.fields %}{{ form.veiculo_id }}{% endif %}
+    <div class="card form-card">
+        <div class="card-body">
+            <form method="post" id="termo-form" data-preview-url="{{ preview_url }}" data-read-only-context="{% if read_only_context %}true{% else %}false{% endif %}">
+                {% csrf_token %}
+                <input type="hidden" name="return_to" value="{{ return_to }}">
+                <input type="hidden" name="context_source" value="{{ context_source }}">
+                <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
+                <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
+                {% if 'viajantes_ids' in form.fields %}{{ form.viajantes_ids }}{% endif %}
+                {% if 'veiculo_id' in form.fields %}{{ form.veiculo_id }}{% endif %}
 
-                        {% if form.non_field_errors %}
-                        <div class="alert alert-danger py-2">
-                            {% for error in form.non_field_errors %}
-                            <div>{{ error }}</div>
-                            {% endfor %}
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2">
+                    {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <section class="termo-form-block">
+                    <div class="termo-form-block__header">
+                        <div>
+                            <div class="termo-form-block__eyebrow">Contexto</div>
+                            <h2 class="h5 mb-1">Evento, oficios e roteiro</h2>
+                            <p class="text-muted small mb-0">A selecao alimenta o consolidado automaticamente. Voce pode ajustar manualmente os campos abaixo.</p>
                         </div>
-                        {% endif %}
+                    </div>
 
-                        <section class="termo-form-block">
-                            <div class="termo-form-block__header">
-                                <div>
-                                    <div class="termo-form-block__eyebrow">Contexto</div>
-                                    <h2 class="h5 mb-1">Evento, oficios e roteiro</h2>
-                                    <p class="text-muted small mb-0">Esse bloco alimenta o consolidado do termo. O formulario continua editavel, mas tenta preencher tudo automaticamente.</p>
-                                </div>
+                    <div class="row g-3">
+                        <div class="col-lg-4">
+                            <label class="form-label">Evento (opcional)</label>
+                            {{ form.evento }}
+                            {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-lg-4">
+                            <label class="form-label">Roteiro (opcional)</label>
+                            {{ form.roteiro }}
+                            <div class="form-text">Sugestao automatica quando ha roteiro unico coerente.</div>
+                            {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="termo-compact-item termo-compact-item--highlight">
+                                <span class="termo-compact-item__label">Modelo inferido</span>
+                                <strong data-inference-modelo>{{ preview_payload.modo_label }}</strong>
                             </div>
-
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="form-label">Evento (opcional)</label>
-                                    {{ form.evento }}
-                                    {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
-                                </div>
-                                <div class="col-md-8">
-                                    <label class="form-label">Oficios (opcional)</label>
-                                    {{ form.oficios }}
-                                    <div class="form-text">Selecione um ou mais oficios. O sistema agrega viajantes, viaturas, datas e destinos sem repetir informacao.</div>
-                                    {% if form.oficios.errors %}<div class="invalid-feedback d-block">{{ form.oficios.errors.0 }}</div>{% endif %}
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Roteiro (opcional)</label>
-                                    {{ form.roteiro }}
-                                    <div class="form-text">Quando houver um unico roteiro coerente com o contexto, ele sera sugerido automaticamente.</div>
-                                    {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
-                                </div>
+                            <div class="termo-compact-item mt-2">
+                                <span class="termo-compact-item__label">Template</span>
+                                <strong data-inference-template>{{ preview_payload.template_name }}</strong>
                             </div>
-                        </section>
-
-                        <section class="termo-form-block mt-4">
-                            <div class="termo-form-block__header">
-                                <div>
-                                    <div class="termo-form-block__eyebrow">Dados consolidados</div>
-                                    <h2 class="h5 mb-1">Destino, periodo, servidores e viatura</h2>
-                                    <p class="text-muted small mb-0">Os campos abaixo recebem o consolidado do contexto, mas voce ainda pode complementar o que faltar.</p>
-                                </div>
+                            <div class="termo-compact-item mt-2">
+                                <span class="termo-compact-item__label">Termos previstos</span>
+                                <strong data-inference-estimativa>{{ preview_payload.estimativa_termos }}</strong>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Destino consolidado</label>
-                                    {{ form.destino }}
-                                    {% if form.destino.errors %}<div class="invalid-feedback d-block">{{ form.destino.errors.0 }}</div>{% endif %}
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Data inicial</label>
-                                    {{ form.data_evento }}
-                                    {% if form.data_evento.errors %}<div class="invalid-feedback d-block">{{ form.data_evento.errors.0 }}</div>{% endif %}
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Data final</label>
-                                    {{ form.data_evento_fim }}
-                                    {% if form.data_evento_fim.errors %}<div class="invalid-feedback d-block">{{ form.data_evento_fim.errors.0 }}</div>{% endif %}
-                                </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <label class="form-label">Oficios (opcional)</label>
+                            {{ form.oficios }}
+                            <div class="form-text">Clique nos itens para marcar ou desmarcar. Nao precisa usar Ctrl/Shift.</div>
+                            {% if form.oficios.errors %}<div class="invalid-feedback d-block">{{ form.oficios.errors.0 }}</div>{% endif %}
+                            <div class="termo-context-selected mt-2">
+                                <div class="termo-selection-list" data-oficios-selection-list></div>
+                                <div class="text-muted small" data-oficios-empty-text>Nenhum oficio selecionado.</div>
                             </div>
+                        </div>
+                    </div>
+                </section>
 
-                            <div class="row g-3 mt-1">
-                                <div class="col-lg-7">
-                                    <div class="termo-form-subsection">
-                                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-                                            <div>
-                                                <h3 class="h6 mb-1">Servidores</h3>
-                                                <p class="text-muted small mb-0">Autopreenchidos a partir do contexto e ajustaveis com o autocomplete de Oficios.</p>
-                                            </div>
-                                            <span class="badge text-bg-secondary" data-count-badge-travelers>0</span>
-                                        </div>
-                                        <div class="position-relative termo-autocomplete" data-search-url="{{ buscar_viajantes_url }}" data-type="traveler">
-                                            {% if show_viajantes_selector %}
-                                            <input type="text" class="form-control termo-autocomplete-input" placeholder="Digite nome, RG ou CPF" autocomplete="off">
-                                            <div class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none termo-autocomplete-results"></div>
-                                            {% endif %}
-                                            <div class="termo-selection-panel mt-3" data-selection-panel>
-                                                <div class="termo-selection-list termo-selection-list--multi" data-selection-list></div>
-                                                <div class="text-muted small" data-empty-text>Nenhum servidor consolidado ate agora.</div>
-                                            </div>
-                                        </div>
-                                        {% if 'viajantes_ids' in form.fields and form.viajantes_ids.errors %}<div class="invalid-feedback d-block">{{ form.viajantes_ids.errors.0 }}</div>{% endif %}
+                <section class="termo-form-block mt-3">
+                    <div class="termo-form-block__header">
+                        <div>
+                            <div class="termo-form-block__eyebrow">Consolidado</div>
+                            <h2 class="h5 mb-1">Dados essenciais</h2>
+                        </div>
+                    </div>
+
+                    <div class="termo-compact-strip mb-3">
+                        <div class="termo-compact-item">
+                            <span class="termo-compact-item__label">Periodo</span>
+                            <span data-compact-periodo>{{ preview_payload.periodo_display|default:'-' }}</span>
+                        </div>
+                        <div class="termo-compact-item">
+                            <span class="termo-compact-item__label">Destinos</span>
+                            <span data-compact-destinos>{% if preview_payload.destinos %}{{ preview_payload.destinos|join:', ' }}{% else %}-{% endif %}</span>
+                        </div>
+                        <div class="termo-compact-item">
+                            <span class="termo-compact-item__label">Servidores</span>
+                            <span data-compact-servidores>{{ preview_payload.total_viajantes }}</span>
+                        </div>
+                        <div class="termo-compact-item">
+                            <span class="termo-compact-item__label">Viaturas</span>
+                            <span data-compact-viaturas>{{ preview_payload.total_viaturas }}</span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Destino consolidado</label>
+                            {{ form.destino }}
+                            {% if form.destino.errors %}<div class="invalid-feedback d-block">{{ form.destino.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Data inicial</label>
+                            {{ form.data_evento }}
+                            {% if form.data_evento.errors %}<div class="invalid-feedback d-block">{{ form.data_evento.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Data final</label>
+                            {{ form.data_evento_fim }}
+                            {% if form.data_evento_fim.errors %}<div class="invalid-feedback d-block">{{ form.data_evento_fim.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-lg-7">
+                            <div class="termo-form-subsection">
+                                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                    <div>
+                                        <h3 class="h6 mb-1">Servidores</h3>
+                                        <p class="text-muted small mb-0">Consolidado automatico com possibilidade de ajuste fino.</p>
+                                    </div>
+                                    <span class="badge text-bg-secondary" data-count-badge-travelers>0</span>
+                                </div>
+                                <div class="position-relative termo-autocomplete" data-search-url="{{ buscar_viajantes_url }}" data-type="traveler">
+                                    {% if show_viajantes_selector %}
+                                    <input type="text" class="form-control termo-autocomplete-input" placeholder="Digite nome, RG ou CPF" autocomplete="off">
+                                    <div class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none termo-autocomplete-results"></div>
+                                    {% endif %}
+                                    <div class="termo-selection-panel mt-3" data-selection-panel>
+                                        <div class="termo-selection-list termo-selection-list--multi" data-selection-list></div>
+                                        <div class="text-muted small" data-empty-text>Nenhum servidor consolidado ate agora.</div>
                                     </div>
                                 </div>
-                                <div class="col-lg-5">
-                                    <div class="termo-form-subsection">
-                                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-                                            <div>
-                                                <h3 class="h6 mb-1">Viatura efetiva</h3>
-                                                <p class="text-muted small mb-0">Se houver uma unica viatura consolidada, ela ja entra no termo. Com mais de uma, voce escolhe qual aplicar.</p>
-                                            </div>
-                                        </div>
-                                        <div class="position-relative termo-autocomplete" data-search-url="{{ buscar_veiculos_url }}" data-type="vehicle">
-                                            {% if show_veiculo_selector %}
-                                            <input type="text" class="form-control termo-autocomplete-input" placeholder="Digite placa ou modelo" autocomplete="off">
-                                            <div class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none termo-autocomplete-results"></div>
-                                            {% endif %}
-                                            <div class="termo-selection-panel mt-3" data-selection-panel>
-                                                <div class="termo-selection-list" data-selection-list></div>
-                                                <div class="text-muted small" data-empty-text>Nenhuma viatura aplicada ao termo.</div>
-                                            </div>
-                                        </div>
-                                        {% if 'veiculo_id' in form.fields and form.veiculo_id.errors %}<div class="invalid-feedback d-block">{{ form.veiculo_id.errors.0 }}</div>{% endif %}
+                                {% if 'viajantes_ids' in form.fields and form.viajantes_ids.errors %}<div class="invalid-feedback d-block">{{ form.viajantes_ids.errors.0 }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-lg-5">
+                            <div class="termo-form-subsection">
+                                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                    <div>
+                                        <h3 class="h6 mb-1">Viatura efetiva</h3>
+                                        <p class="text-muted small mb-0">Quando houver uma unica viatura, ela ja entra no termo automaticamente.</p>
                                     </div>
                                 </div>
+                                <div class="position-relative termo-autocomplete" data-search-url="{{ buscar_veiculos_url }}" data-type="vehicle">
+                                    {% if show_veiculo_selector %}
+                                    <input type="text" class="form-control termo-autocomplete-input" placeholder="Digite placa ou modelo" autocomplete="off">
+                                    <div class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none termo-autocomplete-results"></div>
+                                    {% endif %}
+                                    <div class="termo-selection-panel mt-3" data-selection-panel>
+                                        <div class="termo-selection-list" data-selection-list></div>
+                                        <div class="text-muted small" data-empty-text>Nenhuma viatura aplicada ao termo.</div>
+                                    </div>
+                                </div>
+                                {% if 'veiculo_id' in form.fields and form.veiculo_id.errors %}<div class="invalid-feedback d-block">{{ form.veiculo_id.errors.0 }}</div>{% endif %}
                             </div>
-                        </section>
-
-                        <section class="termo-form-block mt-4">
-                            <div class="termo-form-block__header">
-                                <div>
-                                    <div class="termo-form-block__eyebrow">Resultado previsto</div>
-                                    <h2 class="h5 mb-1">Resumo rapido antes de gerar</h2>
-                                    <p class="text-muted small mb-0">Sem perguntar modo de criacao. O proprio sistema define o template conforme o consolidado efetivo.</p>
-                                </div>
-                            </div>
-                            <div class="termo-inline-summary" data-inline-summary>
-                                <div class="termo-inline-summary__item">
-                                    <span class="termo-inline-summary__label">Modelo inferido</span>
-                                    <strong data-summary-modelo>{{ preview_payload.modo_label }}</strong>
-                                </div>
-                                <div class="termo-inline-summary__item">
-                                    <span class="termo-inline-summary__label">Template</span>
-                                    <strong data-summary-template>{{ preview_payload.template_name }}</strong>
-                                </div>
-                                <div class="termo-inline-summary__item">
-                                    <span class="termo-inline-summary__label">Termos previstos</span>
-                                    <strong data-summary-estimativa>{{ preview_payload.estimativa_termos }}</strong>
-                                </div>
-                            </div>
-                        </section>
-
-                        {% if read_only_context %}
-                        <div class="alert alert-light border mt-4 mb-0">
-                            O servidor e a viatura deste registro continuam vinculados ao termo atual. Esta edicao atualiza o contexto e os campos consolidados sem reabrir o lote de geracao.
                         </div>
-                        {% endif %}
+                    </div>
+                </section>
 
-                        <div class="form-actions mt-4">
-                            <button type="submit" class="btn btn-primary">{% if object %}Salvar alteracoes{% else %}Gerar termo{% endif %}</button>
-                            {% if object %}
-                            <a href="{% url 'eventos:documentos-termos-detalhe' object.pk %}" class="btn btn-outline-secondary">Ver detalhe</a>
-                            {% endif %}
-                        </div>
-                    </form>
+                {% if read_only_context %}
+                <div class="alert alert-light border mt-3 mb-0">
+                    O servidor e a viatura deste registro continuam vinculados ao termo atual. Esta edicao atualiza o contexto e os campos consolidados sem reabrir o lote de geracao.
                 </div>
-            </div>
-        </div>
+                {% endif %}
 
-        <div class="col-xl-4">
-            <div class="card termo-side-card termo-side-card--sticky">
-                <div class="card-body">
-                    <div class="small text-muted text-uppercase mb-2">Quick report</div>
-                    <h2 class="h5 mb-3">Resumo consolidado</h2>
-
-                    <div class="termo-summary-list">
-                        <div class="termo-summary-row">
-                            <span class="termo-summary-row__label">Evento</span>
-                            <span class="termo-summary-row__value" data-summary-evento>{% if preview_payload.evento %}{{ preview_payload.evento.label }}{% else %}-{% endif %}</span>
-                        </div>
-                        <div class="termo-summary-row">
-                            <span class="termo-summary-row__label">Oficios</span>
-                            <span class="termo-summary-row__value" data-summary-oficios>{% if preview_payload.oficios %}{{ preview_payload.oficios|length }} selecionado(s){% else %}-{% endif %}</span>
-                        </div>
-                        <div class="termo-summary-row">
-                            <span class="termo-summary-row__label">Roteiro</span>
-                            <span class="termo-summary-row__value" data-summary-roteiro>{% if preview_payload.roteiro %}{{ preview_payload.roteiro.label }}{% else %}-{% endif %}</span>
-                        </div>
-                        <div class="termo-summary-row">
-                            <span class="termo-summary-row__label">Periodo</span>
-                            <span class="termo-summary-row__value" data-summary-periodo>{{ preview_payload.periodo_display|default:'-' }}</span>
-                        </div>
-                        <div class="termo-summary-row">
-                            <span class="termo-summary-row__label">Destinos</span>
-                            <span class="termo-summary-row__value" data-summary-destinos>{% if preview_payload.destinos %}{{ preview_payload.destinos|join:', ' }}{% else %}-{% endif %}</span>
-                        </div>
-                        <div class="termo-summary-row">
-                            <span class="termo-summary-row__label">Servidores</span>
-                            <span class="termo-summary-row__value" data-summary-servidores>{{ preview_payload.total_viajantes }}</span>
-                        </div>
-                        <div class="termo-summary-row">
-                            <span class="termo-summary-row__label">Viaturas</span>
-                            <span class="termo-summary-row__value" data-summary-viaturas>{{ preview_payload.total_viaturas }}</span>
-                        </div>
-                        <div class="termo-summary-row">
-                            <span class="termo-summary-row__label">Modelo</span>
-                            <span class="termo-summary-row__value" data-summary-modelo-side>{{ preview_payload.modo_label }}</span>
-                        </div>
-                        <div class="termo-summary-row">
-                            <span class="termo-summary-row__label">Template</span>
-                            <span class="termo-summary-row__value" data-summary-template-side>{{ preview_payload.template_name }}</span>
-                        </div>
-                        <div class="termo-summary-row">
-                            <span class="termo-summary-row__label">Termos previstos</span>
-                            <span class="termo-summary-row__value" data-summary-estimativa-side>{{ preview_payload.estimativa_termos }}</span>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <div class="termo-summary-mini">
-                        <div class="small text-muted text-uppercase mb-2">Servidores visiveis</div>
-                        <div class="termo-summary-tags" data-summary-traveler-tags></div>
-                    </div>
-
-                    <div class="termo-summary-mini mt-3">
-                        <div class="small text-muted text-uppercase mb-2">Viaturas encontradas</div>
-                        <div class="termo-summary-tags" data-summary-vehicle-tags></div>
-                    </div>
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">{% if object %}Salvar alteracoes{% else %}Gerar termo{% endif %}</button>
+                    {% if object %}
+                    <a href="{% url 'eventos:documentos-termos-detalhe' object.pk %}" class="btn btn-outline-secondary">Ver detalhe</a>
+                    {% endif %}
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>

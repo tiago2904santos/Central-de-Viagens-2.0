@@ -118,16 +118,20 @@ class TermoAutorizacaoModuleTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Novo termo')
         self.assertContains(response, 'Evento, oficios e roteiro')
+        self.assertContains(response, 'Dados essenciais')
         self.assertNotContains(response, 'Escolha o modo de criacao')
         self.assertNotContains(response, 'Texto complementar')
         self.assertNotContains(response, 'Observacoes')
+        self.assertNotContains(response, 'Resultado previsto')
+        self.assertNotContains(response, 'Resumo rapido antes de gerar')
+        self.assertNotContains(response, 'Quick report')
 
     def test_rotas_legadas_reaproveitam_formulario_unico(self):
         response = self.client.get(reverse('eventos:documentos-termos-novo-rapido'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Novo termo')
-        self.assertContains(response, 'Resumo consolidado')
+        self.assertContains(response, 'Dados essenciais')
 
     def test_preview_evento_puxa_datas_destinos_e_roteiro(self):
         response = self.client.get(
@@ -219,6 +223,37 @@ class TermoAutorizacaoModuleTest(TestCase):
             get_termo_autorizacao_template_path(termos[0].template_variant).name,
             'termo_autorizacao_automatico.docx',
         )
+
+    def test_novo_termo_com_multiplos_oficios_agrega_viajantes_sem_duplicar_e_persiste_m2m(self):
+        response = self.client.post(
+            reverse('eventos:documentos-termos-novo'),
+            {
+                'evento': str(self.evento.pk),
+                'oficios': [str(self.oficio_a.pk), str(self.oficio_b.pk)],
+                'roteiro': str(self.roteiro.pk),
+                'destino': '',
+                'data_evento': '',
+                'data_evento_fim': '',
+                'viajantes_ids': '',
+                'veiculo_id': '',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        termos = list(
+            TermoAutorizacao.objects.filter(modo_geracao=TermoAutorizacao.MODO_AUTOMATICO_COM_VIATURA).order_by('pk')
+        )
+        self.assertEqual(len(termos), 3)
+        self.assertEqual(
+            sorted(termo.viajante.nome for termo in termos),
+            ['SERVIDOR A', 'SERVIDOR B', 'SERVIDOR C'],
+        )
+        self.assertTrue(all(termo.oficio is None for termo in termos))
+        for termo in termos:
+            self.assertEqual(
+                sorted(termo.oficios.values_list('pk', flat=True)),
+                sorted([self.oficio_a.pk, self.oficio_b.pk]),
+            )
 
     def test_novo_termo_inferido_sem_viatura_gera_um_por_servidor(self):
         response = self.client.post(
