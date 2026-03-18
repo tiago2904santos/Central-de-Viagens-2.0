@@ -669,8 +669,6 @@ class TermoAutorizacao(models.Model):
     destino = models.CharField('Destino', max_length=255, blank=True, default='')
     data_evento = models.DateField('Data do evento', null=True, blank=True, db_index=True)
     data_evento_fim = models.DateField('Data final do evento', null=True, blank=True)
-    texto_complementar = models.TextField('Texto complementar', blank=True, default='')
-    observacoes = models.TextField('Observacoes', blank=True, default='')
     servidor_nome = models.CharField('Servidor (snapshot)', max_length=255, blank=True, default='')
     servidor_rg = models.CharField('RG (snapshot)', max_length=40, blank=True, default='')
     servidor_cpf = models.CharField('CPF (snapshot)', max_length=40, blank=True, default='')

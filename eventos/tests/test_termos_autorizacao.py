@@ -1,13 +1,21 @@
-from datetime import date
+from datetime import date, datetime, time
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from cadastros.models import Cargo, Cidade, CombustivelVeiculo, Estado, UnidadeLotacao, Viajante, Veiculo
-from eventos.models import Evento, Oficio, TermoAutorizacao
+from eventos.models import (
+    Evento,
+    EventoDestino,
+    Oficio,
+    OficioTrecho,
+    RoteiroEvento,
+    RoteiroEventoDestino,
+    TermoAutorizacao,
+)
 from eventos.services.documentos.renderer import get_termo_autorizacao_template_path
 
 
@@ -21,25 +29,12 @@ class TermoAutorizacaoModuleTest(TestCase):
         self.client.login(username='termos', password='termos123')
 
         self.estado = Estado.objects.create(codigo_ibge='41', nome='Parana', sigla='PR', ativo=True)
-        self.cidade = Cidade.objects.create(codigo_ibge='4106902', nome='Curitiba', estado=self.estado, ativo=True)
+        self.cidade_curitiba = Cidade.objects.create(codigo_ibge='4106902', nome='Curitiba', estado=self.estado, ativo=True)
+        self.cidade_londrina = Cidade.objects.create(codigo_ibge='4113700', nome='Londrina', estado=self.estado, ativo=True)
+        self.cidade_maringa = Cidade.objects.create(codigo_ibge='4115200', nome='Maringa', estado=self.estado, ativo=True)
         self.cargo = Cargo.objects.create(nome='AGENTE')
         self.unidade = UnidadeLotacao.objects.create(nome='UNIDADE TERMOS')
         self.combustivel = CombustivelVeiculo.objects.create(nome='GASOLINA', is_padrao=True)
-        self.evento = Evento.objects.create(
-            titulo='Evento Termos',
-            data_inicio=date(2026, 3, 18),
-            data_fim=date(2026, 3, 19),
-            cidade_base=self.cidade,
-            cidade_principal=self.cidade,
-            estado_principal=self.estado,
-        )
-        self.oficio = Oficio.objects.create(
-            evento=self.evento,
-            protocolo='123456789',
-            data_criacao=date(2026, 3, 10),
-            tipo_destino=Oficio.TIPO_DESTINO_INTERIOR,
-            status=Oficio.STATUS_RASCUNHO,
-        )
         self.veiculo = Veiculo.objects.create(
             placa='ABC1D23',
             modelo='SPIN',
@@ -47,9 +42,39 @@ class TermoAutorizacaoModuleTest(TestCase):
             tipo=Veiculo.TIPO_DESCARACTERIZADO,
             status=Veiculo.STATUS_FINALIZADO,
         )
+        self.evento = Evento.objects.create(
+            titulo='Evento Termos',
+            data_inicio=date(2026, 3, 18),
+            data_fim=date(2026, 3, 19),
+            cidade_base=self.cidade_curitiba,
+            cidade_principal=self.cidade_curitiba,
+            estado_principal=self.estado,
+            veiculo=self.veiculo,
+        )
+        EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade_londrina, ordem=0)
+        EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade_maringa, ordem=1)
+
+        self.roteiro = RoteiroEvento.objects.create(
+            evento=self.evento,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_curitiba,
+            saida_dt=timezone.make_aware(datetime(2026, 3, 18, 7, 30)),
+            chegada_dt=timezone.make_aware(datetime(2026, 3, 18, 10, 0)),
+            retorno_saida_dt=timezone.make_aware(datetime(2026, 3, 19, 17, 0)),
+            retorno_chegada_dt=timezone.make_aware(datetime(2026, 3, 19, 21, 0)),
+            tipo=RoteiroEvento.TIPO_EVENTO,
+            status=RoteiroEvento.STATUS_FINALIZADO,
+        )
+        RoteiroEventoDestino.objects.create(roteiro=self.roteiro, estado=self.estado, cidade=self.cidade_londrina, ordem=0)
+        RoteiroEventoDestino.objects.create(roteiro=self.roteiro, estado=self.estado, cidade=self.cidade_maringa, ordem=1)
+
         self.viajante_a = self._criar_viajante('Servidor A', '1234567')
         self.viajante_b = self._criar_viajante('Servidor B', '2345678')
         self.viajante_c = self._criar_viajante('Servidor C', '3456789')
+
+        self.oficio_a = self._criar_oficio('123456789', self.veiculo, [self.viajante_a, self.viajante_b])
+        self.oficio_b = self._criar_oficio('987654321', self.veiculo, [self.viajante_b, self.viajante_c])
+        self.oficio_sem_viatura = self._criar_oficio('555444333', None, [self.viajante_a, self.viajante_c])
 
     def _criar_viajante(self, nome, rg):
         return Viajante.objects.create(
@@ -62,67 +87,131 @@ class TermoAutorizacaoModuleTest(TestCase):
             rg=rg,
         )
 
-    def test_lista_de_termos_renderiza_no_novo_padrao(self):
-        termo = TermoAutorizacao.objects.create(
+    def _criar_oficio(self, protocolo, veiculo, viajantes):
+        oficio = Oficio.objects.create(
             evento=self.evento,
-            oficio=self.oficio,
-            modo_geracao=TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA,
-            viajante=self.viajante_a,
-            destino='Curitiba/PR',
-            data_evento=date(2026, 3, 18),
+            roteiro_evento=self.roteiro,
+            protocolo=protocolo,
+            data_criacao=date(2026, 3, 10),
+            tipo_destino=Oficio.TIPO_DESTINO_INTERIOR,
+            status=Oficio.STATUS_RASCUNHO,
+            veiculo=veiculo,
         )
+        oficio.viajantes.set(viajantes)
+        OficioTrecho.objects.create(
+            oficio=oficio,
+            ordem=0,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_curitiba,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_londrina,
+            saida_data=date(2026, 3, 18),
+            saida_hora=time(7, 30),
+            chegada_data=date(2026, 3, 18),
+            chegada_hora=time(10, 0),
+        )
+        return oficio
 
-        response = self.client.get(reverse('eventos:documentos-termos'))
+    def test_novo_termo_abre_direto_no_formulario(self):
+        response = self.client.get(reverse('eventos:documentos-termos-novo'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Lista de termos')
-        self.assertContains(response, 'oficio-process-card')
-        self.assertContains(response, termo.numero_formatado)
         self.assertContains(response, 'Novo termo')
+        self.assertContains(response, 'Evento, oficios e roteiro')
+        self.assertNotContains(response, 'Escolha o modo de criacao')
+        self.assertNotContains(response, 'Texto complementar')
+        self.assertNotContains(response, 'Observacoes')
 
-    def test_cria_termo_rapido_e_usa_template_base(self):
+    def test_rotas_legadas_reaproveitam_formulario_unico(self):
+        response = self.client.get(reverse('eventos:documentos-termos-novo-rapido'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Novo termo')
+        self.assertContains(response, 'Resumo consolidado')
+
+    def test_preview_evento_puxa_datas_destinos_e_roteiro(self):
+        response = self.client.get(
+            reverse('eventos:documentos-termos-preview'),
+            {'evento': self.evento.pk},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['data_evento'], '2026-03-18')
+        self.assertEqual(payload['data_evento_fim'], '2026-03-19')
+        self.assertEqual(payload['destinos'], ['Londrina/PR', 'Maringa/PR'])
+        self.assertEqual(payload['roteiro']['id'], self.roteiro.pk)
+
+    def test_preview_um_oficio_puxa_servidores_viaturas_datas_destinos_e_roteiro(self):
+        response = self.client.get(
+            reverse('eventos:documentos-termos-preview'),
+            [('oficios', self.oficio_a.pk)],
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['total_viajantes'], 2)
+        self.assertEqual(payload['total_viaturas'], 1)
+        self.assertEqual(payload['destinos'], ['Londrina/PR'])
+        self.assertEqual(payload['roteiro']['id'], self.roteiro.pk)
+
+    def test_preview_multiplos_oficios_agrega_sem_duplicar(self):
+        response = self.client.get(
+            reverse('eventos:documentos-termos-preview'),
+            [('oficios', self.oficio_a.pk), ('oficios', self.oficio_b.pk)],
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['total_viajantes'], 3)
+        self.assertEqual(payload['total_viaturas'], 1)
+        self.assertEqual(payload['destinos'], ['Londrina/PR'])
+        self.assertEqual(sorted(item['nome'] for item in payload['viajantes']), ['SERVIDOR A', 'SERVIDOR B', 'SERVIDOR C'])
+
+    def test_novo_termo_simples_inferido_sem_campos_removidos(self):
         response = self.client.post(
-            reverse('eventos:documentos-termos-novo-rapido'),
+            reverse('eventos:documentos-termos-novo'),
             {
-                'evento': str(self.evento.pk),
-                'oficio': str(self.oficio.pk),
+                'evento': '',
+                'oficios': [],
                 'roteiro': '',
-                'destino': 'Londrina/PR',
-                'data_evento': '2026-03-18',
-                'data_evento_fim': '2026-03-18',
-                'texto_complementar': 'Texto rapido',
-                'observacoes': 'Obs',
+                'destino': 'Foz do Iguacu/PR',
+                'data_evento': '2026-03-20',
+                'data_evento_fim': '2026-03-20',
+                'viajantes_ids': '',
+                'veiculo_id': '',
             },
         )
 
         self.assertEqual(response.status_code, 302)
         termo = TermoAutorizacao.objects.get(modo_geracao=TermoAutorizacao.MODO_RAPIDO)
-        self.assertEqual(termo.destino, 'Londrina/PR')
-        self.assertEqual(termo.data_evento, date(2026, 3, 18))
+        self.assertEqual(termo.destino, 'Foz do Iguacu/PR')
+        self.assertFalse(hasattr(termo, 'texto_complementar'))
+        self.assertFalse(hasattr(termo, 'observacoes'))
         self.assertEqual(
             get_termo_autorizacao_template_path(termo.template_variant).name,
             'termo_autorizacao.docx',
         )
 
-    def test_cria_termos_automaticos_com_viatura_um_por_servidor(self):
+    def test_novo_termo_inferido_com_viatura_gera_um_por_servidor(self):
         response = self.client.post(
-            reverse('eventos:documentos-termos-novo-automatico-com-viatura'),
+            reverse('eventos:documentos-termos-novo'),
             {
                 'evento': str(self.evento.pk),
-                'oficio': str(self.oficio.pk),
-                'roteiro': '',
-                'destino': 'Maringa/PR',
-                'data_evento': '2026-03-18',
-                'data_evento_fim': '2026-03-19',
-                'texto_complementar': '',
-                'observacoes': '',
-                'veiculo_id': str(self.veiculo.pk),
-                'viajantes_ids': f'{self.viajante_a.pk},{self.viajante_b.pk}',
+                'oficios': [str(self.oficio_a.pk)],
+                'roteiro': str(self.roteiro.pk),
+                'destino': '',
+                'data_evento': '',
+                'data_evento_fim': '',
+                'viajantes_ids': '',
+                'veiculo_id': '',
             },
         )
 
         self.assertEqual(response.status_code, 302)
-        termos = list(TermoAutorizacao.objects.filter(modo_geracao=TermoAutorizacao.MODO_AUTOMATICO_COM_VIATURA).order_by('pk'))
+        termos = list(
+            TermoAutorizacao.objects.filter(modo_geracao=TermoAutorizacao.MODO_AUTOMATICO_COM_VIATURA).order_by('pk')
+        )
         self.assertEqual(len(termos), 2)
         self.assertTrue(all(termo.veiculo_id == self.veiculo.pk for termo in termos))
         self.assertEqual(len({termo.lote_uuid for termo in termos}), 1)
@@ -131,60 +220,63 @@ class TermoAutorizacaoModuleTest(TestCase):
             'termo_autorizacao_automatico.docx',
         )
 
-    def test_cria_termos_automaticos_sem_viatura_um_por_servidor(self):
+    def test_novo_termo_inferido_sem_viatura_gera_um_por_servidor(self):
         response = self.client.post(
-            reverse('eventos:documentos-termos-novo-automatico-sem-viatura'),
+            reverse('eventos:documentos-termos-novo'),
             {
-                'evento': str(self.evento.pk),
-                'oficio': '',
-                'roteiro': '',
-                'destino': 'Foz do Iguacu/PR',
-                'data_evento': '2026-03-18',
-                'data_evento_fim': '2026-03-19',
-                'texto_complementar': '',
-                'observacoes': '',
-                'viajantes_ids': f'{self.viajante_a.pk},{self.viajante_b.pk},{self.viajante_c.pk}',
+                'evento': '',
+                'oficios': [str(self.oficio_sem_viatura.pk)],
+                'roteiro': str(self.roteiro.pk),
+                'destino': '',
+                'data_evento': '',
+                'data_evento_fim': '',
+                'viajantes_ids': '',
+                'veiculo_id': '',
             },
         )
 
         self.assertEqual(response.status_code, 302)
-        termos = list(TermoAutorizacao.objects.filter(modo_geracao=TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA).order_by('pk'))
-        self.assertEqual(len(termos), 3)
+        termos = list(
+            TermoAutorizacao.objects.filter(modo_geracao=TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA).order_by('pk')
+        )
+        self.assertEqual(len(termos), 2)
         self.assertTrue(all(not termo.veiculo_id for termo in termos))
         self.assertEqual(
             get_termo_autorizacao_template_path(termos[0].template_variant).name,
             'termo_autorizacao_automatico_sem_viatura.docx',
         )
 
-    def test_autocomplete_de_viajantes_funciona(self):
-        response = self.client.get(reverse('eventos:oficio-step1-viajantes-api'), {'q': 'Servidor'})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'SERVIDOR A')
-        self.assertContains(response, 'SERVIDOR B')
-
-    def test_autocomplete_de_viatura_funciona(self):
-        response = self.client.get(reverse('eventos:oficio-step2-veiculos-busca-api'), {'q': 'ABC'})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'ABC1D23')
-        self.assertContains(response, 'SPIN')
-
-    def test_validacao_nao_mistura_modo_sem_viatura_com_veiculo(self):
-        termo = TermoAutorizacao(
-            modo_geracao=TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA,
+    def test_lista_renderiza_card_compacto(self):
+        TermoAutorizacao.objects.create(
+            evento=self.evento,
+            oficio=self.oficio_a,
+            viajante=self.viajante_a,
             destino='Curitiba/PR',
             data_evento=date(2026, 3, 18),
-            veiculo=self.veiculo,
-            servidor_nome='Servidor X',
         )
-        with self.assertRaises(ValidationError):
-            termo.full_clean()
+
+        response = self.client.get(reverse('eventos:documentos-termos'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'termo-list-card')
+        self.assertContains(response, 'Modelo')
+        self.assertNotContains(response, 'oficio-document-card')
+
+    def test_autocomplete_de_viajantes_e_viaturas_funciona(self):
+        response_viajantes = self.client.get(reverse('eventos:oficio-step1-viajantes-api'), {'q': 'Servidor'})
+        response_viaturas = self.client.get(reverse('eventos:oficio-step2-veiculos-busca-api'), {'q': 'ABC'})
+
+        self.assertEqual(response_viajantes.status_code, 200)
+        self.assertContains(response_viajantes, 'SERVIDOR A')
+        self.assertEqual(response_viaturas.status_code, 200)
+        self.assertContains(response_viaturas, 'ABC1D23')
 
     def test_downloads_dos_termos_continuam_funcionando(self):
         termo = TermoAutorizacao.objects.create(
             evento=self.evento,
-            oficio=self.oficio,
-            modo_geracao=TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA,
+            oficio=self.oficio_a,
             viajante=self.viajante_a,
+            veiculo=self.veiculo,
             destino='Curitiba/PR',
             data_evento=date(2026, 3, 18),
         )

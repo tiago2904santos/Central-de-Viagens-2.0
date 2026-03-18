@@ -31,7 +31,7 @@
 
                 <div class="oficio-process-card__meta">
                     <div class="oficio-process-meta-item">
-                        <span class="oficio-process-meta-label">Modo</span>
+                        <span class="oficio-process-meta-label">Modelo</span>
                         <span class="oficio-process-meta-value">{{ mode_meta.label }}</span>
                     </div>
                     <div class="oficio-process-meta-item">
@@ -54,25 +54,11 @@
                         <span class="oficio-process-meta-label">Ultima geracao</span>
                         <span class="oficio-process-meta-value">{{ object.ultima_geracao_em|date:"d/m/Y H:i"|default:"Ainda nao gerado" }}</span>
                     </div>
-                </div>
-
-                {% if object.texto_complementar %}
-                <div class="card mt-3">
-                    <div class="card-body">
-                        <div class="small text-muted text-uppercase mb-2">Texto complementar</div>
-                        <div>{{ object.texto_complementar|linebreaksbr }}</div>
+                    <div class="oficio-process-meta-item">
+                        <span class="oficio-process-meta-label">Oficios</span>
+                        <span class="oficio-process-meta-value">{{ object.oficios_relacionados_display|default:"-" }}</span>
                     </div>
                 </div>
-                {% endif %}
-
-                {% if object.observacoes %}
-                <div class="card mt-3">
-                    <div class="card-body">
-                        <div class="small text-muted text-uppercase mb-2">Observacoes</div>
-                        <div>{{ object.observacoes|linebreaksbr }}</div>
-                    </div>
-                </div>
-                {% endif %}
             </article>
         </div>
 
@@ -97,6 +83,17 @@
                         </div>
                     </div>
                     {% endif %}
+                    {% endif %}
+                    {% if related_oficios %}
+                    <hr>
+                    <div class="small text-muted text-uppercase mb-2">Oficios relacionados</div>
+                    <div class="list-group list-group-flush">
+                        {% for oficio in related_oficios %}
+                        <div class="list-group-item px-0">
+                            Oficio {{ oficio.numero_formatado|default:oficio.pk }}
+                        </div>
+                        {% endfor %}
+                    </div>
                     {% endif %}
                 </div>
             </div>

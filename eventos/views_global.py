@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Count, Prefetch, Q
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -16,10 +16,8 @@ from django.views.decorators.http import require_http_methods
 from .forms import (
     OrdemServicoForm,
     PlanoTrabalhoForm,
-    TermoAutorizacaoAutomaticoComViaturaForm,
-    TermoAutorizacaoAutomaticoSemViaturaForm,
     TermoAutorizacaoEdicaoForm,
-    TermoAutorizacaoRapidoForm,
+    TermoAutorizacaoForm,
 )
 from .models import (
     Evento,
@@ -47,6 +45,7 @@ from .services.documentos.renderer import (
 from .services.documentos.ordem_servico import render_ordem_servico_docx, render_ordem_servico_model_docx
 from .services.documentos.plano_trabalho import render_plano_trabalho_docx, render_plano_trabalho_model_docx
 from .services.documentos.termo_autorizacao import render_saved_termo_autorizacao_docx
+from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
 
@@ -89,6 +88,21 @@ TERMO_STATUS_CARD_META = {
 
 def _clean(value):
     return str(value or '').strip()
+
+
+def _parse_int_list(values):
+    items = []
+    seen = set()
+    for value in values or []:
+        item = str(value or '').strip()
+        if not item.isdigit():
+            continue
+        number = int(item)
+        if number in seen:
+            continue
+        seen.add(number)
+        items.append(number)
+    return items
 
 
 def _full_route_name(request):
@@ -1084,19 +1098,19 @@ def simulacao_diarias_global(request):
 
 TERMO_MODO_META = {
     TermoAutorizacao.MODO_RAPIDO: {
-        'label': 'Termo rapido',
-        'description': 'Formulario enxuto para gerar um termo manual usando o modelo base.',
-        'template_name': 'termo_autorizacao.docx',
+        'label': 'Termo simples',
+        'description': 'Usado quando o contexto nao traz base suficiente para gerar um termo por servidor.',
+        'template_name': TERMO_TEMPLATE_NAMES[TermoAutorizacao.MODO_RAPIDO],
     },
     TermoAutorizacao.MODO_AUTOMATICO_COM_VIATURA: {
         'label': 'Automatico com viatura',
-        'description': 'Seleciona a viatura e gera um termo por servidor escolhido.',
-        'template_name': 'termo_autorizacao_automatico.docx',
+        'description': 'Usado quando ha servidores consolidados e uma viatura efetiva aplicada ao contexto.',
+        'template_name': TERMO_TEMPLATE_NAMES[TermoAutorizacao.MODO_AUTOMATICO_COM_VIATURA],
     },
     TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA: {
         'label': 'Automatico sem viatura',
-        'description': 'Seleciona apenas os servidores e gera um termo individual para cada um.',
-        'template_name': 'termo_autorizacao_automatico_sem_viatura.docx',
+        'description': 'Usado quando ha servidores consolidados, mas nenhuma viatura efetiva no termo.',
+        'template_name': TERMO_TEMPLATE_NAMES[TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA],
     },
 }
 
@@ -1131,7 +1145,10 @@ def _termo_context_display(termo):
     parts = []
     if termo.evento_id:
         parts.append((termo.evento.titulo or '').strip() or f'Evento #{termo.evento_id}')
-    if termo.oficio_id:
+    oficios_labels = (termo.oficios_relacionados_display or '').strip()
+    if oficios_labels:
+        parts.append(f'Oficios {oficios_labels}')
+    elif termo.oficio_id:
         parts.append(f'Oficio {termo.oficio.numero_formatado}')
     elif termo.roteiro_id:
         parts.append(f'Roteiro #{termo.roteiro_id}')
@@ -1144,81 +1161,32 @@ def _build_saved_termo_filename(termo, formato):
     return f'termo_autorizacao_{termo.pk}_{base}.{ext}'
 
 
-def _build_termo_document_cards(termo):
-    status_key = 'available' if termo.status == TermoAutorizacao.STATUS_GERADO else 'pending'
-    status_meta = _document_card_status_meta(status_key, STATUS_LABELS.get(status_key, 'Pendente'))
-    mode_meta = _termo_mode_meta(termo.modo_geracao)
-    return [
-        {
-            'key': 'termo',
-            'title': 'Termo de autorizacao',
-            'status_key': status_key,
-            'status_label': status_meta['label'],
-            'status_css_class': status_meta['css_class'],
-            'detail': mode_meta['description'],
-            'summary_items': [
-                {'label': 'Modo', 'value': mode_meta['label']},
-                {'label': 'Servidor', 'value': termo.servidor_display or 'Nao informado'},
-                {'label': 'Viatura', 'value': termo.viatura_display or 'Sem viatura'},
-                {'label': 'Contexto', 'value': _termo_context_display(termo)},
-            ],
-            'edit_url': reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk}),
-            'actions': [
-                {'label': 'Ver', 'url': reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk}), 'available': True},
-                {'label': 'DOCX', 'url': reverse('eventos:documentos-termos-download', kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value}), 'available': True},
-                {'label': 'PDF', 'url': reverse('eventos:documentos-termos-download', kwargs={'pk': termo.pk, 'formato': DocumentoFormato.PDF.value}), 'available': True},
-            ],
-        }
-    ]
-
-
 def _build_termo_initial(preselected_event, preselected_oficio):
-    initial = {}
+    initial = {'oficios': []}
+    context = build_termo_context(
+        evento=preselected_event,
+        oficios=[preselected_oficio] if preselected_oficio else [],
+        roteiro=getattr(preselected_oficio, 'roteiro_evento', None) if preselected_oficio else None,
+    )
     if preselected_event:
         initial['evento'] = preselected_event.pk
-        initial['data_evento'] = preselected_event.data_inicio
-        initial['data_evento_fim'] = preselected_event.data_fim
-        destinos = [
-            _label_local(destino.cidade, destino.estado)
-            for destino in preselected_event.destinos.select_related('cidade', 'estado').order_by('ordem', 'id')
-        ]
-        destinos = [item for item in destinos if item and item != '-']
-        if destinos:
-            initial['destino'] = ', '.join(dict.fromkeys(destinos))
     if preselected_oficio:
-        initial['oficio'] = preselected_oficio.pk
-        if preselected_oficio.roteiro_evento_id:
-            initial['roteiro'] = preselected_oficio.roteiro_evento_id
-        if not initial.get('evento') and preselected_oficio.evento_id:
-            initial['evento'] = preselected_oficio.evento_id
-        if not initial.get('destino'):
-            initial['destino'] = _oficio_destinos_display(preselected_oficio)
-        if not initial.get('data_evento') and preselected_oficio.evento_id:
-            initial['data_evento'] = preselected_oficio.evento.data_inicio
-            initial['data_evento_fim'] = preselected_oficio.evento.data_fim
+        initial['oficios'] = [preselected_oficio.pk]
+    if context['roteiro']:
+        initial['roteiro'] = context['roteiro'].pk
+    if context['destino']:
+        initial['destino'] = context['destino']
+    if context['data_evento']:
+        initial['data_evento'] = context['data_evento']
+    if context['data_evento_fim']:
+        initial['data_evento_fim'] = context['data_evento_fim']
     return initial
-
-
-def _build_termo_selector_querystring(return_to, context_source, preselected_event, preselected_oficio):
-    params = {}
-    if return_to:
-        params['return_to'] = return_to
-    if context_source:
-        params['context_source'] = context_source
-    if preselected_event:
-        params['preselected_event_id'] = preselected_event.pk
-    if preselected_oficio:
-        params['preselected_oficio_id'] = preselected_oficio.pk
-    if not params:
-        return ''
-    return '?' + urlencode(params)
 
 
 def _render_termo_form(
     request,
     *,
     form,
-    modo_key,
     object_instance=None,
     return_to='',
     context_source='',
@@ -1228,36 +1196,71 @@ def _render_termo_form(
 ):
     selected_viajantes = []
     selected_veiculo_payload = None
+    selected_oficios_payload = []
+    preview_payload = getattr(form, 'preview_payload', None)
     if object_instance and object_instance.viajante_id:
         selected_viajantes = [object_instance.viajante]
+    elif hasattr(form, 'cleaned_viajantes') and form.cleaned_viajantes:
+        selected_viajantes = list(form.cleaned_viajantes)
     if object_instance and object_instance.veiculo_id:
         selected_veiculo_payload = serializar_veiculo_para_oficio(object_instance.veiculo)
         selected_veiculo_payload['id'] = object_instance.veiculo.pk
         selected_veiculo_payload['label'] = (
             f"{selected_veiculo_payload['placa_formatada']} - {selected_veiculo_payload['modelo']}"
         ).strip(' -')
+    elif hasattr(form, 'cleaned_veiculo') and form.cleaned_veiculo:
+        selected_veiculo_payload = serializar_veiculo_para_oficio(form.cleaned_veiculo)
+        selected_veiculo_payload['id'] = form.cleaned_veiculo.pk
+        selected_veiculo_payload['label'] = (
+            f"{selected_veiculo_payload['placa_formatada']} - {selected_veiculo_payload['modelo']}"
+        ).strip(' -')
+    if object_instance:
+        related_oficios = list(object_instance.oficios.all())
+        if not related_oficios and object_instance.oficio_id:
+            related_oficios = [object_instance.oficio]
+        selected_oficios_payload = [
+            {'id': oficio.pk, 'label': f'Oficio {oficio.numero_formatado or f"#{oficio.pk}"}'}
+            for oficio in related_oficios
+        ]
+        if preview_payload is None:
+            preview_payload = build_termo_preview_payload(
+                build_termo_context(
+                    evento=object_instance.evento,
+                    oficios=related_oficios,
+                    roteiro=object_instance.roteiro,
+                ),
+                viajantes=selected_viajantes,
+                veiculo=object_instance.veiculo,
+            )
+    elif getattr(form, 'cleaned_oficios', None):
+        selected_oficios_payload = [
+            {'id': oficio.pk, 'label': f'Oficio {oficio.numero_formatado or f"#{oficio.pk}"}'}
+            for oficio in form.cleaned_oficios
+        ]
+    if preview_payload is None:
+        preview_payload = build_termo_preview_payload(build_termo_context())
     return render(
         request,
         'eventos/documentos/termos_form.html',
         {
             'form': form,
             'object': object_instance,
-            'mode_key': modo_key,
-            'mode_meta': _termo_mode_meta(modo_key),
             'return_to': return_to,
             'context_source': context_source,
             'preselected_event_id': preselected_event.pk if preselected_event else '',
             'preselected_oficio_id': preselected_oficio.pk if preselected_oficio else '',
             'buscar_viajantes_url': reverse('eventos:oficio-step1-viajantes-api'),
             'buscar_veiculos_url': reverse('eventos:oficio-step2-veiculos-busca-api'),
+            'preview_url': reverse('eventos:documentos-termos-preview'),
             'selected_viajantes_payload': [
                 serializar_viajante_para_autocomplete(viajante) for viajante in selected_viajantes
             ],
             'selected_veiculo_payload': selected_veiculo_payload,
+            'selected_oficios_payload': selected_oficios_payload,
+            'preview_payload': preview_payload,
             'read_only_context': read_only_context,
-            'show_viajantes_selector': object_instance is None and 'viajantes_ids' in form.fields,
-            'show_veiculo_selector': object_instance is None and 'veiculo_id' in form.fields,
-            'novo_selector_url': reverse('eventos:documentos-termos-novo'),
+            'show_viajantes_selector': object_instance is None,
+            'show_veiculo_selector': object_instance is None,
         },
     )
 
@@ -1295,7 +1298,7 @@ def documentos_hub(request):
         {
             'label': 'Termos',
             'count': TermoAutorizacao.objects.count(),
-            'description': 'Modulo documental com lista propria, criacao por modo e downloads por registro.',
+            'description': 'Modulo documental com formulario unico, contexto consolidado e downloads por registro.',
             'url': reverse('eventos:documentos-termos'),
         },
     ]
@@ -1313,32 +1316,58 @@ def documentos_hub(request):
     )
 
 
+def _load_termo_context_objects(evento_id='', oficio_ids=None, roteiro_id=''):
+    oficio_ids = [int(pk) for pk in (oficio_ids or []) if str(pk).isdigit()]
+    evento = None
+    roteiro = None
+    if str(evento_id).isdigit():
+        evento = Evento.objects.filter(pk=int(evento_id)).first()
+    if str(roteiro_id).isdigit():
+        roteiro = (
+            RoteiroEvento.objects.select_related('evento')
+            .prefetch_related('destinos__cidade', 'destinos__estado')
+            .filter(pk=int(roteiro_id))
+            .first()
+        )
+    oficios_qs = (
+        Oficio.objects.select_related('evento', 'roteiro_evento', 'veiculo')
+        .prefetch_related('viajantes', 'trechos__destino_cidade', 'trechos__destino_estado')
+        .filter(pk__in=oficio_ids)
+    )
+    oficios_map = {oficio.pk: oficio for oficio in oficios_qs}
+    oficios = [oficios_map[pk] for pk in oficio_ids if pk in oficios_map]
+    return evento, oficios, roteiro
+
+
 def termos_global(request):
     filters = _build_termo_filters(request)
-    queryset = TermoAutorizacao.objects.select_related(
-        'evento',
-        'oficio',
-        'roteiro',
-        'viajante',
-        'viajante__cargo',
-        'veiculo',
+    queryset = (
+        TermoAutorizacao.objects.select_related(
+            'evento',
+            'oficio',
+            'roteiro',
+            'viajante',
+            'viajante__cargo',
+            'veiculo',
+        )
+        .prefetch_related('oficios')
     )
     if filters['q']:
         queryset = queryset.filter(
             Q(destino__icontains=filters['q'])
-            | Q(texto_complementar__icontains=filters['q'])
-            | Q(observacoes__icontains=filters['q'])
             | Q(evento__titulo__icontains=filters['q'])
             | Q(oficio__protocolo__icontains=filters['q'])
+            | Q(oficios__protocolo__icontains=filters['q'])
             | Q(viajante__nome__icontains=filters['q'])
             | Q(servidor_nome__icontains=filters['q'])
             | Q(veiculo_modelo__icontains=filters['q'])
             | Q(veiculo_placa__icontains=filters['q'])
-        )
+        ).distinct()
     if filters['evento_id'].isdigit():
         queryset = queryset.filter(evento_id=int(filters['evento_id']))
     if filters['oficio_id'].isdigit():
-        queryset = queryset.filter(oficio_id=int(filters['oficio_id']))
+        oficio_id = int(filters['oficio_id'])
+        queryset = queryset.filter(Q(oficio_id=oficio_id) | Q(oficios__id=oficio_id)).distinct()
     if filters['status']:
         queryset = queryset.filter(status=filters['status'])
     if filters['modo_geracao']:
@@ -1350,14 +1379,21 @@ def termos_global(request):
         termo.process_status = _termo_status_meta(termo)
         termo.mode_meta = _termo_mode_meta(termo.modo_geracao)
         termo.context_display = _termo_context_display(termo)
+        termo.servidor_resumo = termo.servidor_display or 'Sem servidor'
+        termo.destino_resumo = termo.destino or '-'
+        termo.periodo_resumo = termo.periodo_display or '-'
         termo.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
-        termo.evento_titulo_display = (
-            (termo.evento.titulo or '').strip() if termo.evento_id else 'Termo avulso'
-        ) or 'Termo avulso'
         termo.detail_url = reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk})
         termo.edicao_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
         termo.excluir_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
-        termo.card_documents = _build_termo_document_cards(termo)
+        termo.download_docx_url = reverse(
+            'eventos:documentos-termos-download',
+            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value},
+        )
+        termo.download_pdf_url = reverse(
+            'eventos:documentos-termos-download',
+            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.PDF.value},
+        )
 
     return render(
         request,
@@ -1376,128 +1412,75 @@ def termos_global(request):
 
 
 @require_http_methods(['GET'])
+def termo_autorizacao_preview(request):
+    oficio_ids = _parse_int_list(request.GET.getlist('oficios'))
+    if not oficio_ids:
+        oficio_ids = _parse_int_list(_clean(request.GET.get('oficios_ids')).split(','))
+    evento, oficios, roteiro = _load_termo_context_objects(
+        evento_id=_clean(request.GET.get('evento')),
+        oficio_ids=oficio_ids,
+        roteiro_id=_clean(request.GET.get('roteiro')),
+    )
+    context = build_termo_context(evento=evento, oficios=oficios, roteiro=roteiro)
+    return JsonResponse(build_termo_preview_payload(context))
+
+
+@require_http_methods(['GET', 'POST'])
 def termo_autorizacao_novo(request):
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-termos'))
     context_source = _get_context_source(request)
     preselected_event, preselected_oficio = _resolve_preselected_context(request)
-    querystring = _build_termo_selector_querystring(
-        return_to,
-        context_source,
-        preselected_event,
-        preselected_oficio,
+    form = TermoAutorizacaoForm(
+        request.POST or None,
+        initial=_build_termo_initial(preselected_event, preselected_oficio),
     )
-    modos = [
-        {
-            'key': TermoAutorizacao.MODO_RAPIDO,
-            'label': TERMO_MODO_META[TermoAutorizacao.MODO_RAPIDO]['label'],
-            'description': TERMO_MODO_META[TermoAutorizacao.MODO_RAPIDO]['description'],
-            'template_name': TERMO_MODO_META[TermoAutorizacao.MODO_RAPIDO]['template_name'],
-            'url': reverse('eventos:documentos-termos-novo-rapido') + querystring,
-        },
-        {
-            'key': TermoAutorizacao.MODO_AUTOMATICO_COM_VIATURA,
-            'label': TERMO_MODO_META[TermoAutorizacao.MODO_AUTOMATICO_COM_VIATURA]['label'],
-            'description': TERMO_MODO_META[TermoAutorizacao.MODO_AUTOMATICO_COM_VIATURA]['description'],
-            'template_name': TERMO_MODO_META[TermoAutorizacao.MODO_AUTOMATICO_COM_VIATURA]['template_name'],
-            'url': reverse('eventos:documentos-termos-novo-automatico-com-viatura') + querystring,
-        },
-        {
-            'key': TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA,
-            'label': TERMO_MODO_META[TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA]['label'],
-            'description': TERMO_MODO_META[TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA]['description'],
-            'template_name': TERMO_MODO_META[TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA]['template_name'],
-            'url': reverse('eventos:documentos-termos-novo-automatico-sem-viatura') + querystring,
-        },
-    ]
-    return render(
+    if request.method == 'POST' and form.is_valid():
+        termos = form.save_terms(user=request.user)
+        primeiro_termo = termos[0]
+        mode_meta = _termo_mode_meta(primeiro_termo.modo_geracao)
+        messages.success(
+            request,
+            f'{len(termos)} termo(s) gerado(s) com modelo {mode_meta["label"].lower()}.',
+        )
+        if len(termos) == 1:
+            return redirect(return_to or reverse('eventos:documentos-termos-detalhe', kwargs={'pk': primeiro_termo.pk}))
+        return redirect(return_to or reverse('eventos:documentos-termos'))
+    return _render_termo_form(
         request,
-        'eventos/documentos/termos_selector.html',
-        {
-            'modos': modos,
-            'return_to': return_to,
-            'context_source': context_source,
-            'preselected_event': preselected_event,
-            'preselected_oficio': preselected_oficio,
-        },
+        form=form,
+        return_to=return_to,
+        context_source=context_source,
+        preselected_event=preselected_event,
+        preselected_oficio=preselected_oficio,
     )
 
 
 @require_http_methods(['GET', 'POST'])
 def termo_autorizacao_novo_rapido(request):
-    return_to = _get_safe_return_to(request, reverse('eventos:documentos-termos'))
-    context_source = _get_context_source(request)
-    preselected_event, preselected_oficio = _resolve_preselected_context(request)
-    form = TermoAutorizacaoRapidoForm(
-        request.POST or None,
-        initial=_build_termo_initial(preselected_event, preselected_oficio),
-    )
-    if request.method == 'POST' and form.is_valid():
-        obj = form.save_term(user=request.user)
-        messages.success(request, 'Termo rapido criado com sucesso.')
-        return redirect(return_to or reverse('eventos:documentos-termos-detalhe', kwargs={'pk': obj.pk}))
-    return _render_termo_form(
-        request,
-        form=form,
-        modo_key=TermoAutorizacao.MODO_RAPIDO,
-        return_to=return_to,
-        context_source=context_source,
-        preselected_event=preselected_event,
-        preselected_oficio=preselected_oficio,
-    )
+    return termo_autorizacao_novo(request)
 
 
 @require_http_methods(['GET', 'POST'])
 def termo_autorizacao_novo_automatico_com_viatura(request):
-    return_to = _get_safe_return_to(request, reverse('eventos:documentos-termos'))
-    context_source = _get_context_source(request)
-    preselected_event, preselected_oficio = _resolve_preselected_context(request)
-    form = TermoAutorizacaoAutomaticoComViaturaForm(
-        request.POST or None,
-        initial=_build_termo_initial(preselected_event, preselected_oficio),
-    )
-    if request.method == 'POST' and form.is_valid():
-        termos = form.save_batch(user=request.user)
-        messages.success(request, f'{len(termos)} termo(s) gerado(s) com viatura.')
-        return redirect(return_to or reverse('eventos:documentos-termos'))
-    return _render_termo_form(
-        request,
-        form=form,
-        modo_key=TermoAutorizacao.MODO_AUTOMATICO_COM_VIATURA,
-        return_to=return_to,
-        context_source=context_source,
-        preselected_event=preselected_event,
-        preselected_oficio=preselected_oficio,
-    )
+    return termo_autorizacao_novo(request)
 
 
 @require_http_methods(['GET', 'POST'])
 def termo_autorizacao_novo_automatico_sem_viatura(request):
-    return_to = _get_safe_return_to(request, reverse('eventos:documentos-termos'))
-    context_source = _get_context_source(request)
-    preselected_event, preselected_oficio = _resolve_preselected_context(request)
-    form = TermoAutorizacaoAutomaticoSemViaturaForm(
-        request.POST or None,
-        initial=_build_termo_initial(preselected_event, preselected_oficio),
-    )
-    if request.method == 'POST' and form.is_valid():
-        termos = form.save_batch(user=request.user)
-        messages.success(request, f'{len(termos)} termo(s) gerado(s) sem viatura.')
-        return redirect(return_to or reverse('eventos:documentos-termos'))
-    return _render_termo_form(
-        request,
-        form=form,
-        modo_key=TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA,
-        return_to=return_to,
-        context_source=context_source,
-        preselected_event=preselected_event,
-        preselected_oficio=preselected_oficio,
-    )
+    return termo_autorizacao_novo(request)
 
 
 @require_http_methods(['GET'])
 def termo_autorizacao_detalhe(request, pk):
     obj = get_object_or_404(
-        TermoAutorizacao.objects.select_related('evento', 'oficio', 'roteiro', 'viajante', 'viajante__cargo', 'veiculo'),
+        TermoAutorizacao.objects.select_related(
+            'evento',
+            'oficio',
+            'roteiro',
+            'viajante',
+            'viajante__cargo',
+            'veiculo',
+        ).prefetch_related('oficios'),
         pk=pk,
     )
     related_lote = []
@@ -1517,6 +1500,7 @@ def termo_autorizacao_detalhe(request, pk):
             'process_status': _termo_status_meta(obj),
             'context_display': _termo_context_display(obj),
             'lote_objects': related_lote,
+            'related_oficios': list(obj.oficios.all()) or ([obj.oficio] if obj.oficio_id else []),
         },
     )
 
@@ -1524,7 +1508,7 @@ def termo_autorizacao_detalhe(request, pk):
 @require_http_methods(['GET', 'POST'])
 def termo_autorizacao_editar(request, pk):
     obj = get_object_or_404(
-        TermoAutorizacao.objects.select_related('evento', 'oficio', 'roteiro', 'viajante', 'veiculo'),
+        TermoAutorizacao.objects.select_related('evento', 'oficio', 'roteiro', 'viajante', 'veiculo').prefetch_related('oficios'),
         pk=pk,
     )
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-termos'))
@@ -1537,7 +1521,6 @@ def termo_autorizacao_editar(request, pk):
     return _render_termo_form(
         request,
         form=form,
-        modo_key=obj.modo_geracao,
         object_instance=obj,
         return_to=return_to,
         context_source=context_source,

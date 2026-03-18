@@ -184,8 +184,6 @@ def _build_termo_placeholder_mapping(
     viatura_data,
     viajante=None,
     institucional=None,
-    texto_complementar='',
-    observacoes='',
 ):
     unidade = (
         (institucional or {}).get('unidade')
@@ -205,8 +203,6 @@ def _build_termo_placeholder_mapping(
         'email': (institucional or {}).get('email') or '',
         'endereco': (institucional or {}).get('endereco') or '',
         'telefone_institucional': (institucional or {}).get('telefone') or '',
-        'texto_complementar': texto_complementar or '',
-        'observacoes': observacoes or '',
     }
     mapping.update(_build_viajante_mapping(viajante, modalidade))
     return mapping
@@ -294,8 +290,6 @@ def build_termo_autorizacao_template_context(oficio, modalidade=TERMO_MODALIDADE
         viatura_data=viatura_data,
         viajante=viajante,
         institucional=context.get('institucional') or {},
-        texto_complementar='',
-        observacoes='',
     )
     return mapping, viatura_data
 
@@ -365,8 +359,6 @@ def render_evento_participante_termo_docx(evento, viajante, modalidade, oficios_
         viatura_data=viatura_data,
         viajante=viajante,
         institucional=institucional,
-        texto_complementar='',
-        observacoes='',
     )
     template_variant = _resolve_termo_template_variant(modalidade, viatura_data['has_viatura'])
     template_path = get_termo_autorizacao_template_path(template_variant)
@@ -391,8 +383,6 @@ def render_evento_termo_padrao_branco_docx(evento, veiculo_override=None):
         viatura_data=viatura_data,
         viajante=None,
         institucional=_build_institucional_context(),
-        texto_complementar='',
-        observacoes='',
     )
     template_path = get_termo_autorizacao_template_path('SEMIPREENCHIDO')
     return render_docx_template_bytes(
@@ -449,8 +439,6 @@ def build_saved_termo_autorizacao_template_context(termo):
         viatura_data=viatura_data,
         viajante=_build_saved_termo_viajante_snapshot(termo),
         institucional=_build_institucional_context(),
-        texto_complementar=getattr(termo, 'texto_complementar', ''),
-        observacoes=getattr(termo, 'observacoes', ''),
     )
     template_variant = getattr(termo, 'template_variant', '') or 'SEMIPREENCHIDO'
     return mapping, viatura_data, template_variant

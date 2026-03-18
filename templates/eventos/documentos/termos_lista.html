@@ -8,7 +8,7 @@
     <div class="page-header-cadastro">
         <div>
             <h1 class="mb-1">Lista de termos</h1>
-            <p class="text-muted mb-0">Modulo documental com filtros, cards, downloads e acoes no mesmo padrao visual da lista de oficios.</p>
+            <p class="text-muted mb-0">Mesmo padrao de navegacao da lista de oficios, agora com cards menores, mais objetivos e sem repeticao desnecessaria.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a href="{% url 'eventos:documentos-hub' %}" class="btn btn-outline-secondary">Documentos</a>
@@ -45,7 +45,7 @@
                     </select>
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
-                    <label class="form-label small text-muted">Modo</label>
+                    <label class="form-label small text-muted">Modelo</label>
                     <select name="modo_geracao" class="form-select form-select-sm">
                         <option value="">Todos</option>
                         {% for value, label in modo_choices %}
@@ -70,85 +70,55 @@
         </div>
     </div>
 
-    <div class="oficio-process-list">
+    <div class="termo-list-grid">
         {% for termo in object_list %}
-        <article class="oficio-process-card {{ termo.process_status.css_class }}">
-            <div class="oficio-process-card__header">
-                <div class="oficio-process-card__title-block">
-                    <h2 class="oficio-process-card__title">{{ termo.numero_formatado }}</h2>
-                    <div class="oficio-process-card__subtitle">
+        <article class="termo-list-card {{ termo.process_status.css_class }}">
+            <div class="termo-list-card__top">
+                <div>
+                    <div class="termo-list-card__title-row">
+                        <h2 class="termo-list-card__title">{{ termo.numero_formatado }}</h2>
+                        <span class="oficio-process-status {{ termo.process_status.css_class }}">{{ termo.process_status.label }}</span>
+                    </div>
+                    <div class="termo-list-card__subtitle">
                         {% if termo.evento_url %}
-                        <a href="{{ termo.evento_url }}" class="text-decoration-none">{{ termo.evento_titulo_display }}</a>
+                        <a href="{{ termo.evento_url }}" class="text-decoration-none">{{ termo.context_display }}</a>
                         {% else %}
-                        <span>{{ termo.evento_titulo_display }}</span>
+                        <span>{{ termo.context_display }}</span>
                         {% endif %}
                     </div>
                 </div>
-                <span class="oficio-process-status {{ termo.process_status.css_class }}">{{ termo.process_status.label }}</span>
-            </div>
-
-            <div class="oficio-process-card__meta">
-                <div class="oficio-process-meta-item">
-                    <span class="oficio-process-meta-label">Modo</span>
-                    <span class="oficio-process-meta-value">{{ termo.mode_meta.label }}</span>
-                </div>
-                <div class="oficio-process-meta-item">
-                    <span class="oficio-process-meta-label">Servidor</span>
-                    <span class="oficio-process-meta-value">{{ termo.servidor_display|default:"Nao informado" }}</span>
-                </div>
-                <div class="oficio-process-meta-item">
-                    <span class="oficio-process-meta-label">Destino</span>
-                    <span class="oficio-process-meta-value">{{ termo.destino|default:"-" }}</span>
-                </div>
-                <div class="oficio-process-meta-item">
-                    <span class="oficio-process-meta-label">Data do evento</span>
-                    <span class="oficio-process-meta-value">{{ termo.periodo_display|default:"-" }}</span>
-                </div>
-                <div class="oficio-process-meta-item">
-                    <span class="oficio-process-meta-label">Criado em</span>
-                    <span class="oficio-process-meta-value">{{ termo.created_at|date:"d/m/Y H:i" }}</span>
-                </div>
-                <div class="oficio-process-meta-item">
-                    <span class="oficio-process-meta-label">Contexto</span>
-                    <span class="oficio-process-meta-value">{{ termo.context_display }}</span>
+                <div class="termo-list-card__actions termo-list-card__actions--top">
+                    <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-outline-secondary">DOCX</a>
+                    <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-outline-secondary">PDF</a>
                 </div>
             </div>
 
-            <div class="oficio-document-grid">
-                {% for documento in termo.card_documents %}
-                <section class="oficio-document-card">
-                    <div class="oficio-document-card__header">
-                        <h3 class="oficio-document-card__title">{{ documento.title }}</h3>
-                        <span class="oficio-document-status {{ documento.status_css_class }}">{{ documento.status_label }}</span>
-                    </div>
-
-                    <div class="oficio-document-card__summary">
-                        {% for item in documento.summary_items %}
-                        <div class="oficio-document-summary-item">
-                            <span class="oficio-document-summary-label">{{ item.label }}</span>
-                            <span class="oficio-document-summary-value">{{ item.value|default:"-" }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    {% if documento.detail %}
-                    <p class="oficio-document-card__detail">{{ documento.detail }}</p>
-                    {% endif %}
-
-                    <div class="oficio-document-card__actions">
-                        <a href="{{ documento.edit_url }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                        {% for action in documento.actions %}
-                        <a href="{{ action.url }}" class="btn btn-sm btn-outline-secondary{% if not action.available %} opacity-75{% endif %}">{{ action.label }}</a>
-                        {% endfor %}
-                    </div>
-                </section>
-                {% endfor %}
+            <div class="termo-list-card__meta">
+                <div class="termo-list-meta-item">
+                    <span class="termo-list-meta-item__label">Modelo</span>
+                    <span class="termo-list-meta-item__value">{{ termo.mode_meta.label }}</span>
+                </div>
+                <div class="termo-list-meta-item">
+                    <span class="termo-list-meta-item__label">Servidor</span>
+                    <span class="termo-list-meta-item__value">{{ termo.servidor_resumo }}</span>
+                </div>
+                <div class="termo-list-meta-item">
+                    <span class="termo-list-meta-item__label">Destino</span>
+                    <span class="termo-list-meta-item__value">{{ termo.destino_resumo }}</span>
+                </div>
+                <div class="termo-list-meta-item">
+                    <span class="termo-list-meta-item__label">Periodo</span>
+                    <span class="termo-list-meta-item__value">{{ termo.periodo_resumo }}</span>
+                </div>
             </div>
 
-            <div class="oficio-process-card__footer">
-                <a href="{{ termo.detail_url }}" class="btn btn-sm btn-outline-primary">Ver</a>
-                <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-outline-secondary">Editar</a>
-                <a href="{{ termo.excluir_url }}" class="btn btn-sm btn-outline-danger">Excluir</a>
+            <div class="termo-list-card__footer">
+                <div class="small text-muted">Atualizado em {{ termo.updated_at|date:"d/m/Y H:i" }}</div>
+                <div class="termo-list-card__actions">
+                    <a href="{{ termo.detail_url }}" class="btn btn-sm btn-outline-primary">Ver</a>
+                    <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                    <a href="{{ termo.excluir_url }}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                </div>
             </div>
         </article>
         {% empty %}

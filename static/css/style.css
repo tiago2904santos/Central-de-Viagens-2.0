@@ -841,6 +841,208 @@
     z-index: 20;
 }
 
+.termo-form-block {
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    border-radius: 1rem;
+    padding: 1.1rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+}
+
+.termo-form-block__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.termo-form-block__eyebrow {
+    color: #6c757d;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+}
+
+.termo-form-subsection {
+    height: 100%;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 0.95rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.74);
+}
+
+.termo-inline-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.termo-inline-summary__item {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.9rem;
+    padding: 0.9rem 1rem;
+    background: rgba(13, 110, 253, 0.04);
+}
+
+.termo-inline-summary__label {
+    display: block;
+    color: #6c757d;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+}
+
+.termo-side-card--sticky {
+    position: sticky;
+    top: 1rem;
+}
+
+.termo-summary-list {
+    display: grid;
+    gap: 0.7rem;
+}
+
+.termo-summary-row {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    gap: 0.75rem;
+    align-items: start;
+}
+
+.termo-summary-row__label {
+    color: #6c757d;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.termo-summary-row__value {
+    color: #212529;
+    font-weight: 500;
+}
+
+.termo-summary-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.termo-summary-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.06);
+    color: #1f2937;
+    font-size: 0.88rem;
+}
+
+.termo-summary-tag--muted {
+    background: rgba(108, 117, 125, 0.12);
+    color: #6c757d;
+}
+
+.termo-list-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.termo-list-card {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+    background: #fff;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 0.45rem 1.15rem rgba(15, 23, 42, 0.04);
+}
+
+.termo-list-card__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+}
+
+.termo-list-card__title-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+
+.termo-list-card__title {
+    margin: 0;
+    font-size: 1.08rem;
+}
+
+.termo-list-card__subtitle {
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.termo-list-card__meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.85rem;
+    margin-top: 0.9rem;
+}
+
+.termo-list-meta-item__label {
+    display: block;
+    color: #6c757d;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+}
+
+.termo-list-meta-item__value {
+    color: #212529;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.termo-list-card__footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+    border-top: 1px solid rgba(15, 23, 42, 0.06);
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+}
+
+.termo-list-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+@media (max-width: 991.98px) {
+    .termo-side-card--sticky {
+        position: static;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .termo-summary-row {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+    }
+
+    .termo-list-card__top,
+    .termo-list-card__footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
 .badge-ativo {
     font-size: 0.75rem;
 }

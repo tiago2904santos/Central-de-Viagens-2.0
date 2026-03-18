@@ -104,7 +104,7 @@ class TermoAutorizacaoAdmin(admin.ModelAdmin):
         'updated_at',
     )
     list_filter = ('modo_geracao', 'status')
-    search_fields = ('servidor_nome', 'destino', 'texto_complementar', 'observacoes')
+    search_fields = ('servidor_nome', 'destino', 'evento__titulo', 'oficio__protocolo')
     raw_id_fields = ('evento', 'roteiro', 'oficio', 'viajante', 'veiculo', 'criado_por')
     ordering = ('-updated_at',)
 
