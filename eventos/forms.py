@@ -9,7 +9,6 @@ from eventos.services.oficio_schema import oficio_justificativa_schema_available
 from .models import (
     Evento,
     DocumentoAvulso,
-    EventoFundamentacao,
     EventoFinalizacao,
     EventoParticipante,
     ModeloJustificativa,
@@ -129,115 +128,6 @@ class EventoEtapa1Form(FormComErroInvalidMixin, forms.ModelForm):
             data['descricao'] = ''  # sem OUTROS: não exigir e limpar ao salvar
 
         return data
-
-
-HORARIO_ATENDIMENTO_OPCOES = [
-    ('', '---------'),
-    ('08:00 às 12:00 e 13:00 às 17:00', '08:00 às 12:00 e 13:00 às 17:00'),
-    ('08:00 às 17:00', '08:00 às 17:00'),
-    ('09:00 às 17:00', '09:00 às 17:00'),
-    ('MANUAL', 'Outro (informar abaixo)'),
-]
-
-
-class EventoFundamentacaoForm(FormComErroInvalidMixin, forms.ModelForm):
-    """Formulário da Etapa 4 do evento: Fundamentação / PT-OS (tipo PT ou OS, texto, observações e campos PT)."""
-    atividades_codigos = forms.MultipleChoiceField(
-        label='Atividades (PT)',
-        choices=[(item['codigo'], item['nome']) for item in ATIVIDADES_CATALOGO],
-        required=False,
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
-    )
-    horario_atendimento_sel = forms.ChoiceField(
-        label='Horário de atendimento',
-        choices=HORARIO_ATENDIMENTO_OPCOES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
-
-    class Meta:
-        model = EventoFundamentacao
-        fields = [
-            'tipo_documento', 'texto_fundamentacao', 'observacoes_pt_os',
-            'solicitante', 'solicitante_outros',
-            'coordenador_operacional', 'coordenador_administrativo',
-            'horario_atendimento', 'recursos_texto',
-        ]
-        widgets = {
-            'tipo_documento': forms.Select(attrs={'class': 'form-select'}),
-            'texto_fundamentacao': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 6,
-                'placeholder': 'Descreva a fundamentação do evento para fins de Plano de Trabalho ou Ordem de Serviço.',
-            }),
-            'observacoes_pt_os': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Observações adicionais (opcional).',
-            }),
-            'solicitante': forms.Select(attrs={'class': 'form-select'}),
-            'solicitante_outros': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Quando "Outros" for selecionado, informe aqui.',
-            }),
-            'coordenador_operacional': forms.Select(attrs={'class': 'form-select'}),
-            'coordenador_administrativo': forms.Select(attrs={'class': 'form-select'}),
-            'horario_atendimento': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ex.: 08:00 às 17:00',
-            }),
-            'recursos_texto': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Recursos (estrutura para uso futuro).',
-            }),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['tipo_documento'].required = False
-        self.fields['tipo_documento'].choices = [('', '---------')] + list(EventoFundamentacao.TIPO_CHOICES)
-        self.fields['texto_fundamentacao'].required = False
-        self.fields['observacoes_pt_os'].required = False
-        self.fields['solicitante'].required = False
-        self.fields['solicitante'].queryset = SolicitantePlanoTrabalho.objects.filter(ativo=True).order_by('ordem', 'nome')
-        self.fields['solicitante'].empty_label = 'Outros (informar no campo abaixo)'
-        self.fields['coordenador_operacional'].required = False
-        self.fields['coordenador_operacional'].queryset = CoordenadorOperacional.objects.filter(ativo=True).order_by('ordem', 'nome')
-        self.fields['coordenador_operacional'].empty_label = '---------'
-        self.fields['coordenador_administrativo'].required = False
-        self.fields['coordenador_administrativo'].queryset = Viajante.objects.filter(status='ATIVO').order_by('nome')
-        self.fields['coordenador_administrativo'].empty_label = '---------'
-        self.fields['horario_atendimento'].required = False
-        self.fields['recursos_texto'].required = False
-        if self.instance and self.instance.pk and self.instance.atividades_codigos:
-            self.initial['atividades_codigos'] = [
-                c.strip() for c in self.instance.atividades_codigos.split(',') if c.strip()
-            ]
-        if self.instance and self.instance.pk and self.instance.horario_atendimento:
-            sel = self.instance.horario_atendimento
-            if sel in dict(HORARIO_ATENDIMENTO_OPCOES[1:]):
-                self.initial['horario_atendimento_sel'] = sel
-            else:
-                self.initial['horario_atendimento_sel'] = 'MANUAL'
-
-    def clean(self):
-        data = super().clean()
-        sel = data.get('horario_atendimento_sel')
-        manual = data.get('horario_atendimento', '')
-        if sel == 'MANUAL':
-            data['horario_atendimento'] = manual
-        elif sel:
-            data['horario_atendimento'] = sel
-        return data
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        codigos = self.cleaned_data.get('atividades_codigos', [])
-        instance.atividades_codigos = ','.join(codigos) if codigos else ''
-        if commit:
-            instance.save()
-        return instance
 
 
 class EventoFinalizacaoForm(FormComErroInvalidMixin, forms.ModelForm):

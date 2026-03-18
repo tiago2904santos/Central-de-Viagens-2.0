@@ -5,7 +5,6 @@ from .models import (
     EfetivoPlanoTrabalho,
     Evento,
     EventoFinalizacao,
-    EventoFundamentacao,
     EventoTermoParticipante,
     ModeloJustificativa,
     ModeloMotivoViagem,
@@ -73,14 +72,6 @@ class EfetivoPlanoTrabalhoDocumentoAdmin(admin.ModelAdmin):
     list_filter = ('cargo',)
     raw_id_fields = ('plano_trabalho',)
     ordering = ('plano_trabalho', 'cargo__nome')
-
-
-@admin.register(EventoFundamentacao)
-class EventoFundamentacaoAdmin(admin.ModelAdmin):
-    list_display = ('evento', 'tipo_documento', 'concluido', 'solicitante', 'updated_at')
-    list_filter = ('tipo_documento', 'updated_at')
-    search_fields = ('texto_fundamentacao', 'observacoes_pt_os', 'solicitante_outros')
-    raw_id_fields = ('evento', 'solicitante', 'coordenador_operacional', 'coordenador_administrativo')
 
 
 @admin.register(EventoTermoParticipante)

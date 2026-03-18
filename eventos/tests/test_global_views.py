@@ -8,10 +8,11 @@ from django.utils import timezone
 from cadastros.models import Cargo, Estado, Cidade, UnidadeLotacao, Viajante
 from eventos.models import (
     Evento,
-    EventoFundamentacao,
     EventoTermoParticipante,
     Oficio,
     OficioTrecho,
+    OrdemServico,
+    PlanoTrabalho,
     RoteiroEvento,
     RoteiroEventoDestino,
 )
@@ -54,17 +55,6 @@ class GlobalViewsTest(TestCase):
             status=Evento.STATUS_EM_ANDAMENTO,
             cidade_base=self.cidade_origem,
         )
-        EventoFundamentacao.objects.create(
-            evento=self.evento_pt,
-            tipo_documento=EventoFundamentacao.TIPO_PT,
-            texto_fundamentacao='Plano global',
-        )
-        EventoFundamentacao.objects.create(
-            evento=self.evento_os,
-            tipo_documento=EventoFundamentacao.TIPO_OS,
-            texto_fundamentacao='Ordem global',
-        )
-
         self.oficio_pt = Oficio.objects.create(
             evento=self.evento_pt,
             protocolo='123456789',
@@ -105,6 +95,19 @@ class GlobalViewsTest(TestCase):
             saida_hora=time(9, 0),
             chegada_data=date(2026, 4, 10),
             chegada_hora=time(13, 0),
+        )
+
+        PlanoTrabalho.objects.create(
+            evento=self.evento_pt,
+            oficio=self.oficio_pt,
+            objetivo='Plano global',
+            status=PlanoTrabalho.STATUS_FINALIZADO,
+        )
+        OrdemServico.objects.create(
+            evento=self.evento_os,
+            oficio=self.oficio_os,
+            finalidade='Ordem global',
+            status=OrdemServico.STATUS_FINALIZADO,
         )
 
         self.roteiro = RoteiroEvento.objects.create(
@@ -177,7 +180,7 @@ class GlobalViewsTest(TestCase):
         self.assertContains(response_pt, self.oficio_pt.numero_formatado)
 
         response_os = self.client.get(reverse('eventos:documentos-ordens-servico'))
-        self.assertContains(response_os, 'Ordens de servico')
+        self.assertContains(response_os, 'Ordens de serviço')
         self.assertContains(response_os, self.evento_os.titulo)
         self.assertContains(response_os, self.oficio_os.numero_formatado)
 

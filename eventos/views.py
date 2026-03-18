@@ -882,7 +882,7 @@ def _evento_pendencias_finalizacao(evento):
             'Etapa 3 (Termos) não concluída. Defina status (Dispensado ou Concluído) para todos os participantes do evento.'
         )
     if not _evento_pt_os_ok(evento):
-        pendencias.append('Etapa 4 (PT / OS) não concluída. Preencha tipo e texto da fundamentação.')
+        pendencias.append('Etapa 4 (PT / OS) não concluída. Finalize ao menos um Plano de Trabalho ou uma Ordem de Serviço.')
     if not _evento_oficios_ok(evento):
         pendencias.append('Etapa 5 (Ofícios) não concluída. Finalize todos os ofícios vinculados ao evento.')
     if not _evento_justificativa_ok(evento):
@@ -903,12 +903,12 @@ def _evento_etapa3_ok(evento):
 
 
 def _evento_etapa4_ok(evento):
-    """Compat: etapa antiga 4 = fundamentação/PT-OS."""
+    """Compat: etapa antiga 4 = PT/OS documentais."""
     return _evento_pt_os_ok(evento)
 
 
 def _evento_etapa4_em_andamento(evento):
-    """Compat: etapa antiga 4 = fundamentação/PT-OS."""
+    """Compat: etapa antiga 4 = PT/OS documentais."""
     return _evento_pt_os_em_andamento(evento)
 
 

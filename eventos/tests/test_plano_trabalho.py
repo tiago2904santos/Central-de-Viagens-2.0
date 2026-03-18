@@ -10,8 +10,8 @@ from eventos.models import (
     CoordenadorOperacional,
     EfetivoPlanoTrabalho,
     Evento,
-    EventoFundamentacao,
     Oficio,
+    PlanoTrabalho,
     SolicitantePlanoTrabalho,
 )
 from eventos.services.diarias import PeriodMarker, calculate_periodized_diarias
@@ -106,13 +106,12 @@ class PlanoTrabalhoContextTest(TestCase):
         self.assertIn('8 servidor', ctx['quantidade_de_servidores'])
 
     def test_solicitante_outros_no_contexto(self):
-        fund, _ = EventoFundamentacao.objects.get_or_create(
+        PlanoTrabalho.objects.create(
             evento=self.evento,
-            defaults={'tipo_documento': EventoFundamentacao.TIPO_PT, 'texto_fundamentacao': 'Objetivo'},
+            oficio=self.oficio,
+            solicitante_outros='Secretaria Municipal X',
+            objetivo='Objetivo',
         )
-        fund.tipo_documento = EventoFundamentacao.TIPO_PT
-        fund.solicitante_outros = 'Secretaria Municipal X'
-        fund.save()
         ctx = build_plano_trabalho_document_context(self.oficio)
         self.assertEqual(ctx['solicitante'], 'Secretaria Municipal X')
 
@@ -123,13 +122,12 @@ class PlanoTrabalhoContextTest(TestCase):
             cidade='Curitiba',
             ativo=True,
         )
-        fund, _ = EventoFundamentacao.objects.get_or_create(
+        PlanoTrabalho.objects.create(
             evento=self.evento,
-            defaults={'tipo_documento': EventoFundamentacao.TIPO_PT, 'texto_fundamentacao': 'Objetivo'},
+            oficio=self.oficio,
+            coordenador_operacional=coord,
+            objetivo='Objetivo',
         )
-        fund.tipo_documento = EventoFundamentacao.TIPO_PT
-        fund.coordenador_operacional = coord
-        fund.save()
         ctx = build_plano_trabalho_document_context(self.oficio)
         self.assertIn('Coordenador Operacional', ctx['coordenacao_formatada'])
         self.assertIn('João Silva', ctx['coordenacao_formatada'])

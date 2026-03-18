@@ -25,13 +25,14 @@ from eventos.models import (
     Evento,
     EventoDestino,
     EventoFinalizacao,
-    EventoFundamentacao,
     EventoParticipante,
     EventoTermoParticipante,
     ModeloJustificativa,
     ModeloMotivoViagem,
     Oficio,
     OficioTrecho,
+    OrdemServico,
+    PlanoTrabalho,
     RoteiroEvento,
     RoteiroEventoDestino,
     RoteiroEventoTrecho,
@@ -2769,8 +2770,8 @@ class PainelBlocosClicaveisTest(TestCase):
             self.assertEqual(response.status_code, 200)
 
 
-class EventoEtapa4FundamentacaoTest(TestCase):
-    """Etapa 4 — Fundamentação / PT-OS: tela real, salvar, reabrir, critério de conclusão."""
+class EventoEtapa4PtOsTest(TestCase):
+    """Etapa 4: usa cadastro real de Plano de Trabalho e Ordem de Serviço."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
@@ -2789,99 +2790,32 @@ class EventoEtapa4FundamentacaoTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
-    def test_etapa_4_get_retorna_200_com_formulario(self):
+    def test_etapa_4_get_mostra_links_para_cadastro_real(self):
         response = self.client.get(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'PT / OS')
-        self.assertContains(response, 'Texto da fundamentação')
-        self.assertContains(response, 'Salvar')
-        self.assertContains(response, 'Voltar ao painel')
-        self.assertContains(response, self.evento.titulo)
+        self.assertContains(response, 'Etapa 4 — PT / OS')
+        self.assertContains(response, 'Novo Plano de Trabalho')
+        self.assertContains(response, 'Nova Ordem de Serviço')
+        self.assertContains(response, f'preselected_event_id={self.evento.pk}')
 
-    def test_etapa_4_get_exibe_tipo_pt_os(self):
+    def test_etapa_4_lista_pt_os_reais_vinculados_ao_evento(self):
+        pt = PlanoTrabalho.objects.create(evento=self.evento, objetivo='PT evento')
+        os = OrdemServico.objects.create(evento=self.evento, finalidade='OS evento')
         response = self.client.get(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Tipo do documento')
-        self.assertContains(response, 'Plano de Trabalho')
-        self.assertContains(response, 'Ordem de Serviço')
+        self.assertContains(response, str(pt.pk))
+        self.assertContains(response, str(os.pk))
 
-    def test_etapa_4_post_salva_rascunho(self):
-        response = self.client.post(
-            reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}),
-            {'tipo_documento': '', 'texto_fundamentacao': '', 'observacoes_pt_os': ''},
-        )
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(EventoFundamentacao.objects.filter(evento=self.evento).exists())
-        fund = EventoFundamentacao.objects.get(evento=self.evento)
-        self.assertFalse(fund.concluido)
-
-    def test_etapa_4_post_com_tipo_e_texto_marca_concluido_e_painel_mostra_ok(self):
-        response = self.client.post(
-            reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}),
-            {
-                'tipo_documento': 'PT',
-                'texto_fundamentacao': 'Fundamentação do evento para PT-OS.',
-                'observacoes_pt_os': '',
-            },
-        )
-        self.assertEqual(response.status_code, 302)
-        fund = EventoFundamentacao.objects.get(evento=self.evento)
-        self.assertTrue(fund.concluido)
-        response_painel = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response_painel.status_code, 200)
-        self.assertContains(response_painel, 'PT / OS')
-        self.assertContains(response_painel, 'bg-success')
-
-    def test_etapa_4_painel_em_andamento_quando_tipo_sem_texto(self):
-        EventoFundamentacao.objects.create(
+    def test_painel_etapa4_fica_ok_quando_ha_pt_finalizado(self):
+        PlanoTrabalho.objects.create(
             evento=self.evento,
-            tipo_documento=EventoFundamentacao.TIPO_PT,
-            texto_fundamentacao='',
-            observacoes_pt_os='',
+            objetivo='PT finalizado',
+            status=PlanoTrabalho.STATUS_FINALIZADO,
         )
         response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Em andamento')
-
-    def test_etapa_4_reabrir_exibe_dados_salvos(self):
-        EventoFundamentacao.objects.create(
-            evento=self.evento,
-            tipo_documento=EventoFundamentacao.TIPO_OS,
-            texto_fundamentacao='Texto já salvo.',
-            observacoes_pt_os='Obs PT-OS',
-        )
-        response = self.client.get(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Texto já salvo.')
-        self.assertContains(response, 'Obs PT-OS')
-        self.assertContains(response, 'Ordem de Serviço')
-
-    def test_etapa_4_salvar_e_voltar_ao_painel(self):
-        response = self.client.post(
-            reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}),
-            {
-                'tipo_documento': 'PT',
-                'texto_fundamentacao': 'Conteúdo',
-                'observacoes_pt_os': '',
-                'voltar_painel': '1',
-            },
-        )
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('guiado/painel', response.url)
-        self.assertTrue(EventoFundamentacao.objects.filter(evento=self.evento).exists())
-
-    def test_etapa_4_painel_pendente_quando_registro_vazio(self):
-        EventoFundamentacao.objects.create(
-            evento=self.evento,
-            tipo_documento='',
-            texto_fundamentacao='',
-            observacoes_pt_os='',
-        )
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Etapa 4')
-        self.assertContains(response, 'Plano de Trabalho')
-        self.assertContains(response, 'Pendente')
+        etapa = next(e for e in response.context['etapas'] if e['numero'] == 4)
+        self.assertTrue(etapa['ok'])
 
 
 class EventoEtapa5TermosTest(TestCase):
@@ -3224,11 +3158,10 @@ class EventoEtapa6FinalizacaoTest(TestCase):
             },
         )
         self.assertEqual(etapa1_resp.status_code, 302)
-        EventoFundamentacao.objects.create(
+        PlanoTrabalho.objects.create(
             evento=self.evento,
-            tipo_documento=EventoFundamentacao.TIPO_PT,
-            texto_fundamentacao='Fundamentação.',
-            observacoes_pt_os='',
+            status=PlanoTrabalho.STATUS_FINALIZADO,
+            objetivo='PT finalizado',
         )
         roteiro = RoteiroEvento.objects.create(evento=self.evento)
         RoteiroEvento.objects.filter(pk=roteiro.pk).update(status=RoteiroEvento.STATUS_FINALIZADO)
@@ -3318,20 +3251,16 @@ class EventoFinalizadoTravasTest(TestCase):
         self.assertNotContains(response, 'Evento finalizado. Não é possível alterar os dados do evento.')
 
     def test_post_etapa_4_finalizado_bloqueado(self):
-        EventoFundamentacao.objects.create(
-            evento=self.evento,
-            tipo_documento=EventoFundamentacao.TIPO_PT,
-            texto_fundamentacao='Texto',
-            observacoes_pt_os='',
-        )
+        PlanoTrabalho.objects.create(evento=self.evento, objetivo='Existente')
+        before_pt = PlanoTrabalho.objects.filter(evento=self.evento).count()
+        before_os = OrdemServico.objects.filter(evento=self.evento).count()
         response = self.client.post(
             reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}),
-            {'tipo_documento': 'OS', 'texto_fundamentacao': 'Alterado', 'observacoes_pt_os': ''},
+            {'qualquer': 'valor'},
         )
-        self.assertEqual(response.status_code, 302)
-        self.evento.fundamentacao.refresh_from_db()
-        self.assertEqual(self.evento.fundamentacao.tipo_documento, EventoFundamentacao.TIPO_OS)
-        self.assertEqual(self.evento.fundamentacao.texto_fundamentacao, 'Alterado')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PlanoTrabalho.objects.filter(evento=self.evento).count(), before_pt)
+        self.assertEqual(OrdemServico.objects.filter(evento=self.evento).count(), before_os)
 
     def test_post_etapa_5_finalizado_bloqueado(self):
         viajante = Viajante.objects.create(nome='V', cpf='11122233344')
