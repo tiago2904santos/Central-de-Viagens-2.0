@@ -4,29 +4,6 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
-def migrate_oficio_justificativa_to_model(apps, schema_editor):
-    Oficio = apps.get_model('eventos', 'Oficio')
-    Justificativa = apps.get_model('eventos', 'Justificativa')
-
-    for oficio in Oficio.objects.all().iterator():
-        texto = (getattr(oficio, 'justificativa_texto', '') or '').strip()
-        modelo_id = getattr(oficio, 'justificativa_modelo_id', None)
-        if not texto and not modelo_id:
-            continue
-        Justificativa.objects.update_or_create(
-            oficio_id=oficio.id,
-            defaults={
-                'modelo_id': modelo_id,
-                'texto': texto,
-            },
-        )
-
-
-def noop_reverse(apps, schema_editor):
-    # Mantém o rollback sem tentar repovoar campos legados removidos.
-    pass
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -34,6 +11,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RemoveField(
+            model_name='oficio',
+            name='justificativa_modelo',
+        ),
+        migrations.RemoveField(
+            model_name='oficio',
+            name='justificativa_texto',
+        ),
         migrations.CreateModel(
             name='Justificativa',
             fields=[
@@ -49,14 +34,5 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Justificativas',
                 'ordering': ['-updated_at', '-created_at'],
             },
-        ),
-        migrations.RunPython(migrate_oficio_justificativa_to_model, noop_reverse),
-        migrations.RemoveField(
-            model_name='oficio',
-            name='justificativa_modelo',
-        ),
-        migrations.RemoveField(
-            model_name='oficio',
-            name='justificativa_texto',
         ),
     ]

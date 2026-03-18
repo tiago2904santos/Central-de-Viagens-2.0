@@ -4,7 +4,7 @@ from django.db import connection
 from django.db.utils import OperationalError, ProgrammingError
 
 
-MIGRATION_0033_MESSAGE = 'Banco local desatualizado: aplique a migration 0033 do app eventos.'
+MIGRATION_0018_MESSAGE = 'Banco local desatualizado: aplique a migration 0018 do app eventos.'
 
 
 def _table_columns(table_name):
@@ -22,25 +22,26 @@ def get_oficio_justificativa_schema_status():
         if 'eventos_oficio' not in table_names:
             return {
                 'available': False,
-                'message': MIGRATION_0033_MESSAGE,
+                'message': MIGRATION_0018_MESSAGE,
             }
-        if 'eventos_justificativa' not in table_names:
-            return {
-                'available': False,
-                'message': MIGRATION_0033_MESSAGE,
-            }
-        justificativa_columns = _table_columns('eventos_justificativa')
+        oficio_columns = _table_columns('eventos_oficio')
     except (OperationalError, ProgrammingError):
         return {
             'available': False,
-            'message': MIGRATION_0033_MESSAGE,
+            'message': MIGRATION_0018_MESSAGE,
         }
 
-    required_columns = {'oficio_id', 'texto', 'modelo_id'}
-    if not required_columns.issubset(justificativa_columns):
+    required_columns = {'justificativa_texto', 'justificativa_modelo_id'}
+    if not required_columns.issubset(oficio_columns):
         return {
             'available': False,
-            'message': MIGRATION_0033_MESSAGE,
+            'message': MIGRATION_0018_MESSAGE,
+        }
+
+    if 'eventos_modelojustificativa' not in table_names:
+        return {
+            'available': False,
+            'message': MIGRATION_0018_MESSAGE,
         }
 
     return {

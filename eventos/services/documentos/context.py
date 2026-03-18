@@ -6,7 +6,6 @@ from cadastros.models import AssinaturaConfiguracao, ConfiguracaoSistema
 from eventos.models import (
     EfetivoPlanoTrabalho,
     EfetivoPlanoTrabalhoDocumento,
-    Justificativa,
     OficioTrecho,
     OrdemServico,
     PlanoTrabalho,
@@ -230,8 +229,7 @@ def _build_custeio_context(oficio):
 def _get_oficio_justificativa_texto(oficio):
     if not oficio_justificativa_schema_available():
         return ''
-    justificativa = Justificativa.objects.filter(oficio=oficio).only('texto').first()
-    return _text_or_empty(justificativa.texto if justificativa else '')
+    return _text_or_empty(oficio.justificativa_texto)
 
 
 def get_assinaturas_documento(tipo_documento):

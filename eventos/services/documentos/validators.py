@@ -96,7 +96,7 @@ def _validate_oficio_document(oficio):
 def _validate_justificativa_document(oficio):
     context = build_justificativa_document_context(oficio)
     errors = []
-    if not (context.get('conteudo', {}).get('justificativa_texto') or '').strip():
+    if not (oficio.justificativa_texto or '').strip():
         errors.append('Preencha o texto da justificativa antes de gerar o documento.')
     errors.extend(
         _build_signature_and_config_errors(

@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from cadastros.models import ConfiguracaoSistema
-from eventos.models import Justificativa
 from eventos.services.oficio_schema import oficio_justificativa_schema_available
 
 
@@ -51,5 +50,4 @@ def oficio_exige_justificativa(oficio):
 def oficio_tem_justificativa(oficio):
     if not oficio_justificativa_schema_available():
         return False
-    justificativa = Justificativa.objects.filter(oficio=oficio).only('texto').first()
-    return bool((justificativa.texto if justificativa else '').strip())
+    return bool((oficio.justificativa_texto or '').strip())

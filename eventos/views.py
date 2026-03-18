@@ -27,7 +27,6 @@ from .models import (
     EventoFinalizacao,
     EventoParticipante,
     EventoTermoParticipante,
-    Justificativa,
     ModeloJustificativa,
     ModeloMotivoViagem,
     OrdemServico,
@@ -1252,6 +1251,8 @@ def guiado_etapa_3(request, evento_id):
     """Ofícios do evento (Etapa 5): listar ofícios, criar novo, editar (wizard)."""
     evento = get_object_or_404(Evento, pk=evento_id)
     oficios_qs = evento.oficios.prefetch_related('trechos').order_by('ano', 'numero', 'id')
+    if not get_oficio_justificativa_schema_status()['available']:
+        oficios_qs = oficios_qs.defer('justificativa_modelo', 'justificativa_texto')
     oficios = list(oficios_qs)
     for oficio in oficios:
         oficio.justificativa_info = _build_oficio_justificativa_info(oficio)
@@ -1871,11 +1872,13 @@ def _get_oficio_or_404_for_user(pk, user=None):
         'veiculo',
         'motorista_viajante',
         'modelo_motivo',
-        'justificativa',
-        'justificativa__modelo',
         'roteiro_evento',
         'carona_oficio_referencia',
     )
+    if get_oficio_justificativa_schema_status()['available']:
+        queryset = queryset.select_related('justificativa_modelo')
+    else:
+        queryset = queryset.defer('justificativa_modelo', 'justificativa_texto')
     return get_object_or_404(queryset, pk=pk)
 
 
@@ -1885,33 +1888,6 @@ def _save_oficio_preserving_status(oficio, update_fields):
     """
     fields = [field for field in update_fields if field != 'status']
     oficio.save(update_fields=list(dict.fromkeys([*fields, 'updated_at'])))
-
-
-def _get_oficio_justificativa(oficio):
-    try:
-        return oficio.justificativa
-    except Justificativa.DoesNotExist:
-        return None
-
-
-def _get_oficio_justificativa_texto(oficio):
-    justificativa = _get_oficio_justificativa(oficio)
-    return (justificativa.texto or '').strip() if justificativa else ''
-
-
-def _upsert_oficio_justificativa(oficio, *, modelo=None, texto=''):
-    texto = (texto or '').strip()
-    if not texto and not modelo:
-        Justificativa.objects.filter(oficio=oficio).delete()
-        return None
-    justificativa, _created = Justificativa.objects.update_or_create(
-        oficio=oficio,
-        defaults={
-            'modelo': modelo,
-            'texto': texto,
-        },
-    )
-    return justificativa
 
 
 def _is_autosave_request(request):
@@ -3852,7 +3828,6 @@ def _build_oficio_step4_context(oficio, finalize_validation=None):
         'step3_preview': step3_preview,
         'finalize_validation': finalize_validation,
         'justificativa_info': justificativa_info,
-        'justificativa_texto_preview': _get_oficio_justificativa_texto(oficio),
         'oficio_downloads': _build_oficio_document_download_context(oficio, DocumentoOficioTipo.OFICIO),
         'termo_autorizacao': _build_oficio_termo_autorizacao_context(oficio),
         'justificativa_url': _oficio_justificativa_url(
@@ -4223,9 +4198,16 @@ def oficio_step3(request, pk):
 
 def _autosave_oficio_justificativa(oficio, request):
     modelo_id = _parse_int(request.POST.get('modelo_justificativa'))
-    modelo = ModeloJustificativa.objects.filter(pk=modelo_id).first() if modelo_id else None
-    texto = (request.POST.get('justificativa_texto') or '').strip()
-    _upsert_oficio_justificativa(oficio, modelo=modelo, texto=texto)
+    oficio.justificativa_modelo = (
+        ModeloJustificativa.objects.filter(pk=modelo_id).first()
+        if modelo_id
+        else None
+    )
+    oficio.justificativa_texto = (request.POST.get('justificativa_texto') or '').strip()
+    _save_oficio_preserving_status(
+        oficio,
+        ['justificativa_modelo', 'justificativa_texto'],
+    )
     return None
 
 
@@ -4341,10 +4323,11 @@ def oficio_justificativa(request, pk):
         return _autosave_success_response()
     form = OficioJustificativaForm(request.POST or None, oficio=oficio)
     if request.method == 'POST' and form.is_valid():
-        _upsert_oficio_justificativa(
+        oficio.justificativa_modelo = form.cleaned_data.get('modelo_justificativa')
+        oficio.justificativa_texto = form.cleaned_data.get('justificativa_texto') or ''
+        _save_oficio_preserving_status(
             oficio,
-            modelo=form.cleaned_data.get('modelo_justificativa'),
-            texto=form.cleaned_data.get('justificativa_texto') or '',
+            ['justificativa_modelo', 'justificativa_texto'],
         )
         messages.success(request, 'Justificativa salva com sucesso.')
         return redirect(next_url)

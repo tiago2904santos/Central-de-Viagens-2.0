@@ -878,7 +878,16 @@ class Oficio(models.Model):
         ModeloMotivoViagem, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='oficios', verbose_name='Modelo de motivo'
     )
+    justificativa_modelo = models.ForeignKey(
+        ModeloJustificativa,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='oficios',
+        verbose_name='Modelo de justificativa',
+    )
     motivo = models.TextField('Motivo', blank=True, default='')
+    justificativa_texto = models.TextField('Justificativa', blank=True, default='')
     gerar_termo_preenchido = models.BooleanField(
         'Gerar termo de autorização preenchido',
         default=False,
@@ -1114,40 +1123,6 @@ class Oficio(models.Model):
         if not self.data_criacao:
             return EMPTY_MASK_DISPLAY
         return self.data_criacao.strftime('%d/%m/%Y')
-
-
-class Justificativa(models.Model):
-    """Documento de justificativa vinculado de forma exclusiva ao ofício."""
-
-    oficio = models.OneToOneField(
-        Oficio,
-        on_delete=models.CASCADE,
-        related_name='justificativa',
-        verbose_name='Ofício',
-    )
-    modelo = models.ForeignKey(
-        ModeloJustificativa,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='justificativas',
-        verbose_name='Modelo de justificativa',
-    )
-    texto = models.TextField('Texto da justificativa', blank=True, default='')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-updated_at', '-created_at']
-        verbose_name = 'Justificativa'
-        verbose_name_plural = 'Justificativas'
-
-    def __str__(self):
-        return f'Justificativa {self.oficio.numero_formatado}'
-
-    def save(self, *args, **kwargs):
-        self.texto = (self.texto or '').strip()
-        super().save(*args, **kwargs)
 
 
 class OficioTrecho(models.Model):

@@ -11,7 +11,6 @@ from .models import (
     DocumentoAvulso,
     EventoFinalizacao,
     EventoParticipante,
-    Justificativa,
     ModeloJustificativa,
     ModeloMotivoViagem,
     OrdemServico,
@@ -452,23 +451,20 @@ class OficioJustificativaForm(FormComErroInvalidMixin, forms.Form):
         if not oficio_justificativa_schema_available():
             self.fields['modelo_justificativa'].queryset = ModeloJustificativa.objects.none()
             return
-        justificativa = Justificativa.objects.filter(oficio=self.oficio).select_related('modelo').first()
-        modelo_justificativa_id = justificativa.modelo_id if justificativa else None
         queryset = ModeloJustificativa.objects.filter(
-            Q(ativo=True) | Q(pk=modelo_justificativa_id)
+            Q(ativo=True) | Q(pk=self.oficio.justificativa_modelo_id)
         ).order_by('nome').distinct()
         self.fields['modelo_justificativa'].queryset = queryset
         if self.is_bound:
             return
 
-        modelo_inicial = justificativa.modelo if justificativa else None
+        modelo_inicial = self.oficio.justificativa_modelo
         if not modelo_inicial:
             modelo_inicial = queryset.filter(padrao=True).first()
         if modelo_inicial:
             self.initial.setdefault('modelo_justificativa', modelo_inicial.pk)
-        justificativa_texto = (justificativa.texto or '').strip() if justificativa else ''
-        if justificativa_texto:
-            self.initial.setdefault('justificativa_texto', justificativa_texto)
+        if (self.oficio.justificativa_texto or '').strip():
+            self.initial.setdefault('justificativa_texto', self.oficio.justificativa_texto)
         elif modelo_inicial:
             self.initial.setdefault('justificativa_texto', modelo_inicial.texto)
 
