@@ -108,6 +108,38 @@ VIAGEM_STATUS_CARD_META = {
     'CONCLUIDA': {'label': 'Ja aconteceu', 'css_class': 'is-trip-past'},
     'INDEFINIDA': {'label': 'Sem periodo', 'css_class': 'is-trip-muted'},
 }
+OFICIO_CARD_THEME_META = {
+    'green': {
+        'label': 'Concluido',
+        'css_class': 'is-tone-green',
+        'status_css_class': 'is-finalizado',
+    },
+    'orange': {
+        'label': 'Em andamento',
+        'css_class': 'is-tone-orange',
+        'status_css_class': 'is-warning',
+    },
+    'blue': {
+        'label': 'Programado',
+        'css_class': 'is-tone-blue',
+        'status_css_class': 'is-info',
+    },
+    'yellow': {
+        'label': 'Atencao',
+        'css_class': 'is-tone-yellow',
+        'status_css_class': 'is-pending',
+    },
+    'red': {
+        'label': 'Critico',
+        'css_class': 'is-tone-red',
+        'status_css_class': 'is-rascunho',
+    },
+    'gray': {
+        'label': 'Rascunho',
+        'css_class': 'is-tone-gray',
+        'status_css_class': 'is-muted',
+    },
+}
 
 
 def _clean(value):
@@ -529,14 +561,32 @@ def _oficio_list_viajantes_display(oficio):
     return f"{', '.join(viajantes[:2])} +{len(viajantes) - 2}"
 
 
-def _oficio_list_viajante_chips(oficio, limit=3):
+def _oficio_list_chip(label, value, css_class=''):
+    text = _clean(value)
+    if not text or text == EMPTY_DISPLAY:
+        return None
+    return {
+        'label': label,
+        'value': text,
+        'css_class': css_class,
+    }
+
+
+def _oficio_list_group(title, chips):
+    items = [chip for chip in chips if chip]
+    if not items:
+        return None
+    return {'title': title, 'chips': items}
+
+
+def _oficio_list_viajante_chips(oficio, limit=4):
     viajantes = _oficio_list_ordered_unique_strings([viajante.nome for viajante in oficio.viajantes.all()])
     if not viajantes:
-        return [{'label': 'Nenhum viajante', 'css_class': 'is-muted'}]
-    chips = [{'label': nome, 'css_class': ''} for nome in viajantes[:limit]]
+        return [{'label': '', 'value': 'Nenhum viajante', 'css_class': 'is-muted'}]
+    chips = [{'label': '', 'value': nome, 'css_class': ''} for nome in viajantes[:limit]]
     restante = len(viajantes) - limit
     if restante > 0:
-        chips.append({'label': f'+{restante}', 'css_class': 'is-counter'})
+        chips.append({'label': '', 'value': f'+{restante}', 'css_class': 'is-counter'})
     return chips
 
 
@@ -555,24 +605,6 @@ def _oficio_list_driver_display(oficio):
         if motorista_nome:
             return motorista_nome
     return _clean(oficio.motorista) or 'Nao informado'
-
-
-def _oficio_list_transport_meta(oficio):
-    veiculo = _oficio_list_vehicle_display(oficio)
-    if veiculo != 'Nao informado':
-        return {'label': 'Veiculo', 'value': veiculo}
-    motorista = _oficio_list_driver_display(oficio)
-    if motorista != 'Nao informado':
-        return {'label': 'Motorista', 'value': motorista}
-    return {'label': 'Transporte', 'value': 'Nao informado'}
-
-
-def _oficio_list_activity_meta(oficio):
-    created_at = getattr(oficio, 'created_at', None)
-    updated_at = getattr(oficio, 'updated_at', None)
-    if created_at and updated_at and abs((updated_at - created_at).total_seconds()) >= 60:
-        return {'label': 'Atualizado em', 'value': _oficio_list_format_datetime(updated_at)}
-    return {'label': 'Criado em', 'value': _oficio_list_format_datetime(created_at or updated_at)}
 
 
 def _oficio_list_trip_status(oficio, today=None):
@@ -624,6 +656,58 @@ def _oficio_list_trip_status(oficio, today=None):
     }
 
 
+def _oficio_list_theme(oficio, viagem_status, today=None):
+    inicio, fim = _oficio_list_period_bounds(oficio)
+    hoje = today or timezone.localdate()
+    theme_key = 'gray'
+    reason = 'Rascunho aguardando programacao.'
+
+    if not inicio:
+        if oficio.status == Oficio.STATUS_FINALIZADO:
+            theme_key = 'blue'
+            reason = 'Oficio finalizado sem periodo definido.'
+        meta = OFICIO_CARD_THEME_META[theme_key]
+        return {
+            'key': theme_key,
+            'label': meta['label'],
+            'css_class': meta['css_class'],
+            'status_css_class': meta['status_css_class'],
+            'reason': reason,
+        }
+
+    fim = fim or inicio
+    days_until = (inicio - hoje).days
+    if hoje > fim:
+        if oficio.status == Oficio.STATUS_FINALIZADO:
+            theme_key = 'green'
+            reason = 'Evento concluido com oficio finalizado.'
+        else:
+            theme_key = 'red'
+            reason = 'Evento ja passou e o oficio segue pendente.'
+    elif inicio <= hoje <= fim:
+        if oficio.status == Oficio.STATUS_FINALIZADO:
+            theme_key = 'orange'
+            reason = 'Evento em andamento com oficio finalizado.'
+        else:
+            theme_key = 'red'
+            reason = 'Evento em andamento e o oficio ainda exige atencao.'
+    elif days_until == 1:
+        theme_key = 'yellow'
+        reason = 'Evento acontece amanha.'
+    elif oficio.status == Oficio.STATUS_FINALIZADO:
+        theme_key = 'blue'
+        reason = 'Oficio finalizado para evento futuro.'
+
+    meta = OFICIO_CARD_THEME_META[theme_key]
+    return {
+        'key': theme_key,
+        'label': meta['label'],
+        'css_class': meta['css_class'],
+        'status_css_class': meta['status_css_class'],
+        'reason': reason,
+    }
+
+
 def _oficio_list_justificativa_block(oficio, justificativa_info):
     try:
         justificativa = oficio.justificativa
@@ -657,8 +741,13 @@ def _oficio_list_justificativa_block(oficio, justificativa_info):
 
 def _oficio_list_saved_term_card(termo):
     return {
+        'title': termo.titulo_display,
         'traveler_name': _clean(termo.servidor_display) or 'Termo geral',
         'open_url': reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk}),
+        'download_docx_url': reverse(
+            'eventos:documentos-termos-download',
+            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value},
+        ),
         'download_pdf_url': reverse(
             'eventos:documentos-termos-download',
             kwargs={'pk': termo.pk, 'formato': DocumentoFormato.PDF.value},
@@ -670,8 +759,10 @@ def _oficio_list_saved_term_card(termo):
 
 def _oficio_list_pending_term_card(oficio, viajante):
     return {
+        'title': 'Termo pendente',
         'traveler_name': _clean(getattr(viajante, 'nome', '')) or 'Termo geral',
         'open_url': reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+        'download_docx_url': '',
         'download_pdf_url': '',
         'status': {'label': 'Pendente', 'css_class': 'is-pending'},
         'is_saved': False,
@@ -719,15 +810,47 @@ def _oficio_list_term_block(oficio):
 def _oficio_list_card(oficio):
     justificativa_info = _build_oficio_justificativa_info(oficio)
     viagem_status = _oficio_list_trip_status(oficio)
+    theme = _oficio_list_theme(oficio, viagem_status)
     oficio_downloads = _build_oficio_document_actions(oficio, DocumentoOficioTipo.OFICIO)
     justificativa = _oficio_list_justificativa_block(oficio, justificativa_info)
     termos = _oficio_list_term_block(oficio)
+    destino_labels = _oficio_list_destino_labels(oficio)
     destinos_display = _oficio_list_destinos_display(oficio)
     periodo_display = _oficio_list_period_display(oficio)
     updated_display = _oficio_list_format_datetime(getattr(oficio, 'updated_at', None) or getattr(oficio, 'created_at', None))
     vehicle_display = _oficio_list_vehicle_display(oficio)
     driver_display = _oficio_list_driver_display(oficio)
     context_label = 'Com evento' if oficio.evento_id else 'Avulso'
+    motivo_resumido = _oficio_list_shorten_text(_clean(oficio.motivo), limit=90)
+    status_chips = [
+        _oficio_list_chip('Documento', _oficio_process_status_meta(oficio)['label']),
+        _oficio_list_chip('Viagem', viagem_status['label']),
+        _oficio_list_chip('Janela', viagem_status['relative_label']),
+        _oficio_list_chip('Contexto', context_label),
+    ]
+    if justificativa:
+        status_chips.append(_oficio_list_chip('Justificativa', justificativa['status_label']))
+    if termos:
+        status_chips.append(_oficio_list_chip('Termos', termos['summary']))
+    meta_groups = [
+        _oficio_list_group(
+            'Destinos e periodo',
+            [_oficio_list_chip('', destino) for destino in destino_labels]
+            + [_oficio_list_chip('Periodo', periodo_display)],
+        ),
+        _oficio_list_group('Viajantes', _oficio_list_viajante_chips(oficio)),
+        _oficio_list_group(
+            'Operacao',
+            [
+                _oficio_list_chip('Veiculo', vehicle_display),
+                _oficio_list_chip('Motorista', driver_display),
+                _oficio_list_chip('Evento', _clean(getattr(getattr(oficio, 'evento', None), 'titulo', ''))),
+                _oficio_list_chip('Atualizado', updated_display),
+                _oficio_list_chip('Motivo', motivo_resumido),
+            ],
+        ),
+    ]
+    meta_groups = [group for group in meta_groups if group]
     return {
         'pk': oficio.pk,
         'numero_formatado': oficio.numero_formatado,
@@ -738,21 +861,15 @@ def _oficio_list_card(oficio):
         'periodo_display': periodo_display,
         'updated_display': updated_display,
         'context_label': context_label,
-        'traveler_chips': _oficio_list_viajante_chips(oficio),
-        'vehicle_display': vehicle_display,
-        'driver_display': driver_display,
-        'contexto': {
-            'value': 'EVENTO' if oficio.evento_id else 'AVULSO',
-            'label': context_label,
-            'css_class': 'is-context-evento' if oficio.evento_id else 'is-context-avulso',
-        },
+        'theme': theme,
+        'status_chips': [chip for chip in status_chips if chip],
+        'meta_groups': meta_groups,
         'oficio_status': _oficio_process_status_meta(oficio),
         'viagem_status': viagem_status,
         'justificativa': justificativa,
         'termos': termos,
         'downloads': oficio_downloads['actions'],
         'wizard_url': reverse('eventos:oficio-editar', kwargs={'pk': oficio.pk}),
-        'documentos_url': reverse('eventos:oficio-documentos', kwargs={'pk': oficio.pk}),
         'excluir_url': reverse('eventos:oficio-excluir', kwargs={'pk': oficio.pk}),
         'search_blob': ' '.join(
             value

@@ -254,18 +254,21 @@ class GlobalViewsTest(TestCase):
         self.assertIn('Termos de autorizacao', card_html)
         self.assertIn('SEGUNDO VIAJANTE', card_html)
         self.assertEqual(card_html.count(self.oficio_pt.protocolo_formatado), 1)
-        self.assertEqual(card_html.count('Londrina/PR'), 1)
-        self.assertNotIn('Periodo', card_html)
+        self.assertIn('Londrina/PR', card_html)
         self.assertNotIn('Primeira saida', card_html)
-        self.assertNotIn('Veiculo:', card_html)
-        self.assertNotIn('DOCX', card_html)
+        self.assertIn('Periodo', card_html)
+        self.assertIn('Veiculo', card_html)
+        self.assertIn('DOCX', card_html)
+        self.assertIn('PDF', card_html)
+        self.assertNotIn('Documentos', card_html)
         self.assertEqual(card_html.count('class="oficio-list-term-card '), 2)
         self.assertContains(response, 'Abrir wizard')
 
     def test_lista_global_de_oficios_aplica_linguagem_visual_compacta_e_contexto_sem_repeticao(self):
+        hoje = timezone.localdate()
         oficio_avulso = Oficio.objects.create(
             protocolo='333222111',
-            data_criacao=date(2026, 2, 1),
+            data_criacao=hoje - timedelta(days=12),
             tipo_destino=Oficio.TIPO_DESTINO_INTERIOR,
             status=Oficio.STATUS_FINALIZADO,
             modelo='Spin',
@@ -279,20 +282,61 @@ class GlobalViewsTest(TestCase):
             origem_cidade=self.cidade_origem,
             destino_estado=self.estado,
             destino_cidade=self.cidade_destino,
-            saida_data=date(2026, 2, 10),
-            chegada_data=date(2026, 2, 10),
+            saida_data=hoje - timedelta(days=9),
+            chegada_data=hoje - timedelta(days=8),
         )
 
         response = self.client.get(reverse('eventos:oficios-global'))
         card_html = self._extract_oficio_article_html(response, oficio_avulso.pk)
 
-        self.assertIn('oficio-list-card is-trip-past', card_html)
-        self.assertIn('Finalizado', card_html)
-        self.assertIn('class="oficio-list-card__headline-destination"', card_html)
+        self.assertIn('oficio-list-card is-tone-green', card_html)
+        self.assertIn('Concluido', card_html)
+        self.assertIn('oficio-list-chip-list--status', card_html)
         self.assertIn('class="oficio-list-chip', card_html)
         self.assertIn('Motorista Avulso', card_html)
-        self.assertIn('class="oficio-list-badge is-context-avulso">Avulso</span>', card_html)
+        self.assertIn('Contexto', card_html)
+        self.assertIn('Avulso', card_html)
+        self.assertIn('Veiculo', card_html)
         self.assertNotIn('Oficio avulso', card_html)
+
+    def test_lista_global_de_oficios_aplica_cores_combinadas_e_chips_conforme_tema(self):
+        hoje = timezone.localdate()
+        cenarios = [
+            ('111111110', Oficio.STATUS_FINALIZADO, hoje - timedelta(days=5), hoje - timedelta(days=3), 'is-tone-green'),
+            ('222222221', Oficio.STATUS_FINALIZADO, hoje, hoje + timedelta(days=1), 'is-tone-orange'),
+            ('333333332', Oficio.STATUS_FINALIZADO, hoje + timedelta(days=4), hoje + timedelta(days=5), 'is-tone-blue'),
+            ('444444443', Oficio.STATUS_RASCUNHO, hoje + timedelta(days=1), hoje + timedelta(days=2), 'is-tone-yellow'),
+            ('555555554', Oficio.STATUS_RASCUNHO, hoje, hoje, 'is-tone-red'),
+        ]
+        oficios = []
+        for protocolo, status, inicio, fim, _theme in cenarios:
+            oficio = Oficio.objects.create(
+                protocolo=protocolo,
+                data_criacao=hoje,
+                tipo_destino=Oficio.TIPO_DESTINO_INTERIOR,
+                status=status,
+            )
+            oficio.viajantes.add(self.viajante)
+            OficioTrecho.objects.create(
+                oficio=oficio,
+                ordem=0,
+                origem_estado=self.estado,
+                origem_cidade=self.cidade_origem,
+                destino_estado=self.estado,
+                destino_cidade=self.cidade_destino,
+                saida_data=inicio,
+                chegada_data=fim,
+            )
+            oficios.append(oficio)
+
+        response = self.client.get(reverse('eventos:oficios-global'))
+
+        for oficio, (_, _, _, _, theme_css_class) in zip(oficios, cenarios):
+            card_html = self._extract_oficio_article_html(response, oficio.pk)
+            self.assertIn(theme_css_class, card_html)
+            self.assertIn('oficio-list-chip', card_html)
+            self.assertIn('Documento', card_html)
+            self.assertIn('Viagem', card_html)
 
     def test_hubs_globais_principais_respondem_200(self):
         urls = [

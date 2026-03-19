@@ -5411,7 +5411,8 @@ class OficioStep1AcceptanceTest(TestCase):
 
     def test_step4_finalizar_com_termo_sim_gera_um_termo_por_viajante(self):
         oficio = self._criar_oficio(ano=2026)
-        self._salvar_oficio_finalizavel(oficio, destino=self._criar_destino('Destino Termos Sim'))
+        destino = self._criar_destino('Destino Termos Sim')
+        self._salvar_oficio_finalizavel(oficio, destino=destino)
         viajante_extra = Viajante.objects.create(
             nome='Servidor Extra Termo',
             status=Viajante.STATUS_FINALIZADO,
@@ -5432,7 +5433,52 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(response.url, reverse('eventos:oficios-global'))
         oficio.refresh_from_db()
         self.assertEqual(oficio.status, Oficio.STATUS_FINALIZADO)
-        self.assertEqual(TermoAutorizacao.objects.filter(oficio=oficio).count(), 2)
+        termos = list(TermoAutorizacao.objects.filter(oficio=oficio).order_by('viajante__nome'))
+        self.assertEqual(len(termos), 2)
+        self.assertEqual({termo.viajante_id for termo in termos}, {self.viajante_final.pk, viajante_extra.pk})
+        response_termos = self.client.get(reverse('eventos:documentos-termos'))
+        self.assertContains(response_termos, 'Termo de autorizacao')
+        self.assertContains(response_termos, self.viajante_final.nome)
+        self.assertContains(response_termos, viajante_extra.nome)
+        self.assertContains(response_termos, destino.nome)
+        self.assertNotContains(response_termos, 'TA-000')
+
+    def test_step4_finalizar_com_termo_sim_sincroniza_termos_existentes_sem_manter_sobra(self):
+        oficio = self._criar_oficio(ano=2026)
+        destino = self._criar_destino('Destino Termos Sync')
+        self._salvar_oficio_finalizavel(oficio, destino=destino)
+        viajante_antigo = Viajante.objects.create(
+            nome='Servidor Antigo Termo',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=self.cargo,
+            cpf='65432198700',
+            rg='99887766',
+            unidade_lotacao=self.unidade,
+            telefone='41999992222',
+        )
+        termo_antigo = TermoAutorizacao.objects.create(
+            evento=self.evento,
+            oficio=oficio,
+            modo_geracao=TermoAutorizacao.MODO_AUTOMATICO_SEM_VIATURA,
+            status=TermoAutorizacao.STATUS_GERADO,
+            viajante=viajante_antigo,
+            destino=f'{destino.nome}/{self.estado.sigla}',
+            data_evento=date(2026, 9, 1),
+        )
+        termo_antigo.oficios.add(oficio)
+
+        response = self.client.post(
+            reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+            data={'finalizar': '1', 'gerar_termo_preenchido': '1'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        termos = list(TermoAutorizacao.objects.filter(oficio=oficio))
+        self.assertEqual(len(termos), 1)
+        self.assertEqual(termos[0].viajante_id, self.viajante_final.pk)
+        termo_antigo.refresh_from_db()
+        self.assertIsNone(termo_antigo.oficio_id)
+        self.assertFalse(termo_antigo.oficios.filter(pk=oficio.pk).exists())
 
     def test_step4_finalizar_com_termo_nao_nao_gera_termos(self):
         oficio = self._criar_oficio(ano=2026)
@@ -5731,6 +5777,39 @@ class OficioJustificativaTest(TestCase):
         oficio.refresh_from_db()
         self.assertTrue(oficio.gerar_termo_preenchido)
         self.assertContains(response, 'salvo.')
+
+    def test_assets_do_wizard_mantem_quick_report_abaixo_do_header_no_load_e_no_scroll(self):
+        js = (Path(settings.BASE_DIR) / 'static' / 'js' / 'oficio_wizard.js').read_text(encoding='utf-8')
+        css = (Path(settings.BASE_DIR) / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
+
+        self.assertIn("--oficio-quick-report-top", js)
+        self.assertIn("window.addEventListener('load', forceRefreshLayout)", js)
+        self.assertIn("window.addEventListener('scroll', refreshLayout, { passive: true })", js)
+        self.assertIn("document.addEventListener('scroll', refreshLayout, { passive: true })", js)
+        self.assertIn("observer.observe(document.body);", js)
+        self.assertIn("--oficio-quick-report-top", css)
+        self.assertIn("top: var(--oficio-quick-report-top);", css)
+        self.assertIn("scroll-margin-top: calc(var(--oficio-quick-report-top) + 0.5rem);", css)
+
+    def test_steps_com_quick_report_carregam_header_sticky_e_script_compartilhado(self):
+        oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
+        self._salvar_oficio_finalizavel(
+            oficio,
+            data_saida=date(2026, 10, 10),
+            data_retorno=date(2026, 10, 11),
+        )
+        urls = [
+            reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}),
+            reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
+            reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
+        ]
+        for url in urls:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'data-oficio-sticky-header')
+            self.assertContains(response, 'oficio-quick-report')
+            self.assertContains(response, 'js/oficio_wizard.js')
 
     def test_salvar_justificativa_grava_texto_e_retorna_para_next(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 10, 5))
@@ -6225,22 +6304,25 @@ class OficioDocumentosTest(TestCase):
         self._criar_configuracao()
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
         self._salvar_oficio_finalizavel(oficio, date(2026, 10, 10), date(2026, 10, 11))
-
-        response = self.client.get(
+        initial_response = self.client.get(
             reverse(
                 'eventos:oficio-documento-download',
                 kwargs={'pk': oficio.pk, 'tipo_documento': 'termo-autorizacao', 'formato': 'docx'},
             )
         )
+        termo = TermoAutorizacao.objects.get(oficio=oficio)
+        download_url = reverse(
+            'eventos:documentos-termos-download',
+            kwargs={'pk': termo.pk, 'formato': 'docx'},
+        )
+        self.assertRedirects(initial_response, download_url, fetch_redirect_response=False)
+
+        response = self.client.get(download_url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn(
-            build_document_filename(oficio, DocumentoOficioTipo.TERMO_AUTORIZACAO, 'docx'),
-            response['Content-Disposition'],
-        )
+        self.assertIn(f'termo_autorizacao_{termo.pk}_', response['Content-Disposition'])
         text = self._extract_docx_text(response.content)
         self.assertIn('TERMO DE AUTORIZA', text)
-        self.assertIn('Assessoria de Comunica', text)
         self.assertIn(self.viajante.nome, text)
 
     def test_download_docx_do_plano_trabalho_quando_apto(self):
@@ -6348,22 +6430,26 @@ class OficioDocumentosTest(TestCase):
         self._salvar_oficio_finalizavel(oficio, date(2026, 10, 10), date(2026, 10, 11))
 
         with patch(
-            'eventos.services.documentos.renderer.convert_docx_bytes_to_pdf_bytes',
+            'eventos.views_global.convert_docx_bytes_to_pdf_bytes',
             return_value=b'%PDF-1.4 termo',
         ):
-            response = self.client.get(
+            initial_response = self.client.get(
                 reverse(
                     'eventos:oficio-documento-download',
                     kwargs={'pk': oficio.pk, 'tipo_documento': 'termo-autorizacao', 'formato': 'pdf'},
                 )
             )
+            termo = TermoAutorizacao.objects.get(oficio=oficio)
+            download_url = reverse(
+                'eventos:documentos-termos-download',
+                kwargs={'pk': termo.pk, 'formato': 'pdf'},
+            )
+            self.assertRedirects(initial_response, download_url, fetch_redirect_response=False)
+            response = self.client.get(download_url)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
-        self.assertIn(
-            build_document_filename(oficio, DocumentoOficioTipo.TERMO_AUTORIZACAO, 'pdf'),
-            response['Content-Disposition'],
-        )
+        self.assertIn(f'termo_autorizacao_{termo.pk}_', response['Content-Disposition'])
         self.assertTrue(response.content.startswith(b'%PDF-1.4'))
 
     def test_download_pdf_do_plano_trabalho_quando_apto(self):
@@ -6414,7 +6500,7 @@ class OficioDocumentosTest(TestCase):
         )
         self.assertTrue(response.content.startswith(b'%PDF-1.4'))
 
-    def test_download_do_termo_autorizacao_e_bloqueado_com_oficio_incompleto(self):
+    def test_download_do_termo_autorizacao_redireciona_para_registro_salvo_mesmo_com_oficio_incompleto(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
         self._salvar_steps_1_e_2(oficio)
 
@@ -6422,12 +6508,14 @@ class OficioDocumentosTest(TestCase):
             reverse(
                 'eventos:oficio-documento-download',
                 kwargs={'pk': oficio.pk, 'tipo_documento': 'termo-autorizacao', 'formato': 'docx'},
-            ),
-            follow=True,
+            )
         )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Preencha e salve o Step 3')
+        termo = TermoAutorizacao.objects.get(oficio=oficio)
+        self.assertRedirects(
+            response,
+            reverse('eventos:documentos-termos-download', kwargs={'pk': termo.pk, 'formato': 'docx'}),
+            fetch_redirect_response=False,
+        )
 
     def test_download_do_plano_trabalho_e_bloqueado_com_oficio_incompleto(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
@@ -6763,22 +6851,12 @@ class OficioDocumentosTest(TestCase):
         self.assertContains(response, 'Backend PDF indispon')
         self.assertContains(response, 'Documentos do of')
 
-    def test_tela_documentos_abre_quando_schema_local_da_0018_ainda_nao_foi_aplicado(self):
+    def test_tela_documentos_abre_sem_dependencia_do_check_legado_de_schema(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
-        status_schema = {
-            'available': False,
-            'message': 'Banco local desatualizado: aplique a migration 0018 do app eventos.',
-        }
-
-        with patch('eventos.views.get_oficio_justificativa_schema_status', return_value=status_schema), patch(
-            'eventos.services.documentos.validators.get_oficio_justificativa_schema_status',
-            return_value=status_schema,
-        ):
-            response = self.client.get(reverse('eventos:oficio-documentos', kwargs={'pk': oficio.pk}))
+        response = self.client.get(reverse('eventos:oficio-documentos', kwargs={'pk': oficio.pk}))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Banco local desatualizado')
-        self.assertContains(response, 'Indispon')
+        self.assertContains(response, 'Documentos do of')
 
 
 class OficioStep1AjustesFinosTest(TestCase):

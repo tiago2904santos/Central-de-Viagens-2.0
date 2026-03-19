@@ -17,9 +17,16 @@
     var computed = window.getComputedStyle(header);
     var marginTop = parseFloat(computed.marginTop || '0') || 0;
     var marginBottom = parseFloat(computed.marginBottom || '0') || 0;
-    var height = Math.ceil(header.getBoundingClientRect().height + marginTop + marginBottom);
+    var rect = header.getBoundingClientRect();
+    var height = Math.ceil(rect.height + marginTop + marginBottom);
+    var headerTop = Math.max(Math.floor(rect.top - marginTop), 0);
+    var stickyGap = parseFloat(
+      window.getComputedStyle(page).getPropertyValue('--oficio-sticky-gap') || '12'
+    ) || 12;
+    var quickReportTop = Math.max(Math.ceil(rect.bottom + marginBottom + stickyGap), stickyGap);
     page.style.setProperty('--oficio-sticky-header-height', height + 'px');
-    page.style.setProperty('--oficio-sticky-header-top', '0px');
+    page.style.setProperty('--oficio-sticky-header-top', headerTop + 'px');
+    page.style.setProperty('--oficio-quick-report-top', quickReportTop + 'px');
   }
 
   function syncQuickReportLayout() {
@@ -29,13 +36,9 @@
       return;
     }
     var styles = page ? window.getComputedStyle(page) : window.getComputedStyle(document.documentElement);
-    var headerOffset = parseFloat(styles.getPropertyValue('--oficio-sticky-header-height') || '0') || 0;
-    var headerTop = parseFloat(styles.getPropertyValue('--oficio-sticky-header-top') || '0') || 0;
-    var stickyGap = parseFloat(
-      styles.getPropertyValue('--oficio-sticky-gap') || '12'
-    ) || 12;
+    var quickReportTop = parseFloat(styles.getPropertyValue('--oficio-quick-report-top') || '0') || 0;
     var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-    var maxHeight = Math.max(Math.floor(viewportHeight - headerTop - headerOffset - stickyGap - 12), 240);
+    var maxHeight = Math.max(Math.floor(viewportHeight - quickReportTop - 12), 240);
     if (page) {
       page.style.setProperty('--oficio-quick-report-max-height', maxHeight + 'px');
     }
@@ -49,17 +52,31 @@
 
   function bindStickyLayout() {
     var header = qs('[data-oficio-sticky-header]');
+    var scheduled = false;
     function refreshLayout() {
+      if (scheduled) {
+        return;
+      }
+      scheduled = true;
+      window.requestAnimationFrame(function() {
+        scheduled = false;
+        setStickyHeaderOffset();
+        syncQuickReportLayout();
+      });
+    }
+    function forceRefreshLayout() {
       setStickyHeaderOffset();
       syncQuickReportLayout();
     }
+    forceRefreshLayout();
     refreshLayout();
-    window.requestAnimationFrame(refreshLayout);
-    window.setTimeout(refreshLayout, 0);
-    window.addEventListener('resize', refreshLayout);
-    window.addEventListener('load', refreshLayout);
+    window.setTimeout(forceRefreshLayout, 0);
+    window.addEventListener('resize', refreshLayout, { passive: true });
+    window.addEventListener('load', forceRefreshLayout);
+    window.addEventListener('scroll', refreshLayout, { passive: true });
+    document.addEventListener('scroll', refreshLayout, { passive: true });
     if (typeof ResizeObserver === 'function') {
-      var observer = new ResizeObserver(refreshLayout);
+      var observer = new ResizeObserver(forceRefreshLayout);
       if (header) {
         observer.observe(header);
       }
@@ -67,6 +84,7 @@
       if (page) {
         observer.observe(page);
       }
+      observer.observe(document.body);
       document.querySelectorAll('.oficio-quick-report-column').forEach(function(column) {
         observer.observe(column);
       });

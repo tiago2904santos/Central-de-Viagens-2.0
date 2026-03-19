@@ -11,7 +11,6 @@
             <p class="text-muted mb-0">Acompanhamento honesto das justificativas vinculadas aos oficios.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'eventos:documentos-hub' %}" class="btn btn-outline-secondary">Documentos</a>
             <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary">Oficios</a>
         </div>
     </div>
@@ -99,7 +98,6 @@
                         </td>
                         <td class="text-end">
                             <a href="{{ row.justificativa_url }}" class="btn btn-sm btn-outline-primary">Abrir</a>
-                            <a href="{{ row.documentos_url }}" class="btn btn-sm btn-outline-secondary">Documentos</a>
                             <a href="{{ row.oficio_url }}" class="btn btn-sm btn-outline-secondary">Step 4</a>
                         </td>
                     </tr>

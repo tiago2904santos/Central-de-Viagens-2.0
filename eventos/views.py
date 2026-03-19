@@ -1869,10 +1869,8 @@ def oficio_novo(request):
 
 
 def _oficio_redirect_pos_exclusao(oficio):
-    """Redireciona para a lista de ofícios do evento (Etapa 5)."""
-    if oficio.evento_id:
-        return reverse('eventos:guiado-etapa-5', kwargs={'evento_id': oficio.evento_id})
-    return reverse('eventos:lista')
+    """Redireciona sempre para a lista global de oficios."""
+    return reverse('eventos:oficios-global')
 
 
 @login_required
@@ -4378,10 +4376,6 @@ def _get_or_create_termos_from_oficio(oficio, user=None):
     Obtém ou cria registros TermoAutorizacao vinculados a este Ofício.
     Retorna (lista_de_termos, created_bool).
     """
-    existing = list(TermoAutorizacao.objects.filter(oficio=oficio).order_by('created_at'))
-    if existing:
-        return existing, False
-
     context = _build_termo_context_for_oficio(oficios=[oficio])
     viajantes = list(context['viajantes'])
     veiculo = context['veiculo_inferido']
@@ -4403,21 +4397,60 @@ def _get_or_create_termos_from_oficio(oficio, user=None):
         'modo_geracao': modo,
         'template_variant': TermoAutorizacao.template_variant_for_mode(modo),
     }
-    termos = []
-    if modo == TermoAutorizacao.MODO_RAPIDO:
-        termo = TermoAutorizacao(**common)
+    existing = list(
+        TermoAutorizacao.objects.filter(oficio=oficio)
+        .select_related('viajante', 'veiculo')
+        .order_by('created_at', 'pk')
+    )
+
+    def sync_term(termo, *, viajante=None, lote_uuid=None):
+        for field, value in common.items():
+            setattr(termo, field, value)
+        termo.viajante = viajante
+        termo.lote_uuid = lote_uuid
+        if user and not termo.criado_por_id:
+            termo.criado_por = user
         termo.populate_snapshots_from_relations(force=True)
         termo.save()
         termo.oficios.add(oficio)
+        return termo
+
+    termos = []
+    created = False
+    if modo == TermoAutorizacao.MODO_RAPIDO:
+        termo = next((item for item in existing if not item.viajante_id), None)
+        if termo is None:
+            termo = TermoAutorizacao()
+            created = True
+        termo = sync_term(termo, viajante=None, lote_uuid=None)
         termos.append(termo)
     else:
+        terms_by_viajante_id = {
+            item.viajante_id: item for item in existing if item.viajante_id
+        }
+        generic_terms = [item for item in existing if not item.viajante_id]
         for viajante in viajantes:
-            termo = TermoAutorizacao(**common, viajante=viajante, lote_uuid=lote)
-            termo.populate_snapshots_from_relations(force=True)
-            termo.save()
-            termo.oficios.add(oficio)
+            termo = terms_by_viajante_id.get(viajante.pk)
+            if termo is None and generic_terms:
+                termo = generic_terms.pop(0)
+            if termo is None:
+                termo = TermoAutorizacao()
+                created = True
+            termo = sync_term(termo, viajante=viajante, lote_uuid=lote)
             termos.append(termo)
-    return termos, True
+    used_term_ids = {termo.pk for termo in termos if termo.pk}
+    for termo in existing:
+        if not termo.pk or termo.pk in used_term_ids:
+            continue
+        changed_fields = []
+        if termo.oficio_id == oficio.pk:
+            termo.oficio = None
+            changed_fields.append('oficio')
+        if changed_fields:
+            termo.save(update_fields=[*changed_fields, 'updated_at'])
+        termo.oficios.remove(oficio)
+    termos.sort(key=lambda item: ((item.viajante is None), item.servidor_display or '', item.pk or 0))
+    return termos, created
 
 
 def _download_oficio_documento(request, oficio, tipo_documento, formato):

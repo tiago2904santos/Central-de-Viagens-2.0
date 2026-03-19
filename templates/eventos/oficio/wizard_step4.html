@@ -217,15 +217,19 @@
   <div class="oficio-summary-actions mt-4 p-3 border rounded bg-white">
     <div class="oficio-summary-actions-group">
       {% if oficio.status != 'FINALIZADO' %}
-      <button type="submit" form="oficio-step4-form" name="finalizar" value="1" class="btn btn-success" data-autosave-bypass="1">Finalizar Ofício</button>
+      <button type="submit" form="oficio-step4-form" name="finalizar" value="1" class="btn btn-doc-action btn-doc-action--primary" data-autosave-bypass="1">
+        <i class="bi bi-check2-circle"></i>
+        <span>Finalizar Ofício</span>
+      </button>
       {% endif %}
       {% for action in oficio_downloads.actions %}
       <a
         href="{{ action.url }}"
-        class="btn {% if action.available %}btn-outline-primary{% else %}btn-outline-secondary{% endif %}"
+        class="btn btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}"
         data-autosave-link="1"
       >
-        {{ action.download_label }}
+        <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
+        <span>{{ action.download_label }}</span>
       </a>
       {% endfor %}
     </div>

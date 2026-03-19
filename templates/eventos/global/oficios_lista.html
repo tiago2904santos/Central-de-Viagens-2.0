@@ -9,7 +9,7 @@
         <div>
             <p class="oficios-list-hero__eyebrow">Central documental</p>
             <h1 class="mb-1">Lista de oficios</h1>
-            <p class="text-muted mb-0">Cards menores, filtros enxutos e contexto sem repeticao entre oficio, justificativa e termos.</p>
+            <p class="text-muted mb-0">Cards mais compactos, leitura em chips e documentos principais acessiveis direto no card.</p>
         </div>
         <div class="oficios-list-hero__actions">
             <a href="{% url 'eventos:oficio-novo' %}" class="btn btn-primary btn-lg oficios-list-hero__primary">
@@ -111,60 +111,44 @@
 
     <div class="oficio-list-grid">
         {% for oficio in object_list %}
-        <article class="oficio-list-card {{ oficio.viagem_status.css_class }}" id="oficio-card-{{ oficio.pk }}">
+        <article class="oficio-list-card {{ oficio.theme.css_class }}" id="oficio-card-{{ oficio.pk }}">
             <div class="oficio-list-card__header">
                 <div class="oficio-list-card__header-main">
                     <div class="oficio-list-card__title-row">
                         <h2 class="oficio-list-card__title">Oficio {{ oficio.numero_formatado }}</h2>
                         <span class="oficio-list-card__protocol">Protocolo {{ oficio.protocolo_formatado }}</span>
-                        <span class="oficio-list-badge {{ oficio.oficio_status.css_class }}">{{ oficio.oficio_status.label }}</span>
                     </div>
-                    <div class="oficio-list-card__headline">
-                        <span class="oficio-list-card__headline-destination">{{ oficio.destinos_display }}</span>
-                        <span class="oficio-list-card__headline-separator">&bull;</span>
-                        <span class="oficio-list-card__headline-date">{{ oficio.periodo_display }}</span>
-                    </div>
+                    <div class="oficio-list-card__headline">{{ oficio.destinos_display }}{% if oficio.periodo_display and oficio.periodo_display != '-' %} · {{ oficio.periodo_display }}{% endif %}</div>
+                    <p class="oficio-list-card__reason mb-0">{{ oficio.theme.reason }}</p>
                 </div>
                 <div class="oficio-list-card__header-side">
-                    <span class="oficio-list-card__updated">Atualizado em {{ oficio.updated_display }}</span>
+                    <span class="oficio-list-badge {{ oficio.theme.status_css_class }}">{{ oficio.theme.label }}</span>
                 </div>
             </div>
 
-            <div class="oficio-list-card__status-row">
-                <div class="oficio-list-card__status-copy">
-                    <span class="oficio-list-badge {{ oficio.viagem_status.css_class }}">{{ oficio.viagem_status.label }}</span>
-                    <div class="oficio-list-card__relative {{ oficio.viagem_status.css_class }}">{{ oficio.viagem_status.relative_label }}</div>
-                </div>
-                <span class="oficio-list-badge {{ oficio.contexto.css_class }}">{{ oficio.contexto.label }}</span>
+            <div class="oficio-list-chip-list oficio-list-chip-list--status">
+                {% for chip in oficio.status_chips %}
+                <span class="oficio-list-chip {{ chip.css_class }}">
+                    {% if chip.label %}<span class="oficio-list-chip__label">{{ chip.label }}</span>{% endif %}
+                    <span>{{ chip.value }}</span>
+                </span>
+                {% endfor %}
             </div>
 
-            <div class="oficio-list-card__core-grid">
-                <section class="oficio-list-core-card oficio-list-core-card--travelers">
-                    <span class="oficio-list-core-card__label">Viajantes</span>
+            <div class="oficio-list-meta-grid">
+                {% for group in oficio.meta_groups %}
+                <section class="oficio-list-meta-group">
+                    <span class="oficio-list-meta-group__label">{{ group.title }}</span>
                     <div class="oficio-list-chip-list">
-                        {% for chip in oficio.traveler_chips %}
-                        <span class="oficio-list-chip {{ chip.css_class }}">{{ chip.label }}</span>
+                        {% for chip in group.chips %}
+                        <span class="oficio-list-chip {{ chip.css_class }}">
+                            {% if chip.label %}<span class="oficio-list-chip__label">{{ chip.label }}</span>{% endif %}
+                            <span>{{ chip.value }}</span>
+                        </span>
                         {% endfor %}
                     </div>
                 </section>
-
-                <section class="oficio-list-core-card">
-                    <span class="oficio-list-core-card__label">Veiculo</span>
-                    <div class="oficio-list-core-card__value">{{ oficio.vehicle_display }}</div>
-                    <div class="oficio-list-core-card__subvalue">
-                        <span class="oficio-list-core-card__subvalue-label">Motorista</span>
-                        <span>{{ oficio.driver_display }}</span>
-                    </div>
-                    {% if oficio.evento_titulo %}
-                    <div class="oficio-list-core-card__note">
-                        {% if oficio.evento_url %}
-                        <a href="{{ oficio.evento_url }}" class="text-decoration-none">{{ oficio.evento_titulo }}</a>
-                        {% else %}
-                        <span>{{ oficio.evento_titulo }}</span>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                </section>
+                {% endfor %}
             </div>
 
             {% if oficio.justificativa or oficio.termos %}
@@ -184,11 +168,20 @@
                     <p class="oficio-list-subcard__text">{{ oficio.justificativa.texto_resumido }}</p>
 
                     <div class="oficio-list-subcard__actions">
-                        <a href="{{ oficio.justificativa.detail_url }}" class="btn btn-sm btn-outline-primary">Abrir</a>
-                        <a href="{{ oficio.justificativa.edit_url }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                        <a href="{{ oficio.justificativa.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                            <span>Abrir</span>
+                        </a>
+                        <a href="{{ oficio.justificativa.edit_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                            <i class="bi bi-pencil-square"></i>
+                            <span>Editar</span>
+                        </a>
                         {% for action in oficio.justificativa.downloads %}
                         {% if action.available %}
-                        <a href="{{ action.url }}" class="btn btn-sm btn-outline-secondary">{{ action.label }}</a>
+                        <a href="{{ action.url }}" class="btn btn-sm btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}">
+                            <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
+                            <span>{{ action.label }}</span>
+                        </a>
                         {% endif %}
                         {% endfor %}
                     </div>
@@ -202,19 +195,38 @@
                             <h3 class="oficio-list-subcard__title">Termos de autorizacao</h3>
                             <p class="oficio-list-subcard__subtitle">{{ oficio.termos.count_label }} · {{ oficio.termos.summary }}</p>
                         </div>
-                        <a href="{{ oficio.termos.manage_url }}" class="btn btn-sm btn-outline-secondary">Gerenciar</a>
+                        <a href="{{ oficio.termos.manage_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                            <i class="bi bi-folder-symlink"></i>
+                            <span>Lista de termos</span>
+                        </a>
                     </div>
 
                     <div class="oficio-list-term-grid">
                         {% for termo in oficio.termos.subcards %}
                         <div class="oficio-list-term-card {{ termo.status.css_class }}">
-                            <strong class="oficio-list-term-card__name">{{ termo.traveler_name }}</strong>
+                            <div class="oficio-list-term-card__header">
+                                <strong class="oficio-list-term-card__name">{{ termo.traveler_name }}</strong>
+                                <span class="oficio-list-badge {{ termo.status.css_class }}">{{ termo.status.label }}</span>
+                            </div>
+                            <p class="oficio-list-term-card__title">{{ termo.title }}</p>
                             <div class="oficio-list-term-card__actions">
                                 {% if termo.open_url %}
-                                <a href="{{ termo.open_url }}" class="btn btn-sm btn-outline-primary">Abrir</a>
+                                <a href="{{ termo.open_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                    <span>{% if termo.is_saved %}Abrir{% else %}Abrir resumo{% endif %}</span>
+                                </a>
+                                {% endif %}
+                                {% if termo.download_docx_url %}
+                                <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                                    <i class="bi bi-filetype-docx"></i>
+                                    <span>DOCX</span>
+                                </a>
                                 {% endif %}
                                 {% if termo.download_pdf_url %}
-                                <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-outline-secondary">PDF</a>
+                                <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf">
+                                    <i class="bi bi-filetype-pdf"></i>
+                                    <span>PDF</span>
+                                </a>
                                 {% endif %}
                             </div>
                         </div>
@@ -227,14 +239,22 @@
 
             <div class="oficio-list-card__footer">
                 <div class="oficio-list-card__footer-actions">
-                    <a href="{{ oficio.wizard_url }}" class="btn btn-sm btn-primary">Abrir wizard</a>
-                    <a href="{{ oficio.documentos_url }}" class="btn btn-sm btn-outline-secondary">Documentos</a>
+                    <a href="{{ oficio.wizard_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
+                        <i class="bi bi-magic"></i>
+                        <span>Abrir wizard</span>
+                    </a>
                     {% for action in oficio.downloads %}
                     {% if action.available %}
-                    <a href="{{ action.url }}" class="btn btn-sm btn-outline-secondary">{{ action.label }}</a>
+                    <a href="{{ action.url }}" class="btn btn-sm btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}">
+                        <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
+                        <span>{{ action.label }}</span>
+                    </a>
                     {% endif %}
                     {% endfor %}
-                    <a href="{{ oficio.excluir_url }}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                    <a href="{{ oficio.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger">
+                        <i class="bi bi-trash3"></i>
+                        <span>Excluir</span>
+                    </a>
                 </div>
             </div>
         </article>
