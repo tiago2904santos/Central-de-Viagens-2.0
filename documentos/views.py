@@ -42,7 +42,12 @@ def hub(request):
 
 @login_required
 def oficio_lista(request):
-    oficios = Oficio.objects.prefetch_related('viajantes').order_by('-criado_em')
+    oficios = (
+        Oficio.objects
+        .prefetch_related('viajantes', 'termos')
+        .select_related('motorista', 'evento')
+        .order_by('-criado_em')
+    )
     return render(request, 'documentos/oficios/lista.html', {'oficios': oficios})
 
 

@@ -10,50 +10,251 @@
 </div>
 
 {% if oficios %}
-<div class="card border-0 shadow-sm">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Identificação</th>
-          <th>Status</th>
-          <th>Data criação</th>
-          <th>Viajantes</th>
-          <th class="text-end">Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for o in oficios %}
-        <tr>
-          <td>
-            <a href="{% url 'documentos:oficio-step1' pk=o.pk %}" class="text-decoration-none fw-semibold">
-              {{ o.identificacao }}
-            </a>
-            {% if o.motivo %}<div class="small text-muted text-truncate" style="max-width:300px">{{ o.motivo }}</div>{% endif %}
-          </td>
-          <td>
-            {% if o.status == 'FINALIZADO' %}
-              <span class="badge bg-success">Finalizado</span>
-            {% else %}
-              <span class="badge bg-warning text-dark">Rascunho</span>
+<div class="oficio-process-list">
+  {% for o in oficios %}
+  <article class="oficio-process-card {% if o.status == 'FINALIZADO' %}is-finalizado{% else %}is-rascunho{% endif %}">
+
+    {# ── CABEÇALHO DO CARD ─────────────────────────────────────────────── #}
+    <div class="oficio-process-card__header">
+      <div>
+        <h5 class="oficio-process-card__title">Ofício {{ o.identificacao }}</h5>
+        {% if o.motivo %}
+        <p class="oficio-process-card__subtitle">{{ o.motivo|truncatewords:15 }}</p>
+        {% endif %}
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        {% if o.status == 'FINALIZADO' %}
+          <span class="oficio-process-status is-finalizado">
+            <i class="bi bi-check-circle me-1"></i>Finalizado
+          </span>
+        {% else %}
+          <span class="oficio-process-status is-pending">
+            <i class="bi bi-pencil-square me-1"></i>Em elaboração
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── META (Protocolo · Destino · Data · Evento) ────────────────────── #}
+    <div class="oficio-process-card__meta">
+      {% if o.protocolo %}
+      <div class="oficio-process-meta-item">
+        <span class="oficio-process-meta-label">Protocolo</span>
+        <span class="oficio-process-meta-value">{{ o.protocolo }}</span>
+      </div>
+      {% endif %}
+      <div class="oficio-process-meta-item">
+        <span class="oficio-process-meta-label">Destino</span>
+        <span class="oficio-process-meta-value">{{ o.get_tipo_destino_display }}</span>
+      </div>
+      <div class="oficio-process-meta-item">
+        <span class="oficio-process-meta-label">Data</span>
+        <span class="oficio-process-meta-value">{{ o.data_criacao|date:"d/m/Y" }}</span>
+      </div>
+      {% if o.evento %}
+      <div class="oficio-process-meta-item">
+        <span class="oficio-process-meta-label">Evento</span>
+        <span class="oficio-process-meta-value">{{ o.evento }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    {# ── BLOCO PRINCIPAL: Ofício / Protocolo ──────────────────────────── #}
+    <div class="oficio-document-grid oficio-document-grid--2col mb-2">
+      <div class="oficio-document-card">
+        <div class="oficio-document-card__header">
+          <h6 class="oficio-document-card__title">Ofício</h6>
+          <span class="oficio-document-status {% if o.numero %}is-ready{% else %}is-pending{% endif %}">
+            {% if o.numero %}{{ o.identificacao }}{% else %}Sem número{% endif %}
+          </span>
+        </div>
+        <div class="oficio-document-card__summary">
+          {% if o.protocolo %}
+          <div class="oficio-document-summary-item">
+            <span class="oficio-document-summary-label">Protocolo</span>
+            <span class="oficio-document-summary-value">{{ o.protocolo }}</span>
+          </div>
+          {% endif %}
+          <div class="oficio-document-summary-item">
+            <span class="oficio-document-summary-label">Data</span>
+            <span class="oficio-document-summary-value">{{ o.data_criacao|date:"d/m/Y" }}</span>
+          </div>
+          <div class="oficio-document-summary-item">
+            <span class="oficio-document-summary-label">Destino</span>
+            <span class="oficio-document-summary-value">{{ o.get_tipo_destino_display }}</span>
+          </div>
+          <div class="oficio-document-summary-item">
+            <span class="oficio-document-summary-label">Custeio</span>
+            <span class="oficio-document-summary-value">{{ o.get_custeio_tipo_display }}{% if o.nome_instituicao_custeio %} — {{ o.nome_instituicao_custeio }}{% endif %}</span>
+          </div>
+        </div>
+      </div>
+
+      {# Status block #}
+      <div class="oficio-document-card oficio-document-card--status">
+        <div class="oficio-document-card__header">
+          <h6 class="oficio-document-card__title">Status</h6>
+          <span class="oficio-document-status {% if o.status == 'FINALIZADO' %}is-ready{% else %}is-pending{% endif %}">
+            {% if o.status == 'FINALIZADO' %}Finalizado{% else %}Em elaboração{% endif %}
+          </span>
+        </div>
+        <div class="oficio-document-card__summary">
+          <div class="oficio-document-summary-item">
+            <span class="oficio-document-summary-label">Criado em</span>
+            <span class="oficio-document-summary-value">{{ o.criado_em|date:"d/m/Y" }}</span>
+          </div>
+          {% if o.evento %}
+          <div class="oficio-document-summary-item">
+            <span class="oficio-document-summary-label">Evento</span>
+            <span class="oficio-document-summary-value">{{ o.evento }}</span>
+          </div>
+          {% endif %}
+          {% if o.motivo %}
+          <div class="oficio-document-summary-item">
+            <span class="oficio-document-summary-label">Motivo</span>
+            <span class="oficio-document-summary-value">{{ o.motivo|truncatewords:10 }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ── SERVIDORES (50%) + VEÍCULO/MOTORISTA (50%) ────────────────────── #}
+    <div class="row g-2 mb-2">
+
+      {# Servidores — 50% #}
+      <div class="col-md-6">
+        <div class="oficio-document-card h-100">
+          <div class="oficio-document-card__header">
+            <h6 class="oficio-document-card__title">Servidores</h6>
+            <span class="oficio-document-status {% if o.viajantes.count %}is-ready{% else %}is-muted{% endif %}">
+              {{ o.viajantes.count }} servidor{% if o.viajantes.count != 1 %}es{% endif %}
+            </span>
+          </div>
+          <div class="oficio-document-card__summary">
+            {% for ov in o.viajantes.all %}
+            <div class="oficio-document-summary-item">
+              <span class="oficio-document-summary-value">{{ ov.nome_snapshot|default:ov.viajante }}</span>
+              {% if ov.cargo_snapshot %}
+              <span class="oficio-document-summary-label">{{ ov.cargo_snapshot }}</span>
+              {% endif %}
+            </div>
+            {% empty %}
+            <span class="oficio-document-summary-value text-muted">Nenhum servidor adicionado</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {# Veículo + Motorista — 50% #}
+      <div class="col-md-6 d-flex flex-column gap-2">
+
+        {# Veículo #}
+        <div class="oficio-document-card">
+          <div class="oficio-document-card__header">
+            <h6 class="oficio-document-card__title">Veículo</h6>
+            <span class="oficio-document-status {% if o.placa %}is-ready{% else %}is-muted{% endif %}">
+              {% if o.placa %}Definido{% else %}—{% endif %}
+            </span>
+          </div>
+          <div class="oficio-document-card__summary">
+            <div class="oficio-document-summary-item">
+              <span class="oficio-document-summary-label">Placa</span>
+              <span class="oficio-document-summary-value">{% if o.placa %}{{ o.placa }}{% else %}—{% endif %}</span>
+            </div>
+            {% if o.modelo_veiculo %}
+            <div class="oficio-document-summary-item">
+              <span class="oficio-document-summary-label">Modelo</span>
+              <span class="oficio-document-summary-value">{{ o.modelo_veiculo }}</span>
+            </div>
             {% endif %}
-          </td>
-          <td>{{ o.data_criacao|date:"d/m/Y" }}</td>
-          <td><span class="badge bg-secondary">{{ o.viajantes.count }}</span></td>
-          <td class="text-end">
-            <a href="{% url 'documentos:oficio-step1' pk=o.pk %}" class="btn btn-sm btn-outline-primary me-1">
-              <i class="bi bi-pencil"></i>
-            </a>
-            <a href="{% url 'documentos:oficio-excluir' pk=o.pk %}" class="btn btn-sm btn-outline-danger">
-              <i class="bi bi-trash"></i>
-            </a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+          </div>
+        </div>
+
+        {# Motorista #}
+        <div class="oficio-document-card">
+          <div class="oficio-document-card__header">
+            <h6 class="oficio-document-card__title">Motorista</h6>
+            <span class="oficio-document-status {% if o.motorista %}is-ready{% else %}is-muted{% endif %}">
+              {% if o.motorista %}Definido{% else %}—{% endif %}
+            </span>
+          </div>
+          <div class="oficio-document-card__summary">
+            <div class="oficio-document-summary-item">
+              <span class="oficio-document-summary-label">Nome</span>
+              <span class="oficio-document-summary-value">{{ o.motorista|default:"—" }}</span>
+            </div>
+            {% if o.motorista_oficio_numero %}
+            <div class="oficio-document-summary-item">
+              <span class="oficio-document-summary-label">Ofício do motorista</span>
+              <span class="oficio-document-summary-value">{{ o.motorista_oficio_numero }}/{{ o.motorista_oficio_ano }}</span>
+            </div>
+            {% endif %}
+            {% if o.motorista_protocolo %}
+            <div class="oficio-document-summary-item">
+              <span class="oficio-document-summary-label">Protocolo do motorista</span>
+              <span class="oficio-document-summary-value">{{ o.motorista_protocolo }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>{# /col-md-6 veículo+motorista #}
+    </div>{# /row servidores + veículo+motorista #}
+
+    {# ── JUSTIFICATIVA + TERMOS (condicionais) ─────────────────────────── #}
+    {% if o.justificativa_texto or o.termos.all %}
+    <div class="row g-2 mb-2">
+      {% if o.justificativa_texto %}
+      <div class="col-md-6">
+        <div class="oficio-document-card h-100">
+          <div class="oficio-document-card__header">
+            <h6 class="oficio-document-card__title">Justificativa</h6>
+            <span class="oficio-document-status is-ready">Preenchida</span>
+          </div>
+          <p class="oficio-document-card__detail">{{ o.justificativa_texto|truncatewords:20 }}</p>
+        </div>
+      </div>
+      {% endif %}
+      {% with termos_list=o.termos.all %}
+      {% if termos_list %}
+      <div class="col-md-6">
+        <div class="oficio-document-card h-100">
+          <div class="oficio-document-card__header">
+            <h6 class="oficio-document-card__title">Termos de autorização</h6>
+            <span class="oficio-document-status is-info">{{ termos_list|length }} termo{% if termos_list|length != 1 %}s{% endif %}</span>
+          </div>
+          <div class="oficio-document-card__summary">
+            {% for t in termos_list %}
+            <div class="oficio-document-summary-item">
+              <span class="oficio-document-summary-value">{{ t }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      {% endwith %}
+    </div>
+    {% endif %}
+
+    {# ── RODAPÉ: ações ─────────────────────────────────────────────────── #}
+    <div class="oficio-process-card__footer">
+      <a href="{% url 'documentos:oficio-step4' pk=o.pk %}" class="btn btn-sm btn-primary">
+        <i class="bi bi-folder2-open me-1"></i> Abrir
+      </a>
+      <a href="{% url 'documentos:oficio-step1' pk=o.pk %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-pencil me-1"></i> Editar
+      </a>
+      <a href="{% url 'documentos:oficio-excluir' pk=o.pk %}" class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-trash me-1"></i> Excluir
+      </a>
+    </div>
+
+  </article>
+  {% endfor %}
 </div>
+
 {% else %}
 <div class="text-center py-5">
   <i class="bi bi-file-earmark-text fs-1 text-muted"></i>
