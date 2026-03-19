@@ -572,39 +572,86 @@ def _oficio_list_chip(label, value, css_class=''):
     }
 
 
-def _oficio_list_detail(label, value, css_class=''):
+def _oficio_list_status_item(value, css_class=''):
     text = _clean(value)
     if not text or text == EMPTY_DISPLAY:
         return None
     return {
-        'label': label,
         'value': text,
         'css_class': css_class,
     }
 
 
-def _oficio_list_info_block(title, *, chips=None, rows=None, tone='default'):
-    chip_items = [chip for chip in (chips or []) if chip]
-    row_items = [row for row in (rows or []) if row]
-    if not chip_items and not row_items:
-        return None
-    return {
-        'title': title,
-        'chips': chip_items,
-        'rows': row_items,
-        'tone': tone,
-    }
+def _oficio_list_display_or_default(value, fallback):
+    text = _clean(value)
+    if not text or text == EMPTY_DISPLAY:
+        return fallback
+    return text
 
 
-def _oficio_list_viajante_chips(oficio, limit=2):
+def _oficio_list_header_chips(oficio, destinos_display, periodo_display):
+    return [
+        _oficio_list_chip('Oficio', _oficio_list_display_or_default(oficio.numero_formatado, 'A definir'), 'is-key'),
+        _oficio_list_chip('Protocolo', _oficio_list_display_or_default(oficio.protocolo_formatado, 'Nao informado')),
+        _oficio_list_chip('Destino', _oficio_list_display_or_default(destinos_display, 'Nao definido')),
+        _oficio_list_chip('Data do evento', _oficio_list_display_or_default(periodo_display, 'A definir'), 'is-date'),
+    ]
+
+
+def _oficio_list_status_chips(oficio, viagem_status):
+    oficio_status = _oficio_process_status_meta(oficio)
+    items = [
+        _oficio_list_status_item(oficio_status['label'], oficio_status['css_class']),
+        _oficio_list_status_item(viagem_status['label'], viagem_status['css_class']),
+        _oficio_list_status_item(viagem_status.get('relative_label', ''), viagem_status['css_class']),
+    ]
+    chips = []
+    seen = set()
+    for item in items:
+        if not item:
+            continue
+        normalized = item['value'].lower()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        chips.append(item)
+    return chips
+
+
+def _oficio_list_initials(value):
+    parts = [part for part in _clean(value).split() if part]
+    if not parts:
+        return '--'
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return ''.join(part[0] for part in parts[:2]).upper()
+
+
+def _oficio_list_viajantes_block(oficio, limit=3):
     viajantes = _oficio_list_ordered_unique_strings([viajante.nome for viajante in oficio.viajantes.all()])
     if not viajantes:
-        return [{'label': '', 'value': 'Nenhum viajante', 'css_class': 'is-muted'}]
-    chips = [{'label': '', 'value': nome, 'css_class': ''} for nome in viajantes[:limit]]
+        return {
+            'count_label': '0 viajante',
+            'items': [{'name': 'Nenhum viajante vinculado', 'initials': '--', 'css_class': 'is-empty'}],
+        }
+
+    items = [
+        {'name': nome, 'initials': _oficio_list_initials(nome), 'css_class': ''}
+        for nome in viajantes[:limit]
+    ]
     restante = len(viajantes) - limit
     if restante > 0:
-        chips.append({'label': '', 'value': f'+{restante}', 'css_class': 'is-counter'})
-    return chips
+        items.append(
+            {
+                'name': f'+{restante} viajante(s)',
+                'initials': f'+{restante}',
+                'css_class': 'is-counter',
+            }
+        )
+    return {
+        'count_label': f'{len(viajantes)} viajante(s)',
+        'items': items,
+    }
 
 
 def _oficio_list_vehicle_display(oficio):
@@ -624,6 +671,35 @@ def _oficio_list_driver_display(oficio):
     return _clean(oficio.motorista) or 'Nao informado'
 
 
+def _oficio_list_vehicle_block(oficio):
+    placa = _clean(getattr(oficio, 'placa_formatada', ''))
+    modelo = _clean(oficio.modelo)
+    if placa == EMPTY_DISPLAY:
+        placa = ''
+
+    primary = placa or modelo or 'Nao informado'
+    secondary = modelo if placa and modelo and modelo != placa else ''
+    if not secondary and placa and not modelo:
+        secondary = 'Placa da viagem'
+    return {
+        'title': 'Veiculo',
+        'primary': primary,
+        'secondary': secondary,
+    }
+
+
+def _oficio_list_driver_block(oficio):
+    driver_display = _oficio_list_driver_display(oficio)
+    secondary = ''
+    if driver_display != 'Nao informado':
+        secondary = 'Servidor cadastrado' if getattr(oficio, 'motorista_viajante_id', None) else 'Informado manualmente'
+    return {
+        'title': 'Motorista',
+        'primary': driver_display,
+        'secondary': secondary,
+    }
+
+
 def _oficio_list_trip_status(oficio, today=None):
     inicio, fim = _oficio_list_period_bounds(oficio)
     if not inicio:
@@ -632,7 +708,7 @@ def _oficio_list_trip_status(oficio, today=None):
             'key': 'INDEFINIDA',
             'label': meta['label'],
             'css_class': meta['css_class'],
-            'relative_label': 'Defina o periodo da viagem',
+            'relative_label': '',
         }
 
     hoje = today or timezone.localdate()
@@ -828,42 +904,9 @@ def _oficio_list_card(oficio):
     termos = _oficio_list_term_block(oficio)
     destinos_display = _oficio_list_destinos_display(oficio)
     periodo_display = _oficio_list_period_display(oficio)
-    updated_display = _oficio_list_format_datetime(getattr(oficio, 'updated_at', None) or getattr(oficio, 'created_at', None))
+    context_label = 'Com evento' if oficio.evento_id else 'Avulso'
     vehicle_display = _oficio_list_vehicle_display(oficio)
     driver_display = _oficio_list_driver_display(oficio)
-    context_label = 'Com evento' if oficio.evento_id else 'Avulso'
-    motivo_resumido = _oficio_list_shorten_text(_clean(oficio.motivo), limit=90)
-    status_chips = [
-        _oficio_list_chip('Documento', _oficio_process_status_meta(oficio)['label']),
-        _oficio_list_chip('Viagem', viagem_status['label']),
-        _oficio_list_chip('Janela', viagem_status['relative_label']),
-    ]
-    info_blocks = [
-        _oficio_list_info_block(
-            'Contexto do oficio',
-            rows=[
-                _oficio_list_detail('Destino', destinos_display),
-                _oficio_list_detail('Periodo', periodo_display),
-                _oficio_list_detail('Contexto', context_label),
-                _oficio_list_detail('Evento', _clean(getattr(getattr(oficio, 'evento', None), 'titulo', ''))),
-                _oficio_list_detail('Motivo', motivo_resumido),
-            ],
-        ),
-        _oficio_list_info_block(
-            'Viajantes',
-            chips=_oficio_list_viajante_chips(oficio),
-            tone='soft',
-        ),
-        _oficio_list_info_block(
-            'Veiculo e motorista',
-            rows=[
-                _oficio_list_detail('Veiculo', vehicle_display),
-                _oficio_list_detail('Motorista', driver_display),
-                _oficio_list_detail('Atualizado', updated_display),
-            ],
-        ),
-    ]
-    info_blocks = [block for block in info_blocks if block]
     return {
         'pk': oficio.pk,
         'numero_formatado': oficio.numero_formatado,
@@ -872,11 +915,12 @@ def _oficio_list_card(oficio):
         'evento_url': reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
         'destinos_display': destinos_display,
         'periodo_display': periodo_display,
-        'updated_display': updated_display,
-        'context_label': context_label,
         'theme': theme,
-        'status_chips': [chip for chip in status_chips if chip],
-        'info_blocks': info_blocks,
+        'header_chips': [chip for chip in _oficio_list_header_chips(oficio, destinos_display, periodo_display) if chip],
+        'status_chips': _oficio_list_status_chips(oficio, viagem_status),
+        'viajantes_block': _oficio_list_viajantes_block(oficio),
+        'vehicle_block': _oficio_list_vehicle_block(oficio),
+        'driver_block': _oficio_list_driver_block(oficio),
         'oficio_status': _oficio_process_status_meta(oficio),
         'viagem_status': viagem_status,
         'justificativa': justificativa,
