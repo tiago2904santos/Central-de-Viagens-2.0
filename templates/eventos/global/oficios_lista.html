@@ -9,7 +9,7 @@
         <div>
             <p class="oficios-list-hero__eyebrow">Central documental</p>
             <h1 class="mb-1">Lista de oficios</h1>
-            <p class="text-muted mb-0">Cards mais compactos, leitura em chips e documentos principais acessiveis direto no card.</p>
+            <p class="text-muted mb-0">Cards mais compactos, com blocos mais estaveis e chips apenas onde ainda agregam leitura rapida.</p>
         </div>
         <div class="oficios-list-hero__actions">
             <a href="{% url 'eventos:oficio-novo' %}" class="btn btn-primary btn-lg oficios-list-hero__primary">
@@ -135,18 +135,30 @@
                 {% endfor %}
             </div>
 
-            <div class="oficio-list-meta-grid">
-                {% for group in oficio.meta_groups %}
-                <section class="oficio-list-meta-group">
-                    <span class="oficio-list-meta-group__label">{{ group.title }}</span>
-                    <div class="oficio-list-chip-list">
-                        {% for chip in group.chips %}
+            <div class="oficio-list-info-grid">
+                {% for block in oficio.info_blocks %}
+                <section class="oficio-list-info-block {% if block.tone == 'soft' %}is-soft{% endif %}">
+                    <span class="oficio-list-info-block__title">{{ block.title }}</span>
+                    {% if block.rows %}
+                    <div class="oficio-list-info-rows">
+                        {% for row in block.rows %}
+                        <div class="oficio-list-info-row">
+                            <span class="oficio-list-info-row__label">{{ row.label }}</span>
+                            <span class="oficio-list-info-row__value {{ row.css_class }}">{{ row.value }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if block.chips %}
+                    <div class="oficio-list-chip-list oficio-list-chip-list--compact">
+                        {% for chip in block.chips %}
                         <span class="oficio-list-chip {{ chip.css_class }}">
                             {% if chip.label %}<span class="oficio-list-chip__label">{{ chip.label }}</span>{% endif %}
                             <span>{{ chip.value }}</span>
                         </span>
                         {% endfor %}
                     </div>
+                    {% endif %}
                 </section>
                 {% endfor %}
             </div>
@@ -193,12 +205,35 @@
                     <div class="oficio-list-subcard__header">
                         <div>
                             <h3 class="oficio-list-subcard__title">Termos de autorizacao</h3>
+                            <p class="oficio-list-subcard__subtitle">{{ oficio.termos.count_label }}{% if oficio.termos.summary %} · {{ oficio.termos.summary }}{% endif %}</p>
                         </div>
                     </div>
 
-                    <div class="oficio-list-term-names">
+                    <div class="oficio-list-term-list">
                         {% for termo in oficio.termos.items %}
-                        <span class="oficio-list-term-name">{{ termo.traveler_name }}</span>
+                        <div class="oficio-list-term-row">
+                            <span class="oficio-list-term-row__name">{{ termo.traveler_name }}</span>
+                            <div class="oficio-list-term-row__actions">
+                                {% if termo.open_url %}
+                                <a href="{{ termo.open_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                    <span>{% if termo.is_saved %}Abrir{% else %}Resumo{% endif %}</span>
+                                </a>
+                                {% endif %}
+                                {% if termo.download_docx_url %}
+                                <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                                    <i class="bi bi-filetype-docx"></i>
+                                    <span>DOCX</span>
+                                </a>
+                                {% endif %}
+                                {% if termo.download_pdf_url %}
+                                <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf">
+                                    <i class="bi bi-filetype-pdf"></i>
+                                    <span>PDF</span>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
                         {% endfor %}
                     </div>
                 </section>

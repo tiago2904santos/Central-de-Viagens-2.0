@@ -572,14 +572,31 @@ def _oficio_list_chip(label, value, css_class=''):
     }
 
 
-def _oficio_list_group(title, chips):
-    items = [chip for chip in chips if chip]
-    if not items:
+def _oficio_list_detail(label, value, css_class=''):
+    text = _clean(value)
+    if not text or text == EMPTY_DISPLAY:
         return None
-    return {'title': title, 'chips': items}
+    return {
+        'label': label,
+        'value': text,
+        'css_class': css_class,
+    }
 
 
-def _oficio_list_viajante_chips(oficio, limit=4):
+def _oficio_list_info_block(title, *, chips=None, rows=None, tone='default'):
+    chip_items = [chip for chip in (chips or []) if chip]
+    row_items = [row for row in (rows or []) if row]
+    if not chip_items and not row_items:
+        return None
+    return {
+        'title': title,
+        'chips': chip_items,
+        'rows': row_items,
+        'tone': tone,
+    }
+
+
+def _oficio_list_viajante_chips(oficio, limit=2):
     viajantes = _oficio_list_ordered_unique_strings([viajante.nome for viajante in oficio.viajantes.all()])
     if not viajantes:
         return [{'label': '', 'value': 'Nenhum viajante', 'css_class': 'is-muted'}]
@@ -742,6 +759,15 @@ def _oficio_list_justificativa_block(oficio, justificativa_info):
 def _oficio_list_saved_term_card(termo):
     return {
         'traveler_name': _clean(termo.servidor_display) or 'Termo geral',
+        'open_url': reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk}),
+        'download_docx_url': reverse(
+            'eventos:documentos-termos-download',
+            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value},
+        ),
+        'download_pdf_url': reverse(
+            'eventos:documentos-termos-download',
+            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.PDF.value},
+        ),
         'is_saved': True,
     }
 
@@ -749,6 +775,9 @@ def _oficio_list_saved_term_card(termo):
 def _oficio_list_pending_term_card(oficio, viajante):
     return {
         'traveler_name': _clean(getattr(viajante, 'nome', '')) or 'Termo geral',
+        'open_url': reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+        'download_docx_url': '',
+        'download_pdf_url': '',
         'is_saved': False,
     }
 
@@ -797,7 +826,6 @@ def _oficio_list_card(oficio):
     oficio_downloads = _build_oficio_document_actions(oficio, DocumentoOficioTipo.OFICIO)
     justificativa = _oficio_list_justificativa_block(oficio, justificativa_info)
     termos = _oficio_list_term_block(oficio)
-    destino_labels = _oficio_list_destino_labels(oficio)
     destinos_display = _oficio_list_destinos_display(oficio)
     periodo_display = _oficio_list_period_display(oficio)
     updated_display = _oficio_list_format_datetime(getattr(oficio, 'updated_at', None) or getattr(oficio, 'created_at', None))
@@ -809,31 +837,33 @@ def _oficio_list_card(oficio):
         _oficio_list_chip('Documento', _oficio_process_status_meta(oficio)['label']),
         _oficio_list_chip('Viagem', viagem_status['label']),
         _oficio_list_chip('Janela', viagem_status['relative_label']),
-        _oficio_list_chip('Contexto', context_label),
     ]
-    if justificativa:
-        status_chips.append(_oficio_list_chip('Justificativa', justificativa['status_label']))
-    if termos:
-        status_chips.append(_oficio_list_chip('Termos', termos['summary']))
-    meta_groups = [
-        _oficio_list_group(
-            'Destinos e periodo',
-            [_oficio_list_chip('', destino) for destino in destino_labels]
-            + [_oficio_list_chip('Periodo', periodo_display)],
+    info_blocks = [
+        _oficio_list_info_block(
+            'Contexto do oficio',
+            rows=[
+                _oficio_list_detail('Destino', destinos_display),
+                _oficio_list_detail('Periodo', periodo_display),
+                _oficio_list_detail('Contexto', context_label),
+                _oficio_list_detail('Evento', _clean(getattr(getattr(oficio, 'evento', None), 'titulo', ''))),
+                _oficio_list_detail('Motivo', motivo_resumido),
+            ],
         ),
-        _oficio_list_group('Viajantes', _oficio_list_viajante_chips(oficio)),
-        _oficio_list_group(
-            'Operacao',
-            [
-                _oficio_list_chip('Veiculo', vehicle_display),
-                _oficio_list_chip('Motorista', driver_display),
-                _oficio_list_chip('Evento', _clean(getattr(getattr(oficio, 'evento', None), 'titulo', ''))),
-                _oficio_list_chip('Atualizado', updated_display),
-                _oficio_list_chip('Motivo', motivo_resumido),
+        _oficio_list_info_block(
+            'Viajantes',
+            chips=_oficio_list_viajante_chips(oficio),
+            tone='soft',
+        ),
+        _oficio_list_info_block(
+            'Veiculo e motorista',
+            rows=[
+                _oficio_list_detail('Veiculo', vehicle_display),
+                _oficio_list_detail('Motorista', driver_display),
+                _oficio_list_detail('Atualizado', updated_display),
             ],
         ),
     ]
-    meta_groups = [group for group in meta_groups if group]
+    info_blocks = [block for block in info_blocks if block]
     return {
         'pk': oficio.pk,
         'numero_formatado': oficio.numero_formatado,
@@ -846,7 +876,7 @@ def _oficio_list_card(oficio):
         'context_label': context_label,
         'theme': theme,
         'status_chips': [chip for chip in status_chips if chip],
-        'meta_groups': meta_groups,
+        'info_blocks': info_blocks,
         'oficio_status': _oficio_process_status_meta(oficio),
         'viagem_status': viagem_status,
         'justificativa': justificativa,

@@ -270,15 +270,17 @@ class GlobalViewsTest(TestCase):
         self.assertNotIn('Primeira saida', card_html)
         self.assertIn('Periodo', card_html)
         self.assertIn('Veiculo', card_html)
-        self.assertIn('class="oficio-list-term-name"', termos_html)
-        self.assertNotIn('DOCX', termos_html)
-        self.assertNotIn('PDF', termos_html)
-        self.assertNotIn('Abrir', termos_html)
+        self.assertIn('class="oficio-list-term-row"', termos_html)
+        self.assertIn('class="oficio-list-term-row__name"', termos_html)
+        self.assertIn('class="oficio-list-term-row__actions"', termos_html)
+        self.assertIn('Abrir', termos_html)
+        self.assertIn('PDF', termos_html)
         self.assertNotIn('Londrina/PR', termos_html)
         self.assertNotIn('10/03/2026', termos_html)
         self.assertNotIn('Termo de autorizacao,', termos_html)
+        self.assertNotIn('Protocolo', termos_html)
         self.assertNotIn('Documentos', card_html)
-        self.assertEqual(termos_html.count('class="oficio-list-term-name"'), 2)
+        self.assertEqual(termos_html.count('class="oficio-list-term-row"'), 2)
         self.assertContains(response, 'Abrir wizard')
 
     def test_lista_global_de_oficios_aplica_linguagem_visual_compacta_e_contexto_sem_repeticao(self):
@@ -309,12 +311,47 @@ class GlobalViewsTest(TestCase):
         self.assertIn('oficio-list-card is-tone-green', card_html)
         self.assertIn('Concluido', card_html)
         self.assertIn('oficio-list-chip-list--status', card_html)
+        self.assertIn('oficio-list-info-grid', card_html)
+        self.assertIn('oficio-list-info-block', card_html)
+        self.assertIn('oficio-list-info-row', card_html)
         self.assertIn('class="oficio-list-chip', card_html)
+        self.assertIn('Contexto do oficio', card_html)
+        self.assertIn('Viajantes', card_html)
+        self.assertIn('Veiculo e motorista', card_html)
         self.assertIn('Motorista Avulso', card_html)
         self.assertIn('Contexto', card_html)
         self.assertIn('Avulso', card_html)
         self.assertIn('Veiculo', card_html)
+        self.assertNotIn('oficio-list-meta-group', card_html)
         self.assertNotIn('Oficio avulso', card_html)
+
+    def test_lista_global_de_oficios_limita_chips_de_viajantes_quando_ha_excesso(self):
+        extras = [
+            Viajante.objects.create(
+                nome=f'VIAJANTE EXTRA {indice}',
+                status=Viajante.STATUS_FINALIZADO,
+                cargo=self.cargo,
+                cpf=f'1535094605{indice}',
+                telefone=f'4198888777{indice}',
+                unidade_lotacao=self.unidade,
+                rg=f'RGEXTRA{indice}',
+            )
+            for indice in range(3)
+        ]
+        self.oficio_pt.viajantes.add(*extras)
+
+        response = self.client.get(reverse('eventos:oficios-global'))
+        card_html = self._extract_oficio_article_html(response, self.oficio_pt.pk)
+        viajantes_match = re.search(
+            r'<section class="oficio-list-info-block is-soft">.*?<span class="oficio-list-info-block__title">Viajantes</span>(.*?)</section>',
+            card_html,
+            re.S,
+        )
+
+        self.assertIsNotNone(viajantes_match)
+        viajantes_html = viajantes_match.group(1)
+        self.assertEqual(viajantes_html.count('class="oficio-list-chip '), 3)
+        self.assertIn('+2', viajantes_html)
 
     def test_lista_global_de_oficios_aplica_cores_combinadas_e_chips_conforme_tema(self):
         hoje = timezone.localdate()
@@ -359,11 +396,14 @@ class GlobalViewsTest(TestCase):
         css = (Path(settings.BASE_DIR) / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
 
         self.assertIn('.oficio-list-chip {', css)
-        self.assertIn('padding: 0.22rem 0.48rem;', css)
-        self.assertIn('font-size: 0.74rem;', css)
-        self.assertIn('border-radius: 0.82rem;', css)
-        self.assertIn('.oficio-list-term-name {', css)
-        self.assertIn('font-size: 0.77rem;', css)
+        self.assertIn('padding: 0.1rem 0.28rem;', css)
+        self.assertIn('font-size: 0.63rem;', css)
+        self.assertIn('border-radius: 0.52rem;', css)
+        self.assertIn('.oficio-list-info-block {', css)
+        self.assertIn('padding: 0.44rem 0.5rem;', css)
+        self.assertIn('.oficio-list-term-row {', css)
+        self.assertIn('.oficio-list-term-row .btn-doc-action {', css)
+        self.assertIn('padding: 0.2rem 0.42rem;', css)
 
     def test_hubs_globais_principais_respondem_200(self):
         urls = [

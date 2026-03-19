@@ -1025,39 +1025,43 @@
 .oficio-list-chip-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.3rem;
+    gap: 0.18rem;
 }
 
 .oficio-list-chip-list--status {
-    margin-top: 0.58rem;
+    margin-top: 0.4rem;
+}
+
+.oficio-list-chip-list--compact {
+    gap: 0.14rem;
 }
 
 .oficio-list-chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.24rem;
+    gap: 0.14rem;
     max-width: 100%;
-    padding: 0.22rem 0.48rem;
-    border-radius: 0.82rem;
-    background: rgba(var(--oficio-card-accent-rgb), 0.08);
+    padding: 0.1rem 0.28rem;
+    border-radius: 0.52rem;
+    background: rgba(var(--oficio-card-accent-rgb), 0.035);
     color: var(--oficio-card-ink);
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.15);
-    font-size: 0.74rem;
+    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.08);
+    font-size: 0.63rem;
     font-weight: 600;
-    line-height: 1.1;
+    line-height: 1.05;
 }
 
 .oficio-list-chip__label {
-    font-size: 0.58rem;
-    font-weight: 750;
-    letter-spacing: 0.045em;
+    font-size: 0.47rem;
+    font-weight: 700;
+    letter-spacing: 0.035em;
     text-transform: uppercase;
-    opacity: 0.72;
+    opacity: 0.62;
 }
 
 .oficio-list-chip.is-counter {
-    background: rgba(var(--oficio-card-accent-rgb), 0.14);
-    border-color: rgba(var(--oficio-card-accent-rgb), 0.18);
+    background: rgba(var(--oficio-card-accent-rgb), 0.1);
+    border-color: rgba(var(--oficio-card-accent-rgb), 0.12);
 }
 
 .oficio-list-chip.is-muted {
@@ -1066,105 +1070,145 @@
     border-color: rgba(95, 107, 122, 0.18);
 }
 
-.oficio-list-meta-grid {
+.oficio-list-info-grid {
     display: grid;
-    gap: 0.48rem;
-    margin-top: 0.64rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.42rem;
+    margin-top: 0.52rem;
 }
 
-.oficio-list-meta-group {
+.oficio-list-info-block {
     min-width: 0;
     display: grid;
-    gap: 0.3rem;
+    gap: 0.26rem;
     border: 1px solid rgba(15, 23, 42, 0.06);
-    border-radius: 0.88rem;
-    background: rgba(255, 255, 255, 0.82);
-    padding: 0.52rem 0.58rem;
+    border-radius: 0.78rem;
+    background: rgba(255, 255, 255, 0.93);
+    padding: 0.44rem 0.5rem;
 }
 
-.oficio-list-meta-group__label {
+.oficio-list-info-block.is-soft {
+    background: rgba(248, 250, 252, 0.96);
+}
+
+.oficio-list-info-block__title {
     color: var(--oficios-muted);
-    font-size: 0.64rem;
+    font-size: 0.58rem;
     font-weight: 800;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
+}
+
+.oficio-list-info-rows {
+    display: grid;
+    gap: 0.22rem;
+}
+
+.oficio-list-info-row {
+    display: grid;
+    grid-template-columns: minmax(72px, auto) 1fr;
+    gap: 0.36rem;
+    align-items: start;
+}
+
+.oficio-list-info-row__label {
+    color: var(--oficios-muted);
+    font-size: 0.67rem;
+    font-weight: 700;
+}
+
+.oficio-list-info-row__value {
+    color: #223144;
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.22;
 }
 
 .oficio-list-card__secondary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-    gap: 0.62rem;
-    margin-top: 0.72rem;
+    gap: 0.48rem;
+    margin-top: 0.58rem;
 }
 
 .oficio-list-subcard {
     border: 1px solid rgba(15, 23, 42, 0.06);
-    border-radius: 0.92rem;
+    border-radius: 0.8rem;
     background: rgba(255, 255, 255, 0.94);
-    padding: 0.62rem 0.68rem 0.68rem;
+    padding: 0.5rem 0.56rem 0.54rem;
 }
 
 .oficio-list-subcard__header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 0.55rem;
-    margin-bottom: 0.45rem;
+    gap: 0.46rem;
+    margin-bottom: 0.34rem;
 }
 
 .oficio-list-subcard__title {
     margin: 0;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     font-weight: 700;
 }
 
 .oficio-list-subcard__subtitle {
     margin: 0.12rem 0 0;
     color: var(--oficios-muted);
-    font-size: 0.74rem;
+    font-size: 0.68rem;
 }
 
 .oficio-list-subcard__text {
     margin: 0;
     color: #273444;
-    font-size: 0.82rem;
-    line-height: 1.38;
+    font-size: 0.77rem;
+    line-height: 1.28;
 }
 
 .oficio-list-subcard__actions,
 .oficio-list-card__footer-actions,
-.oficio-list-term-card__actions {
+.oficio-list-term-row__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.42rem;
+    gap: 0.28rem;
 }
 
 .oficio-list-subcard__actions {
-    margin-top: 0.58rem;
+    margin-top: 0.42rem;
 }
 
-.oficio-list-term-names {
-    display: flex;
-    flex-wrap: wrap;
+.oficio-list-term-list {
+    display: grid;
+    gap: 0.3rem;
+}
+
+.oficio-list-term-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.34rem;
+    align-items: center;
+    padding: 0.32rem 0.38rem;
+    border-radius: 0.68rem;
+    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.08);
+    background: rgba(var(--oficio-card-accent-rgb), 0.03);
 }
 
-.oficio-list-term-name {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.22rem 0.5rem;
-    border-radius: 0.78rem;
-    background: rgba(var(--oficio-card-accent-rgb), 0.07);
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.14);
-    color: #233245;
-    font-size: 0.77rem;
-    font-weight: 600;
-    line-height: 1.1;
+.oficio-list-term-row__name {
+    min-width: 0;
+    color: #1f2937;
+    font-size: 0.75rem;
+    font-weight: 650;
+    line-height: 1.16;
+}
+
+.oficio-list-term-row .btn-doc-action {
+    padding: 0.2rem 0.42rem;
+    font-size: 0.67rem;
 }
 
 .oficio-list-card__footer {
-    margin-top: 0.82rem;
-    padding-top: 0.82rem;
+    margin-top: 0.66rem;
+    padding-top: 0.66rem;
     border-top: 1px solid rgba(15, 23, 42, 0.08);
 }
 
@@ -1257,6 +1301,20 @@
 
     .oficio-list-card__header-side {
         margin-left: 0;
+    }
+
+    .oficio-list-info-row {
+        grid-template-columns: 1fr;
+        gap: 0.08rem;
+    }
+
+    .oficio-list-term-row {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .oficio-list-term-row__actions {
+        justify-content: flex-start;
     }
 
     .oficio-list-card__footer-actions .btn-doc-action {
