@@ -1,20 +1,29 @@
-<div class="oficio-wizard-header mb-4" data-oficio-sticky-header>
+<div class="oficio-wizard-header mb-3" data-oficio-sticky-header>
   <div class="oficio-wizard-header-card">
     <div class="oficio-wizard-header-main">
       <div class="oficio-wizard-header-copy">
-        <span class="oficio-wizard-eyebrow">Wizard de ofício</span>
+        <span class="oficio-wizard-eyebrow">OfÃ­cio</span>
         <h1>{{ wizard_page_title }}</h1>
-        <p class="oficio-wizard-subtitle">Fluxo repaginado para leitura mais rápida, preenchimento mais leve e finalização mais segura.</p>
       </div>
       <div class="oficio-wizard-actions">
-        <span class="oficio-autosave-status" id="oficio-autosave-status" data-state="idle">Autosave ativo</span>
-        <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary btn-sm" data-autosave-link="1">Lista de ofícios</a>
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm oficio-wizard-summary-trigger"
+          data-oficio-glance-toggle
+          aria-expanded="false"
+          aria-controls="oficio-glance-panel"
+        >
+          <i class="bi bi-layout-text-sidebar-reverse"></i>
+          <span data-oficio-glance-toggle-label>Resumo</span>
+        </button>
+        <span class="oficio-autosave-status" id="oficio-autosave-status" data-state="idle">Autosave</span>
+        <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary btn-sm" data-autosave-link="1">Lista</a>
         {% if oficio.pk %}
-        <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger btn-sm" data-autosave-link="1">Excluir ofício</a>
+        <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger btn-sm" data-autosave-link="1">Excluir</a>
         {% endif %}
       </div>
     </div>
     {% include 'eventos/oficio/_wizard_stepper.html' %}
-    {% include 'eventos/oficio/_wizard_glance.html' %}
   </div>
+  {% include 'eventos/oficio/_wizard_glance.html' %}
 </div>

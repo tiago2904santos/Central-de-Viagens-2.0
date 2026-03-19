@@ -114,6 +114,52 @@
     }
   }
 
+  function bindGlanceDrawer() {
+    var page = getWizardPage();
+    var panel = qs('[data-oficio-glance-panel]');
+    var toggles = Array.prototype.slice.call(document.querySelectorAll('[data-oficio-glance-toggle]'));
+    var closeButtons = Array.prototype.slice.call(document.querySelectorAll('[data-oficio-glance-close]'));
+
+    if (!page || !panel || !toggles.length) {
+      return;
+    }
+
+    function applyState(isOpen) {
+      var open = !!isOpen;
+      page.setAttribute('data-glance-state', open ? 'open' : 'closed');
+      panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+
+      toggles.forEach(function(button) {
+        var label = button.querySelector('[data-oficio-glance-toggle-label]');
+        button.setAttribute('aria-expanded', open ? 'true' : 'false');
+        button.classList.toggle('is-active', open);
+        if (label) {
+          label.textContent = open ? 'Fechar resumo' : 'Resumo';
+        }
+      });
+    }
+
+    toggles.forEach(function(button) {
+      button.addEventListener('click', function() {
+        applyState(page.getAttribute('data-glance-state') !== 'open');
+      });
+    });
+
+    closeButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        applyState(false);
+      });
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && page.getAttribute('data-glance-state') === 'open') {
+        applyState(false);
+      }
+    });
+
+    applyState(page.getAttribute('data-glance-state') === 'open');
+  }
+
   function createAutosave(options) {
     var form = options && options.form;
     if (!form) {
@@ -270,14 +316,19 @@
 
   window.OficioWizard = {
     bindStickyLayout: bindStickyLayout,
+    bindGlanceDrawer: bindGlanceDrawer,
     createAutosave: createAutosave,
     setGlanceValue: setGlanceValue,
     renderGlanceTravelers: renderGlanceTravelers
   };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindStickyLayout);
+    document.addEventListener('DOMContentLoaded', function() {
+      bindStickyLayout();
+      bindGlanceDrawer();
+    });
   } else {
     bindStickyLayout();
+    bindGlanceDrawer();
   }
 })();

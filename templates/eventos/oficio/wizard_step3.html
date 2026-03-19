@@ -5,7 +5,7 @@
 {% block page_title %}Roteiro e diárias{% endblock %}
 
 {% block content %}
-<div class="container-fluid pt-0 pb-4 oficio-wizard-page">
+<div class="container-fluid pt-0 pb-4 oficio-wizard-page" data-glance-state="closed">
   {% include 'eventos/oficio/_wizard_header.html' %}
 
   <div class="row g-4">
@@ -442,10 +442,21 @@
     link.setAttribute('data-step-key', 'justificativa');
     link.setAttribute('data-autosave-link', '1');
     link.setAttribute('aria-current', 'false');
+    const badge = document.createElement('span');
+    badge.className = 'oficio-stepper-badge oficio-stepper-badge--optional';
+    badge.textContent = 'J';
+    const copy = document.createElement('span');
+    copy.className = 'oficio-stepper-copy';
+    const state = document.createElement('span');
+    state.className = 'oficio-stepper-state';
+    state.textContent = 'Complementar';
     const label = document.createElement('span');
     label.className = 'oficio-stepper-label';
     label.textContent = 'Justificativa';
-    link.appendChild(label);
+    copy.appendChild(state);
+    copy.appendChild(label);
+    link.appendChild(badge);
+    link.appendChild(copy);
 
     const summary = stepper.querySelector('[data-step-key="summary"]');
     if (summary) {

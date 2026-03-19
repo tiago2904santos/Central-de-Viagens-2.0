@@ -1,15 +1,24 @@
-<section class="oficio-glance" aria-label="Informações essenciais do ofício" data-oficio-glance>
-  <div class="oficio-glance-heading">
+<section
+  class="oficio-glance-drawer"
+  id="oficio-glance-panel"
+  aria-label="InformaÃ§Ãµes essenciais do ofÃ­cio"
+  data-oficio-glance
+  data-oficio-glance-panel
+  aria-hidden="true"
+>
+  <div class="oficio-glance-drawer__header">
     <div>
-      <span class="oficio-glance-kicker">Leitura rápida</span>
-      <h2 class="oficio-glance-title">Informações essenciais do ofício</h2>
+      <span class="oficio-glance-kicker">Resumo rÃ¡pido</span>
+      <h2 class="oficio-glance-title">Dados essenciais do ofÃ­cio</h2>
     </div>
-    <p class="oficio-glance-text">Um resumo compacto para acompanhar apenas o que precisa bater o olho durante o preenchimento.</p>
+    <button type="button" class="oficio-glance-close" data-oficio-glance-close aria-label="Fechar resumo">
+      <i class="bi bi-x-lg"></i>
+    </button>
   </div>
 
   <div class="oficio-glance-grid">
     <article class="oficio-glance-card">
-      <span class="oficio-glance-label">Número do ofício</span>
+      <span class="oficio-glance-label">OfÃ­cio</span>
       <strong class="oficio-glance-value" id="summary-oficio" data-empty-text="A definir">{{ wizard_glance.oficio|default:"A definir" }}</strong>
     </article>
 
@@ -41,7 +50,7 @@
     </article>
 
     <article class="oficio-glance-card">
-      <span class="oficio-glance-label">Veículo</span>
+      <span class="oficio-glance-label">VeÃ­culo</span>
       <strong class="oficio-glance-value" id="summary-veiculo" data-empty-text="Defina em transporte">{{ wizard_glance.veiculo|default:"Defina em transporte" }}</strong>
     </article>
   </div>
