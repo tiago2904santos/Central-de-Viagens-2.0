@@ -513,6 +513,12 @@ def _oficio_list_ordered_unique_strings(values):
     return items
 
 
+def _oficio_list_viajante_names(oficio):
+    return _oficio_list_ordered_unique_strings(
+        oficio.viajantes.order_by('pk').values_list('nome', flat=True)
+    )
+
+
 def _oficio_list_summarize_labels(labels, limit=2):
     items = _oficio_list_ordered_unique_strings(labels)
     if not items:
@@ -581,7 +587,7 @@ def _oficio_list_period_display(oficio):
 
 
 def _oficio_list_viajantes_display(oficio):
-    viajantes = _oficio_list_ordered_unique_strings([viajante.nome for viajante in oficio.viajantes.all()])
+    viajantes = _oficio_list_viajante_names(oficio)
     if not viajantes:
         return 'Nenhum'
     if len(viajantes) <= 2:
@@ -590,7 +596,7 @@ def _oficio_list_viajantes_display(oficio):
 
 
 def _oficio_list_basic_viajantes_summary(oficio):
-    viajantes = _oficio_list_ordered_unique_strings([viajante.nome for viajante in oficio.viajantes.all()])
+    viajantes = _oficio_list_viajante_names(oficio)
     if not viajantes:
         return 'Nenhum viajante'
     primeiro = viajantes[0]
@@ -687,7 +693,7 @@ def _oficio_list_initials(value):
 
 
 def _oficio_list_viajantes_block(oficio, limit=3):
-    viajantes = _oficio_list_ordered_unique_strings([viajante.nome for viajante in oficio.viajantes.all()])
+    viajantes = _oficio_list_viajante_names(oficio)
     if not viajantes:
         return {
             'count_label': '0 viajante',
@@ -728,6 +734,12 @@ def _oficio_list_driver_display(oficio):
         if motorista_nome:
             return motorista_nome
     return _clean(oficio.motorista) or 'Nao informado'
+
+
+def _oficio_list_protocol_sort_value(oficio):
+    raw_value = _clean(oficio.protocolo)
+    digits = ''.join(char for char in raw_value if char.isdigit())
+    return digits or raw_value
 
 
 def _oficio_list_transport_block(oficio):
@@ -1013,7 +1025,7 @@ def _oficio_list_card(oficio):
                 int(oficio.ano) if oficio.ano is not None else None,
                 int(oficio.numero) if oficio.numero is not None else None,
             ),
-            'protocolo': _clean(oficio.protocolo),
+            'protocolo': _oficio_list_protocol_sort_value(oficio),
             'data_criacao': oficio.data_criacao,
             'updated_at': getattr(oficio, 'updated_at', None),
             'data_evento': data_evento_inicio,

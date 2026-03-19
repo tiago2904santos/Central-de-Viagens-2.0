@@ -171,6 +171,58 @@ class GlobalViewsTest(TestCase):
         self.assertIsNotNone(match)
         return match.group(0)
 
+    def _extract_oficio_basic_layout_html(self, response, oficio_pk):
+        article_html = self._extract_oficio_article_html(response, oficio_pk)
+        match = re.search(
+            r'<div class="oficio-list-basic-layout">(.*?)<div class="oficio-list-rich-layout">',
+            article_html,
+            re.S,
+        )
+        self.assertIsNotNone(match)
+        return match.group(1)
+
+    def _extract_oficio_ids_order(self, response):
+        return [int(item) for item in re.findall(r'id="oficio-card-(\d+)"', response.content.decode('utf-8'))]
+
+    def _criar_oficio_ordenacao(
+        self,
+        *,
+        numero,
+        protocolo,
+        data_criacao,
+        updated_at,
+        data_evento,
+        status=Oficio.STATUS_RASCUNHO,
+        contexto_evento=False,
+    ):
+        oficio = Oficio.objects.create(
+            evento=self.evento_pt if contexto_evento else None,
+            protocolo=protocolo,
+            data_criacao=data_criacao,
+            tipo_destino=Oficio.TIPO_DESTINO_INTERIOR,
+            status=status,
+            motivo='ORDTEST',
+        )
+        oficio.viajantes.add(self.viajante)
+        OficioTrecho.objects.create(
+            oficio=oficio,
+            ordem=0,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_origem,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_destino,
+            saida_data=data_evento,
+            chegada_data=data_evento,
+        )
+        Oficio.objects.filter(pk=oficio.pk).update(
+            numero=numero,
+            ano=2026,
+            updated_at=updated_at,
+            data_criacao=data_criacao,
+        )
+        oficio.refresh_from_db()
+        return oficio
+
     def test_lista_global_de_oficios_renderiza_header_unico_filtros_enxutos_e_busca_ampla(self):
         response = self.client.get(reverse('eventos:oficios-global'))
         self.assertEqual(response.status_code, 200)
@@ -183,6 +235,8 @@ class GlobalViewsTest(TestCase):
         self.assertContains(response, 'name="viagem_status"', html=False)
         self.assertContains(response, 'name="justificativa"', html=False)
         self.assertContains(response, 'name="termo"', html=False)
+        self.assertContains(response, 'name="order_by"', html=False)
+        self.assertContains(response, 'name="order_dir"', html=False)
         self.assertNotContains(response, 'name="evento_id"', html=False)
         self.assertNotContains(response, 'name="ano"', html=False)
         self.assertNotContains(response, 'name="numero"', html=False)
@@ -205,6 +259,73 @@ class GlobalViewsTest(TestCase):
         self.assertIn("central-viagens.oficios.view-mode", js)
         self.assertIn("data-view-mode", js)
         self.assertIn("data-oficios-view-toggle", js)
+
+    def test_lista_global_de_oficios_modo_basico_mostra_apenas_campos_essenciais_e_acoes_do_oficio(self):
+        with patch('eventos.views_global.get_document_generation_status') as mocked_status:
+            mocked_status.return_value = {'status': 'available', 'errors': []}
+            response = self.client.get(reverse('eventos:oficios-global'))
+        self.assertEqual(response.status_code, 200)
+
+        basic_html = self._extract_oficio_basic_layout_html(response, self.oficio_pt.pk)
+
+        self.assertIn('Oficio', basic_html)
+        self.assertIn('Protocolo', basic_html)
+        self.assertIn('Destino', basic_html)
+        self.assertIn('Data', basic_html)
+        self.assertIn('Viajantes', basic_html)
+        self.assertIn('Abrir', basic_html)
+        self.assertIn('Editar', basic_html)
+        self.assertIn('PDF', basic_html)
+        self.assertIn('DOCX', basic_html)
+        self.assertIn('Excluir', basic_html)
+        self.assertNotIn('Justificativa', basic_html)
+        self.assertNotIn('Termos de autorizacao', basic_html)
+        self.assertNotIn('Abrir wizard', basic_html)
+        self.assertNotIn('/eventos/documentos/termos/', basic_html)
+        self.assertNotIn('/justificativa/', basic_html)
+
+    def test_lista_global_de_oficios_resume_viajantes_no_modo_basico_com_primeiro_nome_e_quantidade_restante(self):
+        viajante_extra_1 = Viajante.objects.create(
+            nome='YARA RESUMO',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=self.cargo,
+            cpf='23921232095',
+            telefone='41977770001',
+            unidade_lotacao=self.unidade,
+            rg='RGRESUMO1',
+        )
+        viajante_extra_2 = Viajante.objects.create(
+            nome='ZULEICA RESUMO',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=self.cargo,
+            cpf='29774396047',
+            telefone='41977770002',
+            unidade_lotacao=self.unidade,
+            rg='RGRESUMO2',
+        )
+        self.oficio_pt.viajantes.add(viajante_extra_1, viajante_extra_2)
+
+        response = self.client.get(reverse('eventos:oficios-global'))
+        basic_html = self._extract_oficio_basic_layout_html(response, self.oficio_pt.pk)
+
+        self.assertIn('VIAJANTE GLOBAL +2', basic_html)
+        self.assertNotIn('YARA RESUMO', basic_html)
+        self.assertNotIn('ZULEICA RESUMO', basic_html)
+
+    def test_lista_global_de_oficios_modo_rico_melhora_bloco_de_transporte_e_viajantes_em_coluna(self):
+        response = self.client.get(reverse('eventos:oficios-global'))
+        self.assertEqual(response.status_code, 200)
+        card_html = self._extract_oficio_article_html(response, self.oficio_pt.pk)
+        css = (Path(settings.BASE_DIR) / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
+
+        self.assertIn('oficio-list-transport-panel', card_html)
+        self.assertIn('oficio-list-transport-panel__hero', card_html)
+        self.assertIn('oficio-list-transport-panel__detail', card_html)
+        self.assertIn('oficio-list-transport-panel__headline', card_html)
+        self.assertIn('oficio-list-traveler-list', card_html)
+        self.assertIn('.oficio-list-traveler-list {', css)
+        self.assertIn('.oficio-list-transport-panel__headline {', css)
+        self.assertIn('display: grid;', css)
 
     def test_lista_global_de_oficios_exibe_periodo_sem_horario_status_da_viagem_e_dias_relativos(self):
         hoje = timezone.localdate()
@@ -287,7 +408,6 @@ class GlobalViewsTest(TestCase):
         self.assertIn('Justificativa', card_html)
         self.assertIn('Termos de autorizacao', card_html)
         self.assertIn('SEGUNDO VIAJANTE', card_html)
-        self.assertEqual(card_html.count(self.oficio_pt.protocolo_formatado), 1)
         self.assertIn('Data do evento', card_html)
         self.assertIn('Destino', card_html)
         self.assertNotIn('Contexto do oficio', card_html)
@@ -309,6 +429,8 @@ class GlobalViewsTest(TestCase):
         self.assertNotIn('Documentos', card_html)
         self.assertEqual(termos_html.count('class="oficio-list-term-row"'), 2)
         self.assertContains(response, 'Abrir wizard')
+        basic_html = self._extract_oficio_basic_layout_html(response, self.oficio_pt.pk)
+        self.assertEqual(basic_html.count(self.oficio_pt.protocolo_formatado), 1)
 
     def test_lista_global_de_oficios_aplica_linguagem_visual_compacta_e_contexto_sem_repeticao(self):
         hoje = timezone.localdate()
@@ -336,21 +458,17 @@ class GlobalViewsTest(TestCase):
         card_html = self._extract_oficio_article_html(response, oficio_avulso.pk)
 
         self.assertIn('oficio-list-card is-tone-green', card_html)
+        self.assertIn('oficio-list-basic-layout', card_html)
+        self.assertIn('oficio-list-basic-field', card_html)
+        self.assertIn('oficio-list-rich-layout', card_html)
         self.assertEqual(card_html.count('oficio-list-chip oficio-list-chip--meta'), 4)
         self.assertIn('oficio-list-card__header-status', card_html)
-        self.assertIn('oficio-list-basic-summary', card_html)
-        self.assertIn('oficio-list-basic-summary__item--stacked', card_html)
         self.assertIn('oficio-list-core-grid', card_html)
         self.assertIn('oficio-list-core-card', card_html)
         self.assertIn('oficio-list-core-card--transport', card_html)
+        self.assertIn('oficio-list-transport-panel', card_html)
         self.assertIn('oficio-list-traveler-pill', card_html)
-        self.assertIn('Oficio', card_html)
-        self.assertIn('Protocolo', card_html)
-        self.assertIn('Destino', card_html)
-        self.assertIn('Data do evento', card_html)
         self.assertNotIn('Contexto do oficio', card_html)
-        self.assertIn('Viajantes', card_html)
-        self.assertIn('Transporte', card_html)
         self.assertIn('Veiculo e motorista', card_html)
         self.assertIn('Motorista Avulso', card_html)
         self.assertIn('Spin', card_html)
@@ -453,23 +571,159 @@ class GlobalViewsTest(TestCase):
     def test_lista_global_de_oficios_mantem_chips_com_css_compacto(self):
         css = (Path(settings.BASE_DIR) / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
 
+        self.assertIn('.oficios-filter-topbar {', css)
+        self.assertIn('.oficios-sort-panel {', css)
         self.assertIn('.oficios-view-toggle {', css)
+        self.assertIn('.oficio-list-basic-layout {', css)
+        self.assertIn('.oficio-list-rich-layout {', css)
+        self.assertIn('.oficio-list-basic-field {', css)
         self.assertIn('.oficio-list-chip {', css)
         self.assertIn('padding: 0.58rem 0.74rem;', css)
         self.assertIn('.oficio-list-chip__value {', css)
         self.assertIn('font-size: 0.92rem;', css)
         self.assertIn('.oficio-list-core-card {', css)
         self.assertIn('padding: 0.78rem 0.82rem;', css)
-        self.assertIn('.oficio-list-transport-item__value {', css)
-        self.assertIn('.oficio-list-basic-summary {', css)
-        self.assertIn('.oficio-list-basic-summary__item--stacked {', css)
-        self.assertIn('[data-view-mode="basic"] .oficio-list-basic-summary {', css)
+        self.assertIn('.oficio-list-transport-panel__headline {', css)
+        self.assertIn('[data-view-mode="basic"] .oficio-list-rich-layout {', css)
+        self.assertIn('[data-view-mode="basic"] .oficio-list-basic-layout {', css)
         self.assertIn('.oficio-list-traveler-pill {', css)
+        self.assertIn('.oficio-list-traveler-list {', css)
+        self.assertIn('display: grid;', css)
         self.assertIn('.oficio-list-subcard--justificativa .oficio-list-subcard__actions {', css)
         self.assertIn('margin-top: auto;', css)
         self.assertIn('.oficio-list-term-row {', css)
         self.assertIn('.oficio-list-term-row .btn-doc-action {', css)
         self.assertIn('padding: 0.26rem 0.5rem;', css)
+
+    def test_lista_global_de_oficios_ordena_por_numero_do_oficio(self):
+        oficio_b = self._criar_oficio_ordenacao(
+            numero=20,
+            protocolo='200000001',
+            data_criacao=date(2026, 5, 2),
+            updated_at=timezone.make_aware(datetime(2026, 5, 2, 12, 0)),
+            data_evento=date(2026, 5, 20),
+        )
+        oficio_a = self._criar_oficio_ordenacao(
+            numero=3,
+            protocolo='200000002',
+            data_criacao=date(2026, 5, 1),
+            updated_at=timezone.make_aware(datetime(2026, 5, 1, 12, 0)),
+            data_evento=date(2026, 5, 21),
+        )
+
+        response = self.client.get(reverse('eventos:oficios-global'), {'q': 'ORDTEST', 'order_by': 'numero', 'order_dir': 'asc'})
+        self.assertEqual(self._extract_oficio_ids_order(response)[:2], [oficio_a.pk, oficio_b.pk])
+
+    def test_lista_global_de_oficios_ordena_por_protocolo(self):
+        oficio_b = self._criar_oficio_ordenacao(
+            numero=4,
+            protocolo='900000009',
+            data_criacao=date(2026, 5, 2),
+            updated_at=timezone.make_aware(datetime(2026, 5, 2, 12, 0)),
+            data_evento=date(2026, 5, 20),
+        )
+        oficio_a = self._criar_oficio_ordenacao(
+            numero=5,
+            protocolo='100000001',
+            data_criacao=date(2026, 5, 1),
+            updated_at=timezone.make_aware(datetime(2026, 5, 1, 12, 0)),
+            data_evento=date(2026, 5, 21),
+        )
+
+        response = self.client.get(reverse('eventos:oficios-global'), {'q': 'ORDTEST', 'order_by': 'protocolo', 'order_dir': 'asc'})
+        self.assertEqual(self._extract_oficio_ids_order(response)[:2], [oficio_a.pk, oficio_b.pk])
+
+    def test_lista_global_de_oficios_ordena_por_data_de_criacao(self):
+        oficio_b = self._criar_oficio_ordenacao(
+            numero=6,
+            protocolo='300000006',
+            data_criacao=date(2026, 5, 10),
+            updated_at=timezone.make_aware(datetime(2026, 5, 12, 12, 0)),
+            data_evento=date(2026, 5, 20),
+        )
+        oficio_a = self._criar_oficio_ordenacao(
+            numero=7,
+            protocolo='300000007',
+            data_criacao=date(2026, 5, 1),
+            updated_at=timezone.make_aware(datetime(2026, 5, 11, 12, 0)),
+            data_evento=date(2026, 5, 21),
+        )
+
+        response = self.client.get(reverse('eventos:oficios-global'), {'q': 'ORDTEST', 'order_by': 'data_criacao', 'order_dir': 'asc'})
+        self.assertEqual(self._extract_oficio_ids_order(response)[:2], [oficio_a.pk, oficio_b.pk])
+
+    def test_lista_global_de_oficios_ordena_por_data_de_atualizacao(self):
+        oficio_b = self._criar_oficio_ordenacao(
+            numero=8,
+            protocolo='400000008',
+            data_criacao=date(2026, 5, 2),
+            updated_at=timezone.make_aware(datetime(2026, 5, 20, 12, 0)),
+            data_evento=date(2026, 5, 22),
+        )
+        oficio_a = self._criar_oficio_ordenacao(
+            numero=9,
+            protocolo='400000009',
+            data_criacao=date(2026, 5, 1),
+            updated_at=timezone.make_aware(datetime(2026, 5, 10, 12, 0)),
+            data_evento=date(2026, 5, 21),
+        )
+
+        response = self.client.get(reverse('eventos:oficios-global'), {'q': 'ORDTEST', 'order_by': 'updated_at', 'order_dir': 'asc'})
+        self.assertEqual(self._extract_oficio_ids_order(response)[:2], [oficio_a.pk, oficio_b.pk])
+
+    def test_lista_global_de_oficios_ordena_por_data_do_evento(self):
+        oficio_b = self._criar_oficio_ordenacao(
+            numero=10,
+            protocolo='500000010',
+            data_criacao=date(2026, 5, 2),
+            updated_at=timezone.make_aware(datetime(2026, 5, 2, 12, 0)),
+            data_evento=date(2026, 6, 20),
+        )
+        oficio_a = self._criar_oficio_ordenacao(
+            numero=11,
+            protocolo='500000011',
+            data_criacao=date(2026, 5, 1),
+            updated_at=timezone.make_aware(datetime(2026, 5, 1, 12, 0)),
+            data_evento=date(2026, 6, 10),
+        )
+
+        response = self.client.get(reverse('eventos:oficios-global'), {'q': 'ORDTEST', 'order_by': 'data_evento', 'order_dir': 'asc'})
+        self.assertEqual(self._extract_oficio_ids_order(response)[:2], [oficio_a.pk, oficio_b.pk])
+
+    def test_lista_global_de_oficios_combina_filtros_com_ordenacao_personalizada(self):
+        oficio_rascunho = self._criar_oficio_ordenacao(
+            numero=12,
+            protocolo='600000012',
+            data_criacao=date(2026, 5, 2),
+            updated_at=timezone.make_aware(datetime(2026, 5, 2, 12, 0)),
+            data_evento=date(2026, 7, 20),
+            status=Oficio.STATUS_RASCUNHO,
+            contexto_evento=True,
+        )
+        oficio_finalizado = self._criar_oficio_ordenacao(
+            numero=13,
+            protocolo='100000013',
+            data_criacao=date(2026, 5, 1),
+            updated_at=timezone.make_aware(datetime(2026, 5, 1, 12, 0)),
+            data_evento=date(2026, 7, 10),
+            status=Oficio.STATUS_FINALIZADO,
+            contexto_evento=True,
+        )
+
+        response = self.client.get(
+            reverse('eventos:oficios-global'),
+            {
+                'q': 'ORDTEST',
+                'status': [Oficio.STATUS_FINALIZADO],
+                'contexto': ['EVENTO'],
+                'order_by': 'protocolo',
+                'order_dir': 'asc',
+            },
+        )
+
+        order = self._extract_oficio_ids_order(response)
+        self.assertEqual(order[:1], [oficio_finalizado.pk])
+        self.assertNotIn(oficio_rascunho.pk, order)
 
     def test_hubs_globais_principais_respondem_200(self):
         urls = [

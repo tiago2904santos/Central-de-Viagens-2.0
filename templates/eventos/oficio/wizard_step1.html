@@ -8,11 +8,19 @@
 <div class="container-fluid pt-0 pb-4 oficio-wizard-page">
   {% include 'eventos/oficio/_wizard_header.html' %}
 
-  <div class="row g-4 oficio-wizard-layout">
-    <div class="col-xxl-7 col-xl-6">
-      <div class="card">
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card oficio-stage-panel">
         <div class="card-body">
-          <form method="post" id="oficio-step1-form">
+          <div class="oficio-stage-intro">
+            <div>
+              <span class="oficio-stage-kicker">Etapa 1</span>
+              <h2 class="oficio-stage-title">Dados e viajantes</h2>
+              <p class="oficio-stage-description">Organize os dados-base do ofício e monte a equipe com menos ruído visual e leitura mais direta.</p>
+            </div>
+          </div>
+
+          <form method="post" id="oficio-step1-form" class="oficio-stage-form">
             {% csrf_token %}
             {% if form.non_field_errors %}
               <div class="alert alert-danger py-2">
@@ -22,74 +30,96 @@
               </div>
             {% endif %}
 
-            <div class="row g-3">
-              <div class="col-md-3">
-                <label class="form-label" for="{{ form.oficio_numero.id_for_label }}">{{ form.oficio_numero.label }}</label>
-                {{ form.oficio_numero }}
-                {% if form.oficio_numero.errors %}<div class="invalid-feedback d-block">{{ form.oficio_numero.errors.0 }}</div>{% endif %}
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Identificação</h3>
+                  <p class="oficio-stage-section-text">Defina o número, protocolo e a data-base do documento.</p>
+                </div>
               </div>
-              <div class="col-md-4">
-                <label class="form-label" for="{{ form.protocolo.id_for_label }}">{{ form.protocolo.label }}</label>
-                {{ form.protocolo }}
-                {% if form.protocolo.errors %}<div class="invalid-feedback d-block">{{ form.protocolo.errors.0 }}</div>{% endif %}
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label" for="{{ form.oficio_numero.id_for_label }}">{{ form.oficio_numero.label }}</label>
+                  {{ form.oficio_numero }}
+                  {% if form.oficio_numero.errors %}<div class="invalid-feedback d-block">{{ form.oficio_numero.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="{{ form.protocolo.id_for_label }}">{{ form.protocolo.label }}</label>
+                  {{ form.protocolo }}
+                  {% if form.protocolo.errors %}<div class="invalid-feedback d-block">{{ form.protocolo.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="{{ form.data_criacao.id_for_label }}">{{ form.data_criacao.label }}</label>
+                  {{ form.data_criacao }}
+                  {% if form.data_criacao.errors %}<div class="invalid-feedback d-block">{{ form.data_criacao.errors.0 }}</div>{% endif %}
+                </div>
               </div>
-              <div class="col-md-3">
-                <label class="form-label" for="{{ form.data_criacao.id_for_label }}">{{ form.data_criacao.label }}</label>
-                {{ form.data_criacao }}
-                {% if form.data_criacao.errors %}<div class="invalid-feedback d-block">{{ form.data_criacao.errors.0 }}</div>{% endif %}
-              </div>
-            </div>
+            </section>
 
-            <div class="row g-3 mt-1 align-items-end">
-              <div class="col-md-8">
-                <label class="form-label" for="{{ form.modelo_motivo.id_for_label }}">{{ form.modelo_motivo.label }}</label>
-                {{ form.modelo_motivo }}
-                {% if form.modelo_motivo.errors %}<div class="invalid-feedback d-block">{{ form.modelo_motivo.errors.0 }}</div>{% endif %}
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Motivo e custeio</h3>
+                  <p class="oficio-stage-section-text">Escolha um texto-base, ajuste o motivo da viagem e defina o custeio sem quebrar o ritmo do preenchimento.</p>
+                </div>
               </div>
-              <div class="col-md-4">
-                <a href="{{ gerenciar_modelos_motivo_url }}" class="btn btn-outline-secondary w-100" data-autosave-link="1">Gerenciar modelos de motivo</a>
-              </div>
-            </div>
 
-            <div class="row g-3 mt-1">
-              <div class="col-12">
-                <label class="form-label" for="{{ form.motivo.id_for_label }}">{{ form.motivo.label }}</label>
-                {{ form.motivo }}
-                {% if form.motivo.errors %}<div class="invalid-feedback d-block">{{ form.motivo.errors.0 }}</div>{% endif %}
+              <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                  <label class="form-label" for="{{ form.modelo_motivo.id_for_label }}">{{ form.modelo_motivo.label }}</label>
+                  {{ form.modelo_motivo }}
+                  {% if form.modelo_motivo.errors %}<div class="invalid-feedback d-block">{{ form.modelo_motivo.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                  <a href="{{ gerenciar_modelos_motivo_url }}" class="btn btn-outline-secondary w-100" data-autosave-link="1">Gerenciar modelos de motivo</a>
+                </div>
               </div>
-              <div class="col-md-5">
-                <input type="hidden" name="novo_modelo_nome" id="id_novo_modelo_nome" value="">
-                <button
-                  type="submit"
-                  name="salvar_modelo_motivo"
-                  value="1"
-                  id="btn-salvar-modelo-motivo"
-                  class="btn btn-outline-primary"
-                  data-autosave-bypass="1"
-                >
-                  Salvar motivo atual como novo modelo
-                </button>
-              </div>
-            </div>
 
-            <div class="row g-3 mt-1">
-              <div class="col-md-6">
-                <label class="form-label" for="{{ form.custeio_tipo.id_for_label }}">{{ form.custeio_tipo.label }}</label>
-                {{ form.custeio_tipo }}
-                {% if form.custeio_tipo.errors %}<div class="invalid-feedback d-block">{{ form.custeio_tipo.errors.0 }}</div>{% endif %}
+              <div class="row g-3 mt-1">
+                <div class="col-12">
+                  <label class="form-label" for="{{ form.motivo.id_for_label }}">{{ form.motivo.label }}</label>
+                  {{ form.motivo }}
+                  {% if form.motivo.errors %}<div class="invalid-feedback d-block">{{ form.motivo.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-5">
+                  <input type="hidden" name="novo_modelo_nome" id="id_novo_modelo_nome" value="">
+                  <button
+                    type="submit"
+                    name="salvar_modelo_motivo"
+                    value="1"
+                    id="btn-salvar-modelo-motivo"
+                    class="btn btn-outline-primary"
+                    data-autosave-bypass="1"
+                  >
+                    Salvar motivo atual como novo modelo
+                  </button>
+                </div>
               </div>
-              <div class="col-md-6" id="nome-instituicao-wrapper"{% if not mostrar_nome_instituicao %} style="display:none;"{% endif %}>
-                <label class="form-label" for="{{ form.nome_instituicao_custeio.id_for_label }}">{{ form.nome_instituicao_custeio.label }}</label>
-                {{ form.nome_instituicao_custeio }}
-                {% if form.nome_instituicao_custeio.errors %}<div class="invalid-feedback d-block">{{ form.nome_instituicao_custeio.errors.0 }}</div>{% endif %}
-              </div>
-            </div>
 
-            <div class="mt-4">
-              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                <label class="form-label mb-0" for="viajantes-autocomplete-input">Buscar viajante</label>
+              <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                  <label class="form-label" for="{{ form.custeio_tipo.id_for_label }}">{{ form.custeio_tipo.label }}</label>
+                  {{ form.custeio_tipo }}
+                  {% if form.custeio_tipo.errors %}<div class="invalid-feedback d-block">{{ form.custeio_tipo.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6" id="nome-instituicao-wrapper"{% if not mostrar_nome_instituicao %} style="display:none;"{% endif %}>
+                  <label class="form-label" for="{{ form.nome_instituicao_custeio.id_for_label }}">{{ form.nome_instituicao_custeio.label }}</label>
+                  {{ form.nome_instituicao_custeio }}
+                  {% if form.nome_instituicao_custeio.errors %}<div class="invalid-feedback d-block">{{ form.nome_instituicao_custeio.errors.0 }}</div>{% endif %}
+                </div>
+              </div>
+            </section>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Equipe do ofício</h3>
+                  <p class="oficio-stage-section-text">Busque servidores finalizados e mantenha a seleção visível enquanto monta o ofício.</p>
+                </div>
                 <a href="{{ cadastrar_viajante_url }}" class="btn btn-outline-secondary btn-sm" data-autosave-link="1">Cadastrar novo viajante</a>
               </div>
+
+              <label class="form-label mb-2" for="viajantes-autocomplete-input">Buscar viajante</label>
               <div class="position-relative" id="viajantes-autocomplete-wrapper" data-search-url="{{ buscar_viajantes_url }}">
                 <input
                   type="text"
@@ -110,7 +140,7 @@
                 <input type="hidden" name="viajantes" value="{{ viajante.pk }}" data-viajante-hidden="{{ viajante.pk }}">
                 {% endfor %}
               </div>
-              <div class="border rounded p-3 mt-3">
+              <div class="oficio-selection-panel mt-3">
                 <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
                   <span class="small fw-semibold text-uppercase">Viajantes selecionados</span>
                   <span class="badge text-bg-secondary" id="viajantes-chip-count">{{ selected_viajantes|length }}</span>
@@ -132,46 +162,8 @@
                 </div>
               </div>
               {% if form.viajantes.errors %}<div class="invalid-feedback d-block">{{ form.viajantes.errors.0 }}</div>{% endif %}
-            </div>
+            </section>
           </form>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xxl-5 col-xl-6 oficio-quick-report-column">
-      <div class="card oficio-quick-report">
-        <div class="card-body">
-          <h2 class="h6 mb-3">Relatório rápido</h2>
-          <dl class="row mb-3">
-            <dt class="col-sm-4">Ofício</dt>
-            <dd class="col-sm-8 mb-2" id="preview-oficio">{{ oficio.numero_formatado|default:"—" }}</dd>
-            <dt class="col-sm-4">Protocolo</dt>
-            <dd class="col-sm-8 mb-2" id="preview-protocolo">{{ form.protocolo.value|default:"—" }}</dd>
-            <dt class="col-sm-4">Data de criação</dt>
-            <dd class="col-sm-8 mb-2">{{ step1_preview.data_criacao|default:"—" }}</dd>
-            <dt class="col-sm-4">Motivo</dt>
-            <dd class="col-sm-8 mb-2" id="preview-motivo">{{ form.motivo.value|default:"—" }}</dd>
-            <dt class="col-sm-4">Custeio</dt>
-            <dd class="col-sm-8 mb-0" id="preview-custeio">{{ custeio_preview_text|default:"—" }}</dd>
-          </dl>
-          <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-            <span class="fw-semibold">Viajantes atuais</span>
-            <span class="badge text-bg-secondary" id="viajantes-preview-count">{{ selected_viajantes|length }}</span>
-          </div>
-          <div id="viajantes-preview-list">
-            {% for viajante in selected_viajantes %}
-            <div class="border rounded p-2 mb-2" data-preview-viajante="{{ viajante.pk }}">
-              <div class="fw-semibold">{{ viajante.nome }}</div>
-              <div class="small text-muted">
-                {% if viajante.cargo %}{{ viajante.cargo.nome }}{% else %}—{% endif %}
-                {% if viajante.rg_formatado %}<span class="d-block">RG: {{ viajante.rg_formatado }}</span>{% endif %}
-                {% if viajante.cpf_formatado %}<span class="d-block">CPF: {{ viajante.cpf_formatado }}</span>{% endif %}
-              </div>
-            </div>
-            {% empty %}
-            <p class="text-muted small mb-0" id="viajantes-preview-empty">Nenhum viajante selecionado.</p>
-            {% endfor %}
-          </div>
         </div>
       </div>
     </div>
@@ -194,9 +186,11 @@
   var custeioSelect = document.getElementById('id_custeio_tipo');
   var instituicaoWrapper = document.getElementById('nome-instituicao-wrapper');
   var instituicaoInput = document.getElementById('id_nome_instituicao_custeio');
+  var oficioNumeroInput = document.getElementById('id_oficio_numero');
   var modeloSelect = document.getElementById('id_modelo_motivo');
   var motivoTextarea = document.getElementById('id_motivo');
   var protocoloInput = document.getElementById('id_protocolo');
+  var dataCriacaoInput = document.getElementById('id_data_criacao');
   var apiPattern = "{{ modelo_texto_api_pattern }}";
   var saveModeloBtn = document.getElementById('btn-salvar-modelo-motivo');
   var novoModeloInput = document.getElementById('id_novo_modelo_nome');
@@ -206,8 +200,6 @@
   var chipsContainer = document.getElementById('viajantes-chip-list');
   var hiddenInputsContainer = document.getElementById('viajantes-hidden-inputs');
   var chipCount = document.getElementById('viajantes-chip-count');
-  var previewCount = document.getElementById('viajantes-preview-count');
-  var previewList = document.getElementById('viajantes-preview-list');
   var selectedDataElement = document.getElementById('viajantes-selected-data');
   var buscarViajantesUrl = buscaWrapper ? buscaWrapper.getAttribute('data-search-url') : '';
   var selectedMap = new Map();
@@ -266,9 +258,11 @@
   }
 
   function updateGeneralPreview() {
-    setPreviewText('preview-protocolo', protocoloInput ? protocoloInput.value : '');
-    setPreviewText('preview-motivo', motivoTextarea ? motivoTextarea.value : '');
-    setPreviewText('preview-custeio', buildCusteioPreview());
+    if (window.OficioWizard) {
+      window.OficioWizard.setGlanceValue('summary-oficio', oficioNumeroInput ? oficioNumeroInput.value : '');
+      window.OficioWizard.setGlanceValue('summary-protocolo', protocoloInput ? protocoloInput.value : '');
+      window.OficioWizard.setGlanceValue('summary-data', dataCriacaoInput ? dataCriacaoInput.value : '');
+    }
   }
 
   function toggleInstituicao() {
@@ -413,55 +407,8 @@
   }
 
   function renderPreview() {
-    if (!previewList) {
-      return;
-    }
-    previewList.innerHTML = '';
-    if (!selectedMap.size) {
-      var emptyState = document.createElement('p');
-      emptyState.className = 'text-muted small mb-0';
-      emptyState.id = 'viajantes-preview-empty';
-      emptyState.textContent = 'Nenhum viajante selecionado.';
-      previewList.appendChild(emptyState);
-    } else {
-      selectedMap.forEach(function(item, id) {
-        var card = document.createElement('div');
-        card.className = 'border rounded p-2 mb-2';
-        card.setAttribute('data-preview-viajante', id);
-
-        var nome = document.createElement('div');
-        nome.className = 'fw-semibold';
-        nome.textContent = item.nome || item.label || 'Viajante';
-        card.appendChild(nome);
-
-        var detalhes = document.createElement('div');
-        detalhes.className = 'small text-muted';
-
-        var cargo = document.createElement('span');
-        cargo.className = 'd-block';
-        cargo.textContent = String(item.cargo || '—');
-        detalhes.appendChild(cargo);
-
-        if (item.rg) {
-          var rg = document.createElement('span');
-          rg.className = 'd-block';
-          rg.textContent = 'RG: ' + item.rg;
-          detalhes.appendChild(rg);
-        }
-        if (item.cpf) {
-          var cpf = document.createElement('span');
-          cpf.className = 'd-block';
-          cpf.textContent = 'CPF: ' + item.cpf;
-          detalhes.appendChild(cpf);
-        }
-
-        card.appendChild(detalhes);
-        previewList.appendChild(card);
-      });
-    }
-
-    if (previewCount) {
-      previewCount.textContent = String(selectedMap.size);
+    if (window.OficioWizard) {
+      window.OficioWizard.renderGlanceTravelers(Array.from(selectedMap.values()));
     }
   }
 

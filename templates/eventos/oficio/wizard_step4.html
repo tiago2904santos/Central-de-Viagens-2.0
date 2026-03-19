@@ -8,35 +8,45 @@
 <div class="container-fluid pt-0 pb-4 oficio-wizard-page">
   {% include 'eventos/oficio/_wizard_header.html' %}
 
-  {% if finalize_validation and finalize_validation.sections %}
-  <div class="alert alert-danger mb-4" role="alert">
-    <strong>Não foi possível finalizar este ofício.</strong>
-    <ul class="mb-0 mt-2">
-      {% for section in finalize_validation.sections %}
-      {% for error in section.errors %}
-      <li><strong>{{ section.label }}:</strong> {{ error }}</li>
-      {% endfor %}
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
-
-  <div class="oficio-summary-hero mb-4">
-    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-      <div>
-        <h2 class="h4 mb-1">Resumo do ofício</h2>
-        <p class="text-muted mb-0">Revise os dados principais, a justificativa e a finalização do fluxo.</p>
+  <div class="card oficio-stage-panel">
+    <div class="card-body">
+      <div class="oficio-stage-intro">
+        <div>
+          <span class="oficio-stage-kicker">Etapa final</span>
+          <h2 class="oficio-stage-title">Resumo e finalização</h2>
+          <p class="oficio-stage-description">Revise o conjunto do ofício em um painel mais limpo e finalize com as ações principais concentradas no rodapé.</p>
+        </div>
       </div>
-      <div class="oficio-summary-pill-list">
-        <span class="oficio-summary-pill"><strong>Ofício:</strong> {{ oficio.numero_formatado|default:"—" }}</span>
-        <span class="oficio-summary-pill"><strong>Protocolo:</strong> {{ oficio.protocolo_formatado|default:"—" }}</span>
-        <span class="oficio-summary-pill"><strong>Status:</strong> {{ oficio.get_status_display }}</span>
-        <span class="oficio-summary-pill"><strong>Viajantes:</strong> {{ selected_viajantes|length }}</span>
-      </div>
-    </div>
-  </div>
 
-  <div class="oficio-summary-grid oficio-summary-grid--two">
+      {% if finalize_validation and finalize_validation.sections %}
+      <div class="alert alert-danger mb-4" role="alert">
+        <strong>Não foi possível finalizar este ofício.</strong>
+        <ul class="mb-0 mt-2">
+          {% for section in finalize_validation.sections %}
+          {% for error in section.errors %}
+          <li><strong>{{ section.label }}:</strong> {{ error }}</li>
+          {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="oficio-summary-hero mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+          <div>
+            <h2 class="h4 mb-1">Resumo do ofício</h2>
+            <p class="text-muted mb-0">Revise os dados principais, a justificativa e a finalização do fluxo.</p>
+          </div>
+          <div class="oficio-summary-pill-list">
+            <span class="oficio-summary-pill"><strong>Ofício:</strong> {{ oficio.numero_formatado|default:"—" }}</span>
+            <span class="oficio-summary-pill"><strong>Protocolo:</strong> {{ oficio.protocolo_formatado|default:"—" }}</span>
+            <span class="oficio-summary-pill"><strong>Status:</strong> {{ oficio.get_status_display }}</span>
+            <span class="oficio-summary-pill"><strong>Viajantes:</strong> {{ selected_viajantes|length }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="oficio-summary-grid oficio-summary-grid--two">
     <section class="oficio-summary-section">
       <h2>Dados e viajantes</h2>
       <div class="oficio-summary-meta">
@@ -212,32 +222,34 @@
         </div>
       </form>
     </section>
-  </div>
+      </div>
 
-  <div class="oficio-summary-actions mt-4 p-3 border rounded bg-white">
-    <div class="oficio-summary-actions-group">
-      {% if oficio.status != 'FINALIZADO' %}
-      <button type="submit" form="oficio-step4-form" name="finalizar" value="1" class="btn btn-doc-action btn-doc-action--primary" data-autosave-bypass="1">
-        <i class="bi bi-check2-circle"></i>
-        <span>Finalizar Ofício</span>
-      </button>
-      {% endif %}
-      {% for action in oficio_downloads.actions %}
-      <a
-        href="{{ action.url }}"
-        class="btn btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}"
-        data-autosave-link="1"
-      >
-        <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
-        <span>{{ action.download_label }}</span>
-      </a>
-      {% endfor %}
+      <div class="oficio-summary-actions mt-4 p-3 bg-white">
+        <div class="oficio-summary-actions-group">
+          {% if oficio.status != 'FINALIZADO' %}
+          <button type="submit" form="oficio-step4-form" name="finalizar" value="1" class="btn btn-doc-action btn-doc-action--primary" data-autosave-bypass="1">
+            <i class="bi bi-check2-circle"></i>
+            <span>Finalizar Ofício</span>
+          </button>
+          {% endif %}
+          {% for action in oficio_downloads.actions %}
+          <a
+            href="{{ action.url }}"
+            class="btn btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}"
+            data-autosave-link="1"
+          >
+            <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
+            <span>{{ action.download_label }}</span>
+          </a>
+          {% endfor %}
+        </div>
+        {% if oficio_downloads.errors %}
+        <div class="oficio-summary-actions-note">
+          {{ oficio_downloads.errors.0 }}
+        </div>
+        {% endif %}
+      </div>
     </div>
-    {% if oficio_downloads.errors %}
-    <div class="oficio-summary-actions-note">
-      {{ oficio_downloads.errors.0 }}
-    </div>
-    {% endif %}
   </div>
 </div>
 {% endblock %}

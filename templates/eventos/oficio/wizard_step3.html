@@ -8,11 +8,19 @@
 <div class="container-fluid pt-0 pb-4 oficio-wizard-page">
   {% include 'eventos/oficio/_wizard_header.html' %}
 
-  <div class="row g-4 oficio-wizard-layout">
-    <div class="col-xxl-7 col-xl-6">
-      <div class="card">
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card oficio-stage-panel">
         <div class="card-body">
-          <form method="post" id="oficio-step3-form" novalidate>
+          <div class="oficio-stage-intro">
+            <div>
+              <span class="oficio-stage-kicker">Etapa 3</span>
+              <h2 class="oficio-stage-title">Roteiro e diárias</h2>
+              <p class="oficio-stage-description">Monte o deslocamento em blocos mais legíveis, sem disputar espaço com painéis laterais redundantes.</p>
+            </div>
+          </div>
+
+          <form method="post" id="oficio-step3-form" novalidate class="oficio-stage-form">
             {% csrf_token %}
             <input type="hidden" name="tipo_destino" id="id_tipo_destino" value="{{ step3_preview.tipo_destino|default:'' }}">
             <input type="hidden" name="quantidade_diarias" id="id_quantidade_diarias" value="{{ step3_preview.diarias.quantidade|default:'' }}">
@@ -26,7 +34,7 @@
             {% endif %}
             {% if step3_seed_source_label %}<div class="alert alert-info py-2">{{ step3_seed_source_label }}</div>{% endif %}
 
-            <div class="border rounded p-3 mb-3">
+            <section class="oficio-stage-section mb-1">
               <div class="mb-3">
                 <div>
                   <div class="fw-semibold mb-2">1. Fonte do roteiro</div>
@@ -58,44 +66,47 @@
                 </div>
                 <div class="small text-muted mt-2" id="roteiro-selector-resumo"></div>
               </div>
-            </div>
+            </section>
 
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label" for="id_sede_estado">2. UF (Sede)</label>
-                <select name="sede_estado" id="id_sede_estado" class="form-select">
-                  <option value="">---------</option>
-                  {% for estado in estados %}
-                  <option value="{{ estado.pk }}" {% if sede_estado_id == estado.pk %}selected{% endif %}>{{ estado.nome }} ({{ estado.sigla }})</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="id_sede_cidade">Cidade (Sede)</label>
-                <select name="sede_cidade" id="id_sede_cidade" class="form-select">
-                  <option value="">---------</option>
-                  {% for cidade in sede_cidades_qs %}
-                  <option value="{{ cidade.pk }}" {% if sede_cidade_id == cidade.pk %}selected{% endif %}>{{ cidade.nome }}</option>
-                  {% endfor %}
-                </select>
-              </div>
+            <section class="oficio-stage-section">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="id_sede_estado">2. UF (Sede)</label>
+                  <select name="sede_estado" id="id_sede_estado" class="form-select">
+                    <option value="">---------</option>
+                    {% for estado in estados %}
+                    <option value="{{ estado.pk }}" {% if sede_estado_id == estado.pk %}selected{% endif %}>{{ estado.nome }} ({{ estado.sigla }})</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="id_sede_cidade">Cidade (Sede)</label>
+                  <select name="sede_cidade" id="id_sede_cidade" class="form-select">
+                    <option value="">---------</option>
+                    {% for cidade in sede_cidades_qs %}
+                    <option value="{{ cidade.pk }}" {% if sede_cidade_id == cidade.pk %}selected{% endif %}>{{ cidade.nome }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
 
-              <div class="col-12">
-                <div class="fw-semibold mb-2">3. Destinos</div>
-                <div id="destinos-container"></div>
-                <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary btn-sm mt-2">Adicionar destino</button>
-              </div>
+                <div class="col-12">
+                  <div class="fw-semibold mb-2">3. Destinos</div>
+                  <div id="destinos-container"></div>
+                  <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary btn-sm mt-2">Adicionar destino</button>
+                </div>
 
-              <div class="col-12">
-                <div class="fw-semibold mb-2">4. Trechos de ida</div>
-                <div id="trechos-gerados-container" class="d-grid gap-2">
-                  <p class="text-muted small mb-0">Selecione a sede e ao menos um destino para editar os trechos.</p>
+                <div class="col-12">
+                  <div class="fw-semibold mb-2">4. Trechos de ida</div>
+                  <div id="trechos-gerados-container" class="d-grid gap-2">
+                    <p class="text-muted small mb-0">Selecione a sede e ao menos um destino para editar os trechos.</p>
+                  </div>
                 </div>
               </div>
+            </section>
 
-              <div class="col-12">
-                <div class="fw-semibold mb-2">5. Retorno</div>
-                <div class="rota-bloco" id="retorno-card">
+            <section class="oficio-stage-section">
+              <div class="fw-semibold mb-2">5. Retorno</div>
+              <div class="rota-bloco" id="retorno-card">
                   <div class="row g-3">
                     <div class="col-md-6">
                       <div class="border rounded p-3 h-100 bg-white">
@@ -181,120 +192,47 @@
                     </div>
                   </div>
                 </div>
-              </div>
+            </section>
 
-              <div class="col-12">
-                <div class="fw-semibold mb-2">6. Calculadora de diárias</div>
-                <div class="border rounded p-3">
-                  <div class="d-flex justify-content-end align-items-center gap-2 mb-2">
-                    <button type="button" id="btn-calcular-diarias" class="btn btn-outline-primary btn-sm">Calcular diárias</button>
+            <section class="oficio-stage-section">
+              <div class="fw-semibold mb-2">6. Calculadora de diárias</div>
+              <div class="border rounded p-3 bg-white">
+                <div class="d-flex justify-content-end align-items-center gap-2 mb-2">
+                  <button type="button" id="btn-calcular-diarias" class="btn btn-outline-primary btn-sm">Calcular diárias</button>
+                </div>
+                <div id="diarias-status" class="small text-muted mb-2">Aguardando cálculo.</div>
+                <div id="diarias-error" class="alert alert-danger py-2 d-none"></div>
+                <div id="diarias-results"{% if not step3_diarias_resultado %} class="d-none"{% endif %}>
+                  <div class="row g-2 mb-3">
+                    <div class="col-md-4"><div class="border rounded p-2"><div class="small text-muted">Tipo destino</div><div class="fw-semibold" id="diarias-tipo">{{ step3_diarias_resultado.tipo_destino|default:step3_preview.tipo_destino|default:"-" }}</div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-2"><div class="small text-muted">Diárias</div><div class="fw-semibold" id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"-" }}</div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-2"><div class="small text-muted">Valor total</div><div class="fw-semibold" id="diarias-valor">{{ step3_diarias_resultado.totais.total_valor|default:"-" }}</div></div></div>
                   </div>
-                  <div id="diarias-status" class="small text-muted mb-2">Aguardando cálculo.</div>
-                  <div id="diarias-error" class="alert alert-danger py-2 d-none"></div>
-                  <div id="diarias-results"{% if not step3_diarias_resultado %} class="d-none"{% endif %}>
-                    <div class="row g-2 mb-3">
-                      <div class="col-md-4"><div class="border rounded p-2"><div class="small text-muted">Tipo destino</div><div class="fw-semibold" id="diarias-tipo">{{ step3_diarias_resultado.tipo_destino|default:step3_preview.tipo_destino|default:"-" }}</div></div></div>
-                      <div class="col-md-4"><div class="border rounded p-2"><div class="small text-muted">Diárias</div><div class="fw-semibold" id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"-" }}</div></div></div>
-                      <div class="col-md-4"><div class="border rounded p-2"><div class="small text-muted">Valor total</div><div class="fw-semibold" id="diarias-valor">{{ step3_diarias_resultado.totais.total_valor|default:"-" }}</div></div></div>
-                    </div>
-                    <div class="small mb-2"><strong>Valor por extenso:</strong> <span id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"-" }}</span></div>
-                    <div class="table-responsive">
-                      <table class="table table-sm mb-0">
-                        <thead><tr><th>Tipo</th><th>Saída</th><th>Chegada</th><th>Diárias</th><th>Adicional</th><th>Subtotal</th></tr></thead>
-                        <tbody id="diarias-table-body">
-                          {% if step3_diarias_resultado %}
-                            {% for periodo in step3_diarias_resultado.periodos %}
-                            <tr>
-                              <td>{{ periodo.tipo }}</td>
-                              <td>{{ periodo.data_saida }} {{ periodo.hora_saida }}</td>
-                              <td>{{ periodo.data_chegada }} {{ periodo.hora_chegada }}</td>
-                              <td>{{ periodo.n_diarias }} x 100%</td>
-                              <td>{% if periodo.percentual_adicional %}{{ periodo.percentual_adicional }}%{% else %}-{% endif %}</td>
-                              <td>{{ periodo.subtotal }}</td>
-                            </tr>
-                            {% endfor %}
-                          {% endif %}
-                        </tbody>
-                      </table>
-                    </div>
+                  <div class="small mb-2"><strong>Valor por extenso:</strong> <span id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"-" }}</span></div>
+                  <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                      <thead><tr><th>Tipo</th><th>Saída</th><th>Chegada</th><th>Diárias</th><th>Adicional</th><th>Subtotal</th></tr></thead>
+                      <tbody id="diarias-table-body">
+                        {% if step3_diarias_resultado %}
+                          {% for periodo in step3_diarias_resultado.periodos %}
+                          <tr>
+                            <td>{{ periodo.tipo }}</td>
+                            <td>{{ periodo.data_saida }} {{ periodo.hora_saida }}</td>
+                            <td>{{ periodo.data_chegada }} {{ periodo.hora_chegada }}</td>
+                            <td>{{ periodo.n_diarias }} x 100%</td>
+                            <td>{% if periodo.percentual_adicional %}{{ periodo.percentual_adicional }}%{% else %}-{% endif %}</td>
+                            <td>{{ periodo.subtotal }}</td>
+                          </tr>
+                          {% endfor %}
+                        {% endif %}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
 
           </form>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xxl-5 col-xl-6 oficio-quick-report-column">
-      <div class="card oficio-quick-report">
-        <div class="card-body">
-          <h2 class="h6 mb-3">Relatório rápido</h2>
-          <div class="oficio-quick-report-section">
-            <dl class="row">
-              <dt class="col-sm-5">Ofício</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.oficio|default:"—" }}</dd>
-              <dt class="col-sm-5">Protocolo</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.protocolo|default:"—" }}</dd>
-              <dt class="col-sm-5">Data de criação</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.data_criacao|default:"—" }}</dd>
-              <dt class="col-sm-5">Situação / origem</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.situacao_origem|default:"—" }}</dd>
-              <dt class="col-sm-5">Motivo</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.motivo|default:"—" }}</dd>
-              <dt class="col-sm-5">Viajantes</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.viajantes|default:"—" }}</dd>
-              <dt class="col-sm-5">Responsável</dt>
-              <dd class="col-sm-7 mb-0">{{ quick_report.responsavel|default:"—" }}</dd>
-            </dl>
-          </div>
-
-          <div class="oficio-quick-report-section">
-            <h3 class="h6 mb-2">Transporte</h3>
-            <dl class="row">
-              <dt class="col-sm-5">Motorista</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.motorista|default:"—" }}</dd>
-              <dt class="col-sm-5">Viatura</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.veiculo|default:"—" }}</dd>
-              <dt class="col-sm-5">Placa</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.placa|default:"—" }}</dd>
-              <dt class="col-sm-5">Modelo</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.modelo|default:"—" }}</dd>
-              <dt class="col-sm-5">Combustível</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.combustivel|default:"—" }}</dd>
-              <dt class="col-sm-5">Tipo viatura</dt>
-              <dd class="col-sm-7 mb-2">{{ quick_report.tipo_viatura|default:"—" }}</dd>
-              <dt class="col-sm-5">Carona / ofício</dt>
-              <dd class="col-sm-7 mb-0">{{ quick_report.carona_oficio|default:"—" }}</dd>
-            </dl>
-          </div>
-
-          <div class="oficio-quick-report-section">
-            <h3 class="h6 mb-2">Roteiro e diárias</h3>
-            <dl class="row">
-              <dt class="col-sm-5">Modo</dt>
-              <dd class="col-sm-7 mb-2"><span id="preview-modo">{{ quick_report.roteiro_modo|default:"—" }}</span></dd>
-              <dt class="col-sm-5">Fonte</dt>
-              <dd class="col-sm-7 mb-2"><span id="preview-fonte">{{ quick_report.roteiro_fonte|default:"Roteiro próprio" }}</span></dd>
-              <dt class="col-sm-5">Período</dt>
-              <dd class="col-sm-7 mb-2"><span id="preview-periodo">{{ quick_report.periodo|default:"—" }}</span></dd>
-              <dt class="col-sm-5">Destino principal</dt>
-              <dd class="col-sm-7 mb-2"><span id="preview-destino-principal">{{ quick_report.destino_principal|default:"—" }}</span></dd>
-              <dt class="col-sm-5">Justificativa</dt>
-              <dd class="col-sm-7 mb-2">
-                <span id="preview-justificativa">
-                  {{ quick_report.justificativa_required|default:"—" }}{% if quick_report.justificativa %} · {{ quick_report.justificativa }}{% endif %}
-                </span>
-              </dd>
-              <dt class="col-sm-5">Diárias</dt>
-              <dd class="col-sm-7 mb-2"><span id="preview-diarias-qtd">{{ quick_report.diarias_qtd|default:"—" }}</span></dd>
-              <dt class="col-sm-5">Valor estimado</dt>
-              <dd class="col-sm-7 mb-2"><span id="preview-diarias-valor">{{ quick_report.diarias_valor|default:"—" }}</span></dd>
-              <dt class="col-sm-5">Valor por extenso</dt>
-              <dd class="col-sm-7 mb-0"><span id="preview-diarias-extenso">{{ quick_report.diarias_extenso|default:"—" }}</span></dd>
-            </dl>
-          </div>
         </div>
       </div>
     </div>
@@ -546,11 +484,10 @@
 
   function renderPreview() {
     const state = captureCurrentState();
-    setPreviewValue('preview-modo', $('id_roteiro_modo_evento').checked ? 'Usar roteiro salvo' : 'Montar roteiro neste ofício');
-    const route = routeMap[String($('id_roteiro_evento_id').value || '')];
-    setPreviewValue('preview-fonte', $('id_roteiro_modo_evento').checked && route ? route.label : 'Roteiro próprio');
-    setPreviewValue('preview-periodo', buildPreviewPeriod(state));
-    setPreviewValue('preview-destino-principal', buildPreviewDestination(state));
+    if (window.OficioWizard) {
+      window.OficioWizard.setGlanceValue('summary-data', buildPreviewPeriod(state));
+      window.OficioWizard.setGlanceValue('summary-destino', buildPreviewDestination(state));
+    }
   }
   function esc(value) {
     return String(value || '')
@@ -954,9 +891,6 @@
       $('id_quantidade_diarias').value = '';
       $('id_valor_diarias').value = '';
       $('id_valor_diarias_extenso').value = '';
-      setPreviewValue('preview-diarias-qtd', '');
-      setPreviewValue('preview-diarias-valor', '');
-      setPreviewValue('preview-diarias-extenso', '');
       return;
     }
 
@@ -981,9 +915,6 @@
     $('id_quantidade_diarias').value = totais.total_diarias || '';
     $('id_valor_diarias').value = totais.total_valor || '';
     $('id_valor_diarias_extenso').value = totais.valor_extenso || '';
-    setPreviewValue('preview-diarias-qtd', totais.total_diarias || '');
-    setPreviewValue('preview-diarias-valor', totais.total_valor || '');
-    setPreviewValue('preview-diarias-extenso', totais.valor_extenso || '');
   }
 
   function clearDiarias() {

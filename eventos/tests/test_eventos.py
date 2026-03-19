@@ -5778,20 +5778,23 @@ class OficioJustificativaTest(TestCase):
         self.assertTrue(oficio.gerar_termo_preenchido)
         self.assertContains(response, 'salvo.')
 
-    def test_assets_do_wizard_mantem_quick_report_abaixo_do_header_no_load_e_no_scroll(self):
+    def test_assets_do_wizard_mantem_header_sticky_e_resumo_essencial_compacto(self):
         js = (Path(settings.BASE_DIR) / 'static' / 'js' / 'oficio_wizard.js').read_text(encoding='utf-8')
         css = (Path(settings.BASE_DIR) / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
 
-        self.assertIn("--oficio-quick-report-top", js)
         self.assertIn("window.addEventListener('load', forceRefreshLayout)", js)
         self.assertIn("window.addEventListener('scroll', refreshLayout, { passive: true })", js)
         self.assertIn("document.addEventListener('scroll', refreshLayout, { passive: true })", js)
         self.assertIn("observer.observe(document.body);", js)
-        self.assertIn("--oficio-quick-report-top", css)
-        self.assertIn("top: var(--oficio-quick-report-top);", css)
-        self.assertIn("scroll-margin-top: calc(var(--oficio-quick-report-top) + 0.5rem);", css)
+        self.assertIn('setGlanceValue', js)
+        self.assertIn('renderGlanceTravelers', js)
+        self.assertNotIn('syncQuickReportLayout', js)
+        self.assertIn('.oficio-glance {', css)
+        self.assertIn('.oficio-glance-grid {', css)
+        self.assertIn('.oficio-stepper-link.is-active {', css)
+        self.assertNotIn('.oficio-quick-report', css)
 
-    def test_steps_com_quick_report_carregam_header_sticky_e_script_compartilhado(self):
+    def test_steps_carregam_header_sticky_resumo_essencial_e_script_compartilhado(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
         self._salvar_oficio_finalizavel(
             oficio,
@@ -5808,8 +5811,43 @@ class OficioJustificativaTest(TestCase):
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, 'data-oficio-sticky-header')
-            self.assertContains(response, 'oficio-quick-report')
+            self.assertContains(response, 'data-oficio-glance')
+            self.assertContains(response, 'Informações essenciais do ofício')
+            self.assertContains(response, 'Número do ofício')
+            self.assertContains(response, 'Protocolo')
+            self.assertContains(response, 'Viajantes')
+            self.assertContains(response, 'Destino')
+            self.assertContains(response, 'Data')
+            self.assertContains(response, 'Veículo')
+            self.assertNotContains(response, 'Relatório rápido')
+            self.assertNotContains(response, 'oficio-quick-report')
             self.assertContains(response, 'js/oficio_wizard.js')
+
+    def test_resumo_essencial_renderiza_dados_chave_sem_campos_legados(self):
+        oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
+        destino = self._salvar_oficio_finalizavel(
+            oficio,
+            data_saida=date(2026, 10, 10),
+            data_retorno=date(2026, 10, 11),
+        )
+
+        response = self.client.get(reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="summary-oficio"')
+        self.assertContains(response, oficio.numero_formatado)
+        self.assertContains(response, 'id="summary-protocolo"')
+        self.assertContains(response, '12.345.678-9')
+        self.assertContains(response, 'id="summary-viajantes-meta"')
+        self.assertContains(response, self.viajante.nome)
+        self.assertContains(response, 'id="summary-destino"')
+        self.assertContains(response, destino.nome)
+        self.assertContains(response, 'id="summary-data"')
+        self.assertContains(response, '10/10/2026 08:00 até 11/10/2026 18:00')
+        self.assertContains(response, 'id="summary-veiculo"')
+        self.assertContains(response, 'ABC1234 • VIATURA JUSTIFICATIVA')
+        self.assertNotContains(response, 'Motivo</dt>')
+        self.assertNotContains(response, 'Custeio</dt>')
 
     def test_salvar_justificativa_grava_texto_e_retorna_para_next(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 10, 5))
@@ -5879,7 +5917,8 @@ class OficioJustificativaTest(TestCase):
         self.assertNotContains(response, 'Resumo do texto')
         html = response.content.decode('utf-8')
         self.assertLess(html.index('Modelo de justificativa'), html.index('Texto da justificativa'))
-        self.assertContains(response, 'Relatório rápido')
+        self.assertContains(response, 'Informações essenciais do ofício')
+        self.assertNotContains(response, 'Relatório rápido')
 
     def test_lista_modelos_justificativa_ordena_por_nome(self):
         ModeloJustificativa.objects.create(nome='ZZZ', texto='z')

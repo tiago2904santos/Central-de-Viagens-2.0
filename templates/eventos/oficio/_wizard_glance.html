@@ -1,0 +1,48 @@
+<section class="oficio-glance" aria-label="Informações essenciais do ofício" data-oficio-glance>
+  <div class="oficio-glance-heading">
+    <div>
+      <span class="oficio-glance-kicker">Leitura rápida</span>
+      <h2 class="oficio-glance-title">Informações essenciais do ofício</h2>
+    </div>
+    <p class="oficio-glance-text">Um resumo compacto para acompanhar apenas o que precisa bater o olho durante o preenchimento.</p>
+  </div>
+
+  <div class="oficio-glance-grid">
+    <article class="oficio-glance-card">
+      <span class="oficio-glance-label">Número do ofício</span>
+      <strong class="oficio-glance-value" id="summary-oficio" data-empty-text="A definir">{{ wizard_glance.oficio|default:"A definir" }}</strong>
+    </article>
+
+    <article class="oficio-glance-card">
+      <span class="oficio-glance-label">Protocolo</span>
+      <strong class="oficio-glance-value" id="summary-protocolo" data-empty-text="Aguardando protocolo">{{ wizard_glance.protocolo|default:"Aguardando protocolo" }}</strong>
+    </article>
+
+    <article class="oficio-glance-card oficio-glance-card--travelers">
+      <span class="oficio-glance-label">Viajantes</span>
+      <strong class="oficio-glance-value" id="summary-viajantes-meta" data-empty-text="Nenhum viajante">{% if wizard_glance.viajantes_count %}{{ wizard_glance.viajantes_count }} viajante{{ wizard_glance.viajantes_count|pluralize }}{% else %}Nenhum viajante{% endif %}</strong>
+      <div class="oficio-glance-travelers" id="summary-viajantes-list">
+        {% for viajante in wizard_glance.viajantes %}
+        <span class="oficio-glance-chip">{{ viajante }}</span>
+        {% empty %}
+        <span class="oficio-glance-empty">Selecione ao menos um viajante.</span>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="oficio-glance-card">
+      <span class="oficio-glance-label">Destino</span>
+      <strong class="oficio-glance-value" id="summary-destino" data-empty-text="Defina no roteiro">{{ wizard_glance.destino|default:"Defina no roteiro" }}</strong>
+    </article>
+
+    <article class="oficio-glance-card">
+      <span class="oficio-glance-label">Data</span>
+      <strong class="oficio-glance-value" id="summary-data" data-empty-text="Defina as datas">{{ wizard_glance.data|default:"Defina as datas" }}</strong>
+    </article>
+
+    <article class="oficio-glance-card">
+      <span class="oficio-glance-label">Veículo</span>
+      <strong class="oficio-glance-value" id="summary-veiculo" data-empty-text="Defina em transporte">{{ wizard_glance.veiculo|default:"Defina em transporte" }}</strong>
+    </article>
+  </div>
+</section>

@@ -1994,12 +1994,55 @@ def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None):
                 'url': resumo_url,
             }
         )
+    current_step = next((item for item in steps if item['key'] == current_key), None)
+    current_number = current_step['number'] if current_step else 0
     for item in steps:
         item['active'] = item['key'] == current_key
+        if item['active']:
+            item['state'] = 'active'
+        elif item['number'] < current_number:
+            item['state'] = 'completed'
+        else:
+            item['state'] = 'pending'
     return steps
 
 
+def _build_oficio_wizard_glance_data(oficio, step1_preview=None, step2_preview=None, step3_preview=None):
+    step1_preview = step1_preview or _build_oficio_step1_preview(oficio)
+    if step2_preview is None:
+        step2_form = OficioStep2Form(initial=_build_oficio_step2_initial(oficio), oficio=oficio)
+        step2_preview = _build_step2_preview_data(oficio, step2_form)
+    if step3_preview is None:
+        saved_state = _get_oficio_step3_saved_state(oficio)
+        if saved_state:
+            try:
+                diarias_resultado = _calculate_step3_diarias_from_state(oficio, saved_state)
+            except ValueError:
+                diarias_resultado = _build_step3_diarias_fallback(oficio)
+        else:
+            diarias_resultado = _build_step3_diarias_fallback(oficio)
+        step3_preview = _build_oficio_step3_preview(oficio, saved_state, diarias_resultado=diarias_resultado)
+
+    viajantes = step1_preview.get('viajantes') or []
+    veiculo_label = ' • '.join(
+        [value for value in [step2_preview.get('placa'), step2_preview.get('modelo')] if value]
+    )
+    data_label = step3_preview.get('periodo_display') or step1_preview.get('data_criacao') or ''
+    return {
+        'oficio': step1_preview.get('oficio') or '',
+        'protocolo': step1_preview.get('protocolo') or '',
+        'viajantes_count': len(viajantes),
+        'viajantes': [viajante.nome for viajante in viajantes if getattr(viajante, 'nome', '').strip()],
+        'destino': step3_preview.get('destino_principal') or '',
+        'data': data_label,
+        'veiculo': veiculo_label,
+    }
+
+
 def _apply_oficio_wizard_context(context, oficio, current_key, page_title, justificativa_info=None):
+    step1_preview = context.get('step1_preview')
+    step2_preview = context.get('step2_preview')
+    step3_preview = context.get('step3_preview')
     context.update(
         {
             'hide_page_header': True,
@@ -2008,6 +2051,12 @@ def _apply_oficio_wizard_context(context, oficio, current_key, page_title, justi
                 oficio,
                 current_key,
                 justificativa_info=justificativa_info,
+            ),
+            'wizard_glance': _build_oficio_wizard_glance_data(
+                oficio,
+                step1_preview=step1_preview,
+                step2_preview=step2_preview,
+                step3_preview=step3_preview,
             ),
         }
     )
@@ -3951,13 +4000,6 @@ def _build_oficio_justificativa_context(oficio, next_url=''):
         'step2_preview': step2_preview,
         'step3_preview': step3_preview,
         'justificativa_info': justificativa_info,
-        'quick_report': _build_oficio_quick_report_data(
-            oficio,
-            step1_preview,
-            step2_preview,
-            step3_preview=step3_preview,
-            justificativa_info=justificativa_info,
-        ),
         'next_url': next_url,
         'voltar_step4_url': next_url or reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
         'modelos_justificativa_url': _append_query_params(
@@ -4184,13 +4226,6 @@ def oficio_step3(request, pk):
         'selected_viajantes': step1_preview['viajantes'],
         'step2_preview': step2_preview,
         'step3_preview': step3_preview,
-        'quick_report': _build_oficio_quick_report_data(
-            oficio,
-            step1_preview,
-            step2_preview,
-            step3_preview=step3_preview,
-            justificativa_info=justificativa_info,
-        ),
         'justificativa_info': justificativa_info,
         'step3_diarias_resultado': diarias_resultado,
         'roteiros_evento': route_options,
@@ -5225,52 +5260,6 @@ def _build_step3_destino_principal_from_state(state):
     if len(destinos) == 1:
         return destinos[0]
     return f'{destinos[0]} (+{len(destinos) - 1})'
-
-
-def _build_oficio_quick_report_data(oficio, step1_preview, step2_preview, step3_preview=None, justificativa_info=None):
-    justificativa_info = justificativa_info or _build_oficio_justificativa_info(oficio)
-    motorista_preview = step2_preview.get('motorista') or {}
-    veiculo_partes = [value for value in [step2_preview.get('placa'), step2_preview.get('modelo')] if value]
-    veiculo_resumo = ' / '.join(veiculo_partes)
-    situacao_origem = ' / '.join(
-        [
-            value
-            for value in [oficio.get_status_display(), oficio.get_tipo_origem_display()]
-            if value
-        ]
-    )
-    carona_partes = []
-    if oficio.motorista_carona:
-        carona_partes.append('Sim')
-    if oficio.carona_oficio_referencia_id and oficio.carona_oficio_referencia:
-        carona_partes.append(oficio.carona_oficio_referencia.numero_formatado or '')
-    elif oficio.motorista_oficio_formatado:
-        carona_partes.append(oficio.motorista_oficio_formatado)
-    return {
-        'oficio': step1_preview.get('oficio') or '',
-        'protocolo': step1_preview.get('protocolo') or '',
-        'data_criacao': step1_preview.get('data_criacao') or '',
-        'situacao_origem': situacao_origem,
-        'motivo': step1_preview.get('motivo') or '',
-        'periodo': (step3_preview or {}).get('periodo_display') or '',
-        'destino_principal': (step3_preview or {}).get('destino_principal') or '',
-        'viajantes': str(len(step1_preview.get('viajantes') or [])) if step1_preview.get('viajantes') is not None else '',
-        'responsavel': _build_oficio_responsavel_label(oficio),
-        'motorista': motorista_preview.get('nome_display') or '',
-        'veiculo': veiculo_resumo,
-        'placa': step2_preview.get('placa') or '',
-        'modelo': step2_preview.get('modelo') or '',
-        'combustivel': step2_preview.get('combustivel') or '',
-        'tipo_viatura': step2_preview.get('tipo_viatura_label') or '',
-        'carona_oficio': ' / '.join([value for value in carona_partes if value]),
-        'roteiro_modo': (step3_preview or {}).get('roteiro_modo_label') or '',
-        'roteiro_fonte': (step3_preview or {}).get('roteiro_evento_label') or 'Roteiro próprio',
-        'justificativa': justificativa_info.get('status_label') or '',
-        'justificativa_required': 'Sim' if justificativa_info.get('required') else 'Não',
-        'diarias_qtd': ((step3_preview or {}).get('diarias') or {}).get('quantidade') or '',
-        'diarias_valor': ((step3_preview or {}).get('diarias') or {}).get('valor_total') or '',
-        'diarias_extenso': ((step3_preview or {}).get('diarias') or {}).get('valor_extenso') or '',
-    }
 
 
 def _autosave_oficio_step2(oficio, request):

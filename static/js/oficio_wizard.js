@@ -20,33 +20,61 @@
     var rect = header.getBoundingClientRect();
     var height = Math.ceil(rect.height + marginTop + marginBottom);
     var headerTop = Math.max(Math.floor(rect.top - marginTop), 0);
-    var stickyGap = parseFloat(
-      window.getComputedStyle(page).getPropertyValue('--oficio-sticky-gap') || '12'
-    ) || 12;
-    var quickReportTop = Math.max(Math.ceil(rect.bottom + marginBottom + stickyGap), stickyGap);
     page.style.setProperty('--oficio-sticky-header-height', height + 'px');
     page.style.setProperty('--oficio-sticky-header-top', headerTop + 'px');
-    page.style.setProperty('--oficio-quick-report-top', quickReportTop + 'px');
   }
 
-  function syncQuickReportLayout() {
-    var page = getWizardPage();
-    var reports = document.querySelectorAll('.oficio-quick-report-column .oficio-quick-report');
-    if (!reports.length) {
+  function getEmptyText(element, fallback) {
+    if (!element) {
+      return fallback || '—';
+    }
+    return element.getAttribute('data-empty-text') || fallback || '—';
+  }
+
+  function setGlanceValue(id, value, fallback) {
+    var element = document.getElementById(id);
+    if (!element) {
       return;
     }
-    var styles = page ? window.getComputedStyle(page) : window.getComputedStyle(document.documentElement);
-    var quickReportTop = parseFloat(styles.getPropertyValue('--oficio-quick-report-top') || '0') || 0;
-    var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-    var maxHeight = Math.max(Math.floor(viewportHeight - quickReportTop - 12), 240);
-    if (page) {
-      page.style.setProperty('--oficio-quick-report-max-height', maxHeight + 'px');
+    var text = String(value || '').trim();
+    element.textContent = text || getEmptyText(element, fallback);
+  }
+
+  function renderGlanceTravelers(items) {
+    var list = document.getElementById('summary-viajantes-list');
+    var meta = document.getElementById('summary-viajantes-meta');
+    var travelers = Array.isArray(items) ? items : [];
+
+    if (meta) {
+      meta.textContent = travelers.length
+        ? (travelers.length + ' viajante' + (travelers.length > 1 ? 's' : ''))
+        : getEmptyText(meta, 'Nenhum viajante');
     }
-    reports.forEach(function(report) {
-      report.classList.remove('is-viewport-fixed');
-      report.style.removeProperty('--oficio-quick-report-left');
-      report.style.removeProperty('--oficio-quick-report-width');
-      report.style.removeProperty('--oficio-quick-report-height');
+
+    if (!list) {
+      return;
+    }
+
+    list.innerHTML = '';
+    if (!travelers.length) {
+      var empty = document.createElement('span');
+      empty.className = 'oficio-glance-empty';
+      empty.textContent = 'Selecione ao menos um viajante.';
+      list.appendChild(empty);
+      return;
+    }
+
+    travelers.forEach(function(item) {
+      var name = typeof item === 'string'
+        ? item
+        : String((item && (item.nome || item.label || item.name)) || '').trim();
+      if (!name) {
+        return;
+      }
+      var chip = document.createElement('span');
+      chip.className = 'oficio-glance-chip';
+      chip.textContent = name;
+      list.appendChild(chip);
     });
   }
 
@@ -61,12 +89,10 @@
       window.requestAnimationFrame(function() {
         scheduled = false;
         setStickyHeaderOffset();
-        syncQuickReportLayout();
       });
     }
     function forceRefreshLayout() {
       setStickyHeaderOffset();
-      syncQuickReportLayout();
     }
     forceRefreshLayout();
     refreshLayout();
@@ -85,9 +111,6 @@
         observer.observe(page);
       }
       observer.observe(document.body);
-      document.querySelectorAll('.oficio-quick-report-column').forEach(function(column) {
-        observer.observe(column);
-      });
     }
   }
 
@@ -248,7 +271,8 @@
   window.OficioWizard = {
     bindStickyLayout: bindStickyLayout,
     createAutosave: createAutosave,
-    syncQuickReportLayout: syncQuickReportLayout
+    setGlanceValue: setGlanceValue,
+    renderGlanceTravelers: renderGlanceTravelers
   };
 
   if (document.readyState === 'loading') {
