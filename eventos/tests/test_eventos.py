@@ -4609,6 +4609,31 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(response.context['retorno_state']['saida_data'], '2026-02-11')
         self.assertEqual(response.context['retorno_state']['saida_hora'], '09:00')
 
+    def test_step3_get_seed_do_roteiro_do_evento_carrega_tempo_e_fonte_de_ida_e_retorno(self):
+        oficio = self._criar_oficio(ano=2026)
+        cidade_destino = Cidade.objects.create(nome='Apucarana Seed', estado=self.estado, codigo_ibge='4101408')
+        roteiro = self._criar_roteiro_evento_base([cidade_destino])
+        trecho_ida = roteiro.trechos.get(ordem=0)
+        trecho_retorno = roteiro.trechos.get(ordem=1)
+        trecho_ida.tempo_cru_estimado_min = 180
+        trecho_ida.tempo_adicional_min = 20
+        trecho_ida.duracao_estimada_min = 200
+        trecho_ida.rota_fonte = 'OSRM'
+        trecho_ida.save(update_fields=['tempo_cru_estimado_min', 'tempo_adicional_min', 'duracao_estimada_min', 'rota_fonte'])
+        trecho_retorno.tempo_cru_estimado_min = 210
+        trecho_retorno.tempo_adicional_min = 15
+        trecho_retorno.duracao_estimada_min = 225
+        trecho_retorno.rota_fonte = 'ESTIMATIVA_LOCAL'
+        trecho_retorno.save(update_fields=['tempo_cru_estimado_min', 'tempo_adicional_min', 'duracao_estimada_min', 'rota_fonte'])
+
+        response = self.client.get(reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['trechos_state'][0]['tempo_cru_estimado_min'], 180)
+        self.assertEqual(response.context['trechos_state'][0]['rota_fonte'], 'OSRM')
+        self.assertEqual(response.context['retorno_state']['tempo_cru_estimado_min'], 210)
+        self.assertEqual(response.context['retorno_state']['rota_fonte'], 'ESTIMATIVA_LOCAL')
+
     def test_step3_permite_escolher_qualquer_roteiro_salvo_do_banco(self):
         oficio = self._criar_oficio(ano=2026)
         cidade_a = Cidade.objects.create(nome='Destino A Step3', estado=self.estado, codigo_ibge='4113703')
@@ -4841,10 +4866,12 @@ class OficioStep1AcceptanceTest(TestCase):
             trecho_0_tempo_cru_estimado_min='210',
             trecho_0_tempo_adicional_min='25',
             trecho_0_duracao_estimada_min='235',
+            trecho_0_rota_fonte='OSRM',
             retorno_distancia_km='123.45',
             retorno_tempo_cru_estimado_min='220',
             retorno_tempo_adicional_min='25',
             retorno_duracao_estimada_min='245',
+            retorno_rota_fonte='ESTIMATIVA_LOCAL',
         )
 
         response = self.client.post(
@@ -4870,9 +4897,11 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(trecho_ida.tempo_cru_estimado_min, 210)
         self.assertEqual(trecho_ida.tempo_adicional_min, 25)
         self.assertEqual(trecho_ida.duracao_estimada_min, 235)
+        self.assertEqual(trecho_ida.rota_fonte, 'OSRM')
         self.assertEqual(trecho_retorno.tempo_cru_estimado_min, 220)
         self.assertEqual(trecho_retorno.tempo_adicional_min, 25)
         self.assertEqual(trecho_retorno.duracao_estimada_min, 245)
+        self.assertEqual(trecho_retorno.rota_fonte, 'ESTIMATIVA_LOCAL')
 
         response_repeat = self.client.post(
             reverse('eventos:oficio-step3-calcular-diarias', kwargs={'pk': oficio.pk}),
@@ -4896,10 +4925,12 @@ class OficioStep1AcceptanceTest(TestCase):
                 trecho_0_tempo_cru_estimado_min='210',
                 trecho_0_tempo_adicional_min='25',
                 trecho_0_duracao_estimada_min='235',
+                trecho_0_rota_fonte='OSRM',
                 retorno_distancia_km='123.45',
                 retorno_tempo_cru_estimado_min='220',
                 retorno_tempo_adicional_min='25',
                 retorno_duracao_estimada_min='245',
+                retorno_rota_fonte='ESTIMATIVA_LOCAL',
             ),
         )
 

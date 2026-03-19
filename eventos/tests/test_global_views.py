@@ -141,7 +141,17 @@ class GlobalViewsTest(TestCase):
     def _extract_oficio_card_html(self, response, oficio_pk):
         content = response.content.decode('utf-8')
         match = re.search(
-            rf'<article class="oficio-list-card" id="oficio-card-{oficio_pk}">(.*?)</article>',
+            rf'<article class="oficio-list-card[^"]*" id="oficio-card-{oficio_pk}">(.*?)</article>',
+            content,
+            re.S,
+        )
+        self.assertIsNotNone(match)
+        return match.group(1)
+
+    def _extract_oficio_article_html(self, response, oficio_pk):
+        content = response.content.decode('utf-8')
+        match = re.search(
+            rf'(<article class="oficio-list-card[^"]*" id="oficio-card-{oficio_pk}">.*?</article>)',
             content,
             re.S,
         )
@@ -245,10 +255,44 @@ class GlobalViewsTest(TestCase):
         self.assertIn('SEGUNDO VIAJANTE', card_html)
         self.assertEqual(card_html.count(self.oficio_pt.protocolo_formatado), 1)
         self.assertEqual(card_html.count('Londrina/PR'), 1)
-        self.assertEqual(card_html.count('Periodo'), 1)
+        self.assertNotIn('Periodo', card_html)
         self.assertNotIn('Primeira saida', card_html)
-        self.assertEqual(card_html.count('class="oficio-list-term-card"'), 2)
+        self.assertNotIn('Veiculo:', card_html)
+        self.assertNotIn('DOCX', card_html)
+        self.assertEqual(card_html.count('class="oficio-list-term-card '), 2)
         self.assertContains(response, 'Abrir wizard')
+
+    def test_lista_global_de_oficios_aplica_linguagem_visual_compacta_e_contexto_sem_repeticao(self):
+        oficio_avulso = Oficio.objects.create(
+            protocolo='333222111',
+            data_criacao=date(2026, 2, 1),
+            tipo_destino=Oficio.TIPO_DESTINO_INTERIOR,
+            status=Oficio.STATUS_FINALIZADO,
+            modelo='Spin',
+            motorista='Motorista Avulso',
+        )
+        oficio_avulso.viajantes.add(self.viajante)
+        OficioTrecho.objects.create(
+            oficio=oficio_avulso,
+            ordem=0,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_origem,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_destino,
+            saida_data=date(2026, 2, 10),
+            chegada_data=date(2026, 2, 10),
+        )
+
+        response = self.client.get(reverse('eventos:oficios-global'))
+        card_html = self._extract_oficio_article_html(response, oficio_avulso.pk)
+
+        self.assertIn('oficio-list-card is-trip-past', card_html)
+        self.assertIn('Finalizado', card_html)
+        self.assertIn('class="oficio-list-card__headline-destination"', card_html)
+        self.assertIn('class="oficio-list-chip', card_html)
+        self.assertIn('Motorista Avulso', card_html)
+        self.assertIn('class="oficio-list-badge is-context-avulso">Avulso</span>', card_html)
+        self.assertNotIn('Oficio avulso', card_html)
 
     def test_hubs_globais_principais_respondem_200(self):
         urls = [
@@ -278,6 +322,8 @@ class GlobalViewsTest(TestCase):
         self.assertContains(response_termos, self.viajante.nome)
         self.assertContains(response_termos, self.evento_pt.titulo)
         self.assertContains(response_termos, 'Novo termo')
+        self.assertContains(response_termos, 'Termo de autorizacao, Londrina/PR, 10/03/2026, VIAJANTE GLOBAL')
+        self.assertNotContains(response_termos, 'TA-000')
 
     def test_simulacao_global_calcula_valor(self):
         response = self.client.post(

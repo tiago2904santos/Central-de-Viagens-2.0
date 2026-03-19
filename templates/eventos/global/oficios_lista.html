@@ -111,38 +111,60 @@
 
     <div class="oficio-list-grid">
         {% for oficio in object_list %}
-        <article class="oficio-list-card" id="oficio-card-{{ oficio.pk }}">
-            <div class="oficio-list-card__top">
-                <div class="oficio-list-card__identity">
+        <article class="oficio-list-card {{ oficio.viagem_status.css_class }}" id="oficio-card-{{ oficio.pk }}">
+            <div class="oficio-list-card__header">
+                <div class="oficio-list-card__header-main">
                     <div class="oficio-list-card__title-row">
                         <h2 class="oficio-list-card__title">Oficio {{ oficio.numero_formatado }}</h2>
                         <span class="oficio-list-card__protocol">Protocolo {{ oficio.protocolo_formatado }}</span>
+                        <span class="oficio-list-badge {{ oficio.oficio_status.css_class }}">{{ oficio.oficio_status.label }}</span>
                     </div>
-                    <div class="oficio-list-card__context">
+                    <div class="oficio-list-card__headline">
+                        <span class="oficio-list-card__headline-destination">{{ oficio.destinos_display }}</span>
+                        <span class="oficio-list-card__headline-separator">&bull;</span>
+                        <span class="oficio-list-card__headline-date">{{ oficio.periodo_display }}</span>
+                    </div>
+                </div>
+                <div class="oficio-list-card__header-side">
+                    <span class="oficio-list-card__updated">Atualizado em {{ oficio.updated_display }}</span>
+                </div>
+            </div>
+
+            <div class="oficio-list-card__status-row">
+                <div class="oficio-list-card__status-copy">
+                    <span class="oficio-list-badge {{ oficio.viagem_status.css_class }}">{{ oficio.viagem_status.label }}</span>
+                    <div class="oficio-list-card__relative {{ oficio.viagem_status.css_class }}">{{ oficio.viagem_status.relative_label }}</div>
+                </div>
+                <span class="oficio-list-badge {{ oficio.contexto.css_class }}">{{ oficio.contexto.label }}</span>
+            </div>
+
+            <div class="oficio-list-card__core-grid">
+                <section class="oficio-list-core-card oficio-list-core-card--travelers">
+                    <span class="oficio-list-core-card__label">Viajantes</span>
+                    <div class="oficio-list-chip-list">
+                        {% for chip in oficio.traveler_chips %}
+                        <span class="oficio-list-chip {{ chip.css_class }}">{{ chip.label }}</span>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="oficio-list-core-card">
+                    <span class="oficio-list-core-card__label">Veiculo</span>
+                    <div class="oficio-list-core-card__value">{{ oficio.vehicle_display }}</div>
+                    <div class="oficio-list-core-card__subvalue">
+                        <span class="oficio-list-core-card__subvalue-label">Motorista</span>
+                        <span>{{ oficio.driver_display }}</span>
+                    </div>
+                    {% if oficio.evento_titulo %}
+                    <div class="oficio-list-core-card__note">
                         {% if oficio.evento_url %}
                         <a href="{{ oficio.evento_url }}" class="text-decoration-none">{{ oficio.evento_titulo }}</a>
                         {% else %}
                         <span>{{ oficio.evento_titulo }}</span>
                         {% endif %}
                     </div>
-                </div>
-
-                <div class="oficio-list-card__badges">
-                    <span class="oficio-list-badge {{ oficio.contexto.css_class }}">{{ oficio.contexto.label }}</span>
-                    <span class="oficio-list-badge {{ oficio.oficio_status.css_class }}">{{ oficio.oficio_status.label }}</span>
-                    <span class="oficio-list-badge {{ oficio.viagem_status.css_class }}">{{ oficio.viagem_status.label }}</span>
-                </div>
-            </div>
-
-            <div class="oficio-list-card__relative">{{ oficio.viagem_status.relative_label }}</div>
-
-            <div class="oficio-list-card__meta">
-                {% for item in oficio.meta_items %}
-                <div class="oficio-list-meta-item">
-                    <span class="oficio-list-meta-item__label">{{ item.label }}</span>
-                    <span class="oficio-list-meta-item__value">{{ item.value }}</span>
-                </div>
-                {% endfor %}
+                    {% endif %}
+                </section>
             </div>
 
             {% if oficio.justificativa or oficio.termos %}
@@ -174,43 +196,25 @@
                 {% endif %}
 
                 {% if oficio.termos %}
-                <section class="oficio-list-subcard oficio-list-subcard--wide">
+                <section class="oficio-list-subcard">
                     <div class="oficio-list-subcard__header">
                         <div>
                             <h3 class="oficio-list-subcard__title">Termos de autorizacao</h3>
-                            <p class="oficio-list-subcard__subtitle">{{ oficio.termos.summary }}</p>
+                            <p class="oficio-list-subcard__subtitle">{{ oficio.termos.count_label }} · {{ oficio.termos.summary }}</p>
                         </div>
                         <a href="{{ oficio.termos.manage_url }}" class="btn btn-sm btn-outline-secondary">Gerenciar</a>
                     </div>
 
                     <div class="oficio-list-term-grid">
                         {% for termo in oficio.termos.subcards %}
-                        <div class="oficio-list-term-card">
-                            <div class="oficio-list-term-card__header">
-                                <strong>{{ termo.traveler_name }}</strong>
-                                <span class="oficio-list-badge {{ termo.status.css_class }}">{{ termo.status.label }}</span>
-                            </div>
-
-                            {% if termo.vehicle %}
-                            <div class="oficio-list-term-card__meta">Veiculo: {{ termo.vehicle }}</div>
-                            {% endif %}
-
-                            {% if termo.created_at_display %}
-                            <div class="oficio-list-term-card__meta">Criado em {{ termo.created_at_display }}</div>
-                            {% endif %}
-
+                        <div class="oficio-list-term-card {{ termo.status.css_class }}">
+                            <strong class="oficio-list-term-card__name">{{ termo.traveler_name }}</strong>
                             <div class="oficio-list-term-card__actions">
-                                {% if termo.detail_url %}
-                                <a href="{{ termo.detail_url }}" class="btn btn-sm btn-outline-primary">Ver</a>
-                                {% endif %}
-                                {% if termo.download_docx_url %}
-                                <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-outline-secondary">DOCX</a>
+                                {% if termo.open_url %}
+                                <a href="{{ termo.open_url }}" class="btn btn-sm btn-outline-primary">Abrir</a>
                                 {% endif %}
                                 {% if termo.download_pdf_url %}
                                 <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-outline-secondary">PDF</a>
-                                {% endif %}
-                                {% if termo.edit_url %}
-                                <a href="{{ termo.edit_url }}" class="btn btn-sm btn-outline-secondary">{% if termo.is_saved %}Editar{% else %}Abrir{% endif %}</a>
                                 {% endif %}
                             </div>
                         </div>

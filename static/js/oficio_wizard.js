@@ -3,52 +3,47 @@
     return document.querySelector(selector);
   }
 
+  function getWizardPage() {
+    var header = qs('[data-oficio-sticky-header]');
+    return header ? header.closest('.oficio-wizard-page') : qs('.oficio-wizard-page');
+  }
+
   function setStickyHeaderOffset() {
     var header = qs('[data-oficio-sticky-header]');
     if (!header) {
       return;
     }
+    var page = getWizardPage() || document.documentElement;
     var computed = window.getComputedStyle(header);
     var marginTop = parseFloat(computed.marginTop || '0') || 0;
     var marginBottom = parseFloat(computed.marginBottom || '0') || 0;
     var height = Math.ceil(header.getBoundingClientRect().height + marginTop + marginBottom);
-    document.documentElement.style.setProperty('--oficio-sticky-header-height', height + 'px');
+    page.style.setProperty('--oficio-sticky-header-height', height + 'px');
+    page.style.setProperty('--oficio-sticky-header-top', '0px');
   }
 
   function syncQuickReportLayout() {
+    var page = getWizardPage();
     var reports = document.querySelectorAll('.oficio-quick-report-column .oficio-quick-report');
     if (!reports.length) {
       return;
     }
-    var isDesktop = window.innerWidth >= 1200;
-    var headerOffset = parseFloat(
-      window.getComputedStyle(document.documentElement).getPropertyValue('--oficio-sticky-header-height') || '0'
-    ) || 0;
+    var styles = page ? window.getComputedStyle(page) : window.getComputedStyle(document.documentElement);
+    var headerOffset = parseFloat(styles.getPropertyValue('--oficio-sticky-header-height') || '0') || 0;
+    var headerTop = parseFloat(styles.getPropertyValue('--oficio-sticky-header-top') || '0') || 0;
     var stickyGap = parseFloat(
-      window.getComputedStyle(document.documentElement).getPropertyValue('--oficio-sticky-gap') || '12'
+      styles.getPropertyValue('--oficio-sticky-gap') || '12'
     ) || 12;
-    var topOffset = Math.max(Math.ceil(headerOffset + stickyGap), 0);
     var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-    var viewportBottomGap = 12;
+    var maxHeight = Math.max(Math.floor(viewportHeight - headerTop - headerOffset - stickyGap - 12), 240);
+    if (page) {
+      page.style.setProperty('--oficio-quick-report-max-height', maxHeight + 'px');
+    }
     reports.forEach(function(report) {
-      var column = report.closest('.oficio-quick-report-column');
-      if (!column || !isDesktop) {
-        report.classList.remove('is-viewport-fixed');
-        report.style.removeProperty('--oficio-quick-report-left');
-        report.style.removeProperty('--oficio-quick-report-width');
-        report.style.removeProperty('--oficio-quick-report-height');
-        return;
-      }
-      var rect = column.getBoundingClientRect();
-      var columnStyles = window.getComputedStyle(column);
-      var paddingLeft = parseFloat(columnStyles.paddingLeft || '0') || 0;
-      var paddingRight = parseFloat(columnStyles.paddingRight || '0') || 0;
-      var width = Math.max(Math.round(rect.width - paddingLeft - paddingRight), 320);
-      var height = Math.max(Math.floor(viewportHeight - topOffset - viewportBottomGap), 240);
-      report.style.setProperty('--oficio-quick-report-left', Math.round(rect.left + paddingLeft) + 'px');
-      report.style.setProperty('--oficio-quick-report-width', width + 'px');
-      report.style.setProperty('--oficio-quick-report-height', height + 'px');
-      report.classList.add('is-viewport-fixed');
+      report.classList.remove('is-viewport-fixed');
+      report.style.removeProperty('--oficio-quick-report-left');
+      report.style.removeProperty('--oficio-quick-report-width');
+      report.style.removeProperty('--oficio-quick-report-height');
     });
   }
 
@@ -59,11 +54,18 @@
       syncQuickReportLayout();
     }
     refreshLayout();
+    window.requestAnimationFrame(refreshLayout);
+    window.setTimeout(refreshLayout, 0);
     window.addEventListener('resize', refreshLayout);
+    window.addEventListener('load', refreshLayout);
     if (typeof ResizeObserver === 'function') {
       var observer = new ResizeObserver(refreshLayout);
       if (header) {
         observer.observe(header);
+      }
+      var page = getWizardPage();
+      if (page) {
+        observer.observe(page);
       }
       document.querySelectorAll('.oficio-quick-report-column').forEach(function(column) {
         observer.observe(column);

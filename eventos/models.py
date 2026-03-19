@@ -702,13 +702,27 @@ class TermoAutorizacao(models.Model):
         verbose_name_plural = 'Termos de autorizacao'
 
     def __str__(self):
-        return self.numero_formatado
+        return self.titulo_display
 
     @property
     def numero_formatado(self):
         if not self.pk:
             return 'TA (novo)'
         return f'TA-{self.pk:04d}'
+
+    @property
+    def titulo_display(self):
+        parts = ['Termo de autorizacao']
+        destino = (self.destino or '').strip()
+        periodo = (self.periodo_display or '').strip()
+        servidor = (self.servidor_display or '').strip()
+        if destino:
+            parts.append(destino)
+        if periodo:
+            parts.append(periodo)
+        if servidor:
+            parts.append(servidor)
+        return ', '.join(parts)
 
     @property
     def servidor_display(self):

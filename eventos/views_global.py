@@ -529,22 +529,41 @@ def _oficio_list_viajantes_display(oficio):
     return f"{', '.join(viajantes[:2])} +{len(viajantes) - 2}"
 
 
-def _oficio_list_transport_meta(oficio):
+def _oficio_list_viajante_chips(oficio, limit=3):
+    viajantes = _oficio_list_ordered_unique_strings([viajante.nome for viajante in oficio.viajantes.all()])
+    if not viajantes:
+        return [{'label': 'Nenhum viajante', 'css_class': 'is-muted'}]
+    chips = [{'label': nome, 'css_class': ''} for nome in viajantes[:limit]]
+    restante = len(viajantes) - limit
+    if restante > 0:
+        chips.append({'label': f'+{restante}', 'css_class': 'is-counter'})
+    return chips
+
+
+def _oficio_list_vehicle_display(oficio):
     placa = _clean(getattr(oficio, 'placa_formatada', ''))
     modelo = _clean(oficio.modelo)
     if placa == EMPTY_DISPLAY:
         placa = ''
-    if placa or modelo:
-        parts = [item for item in [placa, modelo] if item]
-        return {'label': 'Veiculo', 'value': ' - '.join(parts) if parts else 'Nao informado'}
+    parts = [item for item in [placa, modelo] if item]
+    return ' - '.join(parts) if parts else 'Nao informado'
 
-    motorista_nome = ''
+
+def _oficio_list_driver_display(oficio):
     if getattr(oficio, 'motorista_viajante_id', None):
         motorista_nome = _clean(getattr(getattr(oficio, 'motorista_viajante', None), 'nome', ''))
-    if not motorista_nome:
-        motorista_nome = _clean(oficio.motorista)
-    if motorista_nome:
-        return {'label': 'Motorista', 'value': motorista_nome}
+        if motorista_nome:
+            return motorista_nome
+    return _clean(oficio.motorista) or 'Nao informado'
+
+
+def _oficio_list_transport_meta(oficio):
+    veiculo = _oficio_list_vehicle_display(oficio)
+    if veiculo != 'Nao informado':
+        return {'label': 'Veiculo', 'value': veiculo}
+    motorista = _oficio_list_driver_display(oficio)
+    if motorista != 'Nao informado':
+        return {'label': 'Motorista', 'value': motorista}
     return {'label': 'Transporte', 'value': 'Nao informado'}
 
 
@@ -639,14 +658,7 @@ def _oficio_list_justificativa_block(oficio, justificativa_info):
 def _oficio_list_saved_term_card(termo):
     return {
         'traveler_name': _clean(termo.servidor_display) or 'Termo geral',
-        'vehicle': _clean(termo.viatura_display),
-        'created_at_display': _oficio_list_format_datetime(termo.created_at),
-        'detail_url': reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk}),
-        'edit_url': reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk}),
-        'download_docx_url': reverse(
-            'eventos:documentos-termos-download',
-            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value},
-        ),
+        'open_url': reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk}),
         'download_pdf_url': reverse(
             'eventos:documentos-termos-download',
             kwargs={'pk': termo.pk, 'formato': DocumentoFormato.PDF.value},
@@ -657,14 +669,9 @@ def _oficio_list_saved_term_card(termo):
 
 
 def _oficio_list_pending_term_card(oficio, viajante):
-    transporte = _oficio_list_transport_meta(oficio)
     return {
         'traveler_name': _clean(getattr(viajante, 'nome', '')) or 'Termo geral',
-        'vehicle': transporte['value'] if transporte['label'] == 'Veiculo' else '',
-        'created_at_display': '',
-        'detail_url': '',
-        'edit_url': reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
-        'download_docx_url': '',
+        'open_url': reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
         'download_pdf_url': '',
         'status': {'label': 'Pendente', 'css_class': 'is-pending'},
         'is_saved': False,
@@ -703,6 +710,7 @@ def _oficio_list_term_block(oficio):
         summary.append(f'{pending_count} pendente(s)')
     return {
         'summary': ', '.join(summary) if summary else 'Termos vinculados',
+        'count_label': f'{len(subcards)} servidor(es)',
         'manage_url': f"{reverse('eventos:documentos-termos-novo')}?{urlencode({'preselected_oficio_id': oficio.pk})}",
         'subcards': subcards,
     }
@@ -710,32 +718,36 @@ def _oficio_list_term_block(oficio):
 
 def _oficio_list_card(oficio):
     justificativa_info = _build_oficio_justificativa_info(oficio)
-    transporte = _oficio_list_transport_meta(oficio)
-    atividade = _oficio_list_activity_meta(oficio)
     viagem_status = _oficio_list_trip_status(oficio)
     oficio_downloads = _build_oficio_document_actions(oficio, DocumentoOficioTipo.OFICIO)
     justificativa = _oficio_list_justificativa_block(oficio, justificativa_info)
     termos = _oficio_list_term_block(oficio)
+    destinos_display = _oficio_list_destinos_display(oficio)
+    periodo_display = _oficio_list_period_display(oficio)
+    updated_display = _oficio_list_format_datetime(getattr(oficio, 'updated_at', None) or getattr(oficio, 'created_at', None))
+    vehicle_display = _oficio_list_vehicle_display(oficio)
+    driver_display = _oficio_list_driver_display(oficio)
+    context_label = 'Com evento' if oficio.evento_id else 'Avulso'
     return {
         'pk': oficio.pk,
         'numero_formatado': oficio.numero_formatado,
         'protocolo_formatado': oficio.protocolo_formatado or EMPTY_DISPLAY,
-        'evento_titulo': _clean(getattr(getattr(oficio, 'evento', None), 'titulo', '')) or 'Oficio avulso',
+        'evento_titulo': _clean(getattr(getattr(oficio, 'evento', None), 'titulo', '')),
         'evento_url': reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
+        'destinos_display': destinos_display,
+        'periodo_display': periodo_display,
+        'updated_display': updated_display,
+        'context_label': context_label,
+        'traveler_chips': _oficio_list_viajante_chips(oficio),
+        'vehicle_display': vehicle_display,
+        'driver_display': driver_display,
         'contexto': {
             'value': 'EVENTO' if oficio.evento_id else 'AVULSO',
-            'label': 'Com evento' if oficio.evento_id else 'Avulso',
+            'label': context_label,
             'css_class': 'is-context-evento' if oficio.evento_id else 'is-context-avulso',
         },
         'oficio_status': _oficio_process_status_meta(oficio),
         'viagem_status': viagem_status,
-        'meta_items': [
-            {'label': 'Destinos', 'value': _oficio_list_destinos_display(oficio)},
-            {'label': 'Periodo', 'value': _oficio_list_period_display(oficio)},
-            {'label': 'Viajantes', 'value': _oficio_list_viajantes_display(oficio)},
-            {'label': transporte['label'], 'value': transporte['value']},
-            {'label': atividade['label'], 'value': atividade['value']},
-        ],
         'justificativa': justificativa,
         'termos': termos,
         'downloads': oficio_downloads['actions'],
@@ -750,9 +762,11 @@ def _oficio_list_card(oficio):
                 _clean(oficio.protocolo),
                 _clean(getattr(getattr(oficio, 'evento', None), 'titulo', '')),
                 _clean(oficio.motivo),
-                _oficio_list_destinos_display(oficio),
+                destinos_display,
                 _oficio_list_viajantes_display(oficio),
-                transporte['value'],
+                vehicle_display,
+                driver_display,
+                context_label,
             ]
             if value
         ).lower(),
@@ -1605,7 +1619,7 @@ def _termo_context_display(termo):
 
 def _build_saved_termo_filename(termo, formato):
     ext = 'docx' if formato == DocumentoFormato.DOCX.value else 'pdf'
-    base = slugify(termo.servidor_display or termo.destino or termo.numero_formatado) or f'termo-{termo.pk}'
+    base = slugify(getattr(termo, 'titulo_display', '') or termo.servidor_display or termo.destino or termo.numero_formatado) or f'termo-{termo.pk}'
     return f'termo_autorizacao_{termo.pk}_{base}.{ext}'
 
 
@@ -1827,6 +1841,7 @@ def termos_global(request):
         termo.process_status = _termo_status_meta(termo)
         termo.mode_meta = _termo_mode_meta(termo.modo_geracao)
         termo.context_display = _termo_context_display(termo)
+        termo.title_display = termo.titulo_display
         termo.servidor_resumo = termo.servidor_display or 'Sem servidor'
         termo.destino_resumo = termo.destino or '-'
         termo.periodo_resumo = termo.periodo_display or '-'

@@ -274,6 +274,7 @@
             var distEl = card.querySelector('.trecho-distancia-km');
             var tempoCru = card.getAttribute('data-tempo-cru-min');
             var tempoAdicEl = card.querySelector('input[name="trecho_' + ord + '_tempo_adicional_min"]');
+            var rotaFonteInput = card.querySelector('input[name="trecho_' + ord + '_rota_fonte"]');
             var tempoAdic = tempoAdicEl ? parseInt(tempoAdicEl.value, 10) : 0;
             if (isNaN(tempoAdic)) tempoAdic = 0;
             tempoCru = (tempoCru !== null && tempoCru !== '' && !isNaN(parseInt(tempoCru, 10))) ? parseInt(tempoCru, 10) : null;
@@ -293,6 +294,7 @@
                 duracao_estimada_hhmm: tempoTotal > 0 ? minutosParaHhmm(tempoTotal) : '',
                 origem_cidade_id: origId,
                 destino_cidade_id: destId,
+                rota_fonte: rotaFonteInput ? (rotaFonteInput.value || '') : '',
             };
         });
         return outMap;
@@ -353,6 +355,7 @@
             var distKm = (val.distancia_km != null && val.distancia_km !== '') ? val.distancia_km : '';
             var tempoCru = (val.tempo_cru_estimado_min != null && val.tempo_cru_estimado_min !== '') ? val.tempo_cru_estimado_min : '';
             var tempoAdic = (val.tempo_adicional_min != null && val.tempo_adicional_min !== '') ? val.tempo_adicional_min : 0;
+            var rotaFonte = (val.rota_fonte != null && val.rota_fonte !== '') ? val.rota_fonte : '';
             tempoAdic = Math.max(0, parseInt(tempoAdic, 10) || 0);
             var tempoTotal = (parseInt(tempoCru, 10) || 0) + (parseInt(tempoAdic, 10) || 0);
             var distDisplay = distKm !== '' ? (parseFloat(distKm).toFixed(2).replace('.', ',') + ' km') : '—';
@@ -372,7 +375,7 @@
             html += '<div class="col-auto"><span class="text-muted">Adicional (min):</span> <input type="number" name="trecho_' + t.ordem + '_tempo_adicional_min" class="form-control form-control-sm trecho-tempo-adicional" style="width:70px;display:inline-block" value="' + tempoAdic + '" min="0" step="15" placeholder="0" title="Ajuste operacional em minutos (0 ou mais)"></div>';
             html += '<div class="col-auto"><button type="button" class="btn btn-outline-secondary btn-sm btn-tempo-menos" title="-15 min">-15</button><button type="button" class="btn btn-outline-secondary btn-sm btn-tempo-mais" title="+15 min">+15</button></div>';
             html += '<div class="col-auto"><span class="text-muted">Total:</span> <span class="trecho-tempo-total">' + (tempoTotal > 0 ? minutosParaHhmm(tempoTotal) : '—') + '</span></div>';
-            html += '<div class="col-auto"><span class="text-muted">Fonte:</span> <span class="trecho-rota-fonte">' + (distKm !== '' ? 'estimativa local' : '—') + '</span></div>';
+            html += '<div class="col-auto"><span class="text-muted">Fonte:</span> <span class="trecho-rota-fonte">' + (rotaFonte ? (rotaFonte === 'ESTIMATIVA_LOCAL' ? 'estimativa local' : rotaFonte) : '—') + '</span></div>';
             html += '<div class="col-auto"><button type="button" class="btn btn-outline-secondary btn-sm btn-calcular-km" data-trecho-id="' + (trechoId || '') + '" data-origem-cidade-id="' + (origCid || '') + '" data-destino-cidade-id="' + (destCid || '') + '"' + (!trechoId && (!origCid || !destCid) ? ' disabled title="Selecione origem e destino"' : '') + '>Estimar km/tempo</button></div>';
             html += '<div class="col-12 trecho-km-erro text-danger small" style="display:none;"></div></div>';
             html += '<input type="hidden" name="trecho_' + t.ordem + '_saida_dt" value="' + saidaDt + '">';
@@ -380,6 +383,7 @@
             html += '<input type="hidden" name="trecho_' + t.ordem + '_distancia_km" value="' + (distKm || '') + '">';
             html += '<input type="hidden" name="trecho_' + t.ordem + '_tempo_cru_estimado_min" value="' + (tempoCru || '') + '">';
             html += '<input type="hidden" name="trecho_' + t.ordem + '_duracao_estimada_min" value="' + (tempoTotal > 0 ? tempoTotal : '') + '">';
+            html += '<input type="hidden" name="trecho_' + t.ordem + '_rota_fonte" value="' + (rotaFonte || '') + '">';
             html += '</div></div>';
         });
         containerTrechos.innerHTML = html;
@@ -520,12 +524,14 @@
                     if (inpAdic) inpAdic.value = String(tAdicSug);
                     var hidCru = card.querySelector('input[name="trecho_' + ord + '_tempo_cru_estimado_min"]');
                     if (hidCru) hidCru.value = tCru != null ? String(tCru) : '';
+                    var hidFonte = card.querySelector('input[name="trecho_' + ord + '_rota_fonte"]');
+                    if (hidFonte) hidFonte.value = data.rota_fonte || '';
                     var tempoCruEl = card.querySelector('.trecho-tempo-cru');
                     if (tempoCruEl) tempoCruEl.textContent = tCru != null ? minutosParaHhmm(tCru) : '—';
                     atualizarTempoTotalCard(card);
                     syncTrechoHidden(card);
                     var fonteEl = card.querySelector('.trecho-rota-fonte');
-                    if (fonteEl) fonteEl.textContent = (data.rota_fonte === 'ESTIMATIVA_LOCAL' ? 'estimativa local' : (data.rota_fonte || 'estimativa local'));
+                    if (fonteEl) fonteEl.textContent = (data.rota_fonte === 'ESTIMATIVA_LOCAL' ? 'estimativa local' : (data.rota_fonte || 'â€”'));
                 } else {
                     if (errEl) { errEl.textContent = data.erro || 'Erro ao estimar.'; errEl.style.display = 'block'; }
                 }
