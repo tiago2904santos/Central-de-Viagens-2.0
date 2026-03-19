@@ -247,6 +247,15 @@
               </div>
             </section>
 
+            <div class="oficio-wizard-footer-actions">
+              <a href="{% url 'eventos:oficio-step1' oficio.pk %}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar</a>
+              <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar para lista</a>
+              {% if oficio.pk %}
+              <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger" data-autosave-link="1">Excluir</a>
+              {% endif %}
+              <button type="submit" name="avancar" value="1" class="btn btn-primary">Salvar e avançar</button>
+            </div>
+
           </form>
         </div>
       </div>

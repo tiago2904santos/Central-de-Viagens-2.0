@@ -57,6 +57,15 @@
             {{ form.justificativa_texto }}
             {% if form.justificativa_texto.errors %}<div class="invalid-feedback d-block">{{ form.justificativa_texto.errors.0 }}</div>{% endif %}
         </section>
+
+        <div class="oficio-wizard-footer-actions">
+          <a href="{{ voltar_step4_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar</a>
+          <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar para lista</a>
+          {% if oficio.pk %}
+          <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger" data-autosave-link="1">Excluir</a>
+          {% endif %}
+          <button type="submit" class="btn btn-primary">Salvar justificativa</button>
+        </div>
       </form>
         </div>
       </div>

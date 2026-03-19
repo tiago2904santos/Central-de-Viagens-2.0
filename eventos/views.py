@@ -2024,10 +2024,13 @@ def _build_oficio_wizard_glance_data(oficio, step1_preview=None, step2_preview=N
         step3_preview = _build_oficio_step3_preview(oficio, saved_state, diarias_resultado=diarias_resultado)
 
     viajantes = step1_preview.get('viajantes') or []
-    veiculo_label = ' • '.join(
-        [value for value in [step2_preview.get('placa'), step2_preview.get('modelo')] if value]
-    )
-    data_label = step3_preview.get('periodo_display') or step1_preview.get('data_criacao') or ''
+    evento = oficio.evento
+    if evento and evento.data_inicio:
+        inicio = evento.data_inicio.strftime('%d/%m/%Y')
+        fim = evento.data_fim.strftime('%d/%m/%Y') if evento.data_fim else ''
+        data_label = inicio if not fim or fim == inicio else f'{inicio} até {fim}'
+    else:
+        data_label = step3_preview.get('periodo_display') or step1_preview.get('data_criacao') or ''
     return {
         'oficio': step1_preview.get('oficio') or '',
         'protocolo': step1_preview.get('protocolo') or '',
@@ -2035,7 +2038,6 @@ def _build_oficio_wizard_glance_data(oficio, step1_preview=None, step2_preview=N
         'viajantes': [viajante.nome for viajante in viajantes if getattr(viajante, 'nome', '').strip()],
         'destino': step3_preview.get('destino_principal') or '',
         'data': data_label,
-        'veiculo': veiculo_label,
     }
 
 

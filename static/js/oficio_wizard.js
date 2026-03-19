@@ -96,7 +96,7 @@
         button.setAttribute('aria-expanded', open ? 'true' : 'false');
         button.classList.toggle('is-active', open);
         if (label) {
-          label.textContent = open ? 'Fechar resumo' : 'Resumo';
+          label.textContent = open ? 'Fechar submenu' : 'Abrir submenu';
         }
       });
     }

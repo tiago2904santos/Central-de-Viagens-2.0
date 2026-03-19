@@ -7,9 +7,9 @@
   aria-hidden="true"
   role="region"
 >
-  <!-- Grid compacta: Linha 1 com 4 items, Linha 2 com 3 items -->
+  <!-- Grid do submenu: linha 1 com 3 itens, linha 2 com 2 itens -->
   <div class="oficio-glance-grid">
-    <!-- LINHA 1: Ofício, Protocolo, Destino, Data evento -->
+    <!-- LINHA 1: Ofício, Protocolo, Viajantes -->
     <div class="oficio-glance-item">
       <span class="oficio-glance-item-label">Ofício</span>
       <strong class="oficio-glance-item-value" id="summary-oficio" data-empty-text="—">{{ wizard_glance.oficio|default:"—" }}</strong>
@@ -20,18 +20,7 @@
       <strong class="oficio-glance-item-value" id="summary-protocolo" data-empty-text="—">{{ wizard_glance.protocolo|default:"—" }}</strong>
     </div>
 
-    <div class="oficio-glance-item">
-      <span class="oficio-glance-item-label">Destino</span>
-      <strong class="oficio-glance-item-value" id="summary-destino" data-empty-text="—">{{ wizard_glance.destino|default:"—" }}</strong>
-    </div>
-
-    <div class="oficio-glance-item">
-      <span class="oficio-glance-item-label">Data</span>
-      <strong class="oficio-glance-item-value" id="summary-data" data-empty-text="—">{{ wizard_glance.data|default:"—" }}</strong>
-    </div>
-
-    <!-- LINHA 2: Viajantes, Veículo, Motorista -->
-    <div class="oficio-glance-item oficio-glance-item--wide">
+    <div class="oficio-glance-item oficio-glance-item--travelers">
       <span class="oficio-glance-item-label">Viajantes</span>
       <div class="oficio-glance-travelers-compact">
         <strong class="oficio-glance-item-value" id="summary-viajantes-meta" data-empty-text="—">{% if wizard_glance.viajantes_count %}{{ wizard_glance.viajantes_count }}{% else %}—{% endif %}</strong>
@@ -39,14 +28,15 @@
       </div>
     </div>
 
+    <!-- LINHA 2: Data do evento, Destino -->
     <div class="oficio-glance-item">
-      <span class="oficio-glance-item-label">Veículo</span>
-      <strong class="oficio-glance-item-value" id="summary-veiculo" data-empty-text="—">{{ wizard_glance.veiculo|default:"—" }}</strong>
+      <span class="oficio-glance-item-label">Data do evento</span>
+      <strong class="oficio-glance-item-value" id="summary-data-evento" data-empty-text="—">{{ wizard_glance.data|default:"—" }}</strong>
     </div>
 
     <div class="oficio-glance-item">
-      <span class="oficio-glance-item-label">Motorista</span>
-      <strong class="oficio-glance-item-value" id="summary-motorista" data-empty-text="—">{{ wizard_glance.motorista|default:"—" }}</strong>
+      <span class="oficio-glance-item-label">Destino</span>
+      <strong class="oficio-glance-item-value" id="summary-destino" data-empty-text="—">{{ wizard_glance.destino|default:"—" }}</strong>
     </div>
   </div>
 </div>
