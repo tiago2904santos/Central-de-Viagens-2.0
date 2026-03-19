@@ -741,30 +741,14 @@ def _oficio_list_justificativa_block(oficio, justificativa_info):
 
 def _oficio_list_saved_term_card(termo):
     return {
-        'title': termo.titulo_display,
         'traveler_name': _clean(termo.servidor_display) or 'Termo geral',
-        'open_url': reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk}),
-        'download_docx_url': reverse(
-            'eventos:documentos-termos-download',
-            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value},
-        ),
-        'download_pdf_url': reverse(
-            'eventos:documentos-termos-download',
-            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.PDF.value},
-        ),
-        'status': _termo_status_meta(termo),
         'is_saved': True,
     }
 
 
 def _oficio_list_pending_term_card(oficio, viajante):
     return {
-        'title': 'Termo pendente',
         'traveler_name': _clean(getattr(viajante, 'nome', '')) or 'Termo geral',
-        'open_url': reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
-        'download_docx_url': '',
-        'download_pdf_url': '',
-        'status': {'label': 'Pendente', 'css_class': 'is-pending'},
         'is_saved': False,
     }
 
@@ -802,8 +786,7 @@ def _oficio_list_term_block(oficio):
     return {
         'summary': ', '.join(summary) if summary else 'Termos vinculados',
         'count_label': f'{len(subcards)} servidor(es)',
-        'manage_url': f"{reverse('eventos:documentos-termos-novo')}?{urlencode({'preselected_oficio_id': oficio.pk})}",
-        'subcards': subcards,
+        'items': subcards,
     }
 
 

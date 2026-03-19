@@ -193,43 +193,12 @@
                     <div class="oficio-list-subcard__header">
                         <div>
                             <h3 class="oficio-list-subcard__title">Termos de autorizacao</h3>
-                            <p class="oficio-list-subcard__subtitle">{{ oficio.termos.count_label }} · {{ oficio.termos.summary }}</p>
                         </div>
-                        <a href="{{ oficio.termos.manage_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                            <i class="bi bi-folder-symlink"></i>
-                            <span>Lista de termos</span>
-                        </a>
                     </div>
 
-                    <div class="oficio-list-term-grid">
-                        {% for termo in oficio.termos.subcards %}
-                        <div class="oficio-list-term-card {{ termo.status.css_class }}">
-                            <div class="oficio-list-term-card__header">
-                                <strong class="oficio-list-term-card__name">{{ termo.traveler_name }}</strong>
-                                <span class="oficio-list-badge {{ termo.status.css_class }}">{{ termo.status.label }}</span>
-                            </div>
-                            <p class="oficio-list-term-card__title">{{ termo.title }}</p>
-                            <div class="oficio-list-term-card__actions">
-                                {% if termo.open_url %}
-                                <a href="{{ termo.open_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
-                                    <i class="bi bi-box-arrow-up-right"></i>
-                                    <span>{% if termo.is_saved %}Abrir{% else %}Abrir resumo{% endif %}</span>
-                                </a>
-                                {% endif %}
-                                {% if termo.download_docx_url %}
-                                <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                                    <i class="bi bi-filetype-docx"></i>
-                                    <span>DOCX</span>
-                                </a>
-                                {% endif %}
-                                {% if termo.download_pdf_url %}
-                                <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf">
-                                    <i class="bi bi-filetype-pdf"></i>
-                                    <span>PDF</span>
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
+                    <div class="oficio-list-term-names">
+                        {% for termo in oficio.termos.items %}
+                        <span class="oficio-list-term-name">{{ termo.traveler_name }}</span>
                         {% endfor %}
                     </div>
                 </section>

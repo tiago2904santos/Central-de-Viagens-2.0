@@ -1,6 +1,8 @@
 import re
 from datetime import date, datetime, time, timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -158,6 +160,16 @@ class GlobalViewsTest(TestCase):
         self.assertIsNotNone(match)
         return match.group(1)
 
+    def _extract_oficio_terms_html(self, response, oficio_pk):
+        article_html = self._extract_oficio_article_html(response, oficio_pk)
+        match = re.search(
+            r'<section class="oficio-list-subcard">\s*<div class="oficio-list-subcard__header">\s*<div>\s*<h3 class="oficio-list-subcard__title">Termos de autorizacao</h3>(.*?)</section>',
+            article_html,
+            re.S,
+        )
+        self.assertIsNotNone(match)
+        return match.group(0)
+
     def test_lista_global_de_oficios_renderiza_header_unico_filtros_enxutos_e_busca_ampla(self):
         response = self.client.get(reverse('eventos:oficios-global'))
         self.assertEqual(response.status_code, 200)
@@ -250,18 +262,23 @@ class GlobalViewsTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         card_html = self._extract_oficio_card_html(response, self.oficio_pt.pk)
+        termos_html = self._extract_oficio_terms_html(response, self.oficio_pt.pk)
         self.assertIn('Justificativa', card_html)
         self.assertIn('Termos de autorizacao', card_html)
         self.assertIn('SEGUNDO VIAJANTE', card_html)
         self.assertEqual(card_html.count(self.oficio_pt.protocolo_formatado), 1)
-        self.assertIn('Londrina/PR', card_html)
         self.assertNotIn('Primeira saida', card_html)
         self.assertIn('Periodo', card_html)
         self.assertIn('Veiculo', card_html)
-        self.assertIn('DOCX', card_html)
-        self.assertIn('PDF', card_html)
+        self.assertIn('class="oficio-list-term-name"', termos_html)
+        self.assertNotIn('DOCX', termos_html)
+        self.assertNotIn('PDF', termos_html)
+        self.assertNotIn('Abrir', termos_html)
+        self.assertNotIn('Londrina/PR', termos_html)
+        self.assertNotIn('10/03/2026', termos_html)
+        self.assertNotIn('Termo de autorizacao,', termos_html)
         self.assertNotIn('Documentos', card_html)
-        self.assertEqual(card_html.count('class="oficio-list-term-card '), 2)
+        self.assertEqual(termos_html.count('class="oficio-list-term-name"'), 2)
         self.assertContains(response, 'Abrir wizard')
 
     def test_lista_global_de_oficios_aplica_linguagem_visual_compacta_e_contexto_sem_repeticao(self):
@@ -337,6 +354,16 @@ class GlobalViewsTest(TestCase):
             self.assertIn('oficio-list-chip', card_html)
             self.assertIn('Documento', card_html)
             self.assertIn('Viagem', card_html)
+
+    def test_lista_global_de_oficios_mantem_chips_com_css_compacto(self):
+        css = (Path(settings.BASE_DIR) / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
+
+        self.assertIn('.oficio-list-chip {', css)
+        self.assertIn('padding: 0.22rem 0.48rem;', css)
+        self.assertIn('font-size: 0.74rem;', css)
+        self.assertIn('border-radius: 0.82rem;', css)
+        self.assertIn('.oficio-list-term-name {', css)
+        self.assertIn('font-size: 0.77rem;', css)
 
     def test_hubs_globais_principais_respondem_200(self):
         urls = [
