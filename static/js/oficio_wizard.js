@@ -8,22 +8,6 @@
     return header ? header.closest('.oficio-wizard-page') : qs('.oficio-wizard-page');
   }
 
-  function setStickyHeaderOffset() {
-    var header = qs('[data-oficio-sticky-header]');
-    if (!header) {
-      return;
-    }
-    var page = getWizardPage() || document.documentElement;
-    var computed = window.getComputedStyle(header);
-    var marginTop = parseFloat(computed.marginTop || '0') || 0;
-    var marginBottom = parseFloat(computed.marginBottom || '0') || 0;
-    var rect = header.getBoundingClientRect();
-    var height = Math.ceil(rect.height + marginTop + marginBottom);
-    var headerTop = Math.max(Math.floor(rect.top - marginTop), 0);
-    page.style.setProperty('--oficio-sticky-header-height', height + 'px');
-    page.style.setProperty('--oficio-sticky-header-top', headerTop + 'px');
-  }
-
   function getEmptyText(element, fallback) {
     if (!element) {
       return fallback || '—';
@@ -80,38 +64,17 @@
 
   function bindStickyLayout() {
     var header = qs('[data-oficio-sticky-header]');
-    var scheduled = false;
-    function refreshLayout() {
-      if (scheduled) {
-        return;
-      }
-      scheduled = true;
-      window.requestAnimationFrame(function() {
-        scheduled = false;
-        setStickyHeaderOffset();
-      });
+    var page = getWizardPage();
+    if (!header || !page) {
+      return;
     }
-    function forceRefreshLayout() {
-      setStickyHeaderOffset();
-    }
-    forceRefreshLayout();
-    refreshLayout();
-    window.setTimeout(forceRefreshLayout, 0);
-    window.addEventListener('resize', refreshLayout, { passive: true });
-    window.addEventListener('load', forceRefreshLayout);
-    window.addEventListener('scroll', refreshLayout, { passive: true });
-    document.addEventListener('scroll', refreshLayout, { passive: true });
-    if (typeof ResizeObserver === 'function') {
-      var observer = new ResizeObserver(forceRefreshLayout);
-      if (header) {
-        observer.observe(header);
-      }
-      var page = getWizardPage();
-      if (page) {
-        observer.observe(page);
-      }
-      observer.observe(document.body);
-    }
+    // Keep the sticky anchor deterministic. Reading the header's own viewport
+    // top on scroll and feeding that back into CSS was causing the header to drift.
+    page.style.removeProperty('--oficio-sticky-header-height');
+    page.style.removeProperty('--oficio-sticky-header-top');
+    header.style.removeProperty('top');
+    header.style.removeProperty('transform');
+    header.style.removeProperty('translate');
   }
 
   function bindGlanceDrawer() {

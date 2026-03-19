@@ -5788,20 +5788,23 @@ class OficioJustificativaTest(TestCase):
         js = (Path(settings.BASE_DIR) / 'static' / 'js' / 'oficio_wizard.js').read_text(encoding='utf-8')
         css = (Path(settings.BASE_DIR) / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
 
-        self.assertIn("window.addEventListener('load', forceRefreshLayout)", js)
-        self.assertIn("window.addEventListener('scroll', refreshLayout, { passive: true })", js)
-        self.assertIn("document.addEventListener('scroll', refreshLayout, { passive: true })", js)
-        self.assertIn("observer.observe(document.body);", js)
+        self.assertIn("header.style.removeProperty('top');", js)
+        self.assertIn("page.style.removeProperty('--oficio-sticky-header-top');", js)
         self.assertIn('bindGlanceDrawer', js)
         self.assertIn('data-oficio-glance-toggle', js)
         self.assertIn('data-glance-state', js)
         self.assertIn('setGlanceValue', js)
         self.assertIn('renderGlanceTravelers', js)
+        self.assertNotIn("window.addEventListener('scroll', refreshLayout, { passive: true })", js)
+        self.assertNotIn("document.addEventListener('scroll', refreshLayout, { passive: true })", js)
+        self.assertNotIn("page.style.setProperty('--oficio-sticky-header-top'", js)
         self.assertNotIn('syncQuickReportLayout', js)
         self.assertIn('.oficio-glance-drawer {', css)
         self.assertIn('.oficio-glance-grid {', css)
         self.assertIn('.oficio-wizard-summary-trigger {', css)
         self.assertIn('.oficio-wizard-page[data-glance-state="open"] {', css)
+        self.assertIn('--oficio-wizard-sticky-top: 0.7rem;', css)
+        self.assertIn('top: var(--oficio-wizard-sticky-top);', css)
         self.assertIn('overflow-x: auto;', css)
         self.assertIn('.oficio-stepper-link.is-active {', css)
         self.assertNotIn('.oficio-quick-report', css)
@@ -5818,6 +5821,7 @@ class OficioJustificativaTest(TestCase):
             reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}),
             reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
             reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
+            reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
         ]
         for url in urls:
             response = self.client.get(url)
@@ -5837,6 +5841,9 @@ class OficioJustificativaTest(TestCase):
             self.assertNotContains(response, 'Relatório rápido')
             self.assertNotContains(response, 'oficio-quick-report')
             self.assertContains(response, 'js/oficio_wizard.js')
+            content = response.content.decode('utf-8')
+            self.assertEqual(content.count('data-oficio-sticky-header'), 1)
+            self.assertEqual(content.count('id="oficio-glance-panel"'), 1)
 
     def test_resumo_essencial_renderiza_dados_chave_sem_campos_legados(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))

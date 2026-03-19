@@ -2249,8 +2249,7 @@
 .sidebar-badge-em-breve { font-size: 0.65rem; padding: 0.2em 0.45em; background: rgba(255,255,255,0.2); }
 
 .oficio-wizard-page {
-    --oficio-sticky-header-height: 0px;
-    --oficio-sticky-header-top: 0px;
+    --oficio-wizard-sticky-top: 0.7rem;
     --oficio-wizard-accent: #0f766e;
     --oficio-wizard-accent-strong: #115e59;
     --oficio-wizard-ink: #0f172a;
@@ -2269,8 +2268,8 @@
 
 .oficio-wizard-header {
     position: sticky;
-    top: calc(var(--oficio-sticky-header-top) + 0.2rem);
-    z-index: 1050;
+    top: var(--oficio-wizard-sticky-top);
+    z-index: 140;
     margin-top: 0 !important;
 }
 
