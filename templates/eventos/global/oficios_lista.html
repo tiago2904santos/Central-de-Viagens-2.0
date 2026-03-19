@@ -5,395 +5,92 @@
 {% block page_title %}Lista de oficios{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 oficios-list-page" data-oficios-view-root data-view-mode="rich">
-    <div class="oficios-list-hero">
-        <div>
-            <p class="oficios-list-hero__eyebrow">Central documental</p>
-            <h1 class="mb-1">Lista de oficios</h1>
-            <p class="text-muted mb-0">Visual refinado com dois modos de leitura, downloads diretos e cards mais compactos para acompanhar o oficio sem telas intermediarias.</p>
-        </div>
-        <div class="oficios-list-hero__actions">
-            <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de oficios">
-                <button
-                    type="button"
-                    class="oficios-view-toggle__button is-active"
-                    data-oficios-view-toggle="rich"
-                    aria-pressed="true"
-                >
-                    Visual rico
-                </button>
-                <button
-                    type="button"
-                    class="oficios-view-toggle__button"
-                    data-oficios-view-toggle="basic"
-                    aria-pressed="false"
-                >
-                    Visual basico
-                </button>
+<div class="container-fluid py-4 oficios-list-page">
+    <div class="oficios-list-shell">
+        <header class="oficios-list-header">
+            <div>
+                <h1 class="mb-1">Oficios salvos</h1>
+                <p class="oficios-list-header__subtitle mb-0">Historico de documentos gerados.</p>
             </div>
-            <a href="{% url 'eventos:oficio-novo' %}" class="btn btn-primary btn-lg oficios-list-hero__primary">
-                <i class="bi bi-plus-lg me-1"></i>
-                Novo oficio
-            </a>
-        </div>
-    </div>
+        </header>
 
-    <div class="card oficios-filter-card">
-        <div class="card-body">
-            <form method="get" class="oficios-filter-form">
-                <div class="oficios-filter-topbar">
-                    <div class="oficios-filter-search">
-                        <label for="oficios-search" class="form-label small text-muted">Busca ampla</label>
-                        <input
-                            id="oficios-search"
-                            type="text"
-                            name="q"
-                            class="form-control"
-                            value="{{ filters.q }}"
-                            placeholder="Numero, protocolo, evento, viajante, destino, veiculo ou motorista"
-                        >
-                    </div>
-
-                    <div class="oficios-sort-panel">
-                        <div class="oficios-sort-panel__field">
-                            <label for="oficios-order-by" class="form-label small text-muted">Ordenar por</label>
-                            <select id="oficios-order-by" name="order_by" class="form-select">
-                                {% for value, label in order_by_options %}
-                                <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="oficios-sort-panel__field">
-                            <label for="oficios-order-dir" class="form-label small text-muted">Direcao</label>
-                            <select id="oficios-order-dir" name="order_dir" class="form-select">
-                                {% for value, label in order_dir_options %}
-                                <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="oficios-filter-groups">
-                    <div class="oficios-filter-group">
-                        <span class="oficios-filter-group__label">Status do oficio</span>
-                        <div class="oficios-filter-checks">
-                            {% for value, label in status_filter_options %}
-                            <label class="oficios-filter-check">
-                                <input type="checkbox" name="status" value="{{ value }}" {% if value in filters.status %}checked{% endif %}>
-                                <span>{{ label }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="oficios-filter-group">
-                        <span class="oficios-filter-group__label">Contexto</span>
-                        <div class="oficios-filter-checks">
-                            {% for value, label in context_filter_options %}
-                            <label class="oficios-filter-check">
-                                <input type="checkbox" name="contexto" value="{{ value }}" {% if value in filters.contexto %}checked{% endif %}>
-                                <span>{{ label }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="oficios-filter-group">
-                        <span class="oficios-filter-group__label">Status da viagem</span>
-                        <div class="oficios-filter-checks">
-                            {% for value, label in viagem_filter_options %}
-                            <label class="oficios-filter-check">
-                                <input type="checkbox" name="viagem_status" value="{{ value }}" {% if value in filters.viagem_status %}checked{% endif %}>
-                                <span>{{ label }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="oficios-filter-group">
-                        <span class="oficios-filter-group__label">Justificativa</span>
-                        <div class="oficios-filter-checks">
-                            {% for value, label in presence_filter_options %}
-                            <label class="oficios-filter-check">
-                                <input type="checkbox" name="justificativa" value="{{ value }}" {% if value in filters.justificativa %}checked{% endif %}>
-                                <span>{{ label }} justificativa</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="oficios-filter-group">
-                        <span class="oficios-filter-group__label">Termo</span>
-                        <div class="oficios-filter-checks">
-                            {% for value, label in presence_filter_options %}
-                            <label class="oficios-filter-check">
-                                <input type="checkbox" name="termo" value="{{ value }}" {% if value in filters.termo %}checked{% endif %}>
-                                <span>{{ label }} termo</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="oficios-filter-footer">
-                    <div class="oficios-filter-result">
-                        {{ page_obj.paginator.count }} oficio(s) encontrado(s)
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button type="submit" class="btn btn-primary">Filtrar</button>
-                        <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary">Limpar</a>
-                    </div>
-                </div>
+        <section class="oficios-quick-filter" aria-label="Filtro rapido">
+            <div class="oficios-quick-filter__label">Filtro rapido</div>
+            <form method="get" class="oficios-quick-filter__form">
+                <input
+                    id="oficios-search"
+                    type="text"
+                    name="q"
+                    class="form-control oficios-quick-filter__input"
+                    value="{{ filters.q }}"
+                    placeholder="Buscar por oficio, protocolo, destino ou servidor"
+                >
+                <button type="submit" class="btn btn-primary oficios-quick-filter__button">Filtrar</button>
+                <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary oficios-quick-filter__button">Limpar</a>
             </form>
-        </div>
-    </div>
+            <div class="oficios-quick-filter__result">{{ page_obj.paginator.count }} oficio(s) encontrado(s)</div>
+        </section>
 
-    <div class="oficio-basic-list" aria-label="Lista basica de oficios">
-        {% if object_list %}
-        <div class="oficio-basic-list__head" role="row">
-            <span>Oficio</span>
-            <span>Protocolo</span>
-            <span>Destino</span>
-            <span>Data</span>
-            <span>Viajantes</span>
-            <span>Acoes</span>
-        </div>
-        <div class="oficio-basic-list__body">
-            {% for oficio in object_list %}
-            <div class="oficio-basic-row" id="oficio-basic-row-{{ oficio.pk }}">
-                {% for field in oficio.basic_fields %}
-                <div class="oficio-basic-row__cell {{ field.css_class }}" data-label="{{ field.label }}">
-                    <span class="oficio-basic-row__label">{{ field.label }}</span>
-                    <span class="oficio-basic-row__value">{{ field.value }}</span>
-                </div>
-                {% endfor %}
-                <div class="oficio-basic-row__actions" data-label="Acoes">
-                    <span class="oficio-basic-row__label">Acoes</span>
-                    <div class="oficio-basic-row__actions-list">
-                        <a href="{{ oficio.summary_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
-                            <i class="bi bi-box-arrow-up-right"></i>
-                            <span>Abrir</span>
-                        </a>
-                        <a href="{{ oficio.wizard_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                            <i class="bi bi-pencil-square"></i>
-                            <span>Editar</span>
-                        </a>
-                        {% for action in oficio.downloads %}
-                        {% if action.available %}
-                        <a
-                            href="{{ action.url }}"
-                            class="btn btn-sm btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}"
-                            data-direct-download="true"
-                        >
-                            <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
-                            <span>{{ action.label }}</span>
-                        </a>
-                        {% endif %}
-                        {% endfor %}
-                        <a href="{{ oficio.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger">
-                            <i class="bi bi-trash3"></i>
-                            <span>Excluir</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="oficio-basic-list__empty">Nenhum oficio encontrado com os filtros atuais.</div>
-        {% endif %}
-    </div>
-
-    <div class="oficio-list-grid">
-        {% for oficio in object_list %}
-        <article class="oficio-list-card {{ oficio.theme.css_class }}" id="oficio-card-{{ oficio.pk }}">
-            <div class="oficio-list-rich-layout">
-                <div class="oficio-list-card__header">
-                    <div class="oficio-list-chip-list oficio-list-chip-list--meta">
-                        {% for chip in oficio.header_chips %}
-                        <span class="oficio-list-chip oficio-list-chip--meta {{ chip.css_class }}">
-                            <span class="oficio-list-chip__label">{{ chip.label }}</span>
-                            <span class="oficio-list-chip__value">{{ chip.value }}</span>
-                        </span>
-                        {% endfor %}
-                    </div>
-                    {% if oficio.corner_badges %}
-                    <div class="oficio-list-card__header-status">
-                        {% for badge in oficio.corner_badges %}
-                        <span class="oficio-list-badge {{ badge.css_class }}">
-                            <span>{{ badge.value }}</span>
-                        </span>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-
-                <div class="oficio-list-core-grid">
-                    <section class="oficio-list-core-card oficio-list-core-card--travelers">
-                        <div class="oficio-list-core-card__header">
-                            <h3 class="oficio-list-core-card__title">Viajantes</h3>
-                            <span class="oficio-list-core-card__meta">{{ oficio.viajantes_block.count_label }}</span>
-                        </div>
-                        <div class="oficio-list-traveler-list">
-                            {% for traveler in oficio.viajantes_block.items %}
-                            <div class="oficio-list-traveler-pill {{ traveler.css_class }}">
-                                <span class="oficio-list-traveler-pill__initials">{{ traveler.initials }}</span>
-                                <span class="oficio-list-traveler-pill__name">{{ traveler.name }}</span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </section>
-
-                    <section class="oficio-list-core-card oficio-list-core-card--transport">
-                        <div class="oficio-list-core-card__header">
-                            <h3 class="oficio-list-core-card__title">{{ oficio.transport_block.title }}</h3>
-                        </div>
-                        <div class="oficio-list-transport-panel">
-                            <div class="oficio-list-transport-panel__hero">
-                                <span class="oficio-list-transport-panel__kicker">Veiculo</span>
-                                <div class="oficio-list-transport-panel__headline">{{ oficio.transport_block.vehicle_primary }}</div>
-                                {% if oficio.transport_block.vehicle_secondary %}
-                                <p class="oficio-list-transport-panel__support">{{ oficio.transport_block.vehicle_secondary }}</p>
-                                {% endif %}
-                            </div>
-                            <div class="oficio-list-transport-panel__divider"></div>
-                            <div class="oficio-list-transport-panel__detail">
-                                <span class="oficio-list-transport-panel__kicker">Motorista</span>
-                                <div class="oficio-list-transport-panel__detail-value">{{ oficio.transport_block.driver_primary }}</div>
-                                {% if oficio.transport_block.driver_secondary %}
-                                <p class="oficio-list-transport-panel__support">{{ oficio.transport_block.driver_secondary }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                {% if oficio.justificativa or oficio.termos %}
-                <div class="oficio-list-card__secondary">
-                    {% if oficio.justificativa %}
-                    <section class="oficio-list-subcard oficio-list-subcard--justificativa">
-                        <div class="oficio-list-subcard__header">
-                            <div>
-                                <h3 class="oficio-list-subcard__title">Justificativa</h3>
-                                {% if oficio.justificativa.created_at_display != '-' %}
-                                <p class="oficio-list-subcard__subtitle">Criada em {{ oficio.justificativa.created_at_display }}</p>
-                                {% endif %}
-                            </div>
-                            <span class="oficio-list-badge {{ oficio.justificativa.status_css_class }}">{{ oficio.justificativa.status_label }}</span>
-                        </div>
-
-                        <div class="oficio-list-subcard__body">
-                            <p class="oficio-list-subcard__text">{{ oficio.justificativa.texto_resumido }}</p>
-                        </div>
-
-                        <div class="oficio-list-subcard__actions">
-                            <a href="{{ oficio.justificativa.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
-                                <i class="bi bi-box-arrow-up-right"></i>
-                                <span>Abrir</span>
-                            </a>
-                            <a href="{{ oficio.justificativa.edit_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                                <i class="bi bi-pencil-square"></i>
-                                <span>Editar</span>
-                            </a>
-                            {% for action in oficio.justificativa.downloads %}
-                            {% if action.available %}
-                            <a
-                                href="{{ action.url }}"
-                                class="btn btn-sm btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}"
-                                data-direct-download="true"
-                            >
-                                <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
-                                <span>{{ action.label }}</span>
-                            </a>
-                            {% endif %}
-                            {% endfor %}
-                        </div>
-                    </section>
-                    {% endif %}
-
-                    {% if oficio.termos %}
-                    <section class="oficio-list-subcard">
-                        <div class="oficio-list-subcard__header">
-                            <div>
-                                <h3 class="oficio-list-subcard__title">Termos de autorizacao</h3>
-                                <p class="oficio-list-subcard__subtitle">{{ oficio.termos.count_label }}{% if oficio.termos.summary %} - {{ oficio.termos.summary }}{% endif %}</p>
-                            </div>
-                        </div>
-
-                        <div class="oficio-list-subcard__body">
-                            <div class="oficio-list-term-list">
-                                {% for termo in oficio.termos.items %}
-                                <div class="oficio-list-term-row">
-                                    <span class="oficio-list-term-row__name">{{ termo.traveler_name }}</span>
-                                    <div class="oficio-list-term-row__actions">
-                                        {% if termo.open_url %}
-                                        <a href="{{ termo.open_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
-                                            <i class="bi bi-box-arrow-up-right"></i>
-                                            <span>{% if termo.is_saved %}Abrir{% else %}Resumo{% endif %}</span>
-                                        </a>
-                                        {% endif %}
-                                        {% if termo.download_docx_url %}
-                                        <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" data-direct-download="true">
-                                            <i class="bi bi-filetype-docx"></i>
-                                            <span>DOCX</span>
-                                        </a>
-                                        {% endif %}
-                                        {% if termo.download_pdf_url %}
-                                        <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf" data-direct-download="true">
-                                            <i class="bi bi-filetype-pdf"></i>
-                                            <span>PDF</span>
-                                        </a>
-                                        {% endif %}
-                                    </div>
+        <section class="oficios-table-panel" aria-label="Tabela de oficios salvos">
+            {% if object_list %}
+            <div class="table-responsive">
+                <table class="table oficios-table mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">OFICIO</th>
+                            <th scope="col">DATA</th>
+                            <th scope="col">N&deg; PROTOCOLO</th>
+                            <th scope="col">DESTINO</th>
+                            <th scope="col">SERVIDORES</th>
+                            <th scope="col">VEICULO</th>
+                            <th scope="col">STATUS</th>
+                            <th scope="col" class="text-end">ACOES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for oficio in object_list %}
+                        <tr id="oficio-row-{{ oficio.pk }}">
+                            <td data-label="OFICIO">
+                                <a href="{{ oficio.wizard_url }}" class="oficios-table__link">{{ oficio.numero_display }}</a>
+                            </td>
+                            <td data-label="DATA">{{ oficio.data_display }}</td>
+                            <td data-label="N° PROTOCOLO">{{ oficio.protocolo_display }}</td>
+                            <td data-label="DESTINO">{{ oficio.destino_display }}</td>
+                            <td data-label="SERVIDORES">{{ oficio.servidores_display }}</td>
+                            <td data-label="VEICULO">{{ oficio.veiculo_display }}</td>
+                            <td data-label="STATUS">
+                                <span class="oficio-list-badge {{ oficio.status_badge.css_class }}">{{ oficio.status_badge.label }}</span>
+                            </td>
+                            <td data-label="ACOES" class="text-end">
+                                <div class="oficios-table__actions">
+                                    {% for action in oficio.table_actions %}
+                                    <a
+                                        href="{{ action.url }}"
+                                        class="btn btn-sm btn-doc-action {{ action.css_class }}"
+                                        {% if action.download %}data-direct-download="true"{% endif %}
+                                    >
+                                        <i class="bi {{ action.icon }}"></i>
+                                        <span>{{ action.label }}</span>
+                                    </a>
+                                    {% endfor %}
                                 </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </section>
-                    {% endif %}
-                </div>
-                {% endif %}
-
-                <div class="oficio-list-card__footer">
-                    <div class="oficio-list-card__footer-actions">
-                        <a href="{{ oficio.wizard_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
-                            <i class="bi bi-magic"></i>
-                            <span>Abrir wizard</span>
-                        </a>
-                        {% for action in oficio.downloads %}
-                        {% if action.available %}
-                        <a
-                            href="{{ action.url }}"
-                            class="btn btn-sm btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}"
-                            data-direct-download="true"
-                        >
-                            <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
-                            <span>{{ action.label }}</span>
-                        </a>
-                        {% endif %}
+                            </td>
+                        </tr>
                         {% endfor %}
-                        <a href="{{ oficio.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger">
-                            <i class="bi bi-trash3"></i>
-                            <span>Excluir</span>
-                        </a>
-                    </div>
-                </div>
+                    </tbody>
+                </table>
             </div>
-        </article>
-        {% empty %}
-        <div class="card">
-            <div class="card-body text-center text-muted py-5">
-                Nenhum oficio encontrado com os filtros atuais.
-            </div>
-        </div>
-        {% endfor %}
+            {% else %}
+            <div class="oficios-table-panel__empty">Nenhum oficio encontrado com os filtros atuais.</div>
+            {% endif %}
+        </section>
+
+        {% include 'includes/pagination.html' %}
     </div>
 
-    {% include 'includes/pagination.html' %}
+    <a href="{% url 'eventos:oficio-novo' %}" class="oficios-fab">
+        <i class="bi bi-plus-lg"></i>
+        <span>+ Novo oficio</span>
+    </a>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'js/oficios_list.js' %}"></script>
 {% endblock %}

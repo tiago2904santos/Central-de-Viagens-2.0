@@ -89,6 +89,7 @@ TERMO_STATUS_CARD_META = {
 }
 
 EMPTY_DISPLAY = '-'
+EMPTY_DISPLAY_ALIASES = {'-', '—', 'â€”'}
 OFICIO_CONTEXT_CHOICES = [
     ('EVENTO', 'Com evento'),
     ('AVULSO', 'Sem evento'),
@@ -157,6 +158,10 @@ OFICIO_CARD_THEME_META = {
 
 def _clean(value):
     return str(value or '').strip()
+
+
+def _is_empty_display_value(value):
+    return _clean(value) in EMPTY_DISPLAY_ALIASES
 
 
 def _parse_int_list(values):
@@ -617,7 +622,7 @@ def _oficio_list_chip(label, value, css_class=''):
 
 def _oficio_list_display_or_default(value, fallback):
     text = _clean(value)
-    if not text or text == EMPTY_DISPLAY:
+    if not text or _is_empty_display_value(text):
         return fallback
     return text
 
@@ -659,6 +664,68 @@ def _oficio_list_basic_fields(oficio, destinos_display, periodo_display):
             'css_class': 'is-viajantes',
         },
     ]
+
+
+def _oficio_list_compact_date_display(oficio):
+    inicio, _fim = _oficio_list_period_bounds(oficio)
+    data_base = inicio or getattr(oficio, 'data_criacao', None)
+    if not data_base:
+        return 'A definir'
+    return f'{data_base:%d/%m/%Y}'
+
+
+def _oficio_list_download_action(actions, label):
+    for action in actions:
+        if action['label'] == label and action['available']:
+            return action
+    return None
+
+
+def _oficio_list_table_actions(oficio, oficio_downloads):
+    actions = [
+        {
+            'label': 'Editar',
+            'url': reverse('eventos:oficio-editar', kwargs={'pk': oficio.pk}),
+            'css_class': 'btn-doc-action--secondary',
+            'icon': 'bi-pencil-square',
+            'download': False,
+        }
+    ]
+
+    docx_action = _oficio_list_download_action(oficio_downloads['actions'], 'DOCX')
+    if docx_action:
+        actions.append(
+            {
+                'label': 'W',
+                'url': docx_action['url'],
+                'css_class': 'btn-doc-action--secondary',
+                'icon': 'bi-filetype-docx',
+                'download': True,
+            }
+        )
+
+    pdf_action = _oficio_list_download_action(oficio_downloads['actions'], 'PDF')
+    if pdf_action:
+        actions.append(
+            {
+                'label': 'PDF',
+                'url': pdf_action['url'],
+                'css_class': 'btn-doc-action--pdf',
+                'icon': 'bi-filetype-pdf',
+                'download': True,
+            }
+        )
+
+    actions.append(
+        {
+            'label': 'Excluir',
+            'url': reverse('eventos:oficio-excluir', kwargs={'pk': oficio.pk}),
+            'css_class': 'btn-doc-action--danger',
+            'icon': 'bi-trash3',
+            'download': False,
+        }
+    )
+    return actions
 
 
 def _oficio_list_corner_badges(oficio, viagem_status):
@@ -722,8 +789,10 @@ def _oficio_list_viajantes_block(oficio, limit=3):
 def _oficio_list_vehicle_display(oficio):
     placa = _clean(getattr(oficio, 'placa_formatada', ''))
     modelo = _clean(oficio.modelo)
-    if placa == EMPTY_DISPLAY:
+    if _is_empty_display_value(placa):
         placa = ''
+    if _is_empty_display_value(modelo):
+        modelo = ''
     parts = [item for item in [placa, modelo] if item]
     return ' - '.join(parts) if parts else 'Nao informado'
 
@@ -963,40 +1032,25 @@ def _oficio_list_term_block(oficio):
 
 
 def _oficio_list_card(oficio):
-    justificativa_info = _build_oficio_justificativa_info(oficio)
     viagem_status = _oficio_list_trip_status(oficio)
-    theme = _oficio_list_theme(oficio, viagem_status)
     oficio_downloads = _build_oficio_document_actions(oficio, DocumentoOficioTipo.OFICIO)
-    justificativa = _oficio_list_justificativa_block(oficio, justificativa_info)
-    termos = _oficio_list_term_block(oficio)
     destinos_display = _oficio_list_destinos_display(oficio)
-    periodo_display = _oficio_list_period_display(oficio)
     data_evento_inicio, data_evento_fim = _oficio_list_period_bounds(oficio)
     context_label = 'Com evento' if oficio.evento_id else 'Avulso'
     vehicle_display = _oficio_list_vehicle_display(oficio)
     driver_display = _oficio_list_driver_display(oficio)
+    oficio_status = _oficio_process_status_meta(oficio)
     return {
         'pk': oficio.pk,
-        'numero_formatado': oficio.numero_formatado,
-        'protocolo_formatado': oficio.protocolo_formatado or EMPTY_DISPLAY,
-        'evento_titulo': _clean(getattr(getattr(oficio, 'evento', None), 'titulo', '')),
-        'evento_url': reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
-        'destinos_display': destinos_display,
-        'periodo_display': periodo_display,
-        'theme': theme,
-        'basic_fields': _oficio_list_basic_fields(oficio, destinos_display, periodo_display),
-        'header_chips': [chip for chip in _oficio_list_header_chips(oficio, destinos_display, periodo_display) if chip],
-        'corner_badges': _oficio_list_corner_badges(oficio, viagem_status),
-        'viajantes_block': _oficio_list_viajantes_block(oficio),
-        'transport_block': _oficio_list_transport_block(oficio),
-        'oficio_status': _oficio_process_status_meta(oficio),
-        'viagem_status': viagem_status,
-        'justificativa': justificativa,
-        'termos': termos,
-        'downloads': oficio_downloads['actions'],
-        'summary_url': reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+        'numero_display': _oficio_list_display_or_default(oficio.numero_formatado, 'A definir'),
+        'data_display': _oficio_list_compact_date_display(oficio),
+        'protocolo_display': _oficio_list_display_or_default(oficio.protocolo_formatado, 'Nao informado'),
+        'destino_display': _oficio_list_display_or_default(destinos_display, 'Nao definido'),
+        'servidores_display': _oficio_list_basic_viajantes_summary(oficio),
+        'veiculo_display': vehicle_display,
+        'status_badge': oficio_status,
+        'table_actions': _oficio_list_table_actions(oficio, oficio_downloads),
         'wizard_url': reverse('eventos:oficio-editar', kwargs={'pk': oficio.pk}),
-        'excluir_url': reverse('eventos:oficio-excluir', kwargs={'pk': oficio.pk}),
         'search_blob': ' '.join(
             value
             for value in [
@@ -1017,8 +1071,6 @@ def _oficio_list_card(oficio):
             'status': oficio.status,
             'contexto': 'EVENTO' if oficio.evento_id else 'AVULSO',
             'viagem_status': viagem_status['key'],
-            'has_justificativa': justificativa_info['filled'],
-            'has_termo': bool(termos),
         },
         'sort_meta': {
             'numero': (
@@ -1095,7 +1147,6 @@ def oficio_global_lista(request):
             'roteiro_evento',
             'veiculo',
             'motorista_viajante',
-            'justificativa',
         )
         .prefetch_related(
             Prefetch(
@@ -1108,14 +1159,6 @@ def oficio_global_lista(request):
                 ),
             ),
             'viajantes',
-            Prefetch(
-                'termos_autorizacao',
-                queryset=TermoAutorizacao.objects.select_related('viajante', 'veiculo').order_by('created_at', 'pk'),
-            ),
-            Prefetch(
-                'termos_autorizacao_relacionados',
-                queryset=TermoAutorizacao.objects.select_related('viajante', 'veiculo').order_by('created_at', 'pk'),
-            ),
         )
         .all()
     )
@@ -1141,10 +1184,6 @@ def oficio_global_lista(request):
             dict(OFICIO_VIAGEM_STATUS_CHOICES).keys(),
         ):
             continue
-        if not _matches_oficio_list_presence(filters['justificativa'], card['filter_meta']['has_justificativa']):
-            continue
-        if not _matches_oficio_list_presence(filters['termo'], card['filter_meta']['has_termo']):
-            continue
         cards.append(card)
 
     cards = _sort_oficio_list_cards(cards, filters['order_by'], filters['order_dir'])
@@ -1157,12 +1196,6 @@ def oficio_global_lista(request):
             'page_obj': page_obj,
             'pagination_query': _query_without_page(request),
             'filters': filters,
-            'status_filter_options': Oficio.STATUS_CHOICES,
-            'context_filter_options': OFICIO_CONTEXT_CHOICES,
-            'viagem_filter_options': OFICIO_VIAGEM_STATUS_CHOICES,
-            'presence_filter_options': OFICIO_PRESENCE_CHOICES,
-            'order_by_options': OFICIO_ORDER_BY_CHOICES,
-            'order_dir_options': OFICIO_ORDER_DIR_CHOICES,
             'hide_page_header': True,
         },
     )
