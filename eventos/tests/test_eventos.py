@@ -4423,7 +4423,7 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertContains(response, f'/{tz.localdate().year}')
         self.assertContains(response, '12.345.678-9')
 
-    def test_step2_reabre_resumo_rapido_com_step1_e_transporte(self):
+    def test_step2_reabre_resumo_essencial_com_step1_e_transporte(self):
         oficio = self._criar_oficio(ano=2026)
         self.client.post(
             reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
@@ -4575,14 +4575,14 @@ class OficioStep1AcceptanceTest(TestCase):
             ativo=True,
         )
         url = reverse('eventos:modelos-motivo-texto-api', kwargs={'pk': modelo.pk})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertTrue(payload.get('ok'))
+            self.assertContains(response, f'id="summary-oficio"')
+            self.assertContains(response, oficio.numero_formatado)
+            self.assertContains(response, 'id="summary-protocolo"')
+            self.assertContains(response, '98.765.432-1')
+            self.assertContains(response, 'id="summary-veiculo"')
+            self.assertContains(response, 'ABC-1234 • VIATURA TESTE')
+            self.assertContains(response, 'id="summary-viajantes-meta"')
         self.assertEqual(payload.get('texto'), 'Texto API')
-
-    def test_excluir_oficio_reutiliza_lacuna_no_mesmo_ano(self):
-        oficios = [self._criar_oficio(ano=2026) for _ in range(5)]
         oficios[4].delete()
         proximo = self._criar_oficio(ano=2026)
         self.assertEqual(proximo.numero_formatado, '05/2026')
@@ -4590,8 +4590,9 @@ class OficioStep1AcceptanceTest(TestCase):
     def test_oficio_pode_ser_excluido_com_redirecionamento_coerente(self):
         oficio = self._criar_oficio(ano=2026)
         url = reverse('eventos:oficio-excluir', kwargs={'pk': oficio.pk})
+            self.assertNotContains(response, 'Relatório rápido')
         response = self.client.post(url)
-        self.assertRedirects(response, reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
+        def test_step3_resumo_essencial_acumula_steps_1_2_e_3(self):
         self.assertFalse(Oficio.objects.filter(pk=oficio.pk).exists())
 
     def test_step3_get_seed_do_roteiro_do_evento(self):
@@ -5066,14 +5067,16 @@ class OficioStep1AcceptanceTest(TestCase):
         response = self.client.get(reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-oficio-glance')
         self.assertContains(response, '12.345.678-9')
-        self.assertContains(response, 'Data de criação')
-        self.assertContains(response, 'Situação / origem')
-        self.assertContains(response, 'ABC-1234')
-        self.assertContains(response, 'Carona / ofício')
-        self.assertContains(response, 'Destino principal')
+        self.assertContains(response, 'Número do ofício')
+        self.assertContains(response, 'Destino')
+        self.assertContains(response, 'Data')
+        self.assertContains(response, 'Veículo')
+        self.assertContains(response, 'ABC-1234 • VIATURA TESTE')
         self.assertContains(response, cidade_destino.nome)
-        self.assertContains(response, 'Valor por extenso')
+        self.assertContains(response, '01/06/2026 08:30 até 02/06/2026 14:00')
+        self.assertNotContains(response, 'Relatório rápido')
 
     def test_step3_cabecalho_fixo_remove_texto_legado_e_mostra_nova_ui(self):
         oficio = self._criar_oficio(ano=2026)
