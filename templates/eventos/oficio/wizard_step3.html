@@ -430,46 +430,26 @@
     element.textContent = text || '—';
   }
 
-  function ensureJustificativaStep(url) {
-    if (!url) {
-      return;
-    }
+  function syncJustificativaStep(url, isRequired) {
     const stepper = document.querySelector('.oficio-stepper');
     if (!stepper) {
       return;
     }
-    const existing = stepper.querySelector('[data-step-key="justificativa"]');
-    if (existing) {
-      existing.setAttribute('href', url);
+    const step = stepper.querySelector('[data-step-key="justificativa"]');
+    if (!step) {
       return;
     }
-    const link = document.createElement('a');
-    link.href = url;
-    link.className = 'oficio-stepper-link';
-    link.setAttribute('data-step-key', 'justificativa');
-    link.setAttribute('data-autosave-link', '1');
-    link.setAttribute('aria-current', 'false');
-    const badge = document.createElement('span');
-    badge.className = 'oficio-stepper-badge oficio-stepper-badge--optional';
-    badge.textContent = 'J';
-    const copy = document.createElement('span');
-    copy.className = 'oficio-stepper-copy';
-    const state = document.createElement('span');
-    state.className = 'oficio-stepper-state';
-    state.textContent = 'Complementar';
-    const label = document.createElement('span');
-    label.className = 'oficio-stepper-label';
-    label.textContent = 'Justificativa';
-    copy.appendChild(state);
-    copy.appendChild(label);
-    link.appendChild(badge);
-    link.appendChild(copy);
-
-    const summary = stepper.querySelector('[data-step-key="summary"]');
-    if (summary) {
-      stepper.insertBefore(link, summary);
-    } else {
-      stepper.appendChild(link);
+    if (url) {
+      step.setAttribute('href', url);
+    }
+    if (step.classList.contains('is-active') || step.classList.contains('is-completed')) {
+      return;
+    }
+    step.classList.remove('is-optional', 'is-pending');
+    step.classList.add(isRequired ? 'is-pending' : 'is-optional');
+    const state = step.querySelector('.oficio-stepper-state');
+    if (state) {
+      state.textContent = isRequired ? 'Pendente' : 'Opcional';
     }
   }
 
@@ -1109,9 +1089,11 @@
         throw new Error((data.errors || []).join('\n') || data.error || 'Erro ao calcular as diárias.');
       }
       applyDiarias(data);
-      if (data.justificativa_required && data.justificativa_url) {
-        ensureJustificativaStep(data.justificativa_url);
-        $('diarias-status').textContent = 'Cálculo atualizado. Justificativa habilitada no menu.';
+      if (Object.prototype.hasOwnProperty.call(data, 'justificativa_required')) {
+        syncJustificativaStep(data.justificativa_url, !!data.justificativa_required);
+        $('diarias-status').textContent = data.justificativa_required
+          ? 'Cálculo atualizado. Justificativa habilitada no menu.'
+          : 'Cálculo atualizado.';
       }
       scheduleAutosave();
     } catch (error) {

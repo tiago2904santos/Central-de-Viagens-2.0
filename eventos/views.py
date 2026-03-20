@@ -1968,44 +1968,37 @@ def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None):
             'label': 'Roteiro e diárias',
             'url': reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
         },
+        {
+            'key': 'justificativa',
+            'number': 4,
+            'label': 'Justificativa',
+            'url': reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
+        },
+        {
+            'key': 'summary',
+            'number': 5,
+            'label': 'Resumo e termos',
+            'url': resumo_url,
+        },
     ]
-    include_justificativa = bool(justificativa_info.get('required')) or current_key == 'justificativa'
-    if include_justificativa:
-        steps.append(
-            {
-                'key': 'justificativa',
-                'number': 4,
-                'label': 'Justificativa',
-                'url': reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
-            }
-        )
-        steps.append(
-            {
-                'key': 'summary',
-                'number': 5,
-                'label': 'Resumo e termos',
-                'url': resumo_url,
-            }
-        )
-    else:
-        steps.append(
-            {
-                'key': 'summary',
-                'number': 4,
-                'label': 'Resumo e termos',
-                'url': resumo_url,
-            }
-        )
     current_step = next((item for item in steps if item['key'] == current_key), None)
     current_number = current_step['number'] if current_step else 0
     for item in steps:
         item['active'] = item['key'] == current_key
         if item['active']:
             item['state'] = 'active'
+        elif item['key'] == 'justificativa' and not justificativa_required and not justificativa_text:
+            item['state'] = 'optional'
         elif item['number'] < current_number:
             item['state'] = 'completed'
         else:
             item['state'] = 'pending'
+        item['state_label'] = {
+            'active': 'Etapa atual',
+            'completed': 'Concluído',
+            'optional': 'Opcional',
+            'pending': 'Pendente',
+        }.get(item['state'], 'Pendente')
     return steps
 
 
@@ -2051,6 +2044,8 @@ def _apply_oficio_wizard_context(context, oficio, current_key, page_title, justi
         {
             'hide_page_header': True,
             'wizard_page_title': page_title,
+            'wizard_header_title': page_title,
+            'wizard_header_subtitle': 'Fluxo guiado com resumo essencial integrado ao topo e sem atalhos soltos no cabeçalho.',
             'wizard_steps': _build_oficio_wizard_steps(
                 oficio,
                 current_key,
