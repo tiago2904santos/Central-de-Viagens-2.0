@@ -549,6 +549,13 @@ def _oficio_list_viajante_names(oficio):
     )
 
 
+def _oficio_list_first_name(value):
+    parts = [part for part in _clean(value).split() if part]
+    if not parts:
+        return ''
+    return parts[0]
+
+
 def _oficio_list_summarize_labels(labels, limit=2):
     items = _oficio_list_ordered_unique_strings(labels)
     if not items:
@@ -626,12 +633,14 @@ def _oficio_list_viajantes_display(oficio):
 
 
 def _oficio_list_basic_viajantes_summary(oficio):
-    viajantes = _oficio_list_viajante_names(oficio)
+    viajantes = [
+        primeiro_nome
+        for primeiro_nome in (_oficio_list_first_name(nome) for nome in _oficio_list_viajante_names(oficio))
+        if primeiro_nome
+    ]
     if not viajantes:
-        return 'Nenhum viajante'
-    primeiro = viajantes[0]
-    restante = len(viajantes) - 1
-    return primeiro if restante <= 0 else f'{primeiro} +{restante}'
+        return 'Nenhum servidor'
+    return ', '.join(viajantes)
 
 
 def _oficio_list_chip(label, value, css_class=''):
@@ -710,26 +719,29 @@ def _oficio_list_download_action(actions, label):
 def _oficio_list_table_actions(oficio, oficio_downloads):
     actions = []
 
-    if oficio.evento_id:
-        actions.append(
-            {
-                'label': 'Abrir',
-                'url': reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}),
-                'css_class': 'btn-doc-action--primary',
-                'icon': 'bi-box-arrow-up-right',
-                'download': False,
-            }
-        )
+    actions.append(
+        {
+            'label': 'Abrir',
+            'aria_label': 'Abrir cadastro do oficio',
+            'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            'css_class': 'btn-doc-action--primary',
+            'icon': 'bi-box-arrow-up-right',
+            'download': False,
+            'icon_only': False,
+        }
+    )
 
     docx_action = _oficio_list_download_action(oficio_downloads['actions'], 'DOCX')
     if docx_action:
         actions.append(
             {
                 'label': 'DOCX',
+                'aria_label': 'Baixar DOCX do oficio',
                 'url': docx_action['url'],
                 'css_class': 'btn-doc-action--secondary',
                 'icon': 'bi-filetype-docx',
                 'download': True,
+                'icon_only': True,
             }
         )
 
@@ -738,20 +750,24 @@ def _oficio_list_table_actions(oficio, oficio_downloads):
         actions.append(
             {
                 'label': 'PDF',
+                'aria_label': 'Baixar PDF do oficio',
                 'url': pdf_action['url'],
                 'css_class': 'btn-doc-action--pdf',
                 'icon': 'bi-filetype-pdf',
                 'download': True,
+                'icon_only': True,
             }
         )
 
     actions.append(
         {
             'label': 'Excluir',
+            'aria_label': 'Excluir oficio',
             'url': reverse('eventos:oficio-excluir', kwargs={'pk': oficio.pk}),
             'css_class': 'btn-doc-action--danger',
             'icon': 'bi-trash3',
             'download': False,
+            'icon_only': True,
         }
     )
     return actions
@@ -759,18 +775,17 @@ def _oficio_list_table_actions(oficio, oficio_downloads):
 
 def _oficio_list_footer_actions(oficio, oficio_downloads):
     actions = []
-    if oficio.evento_id:
-        actions.append(
-            {
-                'label': 'Abrir',
-                'aria_label': 'Abrir pacote do evento',
-                'url': reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}),
-                'css_class': 'btn-doc-action--primary',
-                'icon': 'bi-box-arrow-up-right',
-                'download': False,
-                'icon_only': False,
-            }
-        )
+    actions.append(
+        {
+            'label': 'Abrir',
+            'aria_label': 'Abrir cadastro do oficio',
+            'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            'css_class': 'btn-doc-action--primary',
+            'icon': 'bi-box-arrow-up-right',
+            'download': False,
+            'icon_only': False,
+        }
+    )
 
     docx_action = _oficio_list_download_action(oficio_downloads['actions'], 'DOCX')
     if docx_action:
@@ -1056,11 +1071,7 @@ def _oficio_list_justificativa_block(oficio, justificativa_info):
         'status_css_class': status_meta['css_class'],
         'texto_resumido': _oficio_list_shorten_text(texto, limit=220) if texto else 'Justificativa ainda nao preenchida.',
         'created_at_display': _oficio_list_format_datetime(getattr(justificativa, 'created_at', None)),
-        'detail_url': (
-            reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': justificativa.pk})
-            if getattr(justificativa, 'pk', None)
-            else reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk})
-        ),
+        'detail_url': reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
         'edit_url': reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
         'downloads': document['actions'],
         'has_text': bool(texto),
@@ -1166,7 +1177,7 @@ def _oficio_list_card(oficio):
         'justificativa': justificativa,
         'termos': termos,
         'evento_url': reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
-        'wizard_url': reverse('eventos:oficio-editar', kwargs={'pk': oficio.pk}),
+        'wizard_url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
         'search_blob': ' '.join(
             value
             for value in [

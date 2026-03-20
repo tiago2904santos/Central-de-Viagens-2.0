@@ -274,7 +274,8 @@ class GlobalViewsTest(TestCase):
         self.assertIn('Servidores', card_html)
         self.assertIn('Veiculo e motorista', card_html)
         self.assertIn('oficio-list-card__footer-actions', card_html)
-        self.assertNotIn(reverse('eventos:oficio-step1', kwargs={'pk': self.oficio_pt.pk}), card_html)
+        self.assertIn(reverse('eventos:oficio-step1', kwargs={'pk': self.oficio_pt.pk}), card_html)
+        self.assertNotIn(reverse('eventos:guiado-painel', kwargs={'pk': self.evento_pt.pk}), card_html)
         self.assertIn('VIAJANTE GLOBAL', card_html)
         self.assertIn('aria-label="Excluir oficio"', card_html)
         self.assertIn('is-icon-only', card_html)
@@ -288,17 +289,20 @@ class GlobalViewsTest(TestCase):
         self.assertIn('data-oficios-view-toggle', js)
         self.assertIn('data-view-mode', js)
 
-    def test_lista_global_de_oficios_mostra_acao_pacote_evento_apenas_quando_existe_evento(self):
+    def test_lista_global_de_oficios_mostra_acao_abrir_para_todos_os_oficios_no_wizard_do_proprio_oficio(self):
         response = self.client.get(reverse('eventos:oficios-global'))
         self.assertEqual(response.status_code, 200)
 
         row_html = self._extract_oficio_row_html(response, self.oficio_pt.pk)
         card_html = self._extract_oficio_card_html(response, self.oficio_pt.pk)
+        wizard_url = reverse('eventos:oficio-step1', kwargs={'pk': self.oficio_pt.pk})
         pacote_url = reverse('eventos:guiado-painel', kwargs={'pk': self.evento_pt.pk})
         self.assertIn('Abrir', row_html)
         self.assertIn('Abrir', card_html)
-        self.assertIn(pacote_url, row_html)
-        self.assertIn(pacote_url, card_html)
+        self.assertIn(wizard_url, row_html)
+        self.assertIn(wizard_url, card_html)
+        self.assertNotIn(pacote_url, row_html)
+        self.assertNotIn(pacote_url, card_html)
 
         oficio_avulso = Oficio.objects.create(
             protocolo='123123123',
@@ -320,8 +324,11 @@ class GlobalViewsTest(TestCase):
         response_avulso = self.client.get(reverse('eventos:oficios-global'), {'q': '123123123'})
         avulso_row_html = self._extract_oficio_row_html(response_avulso, oficio_avulso.pk)
         avulso_card_html = self._extract_oficio_card_html(response_avulso, oficio_avulso.pk)
-        self.assertNotIn('Abrir', avulso_row_html)
-        self.assertNotIn('Abrir pacote do evento', avulso_card_html)
+        avulso_wizard_url = reverse('eventos:oficio-step1', kwargs={'pk': oficio_avulso.pk})
+        self.assertIn('Abrir', avulso_row_html)
+        self.assertIn('Abrir', avulso_card_html)
+        self.assertIn(avulso_wizard_url, avulso_row_html)
+        self.assertIn(avulso_wizard_url, avulso_card_html)
 
     def test_lista_global_de_oficios_modo_basico_mostra_apenas_campos_essenciais_e_acoes_do_oficio(self):
         with patch('eventos.views_global.get_document_generation_status') as mocked_status:
@@ -340,7 +347,7 @@ class GlobalViewsTest(TestCase):
         self.assertIn('VEICULO', table_html)
         self.assertIn('STATUS', table_html)
         self.assertIn('ACOES', table_html)
-        self.assertIn('VIAJANTE GLOBAL', row_html)
+        self.assertIn('data-label="SERVIDORES">VIAJANTE<', row_html)
         self.assertIn('Excluir', row_html)
         self.assertNotIn('Documentos', row_html)
         self.assertNotIn('Justificativa', row_html)
@@ -350,9 +357,25 @@ class GlobalViewsTest(TestCase):
         self.assertNotIn('oficio-list-card', row_html)
         self.assertNotIn('oficio-list-core-card', row_html)
 
-    def test_lista_global_de_oficios_resume_viajantes_no_modo_basico_com_primeiro_nome_e_quantidade_restante(self):
+    def test_lista_global_de_oficios_modo_basico_mantem_abrir_textual_e_acoes_secundarias_so_com_icone(self):
+        with patch('eventos.views_global.get_document_generation_status') as mocked_status:
+            mocked_status.return_value = {'status': 'available', 'errors': []}
+            response = self.client.get(reverse('eventos:oficios-global'))
+
+        row_html = self._extract_oficio_row_html(response, self.oficio_pt.pk)
+
+        self.assertIn('Abrir cadastro do oficio', row_html)
+        self.assertIn('Baixar DOCX do oficio', row_html)
+        self.assertIn('Baixar PDF do oficio', row_html)
+        self.assertIn('Excluir oficio', row_html)
+        self.assertIn('btn-doc-action--primary', row_html)
+        self.assertIn('btn-doc-action--secondary is-icon-only', row_html)
+        self.assertIn('btn-doc-action--pdf is-icon-only', row_html)
+        self.assertIn('btn-doc-action--danger is-icon-only', row_html)
+
+    def test_lista_global_de_oficios_exibe_todos_os_primeiros_nomes_no_modo_basico_sem_resumo(self):
         viajante_extra_1 = Viajante.objects.create(
-            nome='YARA RESUMO',
+            nome='Yara Villela de Barros',
             status=Viajante.STATUS_FINALIZADO,
             cargo=self.cargo,
             cpf='23921232095',
@@ -361,7 +384,7 @@ class GlobalViewsTest(TestCase):
             rg='RGRESUMO1',
         )
         viajante_extra_2 = Viajante.objects.create(
-            nome='ZULEICA RESUMO',
+            nome='Adilson Jose Domingues',
             status=Viajante.STATUS_FINALIZADO,
             cargo=self.cargo,
             cpf='29774396047',
@@ -374,9 +397,26 @@ class GlobalViewsTest(TestCase):
         response = self.client.get(reverse('eventos:oficios-global'))
         basic_html = self._extract_oficio_row_html(response, self.oficio_pt.pk)
 
-        self.assertIn('VIAJANTE GLOBAL +2', basic_html)
-        self.assertNotIn('YARA RESUMO', basic_html)
-        self.assertNotIn('ZULEICA RESUMO', basic_html)
+        self.assertIn('VIAJANTE, YARA, ADILSON', basic_html)
+        self.assertNotIn('+2', basic_html)
+        self.assertNotIn('GLOBAL', basic_html)
+        self.assertNotIn('Villela', basic_html)
+        self.assertNotIn('Domingues', basic_html)
+
+    def test_lista_global_de_oficios_abre_justificativa_no_cadastro_do_oficio_e_nao_no_modulo_global(self):
+        justificativa = Justificativa.objects.create(
+            oficio=self.oficio_pt,
+            texto='Justificativa vinculada ao oficio para o teste.',
+        )
+
+        response = self.client.get(reverse('eventos:oficios-global'))
+        card_html = self._extract_oficio_card_html(response, self.oficio_pt.pk)
+
+        self.assertIn(reverse('eventos:oficio-justificativa', kwargs={'pk': self.oficio_pt.pk}), card_html)
+        self.assertNotIn(
+            reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': justificativa.pk}),
+            card_html,
+        )
 
     def test_lista_global_de_oficios_exibe_veiculo_e_status_em_linha_compacta(self):
         response = self.client.get(reverse('eventos:oficios-global'))
@@ -549,7 +589,7 @@ class GlobalViewsTest(TestCase):
     def test_lista_global_de_oficios_resume_servidores_quando_ha_excesso(self):
         extras = [
             Viajante.objects.create(
-                nome=f'VIAJANTE EXTRA {indice}',
+                nome=f'{primeiro_nome} Extra {indice}',
                 status=Viajante.STATUS_FINALIZADO,
                 cargo=self.cargo,
                 cpf=f'1535094605{indice}',
@@ -557,17 +597,18 @@ class GlobalViewsTest(TestCase):
                 unidade_lotacao=self.unidade,
                 rg=f'RGEXTRA{indice}',
             )
-            for indice in range(3)
+            for indice, primeiro_nome in enumerate(['ALFA', 'BETA', 'GAMA'])
         ]
         self.oficio_pt.viajantes.add(*extras)
 
         response = self.client.get(reverse('eventos:oficios-global'))
         row_html = self._extract_oficio_row_html(response, self.oficio_pt.pk)
 
-        self.assertIn('VIAJANTE GLOBAL +3', row_html)
-        self.assertNotIn('VIAJANTE EXTRA 0', row_html)
-        self.assertNotIn('VIAJANTE EXTRA 1', row_html)
-        self.assertNotIn('VIAJANTE EXTRA 2', row_html)
+        self.assertIn('VIAJANTE, ALFA, BETA, GAMA', row_html)
+        self.assertNotIn('+3', row_html)
+        self.assertNotIn('Extra 0', row_html)
+        self.assertNotIn('Extra 1', row_html)
+        self.assertNotIn('Extra 2', row_html)
 
     def test_lista_global_de_oficios_aplica_badges_de_status_conforme_situacao(self):
         hoje = timezone.localdate()

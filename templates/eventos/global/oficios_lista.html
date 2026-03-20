@@ -171,11 +171,17 @@
                                     {% for action in oficio.table_actions %}
                                     <a
                                         href="{{ action.url }}"
-                                        class="btn btn-sm btn-doc-action {{ action.css_class }}"
+                                        class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}"
+                                        aria-label="{{ action.aria_label|default:action.label }}"
+                                        title="{{ action.aria_label|default:action.label }}"
                                         {% if action.download %}data-direct-download="true"{% endif %}
                                     >
                                         <i class="bi {{ action.icon }}"></i>
+                                        {% if action.icon_only %}
+                                        <span class="visually-hidden">{{ action.label }}</span>
+                                        {% else %}
                                         <span>{{ action.label }}</span>
+                                        {% endif %}
                                     </a>
                                     {% endfor %}
                                 </div>
