@@ -1216,6 +1216,12 @@
 }
 
 .oficio-list-card .oficio-list-badge {
+    --oficio-badge-rgb: var(--oficio-card-accent-rgb);
+    color: var(--oficio-card-ink);
+    border-color: rgba(var(--oficio-badge-rgb), 0.18);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(249, 251, 253, 0.72) 100%),
+        linear-gradient(135deg, rgba(var(--oficio-badge-rgb), 0.14) 0%, rgba(255, 255, 255, 0.16) 100%);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
@@ -1292,6 +1298,47 @@
     background: rgba(95, 107, 122, 0.12);
     color: #5f6b7a;
     border-color: rgba(95, 107, 122, 0.18);
+}
+
+.oficio-list-card .oficio-list-badge.is-muted,
+.oficio-list-card .oficio-list-badge.is-trip-muted {
+    --oficio-badge-rgb: 95, 107, 122;
+    color: #5f6b7a;
+}
+
+.oficio-list-card .oficio-list-badge.is-rascunho {
+    --oficio-badge-rgb: 194, 65, 12;
+    color: #9a3412;
+}
+
+.oficio-list-card .oficio-list-badge.is-finalizado,
+.oficio-list-card .oficio-list-badge.is-trip-past {
+    --oficio-badge-rgb: 31, 143, 87;
+    color: #185c3c;
+}
+
+.oficio-list-card .oficio-list-badge.is-assinado,
+.oficio-list-card .oficio-list-badge.is-ready,
+.oficio-list-card .oficio-list-badge.is-info,
+.oficio-list-card .oficio-list-badge.is-trip-future {
+    --oficio-badge-rgb: 33, 94, 207;
+    color: #1b4faa;
+}
+
+.oficio-list-card .oficio-list-badge.is-unavailable {
+    --oficio-badge-rgb: 180, 35, 24;
+    color: #8d2016;
+}
+
+.oficio-list-card .oficio-list-badge.is-warning,
+.oficio-list-card .oficio-list-badge.is-trip-ongoing {
+    --oficio-badge-rgb: 217, 119, 6;
+    color: #9a5200;
+}
+
+.oficio-list-card .oficio-list-badge.is-pending {
+    --oficio-badge-rgb: 202, 138, 4;
+    color: #8f6200;
 }
 
 .oficio-list-card__header-status {
@@ -1400,12 +1447,23 @@
     align-items: center;
     padding: 0.24rem 0.5rem;
     border-radius: 999px;
-    background: rgba(var(--oficio-card-accent-rgb), 0.11);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(249, 251, 253, 0.7) 100%),
+        linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), 0.11) 0%, rgba(255, 255, 255, 0.16) 100%);
     color: var(--oficio-card-ink);
     border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.14);
     font-size: 0.72rem;
     font-weight: 700;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.72),
+        0 8px 16px rgba(15, 23, 42, 0.04);
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .oficio-list-core-card__meta {
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+    }
 }
 
 .oficio-list-traveler-list {

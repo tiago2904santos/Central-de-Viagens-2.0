@@ -274,7 +274,7 @@ class GlobalViewsTest(TestCase):
         self.assertIn('Servidores', card_html)
         self.assertIn('Veiculo e motorista', card_html)
         self.assertIn('oficio-list-card__footer-actions', card_html)
-        self.assertNotIn('Editar', card_html)
+        self.assertNotIn(reverse('eventos:oficio-step1', kwargs={'pk': self.oficio_pt.pk}), card_html)
         self.assertIn('VIAJANTE GLOBAL', card_html)
         self.assertIn('aria-label="Excluir oficio"', card_html)
         self.assertIn('is-icon-only', card_html)

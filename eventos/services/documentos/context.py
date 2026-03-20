@@ -626,7 +626,10 @@ def build_plano_trabalho_document_context(oficio):
         else:
             dias_evento_extenso = _format_data_extenso(evento.data_inicio)
 
-    numero_pt = _get_proximo_numero_plano_trabalho()
+    if plano and plano.numero and plano.ano:
+        numero_pt = plano.numero_formatado
+    else:
+        numero_pt = _get_proximo_numero_plano_trabalho()
     data_extenso = _format_data_extenso(timezone.now().date())
 
     context.update(
