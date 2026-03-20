@@ -1,0 +1,42 @@
+<div class="oficio-wizard-header" data-oficio-sticky-header>
+  <div class="oficio-wizard-header-card plano-trabalho-header-card">
+    <div class="oficio-wizard-header-main">
+      <div class="oficio-wizard-header-copy">
+        <span class="oficio-wizard-eyebrow">Plano de trabalho</span>
+        <h1>{{ pt_header_title }}</h1>
+        <p class="oficio-wizard-header-support">
+          {{ pt_header_subtitle }}
+        </p>
+      </div>
+
+      <div class="oficio-wizard-header-badges plano-trabalho-header-badges">
+        {% for badge in pt_header_badges %}
+        <span class="oficio-wizard-header-badge">
+          <span class="oficio-wizard-header-badge-label">{{ badge.label }}</span>
+          <strong>{{ badge.value }}</strong>
+        </span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="oficio-wizard-submenu-bar" aria-label="Resumo essencial do plano de trabalho">
+      <button
+        type="button"
+        class="oficio-wizard-submenu-trigger"
+        data-oficio-glance-toggle
+        data-oficio-glance-rail="1"
+        aria-expanded="false"
+        aria-controls="oficio-glance-panel"
+        title="Mostrar ou ocultar o resumo essencial do plano de trabalho"
+      >
+        <span class="visually-hidden">Resumo essencial do plano de trabalho</span>
+        <span class="oficio-wizard-submenu-pill">
+          <span data-oficio-glance-toggle-label>Expandir painel</span>
+          <i class="bi bi-chevron-down" aria-hidden="true"></i>
+        </span>
+      </button>
+    </div>
+
+    {% include 'eventos/documentos/_plano_trabalho_glance.html' %}
+  </div>
+</div>

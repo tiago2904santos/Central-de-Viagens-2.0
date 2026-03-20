@@ -1,0 +1,67 @@
+<div
+  class="oficio-glance-panel"
+  id="oficio-glance-panel"
+  aria-label="Resumo essencial do plano de trabalho"
+  data-oficio-glance
+  data-oficio-glance-panel
+  aria-hidden="true"
+  role="region"
+>
+  <div class="oficio-glance-panel-inner">
+    <div class="oficio-glance-layout plano-trabalho-glance-layout">
+      <div class="oficio-glance-summary">
+        <div class="oficio-glance-row">
+          <article class="oficio-glance-card">
+            <span class="oficio-glance-item-label">Evento</span>
+            <strong class="oficio-glance-item-value" id="pt-summary-evento" data-empty-text="Sem evento vinculado">{{ pt_glance.evento }}</strong>
+          </article>
+          <article class="oficio-glance-card">
+            <span class="oficio-glance-item-label">Ofícios</span>
+            <strong class="oficio-glance-item-value" id="pt-summary-oficios" data-empty-text="Sem ofícios vinculados">{{ pt_glance.oficios }}</strong>
+          </article>
+        </div>
+
+        <div class="oficio-glance-row">
+          <article class="oficio-glance-card">
+            <span class="oficio-glance-item-label">Roteiro</span>
+            <strong class="oficio-glance-item-value" id="pt-summary-roteiro" data-empty-text="Sem roteiro definido">{{ pt_glance.roteiro }}</strong>
+          </article>
+          <article class="oficio-glance-card">
+            <span class="oficio-glance-item-label">Período</span>
+            <strong class="oficio-glance-item-value" id="pt-summary-periodo" data-empty-text="A definir">{{ pt_glance.periodo }}</strong>
+          </article>
+        </div>
+
+        <div class="oficio-glance-row">
+          <article class="oficio-glance-card">
+            <span class="oficio-glance-item-label">Destinos</span>
+            <strong class="oficio-glance-item-value" id="pt-summary-destinos" data-empty-text="Destinos preenchidos no formulário">{{ pt_glance.destinos }}</strong>
+          </article>
+          <article class="oficio-glance-card">
+            <span class="oficio-glance-item-label">Solicitante</span>
+            <strong class="oficio-glance-item-value" id="pt-summary-solicitante" data-empty-text="A definir">{{ pt_glance.solicitante }}</strong>
+          </article>
+        </div>
+      </div>
+
+      <section class="oficio-glance-travelers-panel plano-trabalho-glance-activities" aria-labelledby="pt-summary-activities-heading">
+        <div class="oficio-glance-travelers-head">
+          <div>
+            <span class="oficio-glance-item-label" id="pt-summary-activities-heading">Atividades e metas</span>
+            <strong class="oficio-glance-travelers-title">Seleção rápida integrada ao topo</strong>
+          </div>
+          <strong class="oficio-glance-travelers-meta" id="pt-summary-activities-meta" data-empty-text="Nenhuma atividade selecionada">
+            {{ pt_glance.atividades_count_label }}
+          </strong>
+        </div>
+        <div class="oficio-glance-travelers-list" id="pt-summary-activities-list">
+          {% for atividade in pt_glance.atividades %}
+          <span class="oficio-glance-chip">{{ atividade }}</span>
+          {% empty %}
+          <span class="oficio-glance-empty">Selecione as atividades para acompanhar aqui o recorte operacional do plano.</span>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

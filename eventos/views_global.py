@@ -52,6 +52,7 @@ from .services.documentos.renderer import (
 from .services.documentos.ordem_servico import render_ordem_servico_docx, render_ordem_servico_model_docx
 from .services.documentos.plano_trabalho import render_plano_trabalho_docx, render_plano_trabalho_model_docx
 from .services.documentos.termo_autorizacao import render_saved_termo_autorizacao_docx
+from .services.plano_trabalho_domain import ATIVIDADES_CATALOGO
 from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
@@ -1589,6 +1590,176 @@ def _base_documento_filters(request):
     }
 
 
+def _format_periodo_curto(data_inicio, data_fim):
+    if not data_inicio:
+        return 'A definir'
+    if data_fim and data_fim != data_inicio:
+        return f'{data_inicio:%d/%m/%Y} a {data_fim:%d/%m/%Y}'
+    return f'{data_inicio:%d/%m/%Y}'
+
+
+def _build_plano_trabalho_form_ui_context(form, *, obj=None, preselected_event=None, preselected_oficio=None, data_preview=None):
+    def get_selected_ids(field_name):
+        values = []
+        if form.is_bound:
+            values.extend(form.data.getlist(field_name))
+            single_value = form.data.get(field_name)
+            if single_value and field_name != 'oficios_relacionados':
+                values.append(single_value)
+        else:
+            initial = form.initial.get(field_name)
+            if isinstance(initial, (list, tuple, set)):
+                values.extend(initial)
+            elif initial:
+                values.append(initial)
+        ids = []
+        seen = set()
+        for value in values:
+            parsed = _parse_int(value)
+            if not parsed or parsed in seen:
+                continue
+            seen.add(parsed)
+            ids.append(parsed)
+        return ids
+
+    if obj and obj.pk:
+        evento = obj.evento
+    else:
+        evento = preselected_event
+        if not evento:
+            evento_id = _parse_int(form.data.get('evento') if form.is_bound else form.initial.get('evento'))
+            evento = Evento.objects.filter(pk=evento_id).first() if evento_id else None
+
+    if obj and obj.pk:
+        roteiro = obj.roteiro
+    else:
+        roteiro_id = _parse_int(form.data.get('roteiro') if form.is_bound else form.initial.get('roteiro'))
+        roteiro = (
+            RoteiroEvento.objects.select_related('evento').prefetch_related('destinos__cidade', 'destinos__estado')
+            .filter(pk=roteiro_id)
+            .first()
+            if roteiro_id
+            else None
+        )
+
+    if obj and obj.pk:
+        related_oficios = list(obj.oficios.all())
+        if not related_oficios and obj.oficio_id:
+            related_oficios = [obj.oficio]
+    else:
+        related_ids = get_selected_ids('oficios_relacionados')
+        oficio_ids = get_selected_ids('oficio')
+        for oficio_id in oficio_ids:
+            if oficio_id not in related_ids:
+                related_ids.append(oficio_id)
+        if not related_ids and preselected_oficio:
+            related_oficios = [preselected_oficio]
+        else:
+            query = {
+                oficio.pk: oficio
+                for oficio in Oficio.objects.select_related('evento').filter(pk__in=related_ids)
+            }
+            related_oficios = [query[pk] for pk in related_ids if pk in query]
+
+    destinos_labels = []
+    seen_destinos = set()
+    if obj and obj.pk and obj.destinos_json:
+        for destino in obj.destinos_json:
+            if not isinstance(destino, dict):
+                continue
+            cidade = _clean(destino.get('cidade_nome'))
+            uf = _clean(destino.get('estado_sigla')).upper()
+            label = f'{cidade}/{uf}' if cidade and uf else cidade
+            if not label or label in seen_destinos:
+                continue
+            seen_destinos.add(label)
+            destinos_labels.append(label)
+    elif roteiro:
+        for destino in roteiro.destinos.all():
+            label = _label_local(getattr(destino, 'cidade', None), getattr(destino, 'estado', None))
+            if label == '—' or label in seen_destinos:
+                continue
+            seen_destinos.add(label)
+            destinos_labels.append(label)
+    elif evento:
+        for destino in evento.destinos.all():
+            label = _label_local(getattr(destino, 'cidade', None), getattr(destino, 'estado', None))
+            if label == '—' or label in seen_destinos:
+                continue
+            seen_destinos.add(label)
+            destinos_labels.append(label)
+
+    if obj and obj.pk:
+        data_inicio = obj.evento_data_inicio or getattr(evento, 'data_inicio', None)
+        data_fim = obj.evento_data_fim or getattr(evento, 'data_fim', None)
+    else:
+        data_inicio = None
+        data_fim = None
+        if form.is_bound:
+            try:
+                data_inicio = datetime.strptime(_clean(form.data.get('evento_data_inicio')), '%Y-%m-%d').date()
+            except ValueError:
+                data_inicio = None
+            try:
+                data_fim = datetime.strptime(_clean(form.data.get('evento_data_fim')), '%Y-%m-%d').date()
+            except ValueError:
+                data_fim = None
+        if not data_inicio:
+            data_inicio = getattr(evento, 'data_inicio', None)
+        if not data_fim:
+            data_fim = getattr(evento, 'data_fim', None)
+        if not data_inicio and roteiro and getattr(roteiro, 'saida_dt', None):
+            data_inicio = roteiro.saida_dt.date()
+        if not data_fim and roteiro and getattr(roteiro, 'chegada_dt', None):
+            data_fim = roteiro.chegada_dt.date()
+
+    if obj and obj.pk and obj.atividades_codigos:
+        selected_codes = [codigo.strip() for codigo in obj.atividades_codigos.split(',') if codigo.strip()]
+    else:
+        selected_codes = form.data.getlist('atividades_codigos') if form.is_bound else list(form.initial.get('atividades_codigos') or [])
+    selected_activities = [
+        item for item in ATIVIDADES_CATALOGO
+        if item['codigo'] in selected_codes
+    ]
+
+    solicitante_label = 'A definir'
+    if obj and obj.pk:
+        if obj.solicitante_id:
+            solicitante_label = obj.solicitante.nome
+        elif obj.solicitante_outros:
+            solicitante_label = obj.solicitante_outros
+    else:
+        solicitante_raw = _clean(form.data.get('solicitante_outros') if form.is_bound else form.initial.get('solicitante_outros'))
+        if solicitante_raw:
+            solicitante_label = solicitante_raw
+
+    number_label = obj.numero_formatado if obj and obj.pk else getattr(form, 'proximo_numero_preview', '') or 'A definir'
+    status_label = obj.get_status_display() if obj and obj.pk else PlanoTrabalho.STATUS_RASCUNHO.title()
+
+    return {
+        'header_badges': [
+            {'label': 'Plano', 'value': number_label},
+            {'label': 'Status', 'value': status_label},
+            {'label': 'Data base', 'value': (data_preview or timezone.localdate()).strftime('%d/%m/%Y')},
+        ],
+        'glance': {
+            'evento': getattr(evento, 'titulo', '') or 'Sem evento vinculado',
+            'oficios': ', '.join(oficio.numero_formatado or f'#{oficio.pk}' for oficio in related_oficios) or 'Sem ofícios vinculados',
+            'roteiro': (f'Roteiro #{roteiro.pk}' if roteiro else 'Sem roteiro definido'),
+            'periodo': _format_periodo_curto(data_inicio, data_fim),
+            'destinos': ', '.join(destinos_labels) or 'Destinos preenchidos no formulário',
+            'solicitante': solicitante_label,
+            'atividades': [item['nome'] for item in selected_activities],
+            'atividades_count_label': (
+                f'{len(selected_activities)} atividade(s) selecionada(s)'
+                if selected_activities
+                else 'Nenhuma atividade selecionada'
+            ),
+        },
+        'selected_codes': selected_codes,
+    }
+
+
 def _resolve_preselected_context(request):
     preselected_event_id = _parse_int(request.GET.get('preselected_event_id') or request.POST.get('preselected_event_id'))
     preselected_oficio_id = _parse_int(request.GET.get('preselected_oficio_id') or request.POST.get('preselected_oficio_id'))
@@ -1662,6 +1833,13 @@ def plano_trabalho_novo(request):
         messages.success(request, 'Plano de trabalho criado com sucesso.')
         return redirect(return_to or reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': obj.pk}))
 
+    ui_context = _build_plano_trabalho_form_ui_context(
+        form,
+        preselected_event=preselected_event,
+        preselected_oficio=preselected_oficio,
+        data_preview=timezone.localdate(),
+    )
+
     return render(
         request,
         'eventos/documentos/planos_trabalho_form.html',
@@ -1677,6 +1855,10 @@ def plano_trabalho_novo(request):
             'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
             'proximo_numero_pt': form.proximo_numero_preview,
             'data_geracao_preview': timezone.localdate(),
+            'pt_header_badges': ui_context['header_badges'],
+            'pt_glance': ui_context['glance'],
+            'pt_selected_activity_codes': ui_context['selected_codes'],
+            'plano_trabalho_atividades_catalogo': ATIVIDADES_CATALOGO,
         },
     )
 
@@ -1697,6 +1879,12 @@ def plano_trabalho_editar(request, pk):
             _refresh_plano_diarias(obj)
         messages.success(request, 'Plano de trabalho atualizado.')
         return redirect(return_to or reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': obj.pk}))
+
+    ui_context = _build_plano_trabalho_form_ui_context(
+        form,
+        obj=obj,
+        data_preview=obj.data_criacao,
+    )
     return render(
         request,
         'eventos/documentos/planos_trabalho_form.html',
@@ -1712,6 +1900,10 @@ def plano_trabalho_editar(request, pk):
             'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
             'proximo_numero_pt': obj.numero_formatado,
             'data_geracao_preview': obj.data_criacao,
+            'pt_header_badges': ui_context['header_badges'],
+            'pt_glance': ui_context['glance'],
+            'pt_selected_activity_codes': ui_context['selected_codes'],
+            'plano_trabalho_atividades_catalogo': ATIVIDADES_CATALOGO,
         },
     )
 

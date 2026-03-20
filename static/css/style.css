@@ -4878,3 +4878,305 @@
         grid-column: auto;
     }
 }
+
+.plano-trabalho-page .plano-trabalho-header-badges {
+    align-items: stretch;
+}
+
+.plano-trabalho-page .plano-trabalho-glance-layout {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+}
+
+.plano-trabalho-page .plano-trabalho-glance-activities {
+    min-height: 100%;
+}
+
+.plano-trabalho-page .plano-trabalho-intro-cards,
+.plano-trabalho-page .plano-trabalho-inline-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.plano-trabalho-page .plano-trabalho-intro-cards {
+    width: min(30rem, 100%);
+}
+
+.plano-trabalho-page .plano-trabalho-inline-card,
+.plano-trabalho-page .plano-trabalho-system-card,
+.plano-trabalho-page .plano-trabalho-preview-surface,
+.plano-trabalho-page .plano-trabalho-destinos-panel,
+.plano-trabalho-page .plano-trabalho-simulator-panel,
+.plano-trabalho-page .plano-trabalho-activities-panel,
+.plano-trabalho-page .plano-trabalho-efetivo-row {
+    border: 1px solid rgba(16, 36, 63, 0.08);
+    border-radius: 1.35rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(245, 249, 252, 0.94) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.plano-trabalho-page .plano-trabalho-inline-card,
+.plano-trabalho-page .plano-trabalho-system-card {
+    padding: 0.95rem 1rem;
+}
+
+.plano-trabalho-page .plano-trabalho-inline-card__label,
+.plano-trabalho-page .plano-trabalho-system-card__label,
+.plano-trabalho-page .plano-trabalho-generated-item__label {
+    display: block;
+    margin-bottom: 0.28rem;
+    color: #5c6b80;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.plano-trabalho-page .plano-trabalho-inline-card__value,
+.plano-trabalho-page .plano-trabalho-system-card__value {
+    display: block;
+    color: var(--oficio-wizard-ink);
+    font-size: 0.96rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.plano-trabalho-page .plano-trabalho-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.plano-trabalho-page .plano-trabalho-span-2 {
+    grid-column: span 2;
+}
+
+.plano-trabalho-page .plano-trabalho-span-3 {
+    grid-column: span 3;
+}
+
+.plano-trabalho-page .plano-trabalho-span-4 {
+    grid-column: span 4;
+}
+
+.plano-trabalho-page .plano-trabalho-span-5 {
+    grid-column: span 5;
+}
+
+.plano-trabalho-page .plano-trabalho-span-7 {
+    grid-column: span 7;
+}
+
+.plano-trabalho-page .plano-trabalho-span-8 {
+    grid-column: span 8;
+}
+
+.plano-trabalho-page .plano-trabalho-span-12 {
+    grid-column: span 12;
+}
+
+.plano-trabalho-page .plano-trabalho-check-surface {
+    padding: 0.95rem 1rem;
+    border: 1px dashed rgba(16, 36, 63, 0.12);
+    border-radius: 1.25rem;
+    background: rgba(247, 250, 252, 0.92);
+}
+
+.plano-trabalho-page .plano-trabalho-surface-note {
+    color: var(--oficio-wizard-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.plano-trabalho-page .plano-trabalho-mini-title {
+    color: var(--oficio-wizard-ink);
+    font-size: 0.96rem;
+    font-weight: 800;
+}
+
+.plano-trabalho-page .plano-trabalho-destinos-panel,
+.plano-trabalho-page .plano-trabalho-preview-surface,
+.plano-trabalho-page .plano-trabalho-simulator-panel,
+.plano-trabalho-page .plano-trabalho-activities-panel {
+    padding: 1rem 1.05rem;
+}
+
+.plano-trabalho-page .plano-trabalho-destinos-panel__head,
+.plano-trabalho-page .plano-trabalho-preview-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.plano-trabalho-page .plano-trabalho-destino-stack,
+.plano-trabalho-page .plano-trabalho-efetivo-stack,
+.plano-trabalho-page .plano-trabalho-surface-stack {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.plano-trabalho-page .plano-trabalho-efetivo-stack {
+    max-height: 25rem;
+    overflow: auto;
+    padding-right: 0.2rem;
+}
+
+.plano-trabalho-page .plano-trabalho-destino-row,
+.plano-trabalho-page .plano-trabalho-efetivo-row {
+    padding: 0.9rem;
+}
+
+.plano-trabalho-page .plano-trabalho-destino-row__action {
+    display: flex;
+    align-items: flex-end;
+}
+
+.plano-trabalho-page .plano-trabalho-destino-row__action .btn {
+    width: 100%;
+}
+
+.plano-trabalho-page .plano-trabalho-two-column {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 1rem;
+}
+
+.plano-trabalho-page .plano-trabalho-two-column--activities {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+}
+
+.plano-trabalho-page .plano-trabalho-simulator-grid,
+.plano-trabalho-page .plano-trabalho-activities-grid {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.plano-trabalho-page .plano-trabalho-simulator-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 0.9rem;
+}
+
+.plano-trabalho-page .plano-trabalho-simulator-card {
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.85rem 0.9rem;
+    border-radius: 1.15rem;
+    border: 1px solid rgba(16, 36, 63, 0.08);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.plano-trabalho-page .plano-trabalho-multiselect {
+    min-height: 12rem;
+}
+
+.plano-trabalho-page .plano-trabalho-preview-surface--readonly {
+    background: linear-gradient(180deg, rgba(250, 252, 255, 0.98) 0%, rgba(243, 247, 251, 0.94) 100%);
+}
+
+.plano-trabalho-page .plano-trabalho-generated-list {
+    display: grid;
+    gap: 0.7rem;
+    color: var(--oficio-wizard-muted);
+    font-size: 0.88rem;
+    line-height: 1.55;
+}
+
+.plano-trabalho-page .plano-trabalho-generated-item {
+    padding: 0.85rem 0.95rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(16, 36, 63, 0.08);
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.plano-trabalho-page .plano-trabalho-generated-item p {
+    margin: 0;
+    color: var(--oficio-wizard-ink);
+}
+
+.plano-trabalho-page .plano-trabalho-activities-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.plano-trabalho-page .plano-trabalho-activity-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.95rem 1rem;
+    border-radius: 1.2rem;
+    border: 1px solid rgba(16, 36, 63, 0.08);
+    background: rgba(255, 255, 255, 0.96);
+    cursor: pointer;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.plano-trabalho-page .plano-trabalho-activity-card:hover {
+    border-color: rgba(11, 103, 112, 0.22);
+    box-shadow: 0 16px 28px rgba(16, 36, 63, 0.08);
+}
+
+.plano-trabalho-page .plano-trabalho-activity-card .form-check-input {
+    margin-top: 0.2rem;
+    flex: 0 0 auto;
+}
+
+.plano-trabalho-page .plano-trabalho-activity-card__copy {
+    display: grid;
+    gap: 0.28rem;
+}
+
+.plano-trabalho-page .plano-trabalho-activity-card__copy strong {
+    color: var(--oficio-wizard-ink);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.plano-trabalho-page .plano-trabalho-activity-card__copy small {
+    color: var(--oficio-wizard-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+@supports selector(:has(*)) {
+    .plano-trabalho-page .plano-trabalho-activity-card:has(input:checked) {
+        border-color: transparent;
+        background: linear-gradient(135deg, rgba(18, 60, 102, 0.08) 0%, rgba(11, 103, 112, 0.1) 100%);
+        box-shadow: 0 18px 32px rgba(16, 36, 63, 0.1);
+    }
+}
+
+@media (max-width: 1199.98px) {
+    .plano-trabalho-page .plano-trabalho-glance-layout,
+    .plano-trabalho-page .plano-trabalho-two-column,
+    .plano-trabalho-page .plano-trabalho-two-column--activities {
+        grid-template-columns: 1fr;
+    }
+
+    .plano-trabalho-page .plano-trabalho-activities-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .plano-trabalho-page .plano-trabalho-intro-cards,
+    .plano-trabalho-page .plano-trabalho-inline-metrics,
+    .plano-trabalho-page .plano-trabalho-simulator-grid,
+    .plano-trabalho-page .plano-trabalho-activities-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .plano-trabalho-page .plano-trabalho-span-2,
+    .plano-trabalho-page .plano-trabalho-span-3,
+    .plano-trabalho-page .plano-trabalho-span-4,
+    .plano-trabalho-page .plano-trabalho-span-5,
+    .plano-trabalho-page .plano-trabalho-span-7,
+    .plano-trabalho-page .plano-trabalho-span-8,
+    .plano-trabalho-page .plano-trabalho-span-12 {
+        grid-column: span 12;
+    }
+
+    .plano-trabalho-page .plano-trabalho-destino-row__action {
+        align-items: stretch;
+    }
+}

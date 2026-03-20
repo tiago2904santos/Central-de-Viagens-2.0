@@ -1,655 +1,463 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho - Central de Viagens{% endblock %}
 {% block page_title %}{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho{% endblock %}
 
-{% block extra_css %}
-<style>
-  :root {
-    --pt-ink: #132332;
-    --pt-ink-soft: #455d73;
-    --pt-line: #d8e2eb;
-    --pt-line-strong: #b9c9d8;
-    --pt-bg: #f3f7fb;
-    --pt-card: #ffffff;
-    --pt-accent: #006a5b;
-    --pt-accent-soft: #e7f4f1;
-    --pt-warn: #c66a16;
-    --pt-shadow: 0 14px 34px rgba(12, 35, 58, .08);
-  }
-
-  .pt-wrap {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding-bottom: 4rem;
-  }
-
-  .pt-hero {
-    position: relative;
-    border: 1px solid var(--pt-line-strong);
-    border-radius: 22px;
-    padding: 1.2rem 1.3rem;
-    background:
-      radial-gradient(circle at 86% 14%, rgba(0, 106, 91, .14), transparent 42%),
-      radial-gradient(circle at 6% 0%, rgba(198, 106, 22, .14), transparent 36%),
-      linear-gradient(130deg, #fcfdff 0%, #f2f7fb 100%);
-    box-shadow: var(--pt-shadow);
-    margin-bottom: 1rem;
-  }
-
-  .pt-hero-grid {
-    display: grid;
-    grid-template-columns: 1.3fr auto;
-    gap: .9rem;
-    align-items: start;
-  }
-
-  .pt-title {
-    margin: 0;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 1.86rem;
-    line-height: 1.12;
-    letter-spacing: .01em;
-    color: #102133;
-    font-weight: 700;
-  }
-
-  .pt-sub {
-    margin: .35rem 0 0;
-    color: var(--pt-ink-soft);
-    font-size: .94rem;
-    line-height: 1.35;
-    max-width: 70ch;
-  }
-
-  .pt-status {
-    display: inline-flex;
-    align-items: center;
-    gap: .35rem;
-    margin-top: .65rem;
-    border: 1px solid #c5dfd9;
-    border-radius: 999px;
-    padding: .32rem .8rem;
-    background: var(--pt-accent-soft);
-    color: #0d5447;
-    font-size: .78rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-  }
-
-  .pt-toolbar {
-    display: flex;
-    gap: .45rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  .pt-toolbar .btn {
-    border-radius: 11px;
-    font-weight: 700;
-    padding: .42rem .8rem;
-  }
-
-  .pt-shell {
-    display: grid;
-    gap: .9rem;
-  }
-
-  .pt-panel {
-    border: 1px solid var(--pt-line);
-    border-radius: 18px;
-    background: var(--pt-card);
-    box-shadow: 0 4px 16px rgba(11, 34, 54, .05);
-    overflow: hidden;
-  }
-
-  .pt-panel-head {
-    padding: .82rem 1rem;
-    border-bottom: 1px solid #e8eef4;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: .8rem;
-  }
-
-  .pt-panel-title {
-    margin: 0;
-    color: #17324c;
-    font-size: 1.03rem;
-    font-weight: 800;
-  }
-
-  .pt-panel-sub {
-    margin: 0;
-    color: #62788f;
-    font-size: .81rem;
-    font-weight: 600;
-  }
-
-  .pt-panel-body {
-    padding: .95rem 1rem 1rem;
-  }
-
-  .pt-block-grid {
-    display: grid;
-    gap: .85rem;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-
-  .pt-system-tile {
-    border: 1px dashed #c3d2e1;
-    border-radius: 14px;
-    padding: .62rem .72rem;
-    background: #f6f9fc;
-  }
-
-  .pt-k {
-    font-size: .69rem;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    font-weight: 800;
-    color: #5a6f84;
-    margin-bottom: .28rem;
-  }
-
-  .pt-v {
-    font-size: 1rem;
-    color: #1c3550;
-    font-weight: 800;
-  }
-
-  .pt-shell .form-control,
-  .pt-shell .form-select {
-    min-height: 42px;
-    border-radius: 11px;
-    border-color: #cfd9e3;
-  }
-
-  .pt-shell .form-control:focus,
-  .pt-shell .form-select:focus {
-    border-color: #94b8d7;
-    box-shadow: 0 0 0 .2rem rgba(26, 98, 163, .14);
-  }
-
-  .pt-shell textarea.form-control {
-    min-height: 108px;
-    line-height: 1.35;
-  }
-
-  .pt-muted-note {
-    margin: .38rem 0 0;
-    font-size: .77rem;
-    color: #677f96;
-  }
-
-  .pt-dest-row {
-    border: 1px solid #d4dfeb;
-    border-radius: 12px;
-    padding: .52rem;
-    background: #f8fbff;
-    margin-bottom: .44rem;
-  }
-
-  .pt-ops-grid {
-    display: grid;
-    grid-template-columns: 1.2fr .95fr;
-    gap: .9rem;
-  }
-
-  .pt-efetivo-stack {
-    max-height: 340px;
-    overflow: auto;
-    padding-right: .2rem;
-  }
-
-  .pt-efetivo-row {
-    border: 1px solid #d8e4ee;
-    border-radius: 12px;
-    padding: .5rem;
-    background: linear-gradient(180deg, #fcfeff 0%, #f7fbff 100%);
-    margin-bottom: .42rem;
-  }
-
-  .pt-sim {
-    border: 1px solid #d0dfeb;
-    border-radius: 14px;
-    background: linear-gradient(160deg, #f9fcff 0%, #eef5fb 100%);
-    padding: .75rem;
-    height: 100%;
-  }
-
-  .pt-sim-cards {
-    display: grid;
-    gap: .5rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    margin-bottom: .5rem;
-  }
-
-  .pt-sim-tile {
-    border: 1px solid #cbd9e6;
-    border-radius: 11px;
-    padding: .45rem .5rem;
-    background: #fff;
-  }
-
-  .pt-sim-tile .pt-k {
-    margin-bottom: .16rem;
-    font-size: .65rem;
-  }
-
-  .pt-grid-activities {
-    display: grid;
-    gap: .52rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .pt-act {
-    position: relative;
-    border: 1px solid #d2dfea;
-    border-radius: 13px;
-    padding: .56rem .58rem;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-    transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
-  }
-
-  .pt-act:hover {
-    border-color: #9db6ce;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 16px rgba(16, 53, 86, .08);
-  }
-
-  .pt-act .form-check {
-    margin: 0;
-    min-height: auto;
-  }
-
-  .pt-act .form-check-input {
-    margin-top: .22rem;
-  }
-
-  .pt-act .form-check-label {
-    font-size: .86rem;
-    line-height: 1.28;
-    color: #1f3a53;
-    font-weight: 600;
-    margin-left: .1rem;
-  }
-
-  .pt-meta-grid {
-    display: grid;
-    gap: .72rem;
-    grid-template-columns: 1.1fr .9fr;
-  }
-
-  .pt-preview {
-    border: 1px solid #d8e2ec;
-    border-radius: 12px;
-    background: #fbfdff;
-    padding: .55rem;
-  }
-
-  .pt-actions {
-    position: sticky;
-    bottom: .25rem;
-    margin-top: 1rem;
-    border: 1px solid #bfd0df;
-    border-radius: 16px;
-    background: rgba(252, 254, 255, .98);
-    backdrop-filter: blur(7px);
-    padding: .65rem .8rem;
-    box-shadow: 0 8px 24px rgba(12, 35, 58, .09);
-    display: flex;
-    justify-content: space-between;
-    gap: .7rem;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .pt-actions .btn {
-    border-radius: 11px;
-    font-weight: 700;
-  }
-
-  .pt-actions .btn-primary {
-    padding-left: 1.2rem;
-    padding-right: 1.2rem;
-  }
-
-  .pt-main-col-3 { grid-column: span 3; }
-  .pt-main-col-4 { grid-column: span 4; }
-  .pt-main-col-5 { grid-column: span 5; }
-  .pt-main-col-6 { grid-column: span 6; }
-  .pt-main-col-7 { grid-column: span 7; }
-  .pt-main-col-8 { grid-column: span 8; }
-  .pt-main-col-12 { grid-column: span 12; }
-
-  @media (max-width: 992px) {
-    .pt-hero-grid { grid-template-columns: 1fr; }
-    .pt-toolbar { justify-content: flex-start; }
-    .pt-ops-grid,
-    .pt-meta-grid { grid-template-columns: 1fr; }
-    .pt-grid-activities { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .pt-main-col-3,
-    .pt-main-col-4,
-    .pt-main-col-5,
-    .pt-main-col-6,
-    .pt-main-col-7,
-    .pt-main-col-8,
-    .pt-main-col-12 { grid-column: span 12; }
-    .pt-actions { position: static; }
-  }
-
-  @media (max-width: 680px) {
-    .pt-grid-activities,
-    .pt-sim-cards { grid-template-columns: 1fr; }
-    .pt-title { font-size: 1.48rem; }
-    .pt-panel-head { align-items: flex-start; flex-direction: column; }
-  }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container-fluid py-3">
-  <div class="pt-wrap">
-    <div class="pt-hero">
-      <div class="pt-hero-grid">
-        <div>
-          <h1 class="pt-title">{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho</h1>
-          <p class="pt-sub">Composição operacional com foco em clareza: painel mestre de vínculo, atuação objetiva, efetivo com leitura rápida e simulador financeiro em evidência.</p>
-          <span class="pt-status">Status automático: Rascunho</span>
-        </div>
-        <div class="pt-toolbar">
-          {% if object %}
-          <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">DOCX</a>
-          <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">PDF</a>
-          {% endif %}
-          <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Voltar</a>
-        </div>
-      </div>
-    </div>
+<div class="container-fluid pt-0 pb-4 oficio-wizard-page plano-trabalho-page" data-glance-state="closed">
+  <div class="oficio-wizard-shell">
+    {% if object %}
+      {% include 'eventos/documentos/_plano_trabalho_header.html' with pt_header_title='Editar plano de trabalho' pt_header_subtitle='Base visual reaproveitada do cadastro de Ofícios para manter o mesmo ritmo de leitura, o mesmo topo premium e a mesma organização funcional.' %}
+    {% else %}
+      {% include 'eventos/documentos/_plano_trabalho_header.html' with pt_header_title='Novo plano de trabalho' pt_header_subtitle='Estrutura guiada na mesma família visual do cadastro de Ofícios, com vínculos, efetivo, atividades e geração documental organizados em um único fluxo.' %}
+    {% endif %}
 
-    {% if form.errors %}
-    <div class="alert alert-danger" role="alert">
+    {% if form.errors or form.non_field_errors %}
+    <div class="alert alert-danger py-3">
       <strong>Existem campos inválidos.</strong>
-      <ul class="mb-0 mt-1">
-        {% for field in form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}{% endfor %}
-        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+      <ul class="mb-0 mt-2">
+        {% for field in form %}
+          {% for error in field.errors %}
+          <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
       </ul>
     </div>
     {% endif %}
 
-    <form method="post" novalidate id="pt-form">
-      {% csrf_token %}
-      <input type="hidden" name="return_to" value="{{ return_to }}">
-      <input type="hidden" name="context_source" value="{{ context_source }}">
-      <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
-      <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
-      <input type="hidden" name="data_criacao" value="{{ form.data_criacao.value|default:data_geracao_preview|date:'Y-m-d' }}">
-      {{ form.destinos_payload }}
-
-      <div class="pt-shell">
-        <section class="pt-panel">
-          <div class="pt-panel-head">
-            <h2 class="pt-panel-title">1. Painel mestre: identificação, vínculos e datas</h2>
-            <p class="pt-panel-sub">Dados automáticos com aparência de sistema e vínculo operacional consolidado</p>
+    <div class="card oficio-stage-panel">
+      <div class="card-body">
+        <div class="oficio-stage-intro plano-trabalho-stage-intro">
+          <div>
+            <span class="oficio-stage-kicker">Fluxo guiado</span>
+            <h2 class="oficio-stage-title">Plano de trabalho alinhado à base visual do cadastro de Ofícios</h2>
+            <p class="oficio-stage-description">Número automático, vínculos, coordenação, efetivo, diárias, atividades e metas organizados com a mesma lógica de bloco, hierarquia e acabamento do wizard de Ofícios.</p>
           </div>
-          <div class="pt-panel-body">
-            <div class="pt-block-grid">
-              <div class="pt-main-col-3">
-                <div class="pt-system-tile">
-                  <div class="pt-k">Número do plano</div>
-                  <div class="pt-v">{% if object %}{{ object.numero_formatado }}{% else %}{{ proximo_numero_pt }}{% endif %}</div>
-                </div>
+          <div class="plano-trabalho-intro-cards">
+            <article class="plano-trabalho-inline-card">
+              <span class="plano-trabalho-inline-card__label">Plano previsto</span>
+              <strong class="plano-trabalho-inline-card__value">{{ proximo_numero_pt }}</strong>
+            </article>
+            <article class="plano-trabalho-inline-card">
+              <span class="plano-trabalho-inline-card__label">Data base</span>
+              <strong class="plano-trabalho-inline-card__value">{{ data_geracao_preview|date:'d/m/Y' }}</strong>
+            </article>
+            <article class="plano-trabalho-inline-card">
+              <span class="plano-trabalho-inline-card__label">Efetivo total</span>
+              <strong class="plano-trabalho-inline-card__value" id="pt-intro-efetivo-total" data-empty-text="A definir">{{ form.quantidade_servidores.value|default:'A definir' }}</strong>
+            </article>
+          </div>
+        </div>
+
+        <form method="post" novalidate id="pt-form" class="oficio-stage-form plano-trabalho-form">
+          {% csrf_token %}
+          <input type="hidden" name="return_to" value="{{ return_to }}">
+          <input type="hidden" name="context_source" value="{{ context_source }}">
+          <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
+          <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
+          <input type="hidden" name="data_criacao" value="{{ form.data_criacao.value|default:data_geracao_preview|date:'Y-m-d' }}">
+          {{ form.destinos_payload }}
+
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Identificação automática e vínculos</h3>
+                <p class="oficio-stage-section-text">A mesma lógica de organização do Ofício: dados de sistema no topo, depois evento, Ofício principal, Ofícios relacionados, roteiro e período.</p>
               </div>
-              <div class="pt-main-col-3">
-                <div class="pt-system-tile">
-                  <div class="pt-k">Data de geração</div>
-                  <div class="pt-v">{{ data_geracao_preview|date:'d/m/Y' }}</div>
-                </div>
+            </div>
+
+            <div class="plano-trabalho-grid">
+              <div class="plano-trabalho-span-3">
+                <article class="plano-trabalho-system-card">
+                  <span class="plano-trabalho-system-card__label">Número do plano</span>
+                  <strong class="plano-trabalho-system-card__value">{% if object %}{{ object.numero_formatado }}{% else %}{{ proximo_numero_pt }}{% endif %}</strong>
+                </article>
               </div>
-              <div class="pt-main-col-6">
-                <label class="pt-k" for="{{ form.evento.id_for_label }}">Evento</label>
-                {{ form.evento }}
+              <div class="plano-trabalho-span-3">
+                <article class="plano-trabalho-system-card">
+                  <span class="plano-trabalho-system-card__label">Data de geração</span>
+                  <strong class="plano-trabalho-system-card__value">{{ data_geracao_preview|date:'d/m/Y' }}</strong>
+                </article>
+              </div>
+              <div class="plano-trabalho-span-3">
+                <article class="plano-trabalho-system-card">
+                  <span class="plano-trabalho-system-card__label">Status</span>
+                  <strong class="plano-trabalho-system-card__value">{% if object %}{{ object.get_status_display }}{% else %}Rascunho{% endif %}</strong>
+                </article>
+              </div>
+              <div class="plano-trabalho-span-3">
+                <article class="plano-trabalho-system-card">
+                  <span class="plano-trabalho-system-card__label">Contexto</span>
+                  <strong class="plano-trabalho-system-card__value">{% if preselected_event_id or object.evento_id %}Vinculado a evento{% else %}Cadastro livre{% endif %}</strong>
+                </article>
+              </div>
+
+              <div class="plano-trabalho-span-4" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.evento.id_for_label }}">{{ form.evento.label }}</label>
+                {% with selected=form.evento.value|stringformat:'s' %}
+                <select class="form-select" id="{{ form.evento.id_for_label }}" name="evento">
+                  <option value="">Selecione...</option>
+                  {% for evento in form.fields.evento.queryset %}
+                  <option value="{{ evento.pk }}" {% if evento.pk|stringformat:'s' == selected %}selected{% endif %}>{{ evento.titulo|default:'Evento sem título' }}</option>
+                  {% endfor %}
+                </select>
+                {% endwith %}
                 {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
               </div>
 
-              <div class="pt-main-col-7">
-                <label class="pt-k" for="{{ form.oficios_relacionados.id_for_label }}">Ofícios relacionados (múltiplo)</label>
-                <select class="form-select" id="{{ form.oficios_relacionados.id_for_label }}" name="oficios_relacionados" multiple size="5">
-                  {% with selected=form.oficios_relacionados.value %}
-                  {% for oficio in form.fields.oficios_relacionados.queryset %}
-                  <option value="{{ oficio.pk }}" data-event-id="{{ oficio.evento_id|default:'' }}" {% if selected and oficio.pk|stringformat:'s' in selected %}selected{% endif %}>{{ oficio.numero_formatado|default:'#' }} - {{ oficio.motivo|truncatechars:80 }}</option>
+              <div class="plano-trabalho-span-4" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício principal</label>
+                {% with selected=form.oficio.value|stringformat:'s' %}
+                <select class="form-select" id="{{ form.oficio.id_for_label }}" name="oficio">
+                  <option value="">Selecione...</option>
+                  {% for oficio in form.fields.oficio.queryset %}
+                  <option value="{{ oficio.pk }}" data-event-id="{{ oficio.evento_id|default:'' }}" {% if oficio.pk|stringformat:'s' == selected %}selected{% endif %}>{{ oficio.numero_formatado|default:'#' }} - {{ oficio.motivo|default:'Sem motivo'|truncatechars:72 }}</option>
                   {% endfor %}
-                  {% endwith %}
                 </select>
-                {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
+                {% endwith %}
+                {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
               </div>
 
-              <div class="pt-main-col-5">
-                <label class="pt-k" for="{{ form.roteiro.id_for_label }}">Roteiro principal</label>
+              <div class="plano-trabalho-span-4" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.roteiro.id_for_label }}">Roteiro principal</label>
+                {% with selected=form.roteiro.value|stringformat:'s' %}
                 <select class="form-select" id="{{ form.roteiro.id_for_label }}" name="roteiro">
                   <option value="">Selecione...</option>
-                  {% with selected=form.roteiro.value %}
                   {% for roteiro in form.fields.roteiro.queryset %}
-                  <option value="{{ roteiro.pk }}" data-event-id="{{ roteiro.evento_id|default:'' }}" {% if selected and roteiro.pk|stringformat:'s' == selected|stringformat:'s' %}selected{% endif %}>#{{ roteiro.pk }}{% if roteiro.evento_id %} - {{ roteiro.evento.titulo|default:'Evento'|truncatechars:45 }}{% endif %}</option>
+                  <option value="{{ roteiro.pk }}" data-event-id="{{ roteiro.evento_id|default:'' }}" {% if roteiro.pk|stringformat:'s' == selected %}selected{% endif %}>Roteiro #{{ roteiro.pk }}{% if roteiro.evento_id %} - {{ roteiro.evento.titulo|default:'Evento'|truncatechars:40 }}{% endif %}</option>
                   {% endfor %}
-                  {% endwith %}
                 </select>
+                {% endwith %}
                 {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
               </div>
 
-              <div class="pt-main-col-3">
-                <div class="form-check mt-4">
-                  {{ form.evento_data_unica }}
-                  <label class="form-check-label" for="{{ form.evento_data_unica.id_for_label }}">Data única</label>
-                </div>
+              <div class="plano-trabalho-span-8" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.oficios_relacionados.id_for_label }}">Ofícios relacionados</label>
+                {% with selected=form.oficios_relacionados.value %}
+                <select class="form-select plano-trabalho-multiselect" id="{{ form.oficios_relacionados.id_for_label }}" name="oficios_relacionados" multiple size="6">
+                  {% for oficio in form.fields.oficios_relacionados.queryset %}
+                  <option value="{{ oficio.pk }}" data-event-id="{{ oficio.evento_id|default:'' }}" {% if selected and oficio.pk|stringformat:'s' in selected %}selected{% endif %}>{{ oficio.numero_formatado|default:'#' }} - {{ oficio.motivo|default:'Sem motivo'|truncatechars:88 }}</option>
+                  {% endfor %}
+                </select>
+                {% endwith %}
+                {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
+                <div class="form-text">Use a mesma lógica do Ofício: um vínculo principal e, se necessário, outros Ofícios de apoio para consolidar o plano.</div>
               </div>
 
-              <div class="pt-main-col-4" id="col-data-inicio">
-                <label class="pt-k" for="{{ form.evento_data_inicio.id_for_label }}">Data inicial</label>
+              <div class="plano-trabalho-span-4 plano-trabalho-check-surface" data-pt-field-wrap>
+                <div class="form-check">
+                  {{ form.evento_data_unica }}
+                  <label class="form-check-label" for="{{ form.evento_data_unica.id_for_label }}">Evento em data única</label>
+                </div>
+                <p class="plano-trabalho-surface-note mb-0">Quando marcado, a data final acompanha automaticamente a data inicial.</p>
+              </div>
+
+              <div class="plano-trabalho-span-3" id="col-data-inicio" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.evento_data_inicio.id_for_label }}">Data inicial</label>
                 {{ form.evento_data_inicio }}
                 {% if form.evento_data_inicio.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_inicio.errors.0 }}</div>{% endif %}
               </div>
 
-              <div class="pt-main-col-4" id="col-data-fim">
-                <label class="pt-k" for="{{ form.evento_data_fim.id_for_label }}">Data final</label>
+              <div class="plano-trabalho-span-3" id="col-data-fim" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.evento_data_fim.id_for_label }}">Data final</label>
                 {{ form.evento_data_fim }}
                 {% if form.evento_data_fim.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_fim.errors.0 }}</div>{% endif %}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section class="pt-panel">
-          <div class="pt-panel-head">
-            <h2 class="pt-panel-title">2. Solicitante e coordenação</h2>
-            <p class="pt-panel-sub">Bloco único em duas colunas com entrada de novo servidor sem ruído visual</p>
-          </div>
-          <div class="pt-panel-body">
-            <div class="pt-block-grid">
-              <div class="pt-main-col-6">
-                <label class="pt-k" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Solicitante e coordenação</h3>
+                <p class="oficio-stage-section-text">Mesmo padrão de agrupamento do Ofício: escolhas principais na frente, exceções e persistência logo ao lado, sem blocos soltos.</p>
+              </div>
+            </div>
+
+            <div class="plano-trabalho-grid">
+              <div class="plano-trabalho-span-4" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
                 {{ form.solicitante_escolha }}
-                <div class="pt-muted-note">Escolha na base ou marque Outros para cadastrar de forma assistida.</div>
-              </div>
-              <div class="pt-main-col-4" id="col-solicitante-outros">
-                <label class="pt-k" for="{{ form.solicitante_outros.id_for_label }}">Solicitante (outros)</label>
-                {{ form.solicitante_outros }}
-              </div>
-              <div class="pt-main-col-2" id="col-salvar-solicitante">
-                <div class="form-check mt-4">
-                  {{ form.salvar_solicitante_outros }}
-                  <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">Salvar</label>
-                </div>
+                <div class="form-text">Escolha alguém já cadastrado ou use “Outros” para registrar um solicitante novo.</div>
               </div>
 
-              <div class="pt-main-col-4">
-                <label class="pt-k" for="{{ form.coordenador_operacional.id_for_label }}">Coord. operacional (opcional)</label>
+              <div class="plano-trabalho-span-5" id="col-solicitante-outros" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.solicitante_outros.id_for_label }}">Solicitante (outros)</label>
+                {{ form.solicitante_outros }}
+                {% if form.solicitante_outros.errors %}<div class="invalid-feedback d-block">{{ form.solicitante_outros.errors.0 }}</div>{% endif %}
+              </div>
+
+              <div class="plano-trabalho-span-3 plano-trabalho-check-surface" id="col-salvar-solicitante" data-pt-field-wrap>
+                <div class="form-check">
+                  {{ form.salvar_solicitante_outros }}
+                  <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">Salvar no gerenciador</label>
+                </div>
+                <p class="plano-trabalho-surface-note mb-0">Mantém o fluxo limpo quando o solicitante ainda não existe na base.</p>
+              </div>
+
+              <div class="plano-trabalho-span-4" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.coordenador_operacional.id_for_label }}">Coordenação operacional</label>
                 {{ form.coordenador_operacional }}
               </div>
-              <div class="pt-main-col-4">
-                <label class="pt-k" for="{{ form.coordenador_administrativo.id_for_label }}">Coord. administrativa</label>
+
+              <div class="plano-trabalho-span-4" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenação administrativa</label>
                 {{ form.coordenador_administrativo }}
               </div>
-              <div class="pt-main-col-4">
-                <label class="pt-k" for="{{ form.coordenador_administrativo_novo_nome.id_for_label }}">Novo servidor (se necessário)</label>
+
+              <div class="plano-trabalho-span-4" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.coordenador_administrativo_novo_nome.id_for_label }}">Novo servidor para coordenação</label>
                 {{ form.coordenador_administrativo_novo_nome }}
+                {% if form.coordenador_administrativo_novo_nome.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_administrativo_novo_nome.errors.0 }}</div>{% endif %}
               </div>
-              <div class="pt-main-col-12">
+
+              <div class="plano-trabalho-span-12 plano-trabalho-check-surface" data-pt-field-wrap>
                 <div class="form-check">
                   {{ form.salvar_coordenador_administrativo }}
-                  <label class="form-check-label" for="{{ form.salvar_coordenador_administrativo.id_for_label }}">Persistir novo servidor e usar como coordenação administrativa</label>
+                  <label class="form-check-label" for="{{ form.salvar_coordenador_administrativo.id_for_label }}">Persistir o novo servidor como coordenação administrativa</label>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section class="pt-panel">
-          <div class="pt-panel-head">
-            <h2 class="pt-panel-title">3. Atuação</h2>
-            <p class="pt-panel-sub">Objetivo, horário e destinos organizados em leitura rápida</p>
-          </div>
-          <div class="pt-panel-body">
-            <div class="pt-block-grid">
-              <div class="pt-main-col-8">
-                <label class="pt-k" for="{{ form.objetivo.id_for_label }}">Objetivo / finalidade</label>
-                {{ form.objetivo }}
-              </div>
-              <div class="pt-main-col-4">
-                <label class="pt-k" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horário padrão</label>
-                {{ form.horario_atendimento_padrao }}
-              </div>
-              <div class="pt-main-col-4" id="col-horario-manual">
-                <label class="pt-k" for="{{ form.horario_atendimento_manual.id_for_label }}">Horário manual (00:00 até 00:00)</label>
-                {{ form.horario_atendimento_manual }}
-              </div>
-              <div class="pt-main-col-8">
-                <div class="pt-k">Destinos manuais</div>
-                <div id="destinos-container"></div>
-                <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-destino">Adicionar destino</button>
-                {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
-                <p class="pt-muted-note">Adicionar ou remover linhas sem sair do fluxo principal.</p>
-              </div>
-              <div class="pt-main-col-12">
-                <label class="pt-k" for="{{ form.locais.id_for_label }}">Destinos consolidados</label>
-                {{ form.locais }}
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Atuação, destinos e agenda</h3>
+                <p class="oficio-stage-section-text">Objetivo, horário e destinos consolidados na mesma leitura limpa usada no Ofício, com menos aparência de admin cru.</p>
               </div>
             </div>
-          </div>
-        </section>
 
-        <section class="pt-panel">
-          <div class="pt-panel-head">
-            <h2 class="pt-panel-title">4. Coração operacional: efetivo e simulador de diárias</h2>
-            <p class="pt-panel-sub">Leitura simultânea de equipe e impacto financeiro</p>
-          </div>
-          <div class="pt-panel-body">
-            <div class="pt-ops-grid">
+            <div class="plano-trabalho-grid">
+              <div class="plano-trabalho-span-8" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.objetivo.id_for_label }}">Objetivo / finalidade</label>
+                {{ form.objetivo }}
+                {% if form.objetivo.errors %}<div class="invalid-feedback d-block">{{ form.objetivo.errors.0 }}</div>{% endif %}
+              </div>
+
+              <div class="plano-trabalho-span-4" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horário padrão</label>
+                {{ form.horario_atendimento_padrao }}
+              </div>
+
+              <div class="plano-trabalho-span-4" id="col-horario-manual" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.horario_atendimento_manual.id_for_label }}">Horário manual</label>
+                {{ form.horario_atendimento_manual }}
+                {% if form.horario_atendimento_manual.errors %}<div class="invalid-feedback d-block">{{ form.horario_atendimento_manual.errors.0 }}</div>{% endif %}
+              </div>
+
+              <div class="plano-trabalho-span-8" data-pt-field-wrap>
+                <div class="plano-trabalho-destinos-panel">
+                  <div class="plano-trabalho-destinos-panel__head">
+                    <div>
+                      <h4 class="plano-trabalho-mini-title mb-1">Destinos do plano</h4>
+                      <p class="plano-trabalho-surface-note mb-0">Adicione ou remova destinos sem sair do fluxo. O resumo consolidado é atualizado automaticamente.</p>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-destino">Adicionar destino</button>
+                  </div>
+                  <div id="destinos-container" class="plano-trabalho-destino-stack"></div>
+                  {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
+                </div>
+              </div>
+
+              <div class="plano-trabalho-span-4" data-pt-field-wrap>
+                <label class="form-label" for="{{ form.locais.id_for_label }}">Destinos consolidados</label>
+                <div class="d-none">{{ form.locais }}</div>
+                <div class="plano-trabalho-preview-surface plano-trabalho-preview-surface--readonly" id="pt-locais-preview" data-empty-text="Os destinos consolidados aparecem aqui conforme você preenche o bloco ao lado.">
+                  {% if form.locais.value %}{{ form.locais.value }}{% else %}Os destinos consolidados aparecem aqui conforme você preenche o bloco ao lado.{% endif %}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
               <div>
+                <h3 class="oficio-stage-section-title">Efetivo, cargos e simulador de diárias</h3>
+                <p class="oficio-stage-section-text">Mesmo padrão de superfície do Ofício: um lado concentra o efetivo e o outro mostra o simulador já pronto para leitura e geração.</p>
+              </div>
+            </div>
+
+            <div class="plano-trabalho-two-column">
+              <div class="plano-trabalho-surface-stack">
+                <div class="plano-trabalho-inline-metrics">
+                  <article class="plano-trabalho-inline-card">
+                    <span class="plano-trabalho-inline-card__label">Total de efetivos</span>
+                    <strong class="plano-trabalho-inline-card__value" id="pt-efetivo-total-display">0</strong>
+                  </article>
+                  <article class="plano-trabalho-inline-card">
+                    <span class="plano-trabalho-inline-card__label">Cargos ativos</span>
+                    <strong class="plano-trabalho-inline-card__value" id="pt-efetivo-cargos-display">0</strong>
+                  </article>
+                  <article class="plano-trabalho-inline-card">
+                    <span class="plano-trabalho-inline-card__label">Base da simulação</span>
+                    <strong class="plano-trabalho-inline-card__value" id="pt-diarias-base-display">A definir</strong>
+                  </article>
+                </div>
+
                 {{ efetivo_formset.management_form }}
-                <div class="pt-efetivo-stack">
+                <div class="plano-trabalho-efetivo-stack">
                   {% for row in efetivo_formset %}
-                  <div class="pt-efetivo-row">
-                    <div class="row g-2 align-items-end">
-                      <div class="col-md-7">{{ row.id }}<label class="pt-k">Cargo</label>{{ row.cargo }}</div>
-                      <div class="col-md-3"><label class="pt-k">Quantidade</label>{{ row.quantidade }}</div>
-                      <div class="col-md-2"><div class="form-check mt-4">{{ row.DELETE }}<label class="form-check-label" for="{{ row.DELETE.id_for_label }}">Remover</label></div></div>
+                  <div class="plano-trabalho-efetivo-row" data-pt-efetivo-row>
+                    {{ row.id }}
+                    <div class="plano-trabalho-grid">
+                      <div class="plano-trabalho-span-7">
+                        <label class="form-label" for="{{ row.cargo.id_for_label }}">Cargo</label>
+                        {{ row.cargo }}
+                      </div>
+                      <div class="plano-trabalho-span-3">
+                        <label class="form-label" for="{{ row.quantidade.id_for_label }}">Quantidade</label>
+                        {{ row.quantidade }}
+                      </div>
+                      <div class="plano-trabalho-span-2 plano-trabalho-check-surface">
+                        <div class="form-check">
+                          {{ row.DELETE }}
+                          <label class="form-check-label" for="{{ row.DELETE.id_for_label }}">Remover</label>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   {% endfor %}
                 </div>
-                <div class="row g-3 mt-1">
-                  <div class="col-md-6">
-                    <label class="pt-k" for="{{ form.quantidade_servidores.id_for_label }}">Total de efetivos (manual opcional)</label>
+
+                <div class="plano-trabalho-grid">
+                  <div class="plano-trabalho-span-4">
+                    <label class="form-label" for="{{ form.quantidade_servidores.id_for_label }}">Efetivo total consolidado</label>
                     {{ form.quantidade_servidores }}
+                    <div class="form-text">Esse campo acompanha automaticamente o somatório dos cargos acima.</div>
+                  </div>
+                  <div class="plano-trabalho-span-8">
+                    <div class="plano-trabalho-preview-surface" id="pt-efetivo-breakdown">
+                      O detalhamento por cargo aparece aqui conforme o efetivo é preenchido.
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div class="pt-sim">
-                <div class="pt-sim-cards">
-                  <div class="pt-sim-tile">
-                    <div class="pt-k">Composição de diárias</div>
+              <div class="plano-trabalho-simulator-panel">
+                <div class="plano-trabalho-simulator-grid">
+                  <article class="plano-trabalho-simulator-card">
+                    <span class="plano-trabalho-system-card__label">Composição de diárias</span>
                     {{ form.diarias_quantidade }}
-                  </div>
-                  <div class="pt-sim-tile">
-                    <div class="pt-k">Valor por efetivo</div>
+                  </article>
+                  <article class="plano-trabalho-simulator-card">
+                    <span class="plano-trabalho-system-card__label">Valor por efetivo</span>
                     {{ form.diarias_valor_unitario }}
-                  </div>
-                  <div class="pt-sim-tile">
-                    <div class="pt-k">Valor total</div>
+                  </article>
+                  <article class="plano-trabalho-simulator-card">
+                    <span class="plano-trabalho-system-card__label">Valor total</span>
                     {{ form.diarias_valor_total }}
+                  </article>
+                </div>
+
+                <div class="plano-trabalho-preview-surface plano-trabalho-preview-surface--readonly">
+                  <span class="plano-trabalho-system-card__label">Valor total por extenso</span>
+                  <div class="d-none">{{ form.diarias_valor_extenso }}</div>
+                  <div id="pt-diarias-extenso-preview" data-empty-text="O valor por extenso aparecerá aqui depois do salvamento com o efetivo consolidado.">
+                    {% if form.diarias_valor_extenso.value %}{{ form.diarias_valor_extenso.value|linebreaksbr }}{% else %}O valor por extenso aparecerá aqui depois do salvamento com o efetivo consolidado.{% endif %}
                   </div>
                 </div>
-                <div>
-                  <label class="pt-k" for="{{ form.diarias_valor_extenso.id_for_label }}">Valor total por extenso</label>
-                  {{ form.diarias_valor_extenso }}
+
+                <p class="plano-trabalho-surface-note mb-0">A simulação segue o mesmo raciocínio do Ofício e usa apenas o total de efetivos consolidado no bloco ao lado.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Atividades, metas automáticas e recursos</h3>
+                <p class="oficio-stage-section-text">Marque as atividades e veja as metas aparecerem automaticamente, em uma área bonita, legível e alinhada ao restante do formulário.</p>
+              </div>
+            </div>
+
+            <div class="plano-trabalho-two-column plano-trabalho-two-column--activities">
+              <div class="plano-trabalho-activities-panel">
+                <div class="plano-trabalho-activities-grid">
+                  {% for atividade in plano_trabalho_atividades_catalogo %}
+                  <label class="plano-trabalho-activity-card" for="pt-atividade-{{ atividade.codigo }}">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      name="atividades_codigos"
+                      value="{{ atividade.codigo }}"
+                      id="pt-atividade-{{ atividade.codigo }}"
+                      {% if atividade.codigo in pt_selected_activity_codes %}checked{% endif %}
+                    >
+                    <span class="plano-trabalho-activity-card__copy">
+                      <strong>{{ atividade.nome }}</strong>
+                      <small>Gera meta automática vinculada a esta atividade.</small>
+                    </span>
+                  </label>
+                  {% endfor %}
                 </div>
-                <p class="pt-muted-note">A simulação considera o vínculo evento/ofícios/roteiro e multiplica pela composição do efetivo.</p>
               </div>
-            </div>
-          </div>
-        </section>
 
-        <section class="pt-panel">
-          <div class="pt-panel-head">
-            <h2 class="pt-panel-title">5. Catálogo de atividades</h2>
-            <p class="pt-panel-sub">Seleção em grid com peso visual equilibrado</p>
-          </div>
-          <div class="pt-panel-body">
-            <div class="pt-grid-activities">
-              {% for checkbox in form.atividades_codigos %}
-              <div class="pt-act"><div class="form-check mb-0">{{ checkbox.tag }}<label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label></div></div>
-              {% endfor %}
-            </div>
-          </div>
-        </section>
+              <div class="plano-trabalho-surface-stack">
+                <div class="plano-trabalho-preview-surface plano-trabalho-preview-surface--readonly">
+                  <div class="plano-trabalho-preview-head">
+                    <div>
+                      <span class="plano-trabalho-system-card__label">Metas automáticas</span>
+                      <strong class="plano-trabalho-mini-title">Aparecem imediatamente conforme a seleção</strong>
+                    </div>
+                  </div>
+                  <div class="d-none">{{ form.metas_formatadas }}</div>
+                  <div class="plano-trabalho-generated-list" id="pt-metas-preview-rendered" data-empty-text="Selecione as atividades para visualizar as metas automáticas aqui.">
+                    Selecione as atividades para visualizar as metas automáticas aqui.
+                  </div>
+                </div>
 
-        <section class="pt-panel">
-          <div class="pt-panel-head">
-            <h2 class="pt-panel-title">6. Metas automáticas e recursos</h2>
-            <p class="pt-panel-sub">Prévia elegante de metas + recursos + resumo operacional</p>
-          </div>
-          <div class="pt-panel-body">
-            <div class="pt-meta-grid">
-              <div class="pt-preview">
-                <label class="pt-k" for="{{ form.metas_formatadas.id_for_label }}">Metas (automático por atividade)</label>
-                {{ form.metas_formatadas }}
-              </div>
-              <div class="pt-preview">
-                <label class="pt-k" for="{{ form.recursos_texto.id_for_label }}">Recursos necessários</label>
-                {{ form.recursos_texto }}
+                <div class="plano-trabalho-preview-surface">
+                  <label class="form-label" for="{{ form.recursos_texto.id_for_label }}">Recursos necessários</label>
+                  {{ form.recursos_texto }}
+                </div>
+
+                <div class="plano-trabalho-preview-surface">
+                  <label class="form-label" for="{{ form.efetivo_resumo.id_for_label }}">Resumo operacional do efetivo</label>
+                  {{ form.efetivo_resumo }}
+                </div>
               </div>
             </div>
-            <div class="pt-preview mt-2">
-              <label class="pt-k" for="{{ form.efetivo_resumo.id_for_label }}">Resumo textual do efetivo</label>
-              {{ form.efetivo_resumo }}
-            </div>
+          </section>
+
+          <div class="oficio-wizard-footer-actions">
+            <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Voltar</a>
+            {% if object %}
+            <a class="btn btn-doc-action btn-doc-action--secondary" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">
+              <i class="bi bi-filetype-docx"></i>
+              <span>DOCX</span>
+            </a>
+            <a class="btn btn-doc-action btn-doc-action--pdf" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">
+              <i class="bi bi-filetype-pdf"></i>
+              <span>PDF</span>
+            </a>
+            {% endif %}
+            <button class="btn btn-primary" type="submit">Salvar plano e preparar geração</button>
           </div>
-        </section>
+        </form>
       </div>
-
-      <div class="pt-actions">
-        <div class="d-flex gap-2 flex-wrap">
-          <button class="btn btn-primary" type="submit">Salvar plano e preparar geração</button>
-          {% if object %}
-          <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">Gerar DOCX</a>
-          <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">Gerar PDF</a>
-          {% endif %}
-        </div>
-        <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Cancelar</a>
-      </div>
-    </form>
+    </div>
   </div>
 </div>
+
+{{ plano_trabalho_atividades_catalogo|json_script:"pt-activities-catalog-data" }}
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/oficio_wizard.js' %}"></script>
 <script>
   (function () {
+    const form = document.getElementById('pt-form');
+    if (!form) {
+      return;
+    }
+
     const eventSelect = document.getElementById('{{ form.evento.id_for_label }}');
+    const primaryOficioSelect = document.getElementById('{{ form.oficio.id_for_label }}');
     const oficiosSelect = document.getElementById('{{ form.oficios_relacionados.id_for_label }}');
     const roteiroSelect = document.getElementById('{{ form.roteiro.id_for_label }}');
     const solicitanteSelect = document.getElementById('{{ form.solicitante_escolha.id_for_label }}');
@@ -658,95 +466,130 @@
     const horarioPadrao = document.getElementById('{{ form.horario_atendimento_padrao.id_for_label }}');
     const horarioManual = document.getElementById('{{ form.horario_atendimento_manual.id_for_label }}');
     const dataUnica = document.getElementById('{{ form.evento_data_unica.id_for_label }}');
+    const dataInicio = document.getElementById('{{ form.evento_data_inicio.id_for_label }}');
+    const dataFim = document.getElementById('{{ form.evento_data_fim.id_for_label }}');
     const colDataFim = document.getElementById('col-data-fim');
     const destinosContainer = document.getElementById('destinos-container');
     const destinosPayload = document.getElementById('{{ form.destinos_payload.id_for_label }}');
+    const locaisInput = document.getElementById('{{ form.locais.id_for_label }}');
+    const locaisPreview = document.getElementById('pt-locais-preview');
+    const quantidadeServidores = document.getElementById('{{ form.quantidade_servidores.id_for_label }}');
+    const efetivoResumo = document.getElementById('{{ form.efetivo_resumo.id_for_label }}');
+    const diariasExtenso = document.getElementById('{{ form.diarias_valor_extenso.id_for_label }}');
+    const diariasExtensoPreview = document.getElementById('pt-diarias-extenso-preview');
     const cidadesApiBase = '{{ api_cidades_por_estado_url|escapejs }}';
+    const activityCatalog = JSON.parse(document.getElementById('pt-activities-catalog-data').textContent || '[]');
+    const activityMap = {};
+    let efetivoResumoTouched = false;
 
-    function toggleByValue(source, target, expected) {
-      if (!source || !target) return;
-      const col =
-        target.closest('[id^="col-"]') ||
-        target.closest('.pt-main-col-3') ||
-        target.closest('.pt-main-col-4') ||
-        target.closest('.pt-main-col-5') ||
-        target.closest('.pt-main-col-6') ||
-        target.closest('.pt-main-col-7') ||
-        target.closest('.pt-main-col-8') ||
-        target.closest('.pt-main-col-12') ||
-        target.closest('.col-md-4') ||
-        target.closest('.col-lg-4') ||
-        target.closest('.col-md-12');
-      if (!col) return;
-      col.style.display = source.value === expected ? '' : 'none';
+    activityCatalog.forEach((item) => {
+      activityMap[item.codigo] = item;
+    });
+
+    function getFieldWrap(element) {
+      return element ? element.closest('[data-pt-field-wrap]') : null;
     }
 
-    function syncSolicitante() {
-      toggleByValue(solicitanteSelect, solicitanteOutros, '__OUTROS__');
-      const colSalvar = document.getElementById('col-salvar-solicitante');
-      if (colSalvar && solicitanteSelect) {
-        colSalvar.style.display = solicitanteSelect.value === '__OUTROS__' ? '' : 'none';
+    function toggleFieldWrap(element, shouldShow) {
+      const wrap = getFieldWrap(element);
+      if (wrap) {
+        wrap.style.display = shouldShow ? '' : 'none';
       }
     }
 
+    function optionLabel(select) {
+      if (!select) return '';
+      const option = select.options[select.selectedIndex];
+      return option ? (option.textContent || '').trim() : '';
+    }
+
+    function compactOficioLabel(label) {
+      const text = String(label || '').trim();
+      if (!text) return '';
+      return text.split(' - ')[0] || text;
+    }
+
+    function setSummaryValue(id, value, fallback) {
+      const element = document.getElementById(id);
+      if (!element) return;
+      const text = String(value || '').trim();
+      element.textContent = text || element.getAttribute('data-empty-text') || fallback || '—';
+    }
+
+    function syncSolicitante() {
+      const usingOutros = solicitanteSelect && solicitanteSelect.value === '__OUTROS__';
+      toggleFieldWrap(solicitanteOutros, usingOutros);
+      toggleFieldWrap(salvarSolicitante, usingOutros);
+    }
+
     function syncHorario() {
-      toggleByValue(horarioPadrao, horarioManual, '__OUTROS__');
+      toggleFieldWrap(horarioManual, horarioPadrao && horarioPadrao.value === '__OUTROS__');
     }
 
     function syncDataUnica() {
       if (!dataUnica || !colDataFim) return;
       colDataFim.style.display = dataUnica.checked ? 'none' : '';
+      if (dataUnica.checked && dataInicio && dataFim) {
+        dataFim.value = dataInicio.value;
+      }
     }
 
     function filterByEvent(selectEl) {
       if (!selectEl || !eventSelect) return;
-      const eventId = (eventSelect.value || '').trim();
-      Array.from(selectEl.options).forEach((opt) => {
-        if (!opt.value) {
-          opt.hidden = false;
+      const eventId = String(eventSelect.value || '').trim();
+      Array.from(selectEl.options).forEach((option) => {
+        if (!option.value) {
+          option.hidden = false;
           return;
         }
-        const optEvent = (opt.dataset.eventId || '').trim();
-        opt.hidden = !!eventId && !!optEvent && optEvent !== eventId;
+        const optEvent = String(option.dataset.eventId || '').trim();
+        option.hidden = !!eventId && !!optEvent && optEvent !== eventId;
       });
     }
 
     async function fetchCitiesByEstado(estadoId) {
       if (!estadoId) return [];
       const url = cidadesApiBase.replace('/0/', '/' + estadoId + '/');
-      const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-      if (!res.ok) return [];
-      return res.json();
+      const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!response.ok) return [];
+      return response.json();
     }
 
     async function mountCityOptions(selectEl, estadoId, selectedCidadeId) {
+      if (!selectEl) return;
       selectEl.innerHTML = '<option value="">Selecione...</option>';
       const cidades = await fetchCitiesByEstado(estadoId);
       cidades.forEach((cidade) => {
-        const opt = document.createElement('option');
-        opt.value = cidade.id;
-        opt.textContent = cidade.nome;
+        const option = document.createElement('option');
+        option.value = cidade.id;
+        option.textContent = cidade.nome;
         if (String(selectedCidadeId || '') === String(cidade.id)) {
-          opt.selected = true;
+          option.selected = true;
         }
-        selectEl.appendChild(opt);
+        selectEl.appendChild(option);
       });
     }
 
     async function addDestinoRow(destino) {
+      if (!destinosContainer) return;
       const row = document.createElement('div');
-      row.className = 'pt-dest-row';
+      row.className = 'plano-trabalho-destino-row';
       row.innerHTML = `
-        <div class="row g-2 align-items-end">
-          <div class="col-md-5">
-            <label class="pt-k">Estado</label>
-            <select class="form-select destino-estado"><option value="">Selecione...</option>{% for estado in estados_choices %}<option value="{{ estado.pk }}">{{ estado.nome }} ({{ estado.sigla }})</option>{% endfor %}</select>
+        <div class="plano-trabalho-grid">
+          <div class="plano-trabalho-span-5">
+            <label class="form-label">Estado</label>
+            <select class="form-select destino-estado">
+              <option value="">Selecione...</option>
+              {% for estado in estados_choices %}<option value="{{ estado.pk }}">{{ estado.nome }} ({{ estado.sigla }})</option>{% endfor %}
+            </select>
           </div>
-          <div class="col-md-5">
-            <label class="pt-k">Cidade</label>
+          <div class="plano-trabalho-span-5">
+            <label class="form-label">Cidade</label>
             <select class="form-select destino-cidade"><option value="">Selecione...</option></select>
           </div>
-          <div class="col-md-2"><button type="button" class="btn btn-outline-danger w-100 btn-rem-destino">Remover</button></div>
+          <div class="plano-trabalho-span-2 plano-trabalho-destino-row__action">
+            <button type="button" class="btn btn-outline-danger btn-rem-destino">Remover</button>
+          </div>
         </div>`;
       destinosContainer.appendChild(row);
       const estadoSelect = row.querySelector('.destino-estado');
@@ -758,19 +601,19 @@
     }
 
     function collectDestinos() {
-      const rows = Array.from(destinosContainer.querySelectorAll('.pt-dest-row'));
+      const rows = Array.from(destinosContainer.querySelectorAll('.plano-trabalho-destino-row'));
       const data = [];
       rows.forEach((row) => {
-        const estadoSel = row.querySelector('.destino-estado');
-        const cidadeSel = row.querySelector('.destino-cidade');
-        if (!estadoSel || !cidadeSel || !estadoSel.value || !cidadeSel.value) return;
-        const cidadeNome = cidadeSel.options[cidadeSel.selectedIndex] ? cidadeSel.options[cidadeSel.selectedIndex].textContent : '';
-        const estadoNome = estadoSel.options[estadoSel.selectedIndex] ? estadoSel.options[estadoSel.selectedIndex].textContent : '';
+        const estadoSelect = row.querySelector('.destino-estado');
+        const cidadeSelect = row.querySelector('.destino-cidade');
+        if (!estadoSelect || !cidadeSelect || !estadoSelect.value || !cidadeSelect.value) return;
+        const cidadeNome = cidadeSelect.options[cidadeSelect.selectedIndex] ? cidadeSelect.options[cidadeSelect.selectedIndex].textContent : '';
+        const estadoNome = estadoSelect.options[estadoSelect.selectedIndex] ? estadoSelect.options[estadoSelect.selectedIndex].textContent : '';
         const siglaMatch = estadoNome.match(/\(([^)]+)\)\s*$/);
         data.push({
-          estado_id: parseInt(estadoSel.value, 10),
+          estado_id: parseInt(estadoSelect.value, 10),
           estado_sigla: siglaMatch ? siglaMatch[1] : '',
-          cidade_id: parseInt(cidadeSel.value, 10),
+          cidade_id: parseInt(cidadeSelect.value, 10),
           cidade_nome: cidadeNome,
         });
       });
@@ -779,17 +622,20 @@
     }
 
     function syncLocaisFromDestinos() {
-      const destinos = collectDestinos();
-      const locaisInput = document.getElementById('{{ form.locais.id_for_label }}');
       if (!locaisInput) return;
-      locaisInput.value = destinos.map((d) => d.cidade_nome + '/' + d.estado_sigla).join(', ');
+      const destinos = collectDestinos();
+      const text = destinos.map((item) => item.cidade_nome + '/' + item.estado_sigla).join(', ');
+      locaisInput.value = text;
+      if (locaisPreview) {
+        locaisPreview.textContent = text || locaisPreview.getAttribute('data-empty-text') || 'Destinos preenchidos no formulário';
+      }
     }
 
     async function bootstrapDestinos() {
       let initial = [];
       try {
         initial = JSON.parse(destinosPayload.value || '[]');
-      } catch (_e) {
+      } catch (_error) {
         initial = [];
       }
       if (!Array.isArray(initial) || !initial.length) {
@@ -801,56 +647,259 @@
       syncLocaisFromDestinos();
     }
 
-    document.getElementById('btn-add-destino').addEventListener('click', async () => {
-      await addDestinoRow({ estado_id: '', cidade_id: '' });
-    });
+    function getSelectedActivityCodes() {
+      return Array.from(form.querySelectorAll('input[name="atividades_codigos"]:checked')).map((input) => input.value);
+    }
 
-    destinosContainer.addEventListener('change', async (event) => {
-      const row = event.target.closest('.pt-dest-row');
-      if (!row) return;
-      const estadoSelect = row.querySelector('.destino-estado');
-      const cidadeSelect = row.querySelector('.destino-cidade');
-      if (event.target.classList.contains('destino-estado')) {
-        await mountCityOptions(cidadeSelect, estadoSelect.value, '');
+    function renderActivitiesPreview() {
+      const selectedCodes = getSelectedActivityCodes();
+      const selectedItems = selectedCodes.map((code) => activityMap[code]).filter(Boolean);
+      const metasField = document.getElementById('{{ form.metas_formatadas.id_for_label }}');
+      const metasPreview = document.getElementById('pt-metas-preview-rendered');
+      const activitiesList = document.getElementById('pt-summary-activities-list');
+      const activitiesMeta = document.getElementById('pt-summary-activities-meta');
+
+      if (metasField) {
+        metasField.value = selectedItems.map((item) => item.meta).join('\n\n');
       }
-      syncLocaisFromDestinos();
+
+      if (metasPreview) {
+        metasPreview.innerHTML = '';
+        if (!selectedItems.length) {
+          metasPreview.textContent = metasPreview.getAttribute('data-empty-text') || 'Selecione as atividades para visualizar as metas automáticas aqui.';
+        } else {
+          selectedItems.forEach((item) => {
+            const block = document.createElement('article');
+            block.className = 'plano-trabalho-generated-item';
+            block.innerHTML = `<span class="plano-trabalho-generated-item__label">${item.nome}</span><p>${item.meta}</p>`;
+            metasPreview.appendChild(block);
+          });
+        }
+      }
+
+      if (activitiesMeta) {
+        activitiesMeta.textContent = selectedItems.length
+          ? (selectedItems.length + ' atividade(s) selecionada(s)')
+          : (activitiesMeta.getAttribute('data-empty-text') || 'Nenhuma atividade selecionada');
+      }
+
+      if (activitiesList) {
+        activitiesList.innerHTML = '';
+        if (!selectedItems.length) {
+          const empty = document.createElement('span');
+          empty.className = 'oficio-glance-empty';
+          empty.textContent = 'Selecione as atividades para acompanhar aqui o recorte operacional do plano.';
+          activitiesList.appendChild(empty);
+        } else {
+          selectedItems.forEach((item) => {
+            const chip = document.createElement('span');
+            chip.className = 'oficio-glance-chip';
+            chip.textContent = item.nome;
+            activitiesList.appendChild(chip);
+          });
+        }
+      }
+    }
+
+    function syncHeaderSummary() {
+      setSummaryValue('pt-summary-evento', optionLabel(eventSelect), 'Sem evento vinculado');
+      setSummaryValue('pt-summary-roteiro', optionLabel(roteiroSelect), 'Sem roteiro definido');
+
+      const oficioLabels = [];
+      const seen = new Set();
+      const pushLabel = (label) => {
+        const normalized = compactOficioLabel(label);
+        if (!normalized || seen.has(normalized)) return;
+        seen.add(normalized);
+        oficioLabels.push(normalized);
+      };
+
+      pushLabel(optionLabel(primaryOficioSelect));
+      if (oficiosSelect) {
+        Array.from(oficiosSelect.selectedOptions).forEach((option) => pushLabel(option.textContent || ''));
+      }
+      setSummaryValue('pt-summary-oficios', oficioLabels.join(', '), 'Sem ofícios vinculados');
+
+      const inicio = dataInicio ? String(dataInicio.value || '').trim() : '';
+      const fim = dataFim ? String(dataFim.value || '').trim() : '';
+      if (inicio) {
+        const inicioLabel = inicio.split('-').reverse().join('/');
+        const fimLabel = fim ? fim.split('-').reverse().join('/') : '';
+        const periodLabel = (dataUnica && dataUnica.checked) || !fimLabel || inicioLabel === fimLabel
+          ? inicioLabel
+          : (inicioLabel + ' a ' + fimLabel);
+        setSummaryValue('pt-summary-periodo', periodLabel, 'A definir');
+      } else {
+        setSummaryValue('pt-summary-periodo', '', 'A definir');
+      }
+
+      const solicitanteLabel = solicitanteSelect && solicitanteSelect.value === '__OUTROS__'
+        ? String((solicitanteOutros && solicitanteOutros.value) || '').trim()
+        : optionLabel(solicitanteSelect);
+      setSummaryValue('pt-summary-solicitante', solicitanteLabel, 'A definir');
+      setSummaryValue('pt-summary-destinos', locaisInput ? locaisInput.value : '', 'Destinos preenchidos no formulário');
+    }
+
+    function syncEfetivoMetrics() {
+      const rows = Array.from(form.querySelectorAll('[data-pt-efetivo-row]'));
+      const breakdown = [];
+      let total = 0;
+      let cargos = 0;
+
+      rows.forEach((row) => {
+        const cargoSelect = row.querySelector('select[name$="-cargo"]');
+        const quantidadeInput = row.querySelector('input[name$="-quantidade"]');
+        const deleteInput = row.querySelector('input[name$="-DELETE"]');
+        if (!cargoSelect || !quantidadeInput || (deleteInput && deleteInput.checked)) return;
+        const quantidade = parseInt(quantidadeInput.value || '0', 10);
+        if (!cargoSelect.value || Number.isNaN(quantidade) || quantidade <= 0) return;
+        cargos += 1;
+        total += quantidade;
+        breakdown.push(quantidade + ' x ' + optionLabel(cargoSelect));
+      });
+
+      if (quantidadeServidores) {
+        quantidadeServidores.value = total > 0 ? String(total) : '';
+      }
+
+      const introTotal = document.getElementById('pt-intro-efetivo-total');
+      const totalDisplay = document.getElementById('pt-efetivo-total-display');
+      const cargosDisplay = document.getElementById('pt-efetivo-cargos-display');
+      const baseDisplay = document.getElementById('pt-diarias-base-display');
+      const breakdownPreview = document.getElementById('pt-efetivo-breakdown');
+
+      if (introTotal) {
+        introTotal.textContent = total > 0 ? (total + ' efetivo(s)') : (introTotal.getAttribute('data-empty-text') || 'A definir');
+      }
+      if (totalDisplay) totalDisplay.textContent = total > 0 ? String(total) : '0';
+      if (cargosDisplay) cargosDisplay.textContent = cargos > 0 ? String(cargos) : '0';
+      if (baseDisplay) baseDisplay.textContent = total > 0 ? (total + ' efetivo(s)') : 'A definir';
+      if (breakdownPreview) {
+        breakdownPreview.textContent = breakdown.length ? breakdown.join(', ') : 'O detalhamento por cargo aparece aqui conforme o efetivo é preenchido.';
+      }
+      if (efetivoResumo && !efetivoResumoTouched && breakdown.length) {
+        efetivoResumo.value = breakdown.join('\n');
+      }
+    }
+
+    function syncReadonlyPreviews() {
+      if (!diariasExtenso || !diariasExtensoPreview) return;
+      const text = String(diariasExtenso.value || '').trim();
+      diariasExtensoPreview.innerHTML = text
+        ? text.replace(/\n/g, '<br>')
+        : (diariasExtensoPreview.getAttribute('data-empty-text') || 'O valor por extenso aparecerá aqui depois do salvamento com o efetivo consolidado.');
+    }
+
+    const addDestinoButton = document.getElementById('btn-add-destino');
+    if (addDestinoButton) {
+      addDestinoButton.addEventListener('click', async () => {
+        await addDestinoRow({ estado_id: '', cidade_id: '' });
+      });
+    }
+
+    if (destinosContainer) {
+      destinosContainer.addEventListener('change', async (event) => {
+        const row = event.target.closest('.plano-trabalho-destino-row');
+        if (!row) return;
+        const estadoSelect = row.querySelector('.destino-estado');
+        const cidadeSelect = row.querySelector('.destino-cidade');
+        if (event.target.classList.contains('destino-estado')) {
+          await mountCityOptions(cidadeSelect, estadoSelect.value, '');
+        }
+        syncLocaisFromDestinos();
+        syncHeaderSummary();
+      });
+
+      destinosContainer.addEventListener('click', (event) => {
+        const removeButton = event.target.closest('.btn-rem-destino');
+        if (!removeButton) return;
+        const rows = destinosContainer.querySelectorAll('.plano-trabalho-destino-row');
+        if (rows.length <= 1) return;
+        removeButton.closest('.plano-trabalho-destino-row').remove();
+        syncLocaisFromDestinos();
+        syncHeaderSummary();
+      });
+    }
+
+    form.addEventListener('change', (event) => {
+      if (event.target && event.target.name === 'atividades_codigos') {
+        renderActivitiesPreview();
+      }
+      if (event.target && (event.target.name || '').indexOf('efetivo-') === 0) {
+        syncEfetivoMetrics();
+      }
+      syncHeaderSummary();
+      syncReadonlyPreviews();
     });
 
-    destinosContainer.addEventListener('click', (event) => {
-      const btn = event.target.closest('.btn-rem-destino');
-      if (!btn) return;
-      const rows = destinosContainer.querySelectorAll('.pt-dest-row');
-      if (rows.length <= 1) return;
-      btn.closest('.pt-dest-row').remove();
-      syncLocaisFromDestinos();
+    form.addEventListener('input', (event) => {
+      if (event.target === efetivoResumo) {
+        efetivoResumoTouched = true;
+      }
+      if (event.target && (event.target.name || '').indexOf('efetivo-') === 0) {
+        syncEfetivoMetrics();
+      }
+      syncHeaderSummary();
     });
 
-    document.getElementById('pt-form').addEventListener('submit', () => {
+    form.addEventListener('submit', () => {
       collectDestinos();
+      renderActivitiesPreview();
+      syncEfetivoMetrics();
     });
 
     if (eventSelect) {
       eventSelect.addEventListener('change', () => {
+        filterByEvent(primaryOficioSelect);
         filterByEvent(oficiosSelect);
         filterByEvent(roteiroSelect);
+        syncHeaderSummary();
       });
+      filterByEvent(primaryOficioSelect);
       filterByEvent(oficiosSelect);
       filterByEvent(roteiroSelect);
     }
+
     if (solicitanteSelect) {
       solicitanteSelect.addEventListener('change', syncSolicitante);
-      syncSolicitante();
     }
     if (horarioPadrao) {
       horarioPadrao.addEventListener('change', syncHorario);
-      syncHorario();
     }
     if (dataUnica) {
-      dataUnica.addEventListener('change', syncDataUnica);
-      syncDataUnica();
+      dataUnica.addEventListener('change', () => {
+        syncDataUnica();
+        syncHeaderSummary();
+      });
+    }
+    if (dataInicio) {
+      dataInicio.addEventListener('change', () => {
+        if (dataUnica && dataUnica.checked && dataFim) {
+          dataFim.value = dataInicio.value;
+        }
+        syncHeaderSummary();
+      });
+    }
+    if (dataFim) {
+      dataFim.addEventListener('change', syncHeaderSummary);
+    }
+    if (solicitanteOutros) {
+      solicitanteOutros.addEventListener('input', syncHeaderSummary);
     }
 
-    bootstrapDestinos();
+    if (quantidadeServidores) {
+      quantidadeServidores.readOnly = true;
+    }
+
+    syncSolicitante();
+    syncHorario();
+    syncDataUnica();
+    bootstrapDestinos().then(() => {
+      renderActivitiesPreview();
+      syncEfetivoMetrics();
+      syncHeaderSummary();
+      syncReadonlyPreviews();
+    });
   })();
 </script>
 {% endblock %}
