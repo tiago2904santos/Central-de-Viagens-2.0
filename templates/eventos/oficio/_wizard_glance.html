@@ -7,44 +7,52 @@
   aria-hidden="true"
   role="region"
 >
-  <div class="oficio-glance-layout">
-    <div class="oficio-glance-summary">
-      <div class="oficio-glance-row">
-        <article class="oficio-glance-card">
-          <span class="oficio-glance-item-label">Ofício</span>
-          <strong class="oficio-glance-item-value" id="summary-oficio" data-empty-text="—">{{ wizard_glance.oficio|default:"—" }}</strong>
-        </article>
+  <div class="oficio-glance-panel-inner">
+    <div class="oficio-glance-layout">
+      <div class="oficio-glance-summary">
+        <div class="oficio-glance-row">
+          <article class="oficio-glance-card">
+            <span class="oficio-glance-item-label">Ofício</span>
+            <strong class="oficio-glance-item-value" id="summary-oficio" data-empty-text="—">{{ wizard_glance.oficio|default:"—" }}</strong>
+          </article>
 
-        <article class="oficio-glance-card">
-          <span class="oficio-glance-item-label">Protocolo</span>
-          <strong class="oficio-glance-item-value" id="summary-protocolo" data-empty-text="—">{{ wizard_glance.protocolo|default:"—" }}</strong>
-        </article>
-      </div>
-
-      <div class="oficio-glance-row">
-        <article class="oficio-glance-card">
-          <span class="oficio-glance-item-label">Destino</span>
-          <strong class="oficio-glance-item-value" id="summary-destino" data-empty-text="—">{{ wizard_glance.destino|default:"—" }}</strong>
-        </article>
-
-        <article class="oficio-glance-card">
-          <span class="oficio-glance-item-label">Data do evento</span>
-          <strong class="oficio-glance-item-value" id="summary-data-evento" data-empty-text="—">{{ wizard_glance.data_evento|default:"—" }}</strong>
-        </article>
-      </div>
-    </div>
-
-    <section class="oficio-glance-travelers-panel" aria-labelledby="summary-viajantes-heading">
-      <div class="oficio-glance-travelers-head">
-        <div>
-          <span class="oficio-glance-item-label" id="summary-viajantes-heading">Servidores / viajantes</span>
-          <strong class="oficio-glance-travelers-title">Equipe vinculada a este ofício</strong>
+          <article class="oficio-glance-card">
+            <span class="oficio-glance-item-label">Protocolo</span>
+            <strong class="oficio-glance-item-value" id="summary-protocolo" data-empty-text="—">{{ wizard_glance.protocolo|default:"—" }}</strong>
+          </article>
         </div>
-        <strong class="oficio-glance-travelers-meta" id="summary-viajantes-meta" data-empty-text="Nenhum servidor">
-          {% if wizard_glance.viajantes_count %}{{ wizard_glance.viajantes_count }} servidor{% if wizard_glance.viajantes_count > 1 %}es{% endif %}{% else %}Nenhum servidor{% endif %}
-        </strong>
+
+        <div class="oficio-glance-row">
+          <article class="oficio-glance-card">
+            <span class="oficio-glance-item-label">Destino</span>
+            <strong class="oficio-glance-item-value" id="summary-destino" data-empty-text="—">{{ wizard_glance.destino|default:"—" }}</strong>
+          </article>
+
+          <article class="oficio-glance-card">
+            <span class="oficio-glance-item-label">Data do evento</span>
+            <strong class="oficio-glance-item-value" id="summary-data-evento" data-empty-text="—">{{ wizard_glance.data_evento|default:"—" }}</strong>
+          </article>
+        </div>
       </div>
-      <div class="oficio-glance-travelers-list" id="summary-viajantes-list"></div>
+
+      <section class="oficio-glance-travelers-panel" aria-labelledby="summary-viajantes-heading">
+        <div class="oficio-glance-travelers-head">
+          <div>
+            <span class="oficio-glance-item-label" id="summary-viajantes-heading">Servidores / viajantes</span>
+            <strong class="oficio-glance-travelers-title">Equipe vinculada a este ofício</strong>
+          </div>
+          <strong class="oficio-glance-travelers-meta" id="summary-viajantes-meta" data-empty-text="Nenhum servidor">
+            {% if wizard_glance.viajantes_count %}{{ wizard_glance.viajantes_count }} servidor{% if wizard_glance.viajantes_count > 1 %}es{% endif %}{% else %}Nenhum servidor{% endif %}
+          </strong>
+        </div>
+        <div class="oficio-glance-travelers-list" id="summary-viajantes-list">
+          {% for viajante in wizard_glance.viajantes %}
+          <span class="oficio-glance-chip">{{ viajante }}</span>
+          {% empty %}
+          <span class="oficio-glance-empty">Adicione ao menos um servidor para visualizar a equipe aqui.</span>
+          {% endfor %}
+        </div>
+      </section>
     </section>
   </div>
 </div>

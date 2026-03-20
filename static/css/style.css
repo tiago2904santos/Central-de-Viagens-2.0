@@ -1062,6 +1062,10 @@
     --oficio-card-accent: #5f6b7a;
     --oficio-card-accent-rgb: 95, 107, 122;
     --oficio-card-ink: #2f3946;
+    --oficio-glass-border: rgba(var(--oficio-card-accent-rgb), 0.16);
+    --oficio-glass-shadow: 0 14px 26px rgba(15, 23, 42, 0.08);
+    --oficio-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    --oficio-glass-blur: 5px;
     position: relative;
     overflow: hidden;
     border: 1px solid rgba(15, 23, 42, 0.08);
@@ -1136,6 +1140,38 @@
 .oficio-list-rich-layout {
     display: grid;
     gap: 0.72rem;
+}
+
+.oficio-list-glass,
+.oficio-list-chip,
+.oficio-list-core-card,
+.oficio-list-traveler-pill,
+.oficio-list-transport-panel__hero,
+.oficio-list-transport-panel__detail,
+.oficio-list-driver-carona-col,
+.oficio-list-subcard,
+.oficio-list-term-row,
+.oficio-list-card__footer {
+    border: 1px solid var(--oficio-glass-border);
+    border-radius: 0.98rem;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(var(--oficio-card-accent-rgb), 0.08));
+    box-shadow: var(--oficio-glass-highlight);
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .oficio-list-glass,
+    .oficio-list-chip,
+    .oficio-list-core-card,
+    .oficio-list-traveler-pill,
+    .oficio-list-transport-panel__hero,
+    .oficio-list-transport-panel__detail,
+    .oficio-list-driver-carona-col,
+    .oficio-list-subcard,
+    .oficio-list-term-row,
+    .oficio-list-card__footer {
+        -webkit-backdrop-filter: blur(var(--oficio-glass-blur));
+        backdrop-filter: blur(var(--oficio-glass-blur));
+    }
 }
 
 .oficio-list-badge {
@@ -1251,18 +1287,18 @@
     width: 100%;
     padding: 0.58rem 0.74rem;
     border-radius: 0.92rem;
-    background: rgba(255, 255, 255, 0.9);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(var(--oficio-card-accent-rgb), 0.09));
     color: var(--oficio-card-ink);
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.1);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border-color: rgba(var(--oficio-card-accent-rgb), 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
 .oficio-list-chip--meta.is-key {
-    background: linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), 0.16), rgba(255, 255, 255, 0.96));
+    background: linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), 0.2), rgba(255, 255, 255, 0.96));
 }
 
 .oficio-list-chip--meta.is-date {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.02), rgba(255, 255, 255, 0.96));
+    background: linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), 0.11), rgba(255, 255, 255, 0.95));
 }
 
 .oficio-list-chip__label {
@@ -1291,19 +1327,19 @@
     display: flex;
     flex-direction: column;
     gap: 0.56rem;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-color: rgba(var(--oficio-card-accent-rgb), 0.16);
     border-radius: 0.98rem;
-    background: rgba(255, 255, 255, 0.93);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.93), rgba(var(--oficio-card-accent-rgb), 0.1));
     padding: 0.78rem 0.82rem;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    box-shadow: var(--oficio-glass-highlight), var(--oficio-glass-shadow);
 }
 
 .oficio-list-core-card--travelers {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(var(--oficio-card-accent-rgb), 0.045));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(var(--oficio-card-accent-rgb), 0.085));
 }
 
 .oficio-list-core-card--transport {
-    background: linear-gradient(180deg, rgba(var(--oficio-card-accent-rgb), 0.08), rgba(255, 255, 255, 0.96));
+    background: linear-gradient(180deg, rgba(var(--oficio-card-accent-rgb), 0.14), rgba(255, 255, 255, 0.94));
 }
 
 .oficio-list-core-card__header {
@@ -1348,8 +1384,8 @@
     gap: 0.52rem;
     padding: 0.48rem 0.7rem 0.48rem 0.48rem;
     border-radius: 1rem;
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.12);
-    background: rgba(255, 255, 255, 0.88);
+    border-color: rgba(var(--oficio-card-accent-rgb), 0.14);
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.9), rgba(var(--oficio-card-accent-rgb), 0.08));
     color: #17263a;
 }
 
@@ -1377,12 +1413,12 @@
 }
 
 .oficio-list-traveler-pill.is-counter {
-    background: rgba(var(--oficio-card-accent-rgb), 0.12);
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.88), rgba(var(--oficio-card-accent-rgb), 0.14));
 }
 
 .oficio-list-traveler-pill.is-empty {
-    background: rgba(95, 107, 122, 0.08);
-    border-color: rgba(95, 107, 122, 0.14);
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.84), rgba(95, 107, 122, 0.1));
+    border-color: rgba(95, 107, 122, 0.18);
 }
 
 .oficio-list-traveler-pill.is-empty .oficio-list-traveler-pill__initials {
@@ -1400,15 +1436,17 @@
     gap: 0.24rem;
     padding: 0.82rem 0.86rem;
     border-radius: 1rem;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(var(--oficio-card-accent-rgb), 0.11));
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.14);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(var(--oficio-card-accent-rgb), 0.17));
+    border-color: rgba(var(--oficio-card-accent-rgb), 0.18);
+    box-shadow: var(--oficio-glass-highlight);
 }
 
 .oficio-list-transport-panel__detail {
     display: grid;
     gap: 0.24rem;
-    padding: 0 0.14rem 0.12rem;
+    padding: 0.68rem 0.76rem;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(var(--oficio-card-accent-rgb), 0.08));
+    border-color: rgba(var(--oficio-card-accent-rgb), 0.14);
 }
 
 .oficio-list-transport-panel__kicker {
@@ -1458,9 +1496,9 @@
     display: flex;
     flex-direction: column;
     gap: 0.62rem;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-color: rgba(var(--oficio-card-accent-rgb), 0.14);
     border-radius: 0.98rem;
-    background: rgba(255, 255, 255, 0.94);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(var(--oficio-card-accent-rgb), 0.08));
     padding: 0.78rem 0.82rem;
 }
 
@@ -1506,7 +1544,7 @@
 .oficio-list-subcard--justificativa .oficio-list-subcard__actions {
     margin-top: auto;
     padding-top: 0.72rem;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    border-top: 1px solid rgba(var(--oficio-card-accent-rgb), 0.16);
 }
 
 .oficio-list-term-list {
@@ -1521,8 +1559,8 @@
     align-items: center;
     padding: 0.48rem 0.52rem;
     border-radius: 0.74rem;
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.08);
-    background: rgba(var(--oficio-card-accent-rgb), 0.04);
+    border-color: rgba(var(--oficio-card-accent-rgb), 0.14);
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.88), rgba(var(--oficio-card-accent-rgb), 0.1));
 }
 
 .oficio-list-term-row__name {
@@ -1540,8 +1578,9 @@
 
 .oficio-list-card__footer {
     margin-top: 0.72rem;
-    padding-top: 0.72rem;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 0.72rem;
+    border-top: 1px solid rgba(var(--oficio-card-accent-rgb), 0.16);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(var(--oficio-card-accent-rgb), 0.08));
 }
 
 .oficio-list-card__footer-actions {
@@ -1569,6 +1608,9 @@
 .oficio-list-driver-carona-col {
     display: grid;
     gap: 0.16rem;
+    padding: 0.58rem 0.62rem;
+    border-color: rgba(var(--oficio-card-accent-rgb), 0.14);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(var(--oficio-card-accent-rgb), 0.09));
 }
 
 .oficio-list-driver-carona-meta-title {

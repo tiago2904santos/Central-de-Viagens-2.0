@@ -1947,6 +1947,8 @@ def _autosave_success_response(extra=None):
 def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None):
     justificativa_info = justificativa_info or _build_oficio_justificativa_info(oficio)
     resumo_url = reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk})
+    justificativa_required = bool(justificativa_info.get('required'))
+    justificativa_text = str(justificativa_info.get('texto') or '').strip()
     steps = [
         {
             'key': 'step1',

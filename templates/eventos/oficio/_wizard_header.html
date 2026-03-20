@@ -3,27 +3,18 @@
     <div class="oficio-wizard-header-main">
       <div class="oficio-wizard-header-copy">
         <span class="oficio-wizard-eyebrow">Cadastro de ofício</span>
-        <h1>{{ wizard_page_title }}</h1>
+        <h1>{{ wizard_header_title|default:wizard_page_title }}</h1>
         <p class="oficio-wizard-header-support">
-          Fluxo guiado com resumo essencial integrado ao topo e sem atalhos soltos no cabeçalho.
+          {{ wizard_header_subtitle|default:"Fluxo guiado com resumo essencial integrado ao topo e sem atalhos soltos no cabeçalho." }}
         </p>
-      </div>
-
-      <div class="oficio-wizard-header-badges" aria-label="Contexto do ofício">
-        <span class="oficio-wizard-header-badge">
-          <span class="oficio-wizard-header-badge-label">Ofício</span>
-          <strong>{{ oficio.numero_formatado|default:"Novo rascunho" }}</strong>
-        </span>
-        <span class="oficio-wizard-header-badge">
-          <span class="oficio-wizard-header-badge-label">Status</span>
-          <strong>{{ oficio.get_status_display }}</strong>
-        </span>
       </div>
     </div>
 
-    {% include 'eventos/oficio/_wizard_stepper.html' %}
+    <div class="oficio-wizard-stepper-shell">
+      {% include 'eventos/oficio/_wizard_stepper.html' %}
+    </div>
 
-    <div class="oficio-wizard-submenu-bar" aria-label="Acionamento do resumo essencial">
+    <div class="oficio-wizard-submenu-bar" aria-label="Resumo essencial do ofício">
       <button
         type="button"
         class="oficio-wizard-submenu-trigger"
@@ -33,11 +24,7 @@
         aria-controls="oficio-glance-panel"
         title="Mostrar ou ocultar o resumo essencial do ofício"
       >
-        <span class="oficio-wizard-submenu-copy">
-          <span class="oficio-wizard-submenu-kicker">Resumo essencial</span>
-          <span class="oficio-wizard-submenu-title">Ofício, protocolo, destino, data do evento e servidores</span>
-          <span class="oficio-wizard-submenu-text">Abra a barra abaixo para revisar o núcleo do cadastro sem perder a etapa atual.</span>
-        </span>
+        <span class="visually-hidden">Resumo essencial</span>
         <span class="oficio-wizard-submenu-pill">
           <span data-oficio-glance-toggle-label>Expandir painel</span>
           <i class="bi bi-chevron-down" aria-hidden="true"></i>

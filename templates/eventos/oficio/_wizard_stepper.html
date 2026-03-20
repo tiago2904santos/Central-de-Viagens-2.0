@@ -7,11 +7,9 @@
     {% if not item.active %}data-autosave-link="1"{% endif %}
     aria-current="{% if item.active %}step{% else %}false{% endif %}"
   >
-    <span class="oficio-stepper-badge">{{ item.number }}</span>
+    <span class="oficio-stepper-badge{% if item.state == 'optional' %} oficio-stepper-badge--optional{% endif %}">{{ item.number }}</span>
     <span class="oficio-stepper-copy">
-      <span class="oficio-stepper-state">
-        {% if item.state == 'completed' %}Concluído{% elif item.active %}Etapa atual{% else %}Pendente{% endif %}
-      </span>
+      <span class="oficio-stepper-state">{{ item.state_label }}</span>
       <span class="oficio-stepper-label">{{ item.label }}</span>
     </span>
   </a>
