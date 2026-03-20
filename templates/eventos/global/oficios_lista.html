@@ -197,7 +197,7 @@
                     <div class="oficio-list-card__header">
                         <div class="oficio-list-chip-list oficio-list-chip-list--meta">
                             {% for chip in oficio.header_chips %}
-                            <span class="oficio-list-chip oficio-list-chip--meta {{ chip.css_class }}">
+                            <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature {{ chip.css_class }}">
                                 <span class="oficio-list-chip__label">{{ chip.label }}</span>
                                 <span class="oficio-list-chip__value">{{ chip.value }}</span>
                             </span>
@@ -215,14 +215,14 @@
                     </div>
 
                     <div class="oficio-list-core-grid">
-                        <section class="oficio-list-core-card oficio-list-core-card--travelers">
+                        <section class="oficio-list-core-card oficio-list-core-card--travelers oficio-list-surface oficio-list-surface--panel">
                             <div class="oficio-list-core-card__header">
                                 <h3 class="oficio-list-core-card__title">Servidores</h3>
                                 <span class="oficio-list-core-card__meta">{{ oficio.viajantes_block.count_label }}</span>
                             </div>
                             <div class="oficio-list-traveler-list">
                                 {% for traveler in oficio.viajantes_block.items %}
-                                <div class="oficio-list-traveler-pill {{ traveler.css_class }}">
+                                <div class="oficio-list-traveler-pill oficio-list-surface oficio-list-surface--soft {{ traveler.css_class }}">
                                     <span class="oficio-list-traveler-pill__initials">{{ traveler.initials }}</span>
                                     <span class="oficio-list-traveler-pill__name">{{ traveler.name }}</span>
                                 </div>
@@ -230,12 +230,12 @@
                             </div>
                         </section>
 
-                        <section class="oficio-list-core-card oficio-list-core-card--transport">
+                        <section class="oficio-list-core-card oficio-list-core-card--transport oficio-list-surface oficio-list-surface--panel">
                             <div class="oficio-list-core-card__header">
                                 <h3 class="oficio-list-core-card__title">Veiculo e motorista</h3>
                             </div>
                             <div class="oficio-list-transport-panel">
-                                <div class="oficio-list-transport-panel__hero">
+                                <div class="oficio-list-transport-panel__hero oficio-list-surface oficio-list-surface--feature">
                                     <span class="oficio-list-transport-panel__kicker">Veiculo</span>
                                     <div class="oficio-list-transport-panel__headline">{{ oficio.transport_block.vehicle_primary }}</div>
                                     {% if oficio.transport_block.vehicle_secondary %}
@@ -243,15 +243,15 @@
                                     {% endif %}
                                 </div>
                                 <div class="oficio-list-transport-panel__divider"></div>
-                                <div class="oficio-list-transport-panel__detail">
+                                <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft">
                                     <span class="oficio-list-transport-panel__kicker">Motorista</span>
                                     {% if oficio.transport_block.is_carona %}
                                     <div class="oficio-list-driver-carona-grid">
-                                        <div class="oficio-list-driver-carona-col">
+                                        <div class="oficio-list-driver-carona-col oficio-list-surface oficio-list-surface--soft">
                                             <div class="oficio-list-transport-panel__detail-value">{{ oficio.transport_block.driver_primary }}</div>
                                             <p class="oficio-list-transport-panel__support">Carona</p>
                                         </div>
-                                        <div class="oficio-list-driver-carona-col">
+                                        <div class="oficio-list-driver-carona-col oficio-list-surface oficio-list-surface--soft">
                                             <div class="oficio-list-driver-carona-meta-title">Oficio do motorista</div>
                                             <div class="oficio-list-driver-carona-meta-value">{{ oficio.transport_block.driver_oficio }}</div>
                                             <div class="oficio-list-driver-carona-meta-title">Protocolo</div>
@@ -272,7 +272,7 @@
                     {% if oficio.justificativa or oficio.termos %}
                     <div class="oficio-list-card__secondary">
                         {% if oficio.justificativa %}
-                        <section class="oficio-list-subcard oficio-list-subcard--justificativa">
+                        <section class="oficio-list-subcard oficio-list-subcard--justificativa oficio-list-surface oficio-list-surface--panel">
                             <div class="oficio-list-subcard__header">
                                 <div>
                                     <h3 class="oficio-list-subcard__title">Justificativa</h3>
@@ -313,7 +313,7 @@
                         {% endif %}
 
                         {% if oficio.termos %}
-                        <section class="oficio-list-subcard">
+                        <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
                             <div class="oficio-list-subcard__header">
                                 <div>
                                     <h3 class="oficio-list-subcard__title">Termos de autorizacao</h3>
@@ -324,7 +324,7 @@
                             <div class="oficio-list-subcard__body">
                                 <div class="oficio-list-term-list">
                                     {% for termo in oficio.termos.items %}
-                                    <div class="oficio-list-term-row">
+                                    <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
                                         <span class="oficio-list-term-row__name">{{ termo.traveler_name }}</span>
                                         <div class="oficio-list-term-row__actions">
                                             {% if termo.open_url %}
@@ -355,7 +355,7 @@
                     </div>
                     {% endif %}
 
-                    <div class="oficio-list-card__footer">
+                    <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                         <div class="oficio-list-card__footer-actions">
                             {% for action in oficio.footer_actions %}
                             <a

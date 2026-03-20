@@ -1062,6 +1062,12 @@
     --oficio-card-accent: #5f6b7a;
     --oficio-card-accent-rgb: 95, 107, 122;
     --oficio-card-ink: #2f3946;
+    --oficio-surface-alpha-top: 0.86;
+    --oficio-surface-alpha-bottom: 0.72;
+    --oficio-surface-tint: 0.08;
+    --oficio-surface-border-alpha: 0.14;
+    --oficio-surface-shadow-alpha: 0.07;
+    --oficio-surface-local-blur: 10px;
     position: relative;
     overflow: hidden;
     border: 1px solid rgba(15, 23, 42, 0.08);
@@ -1138,6 +1144,65 @@
     gap: 0.72rem;
 }
 
+.oficio-list-surface {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(var(--oficio-card-accent-rgb), var(--oficio-surface-border-alpha));
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, var(--oficio-surface-alpha-top)) 0%,
+            rgba(248, 250, 253, var(--oficio-surface-alpha-bottom)) 100%
+        ),
+        linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), var(--oficio-surface-tint)) 0%, rgba(255, 255, 255, 0.14) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 12px 24px rgba(15, 23, 42, var(--oficio-surface-shadow-alpha));
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .oficio-list-surface {
+        -webkit-backdrop-filter: blur(var(--oficio-surface-local-blur));
+        backdrop-filter: blur(var(--oficio-surface-local-blur));
+    }
+}
+
+.oficio-list-surface--feature {
+    --oficio-surface-alpha-top: 0.92;
+    --oficio-surface-alpha-bottom: 0.8;
+    --oficio-surface-tint: 0.13;
+    --oficio-surface-border-alpha: 0.19;
+    --oficio-surface-shadow-alpha: 0.08;
+    --oficio-surface-local-blur: 12px;
+}
+
+.oficio-list-surface--panel {
+    --oficio-surface-alpha-top: 0.88;
+    --oficio-surface-alpha-bottom: 0.76;
+    --oficio-surface-tint: 0.1;
+    --oficio-surface-border-alpha: 0.17;
+    --oficio-surface-shadow-alpha: 0.065;
+    --oficio-surface-local-blur: 10px;
+}
+
+.oficio-list-surface--soft {
+    --oficio-surface-alpha-top: 0.8;
+    --oficio-surface-alpha-bottom: 0.68;
+    --oficio-surface-tint: 0.06;
+    --oficio-surface-border-alpha: 0.12;
+    --oficio-surface-shadow-alpha: 0.045;
+    --oficio-surface-local-blur: 8px;
+}
+
+.oficio-list-surface--footer {
+    --oficio-surface-alpha-top: 0.78;
+    --oficio-surface-alpha-bottom: 0.66;
+    --oficio-surface-tint: 0.055;
+    --oficio-surface-border-alpha: 0.11;
+    --oficio-surface-shadow-alpha: 0.05;
+    --oficio-surface-local-blur: 8px;
+}
+
 .oficio-list-badge {
     display: inline-flex;
     align-items: center;
@@ -1148,6 +1213,17 @@
     font-size: 0.76rem;
     font-weight: 800;
     white-space: nowrap;
+}
+
+.oficio-list-card .oficio-list-badge {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .oficio-list-card .oficio-list-badge {
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+    }
 }
 
 .oficio-list-badge.is-muted {
@@ -1251,18 +1327,17 @@
     width: 100%;
     padding: 0.58rem 0.74rem;
     border-radius: 0.92rem;
-    background: rgba(255, 255, 255, 0.9);
     color: var(--oficio-card-ink);
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.1);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .oficio-list-chip--meta.is-key {
-    background: linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), 0.16), rgba(255, 255, 255, 0.96));
+    --oficio-surface-tint: 0.14;
+    --oficio-surface-border-alpha: 0.18;
 }
 
 .oficio-list-chip--meta.is-date {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.02), rgba(255, 255, 255, 0.96));
+    --oficio-surface-tint: 0.075;
+    --oficio-surface-alpha-top: 0.88;
 }
 
 .oficio-list-chip__label {
@@ -1291,19 +1366,16 @@
     display: flex;
     flex-direction: column;
     gap: 0.56rem;
-    border: 1px solid rgba(15, 23, 42, 0.06);
     border-radius: 0.98rem;
-    background: rgba(255, 255, 255, 0.93);
     padding: 0.78rem 0.82rem;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
 .oficio-list-core-card--travelers {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(var(--oficio-card-accent-rgb), 0.045));
+    --oficio-surface-tint: 0.085;
 }
 
 .oficio-list-core-card--transport {
-    background: linear-gradient(180deg, rgba(var(--oficio-card-accent-rgb), 0.08), rgba(255, 255, 255, 0.96));
+    --oficio-surface-tint: 0.115;
 }
 
 .oficio-list-core-card__header {
@@ -1328,11 +1400,12 @@
     align-items: center;
     padding: 0.24rem 0.5rem;
     border-radius: 999px;
-    background: rgba(var(--oficio-card-accent-rgb), 0.1);
+    background: rgba(var(--oficio-card-accent-rgb), 0.11);
     color: var(--oficio-card-ink);
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.12);
+    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.14);
     font-size: 0.72rem;
     font-weight: 700;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .oficio-list-traveler-list {
@@ -1348,8 +1421,6 @@
     gap: 0.52rem;
     padding: 0.48rem 0.7rem 0.48rem 0.48rem;
     border-radius: 1rem;
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.12);
-    background: rgba(255, 255, 255, 0.88);
     color: #17263a;
 }
 
@@ -1377,12 +1448,13 @@
 }
 
 .oficio-list-traveler-pill.is-counter {
-    background: rgba(var(--oficio-card-accent-rgb), 0.12);
+    --oficio-surface-tint: 0.12;
+    --oficio-surface-alpha-bottom: 0.72;
 }
 
 .oficio-list-traveler-pill.is-empty {
-    background: rgba(95, 107, 122, 0.08);
-    border-color: rgba(95, 107, 122, 0.14);
+    --oficio-surface-tint: 0.05;
+    --oficio-surface-border-alpha: 0.11;
 }
 
 .oficio-list-traveler-pill.is-empty .oficio-list-traveler-pill__initials {
@@ -1400,15 +1472,13 @@
     gap: 0.24rem;
     padding: 0.82rem 0.86rem;
     border-radius: 1rem;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(var(--oficio-card-accent-rgb), 0.11));
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.14);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .oficio-list-transport-panel__detail {
     display: grid;
-    gap: 0.24rem;
-    padding: 0 0.14rem 0.12rem;
+    gap: 0.3rem;
+    padding: 0.72rem 0.8rem;
+    border-radius: 1rem;
 }
 
 .oficio-list-transport-panel__kicker {
@@ -1449,7 +1519,7 @@
 .oficio-list-card__secondary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 0.58rem;
+    gap: 0.66rem;
     margin-top: 0.7rem;
 }
 
@@ -1458,9 +1528,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.62rem;
-    border: 1px solid rgba(15, 23, 42, 0.06);
     border-radius: 0.98rem;
-    background: rgba(255, 255, 255, 0.94);
     padding: 0.78rem 0.82rem;
 }
 
@@ -1506,7 +1574,7 @@
 .oficio-list-subcard--justificativa .oficio-list-subcard__actions {
     margin-top: auto;
     padding-top: 0.72rem;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    border-top: 1px solid rgba(var(--oficio-card-accent-rgb), 0.14);
 }
 
 .oficio-list-term-list {
@@ -1521,8 +1589,6 @@
     align-items: center;
     padding: 0.48rem 0.52rem;
     border-radius: 0.74rem;
-    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.08);
-    background: rgba(var(--oficio-card-accent-rgb), 0.04);
 }
 
 .oficio-list-term-row__name {
@@ -1540,8 +1606,8 @@
 
 .oficio-list-card__footer {
     margin-top: 0.72rem;
-    padding-top: 0.72rem;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 0.78rem 0.82rem;
+    border-radius: 1rem;
 }
 
 .oficio-list-card__footer-actions {
@@ -1569,6 +1635,8 @@
 .oficio-list-driver-carona-col {
     display: grid;
     gap: 0.16rem;
+    padding: 0.58rem 0.62rem;
+    border-radius: 0.9rem;
 }
 
 .oficio-list-driver-carona-meta-title {
