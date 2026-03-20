@@ -6,46 +6,214 @@
 {% block content %}
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho</h1>
+    <h1 class="h4 mb-0">{% if object %}Editar plano de trabalho {{ object.numero_formatado }}{% else %}Novo plano de trabalho{% endif %}</h1>
     <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Voltar</a>
   </div>
 
-  <div class="card"><div class="card-body">
-    <form method="post">
-      {% csrf_token %}
-      <input type="hidden" name="return_to" value="{{ return_to }}">
-      <input type="hidden" name="context_source" value="{{ context_source }}">
-      <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
-      <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
+  {% if form.errors %}
+  <div class="alert alert-danger" role="alert">
+    <strong>Corrija os erros abaixo antes de salvar:</strong>
+    <ul class="mb-0 mt-1">
+      {% for field in form %}
+        {% for error in field.errors %}
+          <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
 
-      <div class="row g-3">
-        <div class="col-md-2"><label class="form-label">Número</label>{{ form.numero }}</div>
-        <div class="col-md-2"><label class="form-label">Ano</label>{{ form.ano }}</div>
-        <div class="col-md-3"><label class="form-label">Data</label>{{ form.data_criacao }}</div>
-        <div class="col-md-3"><label class="form-label">Status</label>{{ form.status }}</div>
-        <div class="col-md-6"><label class="form-label">Evento (opcional)</label>{{ form.evento }}</div>
-        <div class="col-md-6"><label class="form-label">Ofício (opcional)</label>{{ form.oficio }}</div>
-        <div class="col-md-6"><label class="form-label">Solicitante</label>{{ form.solicitante }}</div>
-        <div class="col-md-6"><label class="form-label">Solicitante (outros)</label>{{ form.solicitante_outros }}</div>
-        <div class="col-md-6"><label class="form-label">Coord. operacional</label>{{ form.coordenador_operacional }}</div>
-        <div class="col-md-6"><label class="form-label">Coord. administrativo</label>{{ form.coordenador_administrativo }}</div>
-        <div class="col-md-6"><label class="form-label">Coord. municipal</label>{{ form.coordenador_municipal }}</div>
-        <div class="col-md-6"><label class="form-label">Horário de atendimento</label>{{ form.horario_atendimento }}</div>
-        <div class="col-12"><label class="form-label">Objetivo</label>{{ form.objetivo }}</div>
-        <div class="col-12"><label class="form-label">Locais</label>{{ form.locais }}</div>
-        <div class="col-md-4"><label class="form-label">Quantidade de servidores</label>{{ form.quantidade_servidores }}</div>
-        <div class="col-12"><label class="form-label">Atividades</label>{{ form.atividades_codigos }}</div>
-        <div class="col-12"><label class="form-label">Metas formatadas</label>{{ form.metas_formatadas }}</div>
-        <div class="col-12"><label class="form-label">Efetivo resumo</label>{{ form.efetivo_resumo }}</div>
-        <div class="col-12"><label class="form-label">Recursos</label>{{ form.recursos_texto }}</div>
-        <div class="col-12"><label class="form-label">Observações</label>{{ form.observacoes }}</div>
-      </div>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="return_to" value="{{ return_to }}">
+    <input type="hidden" name="context_source" value="{{ context_source }}">
+    <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
+    <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
 
-      <div class="d-flex gap-2 mt-4">
-        <button class="btn btn-primary" type="submit">Salvar</button>
-        {% if object %}<a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-planos-trabalho-detalhe' object.pk %}">Detalhe</a>{% endif %}
+    {# ── Seção 1: Identificação ── #}
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Identificação</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-2">
+            <label class="form-label" for="{{ form.numero.id_for_label }}">Número</label>
+            {{ form.numero }}
+            {% if form.numero.errors %}<div class="invalid-feedback d-block">{{ form.numero.errors.0 }}</div>{% endif %}
+            <div class="form-text">Ex: 1</div>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label" for="{{ form.ano.id_for_label }}">Ano</label>
+            {{ form.ano }}
+            {% if form.ano.errors %}<div class="invalid-feedback d-block">{{ form.ano.errors.0 }}</div>{% endif %}
+            <div class="form-text">Ex: 2026</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="{{ form.data_criacao.id_for_label }}">Data de criação</label>
+            {{ form.data_criacao }}
+            {% if form.data_criacao.errors %}<div class="invalid-feedback d-block">{{ form.data_criacao.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
       </div>
-    </form>
-  </div></div>
+    </div>
+
+    {# ── Seção 2: Vínculo ── #}
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Vínculo <small class="fw-normal text-muted">(opcional)</small></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.evento.id_for_label }}">Evento</label>
+            {{ form.evento }}
+            {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício</label>
+            {{ form.oficio }}
+            {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
+            <div class="form-text">Vincular ao ofício preenche automaticamente roteiro, transporte e diárias no documento.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Seção 3: Solicitante ── #}
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Solicitante</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.solicitante.id_for_label }}">Solicitante (cadastrado)</label>
+            {{ form.solicitante }}
+            {% if form.solicitante.errors %}<div class="invalid-feedback d-block">{{ form.solicitante.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.solicitante_outros.id_for_label }}">Solicitante (outros)</label>
+            {{ form.solicitante_outros }}
+            {% if form.solicitante_outros.errors %}<div class="invalid-feedback d-block">{{ form.solicitante_outros.errors.0 }}</div>{% endif %}
+            <div class="form-text">Preencha quando o solicitante não está no cadastro.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Seção 4: Coordenação ── #}
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Coordenação</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.coordenador_operacional.id_for_label }}">Coordenador operacional</label>
+            {{ form.coordenador_operacional }}
+            {% if form.coordenador_operacional.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_operacional.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenador administrativo</label>
+            {{ form.coordenador_administrativo }}
+            {% if form.coordenador_administrativo.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_administrativo.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.coordenador_municipal.id_for_label }}">Coordenador municipal</label>
+            {{ form.coordenador_municipal }}
+            {% if form.coordenador_municipal.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_municipal.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Seção 5: Conteúdo ── #}
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Conteúdo</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label" for="{{ form.objetivo.id_for_label }}">Objetivo / finalidade</label>
+            {{ form.objetivo }}
+            {% if form.objetivo.errors %}<div class="invalid-feedback d-block">{{ form.objetivo.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="{{ form.locais.id_for_label }}">Locais</label>
+            {{ form.locais }}
+            {% if form.locais.errors %}<div class="invalid-feedback d-block">{{ form.locais.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.horario_atendimento.id_for_label }}">Horário de atendimento</label>
+            {{ form.horario_atendimento }}
+            {% if form.horario_atendimento.errors %}<div class="invalid-feedback d-block">{{ form.horario_atendimento.errors.0 }}</div>{% endif %}
+            <div class="form-text">Ex: das 08h00 às 17h00</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="{{ form.quantidade_servidores.id_for_label }}">Quantidade de servidores</label>
+            {{ form.quantidade_servidores }}
+            {% if form.quantidade_servidores.errors %}<div class="invalid-feedback d-block">{{ form.quantidade_servidores.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Seção 6: Atividades ── #}
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Atividades do Plano</div>
+      <div class="card-body">
+        <p class="text-muted small mb-2">Selecione as atividades que serão realizadas. As metas correspondentes serão geradas automaticamente no documento.</p>
+        <div class="row g-2">
+          {% for checkbox in form.atividades_codigos %}
+          <div class="col-md-6 col-lg-4">
+            <div class="form-check">
+              {{ checkbox.tag }}
+              <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if form.atividades_codigos.errors %}<div class="invalid-feedback d-block mt-1">{{ form.atividades_codigos.errors.0 }}</div>{% endif %}
+      </div>
+    </div>
+
+    {# ── Seção 7: Campos adicionais ── #}
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Campos adicionais</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label" for="{{ form.metas_formatadas.id_for_label }}">Metas formatadas <small class="text-muted">(opcional — preenchido automaticamente pelas atividades)</small></label>
+            {{ form.metas_formatadas }}
+            {% if form.metas_formatadas.errors %}<div class="invalid-feedback d-block">{{ form.metas_formatadas.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="{{ form.efetivo_resumo.id_for_label }}">Efetivo (resumo)</label>
+            {{ form.efetivo_resumo }}
+            {% if form.efetivo_resumo.errors %}<div class="invalid-feedback d-block">{{ form.efetivo_resumo.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="{{ form.recursos_texto.id_for_label }}">Recursos</label>
+            {{ form.recursos_texto }}
+            {% if form.recursos_texto.errors %}<div class="invalid-feedback d-block">{{ form.recursos_texto.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+            {{ form.observacoes }}
+            {% if form.observacoes.errors %}<div class="invalid-feedback d-block">{{ form.observacoes.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-2">
+      <button class="btn btn-primary" type="submit">Salvar</button>
+      {% if object %}
+        <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-planos-trabalho-detalhe' object.pk %}">Ver detalhe</a>
+        <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">Baixar DOCX</a>
+      {% endif %}
+      <a class="btn btn-link text-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Cancelar</a>
+    </div>
+  </form>
 </div>
 {% endblock %}

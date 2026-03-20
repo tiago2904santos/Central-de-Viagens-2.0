@@ -1,4 +1,4 @@
-from .context import build_plano_trabalho_document_context
+from .context import build_plano_trabalho_document_context, _build_coordenacao_formatada, get_assinaturas_documento
 from .renderer import (
     add_bullet_list,
     add_label_value,
@@ -9,6 +9,8 @@ from .renderer import (
     create_base_document,
     document_to_bytes,
 )
+from .types import DocumentoOficioTipo
+from ..plano_trabalho_domain import build_atividades_formatada, build_metas_formatada
 
 
 def render_plano_trabalho_docx(oficio):
@@ -111,20 +113,46 @@ def render_plano_trabalho_model_docx(plano_trabalho):
     add_label_value(document, 'Evento', (plano_trabalho.evento.titulo if plano_trabalho.evento_id and plano_trabalho.evento else ''))
     add_label_value(document, 'Ofício', (plano_trabalho.oficio.numero_formatado if plano_trabalho.oficio_id and plano_trabalho.oficio else ''))
 
+    # Solicitante
+    solicitante_texto = ''
+    if plano_trabalho.solicitante_id and plano_trabalho.solicitante:
+        solicitante_texto = plano_trabalho.solicitante.nome
+    elif plano_trabalho.solicitante_outros:
+        solicitante_texto = plano_trabalho.solicitante_outros
+    if solicitante_texto:
+        add_label_value(document, 'Solicitante', solicitante_texto)
+
     add_multiline_value(document, 'Objetivo / finalidade', plano_trabalho.objetivo)
     add_multiline_value(document, 'Locais', plano_trabalho.locais)
     add_label_value(document, 'Horário de atendimento', plano_trabalho.horario_atendimento)
     add_label_value(document, 'Quantidade de servidores', str(plano_trabalho.quantidade_servidores or ''))
 
-    if plano_trabalho.atividades_codigos:
-        add_label_value(document, 'Atividades (códigos)', plano_trabalho.atividades_codigos)
-    if plano_trabalho.metas_formatadas:
-        add_multiline_value(document, 'Metas', plano_trabalho.metas_formatadas)
+    # Atividades formatadas (fallback para string bruta)
+    atividades_fmt = build_atividades_formatada(plano_trabalho.atividades_codigos)
+    if atividades_fmt:
+        add_multiline_value(document, 'Atividades', atividades_fmt)
+
+    # Metas formatadas (preferencia pelo campo armazenado; fallback por catálogo)
+    metas_exibir = plano_trabalho.metas_formatadas or build_metas_formatada(plano_trabalho.atividades_codigos)
+    if metas_exibir:
+        add_multiline_value(document, 'Metas', metas_exibir)
+
     if plano_trabalho.efetivo_resumo:
         add_multiline_value(document, 'Efetivo', plano_trabalho.efetivo_resumo)
     if plano_trabalho.recursos_texto:
         add_multiline_value(document, 'Recursos', plano_trabalho.recursos_texto)
+
+    # Coordenação
+    coordenacao_texto = _build_coordenacao_formatada(plano_trabalho)
+    if coordenacao_texto:
+        add_multiline_value(document, 'Coordenação', coordenacao_texto)
+
     if plano_trabalho.observacoes:
         add_multiline_value(document, 'Observações', plano_trabalho.observacoes)
+
+    # Assinaturas configuradas para Plano de Trabalho
+    assinaturas = get_assinaturas_documento(DocumentoOficioTipo.PLANO_TRABALHO.value)
+    if assinaturas:
+        add_signature_blocks(document, assinaturas)
 
     return document_to_bytes(document)

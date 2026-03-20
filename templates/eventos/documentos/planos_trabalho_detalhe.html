@@ -1,27 +1,120 @@
 {% extends 'base.html' %}
 
-{% block title %}Plano de trabalho #{{ object.pk }} - Central de Viagens{% endblock %}
+{% block title %}Plano de trabalho {{ object.numero_formatado }} - Central de Viagens{% endblock %}
 {% block page_title %}Detalhe do plano de trabalho{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <h1 class="h4 mb-0">Plano de trabalho #{{ object.pk }}</h1>
-    <div class="d-flex gap-2">
+    <div>
+      <h1 class="h4 mb-0">Plano de trabalho {{ object.numero_formatado }}</h1>
+      <small class="text-muted">Criado em {{ object.data_criacao|date:"d/m/Y" }}</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
       <a class="btn btn-outline-primary" href="{% url 'eventos:documentos-planos-trabalho-editar' object.pk %}">Editar</a>
-      <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">DOCX</a>
-      <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">PDF</a>
+      <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">Baixar DOCX</a>
+      <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">Baixar PDF</a>
       <a class="btn btn-outline-danger" href="{% url 'eventos:documentos-planos-trabalho-excluir' object.pk %}">Excluir</a>
+      <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-planos-trabalho' %}">Voltar</a>
     </div>
   </div>
-  <div class="card"><div class="card-body">
-    <dl class="row mb-0">
-      <dt class="col-sm-3">Número</dt><dd class="col-sm-9">{{ object.numero_formatado|default:'—' }}</dd>
-      <dt class="col-sm-3">Status</dt><dd class="col-sm-9">{{ object.get_status_display }}</dd>
-      <dt class="col-sm-3">Evento</dt><dd class="col-sm-9">{% if object.evento %}{{ object.evento.titulo|default:'(sem título)' }}{% else %}—{% endif %}</dd>
-      <dt class="col-sm-3">Ofício</dt><dd class="col-sm-9">{% if object.oficio %}{{ object.oficio.numero_formatado|default:'—' }}{% else %}—{% endif %}</dd>
-      <dt class="col-sm-3">Objetivo</dt><dd class="col-sm-9">{{ object.objetivo|default:'—' }}</dd>
-    </dl>
-  </div></div>
+
+  <div class="row g-3">
+    {# Identificação #}
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header fw-semibold">Identificação</div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-3">Número</dt>
+            <dd class="col-sm-9">{{ object.numero_formatado }}</dd>
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+              {% if object.status == 'FINALIZADO' %}
+                <span class="badge bg-success">{{ object.get_status_display }}</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ object.get_status_display }}</span>
+              {% endif %}
+            </dd>
+            <dt class="col-sm-3">Data de criação</dt>
+            <dd class="col-sm-9">{{ object.data_criacao|date:"d/m/Y"|default:"—" }}</dd>
+            <dt class="col-sm-3">Evento</dt>
+            <dd class="col-sm-9">{% if object.evento %}{{ object.evento.titulo|default:"(sem título)" }}{% else %}—{% endif %}</dd>
+            <dt class="col-sm-3">Ofício</dt>
+            <dd class="col-sm-9">{% if object.oficio %}{{ object.oficio.numero_formatado|default:"—" }}{% else %}—{% endif %}</dd>
+            <dt class="col-sm-3">Solicitante</dt>
+            <dd class="col-sm-9">
+              {% if object.solicitante %}{{ object.solicitante.nome }}
+              {% elif object.solicitante_outros %}{{ object.solicitante_outros }}
+              {% else %}—{% endif %}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    {# Conteúdo #}
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header fw-semibold">Conteúdo</div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-3">Objetivo / finalidade</dt>
+            <dd class="col-sm-9" style="white-space:pre-line">{{ object.objetivo|default:"—" }}</dd>
+            <dt class="col-sm-3">Locais</dt>
+            <dd class="col-sm-9" style="white-space:pre-line">{{ object.locais|default:"—" }}</dd>
+            <dt class="col-sm-3">Horário de atendimento</dt>
+            <dd class="col-sm-9">{{ object.horario_atendimento|default:"—" }}</dd>
+            <dt class="col-sm-3">Qtd. servidores</dt>
+            <dd class="col-sm-9">{{ object.quantidade_servidores|default:"—" }}</dd>
+            <dt class="col-sm-3">Atividades</dt>
+            <dd class="col-sm-9">{{ object.atividades_codigos|default:"—" }}</dd>
+            <dt class="col-sm-3">Metas formatadas</dt>
+            <dd class="col-sm-9" style="white-space:pre-line">{{ object.metas_formatadas|default:"—" }}</dd>
+            <dt class="col-sm-3">Efetivo (resumo)</dt>
+            <dd class="col-sm-9" style="white-space:pre-line">{{ object.efetivo_resumo|default:"—" }}</dd>
+            <dt class="col-sm-3">Recursos</dt>
+            <dd class="col-sm-9" style="white-space:pre-line">{{ object.recursos_texto|default:"—" }}</dd>
+            <dt class="col-sm-3">Observações</dt>
+            <dd class="col-sm-9" style="white-space:pre-line">{{ object.observacoes|default:"—" }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    {# Coordenação #}
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header fw-semibold">Coordenação</div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">Coord. operacional</dt>
+            <dd class="col-sm-7">{% if object.coordenador_operacional %}{{ object.coordenador_operacional }}{% else %}—{% endif %}</dd>
+            <dt class="col-sm-5">Coord. administrativo</dt>
+            <dd class="col-sm-7">{% if object.coordenador_administrativo %}{{ object.coordenador_administrativo.nome }}{% else %}—{% endif %}</dd>
+            <dt class="col-sm-5">Coord. municipal</dt>
+            <dd class="col-sm-7">{{ object.coordenador_municipal|default:"—" }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    {# Metadados #}
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header fw-semibold">Metadados</div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">ID interno</dt>
+            <dd class="col-sm-7">#{{ object.pk }}</dd>
+            <dt class="col-sm-5">Criado em</dt>
+            <dd class="col-sm-7">{{ object.created_at|date:"d/m/Y H:i"|default:"—" }}</dd>
+            <dt class="col-sm-5">Atualizado em</dt>
+            <dd class="col-sm-7">{{ object.updated_at|date:"d/m/Y H:i"|default:"—" }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
