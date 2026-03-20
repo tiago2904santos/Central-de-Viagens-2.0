@@ -343,23 +343,36 @@ def render_docx_template_bytes(template_path, mapping, post_processor=None):
 
 
 def convert_docx_bytes_to_pdf_bytes(docx_bytes):
+    import sys
     docx2pdf_module = _load_pdf_backend()
-    with TemporaryDirectory() as tmp_dir:
-        base_dir = Path(tmp_dir)
-        docx_path = base_dir / 'documento.docx'
-        pdf_path = base_dir / 'documento.pdf'
-        docx_path.write_bytes(docx_bytes)
+    _pythoncom = None
+    if sys.platform == 'win32':
         try:
-            docx2pdf_module.convert(str(docx_path), str(pdf_path))
-        except Exception as exc:
-            raise DocumentRendererUnavailable(
-                f'Falha na conversão DOCX para PDF neste ambiente Windows: {exc}'
-            ) from exc
-        if not pdf_path.exists() or pdf_path.stat().st_size == 0:
-            raise DocumentRendererUnavailable(
-                'A conversão DOCX para PDF não gerou um arquivo PDF válido.'
-            )
-        return pdf_path.read_bytes()
+            import pythoncom
+            _pythoncom = pythoncom
+            pythoncom.CoInitialize()
+        except Exception:
+            _pythoncom = None
+    try:
+        with TemporaryDirectory() as tmp_dir:
+            base_dir = Path(tmp_dir)
+            docx_path = base_dir / 'documento.docx'
+            pdf_path = base_dir / 'documento.pdf'
+            docx_path.write_bytes(docx_bytes)
+            try:
+                docx2pdf_module.convert(str(docx_path), str(pdf_path))
+            except Exception as exc:
+                raise DocumentRendererUnavailable(
+                    f'Falha na conversão DOCX para PDF neste ambiente Windows: {exc}'
+                ) from exc
+            if not pdf_path.exists() or pdf_path.stat().st_size == 0:
+                raise DocumentRendererUnavailable(
+                    'A conversão DOCX para PDF não gerou um arquivo PDF válido.'
+                )
+            return pdf_path.read_bytes()
+    finally:
+        if _pythoncom is not None:
+            _pythoncom.CoUninitialize()
 
 
 def _render_document_docx_bytes(oficio, tipo_documento):
