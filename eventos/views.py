@@ -8,7 +8,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Max, Q
+from django.db.models import Max, Prefetch, Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -461,9 +461,253 @@ def _parse_trechos_times_post(request, num_trechos):
     return result
 
 
+def _distinct_items_by_pk(items):
+    ordered = []
+    seen = set()
+    for item in items or []:
+        pk = getattr(item, 'pk', None)
+        marker = pk if pk is not None else id(item)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        ordered.append(item)
+    return ordered
+
+
+def _summarize_plain_text(value, fallback='', limit=120):
+    text = ' '.join(str(value or '').split())
+    if not text:
+        return fallback
+    if len(text) <= limit:
+        return text
+    return f'{text[: limit - 3].rstrip()}...'
+
+
+def _evento_lista_destinos_display(evento):
+    labels = []
+    seen = set()
+    for destino in evento.destinos.all():
+        cidade = destino.cidade.nome if destino.cidade_id else ''
+        uf = destino.estado.sigla if destino.estado_id else ''
+        label = f'{cidade}/{uf}' if cidade and uf else cidade or uf
+        if not label or label in seen:
+            continue
+        seen.add(label)
+        labels.append(label)
+    return ', '.join(labels) if labels else 'Destino a definir'
+
+
+def _format_period_range(data_inicio, data_fim, fallback='Periodo a definir'):
+    if not data_inicio:
+        return fallback
+    if data_fim and data_fim != data_inicio:
+        return f'{data_inicio:%d/%m/%Y} a {data_fim:%d/%m/%Y}'
+    return f'{data_inicio:%d/%m/%Y}'
+
+
+def _evento_lista_periodo_display(evento):
+    return _format_period_range(evento.data_inicio, evento.data_fim)
+
+
+def _evento_lista_tipos_display(evento):
+    tipos = [tipo.nome for tipo in evento.tipos_demanda.all() if getattr(tipo, 'nome', '').strip()]
+    return ' / '.join(tipos) if tipos else 'Tipo a definir'
+
+
+def _evento_lista_temporal_meta(evento):
+    today = timezone.localdate()
+    if evento.status == Evento.STATUS_ARQUIVADO:
+        return {'label': 'Arquivado', 'css_class': 'is-muted', 'theme_class': 'is-tone-gray'}
+    if evento.data_inicio and evento.data_fim and evento.data_inicio <= today <= evento.data_fim:
+        label = 'Hoje' if evento.data_inicio == today and evento.data_fim == today else 'Em andamento'
+        return {'label': label, 'css_class': 'is-trip-ongoing', 'theme_class': 'is-tone-orange'}
+    if evento.data_inicio and evento.data_inicio > today:
+        return {'label': 'Programado', 'css_class': 'is-trip-future', 'theme_class': 'is-tone-blue'}
+    if evento.data_fim and evento.data_fim < today:
+        return {'label': 'Encerrado', 'css_class': 'is-trip-past', 'theme_class': 'is-tone-green'}
+    return {'label': 'Sem periodo', 'css_class': 'is-muted', 'theme_class': 'is-tone-gray'}
+
+
+def _evento_lista_oficio_destinos_display(oficio):
+    labels = []
+    seen = set()
+    for trecho in oficio.trechos.all():
+        cidade = trecho.destino_cidade.nome if trecho.destino_cidade_id else ''
+        uf = trecho.destino_estado.sigla if trecho.destino_estado_id else ''
+        label = f'{cidade}/{uf}' if cidade and uf else cidade or uf
+        if not label or label in seen:
+            continue
+        seen.add(label)
+        labels.append(label)
+    return ', '.join(labels) if labels else 'Destino a definir'
+
+
+def _build_evento_document_maps(eventos):
+    event_ids = [evento.pk for evento in eventos]
+    planos_map = {evento_id: [] for evento_id in event_ids}
+    ordens_map = {evento_id: [] for evento_id in event_ids}
+    if not event_ids:
+        return planos_map, ordens_map
+
+    planos = list(
+        PlanoTrabalho.objects.select_related('evento', 'oficio', 'roteiro')
+        .prefetch_related('oficios')
+        .filter(Q(evento_id__in=event_ids) | Q(oficios__evento_id__in=event_ids))
+        .distinct()
+        .order_by('-updated_at', '-created_at')
+    )
+    for plano in planos:
+        related_oficios = list(plano.get_oficios_relacionados()) if hasattr(plano, 'get_oficios_relacionados') else []
+        target_ids = set()
+        if plano.evento_id:
+            target_ids.add(plano.evento_id)
+        if plano.roteiro_id and plano.roteiro and plano.roteiro.evento_id:
+            target_ids.add(plano.roteiro.evento_id)
+        for oficio in related_oficios:
+            if oficio.evento_id:
+                target_ids.add(oficio.evento_id)
+        meta_parts = []
+        if plano.destinos_formatados_display:
+            meta_parts.append(plano.destinos_formatados_display)
+        if plano.evento_data_inicio:
+            meta_parts.append(_format_period_range(plano.evento_data_inicio, plano.evento_data_fim))
+        if plano.oficios_relacionados_display:
+            meta_parts.append(f'Oficios {plano.oficios_relacionados_display}')
+        item = {
+            'title': f'PT {plano.numero_formatado or f"#{plano.pk}"}',
+            'meta': ' | '.join(meta_parts) if meta_parts else 'Plano vinculado ao evento.',
+            'url': reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk}),
+            'badge_label': plano.get_status_display(),
+        }
+        for event_id in sorted(target_ids):
+            if event_id in planos_map:
+                planos_map[event_id].append(item)
+
+    ordens = list(
+        OrdemServico.objects.select_related('evento', 'oficio')
+        .filter(Q(evento_id__in=event_ids) | Q(oficio__evento_id__in=event_ids))
+        .order_by('-updated_at', '-created_at')
+    )
+    for ordem in ordens:
+        target_ids = set()
+        if ordem.evento_id:
+            target_ids.add(ordem.evento_id)
+        if ordem.oficio_id and ordem.oficio and ordem.oficio.evento_id:
+            target_ids.add(ordem.oficio.evento_id)
+        meta_parts = []
+        if ordem.oficio_id and ordem.oficio:
+            meta_parts.append(f'Oficio {ordem.oficio.numero_formatado}')
+        finalidade = _summarize_plain_text(ordem.finalidade, fallback='')
+        if finalidade:
+            meta_parts.append(finalidade)
+        item = {
+            'title': f'OS {ordem.numero_formatado or f"#{ordem.pk}"}',
+            'meta': ' | '.join(meta_parts) if meta_parts else 'Ordem de servico vinculada ao evento.',
+            'url': reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}),
+            'badge_label': ordem.get_status_display(),
+        }
+        for event_id in sorted(target_ids):
+            if event_id in ordens_map:
+                ordens_map[event_id].append(item)
+
+    for event_id in event_ids:
+        planos_map[event_id] = _distinct_items_by_pk(planos_map[event_id])
+        ordens_map[event_id] = _distinct_items_by_pk(ordens_map[event_id])
+    return planos_map, ordens_map
+
+
+def _decorate_evento_list_items(eventos):
+    planos_map, ordens_map = _build_evento_document_maps(eventos)
+    for evento in eventos:
+        temporal_meta = _evento_lista_temporal_meta(evento)
+        oficios_items = []
+        for oficio in evento.oficios.all():
+            meta_parts = []
+            if oficio.protocolo_formatado:
+                meta_parts.append(f'Protocolo {oficio.protocolo_formatado}')
+            destino_oficio = _evento_lista_oficio_destinos_display(oficio)
+            if destino_oficio:
+                meta_parts.append(destino_oficio)
+            oficios_items.append(
+                {
+                    'title': f'Oficio {oficio.numero_formatado or f"#{oficio.pk}"}',
+                    'meta': ' | '.join(meta_parts) if meta_parts else 'Oficio vinculado ao evento.',
+                    'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+                    'badge_label': oficio.get_status_display(),
+                }
+            )
+        oficios_items = _distinct_items_by_pk(oficios_items)
+        planos_items = planos_map.get(evento.pk, [])
+        ordens_items = ordens_map.get(evento.pk, [])
+
+        evento.destinos_display = _evento_lista_destinos_display(evento)
+        evento.periodo_display = _evento_lista_periodo_display(evento)
+        evento.tipos_display = _evento_lista_tipos_display(evento)
+        evento.temporal_meta = temporal_meta
+        evento.card_theme_class = temporal_meta['theme_class']
+        evento.document_blocks = [
+            {
+                'title': 'Oficios',
+                'count_label': f'{len(oficios_items)} vinculado(s)',
+                'items': oficios_items,
+                'empty_text': 'Nenhum oficio vinculado a este evento.',
+            },
+            {
+                'title': 'Planos de trabalho',
+                'count_label': f'{len(planos_items)} vinculado(s)',
+                'items': planos_items,
+                'empty_text': 'Nenhum plano de trabalho relacionado a este evento.',
+            },
+            {
+                'title': 'Ordens de servico',
+                'count_label': f'{len(ordens_items)} vinculada(s)',
+                'items': ordens_items,
+                'empty_text': 'Nenhuma ordem de servico relacionada a este evento.',
+            },
+        ]
+        evento.document_counts_display = (
+            f'{len(oficios_items)} oficios • {len(planos_items)} PT • {len(ordens_items)} OS'
+        )
+        evento.quick_actions = [
+            {
+                'label': 'Abrir fluxo guiado',
+                'url': reverse('eventos:guiado-painel', kwargs={'pk': evento.pk}),
+                'css_class': 'btn-doc-action--primary',
+                'icon': 'bi-box-arrow-up-right',
+            },
+            {
+                'label': 'Editar Etapa 1',
+                'url': reverse('eventos:guiado-etapa-1', kwargs={'pk': evento.pk}),
+                'css_class': 'btn-doc-action--secondary',
+                'icon': 'bi-pencil-square',
+            },
+            {
+                'label': 'Ver',
+                'url': reverse('eventos:detalhe', kwargs={'pk': evento.pk}),
+                'css_class': 'btn-doc-action--secondary',
+                'icon': 'bi-eye',
+            },
+        ]
+        evento.delete_url = reverse('eventos:excluir', kwargs={'pk': evento.pk})
+
+
 @login_required
 def evento_lista(request):
-    qs = Evento.objects.prefetch_related('tipos_demanda', 'destinos', 'destinos__estado', 'destinos__cidade').all()
+    qs = Evento.objects.prefetch_related(
+        'tipos_demanda',
+        'destinos',
+        'destinos__estado',
+        'destinos__cidade',
+        Prefetch(
+            'oficios',
+            queryset=(
+                Oficio.objects.prefetch_related(
+                    'trechos__destino_cidade',
+                    'trechos__destino_estado',
+                ).order_by('-updated_at', '-created_at')
+            ),
+        ),
+    ).all()
     q = request.GET.get('q', '').strip()
     if q:
         qs = qs.filter(titulo__icontains=q)
@@ -473,8 +717,10 @@ def evento_lista(request):
     tipo_id = request.GET.get('tipo_id', '')
     if tipo_id:
         qs = qs.filter(tipos_demanda__id=tipo_id)
+    object_list = list(qs.distinct().order_by('-data_inicio', '-created_at'))
+    _decorate_evento_list_items(object_list)
     context = {
-        'object_list': qs,
+        'object_list': object_list,
         'form_filter': {'q': q, 'status': status, 'tipo_id': tipo_id},
         'status_choices': Evento.STATUS_CHOICES,
         'tipos_demanda_list': TipoDemandaEvento.objects.filter(ativo=True).order_by('ordem', 'nome'),
@@ -5199,11 +5445,19 @@ def _build_step2_preview_data(oficio, form):
 def _get_plano_trabalho_preferencial(oficio):
     if not oficio:
         return None
+    plano = PlanoTrabalho.objects.filter(oficios=oficio).order_by('-updated_at').first()
+    if plano:
+        return plano
     plano = PlanoTrabalho.objects.filter(oficio=oficio).order_by('-updated_at').first()
     if plano:
         return plano
     if oficio.evento_id:
-        return PlanoTrabalho.objects.filter(evento=oficio.evento).order_by('-updated_at').first()
+        return (
+            PlanoTrabalho.objects.filter(Q(evento=oficio.evento) | Q(oficios__evento=oficio.evento))
+            .distinct()
+            .order_by('-updated_at')
+            .first()
+        )
     return None
 
 

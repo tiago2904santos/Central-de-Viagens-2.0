@@ -172,6 +172,17 @@ class GlobalViewsTest(TestCase):
     def _extract_oficio_ids_order(self, response):
         return [int(item) for item in re.findall(r'id="oficio-row-(\d+)"', response.content.decode('utf-8'))]
 
+    def _extract_evento_card_html(self, response, evento_pk):
+        content = response.content.decode('utf-8')
+        anchor = f'id="evento-card-{evento_pk}"'
+        start = content.find(anchor)
+        self.assertNotEqual(start, -1)
+        article_start = content.rfind('<article class="oficio-list-card documento-cascade-card ', 0, start)
+        self.assertNotEqual(article_start, -1)
+        article_end = content.find('</article>', start)
+        self.assertNotEqual(article_end, -1)
+        return content[article_start:article_end + len('</article>')]
+
     def _criar_oficio_ordenacao(
         self,
         *,
@@ -932,6 +943,85 @@ class GlobalViewsTest(TestCase):
         self.assertContains(response_termos, 'Novo termo')
         self.assertContains(response_termos, 'Termo de autorizacao, Londrina/PR, 10/03/2026, VIAJANTE GLOBAL')
         self.assertNotContains(response_termos, 'TA-000')
+
+    def test_lista_de_planos_de_trabalho_exibe_oficios_vinculados_em_card_mesmo_quando_evento_veio_pelos_oficios(self):
+        oficio_extra = Oficio.objects.create(
+            evento=self.evento_pt,
+            protocolo='333444555',
+            data_criacao=date(2026, 3, 2),
+            tipo_destino=Oficio.TIPO_DESTINO_INTERIOR,
+            status=Oficio.STATUS_FINALIZADO,
+        )
+        oficio_extra.viajantes.add(self.viajante)
+        OficioTrecho.objects.create(
+            oficio=oficio_extra,
+            ordem=0,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_origem,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_destino,
+            saida_data=date(2026, 3, 11),
+            chegada_data=date(2026, 3, 11),
+        )
+        plano = PlanoTrabalho.objects.create(
+            objetivo='Plano multi-oficios do evento',
+            status=PlanoTrabalho.STATUS_FINALIZADO,
+        )
+        plano.oficios.add(self.oficio_pt, oficio_extra)
+
+        response = self.client.get(
+            reverse('eventos:documentos-planos-trabalho'),
+            {'evento_id': str(self.evento_pt.pk)},
+        )
+        content = response.content.decode('utf-8')
+
+        self.assertContains(response, f'id="plano-card-{plano.pk}"', html=False)
+        self.assertIn(self.oficio_pt.numero_formatado, content)
+        self.assertIn(oficio_extra.numero_formatado, content)
+        self.assertIn('Ofícios vinculados', content)
+        self.assertIn('Plano de Trabalho', content)
+
+    def test_lista_de_eventos_exibe_cascata_documental_com_pt_vinculado_por_oficios(self):
+        oficio_extra = Oficio.objects.create(
+            evento=self.evento_pt,
+            protocolo='444555666',
+            data_criacao=date(2026, 3, 3),
+            tipo_destino=Oficio.TIPO_DESTINO_INTERIOR,
+            status=Oficio.STATUS_FINALIZADO,
+        )
+        oficio_extra.viajantes.add(self.viajante)
+        OficioTrecho.objects.create(
+            oficio=oficio_extra,
+            ordem=0,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_origem,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_destino,
+            saida_data=date(2026, 3, 12),
+            chegada_data=date(2026, 3, 12),
+        )
+        plano = PlanoTrabalho.objects.create(
+            objetivo='Plano em cascata documental',
+            status=PlanoTrabalho.STATUS_FINALIZADO,
+        )
+        plano.oficios.add(self.oficio_pt, oficio_extra)
+        ordem = OrdemServico.objects.create(
+            oficio=self.oficio_pt,
+            finalidade='Ordem em cascata documental',
+            status=OrdemServico.STATUS_FINALIZADO,
+        )
+
+        response = self.client.get(reverse('eventos:lista'))
+        card_html = self._extract_evento_card_html(response, self.evento_pt.pk)
+
+        self.assertIn('Planos de trabalho', card_html)
+        self.assertIn('Ordens de servico', card_html)
+        self.assertIn('Oficios', card_html)
+        self.assertIn(f'PT {plano.numero_formatado or f"#{plano.pk}"}', card_html)
+        self.assertIn(f'OS {ordem.numero_formatado or f"#{ordem.pk}"}', card_html)
+        self.assertIn(f'Oficio {self.oficio_pt.numero_formatado}', card_html)
+        self.assertIn(reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk}), card_html)
+        self.assertIn(reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}), card_html)
 
     def test_simulacao_global_calcula_valor(self):
         response = self.client.post(

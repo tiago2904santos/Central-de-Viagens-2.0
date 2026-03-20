@@ -1598,6 +1598,80 @@ def _format_periodo_curto(data_inicio, data_fim):
     return f'{data_inicio:%d/%m/%Y}'
 
 
+def _build_plano_trabalho_status_meta(plano):
+    if plano.status == PlanoTrabalho.STATUS_FINALIZADO:
+        return {
+            'label': plano.get_status_display(),
+            'badge_css_class': 'is-finalizado',
+            'theme_class': 'is-tone-green',
+        }
+    return {
+        'label': plano.get_status_display(),
+        'badge_css_class': 'is-rascunho',
+        'theme_class': 'is-tone-gray',
+    }
+
+
+def _resolve_plano_trabalho_periodo(plano, related_event):
+    if plano.evento_data_inicio:
+        return _format_periodo_curto(plano.evento_data_inicio, plano.evento_data_fim)
+    if related_event and related_event.data_inicio:
+        return _format_periodo_curto(related_event.data_inicio, related_event.data_fim)
+    return 'Periodo a definir'
+
+
+def _decorate_plano_trabalho_list_items(items):
+    for plano in items:
+        related_oficios = plano.get_oficios_relacionados() if hasattr(plano, 'get_oficios_relacionados') else []
+        related_event = plano.get_evento_relacionado() if hasattr(plano, 'get_evento_relacionado') else plano.evento
+        status_meta = _build_plano_trabalho_status_meta(plano)
+        destino_display = plano.destinos_formatados_display or 'Destino a definir'
+        periodo_display = _resolve_plano_trabalho_periodo(plano, related_event)
+        resumo_curto = _clean(plano.objetivo) or _clean(plano.recursos_texto) or _clean(plano.observacoes)
+        resumo_curto = resumo_curto or 'Sem resumo adicional registrado para este plano.'
+        plano.status_meta = status_meta
+        plano.card_theme_class = status_meta['theme_class']
+        plano.destino_display = destino_display
+        plano.periodo_display = periodo_display
+        plano.contexto_display = (
+            (related_event.titulo or '').strip()
+            if related_event
+            else 'Plano sem evento vinculado'
+        )
+        plano.header_chips = [
+            {'label': 'PLANO', 'value': f'PT {plano.numero_formatado or f"#{plano.pk}"}', 'css_class': 'is-key'},
+            {'label': 'DESTINO', 'value': destino_display, 'css_class': ''},
+            {'label': 'PERIODO', 'value': periodo_display, 'css_class': 'is-date'},
+        ]
+        plano.meta_items = [
+            {'label': 'Status', 'value': status_meta['label']},
+            {'label': 'Contexto', 'value': plano.contexto_display},
+            {'label': 'Solicitante', 'value': _clean(getattr(plano.solicitante, 'nome', '')) or _clean(plano.solicitante_outros) or 'Nao informado'},
+            {'label': 'Roteiro', 'value': f'#{plano.roteiro_id}' if plano.roteiro_id else 'Nao vinculado'},
+        ]
+        plano.oficios_items = [
+            {
+                'label': f'Oficio {oficio.numero_formatado or f"#{oficio.pk}"}',
+                'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+                'meta': (oficio.evento.titulo or '').strip() if oficio.evento_id and oficio.evento else '',
+            }
+            for oficio in related_oficios
+        ]
+        plano.open_url = reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': plano.pk})
+        plano.edit_url = reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk})
+        plano.download_docx_url = reverse(
+            'eventos:documentos-planos-trabalho-download',
+            kwargs={'pk': plano.pk, 'formato': DocumentoFormato.DOCX.value},
+        )
+        plano.download_pdf_url = reverse(
+            'eventos:documentos-planos-trabalho-download',
+            kwargs={'pk': plano.pk, 'formato': DocumentoFormato.PDF.value},
+        )
+        plano.delete_url = reverse('eventos:documentos-planos-trabalho-excluir', kwargs={'pk': plano.pk})
+        plano.updated_display = plano.updated_at.strftime('%d/%m/%Y %H:%M')
+        plano.resumo_curto = resumo_curto
+
+
 def _build_plano_trabalho_form_ui_context(form, *, obj=None, preselected_event=None, preselected_oficio=None, data_preview=None):
     def get_selected_ids(field_name):
         values = []
@@ -1770,7 +1844,11 @@ def _resolve_preselected_context(request):
 
 def planos_trabalho_global(request):
     filters = _base_documento_filters(request)
-    queryset = PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante', 'roteiro').prefetch_related('oficios').all()
+    queryset = (
+        PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante', 'roteiro')
+        .prefetch_related('oficios', 'oficios__evento')
+        .all()
+    )
     if filters['q']:
         queryset = queryset.filter(
             Q(objetivo__icontains=filters['q'])
@@ -1780,7 +1858,8 @@ def planos_trabalho_global(request):
             | Q(oficios__motivo__icontains=filters['q'])
         )
     if filters['evento_id'].isdigit():
-        queryset = queryset.filter(evento_id=int(filters['evento_id']))
+        event_id = int(filters['evento_id'])
+        queryset = queryset.filter(Q(evento_id=event_id) | Q(oficios__evento_id=event_id))
     if filters['oficio_id'].isdigit():
         queryset = queryset.filter(Q(oficio_id=int(filters['oficio_id'])) | Q(oficios__id=int(filters['oficio_id'])))
     if filters['status']:
@@ -1788,11 +1867,13 @@ def planos_trabalho_global(request):
 
     queryset = queryset.distinct()
     page_obj = _paginate(queryset.order_by('-updated_at', '-created_at'), request.GET.get('page'))
+    object_list = list(page_obj.object_list)
+    _decorate_plano_trabalho_list_items(object_list)
     return render(
         request,
         'eventos/documentos/planos_trabalho_lista.html',
         {
-            'object_list': list(page_obj.object_list),
+            'object_list': object_list,
             'page_obj': page_obj,
             'pagination_query': _query_without_page(request),
             'filters': filters,
@@ -1935,9 +2016,8 @@ def plano_trabalho_download(request, pk, formato):
     formato = _clean(formato).lower()
     if formato not in {DocumentoFormato.DOCX.value, DocumentoFormato.PDF.value}:
         raise Http404('Formato inválido.')
-    oficio_ref = obj.oficio
-    if not oficio_ref:
-        oficio_ref = obj.oficios.order_by('-updated_at').first()
+    related_oficios = obj.get_oficios_relacionados() if hasattr(obj, 'get_oficios_relacionados') else list(obj.oficios.all())
+    oficio_ref = related_oficios[0] if len(related_oficios) == 1 else None
     docx_bytes = render_plano_trabalho_docx(oficio_ref) if oficio_ref else render_plano_trabalho_model_docx(obj)
     payload = docx_bytes
     content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'

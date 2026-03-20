@@ -364,6 +364,52 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         self.assertIn('Ampliar o acesso ao documento oficial', pt.metas_formatadas)
         self.assertIn('Possibilitar o atendimento imediato', pt.metas_formatadas)
 
+    def test_formulario_persiste_multiplos_oficios_e_reabre_com_relacao_documental(self):
+        oficio_extra = Oficio.objects.create(
+            evento=self.evento,
+            motivo='Oficio PT complementar',
+            estado_sede=self.estado,
+            cidade_sede=self.cidade,
+            retorno_chegada_data=date(2026, 5, 3),
+            retorno_chegada_hora=time(12, 0),
+        )
+        payload = {
+            'data_criacao': '2026-05-01',
+            'status': PlanoTrabalho.STATUS_RASCUNHO,
+            'evento': '',
+            'oficio': '',
+            'oficios_relacionados': [str(self.oficio.pk), str(oficio_extra.pk)],
+            'destinos_payload': '[]',
+            'objetivo': 'Plano multi-oficios persistido',
+            'locais': 'Curitiba/PR',
+            'horario_atendimento_padrao': '08:00-17:00',
+            'coordenador_administrativo_novo_nome': 'Servidor Multi Oficio',
+            'salvar_coordenador_administrativo': 'on',
+            'solicitante_escolha': '',
+            'return_to': reverse('eventos:documentos-planos-trabalho'),
+        }
+        payload.update(self._base_formset_payload())
+
+        response = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload)
+        self.assertEqual(response.status_code, 302)
+
+        pt = PlanoTrabalho.objects.get(objetivo='Plano multi-oficios persistido')
+        self.assertEqual(pt.evento_id, self.evento.pk)
+        self.assertEqual(
+            set(pt.oficios.values_list('pk', flat=True)),
+            {self.oficio.pk, oficio_extra.pk},
+        )
+
+        response_edicao = self.client.get(
+            reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': pt.pk})
+        )
+        self.assertEqual(response_edicao.status_code, 200)
+        form = response_edicao.context['form']
+        self.assertEqual(
+            set(form.initial.get('oficios_relacionados', [])),
+            {self.oficio.pk, oficio_extra.pk},
+        )
+
     def test_numero_plano_automatico_auto_increment(self):
         payload = {
             'data_criacao': '2026-05-01',

@@ -223,7 +223,7 @@ class CoordenadorOperacional(models.Model):
 
 
 class PlanoTrabalho(models.Model):
-    """Documento independente de Plano de Trabalho, com vínculo opcional a evento e ofício."""
+    """Documento independente de Plano de Trabalho, com vínculo opcional a evento e múltiplos ofícios."""
 
     STATUS_RASCUNHO = 'RASCUNHO'
     STATUS_FINALIZADO = 'FINALIZADO'
@@ -334,14 +334,34 @@ class PlanoTrabalho(models.Model):
             return f'{int(self.numero):02d}/{int(self.ano)}'
         return EMPTY_MASK_DISPLAY
 
-    @property
-    def oficios_relacionados_display(self):
+    def get_oficios_relacionados(self):
         oficios = list(self.oficios.all())
         if not oficios and self.oficio_id:
             oficios = [self.oficio]
-        labels = []
+        ordered = []
         seen = set()
         for oficio in oficios:
+            if not oficio or oficio.pk in seen:
+                continue
+            seen.add(oficio.pk)
+            ordered.append(oficio)
+        return ordered
+
+    def get_evento_relacionado(self):
+        if self.evento_id:
+            return self.evento
+        for oficio in self.get_oficios_relacionados():
+            if oficio.evento_id:
+                return oficio.evento
+        if self.roteiro_id and self.roteiro and self.roteiro.evento_id:
+            return self.roteiro.evento
+        return None
+
+    @property
+    def oficios_relacionados_display(self):
+        labels = []
+        seen = set()
+        for oficio in self.get_oficios_relacionados():
             if not oficio:
                 continue
             label = (getattr(oficio, 'numero_formatado', '') or '').strip() or f'#{oficio.pk}'

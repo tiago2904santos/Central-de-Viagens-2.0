@@ -5,91 +5,166 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <h1 class="h4 mb-0">Planos de trabalho</h1>
-    <a class="btn btn-primary" href="{% url 'eventos:documentos-planos-trabalho-novo' %}">Novo plano de trabalho</a>
-  </div>
-
-  <form method="get" class="card card-body mb-3">
-    <div class="row g-2">
-      <div class="col-md-4"><input class="form-control" type="text" name="q" placeholder="Buscar" value="{{ filters.q }}"></div>
-      <div class="col-md-3">
-        <select class="form-select" name="evento_id">
-          <option value="">Evento (todos)</option>
-          {% for e in eventos_choices %}<option value="{{ e.pk }}" {% if filters.evento_id == e.pk|stringformat:'s' %}selected{% endif %}>{{ e.titulo|default:'(sem título)' }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="col-md-3">
-        <select class="form-select" name="status">
-          <option value="">Status (todos)</option>
-          {% for value,label in status_choices %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="col-md-2 d-grid"><button class="btn btn-outline-secondary" type="submit">Filtrar</button></div>
+    <div class="page-header-cadastro">
+        <div>
+            <h1 class="mb-1">Planos de trabalho</h1>
+            <p class="text-muted mb-0">Cards no mesmo idioma visual dos Ofícios, agora com relação documental explícita com os Ofícios atendidos.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-primary" href="{% url 'eventos:documentos-planos-trabalho-novo' %}">
+                <i class="bi bi-plus-lg me-1"></i>
+                Novo plano de trabalho
+            </a>
+        </div>
     </div>
-  </form>
 
-  <div class="card">
-    <div class="table-responsive">
-      <table class="table table-sm table-hover mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>Número</th>
-            <th>Status</th>
-            <th>Data</th>
-            <th>Evento</th>
-            <th>Ofícios</th>
-            <th>Roteiro</th>
-            <th class="text-end">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for object in object_list %}
-          <tr>
-            <td>{{ object.numero_formatado }}</td>
-            <td>
-              {% if object.status == 'FINALIZADO' %}
-                <span class="badge bg-success">{{ object.get_status_display }}</span>
-              {% else %}
-                <span class="badge bg-secondary">{{ object.get_status_display }}</span>
-              {% endif %}
-            </td>
-            <td class="text-nowrap">{{ object.data_criacao|date:"d/m/Y"|default:"—" }}</td>
-            <td>{% if object.evento %}{{ object.evento.titulo|default:'(sem título)' }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-            <td>{% if object.oficios_relacionados_display %}{{ object.oficios_relacionados_display }}{% elif object.oficio %}{{ object.oficio.numero_formatado|default:'—' }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-            <td>{% if object.roteiro %}#{{ object.roteiro.pk }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-            <td class="text-end text-nowrap">
-              <a class="btn btn-outline-secondary btn-sm" href="{% url 'eventos:documentos-planos-trabalho-detalhe' object.pk %}">Detalhe</a>
-              <a class="btn btn-outline-primary btn-sm" href="{% url 'eventos:documentos-planos-trabalho-editar' object.pk %}">Editar</a>
-              <a class="btn btn-success btn-sm" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">DOCX</a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="7" class="text-center text-muted py-4">Nenhum plano de trabalho encontrado.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="card filter-card">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-xl-4">
+                    <label class="form-label small text-muted">Busca ampla</label>
+                    <input class="form-control form-control-sm" type="text" name="q" placeholder="Objetivo, observações, evento ou Ofício" value="{{ filters.q }}">
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Evento</label>
+                    <select class="form-select form-select-sm" name="evento_id">
+                        <option value="">Todos</option>
+                        {% for evento in eventos_choices %}
+                        <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:'s' %}selected{% endif %}>{{ evento.titulo|default:'(sem título)' }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Ofício</label>
+                    <select class="form-select form-select-sm" name="oficio_id">
+                        <option value="">Todos</option>
+                        {% for oficio in oficios_choices %}
+                        <option value="{{ oficio.pk }}" {% if filters.oficio_id == oficio.pk|stringformat:'s' %}selected{% endif %}>{{ oficio.numero_formatado }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Status</label>
+                    <select class="form-select form-select-sm" name="status">
+                        <option value="">Todos</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+                    <a href="{% url 'eventos:documentos-planos-trabalho' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 
-  {% if page_obj.has_other_pages %}
-  <nav class="mt-3" aria-label="Paginação">
-    <ul class="pagination pagination-sm justify-content-center mb-0">
-      {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="?{{ pagination_query }}&page={{ page_obj.previous_page_number }}">‹ Anterior</a></li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">‹ Anterior</span></li>
-      {% endif %}
-      <li class="page-item disabled">
-        <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-      </li>
-      {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="?{{ pagination_query }}&page={{ page_obj.next_page_number }}">Próxima ›</a></li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Próxima ›</span></li>
-      {% endif %}
-    </ul>
-  </nav>
-  {% endif %}
+    <section class="documento-cascade-grid" aria-label="Lista de planos de trabalho">
+        {% for object in object_list %}
+        <article class="oficio-list-card documento-cascade-card {{ object.card_theme_class }}" id="plano-card-{{ object.pk }}">
+            <div class="oficio-list-rich-layout">
+                <div class="oficio-list-card__header">
+                    <div class="oficio-list-chip-list oficio-list-chip-list--meta">
+                        {% for chip in object.header_chips %}
+                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature {{ chip.css_class }}">
+                            <span class="oficio-list-chip__label">{{ chip.label }}</span>
+                            <span class="oficio-list-chip__value">{{ chip.value }}</span>
+                        </span>
+                        {% endfor %}
+                    </div>
+                    <div class="oficio-list-card__header-status">
+                        <span class="oficio-list-badge {{ object.status_meta.badge_css_class }}">
+                            <span>{{ object.status_meta.label }}</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="documento-cascade-card__intro">
+                    <h2 class="documento-cascade-card__title">
+                        <a href="{{ object.open_url }}" class="text-decoration-none">Plano de Trabalho {{ object.numero_formatado|default:object.pk }}</a>
+                    </h2>
+                    <p class="documento-cascade-card__subtitle">{{ object.contexto_display }}</p>
+                </div>
+
+                <div class="documento-cascade-meta-grid">
+                    {% for item in object.meta_items %}
+                    <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
+                        <span class="documento-cascade-meta-item__label">{{ item.label }}</span>
+                        <strong class="documento-cascade-meta-item__value">{{ item.value }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="documento-cascade-block-grid documento-cascade-block-grid--double">
+                    <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                        <div class="oficio-list-subcard__header">
+                            <div>
+                                <h3 class="oficio-list-subcard__title">Ofícios vinculados</h3>
+                                <p class="oficio-list-subcard__subtitle">O plano passa a explicitar os Ofícios atendidos no próprio card.</p>
+                            </div>
+                        </div>
+                        <div class="oficio-list-subcard__body">
+                            {% if object.oficios_items %}
+                            <div class="documento-cascade-chip-list">
+                                {% for oficio in object.oficios_items %}
+                                <a href="{{ oficio.url }}" class="documento-cascade-chip oficio-list-surface oficio-list-surface--soft">
+                                    <strong>{{ oficio.label }}</strong>
+                                    {% if oficio.meta %}<span>{{ oficio.meta }}</span>{% endif %}
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="documento-cascade-empty">Nenhum Ofício vinculado a este plano.</div>
+                            {% endif %}
+                        </div>
+                    </section>
+
+                    <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                        <div class="oficio-list-subcard__header">
+                            <div>
+                                <h3 class="oficio-list-subcard__title">Resumo do plano</h3>
+                                <p class="oficio-list-subcard__subtitle">Destino, período e contexto consolidados em um único bloco.</p>
+                            </div>
+                        </div>
+                        <div class="oficio-list-subcard__body">
+                            <p class="oficio-list-subcard__text">{{ object.resumo_curto|truncatechars:220 }}</p>
+                            <div class="documento-cascade-inline-note">Atualizado em {{ object.updated_display }}</div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+                    <div class="oficio-list-card__footer-actions">
+                        <a href="{{ object.open_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir plano de trabalho">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                            <span>Abrir</span>
+                        </a>
+                        <a href="{{ object.edit_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Editar plano de trabalho">
+                            <i class="bi bi-pencil-square"></i>
+                            <span>Editar</span>
+                        </a>
+                        <a href="{{ object.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary is-icon-only" aria-label="Baixar DOCX do plano de trabalho" data-direct-download="true">
+                            <i class="bi bi-filetype-docx"></i>
+                            <span class="visually-hidden">DOCX</span>
+                        </a>
+                        <a href="{{ object.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf is-icon-only" aria-label="Baixar PDF do plano de trabalho" data-direct-download="true">
+                            <i class="bi bi-filetype-pdf"></i>
+                            <span class="visually-hidden">PDF</span>
+                        </a>
+                        <a href="{{ object.delete_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger is-icon-only" aria-label="Excluir plano de trabalho">
+                            <i class="bi bi-trash"></i>
+                            <span class="visually-hidden">Excluir</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </article>
+        {% empty %}
+        <div class="oficios-table-panel__empty">Nenhum plano de trabalho encontrado com os filtros atuais.</div>
+        {% endfor %}
+    </section>
+
+    {% include 'includes/pagination.html' %}
 </div>
 {% endblock %}

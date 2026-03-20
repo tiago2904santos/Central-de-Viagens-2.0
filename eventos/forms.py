@@ -500,6 +500,22 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             oficios_relacionados.append(oficio)
         cleaned_data['oficios_relacionados'] = oficios_relacionados
 
+        eventos_relacionados = {}
+        for of in oficios_relacionados:
+            if of.evento_id:
+                eventos_relacionados[of.evento_id] = of.evento
+        if len(eventos_relacionados) > 1:
+            self.add_error(
+                'oficios_relacionados',
+                'Os ofícios relacionados precisam pertencer ao mesmo evento documental.',
+            )
+        evento_inferido = next(iter(eventos_relacionados.values()), None)
+        if evento and evento_inferido and evento.pk != evento_inferido.pk:
+            self.add_error('evento', 'O evento selecionado não corresponde aos ofícios relacionados.')
+        elif not evento and evento_inferido:
+            evento = evento_inferido
+            cleaned_data['evento'] = evento
+
         if evento and roteiro and roteiro.evento_id and roteiro.evento_id != evento.pk:
             self.add_error('roteiro', 'O roteiro selecionado pertence a outro evento.')
 
@@ -678,6 +694,10 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         related_oficios = list(self.cleaned_data.get('oficios_relacionados') or [])
         if instance.oficio_id and instance.oficio not in related_oficios:
             related_oficios.append(instance.oficio)
+        if not instance.evento_id:
+            related_event_ids = {oficio.evento_id for oficio in related_oficios if oficio.evento_id}
+            if len(related_event_ids) == 1:
+                instance.evento_id = next(iter(related_event_ids))
         if related_oficios and not instance.oficio_id:
             instance.oficio = related_oficios[0]
         if commit:
