@@ -116,7 +116,7 @@ class PlanoTrabalhoContextTest(TestCase):
             evento=self.evento,
             oficio=self.oficio,
             solicitante_outros='Secretaria Municipal X',
-            objetivo='Objetivo',
+            recursos_texto='Objetivo',
         )
         ctx = build_plano_trabalho_document_context(self.oficio)
         self.assertEqual(ctx['solicitante'], 'Secretaria Municipal X')
@@ -132,7 +132,7 @@ class PlanoTrabalhoContextTest(TestCase):
             evento=self.evento,
             oficio=self.oficio,
             coordenador_operacional=coord,
-            objetivo='Objetivo',
+            recursos_texto='Objetivo',
         )
         ctx = build_plano_trabalho_document_context(self.oficio)
         self.assertIn('Coordenador Operacional', ctx['coordenacao_formatada'])
@@ -146,7 +146,7 @@ class PlanoTrabalhoContextTest(TestCase):
             oficio=self.oficio,
             numero=7,
             ano=2026,
-            objetivo='Objetivo',
+            recursos_texto='Objetivo',
         )
         ctx = build_plano_trabalho_document_context(self.oficio)
         self.assertEqual(ctx['numero_plano_trabalho'], '07/2026')
@@ -156,7 +156,7 @@ class PlanoTrabalhoContextTest(TestCase):
         PlanoTrabalho.objects.create(
             evento=self.evento,
             oficio=self.oficio,
-            objetivo='Objetivo',
+            recursos_texto='Objetivo',
         )
         ctx = build_plano_trabalho_document_context(self.oficio)
         # Deve ser uma string (pode ser vazia se sem config, mas nunca deve dar erro)
@@ -174,7 +174,7 @@ class PlanoTrabalhoContextTest(TestCase):
                 'valor_por_servidor': '617,28',
             }
         }
-        PlanoTrabalho.objects.create(evento=self.evento, oficio=self.oficio, objetivo='Objetivo')
+        PlanoTrabalho.objects.create(evento=self.evento, oficio=self.oficio, recursos_texto='Objetivo')
         ctx = build_plano_trabalho_document_context(self.oficio)
         self.assertEqual(ctx['valor_total'], '1234,56')
         self.assertEqual(ctx['diarias_x'], '1 x 100% + 1 x 30%')
@@ -203,7 +203,7 @@ class PlanoTrabalhoModelDocxTest(TestCase):
             evento=self.evento,
             numero=3,
             ano=2026,
-            objetivo='Objetivo teste',
+            recursos_texto='Objetivo teste',
             atividades_codigos='CIN,BO',
             status=PlanoTrabalho.STATUS_RASCUNHO,
         )
@@ -217,7 +217,7 @@ class PlanoTrabalhoModelDocxTest(TestCase):
             evento=self.evento,
             numero=4,
             ano=2026,
-            objetivo='Objetivo',
+            recursos_texto='Objetivo',
             atividades_codigos='CIN,BO',
             status=PlanoTrabalho.STATUS_RASCUNHO,
         )
@@ -233,7 +233,7 @@ class PlanoTrabalhoModelDocxTest(TestCase):
             evento=self.evento,
             numero=5,
             ano=2026,
-            objetivo='Objetivo',
+            recursos_texto='Objetivo',
             solicitante=sol,
             status=PlanoTrabalho.STATUS_RASCUNHO,
         )
@@ -245,7 +245,7 @@ class PlanoTrabalhoModelDocxTest(TestCase):
             evento=self.evento,
             numero=6,
             ano=2026,
-            objetivo='Objetivo',
+            recursos_texto='Objetivo',
             coordenador_operacional=self.coord,
             status=PlanoTrabalho.STATUS_RASCUNHO,
         )
@@ -254,7 +254,7 @@ class PlanoTrabalhoModelDocxTest(TestCase):
 
     def test_model_docx_sem_atividades_nao_quebra(self):
         pt = PlanoTrabalho.objects.create(
-            objetivo='Objetivo sem atividades',
+            recursos_texto='Objetivo sem atividades',
             status=PlanoTrabalho.STATUS_RASCUNHO,
         )
         result = render_plano_trabalho_model_docx(pt)
@@ -268,7 +268,7 @@ class PlanoTrabalhoModelDocxTest(TestCase):
             evento=self.evento,
             numero=8,
             ano=2026,
-            objetivo='Objetivo para estrutura documental',
+            recursos_texto='Objetivo para estrutura documental',
             atividades_codigos='CIN',
             status=PlanoTrabalho.STATUS_RASCUNHO,
         )
@@ -335,14 +335,12 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             'evento': self.evento.pk,
             'oficio': self.oficio.pk,
             'destinos_payload': '[]',
-            'objetivo': 'Objetivo persistencia',
-            'locais': 'Curitiba/PR',
+            'recursos_texto': 'Sem recursos externos',
             'horario_atendimento_padrao': '08:00-17:00',
             'coordenador_administrativo_novo_nome': 'Servidor Teste Persistencia',
             'salvar_coordenador_administrativo': 'on',
             'solicitante_escolha': '',
             'atividades_codigos': ['CIN', 'BO'],
-            'recursos_texto': 'Sem recursos externos',
             'return_to': reverse('eventos:documentos-planos-trabalho'),
         }
         payload.update(self._base_formset_payload())
@@ -352,15 +350,16 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             data=payload,
         )
         self.assertEqual(response.status_code, 302)
-        pt = PlanoTrabalho.objects.get(objetivo='Objetivo persistencia')
+        pt = PlanoTrabalho.objects.order_by('-pk').first()
+        self.assertIsNotNone(pt)
         self.assertEqual(pt.numero, 1)
         self.assertEqual(pt.ano, 2026)
-        self.assertEqual(pt.locais, 'Curitiba/PR')
         self.assertEqual(pt.horario_atendimento, '08:00 até 17:00')
         self.assertEqual(pt.quantidade_servidores, 5)
         self.assertIn('CIN', pt.atividades_codigos)
         self.assertIn('BO', pt.atividades_codigos)
-        self.assertEqual(pt.recursos_texto, 'Sem recursos externos')
+        self.assertIn('Recursos operacionais', pt.recursos_texto)
+        self.assertIn('Escopo previsto', pt.recursos_texto)
         self.assertIn('Ampliar o acesso ao documento oficial', pt.metas_formatadas)
         self.assertIn('Possibilitar o atendimento imediato', pt.metas_formatadas)
 
@@ -380,8 +379,7 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             'oficio': '',
             'oficios_relacionados': [str(self.oficio.pk), str(oficio_extra.pk)],
             'destinos_payload': '[]',
-            'objetivo': 'Plano multi-oficios persistido',
-            'locais': 'Curitiba/PR',
+            'recursos_texto': 'Plano multi-oficios persistido',
             'horario_atendimento_padrao': '08:00-17:00',
             'coordenador_administrativo_novo_nome': 'Servidor Multi Oficio',
             'salvar_coordenador_administrativo': 'on',
@@ -393,7 +391,8 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         response = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload)
         self.assertEqual(response.status_code, 302)
 
-        pt = PlanoTrabalho.objects.get(objetivo='Plano multi-oficios persistido')
+        pt = PlanoTrabalho.objects.order_by('-pk').first()
+        self.assertIsNotNone(pt)
         self.assertEqual(pt.evento_id, self.evento.pk)
         self.assertEqual(
             set(pt.oficios.values_list('pk', flat=True)),
@@ -417,8 +416,7 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             'evento': self.evento.pk,
             'oficio': self.oficio.pk,
             'destinos_payload': '[]',
-            'objetivo': 'Primeiro',
-            'locais': 'Curitiba/PR',
+            'recursos_texto': 'Primeiro',
             'horario_atendimento_padrao': '08:00-12:00',
             'coordenador_administrativo_novo_nome': 'Servidor Teste Numeracao',
             'salvar_coordenador_administrativo': 'on',
@@ -429,12 +427,12 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         r1 = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload)
 
         payload2 = dict(payload)
-        payload2['objetivo'] = 'Segundo'
+        payload2['recursos_texto'] = 'Segundo'
         r2 = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload2)
         self.assertEqual(r1.status_code, 302)
         self.assertEqual(r2.status_code, 302)
 
-        pts = list(PlanoTrabalho.objects.order_by('numero').values_list('numero', 'ano', 'objetivo'))
+        pts = list(PlanoTrabalho.objects.order_by('numero').values_list('numero', 'ano'))
         self.assertEqual(pts[0][0], 1)
         self.assertEqual(pts[1][0], 2)
         self.assertEqual(pts[0][1], 2026)
@@ -447,8 +445,7 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             'evento': self.evento.pk,
             'oficio': self.oficio.pk,
             'destinos_payload': '[]',
-            'objetivo': 'Com solicitante outros',
-            'locais': 'Curitiba/PR',
+            'recursos_texto': 'Com solicitante outros',
             'horario_atendimento_padrao': '13:00-17:00',
             'coordenador_administrativo_novo_nome': 'Servidor Teste Solicitante',
             'salvar_coordenador_administrativo': 'on',
@@ -462,7 +459,8 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         response = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(SolicitantePlanoTrabalho.objects.filter(nome='Secretaria Municipal Teste').exists())
-        pt = PlanoTrabalho.objects.get(objetivo='Com solicitante outros')
+        pt = PlanoTrabalho.objects.order_by('-pk').first()
+        self.assertIsNotNone(pt)
         self.assertTrue(bool(pt.solicitante_id) or bool(pt.solicitante_outros))
 
     def test_dados_reaparecem_na_edicao(self):
@@ -470,12 +468,10 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         pt = PlanoTrabalho.objects.create(
             numero=11,
             ano=2026,
-            objetivo='Objetivo edicao',
-            locais='Londrina/PR',
+            recursos_texto='Objetivo edicao',
             horario_atendimento='09h às 18h',
             quantidade_servidores=3,
             atividades_codigos='CIN,NOC',
-            recursos_texto='PC equipada',
             status=PlanoTrabalho.STATUS_RASCUNHO,
         )
         response = self.client.get(
@@ -483,8 +479,7 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         form = response.context['form']
-        self.assertEqual(form.instance.objetivo, 'Objetivo edicao')
-        self.assertEqual(form.instance.locais, 'Londrina/PR')
+        self.assertEqual(form.instance.recursos_texto, 'Objetivo edicao')
         self.assertEqual(form.instance.atividades_codigos, 'CIN,NOC')
         # Verifica que o initial das atividades está correto
         self.assertIn('CIN', form.initial.get('atividades_codigos', []))
@@ -497,8 +492,7 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             'evento': self.evento.pk,
             'oficio': self.oficio.pk,
             'destinos_payload': '[]',
-            'objetivo': 'Horario manual',
-            'locais': 'Curitiba/PR',
+            'recursos_texto': 'Horario manual',
             'horario_atendimento_padrao': '__OUTROS__',
             'horario_atendimento_manual': 'das 10h às 20h',
             'coordenador_administrativo_novo_nome': 'Servidor Teste Horario',
@@ -510,15 +504,15 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
 
         response = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload)
         self.assertEqual(response.status_code, 302)
-        pt = PlanoTrabalho.objects.get(objetivo='Horario manual')
+        pt = PlanoTrabalho.objects.order_by('-pk').first()
+        self.assertIsNotNone(pt)
         self.assertEqual(pt.horario_atendimento, '10:00 até 20:00')
 
     def test_detalhe_abre_com_todos_campos(self):
         pt = PlanoTrabalho.objects.create(
             numero=12,
             ano=2026,
-            objetivo='Objetivo detalhe',
-            locais='Cascavel/PR',
+            recursos_texto='Objetivo detalhe',
             status=PlanoTrabalho.STATUS_FINALIZADO,
         )
         response = self.client.get(
@@ -526,7 +520,6 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Objetivo detalhe')
-        self.assertContains(response, 'Cascavel/PR')
         self.assertContains(response, '12/2026')
 
     def test_campos_obrigatorios_validados(self):

@@ -38,14 +38,13 @@ class PtOsDesacopladoTest(TestCase):
                 'ano': '2026',
                 'data_criacao': '2026-03-10',
                 'status': PlanoTrabalho.STATUS_RASCUNHO,
-                'objetivo': 'PT sem evento',
-                'locais': 'Curitiba/PR',
+                'recursos_texto': 'PT sem evento',
                 'destinos_payload': '[]',
                 'return_to': reverse('eventos:documentos-planos-trabalho'),
             },
         )
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(PlanoTrabalho.objects.filter(objetivo='PT sem evento', evento__isnull=True).exists())
+        self.assertTrue(PlanoTrabalho.objects.filter(recursos_texto='PT sem evento', evento__isnull=True).exists())
 
     def test_criar_pt_sem_oficio(self):
         response = self.client.post(
@@ -56,8 +55,7 @@ class PtOsDesacopladoTest(TestCase):
                 'data_criacao': '2026-03-10',
                 'status': PlanoTrabalho.STATUS_RASCUNHO,
                 'evento': self.evento.pk,
-                'objetivo': 'PT sem oficio',
-                'locais': 'Curitiba/PR',
+                'recursos_texto': 'PT sem oficio',
                 'destinos_payload': '[]',
                 'return_to': reverse('eventos:documentos-planos-trabalho'),
             },
@@ -65,7 +63,7 @@ class PtOsDesacopladoTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(
             PlanoTrabalho.objects.filter(
-                objetivo='PT sem oficio',
+                recursos_texto='PT sem oficio',
                 evento=self.evento,
                 oficio__isnull=True,
             ).exists()
@@ -151,7 +149,7 @@ class PtOsDesacopladoTest(TestCase):
         self.assertContains(response, reverse('eventos:documentos-ordens-servico-novo'))
 
     def test_download_pt_usa_model_quando_sem_oficio(self):
-        pt = PlanoTrabalho.objects.create(objetivo='PT download', status=PlanoTrabalho.STATUS_RASCUNHO)
+        pt = PlanoTrabalho.objects.create(recursos_texto='PT download', status=PlanoTrabalho.STATUS_RASCUNHO)
         with patch('eventos.views_global.render_plano_trabalho_model_docx', return_value=b'docx') as mock_model:
             with patch('eventos.views_global.render_plano_trabalho_docx', return_value=b'oficio-docx') as mock_oficio:
                 response = self.client.get(
@@ -162,7 +160,7 @@ class PtOsDesacopladoTest(TestCase):
         mock_oficio.assert_not_called()
 
     def test_download_pt_pdf_funciona(self):
-        pt = PlanoTrabalho.objects.create(objetivo='PT download PDF', status=PlanoTrabalho.STATUS_RASCUNHO)
+        pt = PlanoTrabalho.objects.create(recursos_texto='PT download PDF', status=PlanoTrabalho.STATUS_RASCUNHO)
         with patch('eventos.views_global.render_plano_trabalho_model_docx', return_value=b'docx'):
             with patch('eventos.views_global.convert_docx_bytes_to_pdf_bytes', return_value=b'pdf'):
                 response = self.client.get(

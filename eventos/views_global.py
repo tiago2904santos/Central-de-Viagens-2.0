@@ -11,10 +11,11 @@ from django.db.models import Count, Prefetch, Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.urls.exceptions import NoReverseMatch
 from django.utils import timezone
 from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods
-from cadastros.models import Estado
+from cadastros.models import Cargo, Estado
 
 from .forms import (
     JustificativaForm,
@@ -70,11 +71,23 @@ STATUS_LABELS = {
     'indisponivel': 'Indisponivel',
 }
 
+def _get_default_pt_cargo():
+    preferred_names = [
+        'AGENTE DE POLÍCIA CIVIL',
+        'AGENTE DE POLICIA CIVIL',
+    ]
+    for name in preferred_names:
+        cargo = Cargo.objects.filter(nome__iexact=name).first()
+        if cargo:
+            return cargo
+    return Cargo.objects.filter(is_padrao=True).order_by('nome').first() or Cargo.objects.order_by('nome').first()
+
+
 PlanoTrabalhoEfetivoFormSet = inlineformset_factory(
     PlanoTrabalho,
     EfetivoPlanoTrabalhoDocumento,
     fields=('cargo', 'quantidade'),
-    extra=3,
+    extra=1,
     can_delete=True,
     widgets={
         'cargo': forms.Select(attrs={'class': 'form-select'}),
@@ -103,6 +116,32 @@ def _extract_efetivo_rows(post_data, prefix='efetivo'):
             continue
         rows.append((int(cargo), int(quantidade)))
     return rows
+
+
+def _get_coordenador_operacional_create_url():
+    try:
+        return reverse('eventos:coordenadores-operacionais-cadastrar')
+    except NoReverseMatch:
+        return ''
+
+
+def _build_plano_trabalho_efetivo_formset(request, *, instance=None):
+    has_payload = request.method == 'POST' and any(k.startswith('efetivo-') for k in request.POST.keys())
+    default_cargo = _get_default_pt_cargo()
+    initial = None
+    if request.method != 'POST':
+        has_existing_rows = bool(instance and instance.pk and instance.efetivos.exists())
+        if not has_existing_rows:
+            initial = [{'cargo': default_cargo.pk if default_cargo else '', 'quantidade': 1}]
+    kwargs = {
+        'instance': instance,
+        'prefix': 'efetivo',
+        'initial': initial,
+    }
+    if instance is None:
+        kwargs['queryset'] = EfetivoPlanoTrabalhoDocumento.objects.none()
+    formset = PlanoTrabalhoEfetivoFormSet(request.POST if has_payload else None, **kwargs)
+    return formset, has_payload, default_cargo
 
 
 def _save_efetivo_rows(plano, rows):
@@ -1627,7 +1666,16 @@ def _decorate_plano_trabalho_list_items(items):
         status_meta = _build_plano_trabalho_status_meta(plano)
         destino_display = plano.destinos_formatados_display or 'Destino a definir'
         periodo_display = _resolve_plano_trabalho_periodo(plano, related_event)
-        resumo_curto = _clean(plano.objetivo) or _clean(plano.recursos_texto) or _clean(plano.observacoes)
+        atividades_labels = [
+            item['nome']
+            for item in ATIVIDADES_CATALOGO
+            if item['codigo'] in {
+                codigo.strip()
+                for codigo in _clean(plano.atividades_codigos).split(',')
+                if codigo.strip()
+            }
+        ]
+        resumo_curto = _clean(plano.recursos_texto) or ', '.join(atividades_labels[:3]) or _clean(plano.observacoes)
         resumo_curto = resumo_curto or 'Sem resumo adicional registrado para este plano.'
         plano.status_meta = status_meta
         plano.card_theme_class = status_meta['theme_class']
@@ -1851,7 +1899,7 @@ def planos_trabalho_global(request):
     )
     if filters['q']:
         queryset = queryset.filter(
-            Q(objetivo__icontains=filters['q'])
+            Q(recursos_texto__icontains=filters['q'])
             | Q(observacoes__icontains=filters['q'])
             | Q(evento__titulo__icontains=filters['q'])
             | Q(oficio__motivo__icontains=filters['q'])
@@ -1899,12 +1947,7 @@ def plano_trabalho_novo(request):
         initial['oficios_relacionados'] = [preselected_oficio.pk]
 
     form = PlanoTrabalhoForm(request.POST or None, initial=initial)
-    has_efetivo_payload = request.method == 'POST' and any(k.startswith('efetivo-') for k in request.POST.keys())
-    formset = PlanoTrabalhoEfetivoFormSet(
-        request.POST if has_efetivo_payload else None,
-        prefix='efetivo',
-        queryset=EfetivoPlanoTrabalhoDocumento.objects.none(),
-    )
+    formset, has_efetivo_payload, default_cargo = _build_plano_trabalho_efetivo_formset(request)
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
         if has_efetivo_payload:
@@ -1940,6 +1983,9 @@ def plano_trabalho_novo(request):
             'pt_glance': ui_context['glance'],
             'pt_selected_activity_codes': ui_context['selected_codes'],
             'plano_trabalho_atividades_catalogo': ATIVIDADES_CATALOGO,
+            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrão',
+            'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
+            'hide_page_header': True,
         },
     )
 
@@ -1950,8 +1996,7 @@ def plano_trabalho_editar(request, pk):
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-planos-trabalho'))
     context_source = _get_context_source(request)
     form = PlanoTrabalhoForm(request.POST or None, instance=obj)
-    has_efetivo_payload = request.method == 'POST' and any(k.startswith('efetivo-') for k in request.POST.keys())
-    formset = PlanoTrabalhoEfetivoFormSet(request.POST if has_efetivo_payload else None, instance=obj, prefix='efetivo')
+    formset, has_efetivo_payload, default_cargo = _build_plano_trabalho_efetivo_formset(request, instance=obj)
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
         if has_efetivo_payload:
@@ -1985,6 +2030,9 @@ def plano_trabalho_editar(request, pk):
             'pt_glance': ui_context['glance'],
             'pt_selected_activity_codes': ui_context['selected_codes'],
             'plano_trabalho_atividades_catalogo': ATIVIDADES_CATALOGO,
+            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrão',
+            'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
+            'hide_page_header': True,
         },
     )
 

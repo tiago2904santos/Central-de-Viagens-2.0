@@ -613,9 +613,26 @@ def build_plano_trabalho_document_context(oficio):
     context = _build_common_context(oficio)
     evento = oficio.evento
     plano = _get_plano_trabalho_for_oficio(oficio)
-    objetivo = _text_or_empty(plano.objetivo) if plano else ''
-    if not objetivo:
-        objetivo = context['conteudo']['motivo']
+    oficios_labels = []
+    if plano:
+        for related_oficio in plano.get_oficios_relacionados():
+            label = _text_or_empty(getattr(related_oficio, 'numero_formatado', '')) or f'#{related_oficio.pk}'
+            if label and label not in oficios_labels:
+                oficios_labels.append(label)
+    contexto_operacional = ' | '.join(
+        [
+            part
+            for part in [
+                _text_or_empty(evento.titulo if evento else ''),
+                ', '.join(oficios_labels),
+                context['roteiro']['destinos_texto'] or context['roteiro']['sede'],
+                context['roteiro']['periodo_viagem']['resumo'],
+            ]
+            if part
+        ]
+    )
+    if not contexto_operacional:
+        contexto_operacional = context['conteudo']['motivo']
 
     solicitante_texto = ''
     if plano:
@@ -698,7 +715,7 @@ def build_plano_trabalho_document_context(oficio):
             'recursos_formatado': recursos_formatado,
             'coordenacao_formatada': _build_coordenacao_formatada(plano) if plano else '',
             'plano_trabalho': {
-                'objetivo': objetivo,
+                'contexto_operacional': contexto_operacional,
                 'local_periodo': (
                     ' | '.join(
                         [

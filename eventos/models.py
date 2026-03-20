@@ -298,8 +298,6 @@ class PlanoTrabalho(models.Model):
         verbose_name='Coordenador administrativo',
     )
     coordenador_municipal = models.CharField('Coordenador municipal', max_length=200, blank=True, default='')
-    objetivo = models.TextField('Objetivo/finalidade', blank=True, default='')
-    locais = models.TextField('Locais', blank=True, default='')
     destinos_json = models.JSONField('Destinos estruturados', blank=True, default=list)
     evento_data_unica = models.BooleanField('Evento em um único dia', default=False)
     evento_data_inicio = models.DateField('Data inicial do evento', null=True, blank=True)
@@ -308,7 +306,6 @@ class PlanoTrabalho(models.Model):
     quantidade_servidores = models.PositiveIntegerField('Quantidade de servidores', null=True, blank=True)
     atividades_codigos = models.CharField('Atividades (códigos)', max_length=500, blank=True, default='')
     metas_formatadas = models.TextField('Metas formatadas', blank=True, default='')
-    efetivo_resumo = models.TextField('Efetivo (resumo)', blank=True, default='')
     diarias_quantidade = models.CharField('Simulação de diárias (quantidade)', max_length=120, blank=True, default='')
     diarias_valor_total = models.CharField('Simulação de diárias (valor total)', max_length=80, blank=True, default='')
     diarias_valor_unitario = models.CharField('Simulação de diárias (valor unitário)', max_length=80, blank=True, default='')
@@ -371,21 +368,64 @@ class PlanoTrabalho(models.Model):
             labels.append(label)
         return ', '.join(labels)
 
-    @property
-    def destinos_formatados_display(self):
-        items = []
+    def get_destinos_labels(self):
+        labels = []
+        seen = set()
+
+        def remember(label):
+            value = (label or '').strip()
+            if not value or value in seen:
+                return
+            seen.add(value)
+            labels.append(value)
+
         for destino in self.destinos_json or []:
             if not isinstance(destino, dict):
                 continue
             cidade = (destino.get('cidade_nome') or '').strip()
             uf = (destino.get('estado_sigla') or '').strip().upper()
             if cidade and uf:
-                items.append(f'{cidade}/{uf}')
+                remember(f'{cidade}/{uf}')
             elif cidade:
-                items.append(cidade)
-        if items:
-            return ', '.join(items)
-        return (self.locais or '').strip()
+                remember(cidade)
+
+        if labels:
+            return labels
+
+        if self.roteiro_id and self.roteiro:
+            for destino in self.roteiro.destinos.select_related('cidade', 'estado').order_by('ordem', 'pk'):
+                cidade = (destino.cidade.nome if destino.cidade_id else '').strip()
+                uf = (destino.estado.sigla if destino.estado_id else '').strip().upper()
+                if cidade and uf:
+                    remember(f'{cidade}/{uf}')
+                elif cidade:
+                    remember(cidade)
+
+        evento = self.get_evento_relacionado()
+        if not labels and evento:
+            for destino in evento.destinos.select_related('cidade', 'estado').order_by('ordem', 'pk'):
+                cidade = (destino.cidade.nome if destino.cidade_id else '').strip()
+                uf = (destino.estado.sigla if destino.estado_id else '').strip().upper()
+                if cidade and uf:
+                    remember(f'{cidade}/{uf}')
+                elif cidade:
+                    remember(cidade)
+
+        if not labels:
+            for oficio in self.get_oficios_relacionados():
+                for trecho in oficio.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk'):
+                    cidade = (trecho.destino_cidade.nome if trecho.destino_cidade_id else '').strip()
+                    uf = (trecho.destino_estado.sigla if trecho.destino_estado_id else '').strip().upper()
+                    if cidade and uf:
+                        remember(f'{cidade}/{uf}')
+                    elif cidade:
+                        remember(cidade)
+
+        return labels
+
+    @property
+    def destinos_formatados_display(self):
+        return ', '.join(self.get_destinos_labels())
 
     def _sync_context_relations(self):
         if self.oficio_id:

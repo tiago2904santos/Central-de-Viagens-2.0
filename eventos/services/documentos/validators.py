@@ -141,8 +141,8 @@ def _validate_plano_trabalho_document(oficio):
     base_validation = _validate_base_travel_document(oficio)
     context = build_plano_trabalho_document_context(oficio)
     extra_errors = []
-    if not context['plano_trabalho']['objetivo']:
-        extra_errors.append('Informe a finalidade da viagem antes de gerar o plano de trabalho.')
+    if not context['plano_trabalho']['contexto_operacional']:
+        extra_errors.append('Informe o contexto operacional mínimo antes de gerar o plano de trabalho.')
     if not context['plano_trabalho']['roteiro_resumo']:
         extra_errors.append('Salve um roteiro válido antes de gerar o plano de trabalho.')
     if not context['plano_trabalho']['participantes_texto']:

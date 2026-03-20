@@ -145,6 +145,28 @@ def build_metas_formatada(codigos_raw: str | None) -> str:
     return '\n\n'.join(item['meta'] for item in itens)
 
 
+def build_recursos_necessarios_formatado(codigos_raw: str | None) -> str:
+    """
+    Gera um texto-base de recursos a partir das atividades selecionadas.
+    A estrutura fica pronta para detalhamento futuro sem deixar o PT com bloco morto.
+    """
+    codigos = _codigos_from_string(codigos_raw)
+    itens = _codigos_validos_na_ordem(codigos)
+    if not itens:
+        return ''
+    atividades = '; '.join(item['nome'] for item in itens)
+    linhas = [
+        (
+            'Recursos operacionais, materiais de atendimento, equipamentos de apoio '
+            'e suporte logístico compatíveis com as atividades selecionadas.'
+        ),
+        f'Escopo previsto: {atividades}.',
+    ]
+    if CODIGO_UNIDADE_MOVEL in codigos:
+        linhas.append('Prever unidade móvel institucional e o suporte operacional associado.')
+    return '\n'.join(linhas)
+
+
 def has_unidade_movel(codigos_raw: str | None) -> bool:
     """True se a atividade Unidade móvel (ônibus ou caminhão) estiver selecionada."""
     return CODIGO_UNIDADE_MOVEL in _codigos_from_string(codigos_raw)

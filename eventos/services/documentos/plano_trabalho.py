@@ -19,7 +19,7 @@ from ..plano_trabalho_domain import build_atividades_formatada, build_metas_form
 
 def _render_from_context(document, context):
     add_section_heading(document, '1. BREVE CONTEXTUALIZAÇÃO')
-    add_multiline_value(document, 'Objetivo / Finalidade', context['plano_trabalho']['objetivo'])
+    add_multiline_value(document, 'Contexto operacional', context['plano_trabalho']['contexto_operacional'])
     add_label_value(document, 'Número do plano', context.get('numero_plano_trabalho', ''))
     add_label_value(document, 'Destino', context.get('destino', ''))
     add_label_value(document, 'Solicitante', context.get('solicitante', ''))
@@ -114,10 +114,22 @@ def render_plano_trabalho_model_docx(plano_trabalho):
     coordenacao_texto = _build_coordenacao_formatada(plano_trabalho)
     config = _get_configuracao_sistema()
     data_extenso = _format_data_extenso(timezone.localdate())
+    evento_relacionado = plano_trabalho.get_evento_relacionado()
+    contexto_operacional = ' | '.join(
+        [
+            part
+            for part in [
+                _text_or_empty(evento_relacionado.titulo if evento_relacionado else ''),
+                _text_or_empty(plano_trabalho.oficios_relacionados_display),
+                _text_or_empty(plano_trabalho.destinos_formatados_display),
+            ]
+            if part
+        ]
+    )
 
     context = {
         'plano_trabalho': {
-            'objetivo': plano_trabalho.objetivo,
+            'contexto_operacional': contexto_operacional,
         },
         'institucional': {
             'divisao': _text_or_empty(config.divisao if config else ''),
@@ -131,12 +143,12 @@ def render_plano_trabalho_model_docx(plano_trabalho):
             'cargo_chefia': _text_or_empty(getattr(config, 'cargo_chefia', '') if config else ''),
         },
         'numero_plano_trabalho': plano_trabalho.numero_formatado,
-        'destino': plano_trabalho.locais,
+        'destino': plano_trabalho.destinos_formatados_display,
         'solicitante': solicitante_texto,
         'metas_formatada': metas_exibir,
         'atividades_formatada': atividades_fmt,
         'dias_evento_extenso': '',
-        'locais_formatado': plano_trabalho.locais,
+        'locais_formatado': plano_trabalho.destinos_formatados_display,
         'horario_atendimento': plano_trabalho.horario_atendimento,
         'quantidade_de_servidores': str(plano_trabalho.quantidade_servidores or ''),
         'unidade_movel': '',

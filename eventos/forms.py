@@ -4,11 +4,11 @@ import re
 from datetime import datetime
 
 from django import forms
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from cadastros.models import Cidade, ConfiguracaoSistema, Viajante, Veiculo
+from cadastros.models import Cargo, Cidade, ConfiguracaoSistema, UnidadeLotacao, Viajante, Veiculo
 from eventos.services.oficio_schema import oficio_justificativa_schema_available
 from eventos.services.justificativa import get_oficio_justificativa, get_oficio_justificativa_texto
 from eventos.termos import build_termo_context, build_termo_preview_payload
@@ -28,7 +28,11 @@ from .models import (
     CoordenadorOperacional,
     TipoDemandaEvento,
 )
-from .services.plano_trabalho_domain import ATIVIDADES_CATALOGO, build_metas_formatada
+from .services.plano_trabalho_domain import (
+    ATIVIDADES_CATALOGO,
+    build_metas_formatada,
+    build_recursos_necessarios_formatado,
+)
 from .services.diarias import PeriodMarker, calculate_periodized_diarias
 from core.utils.masks import format_placa, format_protocolo, normalize_placa
 from .utils import buscar_veiculo_finalizado_por_placa, mapear_tipo_viatura_para_oficio, normalize_protocolo
@@ -156,6 +160,76 @@ class EventoFinalizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['observacoes_finais'].required = False
 
 
+class CoordenadorOperacionalForm(FormComErroInvalidMixin, forms.ModelForm):
+    cargo_base = forms.ModelChoiceField(
+        label='Cargo',
+        queryset=Cargo.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    lotacao_base = forms.ModelChoiceField(
+        label='Lotação',
+        queryset=UnidadeLotacao.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
+    class Meta:
+        model = CoordenadorOperacional
+        fields = ['nome', 'ativo', 'ordem']
+        widgets = {
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 200}),
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'ordem': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cargo_base'].queryset = Cargo.objects.order_by('nome')
+        self.fields['lotacao_base'].queryset = UnidadeLotacao.objects.order_by('nome')
+        if self.instance and self.instance.pk:
+            cargo_value = (self.instance.cargo or '').strip()
+            lotacao_value = (self.instance.unidade or '').strip()
+            if cargo_value:
+                cargo_obj = Cargo.objects.filter(nome__iexact=cargo_value).first()
+                if cargo_obj:
+                    self.initial['cargo_base'] = cargo_obj.pk
+            if lotacao_value:
+                lotacao_obj = UnidadeLotacao.objects.filter(nome__iexact=lotacao_value).first()
+                if lotacao_obj:
+                    self.initial['lotacao_base'] = lotacao_obj.pk
+
+    def clean_nome(self):
+        value = ' '.join((self.cleaned_data.get('nome') or '').strip().upper().split())
+        if not value:
+            raise forms.ValidationError('Informe o nome completo do coordenador.')
+        qs = CoordenadorOperacional.objects.filter(nome=value)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError('Já existe um coordenador com este nome.')
+        return value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cargo_obj = cleaned_data.get('cargo_base')
+        lotacao_obj = cleaned_data.get('lotacao_base')
+        if cargo_obj:
+            cleaned_data['cargo'] = cargo_obj.nome
+        if lotacao_obj:
+            cleaned_data['unidade'] = lotacao_obj.nome
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.cargo = (self.cleaned_data.get('cargo') or '').strip()
+        instance.unidade = (self.cleaned_data.get('unidade') or '').strip()
+        instance.cidade = ''
+        if commit:
+            instance.save()
+        return instance
+
+
 class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
     OUTROS_CHOICE = '__OUTROS__'
     HORARIO_OUTROS = '__OUTROS__'
@@ -193,17 +267,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': 6}),
     )
     destinos_payload = forms.CharField(required=False, widget=forms.HiddenInput())
-    salvar_coordenador_administrativo = forms.BooleanField(
-        label='Salvar novo servidor para coordenação administrativa',
-        required=False,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-    )
-    coordenador_administrativo_novo_nome = forms.CharField(
-        label='Coordenador administrativo (novo nome)',
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
-    )
-
     class Meta:
         model = PlanoTrabalho
         fields = [
@@ -214,8 +277,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'solicitante_outros',
             'coordenador_operacional',
             'coordenador_administrativo',
-            'objetivo',
-            'locais',
             'destinos_json',
             'evento_data_unica',
             'evento_data_inicio',
@@ -223,7 +284,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'horario_atendimento',
             'quantidade_servidores',
             'metas_formatadas',
-            'efetivo_resumo',
             'diarias_quantidade',
             'diarias_valor_total',
             'diarias_valor_unitario',
@@ -238,8 +298,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'solicitante_outros': forms.TextInput(attrs={'class': 'form-control'}),
             'coordenador_operacional': forms.Select(attrs={'class': 'form-select'}),
             'coordenador_administrativo': forms.Select(attrs={'class': 'form-select'}),
-            'objetivo': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'locais': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'destinos_json': forms.HiddenInput(),
             'evento_data_unica': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'evento_data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -247,7 +305,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'horario_atendimento': forms.TextInput(attrs={'class': 'form-control'}),
             'quantidade_servidores': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'metas_formatadas': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'efetivo_resumo': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'diarias_quantidade': forms.TextInput(attrs={'class': 'form-control'}),
             'diarias_valor_total': forms.TextInput(attrs={'class': 'form-control'}),
             'diarias_valor_unitario': forms.TextInput(attrs={'class': 'form-control'}),
@@ -270,15 +327,20 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['oficios_relacionados'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
         self.fields['roteiro'].queryset = RoteiroEvento.objects.select_related('evento').order_by('-updated_at')
         self.fields['coordenador_operacional'].queryset = CoordenadorOperacional.objects.filter(ativo=True).order_by('ordem', 'nome')
-        self.fields['coordenador_administrativo'].queryset = Viajante.objects.order_by('nome')
+        self.fields['coordenador_administrativo'].queryset = Viajante.objects.filter(
+            status=Viajante.STATUS_FINALIZADO
+        ).select_related('cargo', 'unidade_lotacao').order_by('nome')
         self.fields['metas_formatadas'].widget.attrs['readonly'] = True
+        self.fields['recursos_texto'].widget.attrs['readonly'] = True
         self.fields['diarias_quantidade'].widget.attrs['readonly'] = True
         self.fields['diarias_valor_total'].widget.attrs['readonly'] = True
         self.fields['diarias_valor_unitario'].widget.attrs['readonly'] = True
         self.fields['diarias_valor_extenso'].widget.attrs['readonly'] = True
-        self.fields['locais'].widget.attrs['readonly'] = True
 
         self.initial.setdefault('data_criacao', timezone.localdate())
+        config = ConfiguracaoSistema.objects.order_by('pk').first()
+        if config and getattr(config, 'coordenador_adm_plano_trabalho_id', None):
+            self.initial.setdefault('coordenador_administrativo', config.coordenador_adm_plano_trabalho_id)
 
         solicitantes = list(
             SolicitantePlanoTrabalho.objects.filter(ativo=True).order_by('ordem', 'nome').values_list('pk', 'nome')
@@ -524,12 +586,8 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
                 self.add_error('oficios_relacionados', 'Um dos ofícios selecionados pertence a outro evento.')
                 break
 
-        novo_coord_nome = (cleaned_data.get('coordenador_administrativo_novo_nome') or '').strip()
-        if cleaned_data.get('salvar_coordenador_administrativo') and not novo_coord_nome:
-            self.add_error('coordenador_administrativo_novo_nome', 'Informe o nome para salvar novo servidor.')
-
         coord_adm = cleaned_data.get('coordenador_administrativo')
-        if not coord_adm and not novo_coord_nome:
+        if not coord_adm:
             config = ConfiguracaoSistema.objects.order_by('pk').first()
             coord_cfg = getattr(config, 'coordenador_adm_plano_trabalho', None) if config else None
             if coord_cfg:
@@ -563,19 +621,10 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
                     for d in evento.destinos.select_related('cidade', 'estado').order_by('ordem')
                 ]
 
-        locais_manualmente = (cleaned_data.get('locais') or '').strip()
-        if not destinos and not locais_manualmente and not (evento or roteiro or oficios_relacionados):
+        if not destinos and not (evento or roteiro or oficios_relacionados):
             self.add_error('destinos_payload', 'Adicione ao menos um destino manual quando não houver vínculo.')
 
         cleaned_data['destinos_json'] = destinos
-        if destinos:
-            cleaned_data['locais'] = ', '.join(
-                f"{item.get('cidade_nome')}/{item.get('estado_sigla')}"
-                for item in destinos
-                if item.get('cidade_nome')
-            )
-        else:
-            cleaned_data['locais'] = locais_manualmente
 
         data_unica = bool(cleaned_data.get('evento_data_unica'))
         data_inicio = cleaned_data.get('evento_data_inicio')
@@ -622,6 +671,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
 
         codigos = cleaned_data.get('atividades_codigos', [])
         cleaned_data['metas_formatadas'] = build_metas_formatada(','.join(codigos) if codigos else '')
+        cleaned_data['recursos_texto'] = build_recursos_necessarios_formatado(','.join(codigos) if codigos else '')
         return cleaned_data
 
     def _assign_auto_number(self, instance):
@@ -671,6 +721,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         codigos = self.cleaned_data.get('atividades_codigos', [])
         instance.atividades_codigos = ','.join(codigos) if codigos else ''
         instance.metas_formatadas = self.cleaned_data.get('metas_formatadas') or ''
+        instance.recursos_texto = self.cleaned_data.get('recursos_texto') or ''
         instance.destinos_json = self.cleaned_data.get('destinos_json') or []
         instance.diarias_quantidade = self.cleaned_data.get('diarias_quantidade') or ''
         instance.diarias_valor_total = self.cleaned_data.get('diarias_valor_total') or ''
@@ -679,17 +730,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         instance.coordenador_municipal = ''
         instance.observacoes = ''
         instance.status = PlanoTrabalho.STATUS_RASCUNHO
-
-        novo_coord_nome = (self.cleaned_data.get('coordenador_administrativo_novo_nome') or '').strip()
-        if novo_coord_nome and self.cleaned_data.get('salvar_coordenador_administrativo'):
-            novo_coord = Viajante.objects.filter(nome__iexact=novo_coord_nome).first()
-            if not novo_coord:
-                try:
-                    novo_coord = Viajante.objects.create(nome=novo_coord_nome)
-                except IntegrityError:
-                    # Another row with same normalized name may already exist.
-                    novo_coord = Viajante.objects.filter(nome__iexact=novo_coord_nome).first()
-            instance.coordenador_administrativo = novo_coord
 
         related_oficios = list(self.cleaned_data.get('oficios_relacionados') or [])
         if instance.oficio_id and instance.oficio not in related_oficios:

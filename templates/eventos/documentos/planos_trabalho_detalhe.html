@@ -61,10 +61,10 @@
         <div class="card-header fw-semibold">Conteúdo</div>
         <div class="card-body">
           <dl class="row mb-0">
-            <dt class="col-sm-3">Objetivo / finalidade</dt>
-            <dd class="col-sm-9" style="white-space:pre-line">{{ object.objetivo|default:"—" }}</dd>
-            <dt class="col-sm-3">Locais</dt>
-            <dd class="col-sm-9" style="white-space:pre-line">{{ object.destinos_formatados_display|default:object.locais|default:"—" }}</dd>
+            <dt class="col-sm-3">Contexto operacional</dt>
+            <dd class="col-sm-9" style="white-space:pre-line">{{ object.recursos_texto|default:"—" }}</dd>
+            <dt class="col-sm-3">Destinos</dt>
+            <dd class="col-sm-9" style="white-space:pre-line">{{ object.destinos_formatados_display|default:"—" }}</dd>
             <dt class="col-sm-3">Período do evento</dt>
             <dd class="col-sm-9">
               {% if object.evento_data_inicio %}
@@ -80,8 +80,6 @@
             <dd class="col-sm-9">{{ object.atividades_codigos|default:"—" }}</dd>
             <dt class="col-sm-3">Metas formatadas</dt>
             <dd class="col-sm-9" style="white-space:pre-line">{{ object.metas_formatadas|default:"—" }}</dd>
-            <dt class="col-sm-3">Efetivo (resumo)</dt>
-            <dd class="col-sm-9" style="white-space:pre-line">{{ object.efetivo_resumo|default:"—" }}</dd>
             <dt class="col-sm-3">Recursos</dt>
             <dd class="col-sm-9" style="white-space:pre-line">{{ object.recursos_texto|default:"—" }}</dd>
             <dt class="col-sm-3">Diárias (quantidade)</dt>
