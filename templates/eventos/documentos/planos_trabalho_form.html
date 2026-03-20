@@ -1,264 +1,472 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block title %}{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho - Central de Viagens{% endblock %}
 {% block page_title %}{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho{% endblock %}
 
+{% block extra_css %}
+<style>
+  .pt-shell {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .pt-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .pt-hero-title {
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: #122033;
+  }
+
+  .pt-hero-subtitle {
+    margin: 0.3rem 0 0;
+    font-size: 0.92rem;
+    color: #576579;
+  }
+
+  .pt-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+
+  .pt-card {
+    border: 1px solid #d9e2ec;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(23, 31, 44, 0.05);
+    overflow: hidden;
+  }
+
+  .pt-card-header {
+    padding: 0.72rem 1rem;
+    border-bottom: 1px solid #edf2f7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .pt-card-title {
+    margin: 0;
+    font-size: 0.97rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #1c2d44;
+  }
+
+  .pt-card-body {
+    padding: 0.95rem 1rem 1rem;
+  }
+
+  .pt-field-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #4f6177;
+    margin-bottom: 0.33rem;
+  }
+
+  .pt-system-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid #c6d4e3;
+    border-radius: 999px;
+    background: #f6f9fc;
+    color: #233752;
+    font-size: 0.83rem;
+    font-weight: 600;
+    padding: 0.4rem 0.75rem;
+    line-height: 1;
+  }
+
+  .pt-status-badge {
+    border-radius: 999px;
+    padding: 0.35rem 0.62rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    background: #eef4fb;
+    color: #29486b;
+  }
+
+  .pt-card .form-control,
+  .pt-card .form-select {
+    border-radius: 10px;
+    border-color: #cad5e2;
+    min-height: 42px;
+  }
+
+  .pt-card textarea.form-control {
+    min-height: 110px;
+  }
+
+  .pt-card .form-control:focus,
+  .pt-card .form-select:focus {
+    border-color: #53749b;
+    box-shadow: 0 0 0 0.22rem rgba(58, 90, 124, 0.18);
+  }
+
+  .pt-mini-help {
+    font-size: 0.77rem;
+    color: #6a7a8f;
+    margin-top: 0.3rem;
+  }
+
+  .pt-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .pt-check-tile {
+    border: 1px solid #d5dfeb;
+    border-radius: 11px;
+    background: #f9fbfd;
+    padding: 0.62rem 0.7rem;
+    min-height: 100%;
+  }
+
+  .pt-check-tile .form-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.48rem;
+    margin: 0;
+  }
+
+  .pt-check-tile .form-check-input {
+    margin-top: 0.2rem;
+  }
+
+  .pt-check-tile .form-check-label {
+    font-size: 0.87rem;
+    line-height: 1.3;
+    color: #24384f;
+  }
+
+  .pt-efetivo-list {
+    display: grid;
+    gap: 0.58rem;
+  }
+
+  .pt-efetivo-row {
+    border: 1px solid #d8e1ec;
+    border-radius: 12px;
+    background: #fbfcfe;
+    padding: 0.65rem;
+  }
+
+  .pt-efetivo-remove {
+    padding-top: 1.58rem;
+  }
+
+  .pt-actions {
+    position: sticky;
+    bottom: 0;
+    margin-top: 1rem;
+    background: #ffffff;
+    border: 1px solid #d6e0eb;
+    border-radius: 14px;
+    padding: 0.7rem;
+    box-shadow: 0 -1px 10px rgba(24, 36, 52, 0.08);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .pt-actions-main,
+  .pt-actions-side {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .pt-actions .btn {
+    min-height: 40px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 992px) {
+    .pt-checkbox-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .pt-actions {
+      position: static;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">{% if object %}Editar plano de trabalho {{ object.numero_formatado }}{% else %}Novo plano de trabalho{% endif %}</h1>
-    <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Voltar</a>
-  </div>
-
-  {% if form.errors %}
-  <div class="alert alert-danger" role="alert">
-    <strong>Corrija os erros abaixo antes de salvar:</strong>
-    <ul class="mb-0 mt-1">
-      {% for field in form %}
-        {% for error in field.errors %}
-          <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-        {% endfor %}
-      {% endfor %}
-      {% for error in form.non_field_errors %}
-        <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
-
-  <form method="post">
-    {% csrf_token %}
-    <input type="hidden" name="return_to" value="{{ return_to }}">
-    <input type="hidden" name="context_source" value="{{ context_source }}">
-    <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
-    <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
-
-    {# ── Seção 1: Identificação ── #}
-    <div class="card mb-3">
-      <div class="card-header fw-semibold">Identificação</div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-4">
-            <label class="form-label">Número do plano</label>
-            <input class="form-control" type="text" value="{% if object %}{{ object.numero_formatado }}{% else %}Gerado automaticamente ao salvar{% endif %}" readonly>
-            <div class="form-text">Numeração automática e incremental.</div>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label" for="{{ form.data_criacao.id_for_label }}">Data de criação</label>
-            {{ form.data_criacao }}
-            {% if form.data_criacao.errors %}<div class="invalid-feedback d-block">{{ form.data_criacao.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-md-3">
-            <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
-            {{ form.status }}
-            {% if form.status.errors %}<div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
+<div class="container-fluid py-3">
+  <div class="pt-shell">
+    <div class="pt-hero">
+      <div>
+        <h1 class="pt-hero-title">{% if object %}Editar plano de trabalho{% else %}Novo plano de trabalho{% endif %}</h1>
+        <p class="pt-hero-subtitle">Preencha os blocos essenciais para gerar um documento coerente, consistente e pronto para emissão.</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap justify-content-end">
+        {% if object %}
+        <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">DOCX</a>
+        <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">PDF</a>
+        {% endif %}
+        <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Voltar</a>
       </div>
     </div>
 
-    {# ── Seção 2: Vínculo ── #}
-    <div class="card mb-3">
-      <div class="card-header fw-semibold">Vínculo <small class="fw-normal text-muted">(opcional)</small></div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label" for="{{ form.evento.id_for_label }}">Evento</label>
-            {{ form.evento }}
-            {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício</label>
-            {{ form.oficio }}
-            {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
-            <div class="form-text">Vincular ao ofício preenche automaticamente roteiro, transporte e diárias no documento.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {# ── Seção 3: Solicitante ── #}
-    <div class="card mb-3">
-      <div class="card-header fw-semibold">Solicitante</div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
-            {{ form.solicitante_escolha }}
-            {% if form.solicitante_escolha.errors %}<div class="invalid-feedback d-block">{{ form.solicitante_escolha.errors.0 }}</div>{% endif %}
-            <div class="form-text">Selecione um solicitante cadastrado ou use a opção "Outros".</div>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="{{ form.solicitante_outros.id_for_label }}">Solicitante (outros)</label>
-            {{ form.solicitante_outros }}
-            {% if form.solicitante_outros.errors %}<div class="invalid-feedback d-block">{{ form.solicitante_outros.errors.0 }}</div>{% endif %}
-            <div class="form-text">Preencha apenas quando selecionar "Outros".</div>
-          </div>
-          <div class="col-12">
-            <div class="form-check mt-1">
-              {{ form.salvar_solicitante_outros }}
-              <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">
-                Salvar este solicitante no gerenciador para uso futuro
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {# ── Seção 4: Coordenação ── #}
-    <div class="card mb-3">
-      <div class="card-header fw-semibold">Coordenação</div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label" for="{{ form.coordenador_operacional.id_for_label }}">Coordenador operacional</label>
-            {{ form.coordenador_operacional }}
-            {% if form.coordenador_operacional.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_operacional.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenador administrativo</label>
-            {{ form.coordenador_administrativo }}
-            {% if form.coordenador_administrativo.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_administrativo.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="{{ form.coordenador_municipal.id_for_label }}">Coordenador municipal</label>
-            {{ form.coordenador_municipal }}
-            {% if form.coordenador_municipal.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_municipal.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {# ── Seção 5: Atuação ── #}
-    <div class="card mb-3">
-      <div class="card-header fw-semibold">Atuação</div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-12">
-            <label class="form-label" for="{{ form.objetivo.id_for_label }}">Objetivo / finalidade</label>
-            {{ form.objetivo }}
-            {% if form.objetivo.errors %}<div class="invalid-feedback d-block">{{ form.objetivo.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="{{ form.locais.id_for_label }}">Locais</label>
-            {{ form.locais }}
-            {% if form.locais.errors %}<div class="invalid-feedback d-block">{{ form.locais.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horário de atendimento (padrão)</label>
-            {{ form.horario_atendimento_padrao }}
-            {% if form.horario_atendimento_padrao.errors %}<div class="invalid-feedback d-block">{{ form.horario_atendimento_padrao.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="{{ form.horario_atendimento_manual.id_for_label }}">Horário de atendimento (manual)</label>
-            {{ form.horario_atendimento_manual }}
-            {% if form.horario_atendimento_manual.errors %}<div class="invalid-feedback d-block">{{ form.horario_atendimento_manual.errors.0 }}</div>{% endif %}
-            <div class="form-text">Preencha apenas quando escolher "Outro (informar manualmente)".</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {# ── Seção 6: Efetivo / cargos ── #}
-    <div class="card mb-3">
-      <div class="card-header fw-semibold">Efetivo / cargos</div>
-      <div class="card-body">
-        <p class="text-muted small mb-3">Preencha a composição do efetivo por cargo e quantidade. O total será consolidado automaticamente no documento.</p>
-        {{ efetivo_formset.management_form }}
-        <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
-            <thead>
-              <tr>
-                <th style="width: 55%;">Cargo</th>
-                <th style="width: 20%;">Quantidade</th>
-                <th style="width: 25%;">Remover</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in efetivo_formset %}
-              <tr>
-                <td>
-                  {{ row.id }}
-                  {{ row.cargo }}
-                  {% if row.cargo.errors %}<div class="invalid-feedback d-block">{{ row.cargo.errors.0 }}</div>{% endif %}
-                </td>
-                <td>
-                  {{ row.quantidade }}
-                  {% if row.quantidade.errors %}<div class="invalid-feedback d-block">{{ row.quantidade.errors.0 }}</div>{% endif %}
-                </td>
-                <td>
-                  <div class="form-check mt-1">
-                    {{ row.DELETE }}
-                    <label class="form-check-label" for="{{ row.DELETE.id_for_label }}">Excluir linha</label>
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    {# ── Seção 7: Atividades ── #}
-    <div class="card mb-3">
-      <div class="card-header fw-semibold">Atividades do Plano</div>
-      <div class="card-body">
-        <p class="text-muted small mb-2">Selecione as atividades que serão realizadas. As metas correspondentes serão geradas automaticamente no documento.</p>
-        <div class="row g-2">
-          {% for checkbox in form.atividades_codigos %}
-          <div class="col-md-6 col-lg-4">
-            <div class="form-check">
-              {{ checkbox.tag }}
-              <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
-            </div>
-          </div>
+    <div class="pt-grid">
+      {% if form.errors %}
+      <div class="alert alert-danger" role="alert">
+        <strong>Corrija os erros abaixo antes de salvar:</strong>
+        <ul class="mb-0 mt-1">
+          {% for field in form %}
+            {% for error in field.errors %}
+              <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+            {% endfor %}
           {% endfor %}
-        </div>
-        {% if form.atividades_codigos.errors %}<div class="invalid-feedback d-block mt-1">{{ form.atividades_codigos.errors.0 }}</div>{% endif %}
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
       </div>
-    </div>
-
-    {# ── Seção 8: Recursos necessários e observações ── #}
-    <div class="card mb-3">
-      <div class="card-header fw-semibold">Recursos necessários e observações</div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-12">
-            <label class="form-label" for="{{ form.metas_formatadas.id_for_label }}">Metas formatadas <small class="text-muted">(preenchimento automático)</small></label>
-            {{ form.metas_formatadas }}
-            {% if form.metas_formatadas.errors %}<div class="invalid-feedback d-block">{{ form.metas_formatadas.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="{{ form.efetivo_resumo.id_for_label }}">Efetivo (resumo)</label>
-            {{ form.efetivo_resumo }}
-            {% if form.efetivo_resumo.errors %}<div class="invalid-feedback d-block">{{ form.efetivo_resumo.errors.0 }}</div>{% endif %}
-            <div class="form-text">Opcional. A composição oficial do efetivo usa o bloco estruturado por cargo acima.</div>
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="{{ form.recursos_texto.id_for_label }}">Recursos</label>
-            {{ form.recursos_texto }}
-            {% if form.recursos_texto.errors %}<div class="invalid-feedback d-block">{{ form.recursos_texto.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
-            {{ form.observacoes }}
-            {% if form.observacoes.errors %}<div class="invalid-feedback d-block">{{ form.observacoes.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="d-flex gap-2 mt-2">
-      <button class="btn btn-primary" type="submit">Salvar</button>
-      {% if object %}
-        <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-planos-trabalho-detalhe' object.pk %}">Ver detalhe</a>
-        <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">Baixar DOCX</a>
       {% endif %}
-      <a class="btn btn-link text-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Cancelar</a>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="return_to" value="{{ return_to }}">
+        <input type="hidden" name="context_source" value="{{ context_source }}">
+        <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
+        <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
+
+        <div class="pt-card">
+          <div class="pt-card-header">
+            <h2 class="pt-card-title">Identificação e vínculo</h2>
+            <span class="pt-status-badge">{{ form.status.value|default:'RASCUNHO' }}</span>
+          </div>
+          <div class="pt-card-body">
+            <div class="row g-3 align-items-end">
+              <div class="col-lg-3 col-md-4">
+                <div class="pt-field-label">Número do plano</div>
+                <span class="pt-system-pill">{% if object %}{{ object.numero_formatado }}{% else %}Gerado ao salvar{% endif %}</span>
+              </div>
+              <div class="col-lg-2 col-md-4">
+                <label class="pt-field-label" for="{{ form.data_criacao.id_for_label }}">Data</label>
+                {{ form.data_criacao }}
+                {% if form.data_criacao.errors %}<div class="invalid-feedback d-block">{{ form.data_criacao.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-2 col-md-4">
+                <label class="pt-field-label" for="{{ form.status.id_for_label }}">Status</label>
+                {{ form.status }}
+                {% if form.status.errors %}<div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-5 col-md-6">
+                <label class="pt-field-label" for="{{ form.evento.id_for_label }}">Evento</label>
+                {{ form.evento }}
+                {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-5 col-md-6">
+                <label class="pt-field-label" for="{{ form.oficio.id_for_label }}">Ofício</label>
+                {{ form.oficio }}
+                {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-7 col-md-12">
+                <p class="pt-mini-help mb-0">Vincular o ofício aproveita automaticamente dados de roteiro, diárias e destino no documento final.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-card mt-3">
+          <div class="pt-card-header">
+            <h2 class="pt-card-title">Solicitante e coordenação</h2>
+          </div>
+          <div class="pt-card-body">
+            <div class="row g-3 align-items-end">
+              <div class="col-lg-4 col-md-6">
+                <label class="pt-field-label" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
+                {{ form.solicitante_escolha }}
+                {% if form.solicitante_escolha.errors %}<div class="invalid-feedback d-block">{{ form.solicitante_escolha.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <label class="pt-field-label" for="{{ form.solicitante_outros.id_for_label }}">Solicitante (outros)</label>
+                {{ form.solicitante_outros }}
+                {% if form.solicitante_outros.errors %}<div class="invalid-feedback d-block">{{ form.solicitante_outros.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-4 col-md-12">
+                <div class="form-check mt-2">
+                  {{ form.salvar_solicitante_outros }}
+                  <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">Salvar no gerenciador</label>
+                </div>
+              </div>
+
+              <div class="col-lg-4 col-md-6">
+                <label class="pt-field-label" for="{{ form.coordenador_operacional.id_for_label }}">Coordenador operacional</label>
+                {{ form.coordenador_operacional }}
+                {% if form.coordenador_operacional.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_operacional.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <label class="pt-field-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenador administrativo</label>
+                {{ form.coordenador_administrativo }}
+                {% if form.coordenador_administrativo.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_administrativo.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <label class="pt-field-label" for="{{ form.coordenador_municipal.id_for_label }}">Coordenador municipal</label>
+                {{ form.coordenador_municipal }}
+                {% if form.coordenador_municipal.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_municipal.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-card mt-3">
+          <div class="pt-card-header">
+            <h2 class="pt-card-title">Atuação</h2>
+          </div>
+          <div class="pt-card-body">
+            <div class="row g-3 align-items-end">
+              <div class="col-xl-7 col-lg-6 col-md-12">
+                <label class="pt-field-label" for="{{ form.objetivo.id_for_label }}">Objetivo / finalidade</label>
+                {{ form.objetivo }}
+                {% if form.objetivo.errors %}<div class="invalid-feedback d-block">{{ form.objetivo.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-xl-5 col-lg-6 col-md-12">
+                <label class="pt-field-label" for="{{ form.locais.id_for_label }}">Locais</label>
+                {{ form.locais }}
+                {% if form.locais.errors %}<div class="invalid-feedback d-block">{{ form.locais.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <label class="pt-field-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horário padrão</label>
+                {{ form.horario_atendimento_padrao }}
+                {% if form.horario_atendimento_padrao.errors %}<div class="invalid-feedback d-block">{{ form.horario_atendimento_padrao.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <label class="pt-field-label" for="{{ form.horario_atendimento_manual.id_for_label }}">Horário manual</label>
+                {{ form.horario_atendimento_manual }}
+                {% if form.horario_atendimento_manual.errors %}<div class="invalid-feedback d-block">{{ form.horario_atendimento_manual.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-4 col-md-12">
+                <p class="pt-mini-help mb-0">Use horário manual apenas quando o padrão não atender ao evento.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-card mt-3">
+          <div class="pt-card-header">
+            <h2 class="pt-card-title">Efetivo / cargos</h2>
+          </div>
+          <div class="pt-card-body">
+            {{ efetivo_formset.management_form }}
+            <div class="pt-efetivo-list">
+              {% for row in efetivo_formset %}
+              <div class="pt-efetivo-row">
+                <div class="row g-2 align-items-start">
+                  <div class="col-lg-7 col-md-6">
+                    <label class="pt-field-label mb-1">Cargo</label>
+                    {{ row.id }}
+                    {{ row.cargo }}
+                    {% if row.cargo.errors %}<div class="invalid-feedback d-block">{{ row.cargo.errors.0 }}</div>{% endif %}
+                  </div>
+                  <div class="col-lg-3 col-md-3">
+                    <label class="pt-field-label mb-1">Quantidade</label>
+                    {{ row.quantidade }}
+                    {% if row.quantidade.errors %}<div class="invalid-feedback d-block">{{ row.quantidade.errors.0 }}</div>{% endif %}
+                  </div>
+                  <div class="col-lg-2 col-md-3 pt-efetivo-remove">
+                    <div class="form-check">
+                      {{ row.DELETE }}
+                      <label class="form-check-label" for="{{ row.DELETE.id_for_label }}">Remover</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-card mt-3">
+          <div class="pt-card-header">
+            <h2 class="pt-card-title">Atividades do plano</h2>
+          </div>
+          <div class="pt-card-body">
+            <div class="pt-checkbox-grid">
+              {% for checkbox in form.atividades_codigos %}
+              <div class="pt-check-tile">
+                <div class="form-check mb-0">
+                  {{ checkbox.tag }}
+                  <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% if form.atividades_codigos.errors %}<div class="invalid-feedback d-block mt-1">{{ form.atividades_codigos.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="pt-card mt-3">
+          <div class="pt-card-header">
+            <h2 class="pt-card-title">Metas, recursos e observações</h2>
+          </div>
+          <div class="pt-card-body">
+            <div class="row g-3">
+              <div class="col-lg-6 col-md-12">
+                <label class="pt-field-label" for="{{ form.metas_formatadas.id_for_label }}">Metas automáticas</label>
+                {{ form.metas_formatadas }}
+                {% if form.metas_formatadas.errors %}<div class="invalid-feedback d-block">{{ form.metas_formatadas.errors.0 }}</div>{% endif %}
+                <p class="pt-mini-help mb-0">As metas são montadas automaticamente conforme as atividades selecionadas.</p>
+              </div>
+              <div class="col-lg-6 col-md-12">
+                <label class="pt-field-label" for="{{ form.recursos_texto.id_for_label }}">Recursos necessários</label>
+                {{ form.recursos_texto }}
+                {% if form.recursos_texto.errors %}<div class="invalid-feedback d-block">{{ form.recursos_texto.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-lg-6 col-md-12">
+                <label class="pt-field-label" for="{{ form.efetivo_resumo.id_for_label }}">Resumo textual do efetivo</label>
+                {{ form.efetivo_resumo }}
+                {% if form.efetivo_resumo.errors %}<div class="invalid-feedback d-block">{{ form.efetivo_resumo.errors.0 }}</div>{% endif %}
+                <p class="pt-mini-help mb-0">Campo opcional de apoio para observações de composição.</p>
+              </div>
+              <div class="col-lg-6 col-md-12">
+                <label class="pt-field-label" for="{{ form.observacoes.id_for_label }}">Observações finais</label>
+                {{ form.observacoes }}
+                {% if form.observacoes.errors %}<div class="invalid-feedback d-block">{{ form.observacoes.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-actions">
+          <div class="pt-actions-main">
+            <button class="btn btn-primary" type="submit">Salvar plano</button>
+            {% if object %}
+            <a class="btn btn-outline-primary" href="{% url 'eventos:documentos-planos-trabalho-detalhe' object.pk %}">Ver detalhe</a>
+            <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">Gerar DOCX</a>
+            <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">Gerar PDF</a>
+            {% endif %}
+          </div>
+          <div class="pt-actions-side">
+            <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Voltar para lista</a>
+          </div>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 </div>
 {% endblock %}
 
@@ -273,7 +481,7 @@
 
     function setVisibility(field, show) {
       if (!field) return;
-      const col = field.closest('.col-md-6') || field.closest('.col-12') || field.parentElement;
+      const col = field.closest('.col-md-6') || field.closest('.col-lg-4') || field.closest('.col-lg-6') || field.closest('.col-md-12') || field.parentElement;
       if (col) col.style.display = show ? '' : 'none';
     }
 
