@@ -275,14 +275,11 @@ class PlanoTrabalhoModelDocxTest(TestCase):
         docx_bytes = render_plano_trabalho_model_docx(pt)
         doc = Document(BytesIO(docx_bytes))
         text = '\n'.join(p.text for p in doc.paragraphs)
-        self.assertIn('1. BREVE CONTEXTUALIZAÇÃO', text)
-        self.assertIn('2. METAS ESTABELECIDAS', text)
-        self.assertIn('3. ATIVIDADES A SEREM DESENVOLVIDAS', text)
-        self.assertIn('4. ATUAÇÃO', text)
-        self.assertIn('5. VALOR TOTAL DO PLANO', text)
-        self.assertIn('6. RECURSOS NECESSÁRIOS', text)
-        self.assertIn('7. COORDENADOR DO EVENTO', text)
-        self.assertIn('8. CONSIDERAÇÕES FINAIS', text)
+        self.assertIn('PLANO DE TRABALHO', text)
+        self.assertIn('BREVE CONTEXTUALIZAÇÃO', text)
+        self.assertIn('METAS ESTABELECIDAS', text)
+        self.assertIn('ATIVIDADES A SEREM DESENVOLVIDAS', text)
+        self.assertIn('CONSIDERAÇÕES FINAIS', text)
 
 
 class PlanoTrabalhoFormPersistenciaTest(TestCase):
@@ -337,9 +334,12 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             'status': PlanoTrabalho.STATUS_RASCUNHO,
             'evento': self.evento.pk,
             'oficio': self.oficio.pk,
+            'destinos_payload': '[]',
             'objetivo': 'Objetivo persistencia',
             'locais': 'Curitiba/PR',
             'horario_atendimento_padrao': '08:00-17:00',
+            'coordenador_administrativo_novo_nome': 'Servidor Teste Persistencia',
+            'salvar_coordenador_administrativo': 'on',
             'solicitante_escolha': '',
             'atividades_codigos': ['CIN', 'BO'],
             'recursos_texto': 'Sem recursos externos',
@@ -356,7 +356,7 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         self.assertEqual(pt.numero, 1)
         self.assertEqual(pt.ano, 2026)
         self.assertEqual(pt.locais, 'Curitiba/PR')
-        self.assertEqual(pt.horario_atendimento, '08:00-17:00')
+        self.assertEqual(pt.horario_atendimento, '08:00 até 17:00')
         self.assertEqual(pt.quantidade_servidores, 5)
         self.assertIn('CIN', pt.atividades_codigos)
         self.assertIn('BO', pt.atividades_codigos)
@@ -370,9 +370,12 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             'status': PlanoTrabalho.STATUS_RASCUNHO,
             'evento': self.evento.pk,
             'oficio': self.oficio.pk,
+            'destinos_payload': '[]',
             'objetivo': 'Primeiro',
             'locais': 'Curitiba/PR',
             'horario_atendimento_padrao': '08:00-12:00',
+            'coordenador_administrativo_novo_nome': 'Servidor Teste Numeracao',
+            'salvar_coordenador_administrativo': 'on',
             'solicitante_escolha': '',
             'return_to': reverse('eventos:documentos-planos-trabalho'),
         }
@@ -397,9 +400,12 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             'status': PlanoTrabalho.STATUS_RASCUNHO,
             'evento': self.evento.pk,
             'oficio': self.oficio.pk,
+            'destinos_payload': '[]',
             'objetivo': 'Com solicitante outros',
             'locais': 'Curitiba/PR',
             'horario_atendimento_padrao': '13:00-17:00',
+            'coordenador_administrativo_novo_nome': 'Servidor Teste Solicitante',
+            'salvar_coordenador_administrativo': 'on',
             'solicitante_escolha': '__OUTROS__',
             'solicitante_outros': 'Secretaria Municipal Teste',
             'salvar_solicitante_outros': 'on',
@@ -444,10 +450,13 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             'status': PlanoTrabalho.STATUS_RASCUNHO,
             'evento': self.evento.pk,
             'oficio': self.oficio.pk,
+            'destinos_payload': '[]',
             'objetivo': 'Horario manual',
             'locais': 'Curitiba/PR',
             'horario_atendimento_padrao': '__OUTROS__',
             'horario_atendimento_manual': 'das 10h às 20h',
+            'coordenador_administrativo_novo_nome': 'Servidor Teste Horario',
+            'salvar_coordenador_administrativo': 'on',
             'solicitante_escolha': '',
             'return_to': reverse('eventos:documentos-planos-trabalho'),
         }
@@ -456,7 +465,7 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         response = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload)
         self.assertEqual(response.status_code, 302)
         pt = PlanoTrabalho.objects.get(objetivo='Horario manual')
-        self.assertEqual(pt.horario_atendimento, 'das 10h às 20h')
+        self.assertEqual(pt.horario_atendimento, '10:00 até 20:00')
 
     def test_detalhe_abre_com_todos_campos(self):
         pt = PlanoTrabalho.objects.create(

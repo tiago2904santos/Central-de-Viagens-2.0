@@ -439,6 +439,9 @@ def _get_plano_trabalho_for_oficio(oficio):
     plano = PlanoTrabalho.objects.filter(oficio=oficio).order_by('-updated_at').first()
     if plano:
         return plano
+    plano = PlanoTrabalho.objects.filter(oficios=oficio).order_by('-updated_at').first()
+    if plano:
+        return plano
     if oficio.evento_id:
         return PlanoTrabalho.objects.filter(evento=oficio.evento).order_by('-updated_at').first()
     return None

@@ -39,6 +39,8 @@ class PtOsDesacopladoTest(TestCase):
                 'data_criacao': '2026-03-10',
                 'status': PlanoTrabalho.STATUS_RASCUNHO,
                 'objetivo': 'PT sem evento',
+                'locais': 'Curitiba/PR',
+                'destinos_payload': '[]',
                 'return_to': reverse('eventos:documentos-planos-trabalho'),
             },
         )
@@ -55,6 +57,8 @@ class PtOsDesacopladoTest(TestCase):
                 'status': PlanoTrabalho.STATUS_RASCUNHO,
                 'evento': self.evento.pk,
                 'objetivo': 'PT sem oficio',
+                'locais': 'Curitiba/PR',
+                'destinos_payload': '[]',
                 'return_to': reverse('eventos:documentos-planos-trabalho'),
             },
         )

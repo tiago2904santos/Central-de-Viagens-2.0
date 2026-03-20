@@ -21,6 +21,7 @@ PLACEHOLDER_RE = re.compile(r'\{\{\s*([^{}]+?)\s*\}\}')
 TEMPLATE_FILENAMES = {
     DocumentoOficioTipo.OFICIO: 'oficio_model.docx',
     DocumentoOficioTipo.JUSTIFICATIVA: 'modelo_justificativa.docx',
+    DocumentoOficioTipo.PLANO_TRABALHO: 'modelo_plano_de_trabalho.docx',
     DocumentoOficioTipo.TERMO_AUTORIZACAO: 'termo_autorizacao.docx',
     DocumentoOficioTipo.ORDEM_SERVICO: 'modelo_ordem_servico.docx',
 }

@@ -1,11 +1,14 @@
 import uuid
+import json
+import re
+from datetime import datetime
 
 from django import forms
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Q
 from django.utils import timezone
 
-from cadastros.models import ConfiguracaoSistema, Viajante, Veiculo
+from cadastros.models import Cidade, ConfiguracaoSistema, Viajante, Veiculo
 from eventos.services.oficio_schema import oficio_justificativa_schema_available
 from eventos.services.justificativa import get_oficio_justificativa, get_oficio_justificativa_texto
 from eventos.termos import build_termo_context, build_termo_preview_payload
@@ -26,6 +29,7 @@ from .models import (
     TipoDemandaEvento,
 )
 from .services.plano_trabalho_domain import ATIVIDADES_CATALOGO, build_metas_formatada
+from .services.diarias import PeriodMarker, calculate_periodized_diarias
 from core.utils.masks import format_placa, format_protocolo, normalize_placa
 from .utils import buscar_veiculo_finalizado_por_placa, mapear_tipo_viatura_para_oficio, normalize_protocolo
 
@@ -182,58 +186,99 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'}),
     )
+    oficios_relacionados = forms.ModelMultipleChoiceField(
+        label='Ofícios relacionados',
+        queryset=Oficio.objects.none(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': 6}),
+    )
+    destinos_payload = forms.CharField(required=False, widget=forms.HiddenInput())
+    salvar_coordenador_administrativo = forms.BooleanField(
+        label='Salvar novo servidor para coordenação administrativa',
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+    )
+    coordenador_administrativo_novo_nome = forms.CharField(
+        label='Coordenador administrativo (novo nome)',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
 
     class Meta:
         model = PlanoTrabalho
         fields = [
             'data_criacao',
-            'status',
             'evento',
             'oficio',
+            'roteiro',
             'solicitante_outros',
             'coordenador_operacional',
             'coordenador_administrativo',
-            'coordenador_municipal',
             'objetivo',
             'locais',
+            'destinos_json',
+            'evento_data_unica',
+            'evento_data_inicio',
+            'evento_data_fim',
             'horario_atendimento',
             'quantidade_servidores',
             'metas_formatadas',
             'efetivo_resumo',
+            'diarias_quantidade',
+            'diarias_valor_total',
+            'diarias_valor_unitario',
+            'diarias_valor_extenso',
             'recursos_texto',
-            'observacoes',
         ]
         widgets = {
             'data_criacao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
             'evento': forms.Select(attrs={'class': 'form-select'}),
             'oficio': forms.Select(attrs={'class': 'form-select'}),
+            'roteiro': forms.Select(attrs={'class': 'form-select'}),
             'solicitante_outros': forms.TextInput(attrs={'class': 'form-control'}),
             'coordenador_operacional': forms.Select(attrs={'class': 'form-select'}),
             'coordenador_administrativo': forms.Select(attrs={'class': 'form-select'}),
-            'coordenador_municipal': forms.TextInput(attrs={'class': 'form-control'}),
             'objetivo': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'locais': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'destinos_json': forms.HiddenInput(),
+            'evento_data_unica': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'evento_data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'evento_data_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'horario_atendimento': forms.TextInput(attrs={'class': 'form-control'}),
             'quantidade_servidores': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'metas_formatadas': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'efetivo_resumo': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'diarias_quantidade': forms.TextInput(attrs={'class': 'form-control'}),
+            'diarias_valor_total': forms.TextInput(attrs={'class': 'form-control'}),
+            'diarias_valor_unitario': forms.TextInput(attrs={'class': 'form-control'}),
+            'diarias_valor_extenso': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'recursos_texto': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['evento'].required = False
         self.fields['oficio'].required = False
+        self.fields['roteiro'].required = False
         self.fields['coordenador_operacional'].required = False
         self.fields['coordenador_administrativo'].required = False
         self.fields['quantidade_servidores'].required = False
+        self.fields['evento_data_inicio'].required = False
+        self.fields['evento_data_fim'].required = False
         self.fields['evento'].queryset = Evento.objects.order_by('-data_inicio', 'titulo')
         self.fields['oficio'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
+        self.fields['oficios_relacionados'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
+        self.fields['roteiro'].queryset = RoteiroEvento.objects.select_related('evento').order_by('-updated_at')
         self.fields['coordenador_operacional'].queryset = CoordenadorOperacional.objects.filter(ativo=True).order_by('ordem', 'nome')
-        self.fields['coordenador_administrativo'].queryset = Viajante.objects.filter(status='ATIVO').order_by('nome')
+        self.fields['coordenador_administrativo'].queryset = Viajante.objects.order_by('nome')
         self.fields['metas_formatadas'].widget.attrs['readonly'] = True
+        self.fields['diarias_quantidade'].widget.attrs['readonly'] = True
+        self.fields['diarias_valor_total'].widget.attrs['readonly'] = True
+        self.fields['diarias_valor_unitario'].widget.attrs['readonly'] = True
+        self.fields['diarias_valor_extenso'].widget.attrs['readonly'] = True
+        self.fields['locais'].widget.attrs['readonly'] = True
+
+        self.initial.setdefault('data_criacao', timezone.localdate())
 
         solicitantes = list(
             SolicitantePlanoTrabalho.objects.filter(ativo=True).order_by('ordem', 'nome').values_list('pk', 'nome')
@@ -246,12 +291,36 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
 
         horarios = [
             ('', 'Selecione...'),
-            ('08:00-12:00', '08h00 às 12h00'),
-            ('13:00-17:00', '13h00 às 17h00'),
-            ('08:00-17:00', '08h00 às 17h00'),
+            ('08:00 até 12:00', '08:00 até 12:00'),
+            ('13:00 até 17:00', '13:00 até 17:00'),
+            ('08:00 até 17:00', '08:00 até 17:00'),
+            ('08:00-12:00', '08:00-12:00 (legado)'),
+            ('13:00-17:00', '13:00-17:00 (legado)'),
+            ('08:00-17:00', '08:00-17:00 (legado)'),
             (self.HORARIO_OUTROS, 'Outro (informar manualmente)'),
         ]
         self.fields['horario_atendimento_padrao'].choices = horarios
+
+        selected_event = None
+        if self.is_bound:
+            raw_event = (self.data.get('evento') or '').strip()
+            if raw_event.isdigit():
+                selected_event = Evento.objects.filter(pk=int(raw_event)).first()
+        elif self.instance and self.instance.evento_id:
+            selected_event = self.instance.evento
+        elif self.initial.get('evento'):
+            selected_event = Evento.objects.filter(pk=self.initial.get('evento')).first()
+
+        if selected_event:
+            self.fields['oficio'].queryset = Oficio.objects.filter(
+                Q(evento=selected_event) | Q(evento__isnull=True)
+            ).order_by('-updated_at')
+            self.fields['oficios_relacionados'].queryset = Oficio.objects.filter(
+                Q(evento=selected_event) | Q(evento__isnull=True)
+            ).order_by('-updated_at')
+            self.fields['roteiro'].queryset = RoteiroEvento.objects.filter(
+                Q(evento=selected_event) | Q(evento__isnull=True)
+            ).order_by('-updated_at')
 
         if self.instance and self.instance.pk:
             if self.instance.solicitante_id:
@@ -267,12 +336,131 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
                 self.initial['horario_atendimento_padrao'] = self.HORARIO_OUTROS
                 self.initial['horario_atendimento_manual'] = horario_atual
 
+            related_ids = list(self.instance.oficios.values_list('pk', flat=True))
+            if not related_ids and self.instance.oficio_id:
+                related_ids = [self.instance.oficio_id]
+            self.initial['oficios_relacionados'] = related_ids
+            self.initial['destinos_payload'] = json.dumps(self.instance.destinos_json or [])
+
         if self.instance and self.instance.pk and self.instance.atividades_codigos:
             self.initial['atividades_codigos'] = [
                 codigo.strip()
                 for codigo in self.instance.atividades_codigos.split(',')
                 if codigo.strip()
             ]
+
+        self.proximo_numero_preview = self._get_next_pt_number_preview()
+
+    def _get_next_pt_number_preview(self):
+        ano_atual = timezone.now().year
+        config = ConfiguracaoSistema.objects.order_by('pk').first()
+        if config:
+            ultimo = getattr(config, 'pt_ultimo_numero', 0) or 0
+            ano_cfg = getattr(config, 'pt_ano', 0) or 0
+            proximo = (ultimo + 1) if ano_cfg == ano_atual else 1
+            return f'{proximo:02d}/{ano_atual}'
+        ultimo = (
+            PlanoTrabalho.objects.filter(ano=ano_atual)
+            .order_by('-numero')
+            .values_list('numero', flat=True)
+            .first()
+        ) or 0
+        return f'{int(ultimo) + 1:02d}/{ano_atual}'
+
+    def _build_markers_for_diarias(self, cleaned_data):
+        roteiro = cleaned_data.get('roteiro')
+        if roteiro:
+            trechos = list(roteiro.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk'))
+            markers = []
+            chegada_final = None
+            for trecho in trechos:
+                if trecho.saida_dt and trecho.destino_cidade_id:
+                    markers.append(
+                        PeriodMarker(
+                            saida=trecho.saida_dt,
+                            destino_cidade=trecho.destino_cidade.nome,
+                            destino_uf=(trecho.destino_estado.sigla if trecho.destino_estado_id else ''),
+                        )
+                    )
+                if trecho.chegada_dt and (not chegada_final or trecho.chegada_dt > chegada_final):
+                    chegada_final = trecho.chegada_dt
+            if markers and chegada_final:
+                return markers, chegada_final
+
+        oficios = list(cleaned_data.get('oficios_relacionados') or [])
+        if not oficios and cleaned_data.get('oficio'):
+            oficios = [cleaned_data.get('oficio')]
+        for oficio in oficios:
+            trechos = list(oficio.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk'))
+            if not trechos:
+                continue
+            markers = []
+            for trecho in trechos:
+                if not trecho.saida_data or not trecho.saida_hora:
+                    markers = []
+                    break
+                if not trecho.destino_cidade_id:
+                    continue
+                markers.append(
+                    PeriodMarker(
+                        saida=datetime.combine(trecho.saida_data, trecho.saida_hora),
+                        destino_cidade=trecho.destino_cidade.nome,
+                        destino_uf=(trecho.destino_estado.sigla if trecho.destino_estado_id else ''),
+                    )
+                )
+            if not markers:
+                continue
+            if oficio.retorno_chegada_data and oficio.retorno_chegada_hora:
+                return markers, datetime.combine(oficio.retorno_chegada_data, oficio.retorno_chegada_hora)
+        return [], None
+
+    def _parse_destinos_payload(self, payload_text):
+        payload = []
+        if not payload_text:
+            return payload
+        try:
+            raw = json.loads(payload_text)
+        except (TypeError, ValueError):
+            raise forms.ValidationError('Destinos inválidos. Atualize a tela e tente novamente.')
+        if not isinstance(raw, list):
+            raise forms.ValidationError('Destinos inválidos. Atualize a tela e tente novamente.')
+
+        cidade_ids = []
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            cidade_id = item.get('cidade_id')
+            if isinstance(cidade_id, str) and cidade_id.isdigit():
+                cidade_id = int(cidade_id)
+            if isinstance(cidade_id, int) and cidade_id > 0:
+                cidade_ids.append(cidade_id)
+        cidades_map = {
+            cidade.pk: cidade
+            for cidade in Cidade.objects.select_related('estado').filter(pk__in=set(cidade_ids), ativo=True)
+        }
+
+        seen = set()
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            cidade_id = item.get('cidade_id')
+            if isinstance(cidade_id, str) and cidade_id.isdigit():
+                cidade_id = int(cidade_id)
+            if not isinstance(cidade_id, int):
+                continue
+            cidade = cidades_map.get(cidade_id)
+            if not cidade or cidade_id in seen:
+                continue
+            seen.add(cidade_id)
+            payload.append(
+                {
+                    'estado_id': cidade.estado_id,
+                    'estado_sigla': cidade.estado.sigla,
+                    'cidade_id': cidade.pk,
+                    'cidade_nome': cidade.nome,
+                }
+            )
+        return payload
 
     def clean(self):
         cleaned_data = super().clean()
@@ -287,9 +475,134 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         if horario_padrao == self.HORARIO_OUTROS:
             if not horario_manual:
                 self.add_error('horario_atendimento_manual', 'Informe o horário manual.')
-            cleaned_data['horario_atendimento'] = horario_manual
+            horario_value = horario_manual
         else:
-            cleaned_data['horario_atendimento'] = horario_padrao
+            horario_value = horario_padrao
+
+        normalized_horario = horario_value
+        if horario_value:
+            if re.match(r'^\d{2}:\d{2}\s*-\s*\d{2}:\d{2}$', horario_value):
+                parts = [p.strip() for p in horario_value.split('-', 1)]
+                normalized_horario = f'{parts[0]} até {parts[1]}'
+            elif re.match(r'^das\s+\d{1,2}h\s+às\s+\d{1,2}h$', horario_value, flags=re.IGNORECASE):
+                hh = re.findall(r'\d{1,2}', horario_value)
+                if len(hh) == 2:
+                    normalized_horario = f'{int(hh[0]):02d}:00 até {int(hh[1]):02d}:00'
+            if not re.match(r'^\d{2}:\d{2}\s+até\s+\d{2}:\d{2}$', normalized_horario):
+                self.add_error('horario_atendimento_manual', 'Use o formato 00:00 até 00:00.')
+        cleaned_data['horario_atendimento'] = normalized_horario
+
+        evento = cleaned_data.get('evento')
+        oficio = cleaned_data.get('oficio')
+        roteiro = cleaned_data.get('roteiro')
+        oficios_relacionados = list(cleaned_data.get('oficios_relacionados') or [])
+        if oficio and oficio not in oficios_relacionados:
+            oficios_relacionados.append(oficio)
+        cleaned_data['oficios_relacionados'] = oficios_relacionados
+
+        if evento and roteiro and roteiro.evento_id and roteiro.evento_id != evento.pk:
+            self.add_error('roteiro', 'O roteiro selecionado pertence a outro evento.')
+
+        for of in oficios_relacionados:
+            if evento and of.evento_id and of.evento_id != evento.pk:
+                self.add_error('oficios_relacionados', 'Um dos ofícios selecionados pertence a outro evento.')
+                break
+
+        novo_coord_nome = (cleaned_data.get('coordenador_administrativo_novo_nome') or '').strip()
+        if cleaned_data.get('salvar_coordenador_administrativo') and not novo_coord_nome:
+            self.add_error('coordenador_administrativo_novo_nome', 'Informe o nome para salvar novo servidor.')
+
+        coord_adm = cleaned_data.get('coordenador_administrativo')
+        if not coord_adm and not novo_coord_nome:
+            config = ConfiguracaoSistema.objects.order_by('pk').first()
+            coord_cfg = getattr(config, 'coordenador_adm_plano_trabalho', None) if config else None
+            if coord_cfg:
+                cleaned_data['coordenador_administrativo'] = coord_cfg
+
+        destinos = []
+        try:
+            destinos = self._parse_destinos_payload((cleaned_data.get('destinos_payload') or '').strip())
+        except forms.ValidationError as exc:
+            self.add_error('destinos_payload', exc)
+
+        if not destinos:
+            if roteiro:
+                destinos = [
+                    {
+                        'estado_id': d.estado_id,
+                        'estado_sigla': (d.estado.sigla if d.estado_id else ''),
+                        'cidade_id': d.cidade_id,
+                        'cidade_nome': (d.cidade.nome if d.cidade_id else ''),
+                    }
+                    for d in roteiro.destinos.select_related('cidade', 'estado').order_by('ordem')
+                ]
+            elif evento:
+                destinos = [
+                    {
+                        'estado_id': d.estado_id,
+                        'estado_sigla': (d.estado.sigla if d.estado_id else ''),
+                        'cidade_id': d.cidade_id,
+                        'cidade_nome': (d.cidade.nome if d.cidade_id else ''),
+                    }
+                    for d in evento.destinos.select_related('cidade', 'estado').order_by('ordem')
+                ]
+
+        locais_manualmente = (cleaned_data.get('locais') or '').strip()
+        if not destinos and not locais_manualmente and not (evento or roteiro or oficios_relacionados):
+            self.add_error('destinos_payload', 'Adicione ao menos um destino manual quando não houver vínculo.')
+
+        cleaned_data['destinos_json'] = destinos
+        if destinos:
+            cleaned_data['locais'] = ', '.join(
+                f"{item.get('cidade_nome')}/{item.get('estado_sigla')}"
+                for item in destinos
+                if item.get('cidade_nome')
+            )
+        else:
+            cleaned_data['locais'] = locais_manualmente
+
+        data_unica = bool(cleaned_data.get('evento_data_unica'))
+        data_inicio = cleaned_data.get('evento_data_inicio')
+        data_fim = cleaned_data.get('evento_data_fim')
+        if not data_inicio:
+            if evento and evento.data_inicio:
+                data_inicio = evento.data_inicio
+            elif roteiro and roteiro.saida_dt:
+                data_inicio = roteiro.saida_dt.date()
+        if not data_fim:
+            if evento and evento.data_fim:
+                data_fim = evento.data_fim
+            elif roteiro and roteiro.chegada_dt:
+                data_fim = roteiro.chegada_dt.date()
+        if not data_inicio and not (evento or roteiro or oficios_relacionados):
+            self.add_error('evento_data_inicio', 'Informe a data inicial do evento.')
+        if data_unica and data_inicio:
+            data_fim = data_inicio
+        elif data_inicio and data_fim and data_fim < data_inicio:
+            self.add_error('evento_data_fim', 'A data final não pode ser anterior à inicial.')
+        cleaned_data['evento_data_inicio'] = data_inicio
+        cleaned_data['evento_data_fim'] = data_fim
+
+        qtd = cleaned_data.get('quantidade_servidores') or 1
+        markers, chegada_final = self._build_markers_for_diarias(cleaned_data)
+        if markers and chegada_final:
+            try:
+                result = calculate_periodized_diarias(markers, chegada_final, quantidade_servidores=int(qtd))
+                totais = (result or {}).get('totais') or {}
+                cleaned_data['diarias_quantidade'] = totais.get('total_diarias', '') or ''
+                cleaned_data['diarias_valor_total'] = totais.get('total_valor', '') or ''
+                cleaned_data['diarias_valor_unitario'] = totais.get('valor_por_servidor', '') or ''
+                cleaned_data['diarias_valor_extenso'] = totais.get('valor_extenso', '') or ''
+            except Exception:
+                cleaned_data['diarias_quantidade'] = ''
+                cleaned_data['diarias_valor_total'] = ''
+                cleaned_data['diarias_valor_unitario'] = ''
+                cleaned_data['diarias_valor_extenso'] = ''
+        else:
+            cleaned_data['diarias_quantidade'] = ''
+            cleaned_data['diarias_valor_total'] = ''
+            cleaned_data['diarias_valor_unitario'] = ''
+            cleaned_data['diarias_valor_extenso'] = ''
 
         codigos = cleaned_data.get('atividades_codigos', [])
         cleaned_data['metas_formatadas'] = build_metas_formatada(','.join(codigos) if codigos else '')
@@ -342,9 +655,37 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         codigos = self.cleaned_data.get('atividades_codigos', [])
         instance.atividades_codigos = ','.join(codigos) if codigos else ''
         instance.metas_formatadas = self.cleaned_data.get('metas_formatadas') or ''
+        instance.destinos_json = self.cleaned_data.get('destinos_json') or []
+        instance.diarias_quantidade = self.cleaned_data.get('diarias_quantidade') or ''
+        instance.diarias_valor_total = self.cleaned_data.get('diarias_valor_total') or ''
+        instance.diarias_valor_unitario = self.cleaned_data.get('diarias_valor_unitario') or ''
+        instance.diarias_valor_extenso = self.cleaned_data.get('diarias_valor_extenso') or ''
+        instance.coordenador_municipal = ''
+        instance.observacoes = ''
+        instance.status = PlanoTrabalho.STATUS_RASCUNHO
+
+        novo_coord_nome = (self.cleaned_data.get('coordenador_administrativo_novo_nome') or '').strip()
+        if novo_coord_nome and self.cleaned_data.get('salvar_coordenador_administrativo'):
+            novo_coord = Viajante.objects.filter(nome__iexact=novo_coord_nome).first()
+            if not novo_coord:
+                try:
+                    novo_coord = Viajante.objects.create(nome=novo_coord_nome)
+                except IntegrityError:
+                    # Another row with same normalized name may already exist.
+                    novo_coord = Viajante.objects.filter(nome__iexact=novo_coord_nome).first()
+            instance.coordenador_administrativo = novo_coord
+
+        related_oficios = list(self.cleaned_data.get('oficios_relacionados') or [])
+        if instance.oficio_id and instance.oficio not in related_oficios:
+            related_oficios.append(instance.oficio)
+        if related_oficios and not instance.oficio_id:
+            instance.oficio = related_oficios[0]
         if commit:
             self._assign_auto_number(instance)
             instance.save()
+            instance.oficios.set(related_oficios)
+        else:
+            self._pending_oficios = related_oficios
         return instance
 
 

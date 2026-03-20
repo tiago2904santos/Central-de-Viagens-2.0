@@ -14,6 +14,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods
+from cadastros.models import Estado
 
 from .forms import (
     JustificativaForm,
@@ -115,6 +116,79 @@ def _save_efetivo_rows(plano, rows):
         )
     plano.quantidade_servidores = plano.efetivos.aggregate(total=Sum('quantidade')).get('total') or 0
     plano.save(update_fields=['quantidade_servidores', 'updated_at'])
+
+
+def _build_plano_diarias_markers(plano):
+    if plano.roteiro_id:
+        trechos = list(plano.roteiro.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk'))
+        markers = []
+        chegada_final = None
+        for trecho in trechos:
+            if trecho.saida_dt and trecho.destino_cidade_id:
+                markers.append(
+                    PeriodMarker(
+                        saida=trecho.saida_dt,
+                        destino_cidade=trecho.destino_cidade.nome,
+                        destino_uf=(trecho.destino_estado.sigla if trecho.destino_estado_id else ''),
+                    )
+                )
+            if trecho.chegada_dt and (not chegada_final or trecho.chegada_dt > chegada_final):
+                chegada_final = trecho.chegada_dt
+        if markers and chegada_final:
+            return markers, chegada_final
+
+    oficios = list(plano.oficios.all())
+    if not oficios and plano.oficio_id:
+        oficios = [plano.oficio]
+    for oficio in oficios:
+        trechos = list(oficio.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk'))
+        if not trechos:
+            continue
+        markers = []
+        for trecho in trechos:
+            if not trecho.saida_data or not trecho.saida_hora or not trecho.destino_cidade_id:
+                markers = []
+                break
+            markers.append(
+                PeriodMarker(
+                    saida=datetime.combine(trecho.saida_data, trecho.saida_hora),
+                    destino_cidade=trecho.destino_cidade.nome,
+                    destino_uf=(trecho.destino_estado.sigla if trecho.destino_estado_id else ''),
+                )
+            )
+        if markers and oficio.retorno_chegada_data and oficio.retorno_chegada_hora:
+            chegada_final = datetime.combine(oficio.retorno_chegada_data, oficio.retorno_chegada_hora)
+            return markers, chegada_final
+    return [], None
+
+
+def _refresh_plano_diarias(plano):
+    markers, chegada_final = _build_plano_diarias_markers(plano)
+    if not markers or not chegada_final:
+        PlanoTrabalho.objects.filter(pk=plano.pk).update(
+            diarias_quantidade='',
+            diarias_valor_total='',
+            diarias_valor_unitario='',
+            diarias_valor_extenso='',
+            updated_at=timezone.now(),
+        )
+        return
+    try:
+        resultado = calculate_periodized_diarias(
+            markers,
+            chegada_final,
+            quantidade_servidores=max(1, int(plano.quantidade_servidores or 1)),
+        )
+    except Exception:
+        return
+    totais = (resultado or {}).get('totais') or {}
+    PlanoTrabalho.objects.filter(pk=plano.pk).update(
+        diarias_quantidade=totais.get('total_diarias', '') or '',
+        diarias_valor_total=totais.get('total_valor', '') or '',
+        diarias_valor_unitario=totais.get('valor_por_servidor', '') or '',
+        diarias_valor_extenso=totais.get('valor_extenso', '') or '',
+        updated_at=timezone.now(),
+    )
 
 OFICIO_STATUS_CARD_META = {
     Oficio.STATUS_RASCUNHO: {'label': 'Rascunho', 'css_class': 'is-rascunho'},
@@ -1525,21 +1599,23 @@ def _resolve_preselected_context(request):
 
 def planos_trabalho_global(request):
     filters = _base_documento_filters(request)
-    queryset = PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante').all()
+    queryset = PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante', 'roteiro').prefetch_related('oficios').all()
     if filters['q']:
         queryset = queryset.filter(
             Q(objetivo__icontains=filters['q'])
             | Q(observacoes__icontains=filters['q'])
             | Q(evento__titulo__icontains=filters['q'])
             | Q(oficio__motivo__icontains=filters['q'])
+            | Q(oficios__motivo__icontains=filters['q'])
         )
     if filters['evento_id'].isdigit():
         queryset = queryset.filter(evento_id=int(filters['evento_id']))
     if filters['oficio_id'].isdigit():
-        queryset = queryset.filter(oficio_id=int(filters['oficio_id']))
+        queryset = queryset.filter(Q(oficio_id=int(filters['oficio_id'])) | Q(oficios__id=int(filters['oficio_id'])))
     if filters['status']:
         queryset = queryset.filter(status=filters['status'])
 
+    queryset = queryset.distinct()
     page_obj = _paginate(queryset.order_by('-updated_at', '-created_at'), request.GET.get('page'))
     return render(
         request,
@@ -1568,6 +1644,7 @@ def plano_trabalho_novo(request):
         initial['evento'] = preselected_event.pk
     if preselected_oficio:
         initial['oficio'] = preselected_oficio.pk
+        initial['oficios_relacionados'] = [preselected_oficio.pk]
 
     form = PlanoTrabalhoForm(request.POST or None, initial=initial)
     has_efetivo_payload = request.method == 'POST' and any(k.startswith('efetivo-') for k in request.POST.keys())
@@ -1581,6 +1658,7 @@ def plano_trabalho_novo(request):
         if has_efetivo_payload:
             rows = _extract_efetivo_rows(request.POST, prefix='efetivo')
             _save_efetivo_rows(obj, rows)
+            _refresh_plano_diarias(obj)
         messages.success(request, 'Plano de trabalho criado com sucesso.')
         return redirect(return_to or reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': obj.pk}))
 
@@ -1595,13 +1673,17 @@ def plano_trabalho_novo(request):
             'context_source': context_source,
             'preselected_event_id': preselected_event.pk if preselected_event else '',
             'preselected_oficio_id': preselected_oficio.pk if preselected_oficio else '',
+            'estados_choices': Estado.objects.filter(ativo=True).order_by('nome'),
+            'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
+            'proximo_numero_pt': form.proximo_numero_preview,
+            'data_geracao_preview': timezone.localdate(),
         },
     )
 
 
 @require_http_methods(['GET', 'POST'])
 def plano_trabalho_editar(request, pk):
-    obj = get_object_or_404(PlanoTrabalho.objects.select_related('evento', 'oficio'), pk=pk)
+    obj = get_object_or_404(PlanoTrabalho.objects.select_related('evento', 'oficio', 'roteiro').prefetch_related('oficios'), pk=pk)
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-planos-trabalho'))
     context_source = _get_context_source(request)
     form = PlanoTrabalhoForm(request.POST or None, instance=obj)
@@ -1612,6 +1694,7 @@ def plano_trabalho_editar(request, pk):
         if has_efetivo_payload:
             rows = _extract_efetivo_rows(request.POST, prefix='efetivo')
             _save_efetivo_rows(obj, rows)
+            _refresh_plano_diarias(obj)
         messages.success(request, 'Plano de trabalho atualizado.')
         return redirect(return_to or reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': obj.pk}))
     return render(
@@ -1625,13 +1708,17 @@ def plano_trabalho_editar(request, pk):
             'context_source': context_source,
             'preselected_event_id': obj.evento_id or '',
             'preselected_oficio_id': obj.oficio_id or '',
+            'estados_choices': Estado.objects.filter(ativo=True).order_by('nome'),
+            'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
+            'proximo_numero_pt': obj.numero_formatado,
+            'data_geracao_preview': obj.data_criacao,
         },
     )
 
 
 @require_http_methods(['GET'])
 def plano_trabalho_detalhe(request, pk):
-    obj = get_object_or_404(PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante'), pk=pk)
+    obj = get_object_or_404(PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante', 'roteiro').prefetch_related('oficios'), pk=pk)
     return render(request, 'eventos/documentos/planos_trabalho_detalhe.html', {'object': obj})
 
 
@@ -1652,15 +1739,14 @@ def plano_trabalho_excluir(request, pk):
 
 @require_http_methods(['GET'])
 def plano_trabalho_download(request, pk, formato):
-    obj = get_object_or_404(PlanoTrabalho.objects.select_related('oficio'), pk=pk)
+    obj = get_object_or_404(PlanoTrabalho.objects.select_related('oficio').prefetch_related('oficios'), pk=pk)
     formato = _clean(formato).lower()
     if formato not in {DocumentoFormato.DOCX.value, DocumentoFormato.PDF.value}:
         raise Http404('Formato inválido.')
-    docx_bytes = (
-        render_plano_trabalho_docx(obj.oficio)
-        if obj.oficio_id
-        else render_plano_trabalho_model_docx(obj)
-    )
+    oficio_ref = obj.oficio
+    if not oficio_ref:
+        oficio_ref = obj.oficios.order_by('-updated_at').first()
+    docx_bytes = render_plano_trabalho_docx(oficio_ref) if oficio_ref else render_plano_trabalho_model_docx(obj)
     payload = docx_bytes
     content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     if formato == DocumentoFormato.PDF.value:

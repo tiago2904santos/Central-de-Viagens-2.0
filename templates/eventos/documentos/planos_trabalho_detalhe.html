@@ -40,8 +40,10 @@
             <dd class="col-sm-9">{{ object.data_criacao|date:"d/m/Y"|default:"—" }}</dd>
             <dt class="col-sm-3">Evento</dt>
             <dd class="col-sm-9">{% if object.evento %}{{ object.evento.titulo|default:"(sem título)" }}{% else %}—{% endif %}</dd>
-            <dt class="col-sm-3">Ofício</dt>
-            <dd class="col-sm-9">{% if object.oficio %}{{ object.oficio.numero_formatado|default:"—" }}{% else %}—{% endif %}</dd>
+            <dt class="col-sm-3">Ofícios</dt>
+            <dd class="col-sm-9">{{ object.oficios_relacionados_display|default:"—" }}</dd>
+            <dt class="col-sm-3">Roteiro</dt>
+            <dd class="col-sm-9">{% if object.roteiro %}#{{ object.roteiro.pk }}{% else %}—{% endif %}</dd>
             <dt class="col-sm-3">Solicitante</dt>
             <dd class="col-sm-9">
               {% if object.solicitante %}{{ object.solicitante.nome }}
@@ -62,7 +64,14 @@
             <dt class="col-sm-3">Objetivo / finalidade</dt>
             <dd class="col-sm-9" style="white-space:pre-line">{{ object.objetivo|default:"—" }}</dd>
             <dt class="col-sm-3">Locais</dt>
-            <dd class="col-sm-9" style="white-space:pre-line">{{ object.locais|default:"—" }}</dd>
+            <dd class="col-sm-9" style="white-space:pre-line">{{ object.destinos_formatados_display|default:object.locais|default:"—" }}</dd>
+            <dt class="col-sm-3">Período do evento</dt>
+            <dd class="col-sm-9">
+              {% if object.evento_data_inicio %}
+                {{ object.evento_data_inicio|date:"d/m/Y" }}
+                {% if object.evento_data_fim and object.evento_data_fim != object.evento_data_inicio %} até {{ object.evento_data_fim|date:"d/m/Y" }}{% endif %}
+              {% else %}—{% endif %}
+            </dd>
             <dt class="col-sm-3">Horário de atendimento</dt>
             <dd class="col-sm-9">{{ object.horario_atendimento|default:"—" }}</dd>
             <dt class="col-sm-3">Qtd. servidores</dt>
@@ -75,8 +84,12 @@
             <dd class="col-sm-9" style="white-space:pre-line">{{ object.efetivo_resumo|default:"—" }}</dd>
             <dt class="col-sm-3">Recursos</dt>
             <dd class="col-sm-9" style="white-space:pre-line">{{ object.recursos_texto|default:"—" }}</dd>
-            <dt class="col-sm-3">Observações</dt>
-            <dd class="col-sm-9" style="white-space:pre-line">{{ object.observacoes|default:"—" }}</dd>
+            <dt class="col-sm-3">Diárias (quantidade)</dt>
+            <dd class="col-sm-9">{{ object.diarias_quantidade|default:"—" }}</dd>
+            <dt class="col-sm-3">Diárias (valor total)</dt>
+            <dd class="col-sm-9">{{ object.diarias_valor_total|default:"—" }}</dd>
+            <dt class="col-sm-3">Diárias (valor unitário)</dt>
+            <dd class="col-sm-9">{{ object.diarias_valor_unitario|default:"—" }}</dd>
           </dl>
         </div>
       </div>
@@ -92,8 +105,6 @@
             <dd class="col-sm-7">{% if object.coordenador_operacional %}{{ object.coordenador_operacional }}{% else %}—{% endif %}</dd>
             <dt class="col-sm-5">Coord. administrativo</dt>
             <dd class="col-sm-7">{% if object.coordenador_administrativo %}{{ object.coordenador_administrativo.nome }}{% else %}—{% endif %}</dd>
-            <dt class="col-sm-5">Coord. municipal</dt>
-            <dd class="col-sm-7">{{ object.coordenador_municipal|default:"—" }}</dd>
           </dl>
         </div>
       </div>

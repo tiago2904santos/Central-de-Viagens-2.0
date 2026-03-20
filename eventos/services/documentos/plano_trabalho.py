@@ -10,14 +10,8 @@ from .context import (
     get_assinaturas_documento,
 )
 from .renderer import (
-    add_bullet_list,
-    add_label_value,
-    add_multiline_value,
-    add_section_heading,
-    add_signature_blocks,
-    add_simple_table,
-    create_base_document,
-    document_to_bytes,
+    get_document_template_path,
+    render_docx_template_bytes,
 )
 from .types import DocumentoOficioTipo
 from ..plano_trabalho_domain import build_atividades_formatada, build_metas_formatada
@@ -73,27 +67,42 @@ def _render_from_context(document, context):
 
 def render_plano_trabalho_docx(oficio):
     context = build_plano_trabalho_document_context(oficio)
-    titulo = (
-        f"PLANO DE TRABALHO Nº {context.get('numero_plano_trabalho') or '—'} - "
-        f"OFÍCIO Nº {context['identificacao']['numero_formatado'] or 'RASCUNHO'}"
-    )
-    subtitulo = context['institucional']['orgao'] or context['institucional']['sigla_orgao']
-    document = create_base_document(titulo, subtitulo)
-
-    _render_from_context(document, context)
-    return document_to_bytes(document)
+    mapping = {
+        'numero_plano_trabalho': context.get('numero_plano_trabalho', ''),
+        'destino': context.get('destino', ''),
+        'solicitante': context.get('solicitante', ''),
+        'metas_formatada': context.get('metas_formatada', ''),
+        'atividades_formatada': context.get('atividades_formatada', ''),
+        'dias_evento_extenso': context.get('dias_evento_extenso', ''),
+        'locais_formatado': context.get('locais_formatado', ''),
+        'horario_atendimento': context.get('horario_atendimento', ''),
+        'quantidade_de_servidores': context.get('quantidade_de_servidores', ''),
+        'unidade_movel': context.get('unidade_movel', ''),
+        'diarias_x': context.get('diarias_x', ''),
+        'valor_unitario': context.get('valor_unitario', ''),
+        'valor_unitario_por_extenso': context.get('valor_unitario_por_extenso', ''),
+        'valor_total': context.get('valor_total', ''),
+        'valor_total_por_extenso': context.get('valor_total_por_extenso', ''),
+        'recursos_formatado': context.get('recursos_formatado', ''),
+        'coordenacao_formatada': context.get('coordenacao_formatada', ''),
+        'coordenação formatada': context.get('coordenacao_formatada', ''),
+        'data_extenso': context.get('data_extenso', ''),
+        'divisao': context['institucional'].get('divisao', ''),
+        'unidade': context['institucional'].get('unidade', ''),
+        'unidade_rodape': context['institucional'].get('unidade_rodape', ''),
+        'endereco': context['institucional'].get('endereco', ''),
+        'telefone': context['institucional'].get('telefone', ''),
+        'email': context['institucional'].get('email', ''),
+        'sede': context['institucional'].get('sede', ''),
+        'nome_chefia': context['institucional'].get('nome_chefia', ''),
+        'cargo_chefia': context['institucional'].get('cargo_chefia', ''),
+    }
+    template_path = get_document_template_path(DocumentoOficioTipo.PLANO_TRABALHO)
+    return render_docx_template_bytes(template_path, mapping)
 
 
 def render_plano_trabalho_model_docx(plano_trabalho):
     """Renderização DOCX a partir da entidade PlanoTrabalho, sem exigir Ofício/Evento."""
-    titulo = f"PLANO DE TRABALHO {plano_trabalho.numero_formatado or f'#{plano_trabalho.pk}'}"
-    subtitulo = (
-        (plano_trabalho.evento.titulo or '').strip()
-        if plano_trabalho.evento_id and plano_trabalho.evento
-        else 'Plano de trabalho independente'
-    )
-    document = create_base_document(titulo, subtitulo)
-
     solicitante_texto = ''
     if plano_trabalho.solicitante_id and plano_trabalho.solicitante:
         solicitante_texto = plano_trabalho.solicitante.nome
@@ -141,6 +150,35 @@ def render_plano_trabalho_model_docx(plano_trabalho):
         'data_extenso': data_extenso,
         'assinaturas': get_assinaturas_documento(DocumentoOficioTipo.PLANO_TRABALHO.value),
     }
-    _render_from_context(document, context)
-
-    return document_to_bytes(document)
+    mapping = {
+        'numero_plano_trabalho': context.get('numero_plano_trabalho', ''),
+        'destino': context.get('destino', ''),
+        'solicitante': context.get('solicitante', ''),
+        'metas_formatada': context.get('metas_formatada', ''),
+        'atividades_formatada': context.get('atividades_formatada', ''),
+        'dias_evento_extenso': context.get('dias_evento_extenso', ''),
+        'locais_formatado': context.get('locais_formatado', ''),
+        'horario_atendimento': context.get('horario_atendimento', ''),
+        'quantidade_de_servidores': context.get('quantidade_de_servidores', ''),
+        'unidade_movel': context.get('unidade_movel', ''),
+        'diarias_x': plano_trabalho.diarias_quantidade or context.get('diarias_x', ''),
+        'valor_unitario': plano_trabalho.diarias_valor_unitario or context.get('valor_unitario', ''),
+        'valor_unitario_por_extenso': '',
+        'valor_total': plano_trabalho.diarias_valor_total or context.get('valor_total', ''),
+        'valor_total_por_extenso': plano_trabalho.diarias_valor_extenso or context.get('valor_total_por_extenso', ''),
+        'recursos_formatado': context.get('recursos_formatado', ''),
+        'coordenacao_formatada': context.get('coordenacao_formatada', ''),
+        'coordenação formatada': context.get('coordenacao_formatada', ''),
+        'data_extenso': context.get('data_extenso', ''),
+        'divisao': context['institucional'].get('divisao', ''),
+        'unidade': context['institucional'].get('unidade', ''),
+        'unidade_rodape': context['institucional'].get('unidade_rodape', ''),
+        'endereco': context['institucional'].get('endereco', ''),
+        'telefone': context['institucional'].get('telefone', ''),
+        'email': context['institucional'].get('email', ''),
+        'sede': context['institucional'].get('sede', ''),
+        'nome_chefia': context['institucional'].get('nome_chefia', ''),
+        'cargo_chefia': context['institucional'].get('cargo_chefia', ''),
+    }
+    template_path = get_document_template_path(DocumentoOficioTipo.PLANO_TRABALHO)
+    return render_docx_template_bytes(template_path, mapping)

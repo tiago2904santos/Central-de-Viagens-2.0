@@ -258,6 +258,20 @@ class PlanoTrabalho(models.Model):
         related_name='planos_trabalho',
         verbose_name='Ofício',
     )
+    oficios = models.ManyToManyField(
+        'Oficio',
+        blank=True,
+        related_name='planos_trabalho_relacionados',
+        verbose_name='Ofícios relacionados',
+    )
+    roteiro = models.ForeignKey(
+        'RoteiroEvento',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='planos_trabalho',
+        verbose_name='Roteiro selecionado',
+    )
     solicitante = models.ForeignKey(
         'SolicitantePlanoTrabalho',
         on_delete=models.SET_NULL,
@@ -286,11 +300,19 @@ class PlanoTrabalho(models.Model):
     coordenador_municipal = models.CharField('Coordenador municipal', max_length=200, blank=True, default='')
     objetivo = models.TextField('Objetivo/finalidade', blank=True, default='')
     locais = models.TextField('Locais', blank=True, default='')
+    destinos_json = models.JSONField('Destinos estruturados', blank=True, default=list)
+    evento_data_unica = models.BooleanField('Evento em um único dia', default=False)
+    evento_data_inicio = models.DateField('Data inicial do evento', null=True, blank=True)
+    evento_data_fim = models.DateField('Data final do evento', null=True, blank=True)
     horario_atendimento = models.CharField('Horário de atendimento', max_length=120, blank=True, default='')
     quantidade_servidores = models.PositiveIntegerField('Quantidade de servidores', null=True, blank=True)
     atividades_codigos = models.CharField('Atividades (códigos)', max_length=500, blank=True, default='')
     metas_formatadas = models.TextField('Metas formatadas', blank=True, default='')
     efetivo_resumo = models.TextField('Efetivo (resumo)', blank=True, default='')
+    diarias_quantidade = models.CharField('Simulação de diárias (quantidade)', max_length=120, blank=True, default='')
+    diarias_valor_total = models.CharField('Simulação de diárias (valor total)', max_length=80, blank=True, default='')
+    diarias_valor_unitario = models.CharField('Simulação de diárias (valor unitário)', max_length=80, blank=True, default='')
+    diarias_valor_extenso = models.TextField('Simulação de diárias (valor por extenso)', blank=True, default='')
     recursos_texto = models.TextField('Recursos (texto)', blank=True, default='')
     observacoes = models.TextField('Observações', blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -311,6 +333,62 @@ class PlanoTrabalho(models.Model):
         if self.numero and self.ano:
             return f'{int(self.numero):02d}/{int(self.ano)}'
         return EMPTY_MASK_DISPLAY
+
+    @property
+    def oficios_relacionados_display(self):
+        oficios = list(self.oficios.all())
+        if not oficios and self.oficio_id:
+            oficios = [self.oficio]
+        labels = []
+        seen = set()
+        for oficio in oficios:
+            if not oficio:
+                continue
+            label = (getattr(oficio, 'numero_formatado', '') or '').strip() or f'#{oficio.pk}'
+            if label in seen:
+                continue
+            seen.add(label)
+            labels.append(label)
+        return ', '.join(labels)
+
+    @property
+    def destinos_formatados_display(self):
+        items = []
+        for destino in self.destinos_json or []:
+            if not isinstance(destino, dict):
+                continue
+            cidade = (destino.get('cidade_nome') or '').strip()
+            uf = (destino.get('estado_sigla') or '').strip().upper()
+            if cidade and uf:
+                items.append(f'{cidade}/{uf}')
+            elif cidade:
+                items.append(cidade)
+        if items:
+            return ', '.join(items)
+        return (self.locais or '').strip()
+
+    def _sync_context_relations(self):
+        if self.oficio_id:
+            if not self.evento_id and self.oficio.evento_id:
+                self.evento = self.oficio.evento
+            if not self.roteiro_id and self.oficio.roteiro_evento_id:
+                self.roteiro = self.oficio.roteiro_evento
+        if self.roteiro_id and not self.evento_id and self.roteiro.evento_id:
+            self.evento = self.roteiro.evento
+
+    def clean(self):
+        super().clean()
+        self._sync_context_relations()
+        if self.evento_data_unica and self.evento_data_inicio:
+            self.evento_data_fim = self.evento_data_inicio
+        if self.evento_data_inicio and self.evento_data_fim and self.evento_data_fim < self.evento_data_inicio:
+            raise ValidationError({'evento_data_fim': 'A data final do evento não pode ser anterior à data inicial.'})
+
+    def save(self, *args, **kwargs):
+        self._sync_context_relations()
+        if self.evento_data_unica and self.evento_data_inicio:
+            self.evento_data_fim = self.evento_data_inicio
+        super().save(*args, **kwargs)
 
 
 class OrdemServico(models.Model):
