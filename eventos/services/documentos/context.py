@@ -496,6 +496,38 @@ def _get_pt_total_servidores(plano, evento):
     return _pt_total_servidores_safe(evento)
 
 
+def _build_quantidade_servidores_texto(plano, evento):
+    """Consolida total e composição por cargo para o placeholder quantidade_de_servidores."""
+    composicao = []
+    total = 0
+
+    if plano:
+        for item in plano.efetivos.select_related('cargo').order_by('cargo__nome'):
+            if not item.quantidade:
+                continue
+            cargo_nome = _text_or_empty(item.cargo.nome if item.cargo_id else '') or 'cargo não informado'
+            qtd = int(item.quantidade)
+            total += qtd
+            composicao.append(f'- {qtd} {cargo_nome.lower()}')
+
+    if not composicao and evento:
+        for item in EfetivoPlanoTrabalho.objects.filter(evento=evento).select_related('cargo').order_by('cargo__nome'):
+            if not item.quantidade:
+                continue
+            cargo_nome = _text_or_empty(item.cargo.nome if item.cargo_id else '') or 'cargo não informado'
+            qtd = int(item.quantidade)
+            total += qtd
+            composicao.append(f'- {qtd} {cargo_nome.lower()}')
+
+    if total <= 0:
+        total = _get_pt_total_servidores(plano, evento)
+
+    linhas = [f'Total: {total} servidor(es)']
+    if composicao:
+        linhas.extend(composicao)
+    return '\n'.join(linhas)
+
+
 def _get_proximo_numero_plano_trabalho():
     """Retorna o próximo número do PT no formato 'N/AAAA' (ex: 1/2026), sem persistir."""
     from django.utils import timezone
@@ -615,7 +647,7 @@ def build_plano_trabalho_document_context(oficio):
             valor_unitario_str = ''
     valor_unitario_extenso = valor_por_extenso_ptbr(valor_unitario_str) if valor_unitario_str else ''
 
-    quantidade_de_servidores_texto = f'{total_servidores_pt} servidor(es)' if total_servidores_pt else ''
+    quantidade_de_servidores_texto = _build_quantidade_servidores_texto(plano, evento)
 
     dias_evento_extenso = ''
     if evento and evento.data_inicio:

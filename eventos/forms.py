@@ -1,10 +1,11 @@
 import uuid
 
 from django import forms
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from cadastros.models import Viajante, Veiculo
+from cadastros.models import ConfiguracaoSistema, Viajante, Veiculo
 from eventos.services.oficio_schema import oficio_justificativa_schema_available
 from eventos.services.justificativa import get_oficio_justificativa, get_oficio_justificativa_texto
 from eventos.termos import build_termo_context, build_termo_preview_payload
@@ -24,7 +25,7 @@ from .models import (
     CoordenadorOperacional,
     TipoDemandaEvento,
 )
-from .services.plano_trabalho_domain import ATIVIDADES_CATALOGO
+from .services.plano_trabalho_domain import ATIVIDADES_CATALOGO, build_metas_formatada
 from core.utils.masks import format_placa, format_protocolo, normalize_placa
 from .utils import buscar_veiculo_finalizado_por_placa, mapear_tipo_viatura_para_oficio, normalize_protocolo
 
@@ -152,23 +153,43 @@ class EventoFinalizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
 
 
 class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
+    OUTROS_CHOICE = '__OUTROS__'
+    HORARIO_OUTROS = '__OUTROS__'
+
     atividades_codigos = forms.MultipleChoiceField(
         label='Atividades (PT)',
         choices=[(item['codigo'], item['nome']) for item in ATIVIDADES_CATALOGO],
         required=False,
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
     )
+    solicitante_escolha = forms.ChoiceField(
+        label='Solicitante',
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    salvar_solicitante_outros = forms.BooleanField(
+        label='Salvar este solicitante no gerenciador',
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+    )
+    horario_atendimento_padrao = forms.ChoiceField(
+        label='Horário de atendimento',
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    horario_atendimento_manual = forms.CharField(
+        label='Horário de atendimento (manual)',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
 
     class Meta:
         model = PlanoTrabalho
         fields = [
-            'numero',
-            'ano',
             'data_criacao',
             'status',
             'evento',
             'oficio',
-            'solicitante',
             'solicitante_outros',
             'coordenador_operacional',
             'coordenador_administrativo',
@@ -183,13 +204,10 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'observacoes',
         ]
         widgets = {
-            'numero': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'ano': forms.NumberInput(attrs={'class': 'form-control', 'min': 2000}),
             'data_criacao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
             'evento': forms.Select(attrs={'class': 'form-select'}),
             'oficio': forms.Select(attrs={'class': 'form-select'}),
-            'solicitante': forms.Select(attrs={'class': 'form-select'}),
             'solicitante_outros': forms.TextInput(attrs={'class': 'form-control'}),
             'coordenador_operacional': forms.Select(attrs={'class': 'form-select'}),
             'coordenador_administrativo': forms.Select(attrs={'class': 'form-select'}),
@@ -208,17 +226,47 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['evento'].required = False
         self.fields['oficio'].required = False
-        self.fields['solicitante'].required = False
         self.fields['coordenador_operacional'].required = False
         self.fields['coordenador_administrativo'].required = False
-        self.fields['numero'].required = False
-        self.fields['ano'].required = False
         self.fields['quantidade_servidores'].required = False
         self.fields['evento'].queryset = Evento.objects.order_by('-data_inicio', 'titulo')
         self.fields['oficio'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
-        self.fields['solicitante'].queryset = SolicitantePlanoTrabalho.objects.filter(ativo=True).order_by('ordem', 'nome')
         self.fields['coordenador_operacional'].queryset = CoordenadorOperacional.objects.filter(ativo=True).order_by('ordem', 'nome')
         self.fields['coordenador_administrativo'].queryset = Viajante.objects.filter(status='ATIVO').order_by('nome')
+        self.fields['metas_formatadas'].widget.attrs['readonly'] = True
+
+        solicitantes = list(
+            SolicitantePlanoTrabalho.objects.filter(ativo=True).order_by('ordem', 'nome').values_list('pk', 'nome')
+        )
+        self.fields['solicitante_escolha'].choices = [
+            ('', 'Selecione...'),
+            *[(str(pk), nome) for pk, nome in solicitantes],
+            (self.OUTROS_CHOICE, 'Outros'),
+        ]
+
+        horarios = [
+            ('', 'Selecione...'),
+            ('08:00-12:00', '08h00 às 12h00'),
+            ('13:00-17:00', '13h00 às 17h00'),
+            ('08:00-17:00', '08h00 às 17h00'),
+            (self.HORARIO_OUTROS, 'Outro (informar manualmente)'),
+        ]
+        self.fields['horario_atendimento_padrao'].choices = horarios
+
+        if self.instance and self.instance.pk:
+            if self.instance.solicitante_id:
+                self.initial['solicitante_escolha'] = str(self.instance.solicitante_id)
+            elif self.instance.solicitante_outros:
+                self.initial['solicitante_escolha'] = self.OUTROS_CHOICE
+
+            horario_atual = (self.instance.horario_atendimento or '').strip()
+            known = {value for value, _label in horarios}
+            if horario_atual in known:
+                self.initial['horario_atendimento_padrao'] = horario_atual
+            elif horario_atual:
+                self.initial['horario_atendimento_padrao'] = self.HORARIO_OUTROS
+                self.initial['horario_atendimento_manual'] = horario_atual
+
         if self.instance and self.instance.pk and self.instance.atividades_codigos:
             self.initial['atividades_codigos'] = [
                 codigo.strip()
@@ -226,11 +274,76 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
                 if codigo.strip()
             ]
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        escolha = (cleaned_data.get('solicitante_escolha') or '').strip()
+        solicitante_outros = (cleaned_data.get('solicitante_outros') or '').strip()
+        if escolha == self.OUTROS_CHOICE and not solicitante_outros:
+            self.add_error('solicitante_outros', 'Informe o solicitante quando selecionar "Outros".')
+
+        horario_padrao = (cleaned_data.get('horario_atendimento_padrao') or '').strip()
+        horario_manual = (cleaned_data.get('horario_atendimento_manual') or '').strip()
+        if horario_padrao == self.HORARIO_OUTROS:
+            if not horario_manual:
+                self.add_error('horario_atendimento_manual', 'Informe o horário manual.')
+            cleaned_data['horario_atendimento'] = horario_manual
+        else:
+            cleaned_data['horario_atendimento'] = horario_padrao
+
+        codigos = cleaned_data.get('atividades_codigos', [])
+        cleaned_data['metas_formatadas'] = build_metas_formatada(','.join(codigos) if codigos else '')
+        return cleaned_data
+
+    def _assign_auto_number(self, instance):
+        if instance.numero and instance.ano:
+            return
+        ano_atual = timezone.now().year
+        with transaction.atomic():
+            config = ConfiguracaoSistema.objects.select_for_update().order_by('pk').first()
+            if config:
+                ultimo = getattr(config, 'pt_ultimo_numero', 0) or 0
+                ano_cfg = getattr(config, 'pt_ano', 0) or 0
+                proximo = (ultimo + 1) if ano_cfg == ano_atual else 1
+                instance.numero = proximo
+                instance.ano = ano_atual
+                config.pt_ultimo_numero = proximo
+                config.pt_ano = ano_atual
+                config.save(update_fields=['pt_ultimo_numero', 'pt_ano', 'updated_at'])
+                return
+
+            ultimo_plano = (
+                PlanoTrabalho.objects.filter(ano=ano_atual)
+                .order_by('-numero')
+                .values_list('numero', flat=True)
+                .first()
+            ) or 0
+            instance.numero = int(ultimo_plano) + 1
+            instance.ano = ano_atual
+
     def save(self, commit=True):
         instance = super().save(commit=False)
+        escolha = (self.cleaned_data.get('solicitante_escolha') or '').strip()
+        instance.solicitante = None
+        if escolha and escolha != self.OUTROS_CHOICE and escolha.isdigit():
+            instance.solicitante_id = int(escolha)
+            instance.solicitante_outros = ''
+        elif escolha == self.OUTROS_CHOICE:
+            instance.solicitante_outros = (self.cleaned_data.get('solicitante_outros') or '').strip()
+            if instance.solicitante_outros and self.cleaned_data.get('salvar_solicitante_outros'):
+                solicitante_obj, _ = SolicitantePlanoTrabalho.objects.get_or_create(
+                    nome=instance.solicitante_outros,
+                    defaults={'ativo': True},
+                )
+                instance.solicitante = solicitante_obj
+                instance.solicitante_outros = ''
+
+        instance.horario_atendimento = (self.cleaned_data.get('horario_atendimento') or '').strip()
         codigos = self.cleaned_data.get('atividades_codigos', [])
         instance.atividades_codigos = ','.join(codigos) if codigos else ''
+        instance.metas_formatadas = self.cleaned_data.get('metas_formatadas') or ''
         if commit:
+            self._assign_auto_number(instance)
             instance.save()
         return instance
 

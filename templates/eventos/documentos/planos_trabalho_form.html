@@ -38,17 +38,10 @@
       <div class="card-header fw-semibold">Identificação</div>
       <div class="card-body">
         <div class="row g-3">
-          <div class="col-md-2">
-            <label class="form-label" for="{{ form.numero.id_for_label }}">Número</label>
-            {{ form.numero }}
-            {% if form.numero.errors %}<div class="invalid-feedback d-block">{{ form.numero.errors.0 }}</div>{% endif %}
-            <div class="form-text">Ex: 1</div>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label" for="{{ form.ano.id_for_label }}">Ano</label>
-            {{ form.ano }}
-            {% if form.ano.errors %}<div class="invalid-feedback d-block">{{ form.ano.errors.0 }}</div>{% endif %}
-            <div class="form-text">Ex: 2026</div>
+          <div class="col-md-4">
+            <label class="form-label">Número do plano</label>
+            <input class="form-control" type="text" value="{% if object %}{{ object.numero_formatado }}{% else %}Gerado automaticamente ao salvar{% endif %}" readonly>
+            <div class="form-text">Numeração automática e incremental.</div>
           </div>
           <div class="col-md-3">
             <label class="form-label" for="{{ form.data_criacao.id_for_label }}">Data de criação</label>
@@ -90,15 +83,24 @@
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label" for="{{ form.solicitante.id_for_label }}">Solicitante (cadastrado)</label>
-            {{ form.solicitante }}
-            {% if form.solicitante.errors %}<div class="invalid-feedback d-block">{{ form.solicitante.errors.0 }}</div>{% endif %}
+            <label class="form-label" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
+            {{ form.solicitante_escolha }}
+            {% if form.solicitante_escolha.errors %}<div class="invalid-feedback d-block">{{ form.solicitante_escolha.errors.0 }}</div>{% endif %}
+            <div class="form-text">Selecione um solicitante cadastrado ou use a opção "Outros".</div>
           </div>
           <div class="col-md-6">
             <label class="form-label" for="{{ form.solicitante_outros.id_for_label }}">Solicitante (outros)</label>
             {{ form.solicitante_outros }}
             {% if form.solicitante_outros.errors %}<div class="invalid-feedback d-block">{{ form.solicitante_outros.errors.0 }}</div>{% endif %}
-            <div class="form-text">Preencha quando o solicitante não está no cadastro.</div>
+            <div class="form-text">Preencha apenas quando selecionar "Outros".</div>
+          </div>
+          <div class="col-12">
+            <div class="form-check mt-1">
+              {{ form.salvar_solicitante_outros }}
+              <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">
+                Salvar este solicitante no gerenciador para uso futuro
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -128,9 +130,9 @@
       </div>
     </div>
 
-    {# ── Seção 5: Conteúdo ── #}
+    {# ── Seção 5: Atuação ── #}
     <div class="card mb-3">
-      <div class="card-header fw-semibold">Conteúdo</div>
+      <div class="card-header fw-semibold">Atuação</div>
       <div class="card-body">
         <div class="row g-3">
           <div class="col-12">
@@ -144,21 +146,62 @@
             {% if form.locais.errors %}<div class="invalid-feedback d-block">{{ form.locais.errors.0 }}</div>{% endif %}
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="{{ form.horario_atendimento.id_for_label }}">Horário de atendimento</label>
-            {{ form.horario_atendimento }}
-            {% if form.horario_atendimento.errors %}<div class="invalid-feedback d-block">{{ form.horario_atendimento.errors.0 }}</div>{% endif %}
-            <div class="form-text">Ex: das 08h00 às 17h00</div>
+            <label class="form-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horário de atendimento (padrão)</label>
+            {{ form.horario_atendimento_padrao }}
+            {% if form.horario_atendimento_padrao.errors %}<div class="invalid-feedback d-block">{{ form.horario_atendimento_padrao.errors.0 }}</div>{% endif %}
           </div>
-          <div class="col-md-3">
-            <label class="form-label" for="{{ form.quantidade_servidores.id_for_label }}">Quantidade de servidores</label>
-            {{ form.quantidade_servidores }}
-            {% if form.quantidade_servidores.errors %}<div class="invalid-feedback d-block">{{ form.quantidade_servidores.errors.0 }}</div>{% endif %}
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.horario_atendimento_manual.id_for_label }}">Horário de atendimento (manual)</label>
+            {{ form.horario_atendimento_manual }}
+            {% if form.horario_atendimento_manual.errors %}<div class="invalid-feedback d-block">{{ form.horario_atendimento_manual.errors.0 }}</div>{% endif %}
+            <div class="form-text">Preencha apenas quando escolher "Outro (informar manualmente)".</div>
           </div>
         </div>
       </div>
     </div>
 
-    {# ── Seção 6: Atividades ── #}
+    {# ── Seção 6: Efetivo / cargos ── #}
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Efetivo / cargos</div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">Preencha a composição do efetivo por cargo e quantidade. O total será consolidado automaticamente no documento.</p>
+        {{ efetivo_formset.management_form }}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 55%;">Cargo</th>
+                <th style="width: 20%;">Quantidade</th>
+                <th style="width: 25%;">Remover</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in efetivo_formset %}
+              <tr>
+                <td>
+                  {{ row.id }}
+                  {{ row.cargo }}
+                  {% if row.cargo.errors %}<div class="invalid-feedback d-block">{{ row.cargo.errors.0 }}</div>{% endif %}
+                </td>
+                <td>
+                  {{ row.quantidade }}
+                  {% if row.quantidade.errors %}<div class="invalid-feedback d-block">{{ row.quantidade.errors.0 }}</div>{% endif %}
+                </td>
+                <td>
+                  <div class="form-check mt-1">
+                    {{ row.DELETE }}
+                    <label class="form-check-label" for="{{ row.DELETE.id_for_label }}">Excluir linha</label>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# ── Seção 7: Atividades ── #}
     <div class="card mb-3">
       <div class="card-header fw-semibold">Atividades do Plano</div>
       <div class="card-body">
@@ -177,13 +220,13 @@
       </div>
     </div>
 
-    {# ── Seção 7: Campos adicionais ── #}
+    {# ── Seção 8: Recursos necessários e observações ── #}
     <div class="card mb-3">
-      <div class="card-header fw-semibold">Campos adicionais</div>
+      <div class="card-header fw-semibold">Recursos necessários e observações</div>
       <div class="card-body">
         <div class="row g-3">
           <div class="col-12">
-            <label class="form-label" for="{{ form.metas_formatadas.id_for_label }}">Metas formatadas <small class="text-muted">(opcional — preenchido automaticamente pelas atividades)</small></label>
+            <label class="form-label" for="{{ form.metas_formatadas.id_for_label }}">Metas formatadas <small class="text-muted">(preenchimento automático)</small></label>
             {{ form.metas_formatadas }}
             {% if form.metas_formatadas.errors %}<div class="invalid-feedback d-block">{{ form.metas_formatadas.errors.0 }}</div>{% endif %}
           </div>
@@ -191,6 +234,7 @@
             <label class="form-label" for="{{ form.efetivo_resumo.id_for_label }}">Efetivo (resumo)</label>
             {{ form.efetivo_resumo }}
             {% if form.efetivo_resumo.errors %}<div class="invalid-feedback d-block">{{ form.efetivo_resumo.errors.0 }}</div>{% endif %}
+            <div class="form-text">Opcional. A composição oficial do efetivo usa o bloco estruturado por cargo acima.</div>
           </div>
           <div class="col-12">
             <label class="form-label" for="{{ form.recursos_texto.id_for_label }}">Recursos</label>
@@ -216,4 +260,42 @@
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const solicitanteSelect = document.getElementById('{{ form.solicitante_escolha.id_for_label }}');
+    const solicitanteOutros = document.getElementById('{{ form.solicitante_outros.id_for_label }}');
+    const salvarOutros = document.getElementById('{{ form.salvar_solicitante_outros.id_for_label }}');
+    const horarioPadrao = document.getElementById('{{ form.horario_atendimento_padrao.id_for_label }}');
+    const horarioManual = document.getElementById('{{ form.horario_atendimento_manual.id_for_label }}');
+
+    function setVisibility(field, show) {
+      if (!field) return;
+      const col = field.closest('.col-md-6') || field.closest('.col-12') || field.parentElement;
+      if (col) col.style.display = show ? '' : 'none';
+    }
+
+    function syncSolicitante() {
+      const isOutros = solicitanteSelect && solicitanteSelect.value === '__OUTROS__';
+      setVisibility(solicitanteOutros, !!isOutros);
+      setVisibility(salvarOutros, !!isOutros);
+    }
+
+    function syncHorario() {
+      const isManual = horarioPadrao && horarioPadrao.value === '__OUTROS__';
+      setVisibility(horarioManual, !!isManual);
+    }
+
+    if (solicitanteSelect) {
+      solicitanteSelect.addEventListener('change', syncSolicitante);
+      syncSolicitante();
+    }
+    if (horarioPadrao) {
+      horarioPadrao.addEventListener('change', syncHorario);
+      syncHorario();
+    }
+  })();
+</script>
 {% endblock %}

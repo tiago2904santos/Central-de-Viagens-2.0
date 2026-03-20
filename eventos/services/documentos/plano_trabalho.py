@@ -1,4 +1,14 @@
-from .context import build_plano_trabalho_document_context, _build_coordenacao_formatada, get_assinaturas_documento
+from django.utils import timezone
+
+from .context import (
+    _build_coordenacao_formatada,
+    _build_endereco_configuracao,
+    _format_data_extenso,
+    _get_configuracao_sistema,
+    _text_or_empty,
+    build_plano_trabalho_document_context,
+    get_assinaturas_documento,
+)
 from .renderer import (
     add_bullet_list,
     add_label_value,
@@ -13,6 +23,54 @@ from .types import DocumentoOficioTipo
 from ..plano_trabalho_domain import build_atividades_formatada, build_metas_formatada
 
 
+def _render_from_context(document, context):
+    add_section_heading(document, '1. BREVE CONTEXTUALIZAÇÃO')
+    add_multiline_value(document, 'Objetivo / Finalidade', context['plano_trabalho']['objetivo'])
+    add_label_value(document, 'Número do plano', context.get('numero_plano_trabalho', ''))
+    add_label_value(document, 'Destino', context.get('destino', ''))
+    add_label_value(document, 'Solicitante', context.get('solicitante', ''))
+
+    add_section_heading(document, '2. METAS ESTABELECIDAS')
+    add_multiline_value(document, 'Metas', context.get('metas_formatada', ''))
+
+    add_section_heading(document, '3. ATIVIDADES A SEREM DESENVOLVIDAS')
+    add_multiline_value(document, 'Atividades', context.get('atividades_formatada', ''))
+
+    add_section_heading(document, '4. ATUAÇÃO')
+    add_label_value(document, 'Dias do evento (extenso)', context.get('dias_evento_extenso', ''))
+    add_label_value(document, 'Locais', context.get('locais_formatado', ''))
+    add_label_value(document, 'Horário de atendimento', context.get('horario_atendimento', ''))
+    add_multiline_value(document, 'Quantidade de servidores', context.get('quantidade_de_servidores', ''))
+    if context.get('unidade_movel'):
+        add_label_value(document, 'Unidade móvel', context['unidade_movel'])
+
+    add_section_heading(document, '5. VALOR TOTAL DO PLANO')
+    add_label_value(document, 'Composição (diárias)', context.get('diarias_x', ''))
+    add_label_value(document, 'Valor unitário', context.get('valor_unitario', ''))
+    add_label_value(document, 'Valor unitário por extenso', context.get('valor_unitario_por_extenso', ''))
+    add_label_value(document, 'Valor total', context.get('valor_total', ''))
+    add_label_value(document, 'Valor total por extenso', context.get('valor_total_por_extenso', ''))
+
+    add_section_heading(document, '6. RECURSOS NECESSÁRIOS')
+    add_multiline_value(document, 'Recursos', context.get('recursos_formatado', ''))
+
+    add_section_heading(document, '7. COORDENADOR DO EVENTO')
+    add_multiline_value(document, 'Coordenação', context.get('coordenacao_formatada', ''))
+
+    add_section_heading(document, '8. CONSIDERAÇÕES FINAIS')
+    add_label_value(document, 'Data (extenso)', context.get('data_extenso', ''))
+    add_label_value(document, 'Divisão', context['institucional'].get('divisao', ''))
+    add_label_value(document, 'Unidade', context['institucional'].get('unidade', ''))
+    add_label_value(document, 'Unidade (rodapé)', context['institucional'].get('unidade_rodape', ''))
+    add_label_value(document, 'Endereço', context['institucional'].get('endereco', ''))
+    add_label_value(document, 'Telefone', context['institucional'].get('telefone', ''))
+    add_label_value(document, 'Email', context['institucional'].get('email', ''))
+    add_label_value(document, 'Sede', context['institucional'].get('sede', ''))
+    add_label_value(document, 'Nome da chefia', context['institucional'].get('nome_chefia', ''))
+    add_label_value(document, 'Cargo da chefia', context['institucional'].get('cargo_chefia', ''))
+    add_signature_blocks(document, context.get('assinaturas') or [])
+
+
 def render_plano_trabalho_docx(oficio):
     context = build_plano_trabalho_document_context(oficio)
     titulo = (
@@ -22,77 +80,7 @@ def render_plano_trabalho_docx(oficio):
     subtitulo = context['institucional']['orgao'] or context['institucional']['sigla_orgao']
     document = create_base_document(titulo, subtitulo)
 
-    add_section_heading(document, 'Identificação')
-    add_label_value(document, 'Número do plano', context.get('numero_plano_trabalho', ''))
-    add_label_value(document, 'Evento', context['evento']['titulo'])
-    add_label_value(document, 'Protocolo', context['identificacao']['protocolo_formatado'])
-    add_label_value(document, 'Período da viagem', context['roteiro']['periodo_viagem']['resumo'])
-    add_label_value(document, 'Destino(s)', context.get('destino') or context['roteiro']['destinos_texto'])
-    add_label_value(document, 'Solicitante', context.get('solicitante', ''))
-
-    add_multiline_value(document, 'Objetivo / finalidade', context['plano_trabalho']['objetivo'])
-    add_label_value(document, 'Local e período', context['plano_trabalho']['local_periodo'])
-    add_label_value(document, 'Dias do evento (extenso)', context.get('dias_evento_extenso', ''))
-    add_label_value(document, 'Locais', context.get('locais_formatado', '') or context['roteiro']['destinos_texto'])
-    add_label_value(document, 'Horário de atendimento', context.get('horario_atendimento', ''))
-
-    if context.get('atividades_formatada'):
-        add_multiline_value(document, 'Atividades', context['atividades_formatada'])
-    if context.get('metas_formatada'):
-        add_multiline_value(document, 'Metas', context['metas_formatada'])
-    if context.get('unidade_movel'):
-        add_label_value(document, 'Unidade móvel', context['unidade_movel'])
-
-    add_label_value(document, 'Quantidade de servidores', context.get('quantidade_de_servidores', ''))
-
-    participantes_rows = [
-        [viajante['nome'], viajante['cargo'], viajante['rg'], viajante['cpf']]
-        for viajante in context['viajantes']
-    ]
-    if participantes_rows:
-        add_section_heading(document, 'Participantes / servidores')
-        add_simple_table(document, ['Nome', 'Cargo', 'RG', 'CPF'], participantes_rows)
-
-    add_bullet_list(
-        document,
-        'Roteiro resumido',
-        context['plano_trabalho']['roteiro_resumo'],
-        empty_text='Roteiro ainda não informado.',
-    )
-
-    if context.get('coordenacao_formatada'):
-        add_multiline_value(document, 'Coordenação', context['coordenacao_formatada'])
-
-    add_section_heading(document, 'Transporte')
-    add_label_value(document, 'Veículo', context['veiculo']['descricao'])
-    add_label_value(document, 'Motorista', context['motorista']['descricao'])
-    add_label_value(document, 'Sede', context['roteiro']['sede'])
-
-    add_section_heading(document, 'Diárias e custeio')
-    add_label_value(document, 'Composição (diárias)', context.get('diarias_x') or context['plano_trabalho']['diarias_resumo'])
-    add_label_value(document, 'Valor unitário (1 servidor)', context.get('valor_unitario', ''))
-    add_label_value(document, 'Valor unitário por extenso', context.get('valor_unitario_por_extenso', ''))
-    add_label_value(document, 'Valor total', context.get('valor_total', '') or context['diarias']['valor'])
-    add_label_value(document, 'Valor total por extenso', context.get('valor_total_por_extenso') or context['diarias']['valor_extenso'])
-    add_label_value(document, 'Custeio', context['plano_trabalho']['custeio_resumo'])
-
-    if context.get('recursos_formatado'):
-        add_multiline_value(document, 'Recursos', context['recursos_formatado'])
-
-    add_section_heading(document, 'Informações institucionais')
-    add_label_value(document, 'Data (extenso)', context.get('data_extenso', ''))
-    add_label_value(document, 'Órgão', context['institucional']['orgao'] or context['institucional']['sigla_orgao'])
-    add_label_value(document, 'Unidade', context['institucional']['unidade'])
-    add_label_value(document, 'Divisão', context['institucional']['divisao'])
-    add_label_value(document, 'Sede', context['institucional'].get('sede', ''))
-    add_label_value(document, 'Endereço', context['institucional']['endereco'])
-    add_label_value(document, 'Nome da chefia', context['institucional'].get('nome_chefia', ''))
-    add_label_value(document, 'Cargo da chefia', context['institucional'].get('cargo_chefia', ''))
-
-    if context['justificativa']['exigida'] and context['conteudo']['justificativa_texto']:
-        add_multiline_value(document, 'Justificativa registrada', context['conteudo']['justificativa_texto'])
-
-    add_signature_blocks(document, context['assinaturas'])
+    _render_from_context(document, context)
     return document_to_bytes(document)
 
 
@@ -106,53 +94,53 @@ def render_plano_trabalho_model_docx(plano_trabalho):
     )
     document = create_base_document(titulo, subtitulo)
 
-    add_section_heading(document, 'Identificação')
-    add_label_value(document, 'Número', plano_trabalho.numero_formatado)
-    add_label_value(document, 'Data de criação', plano_trabalho.data_criacao.strftime('%d/%m/%Y') if plano_trabalho.data_criacao else '')
-    add_label_value(document, 'Status', plano_trabalho.get_status_display())
-    add_label_value(document, 'Evento', (plano_trabalho.evento.titulo if plano_trabalho.evento_id and plano_trabalho.evento else ''))
-    add_label_value(document, 'Ofício', (plano_trabalho.oficio.numero_formatado if plano_trabalho.oficio_id and plano_trabalho.oficio else ''))
-
-    # Solicitante
     solicitante_texto = ''
     if plano_trabalho.solicitante_id and plano_trabalho.solicitante:
         solicitante_texto = plano_trabalho.solicitante.nome
     elif plano_trabalho.solicitante_outros:
         solicitante_texto = plano_trabalho.solicitante_outros
-    if solicitante_texto:
-        add_label_value(document, 'Solicitante', solicitante_texto)
 
-    add_multiline_value(document, 'Objetivo / finalidade', plano_trabalho.objetivo)
-    add_multiline_value(document, 'Locais', plano_trabalho.locais)
-    add_label_value(document, 'Horário de atendimento', plano_trabalho.horario_atendimento)
-    add_label_value(document, 'Quantidade de servidores', str(plano_trabalho.quantidade_servidores or ''))
-
-    # Atividades formatadas (fallback para string bruta)
     atividades_fmt = build_atividades_formatada(plano_trabalho.atividades_codigos)
-    if atividades_fmt:
-        add_multiline_value(document, 'Atividades', atividades_fmt)
-
-    # Metas formatadas (preferencia pelo campo armazenado; fallback por catálogo)
     metas_exibir = plano_trabalho.metas_formatadas or build_metas_formatada(plano_trabalho.atividades_codigos)
-    if metas_exibir:
-        add_multiline_value(document, 'Metas', metas_exibir)
-
-    if plano_trabalho.efetivo_resumo:
-        add_multiline_value(document, 'Efetivo', plano_trabalho.efetivo_resumo)
-    if plano_trabalho.recursos_texto:
-        add_multiline_value(document, 'Recursos', plano_trabalho.recursos_texto)
-
-    # Coordenação
     coordenacao_texto = _build_coordenacao_formatada(plano_trabalho)
-    if coordenacao_texto:
-        add_multiline_value(document, 'Coordenação', coordenacao_texto)
+    config = _get_configuracao_sistema()
+    data_extenso = _format_data_extenso(timezone.localdate())
 
-    if plano_trabalho.observacoes:
-        add_multiline_value(document, 'Observações', plano_trabalho.observacoes)
-
-    # Assinaturas configuradas para Plano de Trabalho
-    assinaturas = get_assinaturas_documento(DocumentoOficioTipo.PLANO_TRABALHO.value)
-    if assinaturas:
-        add_signature_blocks(document, assinaturas)
+    context = {
+        'plano_trabalho': {
+            'objetivo': plano_trabalho.objetivo,
+        },
+        'institucional': {
+            'divisao': _text_or_empty(config.divisao if config else ''),
+            'unidade': _text_or_empty(config.unidade if config else ''),
+            'unidade_rodape': _text_or_empty(config.unidade if config else ''),
+            'endereco': _build_endereco_configuracao(config),
+            'telefone': _text_or_empty(getattr(config, 'telefone_formatado', '') if config else ''),
+            'email': _text_or_empty(config.email if config else ''),
+            'sede': _text_or_empty(getattr(config, 'sede', '') if config else ''),
+            'nome_chefia': _text_or_empty(getattr(config, 'nome_chefia', '') if config else ''),
+            'cargo_chefia': _text_or_empty(getattr(config, 'cargo_chefia', '') if config else ''),
+        },
+        'numero_plano_trabalho': plano_trabalho.numero_formatado,
+        'destino': plano_trabalho.locais,
+        'solicitante': solicitante_texto,
+        'metas_formatada': metas_exibir,
+        'atividades_formatada': atividades_fmt,
+        'dias_evento_extenso': '',
+        'locais_formatado': plano_trabalho.locais,
+        'horario_atendimento': plano_trabalho.horario_atendimento,
+        'quantidade_de_servidores': str(plano_trabalho.quantidade_servidores or ''),
+        'unidade_movel': '',
+        'valor_total': '',
+        'valor_total_por_extenso': '',
+        'diarias_x': '',
+        'valor_unitario': '',
+        'valor_unitario_por_extenso': '',
+        'recursos_formatado': plano_trabalho.recursos_texto,
+        'coordenacao_formatada': coordenacao_texto,
+        'data_extenso': data_extenso,
+        'assinaturas': get_assinaturas_documento(DocumentoOficioTipo.PLANO_TRABALHO.value),
+    }
+    _render_from_context(document, context)
 
     return document_to_bytes(document)

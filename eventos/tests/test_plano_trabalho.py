@@ -162,6 +162,24 @@ class PlanoTrabalhoContextTest(TestCase):
         # Deve ser uma string (pode ser vazia se sem config, mas nunca deve dar erro)
         self.assertIsInstance(ctx['numero_plano_trabalho'], str)
 
+    @patch('eventos.services.documentos.context._get_plano_trabalho_markers_chegada')
+    @patch('eventos.services.documentos.context.calculate_periodized_diarias')
+    def test_valores_diarias_preenchidos_do_calculo(self, mock_calc, mock_markers):
+        mock_markers.return_value = ([object()], datetime(2026, 3, 18, 11, 30))
+        mock_calc.return_value = {
+            'totais': {
+                'total_valor': '1234,56',
+                'valor_extenso': 'mil duzentos e trinta e quatro reais e cinquenta e seis centavos',
+                'total_diarias': '1 x 100% + 1 x 30%',
+                'valor_por_servidor': '617,28',
+            }
+        }
+        PlanoTrabalho.objects.create(evento=self.evento, oficio=self.oficio, objetivo='Objetivo')
+        ctx = build_plano_trabalho_document_context(self.oficio)
+        self.assertEqual(ctx['valor_total'], '1234,56')
+        self.assertEqual(ctx['diarias_x'], '1 x 100% + 1 x 30%')
+        self.assertEqual(ctx['valor_unitario'], '617,28')
+
 
 class PlanoTrabalhoModelDocxTest(TestCase):
     """render_plano_trabalho_model_docx deve incluir atividades formatadas, solicitante e coordenação."""
@@ -242,6 +260,30 @@ class PlanoTrabalhoModelDocxTest(TestCase):
         result = render_plano_trabalho_model_docx(pt)
         self.assertIsInstance(result, bytes)
 
+    def test_model_docx_contem_blocos_documentais(self):
+        from io import BytesIO
+        from docx import Document
+
+        pt = PlanoTrabalho.objects.create(
+            evento=self.evento,
+            numero=8,
+            ano=2026,
+            objetivo='Objetivo para estrutura documental',
+            atividades_codigos='CIN',
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+        )
+        docx_bytes = render_plano_trabalho_model_docx(pt)
+        doc = Document(BytesIO(docx_bytes))
+        text = '\n'.join(p.text for p in doc.paragraphs)
+        self.assertIn('1. BREVE CONTEXTUALIZAÇÃO', text)
+        self.assertIn('2. METAS ESTABELECIDAS', text)
+        self.assertIn('3. ATIVIDADES A SEREM DESENVOLVIDAS', text)
+        self.assertIn('4. ATUAÇÃO', text)
+        self.assertIn('5. VALOR TOTAL DO PLANO', text)
+        self.assertIn('6. RECURSOS NECESSÁRIOS', text)
+        self.assertIn('7. COORDENADOR DO EVENTO', text)
+        self.assertIn('8. CONSIDERAÇÕES FINAIS', text)
+
 
 class PlanoTrabalhoFormPersistenciaTest(TestCase):
     """Persistência de dados: o formulário salva e reabre corretamente."""
@@ -250,11 +292,36 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(username='pttest', password='pttest123')
         self.client.login(username='pttest', password='pttest123')
+        self.estado = Estado.objects.create(nome='Paraná', sigla='PR')
+        self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado)
+        self.oficio = Oficio.objects.create(
+            motivo='Oficio PT',
+            estado_sede=self.estado,
+            cidade_sede=self.cidade,
+            retorno_chegada_data=date(2026, 5, 3),
+            retorno_chegada_hora=time(11, 30),
+        )
+        self.cargo = Cargo.objects.create(nome='AGENTE DE POLÍCIA JUDICIÁRIA', is_padrao=True)
         self.evento = Evento.objects.create(
             titulo='Evento Form',
             data_inicio=date(2026, 5, 1),
             data_fim=date(2026, 5, 3),
         )
+        ConfiguracaoSistema.get_singleton()
+
+    def _base_formset_payload(self):
+        return {
+            'efetivo-TOTAL_FORMS': '3',
+            'efetivo-INITIAL_FORMS': '0',
+            'efetivo-MIN_NUM_FORMS': '0',
+            'efetivo-MAX_NUM_FORMS': '1000',
+            'efetivo-0-cargo': str(self.cargo.pk),
+            'efetivo-0-quantidade': '5',
+            'efetivo-1-cargo': '',
+            'efetivo-1-quantidade': '',
+            'efetivo-2-cargo': '',
+            'efetivo-2-quantidade': '',
+        }
 
     def test_tela_plano_lista_abre(self):
         response = self.client.get(reverse('eventos:documentos-planos-trabalho'))
@@ -265,33 +332,86 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_formulario_salva_campos_corretamente(self):
+        payload = {
+            'data_criacao': '2026-05-01',
+            'status': PlanoTrabalho.STATUS_RASCUNHO,
+            'evento': self.evento.pk,
+            'oficio': self.oficio.pk,
+            'objetivo': 'Objetivo persistencia',
+            'locais': 'Curitiba/PR',
+            'horario_atendimento_padrao': '08:00-17:00',
+            'solicitante_escolha': '',
+            'atividades_codigos': ['CIN', 'BO'],
+            'recursos_texto': 'Sem recursos externos',
+            'return_to': reverse('eventos:documentos-planos-trabalho'),
+        }
+        payload.update(self._base_formset_payload())
+
         response = self.client.post(
             reverse('eventos:documentos-planos-trabalho-novo'),
-            data={
-                'numero': '10',
-                'ano': '2026',
-                'data_criacao': '2026-05-01',
-                'status': PlanoTrabalho.STATUS_RASCUNHO,
-                'evento': self.evento.pk,
-                'objetivo': 'Objetivo persistencia',
-                'locais': 'Curitiba/PR',
-                'horario_atendimento': 'das 08h às 17h',
-                'quantidade_servidores': '5',
-                'atividades_codigos': ['CIN', 'BO'],
-                'recursos_texto': 'Sem recursos externos',
-                'return_to': reverse('eventos:documentos-planos-trabalho'),
-            },
+            data=payload,
         )
         self.assertEqual(response.status_code, 302)
         pt = PlanoTrabalho.objects.get(objetivo='Objetivo persistencia')
-        self.assertEqual(pt.numero, 10)
+        self.assertEqual(pt.numero, 1)
         self.assertEqual(pt.ano, 2026)
         self.assertEqual(pt.locais, 'Curitiba/PR')
-        self.assertEqual(pt.horario_atendimento, 'das 08h às 17h')
+        self.assertEqual(pt.horario_atendimento, '08:00-17:00')
         self.assertEqual(pt.quantidade_servidores, 5)
         self.assertIn('CIN', pt.atividades_codigos)
         self.assertIn('BO', pt.atividades_codigos)
         self.assertEqual(pt.recursos_texto, 'Sem recursos externos')
+        self.assertIn('Ampliar o acesso ao documento oficial', pt.metas_formatadas)
+        self.assertIn('Possibilitar o atendimento imediato', pt.metas_formatadas)
+
+    def test_numero_plano_automatico_auto_increment(self):
+        payload = {
+            'data_criacao': '2026-05-01',
+            'status': PlanoTrabalho.STATUS_RASCUNHO,
+            'evento': self.evento.pk,
+            'oficio': self.oficio.pk,
+            'objetivo': 'Primeiro',
+            'locais': 'Curitiba/PR',
+            'horario_atendimento_padrao': '08:00-12:00',
+            'solicitante_escolha': '',
+            'return_to': reverse('eventos:documentos-planos-trabalho'),
+        }
+        payload.update(self._base_formset_payload())
+        r1 = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload)
+
+        payload2 = dict(payload)
+        payload2['objetivo'] = 'Segundo'
+        r2 = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload2)
+        self.assertEqual(r1.status_code, 302)
+        self.assertEqual(r2.status_code, 302)
+
+        pts = list(PlanoTrabalho.objects.order_by('numero').values_list('numero', 'ano', 'objetivo'))
+        self.assertEqual(pts[0][0], 1)
+        self.assertEqual(pts[1][0], 2)
+        self.assertEqual(pts[0][1], 2026)
+        self.assertEqual(pts[1][1], 2026)
+
+    def test_solicitante_outros_funciona_e_salva_no_gerenciador(self):
+        payload = {
+            'data_criacao': '2026-05-01',
+            'status': PlanoTrabalho.STATUS_RASCUNHO,
+            'evento': self.evento.pk,
+            'oficio': self.oficio.pk,
+            'objetivo': 'Com solicitante outros',
+            'locais': 'Curitiba/PR',
+            'horario_atendimento_padrao': '13:00-17:00',
+            'solicitante_escolha': '__OUTROS__',
+            'solicitante_outros': 'Secretaria Municipal Teste',
+            'salvar_solicitante_outros': 'on',
+            'return_to': reverse('eventos:documentos-planos-trabalho'),
+        }
+        payload.update(self._base_formset_payload())
+
+        response = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(SolicitantePlanoTrabalho.objects.filter(nome='Secretaria Municipal Teste').exists())
+        pt = PlanoTrabalho.objects.get(objetivo='Com solicitante outros')
+        self.assertTrue(bool(pt.solicitante_id) or bool(pt.solicitante_outros))
 
     def test_dados_reaparecem_na_edicao(self):
         """Ao abrir o formulário de edição, os dados salvos devem estar presentes."""
@@ -317,6 +437,26 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         # Verifica que o initial das atividades está correto
         self.assertIn('CIN', form.initial.get('atividades_codigos', []))
         self.assertIn('NOC', form.initial.get('atividades_codigos', []))
+
+    def test_horario_manual_quando_escolhido_outros(self):
+        payload = {
+            'data_criacao': '2026-05-01',
+            'status': PlanoTrabalho.STATUS_RASCUNHO,
+            'evento': self.evento.pk,
+            'oficio': self.oficio.pk,
+            'objetivo': 'Horario manual',
+            'locais': 'Curitiba/PR',
+            'horario_atendimento_padrao': '__OUTROS__',
+            'horario_atendimento_manual': 'das 10h às 20h',
+            'solicitante_escolha': '',
+            'return_to': reverse('eventos:documentos-planos-trabalho'),
+        }
+        payload.update(self._base_formset_payload())
+
+        response = self.client.post(reverse('eventos:documentos-planos-trabalho-novo'), data=payload)
+        self.assertEqual(response.status_code, 302)
+        pt = PlanoTrabalho.objects.get(objetivo='Horario manual')
+        self.assertEqual(pt.horario_atendimento, 'das 10h às 20h')
 
     def test_detalhe_abre_com_todos_campos(self):
         pt = PlanoTrabalho.objects.create(

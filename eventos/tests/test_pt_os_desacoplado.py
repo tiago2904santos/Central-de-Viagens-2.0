@@ -157,6 +157,16 @@ class PtOsDesacopladoTest(TestCase):
         mock_model.assert_called_once()
         mock_oficio.assert_not_called()
 
+    def test_download_pt_pdf_funciona(self):
+        pt = PlanoTrabalho.objects.create(objetivo='PT download PDF', status=PlanoTrabalho.STATUS_RASCUNHO)
+        with patch('eventos.views_global.render_plano_trabalho_model_docx', return_value=b'docx'):
+            with patch('eventos.views_global.convert_docx_bytes_to_pdf_bytes', return_value=b'pdf'):
+                response = self.client.get(
+                    reverse('eventos:documentos-planos-trabalho-download', kwargs={'pk': pt.pk, 'formato': 'pdf'})
+                )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
     def test_download_os_usa_model_quando_sem_oficio(self):
         os_obj = OrdemServico.objects.create(finalidade='OS download', status=OrdemServico.STATUS_RASCUNHO)
         with patch('eventos.views_global.render_ordem_servico_model_docx', return_value=b'docx') as mock_model:

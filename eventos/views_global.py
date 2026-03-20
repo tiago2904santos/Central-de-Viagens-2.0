@@ -3,9 +3,11 @@ from __future__ import annotations
 from datetime import date, datetime, time, timedelta
 from urllib.parse import urlencode
 
+from django import forms
 from django.contrib import messages
+from django.forms import inlineformset_factory
 from django.core.paginator import Paginator
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, Prefetch, Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -21,6 +23,7 @@ from .forms import (
     TermoAutorizacaoForm,
 )
 from .models import (
+    EfetivoPlanoTrabalhoDocumento,
     Evento,
     EventoTermoParticipante,
     Justificativa,
@@ -64,6 +67,54 @@ STATUS_LABELS = {
     'indefinida': 'Aguardando roteiro',
     'indisponivel': 'Indisponivel',
 }
+
+PlanoTrabalhoEfetivoFormSet = inlineformset_factory(
+    PlanoTrabalho,
+    EfetivoPlanoTrabalhoDocumento,
+    fields=('cargo', 'quantidade'),
+    extra=3,
+    can_delete=True,
+    widgets={
+        'cargo': forms.Select(attrs={'class': 'form-select'}),
+        'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+    },
+)
+
+
+def _extract_efetivo_rows(post_data, prefix='efetivo'):
+    rows = []
+    try:
+        total = int(post_data.get(f'{prefix}-TOTAL_FORMS', 0) or 0)
+    except (TypeError, ValueError):
+        total = 0
+    for idx in range(total):
+        cargo = (post_data.get(f'{prefix}-{idx}-cargo') or '').strip()
+        quantidade = (post_data.get(f'{prefix}-{idx}-quantidade') or '').strip()
+        delete_flag = str(post_data.get(f'{prefix}-{idx}-DELETE') or '').lower() in {'on', 'true', '1'}
+        if delete_flag:
+            continue
+        if not cargo and not quantidade:
+            continue
+        if not cargo or not quantidade:
+            continue
+        if not cargo.isdigit() or not quantidade.isdigit():
+            continue
+        rows.append((int(cargo), int(quantidade)))
+    return rows
+
+
+def _save_efetivo_rows(plano, rows):
+    EfetivoPlanoTrabalhoDocumento.objects.filter(plano_trabalho=plano).delete()
+    for cargo_id, quantidade in rows:
+        if quantidade <= 0:
+            continue
+        EfetivoPlanoTrabalhoDocumento.objects.create(
+            plano_trabalho=plano,
+            cargo_id=cargo_id,
+            quantidade=quantidade,
+        )
+    plano.quantidade_servidores = plano.efetivos.aggregate(total=Sum('quantidade')).get('total') or 0
+    plano.save(update_fields=['quantidade_servidores', 'updated_at'])
 
 OFICIO_STATUS_CARD_META = {
     Oficio.STATUS_RASCUNHO: {'label': 'Rascunho', 'css_class': 'is-rascunho'},
@@ -1519,8 +1570,17 @@ def plano_trabalho_novo(request):
         initial['oficio'] = preselected_oficio.pk
 
     form = PlanoTrabalhoForm(request.POST or None, initial=initial)
+    has_efetivo_payload = request.method == 'POST' and any(k.startswith('efetivo-') for k in request.POST.keys())
+    formset = PlanoTrabalhoEfetivoFormSet(
+        request.POST if has_efetivo_payload else None,
+        prefix='efetivo',
+        queryset=EfetivoPlanoTrabalhoDocumento.objects.none(),
+    )
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
+        if has_efetivo_payload:
+            rows = _extract_efetivo_rows(request.POST, prefix='efetivo')
+            _save_efetivo_rows(obj, rows)
         messages.success(request, 'Plano de trabalho criado com sucesso.')
         return redirect(return_to or reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': obj.pk}))
 
@@ -1529,6 +1589,7 @@ def plano_trabalho_novo(request):
         'eventos/documentos/planos_trabalho_form.html',
         {
             'form': form,
+            'efetivo_formset': formset,
             'object': None,
             'return_to': return_to,
             'context_source': context_source,
@@ -1544,8 +1605,13 @@ def plano_trabalho_editar(request, pk):
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-planos-trabalho'))
     context_source = _get_context_source(request)
     form = PlanoTrabalhoForm(request.POST or None, instance=obj)
+    has_efetivo_payload = request.method == 'POST' and any(k.startswith('efetivo-') for k in request.POST.keys())
+    formset = PlanoTrabalhoEfetivoFormSet(request.POST if has_efetivo_payload else None, instance=obj, prefix='efetivo')
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        obj = form.save()
+        if has_efetivo_payload:
+            rows = _extract_efetivo_rows(request.POST, prefix='efetivo')
+            _save_efetivo_rows(obj, rows)
         messages.success(request, 'Plano de trabalho atualizado.')
         return redirect(return_to or reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': obj.pk}))
     return render(
@@ -1553,6 +1619,7 @@ def plano_trabalho_editar(request, pk):
         'eventos/documentos/planos_trabalho_form.html',
         {
             'form': form,
+            'efetivo_formset': formset,
             'object': obj,
             'return_to': return_to,
             'context_source': context_source,
