@@ -3,9 +3,9 @@
     
     Parâmetros:
     - items: objetos a serem listados
-    - columns: lista de colunas com format { label, key [, css_class] }
-    - row_id_key: atributo usado para gerar id único da linha (opcional, ex 'pk')
-    - row_actions: ações para cada linha (opcional) - ex botão de editar, deletar
+        - columns: lista de colunas com format { label [, css_class] }
+        - items: cada item precisa fornecer item.cells (lista de células já preparadas)
+            e opcionalmente item.actions
     - empty_message: mensagem quando lista vazia (opcional)
     - row_class: classe CSS extra para <tr> (opcional)
 #}
@@ -21,24 +21,24 @@
                         {{ column.label }}
                     </th>
                     {% endfor %}
-                    {% if row_actions %}
+                    {% if show_actions %}
                     <th class="text-end">Ações</th>
                     {% endif %}
                 </tr>
             </thead>
             <tbody class="system-list-table__body">
                 {% for item in items %}
-                <tr class="system-list-table__row {% if row_class %}{{ row_class }}{% endif %}" {% if row_id_key %}id="row-{{ item|get_item:row_id_key }}"{% endif %}>
-                    {% for column in columns %}
-                    <td class="{% if column.css_class %}{{ column.css_class }}{% endif %}" data-label="{{ column.label }}">
-                        {{ item|get_item:column.key }}
+                <tr class="system-list-table__row {% if row_class %}{{ row_class }}{% endif %}" {% if item.row_id %}id="{{ item.row_id }}"{% endif %}>
+                    {% for cell in item.cells %}
+                    <td class="{% if cell.css_class %}{{ cell.css_class }}{% endif %}" data-label="{{ cell.label }}">
+                        {{ cell.value|safe }}
                     </td>
                     {% endfor %}
 
-                    {% if row_actions %}
+                    {% if show_actions %}
                     <td class="text-end">
                         <div class="system-list-table__actions">
-                            {% for action in row_actions %}
+                            {% for action in item.actions %}
                             <a 
                                 href="{{ action.url }}"
                                 class="btn btn-sm btn-doc-action {{ action.css_class|default:'btn-doc-action--secondary' }}"
