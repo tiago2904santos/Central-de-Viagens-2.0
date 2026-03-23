@@ -48,19 +48,41 @@ def _placa_valida(norm):
 def veiculo_lista(request):
     qs = Veiculo.objects.select_related('combustivel').all()
     q = request.GET.get('q', '').strip()
+    order_by = (request.GET.get('order_by') or 'updated_at').strip().lower()
+    order_dir = (request.GET.get('order_dir') or 'desc').strip().lower()
+    order_by_map = {
+        'updated_at': 'updated_at',
+        'placa': 'placa',
+        'modelo': 'modelo',
+        'status': 'status',
+    }
+    order_field = order_by_map.get(order_by, 'updated_at')
+    order_dir = 'asc' if order_dir == 'asc' else 'desc'
+    if order_dir == 'desc':
+        order_field = f'-{order_field}'
+
     if q:
         qs = qs.filter(
             Q(placa__icontains=q) | Q(modelo__icontains=q) |
             Q(combustivel__nome__icontains=q) | Q(tipo__icontains=q) | Q(status__icontains=q)
         )
-    qs = qs.order_by('-status', '-updated_at')
+    qs = qs.order_by('-status', order_field, '-updated_at')
     object_list = list(qs)
     for obj in object_list:
         obj.placa_display = obj.placa_formatada
         obj.status_display = obj.get_status_display()
     context = {
         'object_list': object_list,
-        'form_filter': {'q': q},
+        'form_filter': {'q': q, 'order_by': order_by, 'order_dir': order_dir},
+        'order_by_choices': [
+            ('updated_at', 'Atualização'),
+            ('placa', 'Placa'),
+            ('modelo', 'Modelo'),
+            ('status', 'Status'),
+        ],
+        'order_dir_choices': [('desc', 'Decrescente'), ('asc', 'Crescente')],
+        'combustiveis_url': reverse('cadastros:combustivel-lista'),
+        'novo_veiculo_url': reverse('cadastros:veiculo-cadastrar'),
     }
     return render(request, 'cadastros/veiculos/lista.html', context)
 
@@ -168,15 +190,35 @@ def veiculo_excluir(request, pk):
 
 @login_required
 def combustivel_lista(request):
-    qs = CombustivelVeiculo.objects.all().order_by('nome')
+    qs = CombustivelVeiculo.objects.all()
     q = request.GET.get('q', '').strip()
+    order_by = (request.GET.get('order_by') or 'nome').strip().lower()
+    order_dir = (request.GET.get('order_dir') or 'asc').strip().lower()
+    order_by_map = {
+        'nome': 'nome',
+        'is_padrao': 'is_padrao',
+        'id': 'id',
+    }
+    order_field = order_by_map.get(order_by, 'nome')
+    order_dir = 'asc' if order_dir == 'asc' else 'desc'
+    if order_dir == 'desc':
+        order_field = f'-{order_field}'
+
     if q:
         qs = qs.filter(nome__icontains=q)
+    qs = qs.order_by(order_field, 'nome')
     return_url = request.session.get(RETURN_URL_KEY)
+    voltar_url = return_url or reverse('cadastros:veiculo-lista')
+    voltar_label = 'Voltar' if return_url else 'Voltar para veículos'
     context = {
         'object_list': qs,
-        'form_filter': {'q': q},
+        'form_filter': {'q': q, 'order_by': order_by, 'order_dir': order_dir},
+        'order_by_choices': [('nome', 'Nome'), ('is_padrao', 'Padrão'), ('id', 'Cadastro')],
+        'order_dir_choices': [('asc', 'Crescente'), ('desc', 'Decrescente')],
         'return_url': return_url,
+        'voltar_url': voltar_url,
+        'voltar_label': voltar_label,
+        'novo_combustivel_url': reverse('cadastros:combustivel-cadastrar'),
     }
     return render(request, 'cadastros/veiculos/combustiveis_lista.html', context)
 

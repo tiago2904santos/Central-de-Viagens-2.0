@@ -1,33 +1,24 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Eventos — Central de Viagens{% endblock %}
 {% block page_title %}Eventos{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="page-header-cadastro">
-        <div>
-            <h1 class="mb-1">Eventos</h1>
-            <p class="text-muted mb-0">Leitura em cascata dos documentos vinculados: Ofícios, Planos de Trabalho e Ordens de Serviço no mesmo card.</p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'eventos:guiado-novo' %}" class="btn btn-success">
-                <i class="bi bi-signpost-2 me-1"></i>
-                Novo (fluxo guiado)
-            </a>
-        </div>
-    </div>
+<div class="container-fluid py-4 system-list-page system-list-page--complete">
+    <div class="system-list-shell">
+        {% include 'includes/list/page_header.html' with title='Eventos' subtitle='Leitura em cascata dos documentos vinculados: Oficios, Planos de Trabalho e Ordens de Servico no mesmo card.' primary_url=evento_novo_url primary_label='Novo (fluxo guiado)' primary_icon='bi-signpost-2' primary_variant='success' %}
 
-    <div class="card filter-card">
-        <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end">
+        <div class="card filter-card system-filter-card">
+            <div class="card-body py-3">
+                <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
                 <div class="col-12 col-md-4">
                     <label class="form-label small text-muted">Buscar por título</label>
-                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Título do evento" value="{{ form_filter.q }}">
+                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Titulo do evento" value="{{ form_filter.q }}" data-list-autosubmit>
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Status</label>
-                    <select name="status" class="form-select form-select-sm">
+                    <select name="status" class="form-select form-select-sm" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for valor, label in status_choices %}
                         <option value="{{ valor }}" {% if form_filter.status == valor %}selected{% endif %}>{{ label }}</option>
@@ -36,22 +27,42 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-3">
                     <label class="form-label small text-muted">Tipo de demanda</label>
-                    <select name="tipo_id" class="form-select form-select-sm">
+                    <select name="tipo_id" class="form-select form-select-sm" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for t in tipos_demanda_list %}
                         <option value="{{ t.pk }}" {% if form_filter.tipo_id == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nome }}</option>
                         {% endfor %}
                     </select>
                 </div>
+                <div class="col-12 col-xl-3">
+                    <div class="system-sort-row">
+                        <div>
+                            <label class="form-label small text-muted">Ordenar por</label>
+                            <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
+                                {% for key, label in order_by_choices %}
+                                <option value="{{ key }}" {% if form_filter.order_by == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small text-muted">Direção</label>
+                            <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
+                                {% for key, label in order_dir_choices %}
+                                <option value="{{ key }}" {% if form_filter.order_dir == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-12 col-md-auto">
                     <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
                     <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
                 </div>
-            </form>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <section class="documento-cascade-grid" aria-label="Lista de eventos">
+        <section class="documento-cascade-grid" aria-label="Lista de eventos">
         {% for obj in object_list %}
         <article class="oficio-list-card documento-cascade-card {{ obj.card_theme_class }}" id="evento-card-{{ obj.pk }}">
             <div class="oficio-list-rich-layout">
@@ -145,6 +156,15 @@
         {% empty %}
         <div class="oficios-table-panel__empty">Nenhum evento encontrado.</div>
         {% endfor %}
-    </section>
+        </section>
+
+        {% include 'includes/pagination.html' %}
+
+        {% include 'includes/list/floating_new_button.html' with url=evento_novo_url label='Novo evento' icon='bi-plus-lg' %}
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}

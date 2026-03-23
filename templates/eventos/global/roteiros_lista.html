@@ -1,35 +1,28 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Roteiros - Central de Viagens{% endblock %}
 {% block page_title %}Roteiros{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="page-header-cadastro">
-        <div>
-            <h1 class="mb-1">Lista global de roteiros</h1>
-            <p class="text-muted mb-0">Biblioteca operacional dos roteiros criados na etapa 2 dos eventos.</p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-            {% if novo_roteiro_url %}
-            <a href="{{ novo_roteiro_url }}" class="btn btn-primary">Novo roteiro neste evento</a>
-            {% else %}
-            <span class="btn btn-outline-secondary disabled" aria-disabled="true">Selecione um evento para criar</span>
-            {% endif %}
-            <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary">Eventos</a>
-        </div>
-    </div>
+<div class="container-fluid py-4 system-list-page system-list-page--simple">
+    <div class="system-list-shell">
+    {% include 'includes/list/page_header.html' with title='Lista global de roteiros' subtitle='Biblioteca operacional dos roteiros criados na etapa 2 dos eventos.' secondary_url=eventos_url secondary_label='Eventos' primary_url=novo_roteiro_url primary_label='Novo roteiro neste evento' %}
+    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+    {% if not novo_roteiro_url %}
+    <div class="alert alert-light border small py-2 px-3 mb-3">Selecione um evento no filtro para habilitar a criação vinculada.</div>
+    {% endif %}
 
-    <div class="card filter-card">
+    <div class="card filter-card system-filter-card">
         <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end">
+            <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
                 <div class="col-12 col-lg-4">
                     <label class="form-label small text-muted">Busca</label>
-                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, sede ou destino">
+                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, sede ou destino" data-list-autosubmit>
                 </div>
                 <div class="col-12 col-md-4 col-lg-4">
                     <label class="form-label small text-muted">Evento</label>
-                    <select name="evento_id" class="form-select form-select-sm">
+                    <select name="evento_id" class="form-select form-select-sm" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for evento in eventos_choices %}
                         <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
@@ -38,7 +31,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label small text-muted">Status</label>
-                    <select name="status" class="form-select form-select-sm">
+                    <select name="status" class="form-select form-select-sm" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for value, label in status_choices %}
                         <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
@@ -47,9 +40,25 @@
                 </div>
                 <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label small text-muted">Tipo</label>
-                    <select name="tipo" class="form-select form-select-sm">
+                    <select name="tipo" class="form-select form-select-sm" data-list-autosubmit>
                         {% for value, label in tipo_choices %}
                         <option value="{{ value }}" {% if filters.tipo|upper == value|upper %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-lg-2">
+                    <label class="form-label small text-muted">Ordenar por</label>
+                    <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
+                        {% for value, label in order_by_choices %}
+                        <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-lg-2">
+                    <label class="form-label small text-muted">Direção</label>
+                    <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
+                        {% for value, label in order_dir_choices %}
+                        <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -64,9 +73,9 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="system-list-table-wrap">
         <div class="table-responsive">
-            <table class="table table-hover table-cadastro mb-0 align-middle">
+            <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
                 <thead class="table-light">
                     <tr>
                         <th>Evento / tipo</th>
@@ -78,12 +87,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for roteiro in object_list %}
+                            <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
                     <tr>
-                        <td>
+                            <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Etapa 2</span></a>
                             {% if roteiro.is_avulso %}
                                 <span class="badge bg-secondary me-1">Avulso</span>
-                                <span class="text-muted small">Sem evento</span>
+                            <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-journal-text"></i><span>Usar no oficio</span></a>
                             {% else %}
                                 <a href="{{ roteiro.evento_url }}" class="text-decoration-none">{{ roteiro.evento.titulo|default:"(sem titulo)" }}</a>
                             {% endif %}
@@ -124,20 +133,11 @@
     </div>
 
     {% include 'includes/pagination.html' %}
+    {% include 'includes/list/floating_new_button.html' with url=novo_roteiro_avulso_url label='Novo roteiro avulso' icon='bi-plus-lg' %}
+    </div>
 </div>
+{% endblock %}
 
-<style>
-.floating-new-roteiro-btn {
-    position: fixed;
-    right: 1.5rem;
-    bottom: 1.5rem;
-    z-index: 1030;
-}
-</style>
-
-<a href="{{ novo_roteiro_avulso_url }}" class="btn btn-primary btn-lg shadow floating-new-roteiro-btn">
-    <i class="bi bi-plus-lg me-2"></i>
-    Novo roteiro avulso
-</a>
-
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}

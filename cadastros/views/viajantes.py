@@ -109,6 +109,19 @@ def _extrair_dados_rascunho_post(post, obj_existente=None):
 def viajante_lista(request):
     qs = Viajante.objects.select_related('cargo', 'unidade_lotacao').all()
     q = request.GET.get('q', '').strip()
+    order_by = (request.GET.get('order_by') or 'updated_at').strip().lower()
+    order_dir = (request.GET.get('order_dir') or 'desc').strip().lower()
+    order_by_map = {
+        'updated_at': 'updated_at',
+        'nome': 'nome',
+        'cargo': 'cargo__nome',
+        'status': 'status',
+    }
+    order_field = order_by_map.get(order_by, 'updated_at')
+    order_dir = 'asc' if order_dir == 'asc' else 'desc'
+    if order_dir == 'desc':
+        order_field = f'-{order_field}'
+
     if q:
         qs = qs.filter(
             Q(nome__icontains=q) | Q(cargo__nome__icontains=q) |
@@ -122,7 +135,7 @@ def viajante_lista(request):
             default=Value(1),
             output_field=IntegerField(),
         )
-    ).order_by('_sort_status', '-updated_at')
+    ).order_by('_sort_status', order_field, '-updated_at')
     object_list = list(qs)
     for obj in object_list:
         obj.nome_display = obj.nome or '(Rascunho)'
@@ -132,7 +145,17 @@ def viajante_lista(request):
         obj.status_display = obj.get_status_display()
     context = {
         'object_list': object_list,
-        'form_filter': {'q': q},
+        'form_filter': {'q': q, 'order_by': order_by, 'order_dir': order_dir},
+        'order_by_choices': [
+            ('updated_at', 'Atualização'),
+            ('nome', 'Nome'),
+            ('cargo', 'Cargo'),
+            ('status', 'Status'),
+        ],
+        'order_dir_choices': [('desc', 'Decrescente'), ('asc', 'Crescente')],
+        'cargos_url': reverse('cadastros:cargo-lista'),
+        'unidades_url': reverse('cadastros:unidade-lotacao-lista'),
+        'novo_viajante_url': reverse('cadastros:viajante-cadastrar'),
     }
     return render(request, 'cadastros/viajantes/lista.html', context)
 

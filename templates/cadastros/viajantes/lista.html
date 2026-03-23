@@ -1,26 +1,38 @@
 {% extends 'base.html' %}
 {% load cadastros_extras %}
+{% load static %}
 
 {% block title %}Viajantes — Central de Viagens{% endblock %}
 {% block page_title %}Viajantes{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="page-header-cadastro d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Viajantes</h2>
-        <div class="d-flex gap-2">
-            <a href="{% url 'cadastros:cargo-lista' %}" class="btn btn-outline-secondary">Gerenciar Cargos</a>
-            <a href="{% url 'cadastros:unidade-lotacao-lista' %}" class="btn btn-outline-secondary">Gerenciar Unidades de Lotação</a>
-            <a href="{% url 'cadastros:viajante-cadastrar' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Cadastrar</a>
-        </div>
-    </div>
+<div class="container-fluid py-4 system-list-page system-list-page--simple">
+    <div class="system-list-shell">
+    {% include 'includes/list/page_header.html' with title='Viajantes' subtitle='Cadastro simples de pessoas com foco em leitura e ação.' tertiary_url=cargos_url tertiary_label='Gerenciar Cargos' secondary_url=unidades_url secondary_label='Gerenciar Unidades de Lotacao' primary_url=novo_viajante_url primary_label='Cadastrar viajante' %}
+    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
 
-    <div class="card filter-card mb-4">
+    <div class="card filter-card mb-4 system-filter-card">
         <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end">
+            <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
                 <div class="col-12 col-md-4">
                     <label class="form-label small text-muted">Buscar</label>
-                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Nome, cargo, unidade, RG, CPF, telefone ou status" value="{{ form_filter.q }}">
+                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Nome, cargo, unidade, RG, CPF, telefone ou status" value="{{ form_filter.q }}" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted">Ordenar por</label>
+                    <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
+                        {% for key, label in order_by_choices %}
+                        <option value="{{ key }}" {% if form_filter.order_by == key %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted">Direção</label>
+                    <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
+                        {% for key, label in order_dir_choices %}
+                        <option value="{{ key }}" {% if form_filter.order_dir == key %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="col-12 col-md-auto">
                     <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
@@ -30,9 +42,9 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="system-list-table-wrap">
         <div class="table-responsive">
-            <table class="table table-hover table-cadastro mb-0">
+            <table class="table table-hover table-cadastro mb-0 system-list-table">
                 <thead class="table-light">
                     <tr>
                         <th>Nome</th>
@@ -56,8 +68,8 @@
                         <td>{{ obj.cpf_formatado }}</td>
                         <td>{{ obj.telefone_formatado }}</td>
                         <td class="text-end">
-                            <a href="{% url 'cadastros:viajante-editar' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
-                            <a href="{% url 'cadastros:viajante-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                            <a href="{% url 'cadastros:viajante-editar' obj.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                            <a href="{% url 'cadastros:viajante-excluir' obj.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--danger"><i class="bi bi-trash"></i><span>Excluir</span></a>
                         </td>
                     </tr>
                     {% empty %}
@@ -67,5 +79,12 @@
             </table>
         </div>
     </div>
+
+    {% include 'includes/list/floating_new_button.html' with url=novo_viajante_url label='Novo viajante' icon='bi-plus-lg' %}
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}

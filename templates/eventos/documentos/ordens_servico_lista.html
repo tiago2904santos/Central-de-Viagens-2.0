@@ -1,37 +1,47 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Ordens de serviço - Central de Viagens{% endblock %}
 {% block page_title %}Ordens de serviço{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <h1 class="h4 mb-0">Ordens de serviço</h1>
-    <a class="btn btn-primary" href="{% url 'eventos:documentos-ordens-servico-novo' %}">Nova ordem de serviço</a>
-  </div>
+<div class="container-fluid py-4 system-list-page system-list-page--simple">
+  <div class="system-list-shell">
+  {% include 'includes/list/page_header.html' with title='Ordens de servico' subtitle='Lista simples para leitura rapida e acoes diretas por registro.' primary_url=ordem_novo_url primary_label='Nova ordem de servico' %}
+  <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
 
-  <form method="get" class="card card-body mb-3">
+  <form method="get" class="card card-body mb-3 system-filter-card" data-list-autosubmit-form>
     <div class="row g-2">
-      <div class="col-md-4"><input class="form-control" type="text" name="q" placeholder="Buscar" value="{{ filters.q }}"></div>
+      <div class="col-md-4"><input class="form-control" type="text" name="q" placeholder="Buscar" value="{{ filters.q }}" data-list-autosubmit></div>
       <div class="col-md-3">
-        <select class="form-select" name="evento_id">
+        <select class="form-select" name="evento_id" data-list-autosubmit>
           <option value="">Evento (todos)</option>
           {% for e in eventos_choices %}<option value="{{ e.pk }}" {% if filters.evento_id == e.pk|stringformat:'s' %}selected{% endif %}>{{ e.titulo|default:'(sem título)' }}</option>{% endfor %}
         </select>
       </div>
       <div class="col-md-3">
-        <select class="form-select" name="status">
+        <select class="form-select" name="status" data-list-autosubmit>
           <option value="">Status (todos)</option>
           {% for value,label in status_choices %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" name="order_by" data-list-autosubmit>
+          {% for key, label in order_by_choices %}<option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" name="order_dir" data-list-autosubmit>
+          {% for key, label in order_dir_choices %}<option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
         </select>
       </div>
       <div class="col-md-2 d-grid"><button class="btn btn-outline-secondary" type="submit">Filtrar</button></div>
     </div>
   </form>
 
-  <div class="card">
+  <div class="system-list-table-wrap">
     <div class="table-responsive">
-      <table class="table table-sm table-hover mb-0">
+      <table class="table table-sm table-hover mb-0 system-list-table">
         <thead class="table-light"><tr><th>ID</th><th>Número</th><th>Status</th><th>Evento</th><th>Ofício</th><th class="text-end">Ações</th></tr></thead>
         <tbody>
           {% for object in object_list %}
@@ -42,16 +52,25 @@
             <td>{% if object.evento %}{{ object.evento.titulo|default:'(sem título)' }}{% else %}—{% endif %}</td>
             <td>{% if object.oficio %}{{ object.oficio.numero_formatado|default:'—' }}{% else %}—{% endif %}</td>
             <td class="text-end">
-              <a class="btn btn-outline-secondary btn-sm" href="{% url 'eventos:documentos-ordens-servico-detalhe' object.pk %}">Detalhe</a>
-              <a class="btn btn-outline-primary btn-sm" href="{% url 'eventos:documentos-ordens-servico-editar' object.pk %}">Editar</a>
+              <a class="btn btn-sm btn-doc-action btn-doc-action--primary" href="{% url 'eventos:documentos-ordens-servico-detalhe' object.pk %}"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+              <a class="btn btn-sm btn-doc-action btn-doc-action--secondary" href="{% url 'eventos:documentos-ordens-servico-editar' object.pk %}"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="6" class="text-center text-muted py-4">Nenhuma ordem de serviço encontrada.</td></tr>
+          <tr><td colspan="6" class="text-center text-muted py-4">Nenhuma ordem de servico encontrada.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
+
+  {% include 'includes/pagination.html' %}
+
+  {% include 'includes/list/floating_new_button.html' with url=ordem_novo_url label='Nova ordem de servico' icon='bi-plus-lg' %}
+  </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}

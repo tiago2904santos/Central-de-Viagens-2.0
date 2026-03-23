@@ -5,19 +5,20 @@
 {% block page_title %}Lista de oficios{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 oficios-list-page" data-oficios-view-root data-view-mode="rich">
-    <div class="oficios-list-shell">
+<div class="container-fluid py-4 oficios-list-page system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.oficios.view-mode">
+    <div class="oficios-list-shell system-list-shell">
         <header class="oficios-list-header">
             <div>
                 <h1 class="mb-1">Oficios salvos</h1>
                 <p class="oficios-list-header__subtitle mb-0">Historico de documentos gerados.</p>
             </div>
             <div class="oficios-list-header__controls">
+                {% include 'includes/list/mode_badge.html' with mode='complete' %}
                 <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de oficios">
                     <button
                         type="button"
                         class="oficios-view-toggle__button is-active"
-                        data-oficios-view-toggle="rich"
+                        data-list-view-toggle="rich"
                         aria-pressed="true"
                     >
                         Visualizacao completa
@@ -25,7 +26,7 @@
                     <button
                         type="button"
                         class="oficios-view-toggle__button"
-                        data-oficios-view-toggle="basic"
+                        data-list-view-toggle="basic"
                         aria-pressed="false"
                     >
                         Visualizacao simples
@@ -36,7 +37,7 @@
 
         <section class="oficios-quick-filter" aria-label="Filtro rapido">
             <div class="oficios-quick-filter__label">Filtro rapido e ordenacao</div>
-            <form method="get" class="oficios-quick-filter__form" data-oficios-filters-form>
+            <form method="get" class="oficios-quick-filter__form" data-list-autosubmit-form>
                 <div class="oficios-filter-main-row">
                     <input
                         id="oficios-search"
@@ -45,16 +46,16 @@
                         class="form-control oficios-quick-filter__input"
                         value="{{ filters.q }}"
                         placeholder="Buscar por oficio, protocolo, destino ou servidor"
-                        data-oficios-autosubmit
+                        data-list-autosubmit
                     >
 
-                    <select class="form-select oficios-sort-select" name="order_by" data-oficios-autosubmit>
+                    <select class="form-select oficios-sort-select" name="order_by" data-list-autosubmit>
                         {% for key, label in order_by_choices %}
                         <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>Ordenar por: {{ label }}</option>
                         {% endfor %}
                     </select>
 
-                    <select class="form-select oficios-sort-select" name="order_dir" data-oficios-autosubmit>
+                    <select class="form-select oficios-sort-select" name="order_dir" data-list-autosubmit>
                         {% for key, label in order_dir_choices %}
                         <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -66,7 +67,7 @@
                     <div class="oficios-filter-chip-list">
                         {% for key, label in status_choices %}
                         <label class="oficios-filter-chip">
-                            <input type="checkbox" name="status" value="{{ key }}" {% if key in filters.status %}checked{% endif %} data-oficios-autosubmit>
+                            <input type="checkbox" name="status" value="{{ key }}" {% if key in filters.status %}checked{% endif %} data-list-autosubmit>
                             <span>{{ label }}</span>
                         </label>
                         {% endfor %}
@@ -78,7 +79,7 @@
                     <div class="oficios-filter-chip-list">
                         {% for key, label in viagem_status_choices %}
                         <label class="oficios-filter-chip">
-                            <input type="checkbox" name="viagem_status" value="{{ key }}" {% if key in filters.viagem_status %}checked{% endif %} data-oficios-autosubmit>
+                            <input type="checkbox" name="viagem_status" value="{{ key }}" {% if key in filters.viagem_status %}checked{% endif %} data-list-autosubmit>
                             <span>{{ label }}</span>
                         </label>
                         {% endfor %}
@@ -89,26 +90,26 @@
                     <div class="oficios-filter-chip-group__title">Termos e justificativa</div>
                     <div class="oficios-filter-chip-list">
                         <label class="oficios-filter-chip">
-                            <input type="checkbox" name="termo" value="COM" {% if 'COM' in filters.termo %}checked{% endif %} data-oficios-autosubmit>
+                            <input type="checkbox" name="termo" value="COM" {% if 'COM' in filters.termo %}checked{% endif %} data-list-autosubmit>
                             <span>Com termos</span>
                         </label>
                         <label class="oficios-filter-chip">
-                            <input type="checkbox" name="termo" value="SEM" {% if 'SEM' in filters.termo %}checked{% endif %} data-oficios-autosubmit>
+                            <input type="checkbox" name="termo" value="SEM" {% if 'SEM' in filters.termo %}checked{% endif %} data-list-autosubmit>
                             <span>Sem termos</span>
                         </label>
                         <label class="oficios-filter-chip">
-                            <input type="checkbox" name="justificativa" value="COM" {% if 'COM' in filters.justificativa %}checked{% endif %} data-oficios-autosubmit>
+                            <input type="checkbox" name="justificativa" value="COM" {% if 'COM' in filters.justificativa %}checked{% endif %} data-list-autosubmit>
                             <span>Com justificativa</span>
                         </label>
                         <label class="oficios-filter-chip">
-                            <input type="checkbox" name="justificativa" value="SEM" {% if 'SEM' in filters.justificativa %}checked{% endif %} data-oficios-autosubmit>
+                            <input type="checkbox" name="justificativa" value="SEM" {% if 'SEM' in filters.justificativa %}checked{% endif %} data-list-autosubmit>
                             <span>Sem justificativa</span>
                         </label>
                     </div>
                 </div>
 
                 <div class="oficios-filter-main-row oficios-filter-main-row--dates">
-                    <select class="form-select oficios-sort-select" name="date_scope" data-oficios-autosubmit>
+                    <select class="form-select oficios-sort-select" name="date_scope" data-list-autosubmit>
                         {% for key, label in date_scope_choices %}
                         <option value="{{ key }}" {% if filters.date_scope == key %}selected{% endif %}>Periodo: {{ label }}</option>
                         {% endfor %}
@@ -119,7 +120,7 @@
                         name="date_start"
                         value="{% if filters.date_start %}{{ filters.date_start|date:'Y-m-d' }}{% endif %}"
                         class="form-control oficios-date-input"
-                        data-oficios-autosubmit
+                        data-list-autosubmit
                     >
 
                     <input
@@ -127,7 +128,7 @@
                         name="date_end"
                         value="{% if filters.date_end %}{{ filters.date_end|date:'Y-m-d' }}{% endif %}"
                         class="form-control oficios-date-input"
-                        data-oficios-autosubmit
+                        data-list-autosubmit
                     >
 
                     <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary oficios-quick-filter__button">Limpar</a>
@@ -390,13 +391,10 @@
         {% include 'includes/pagination.html' %}
     </div>
 
-    <a href="{% url 'eventos:oficio-novo' %}" class="oficios-fab">
-        <i class="bi bi-plus-lg"></i>
-        <span>Novo oficio</span>
-    </a>
+    {% include 'includes/list/floating_new_button.html' with url=oficio_novo_url label='Novo oficio' icon='bi-plus-lg' %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/oficios_list.js' %}"></script>
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}

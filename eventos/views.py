@@ -709,6 +709,19 @@ def evento_lista(request):
         ),
     ).all()
     q = request.GET.get('q', '').strip()
+    order_by = (request.GET.get('order_by') or 'data_inicio').strip().lower()
+    order_dir = (request.GET.get('order_dir') or 'desc').strip().lower()
+    order_by_map = {
+        'data_inicio': 'data_inicio',
+        'updated_at': 'updated_at',
+        'titulo': 'titulo',
+        'status': 'status',
+    }
+    order_field = order_by_map.get(order_by, 'data_inicio')
+    order_dir = 'asc' if order_dir == 'asc' else 'desc'
+    if order_dir == 'desc':
+        order_field = f'-{order_field}'
+
     if q:
         qs = qs.filter(titulo__icontains=q)
     status = request.GET.get('status', '')
@@ -717,13 +730,27 @@ def evento_lista(request):
     tipo_id = request.GET.get('tipo_id', '')
     if tipo_id:
         qs = qs.filter(tipos_demanda__id=tipo_id)
-    object_list = list(qs.distinct().order_by('-data_inicio', '-created_at'))
+    object_list = list(qs.distinct().order_by(order_field, '-created_at'))
     _decorate_evento_list_items(object_list)
     context = {
         'object_list': object_list,
-        'form_filter': {'q': q, 'status': status, 'tipo_id': tipo_id},
+        'form_filter': {
+            'q': q,
+            'status': status,
+            'tipo_id': tipo_id,
+            'order_by': order_by,
+            'order_dir': order_dir,
+        },
         'status_choices': Evento.STATUS_CHOICES,
         'tipos_demanda_list': TipoDemandaEvento.objects.filter(ativo=True).order_by('ordem', 'nome'),
+        'order_by_choices': [
+            ('data_inicio', 'Data de início'),
+            ('updated_at', 'Atualização'),
+            ('titulo', 'Título'),
+            ('status', 'Status'),
+        ],
+        'order_dir_choices': [('desc', 'Decrescente'), ('asc', 'Crescente')],
+        'evento_novo_url': reverse('eventos:guiado-novo'),
     }
     return render(request, 'eventos/evento_lista.html', context)
 

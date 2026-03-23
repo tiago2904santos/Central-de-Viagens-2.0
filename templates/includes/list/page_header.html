@@ -1,0 +1,22 @@
+<div class="page-header-cadastro system-list-header">
+    <div>
+        <h1 class="mb-1">{{ title }}</h1>
+        {% if subtitle %}
+        <p class="text-muted mb-0">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2 flex-wrap system-list-header__actions">
+        {% if tertiary_url %}
+        <a href="{{ tertiary_url }}" class="btn btn-outline-secondary">{{ tertiary_label|default:'Voltar' }}</a>
+        {% endif %}
+        {% if secondary_url %}
+        <a href="{{ secondary_url }}" class="btn btn-outline-secondary">{{ secondary_label }}</a>
+        {% endif %}
+        {% if primary_url %}
+        <a href="{{ primary_url }}" class="btn {% if primary_variant %}btn-{{ primary_variant }}{% else %}btn-primary{% endif %} system-list-new-btn">
+            <i class="bi {{ primary_icon|default:'bi-plus-lg' }} me-1"></i>
+            {{ primary_label }}
+        </a>
+        {% endif %}
+    </div>
+</div>

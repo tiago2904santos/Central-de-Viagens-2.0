@@ -1,33 +1,24 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Planos de trabalho - Central de Viagens{% endblock %}
 {% block page_title %}Planos de trabalho{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="page-header-cadastro">
-        <div>
-            <h1 class="mb-1">Planos de trabalho</h1>
-            <p class="text-muted mb-0">Cards no mesmo idioma visual dos Ofícios, agora com relação documental explícita com os Ofícios atendidos.</p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a class="btn btn-primary" href="{% url 'eventos:documentos-planos-trabalho-novo' %}">
-                <i class="bi bi-plus-lg me-1"></i>
-                Novo plano de trabalho
-            </a>
-        </div>
-    </div>
+<div class="container-fluid py-4 system-list-page system-list-page--complete">
+    <div class="system-list-shell">
+    {% include 'includes/list/page_header.html' with title='Planos de trabalho' subtitle='Cards no mesmo idioma visual dos Oficios, com relacao documental explicita com os Oficios atendidos.' primary_url=plano_novo_url primary_label='Novo plano de trabalho' %}
 
-    <div class="card filter-card">
+    <div class="card filter-card system-filter-card">
         <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end">
+            <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
                 <div class="col-12 col-xl-4">
                     <label class="form-label small text-muted">Busca ampla</label>
-                    <input class="form-control form-control-sm" type="text" name="q" placeholder="Objetivo, observações, evento ou Ofício" value="{{ filters.q }}">
+                    <input class="form-control form-control-sm" type="text" name="q" placeholder="Objetivo, observacoes, evento ou Oficio" value="{{ filters.q }}" data-list-autosubmit>
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Evento</label>
-                    <select class="form-select form-select-sm" name="evento_id">
+                    <select class="form-select form-select-sm" name="evento_id" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for evento in eventos_choices %}
                         <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:'s' %}selected{% endif %}>{{ evento.titulo|default:'(sem título)' }}</option>
@@ -36,7 +27,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Ofício</label>
-                    <select class="form-select form-select-sm" name="oficio_id">
+                    <select class="form-select form-select-sm" name="oficio_id" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for oficio in oficios_choices %}
                         <option value="{{ oficio.pk }}" {% if filters.oficio_id == oficio.pk|stringformat:'s' %}selected{% endif %}>{{ oficio.numero_formatado }}</option>
@@ -45,12 +36,32 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Status</label>
-                    <select class="form-select form-select-sm" name="status">
+                    <select class="form-select form-select-sm" name="status" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for value, label in status_choices %}
                         <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
+                </div>
+                <div class="col-12 col-xl-3">
+                    <div class="system-sort-row">
+                        <div>
+                            <label class="form-label small text-muted">Ordenar por</label>
+                            <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
+                                {% for key, label in order_by_choices %}
+                                <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small text-muted">Direção</label>
+                            <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
+                                {% for key, label in order_dir_choices %}
+                                <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-12 col-md-auto">
                     <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
@@ -166,5 +177,12 @@
     </section>
 
     {% include 'includes/pagination.html' %}
+
+    {% include 'includes/list/floating_new_button.html' with url=plano_novo_url label='Novo plano de trabalho' icon='bi-plus-lg' %}
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}

@@ -1,33 +1,25 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Termos de autorizacao - Central de Viagens{% endblock %}
 {% block page_title %}Termos de autorizacao{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="page-header-cadastro">
-        <div>
-            <h1 class="mb-1">Lista de termos</h1>
-            <p class="text-muted mb-0">Mesmo padrao de navegacao da lista de oficios, agora com cards menores, mais objetivos e sem repeticao desnecessaria.</p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'eventos:documentos-termos-novo' %}" class="btn btn-primary">
-                <i class="bi bi-plus-lg me-1"></i>
-                Novo termo
-            </a>
-        </div>
-    </div>
+<div class="container-fluid py-4 system-list-page system-list-page--complete">
+    <div class="system-list-shell">
+    {% include 'includes/list/page_header.html' with title='Lista de termos' subtitle='Mesmo padrao de navegacao da lista de oficios, com cards objetivos e hierarquia clara.' primary_url=termo_novo_url primary_label='Novo termo' %}
+    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='complete' %}</div>
 
-    <div class="card filter-card">
+    <div class="card filter-card system-filter-card">
         <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end">
+            <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
                 <div class="col-12 col-xl-3">
                     <label class="form-label small text-muted">Busca ampla</label>
-                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Servidor, viatura, destino ou contexto">
+                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Servidor, viatura, destino ou contexto" data-list-autosubmit>
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Evento</label>
-                    <select name="evento_id" class="form-select form-select-sm">
+                    <select name="evento_id" class="form-select form-select-sm" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for evento in eventos_choices %}
                         <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
@@ -36,7 +28,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Oficio</label>
-                    <select name="oficio_id" class="form-select form-select-sm">
+                    <select name="oficio_id" class="form-select form-select-sm" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for oficio in oficios_choices %}
                         <option value="{{ oficio.pk }}" {% if filters.oficio_id == oficio.pk|stringformat:"s" %}selected{% endif %}>{{ oficio.numero_formatado }}</option>
@@ -45,7 +37,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Modelo</label>
-                    <select name="modo_geracao" class="form-select form-select-sm">
+                    <select name="modo_geracao" class="form-select form-select-sm" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for value, label in modo_choices %}
                         <option value="{{ value }}" {% if filters.modo_geracao == value %}selected{% endif %}>{{ label }}</option>
@@ -54,10 +46,26 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-1">
                     <label class="form-label small text-muted">Status</label>
-                    <select name="status" class="form-select form-select-sm">
+                    <select name="status" class="form-select form-select-sm" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for value, label in status_choices %}
                         <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-1">
+                    <label class="form-label small text-muted">Ordenar</label>
+                    <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
+                        {% for value, label in order_by_choices %}
+                        <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-1">
+                    <label class="form-label small text-muted">Direção</label>
+                    <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
+                        {% for value, label in order_dir_choices %}
+                        <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -87,8 +95,8 @@
                     </div>
                 </div>
                 <div class="termo-list-card__actions termo-list-card__actions--top">
-                    <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-outline-secondary">DOCX</a>
-                    <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-outline-secondary">PDF</a>
+                    <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" data-direct-download="true"><i class="bi bi-filetype-docx"></i><span>DOCX</span></a>
+                    <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf" data-direct-download="true"><i class="bi bi-filetype-pdf"></i><span>PDF</span></a>
                 </div>
             </div>
 
@@ -114,9 +122,9 @@
             <div class="termo-list-card__footer">
                 <div class="small text-muted">Atualizado em {{ termo.updated_at|date:"d/m/Y H:i" }}</div>
                 <div class="termo-list-card__actions">
-                    <a href="{{ termo.detail_url }}" class="btn btn-sm btn-outline-primary">Ver</a>
-                    <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-outline-secondary">Editar</a>
-                    <a href="{{ termo.excluir_url }}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                    <a href="{{ termo.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                    <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                    <a href="{{ termo.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger"><i class="bi bi-trash"></i><span>Excluir</span></a>
                 </div>
             </div>
         </article>
@@ -130,5 +138,12 @@
     </div>
 
     {% include 'includes/pagination.html' %}
+
+    {% include 'includes/list/floating_new_button.html' with url=termo_novo_url label='Novo termo' icon='bi-plus-lg' %}
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}

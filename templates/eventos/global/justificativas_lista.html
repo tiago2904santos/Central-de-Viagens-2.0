@@ -4,7 +4,8 @@
 {% block page_title %}Justificativas{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-4 system-list-page system-list-page--simple">
+    <div class="system-list-shell">
     <div class="page-header-cadastro">
         <div>
             <h1 class="mb-1">Lista global de justificativas</h1>
@@ -15,7 +16,7 @@
         </div>
     </div>
 
-    <div class="card filter-card">
+    <div class="card filter-card system-filter-card">
         <div class="card-body py-3">
             <form method="get" class="row g-2 align-items-end">
                 <div class="col-12 col-lg-4">
@@ -52,9 +53,9 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="system-list-table-wrap">
         <div class="table-responsive">
-            <table class="table table-hover table-cadastro mb-0 align-middle">
+            <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
                 <thead class="table-light">
                     <tr>
                         <th>Oficio</th>
@@ -97,8 +98,8 @@
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            <a href="{{ row.justificativa_url }}" class="btn btn-sm btn-outline-primary">Abrir</a>
-                            <a href="{{ row.oficio_url }}" class="btn btn-sm btn-outline-secondary">Step 4</a>
+                            <a href="{{ row.justificativa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                            <a href="{{ row.oficio_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-journal-text"></i><span>Step 4</span></a>
                         </td>
                     </tr>
                     {% empty %}
@@ -110,5 +111,6 @@
     </div>
 
     {% include 'includes/pagination.html' %}
+</div>
 </div>
 {% endblock %}

@@ -71,6 +71,24 @@ STATUS_LABELS = {
     'indisponivel': 'Indisponivel',
 }
 
+ORDER_DIR_CHOICES = (
+    ('desc', 'Decrescente'),
+    ('asc', 'Crescente'),
+)
+
+
+def _resolve_ordering(filters, allowed_fields, default_key):
+    order_key = (filters.get('order_by') or default_key).strip().lower()
+    order_dir = (filters.get('order_dir') or 'desc').strip().lower()
+    order_key = order_key if order_key in allowed_fields else default_key
+    order_dir = 'asc' if order_dir == 'asc' else 'desc'
+    order_field = allowed_fields[order_key]
+    if order_dir == 'desc':
+        order_field = f'-{order_field}'
+    filters['order_by'] = order_key
+    filters['order_dir'] = order_dir
+    return order_field
+
 def _get_default_pt_cargo():
     preferred_names = [
         'AGENTE DE POLÍCIA CIVIL',
@@ -1534,6 +1552,7 @@ def oficio_global_lista(request):
             'order_by_choices': OFICIO_ORDER_BY_CHOICES,
             'order_dir_choices': OFICIO_ORDER_DIR_CHOICES,
             'date_scope_choices': OFICIO_DATE_SCOPE_CHOICES,
+            'oficio_novo_url': reverse('eventos:oficio-novo'),
             'hide_page_header': True,
         },
     )
@@ -1545,6 +1564,8 @@ def roteiro_global_lista(request):
         'status': _clean(request.GET.get('status')),
         'evento_id': _clean(request.GET.get('evento_id')),
         'tipo': _clean(request.GET.get('tipo')).upper(),
+        'order_by': _clean(request.GET.get('order_by')),
+        'order_dir': _clean(request.GET.get('order_dir')),
     }
     queryset = (
         RoteiroEvento.objects.select_related('evento', 'origem_estado', 'origem_cidade')
@@ -1568,8 +1589,16 @@ def roteiro_global_lista(request):
     if filters['evento_id'].isdigit():
         queryset = queryset.filter(evento_id=int(filters['evento_id']))
 
+    roteiro_order_map = {
+        'updated_at': 'updated_at',
+        'evento': 'evento__titulo',
+        'status': 'status',
+        'created_at': 'created_at',
+    }
+    ordering = _resolve_ordering(filters, roteiro_order_map, 'updated_at')
+
     page_obj = _paginate(
-        queryset.distinct().order_by('-updated_at', '-created_at'),
+        queryset.distinct().order_by(ordering, '-created_at'),
         request.GET.get('page'),
     )
     object_list = list(page_obj.object_list)
@@ -1609,12 +1638,20 @@ def roteiro_global_lista(request):
                 (RoteiroEvento.TIPO_AVULSO, 'Avulsos'),
                 (RoteiroEvento.TIPO_EVENTO, 'Vinculados a evento'),
             ],
+            'order_by_choices': [
+                ('updated_at', 'Atualização'),
+                ('evento', 'Evento'),
+                ('status', 'Status'),
+                ('created_at', 'Criação'),
+            ],
+            'order_dir_choices': ORDER_DIR_CHOICES,
             'novo_roteiro_url': (
                 reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': selected_event.pk})
                 if selected_event
                 else ''
             ),
             'novo_roteiro_avulso_url': reverse('eventos:roteiro-avulso-cadastrar'),
+            'eventos_url': reverse('eventos:lista'),
             'selected_event': selected_event,
         },
     )
@@ -1626,6 +1663,8 @@ def _base_documento_filters(request):
         'evento_id': _clean(request.GET.get('evento_id')),
         'oficio_id': _clean(request.GET.get('oficio_id')),
         'status': _clean(request.GET.get('status')),
+        'order_by': _clean(request.GET.get('order_by')),
+        'order_dir': _clean(request.GET.get('order_dir')),
     }
 
 
@@ -1913,8 +1952,16 @@ def planos_trabalho_global(request):
     if filters['status']:
         queryset = queryset.filter(status=filters['status'])
 
+    plano_order_map = {
+        'updated_at': 'updated_at',
+        'created_at': 'created_at',
+        'status': 'status',
+        'evento': 'evento__titulo',
+    }
+    ordering = _resolve_ordering(filters, plano_order_map, 'updated_at')
+
     queryset = queryset.distinct()
-    page_obj = _paginate(queryset.order_by('-updated_at', '-created_at'), request.GET.get('page'))
+    page_obj = _paginate(queryset.order_by(ordering, '-created_at'), request.GET.get('page'))
     object_list = list(page_obj.object_list)
     _decorate_plano_trabalho_list_items(object_list)
     return render(
@@ -1928,6 +1975,14 @@ def planos_trabalho_global(request):
             'eventos_choices': _eventos_choices(),
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'status_choices': PlanoTrabalho.STATUS_CHOICES,
+            'order_by_choices': [
+                ('updated_at', 'Atualização'),
+                ('created_at', 'Criação'),
+                ('status', 'Status'),
+                ('evento', 'Evento'),
+            ],
+            'order_dir_choices': ORDER_DIR_CHOICES,
+            'plano_novo_url': reverse('eventos:documentos-planos-trabalho-novo'),
         },
     )
 
@@ -2095,7 +2150,16 @@ def ordens_servico_global(request):
     if filters['status']:
         queryset = queryset.filter(status=filters['status'])
 
-    page_obj = _paginate(queryset.order_by('-updated_at', '-created_at'), request.GET.get('page'))
+    ordem_order_map = {
+        'updated_at': 'updated_at',
+        'created_at': 'created_at',
+        'status': 'status',
+        'evento': 'evento__titulo',
+        'numero': 'numero',
+    }
+    ordering = _resolve_ordering(filters, ordem_order_map, 'updated_at')
+
+    page_obj = _paginate(queryset.order_by(ordering, '-created_at'), request.GET.get('page'))
     return render(
         request,
         'eventos/documentos/ordens_servico_lista.html',
@@ -2107,6 +2171,15 @@ def ordens_servico_global(request):
             'eventos_choices': _eventos_choices(),
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'status_choices': OrdemServico.STATUS_CHOICES,
+            'order_by_choices': [
+                ('updated_at', 'Atualização'),
+                ('created_at', 'Criação'),
+                ('status', 'Status'),
+                ('evento', 'Evento'),
+                ('numero', 'Número'),
+            ],
+            'order_dir_choices': ORDER_DIR_CHOICES,
+            'ordem_novo_url': reverse('eventos:documentos-ordens-servico-novo'),
         },
     )
 
@@ -2215,13 +2288,15 @@ def justificativas_global(request):
     filters = {
         'q': _clean(request.GET.get('q')),
         'oficio_id': _clean(request.GET.get('oficio_id')),
+        'order_by': _clean(request.GET.get('order_by')),
+        'order_dir': _clean(request.GET.get('order_dir')),
     }
     queryset = (
         Justificativa.objects.select_related(
             'oficio',
             'oficio__evento',
             'modelo',
-        ).order_by('-updated_at', '-created_at')
+        )
     )
     if filters['q']:
         queryset = queryset.filter(
@@ -2232,6 +2307,15 @@ def justificativas_global(request):
         ).distinct()
     if filters['oficio_id'].isdigit():
         queryset = queryset.filter(oficio_id=int(filters['oficio_id']))
+
+    justificativa_order_map = {
+        'updated_at': 'updated_at',
+        'created_at': 'created_at',
+        'oficio': 'oficio__numero',
+        'modelo': 'modelo__nome',
+    }
+    ordering = _resolve_ordering(filters, justificativa_order_map, 'updated_at')
+    queryset = queryset.order_by(ordering, '-created_at')
 
     page_obj = _paginate(queryset, request.GET.get('page'))
     object_list = []
@@ -2255,6 +2339,14 @@ def justificativas_global(request):
             'pagination_query': _query_without_page(request),
             'filters': filters,
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
+            'order_by_choices': [
+                ('updated_at', 'Atualização'),
+                ('created_at', 'Criação'),
+                ('oficio', 'Ofício'),
+                ('modelo', 'Modelo'),
+            ],
+            'order_dir_choices': ORDER_DIR_CHOICES,
+            'justificativa_novo_url': reverse('eventos:documentos-justificativas-nova'),
         },
     )
 
@@ -2559,6 +2651,8 @@ def _build_termo_filters(request):
         'oficio_id': _clean(request.GET.get('oficio_id')),
         'status': _clean(request.GET.get('status')),
         'modo_geracao': _clean(request.GET.get('modo_geracao')),
+        'order_by': _clean(request.GET.get('order_by')),
+        'order_dir': _clean(request.GET.get('order_dir')),
     }
 
 
@@ -2810,7 +2904,16 @@ def termos_global(request):
     if filters['modo_geracao']:
         queryset = queryset.filter(modo_geracao=filters['modo_geracao'])
 
-    page_obj = _paginate(queryset.order_by('-updated_at', '-created_at'), request.GET.get('page'))
+    termo_order_map = {
+        'updated_at': 'updated_at',
+        'created_at': 'created_at',
+        'status': 'status',
+        'evento': 'evento__titulo',
+        'servidor': 'servidor_nome',
+    }
+    ordering = _resolve_ordering(filters, termo_order_map, 'updated_at')
+
+    page_obj = _paginate(queryset.order_by(ordering, '-created_at'), request.GET.get('page'))
     object_list = list(page_obj.object_list)
     for termo in object_list:
         termo.process_status = _termo_status_meta(termo)
@@ -2845,6 +2948,15 @@ def termos_global(request):
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'status_choices': TermoAutorizacao.STATUS_CHOICES,
             'modo_choices': TermoAutorizacao.MODO_CHOICES,
+            'order_by_choices': [
+                ('updated_at', 'Atualização'),
+                ('created_at', 'Criação'),
+                ('status', 'Status'),
+                ('evento', 'Evento'),
+                ('servidor', 'Servidor'),
+            ],
+            'order_dir_choices': ORDER_DIR_CHOICES,
+            'termo_novo_url': reverse('eventos:documentos-termos-novo'),
         },
     )
 
