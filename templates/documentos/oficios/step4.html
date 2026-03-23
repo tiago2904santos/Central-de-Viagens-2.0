@@ -4,92 +4,119 @@
 {% block content %}
 {% include 'documentos/oficios/_stepper.html' %}
 
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header bg-light fw-semibold">Dados gerais</div>
-  <div class="card-body">
-    <dl class="row mb-0">
-      <dt class="col-sm-3">Identificação</dt>
-      <dd class="col-sm-9">{{ oficio.identificacao }}</dd>
-      <dt class="col-sm-3">Data de criação</dt>
-      <dd class="col-sm-9">{{ oficio.data_criacao|date:"d/m/Y" }}</dd>
-      <dt class="col-sm-3">Motivo</dt>
-      <dd class="col-sm-9">{{ oficio.motivo|default:"—" }}</dd>
-      <dt class="col-sm-3">Custeio</dt>
-      <dd class="col-sm-9">{{ oficio.get_custeio_tipo_display }}{% if oficio.nome_instituicao_custeio %} — {{ oficio.nome_instituicao_custeio }}{% endif %}</dd>
-      <dt class="col-sm-3">Destino</dt>
-      <dd class="col-sm-9">{{ oficio.get_tipo_destino_display }}</dd>
-      <dt class="col-sm-3">Evento</dt>
-      <dd class="col-sm-9">{{ oficio.evento|default:"—" }}</dd>
-    </dl>
-  </div>
-</div>
+<div class="oficio-summary-grid oficio-summary-grid--two mb-4">
 
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header bg-light fw-semibold">Viajantes</div>
-  <div class="card-body">
+  <section class="oficio-summary-section oficio-summary-hero">
+    <h2>Identificação</h2>
+    <div class="oficio-summary-meta">
+      <div class="oficio-summary-row">
+        <span class="oficio-summary-label">Identificação</span>
+        <span class="oficio-summary-value">{{ oficio.identificacao }}</span>
+      </div>
+      <div class="oficio-summary-row">
+        <span class="oficio-summary-label">Data de criação</span>
+        <span class="oficio-summary-value">{{ oficio.data_criacao|date:"d/m/Y" }}</span>
+      </div>
+      <div class="oficio-summary-row">
+        <span class="oficio-summary-label">Custeio</span>
+        <span class="oficio-summary-value">{{ oficio.get_custeio_tipo_display }}{% if oficio.nome_instituicao_custeio %} — {{ oficio.nome_instituicao_custeio }}{% endif %}</span>
+      </div>
+      <div class="oficio-summary-row">
+        <span class="oficio-summary-label">Destino</span>
+        <span class="oficio-summary-value">{{ oficio.get_tipo_destino_display }}</span>
+      </div>
+      {% if oficio.evento %}
+      <div class="oficio-summary-row">
+        <span class="oficio-summary-label">Evento</span>
+        <span class="oficio-summary-value">{{ oficio.evento }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="oficio-summary-section">
+    <h2>Motivo</h2>
+    <p class="oficio-summary-value mb-0">{{ oficio.motivo|default:"—" }}</p>
+  </section>
+
+  <section class="oficio-summary-section">
+    <h2>Viajantes</h2>
     {% if viajantes %}
-    <ul class="list-group list-group-flush">
+    <div class="oficio-summary-pill-list">
       {% for ov in viajantes %}
-      <li class="list-group-item px-0">{{ ov.nome_snapshot|default:ov.viajante }}</li>
+      <span class="oficio-summary-pill">
+        <i class="bi bi-person" aria-hidden="true"></i>
+        {{ ov.nome_snapshot|default:ov.viajante }}
+      </span>
       {% endfor %}
-    </ul>
+    </div>
     {% else %}
-    <span class="text-muted">Nenhum viajante.</span>
+    <span class="oficio-summary-value text-muted">Nenhum viajante.</span>
     {% endif %}
-  </div>
-</div>
+  </section>
 
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header bg-light fw-semibold">Transporte</div>
-  <div class="card-body">
-    <dl class="row mb-0">
-      <dt class="col-sm-3">Veículo</dt>
-      <dd class="col-sm-9">{% if oficio.placa %}{{ oficio.placa }} — {{ oficio.modelo_veiculo }}{% else %}—{% endif %}</dd>
-      <dt class="col-sm-3">Motorista</dt>
-      <dd class="col-sm-9">{{ oficio.motorista|default:"—" }}</dd>
-    </dl>
-  </div>
-</div>
+  <section class="oficio-summary-section">
+    <h2>Transporte</h2>
+    <div class="oficio-summary-meta">
+      <div class="oficio-summary-row">
+        <span class="oficio-summary-label">Veículo</span>
+        <span class="oficio-summary-value">{% if oficio.placa %}{{ oficio.placa }} — {{ oficio.modelo_veiculo }}{% else %}—{% endif %}</span>
+      </div>
+      <div class="oficio-summary-row">
+        <span class="oficio-summary-label">Motorista</span>
+        <span class="oficio-summary-value">{{ oficio.motorista|default:"—" }}</span>
+      </div>
+    </div>
+  </section>
 
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header bg-light fw-semibold">Trechos</div>
-  <div class="card-body">
+  <section class="oficio-summary-section">
+    <h2>Trechos</h2>
     {% if trechos %}
-    <ul class="list-group list-group-flush">
+    <div class="oficio-summary-meta">
       {% for t in trechos %}
-      <li class="list-group-item px-0">
-        <strong>{{ t.ordem }}.</strong> {{ t.origem_nome }} → {{ t.destino_nome }}
-        {% if t.data_saida %}<span class="text-muted ms-2">{{ t.data_saida|date:"d/m/Y" }}</span>{% endif %}
-        {% if t.is_retorno %}<span class="badge bg-secondary ms-1">Retorno</span>{% endif %}
-      </li>
+      <div class="oficio-summary-row">
+        <span class="oficio-summary-label">Trecho {{ t.ordem }}</span>
+        <span class="oficio-summary-value">
+          {{ t.origem_nome }} → {{ t.destino_nome }}
+          {% if t.data_saida %}<span class="text-muted ms-1 small">{{ t.data_saida|date:"d/m/Y" }}</span>{% endif %}
+          {% if t.is_retorno %}<span class="badge bg-secondary ms-1">Retorno</span>{% endif %}
+        </span>
+      </div>
       {% endfor %}
-    </ul>
+    </div>
     {% else %}
-    <span class="text-muted">Nenhum trecho.</span>
+    <span class="oficio-summary-value text-muted">Nenhum trecho.</span>
     {% endif %}
-  </div>
-</div>
+  </section>
 
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header bg-light fw-semibold">Diárias</div>
-  <div class="card-body">
-    <dl class="row mb-0">
-      <dt class="col-sm-3">Quantidade</dt>
-      <dd class="col-sm-9">{{ oficio.quantidade_diarias|default:"—" }}</dd>
-      <dt class="col-sm-3">Valor</dt>
-      <dd class="col-sm-9">{% if oficio.valor_diarias %}R$ {{ oficio.valor_diarias }}{% else %}—{% endif %}</dd>
-    </dl>
-  </div>
+  <section class="oficio-summary-section">
+    <h2>Diárias</h2>
+    <div class="oficio-summary-meta">
+      <div class="oficio-summary-row">
+        <span class="oficio-summary-label">Quantidade</span>
+        <span class="oficio-summary-value">{{ oficio.quantidade_diarias|default:"—" }}</span>
+      </div>
+      <div class="oficio-summary-row">
+        <span class="oficio-summary-label">Valor</span>
+        <span class="oficio-summary-value">{% if oficio.valor_diarias %}R$ {{ oficio.valor_diarias }}{% else %}—{% endif %}</span>
+      </div>
+    </div>
+  </section>
+
 </div>
 
 <form method="post">
   {% csrf_token %}
-  <div class="d-flex gap-2">
-    <a href="{% url 'documentos:oficio-step3' pk=oficio.pk %}" class="btn btn-outline-secondary"><i class="bi bi-chevron-left"></i> Anterior</a>
-    <button type="submit" name="acao" value="salvar" class="btn btn-outline-primary">Salvar rascunho</button>
-    <button type="submit" name="acao" value="finalizar" class="btn btn-success">
-      <i class="bi bi-check-lg me-1"></i> Finalizar ofício
-    </button>
+  <div class="oficio-summary-actions">
+    <div class="oficio-summary-actions-group">
+      <a href="{% url 'documentos:oficio-step3' pk=oficio.pk %}" class="btn btn-outline-secondary">
+        <i class="bi bi-chevron-left me-1"></i> Anterior
+      </a>
+      <button type="submit" name="acao" value="salvar" class="btn btn-outline-primary">Salvar rascunho</button>
+      <button type="submit" name="acao" value="finalizar" class="btn btn-primary">
+        <i class="bi bi-check-lg me-1"></i> Finalizar ofício
+      </button>
+    </div>
   </div>
 </form>
 {% endblock %}

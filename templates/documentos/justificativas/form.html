@@ -2,7 +2,7 @@
 {% block title %}{% if just %}Editar justificativa{% else %}Nova justificativa{% endif %}{% endblock %}
 {% block page_title %}{% if just %}Editar justificativa{% else %}Nova justificativa{% endif %}{% endblock %}
 {% block content %}
-<div class="card border-0 shadow-sm" style="max-width:700px">
+<div class="card form-doc-card">
   <div class="card-body">
     <form method="post">
       {% csrf_token %}
@@ -39,8 +39,8 @@
         <textarea name="observacoes" class="form-control" rows="3">{{ just.observacoes|default:'' }}</textarea>
       </div>
       <div class="d-flex gap-2">
-        <button type="submit" name="acao" value="rascunho" class="btn btn-danger">Salvar rascunho</button>
-        <button type="submit" name="acao" value="finalizar" class="btn btn-success">Finalizar</button>
+        <button type="submit" name="acao" value="rascunho" class="btn btn-outline-primary">Salvar rascunho</button>
+        <button type="submit" name="acao" value="finalizar" class="btn btn-primary">Finalizar</button>
         <a href="{% url 'documentos:justificativas' %}" class="btn btn-outline-secondary">Cancelar</a>
       </div>
     </form>

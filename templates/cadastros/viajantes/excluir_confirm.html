@@ -1,19 +1,7 @@
 {% extends 'base.html' %}
-
 {% block title %}Excluir viajante — Central de Viagens{% endblock %}
 {% block page_title %}Excluir viajante{% endblock %}
-
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="card">
-        <div class="card-body">
-            <p class="mb-3">Deseja realmente excluir o viajante <strong>{{ object.nome }}</strong>? Esta ação não pode ser desfeita.</p>
-            <form method="post" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Excluir</button>
-            </form>
-            <a href="{% url 'cadastros:viajante-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-        </div>
-    </div>
-</div>
+{% url 'cadastros:viajante-lista' as _cancel_url %}
+{% include 'includes/_confirmar_exclusao.html' with exclusao_titulo="Excluir viajante" exclusao_texto="Deseja realmente excluir o viajante <strong>{{ object.nome }}</strong>? Esta ação não pode ser desfeita." exclusao_url_cancelar=_cancel_url %}
 {% endblock %}

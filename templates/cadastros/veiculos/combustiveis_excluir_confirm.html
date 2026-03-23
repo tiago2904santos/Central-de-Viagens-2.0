@@ -1,19 +1,7 @@
 {% extends 'base.html' %}
-
 {% block title %}Excluir combustível — Central de Viagens{% endblock %}
 {% block page_title %}Excluir combustível{% endblock %}
-
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="card">
-        <div class="card-body">
-            <p class="mb-3">Deseja realmente excluir o combustível <strong>{{ object.nome }}</strong>? Se estiver em uso por algum veículo, a exclusão não será permitida.</p>
-            <form method="post" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Excluir</button>
-            </form>
-            <a href="{% url 'cadastros:combustivel-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-        </div>
-    </div>
-</div>
+{% url 'cadastros:combustivel-lista' as _cancel_url %}
+{% include 'includes/_confirmar_exclusao.html' with exclusao_titulo="Excluir combustível" exclusao_texto="Deseja realmente excluir o combustível <strong>{{ object.nome }}</strong>? Se estiver em uso, a exclusão não será permitida." exclusao_url_cancelar=_cancel_url %}
 {% endblock %}

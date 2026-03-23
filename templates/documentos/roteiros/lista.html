@@ -4,7 +4,7 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <span class="text-muted">{{ roteiros|length }} roteiro(s)</span>
-  <a href="{% url 'documentos:roteiro-novo' %}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i> Novo Roteiro</a>
+  <a href="{% url 'documentos:roteiro-novo' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Novo Roteiro</a>
 </div>
 {% if roteiros %}
 <div class="card border-0 shadow-sm">
@@ -34,7 +34,7 @@
 <div class="text-center py-5">
   <i class="bi bi-signpost-2 fs-1 text-muted"></i>
   <p class="text-muted mt-2">Nenhum roteiro cadastrado.</p>
-  <a href="{% url 'documentos:roteiro-novo' %}" class="btn btn-success">Criar primeiro roteiro</a>
+  <a href="{% url 'documentos:roteiro-novo' %}" class="btn btn-primary">Criar primeiro roteiro</a>
 </div>
 {% endif %}
 {% endblock %}

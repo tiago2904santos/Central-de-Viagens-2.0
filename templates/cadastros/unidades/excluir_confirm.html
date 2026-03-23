@@ -1,19 +1,7 @@
 {% extends 'base.html' %}
-
 {% block title %}Excluir unidade de lotação — Central de Viagens{% endblock %}
 {% block page_title %}Excluir unidade de lotação{% endblock %}
-
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="card">
-        <div class="card-body">
-            <p class="mb-3">Deseja realmente excluir a unidade <strong>{{ object.nome }}</strong>? Se estiver em uso por algum viajante, a exclusão não será permitida.</p>
-            <form method="post" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Excluir</button>
-            </form>
-            <a href="{% url 'cadastros:unidade-lotacao-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-        </div>
-    </div>
-</div>
+{% url 'cadastros:unidade-lotacao-lista' as _cancel_url %}
+{% include 'includes/_confirmar_exclusao.html' with exclusao_titulo="Excluir unidade de lotação" exclusao_texto="Deseja realmente excluir a unidade <strong>{{ object.nome }}</strong>? Se estiver em uso por algum viajante, a exclusão não será permitida." exclusao_url_cancelar=_cancel_url %}
 {% endblock %}
