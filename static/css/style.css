@@ -647,13 +647,7 @@ a:hover {
 
 .main-content {
     flex: 1;
-    padding-top: 1rem;
-}
-
-@media (max-width: 767.98px) {
-    .main-content {
-        padding-top: 0.75rem;
-    }
+    padding-top: 0;
 }
 
 /* ----- Cards padrÃ£o ----- */
@@ -927,7 +921,7 @@ a:hover {
     --list-meta-size: 0.9rem;
     --list-focus-ring: var(--cv-focus);
     background: var(--system-list-bg);
-    border-radius: 1.35rem;
+    border-radius: 0 0 1.35rem 1.35rem;
     padding-bottom: 5.5rem;
     transition: background var(--cv-transition-base);
 }
@@ -3288,7 +3282,7 @@ a:hover {
     --system-form-kicker: rgba(15, 31, 53, 0.64);
     --system-form-section: linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(245, 251, 247, 0.97));
     background: var(--system-form-bg);
-    border-radius: 1.25rem;
+    border-radius: 0 0 1.25rem 1.25rem;
     padding-bottom: 2rem;
 }
 
