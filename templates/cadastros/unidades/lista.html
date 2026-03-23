@@ -4,19 +4,19 @@
 {% block page_title %}Unidades de Lotação{% endblock %}
 
 {% block content %}
-<div class="page-header-cadastro d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Unidades de Lotação</h2>
+<div class="page-header-cadastro">
+    <div></div>
     <div class="d-flex gap-2">
-        {% if return_url %}<a href="{{ return_url }}" class="btn btn-outline-secondary">Voltar</a>{% else %}<a href="{% url 'cadastros:viajante-lista' %}" class="btn btn-outline-secondary">Voltar para viajantes</a>{% endif %}
-        <a href="{% url 'cadastros:unidade-lotacao-cadastrar' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Cadastrar</a>
+        {% if return_url %}<a href="{{ return_url }}" class="btn btn-outline-secondary btn-sm">Voltar</a>{% else %}<a href="{% url 'cadastros:viajante-lista' %}" class="btn btn-outline-secondary btn-sm">Voltar para viajantes</a>{% endif %}
+        <a href="{% url 'cadastros:unidade-lotacao-cadastrar' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Cadastrar</a>
     </div>
 </div>
 
-<div class="card filter-card mb-4">
+<div class="card filter-card mb-3">
     <div class="card-body py-3">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-12 col-md-4">
-                <label class="form-label small text-muted">Buscar</label>
+                <label class="form-label small fw-semibold text-muted mb-1">Buscar</label>
                 <input type="text" name="q" class="form-control form-control-sm" placeholder="Nome" value="{{ form_filter.q }}">
             </div>
             <div class="col-12 col-md-auto">
@@ -27,26 +27,39 @@
     </div>
 </div>
 
-<div class="card">
+<div class="card overflow-hidden">
     <div class="table-responsive">
         <table class="table table-hover table-cadastro mb-0">
-            <thead class="table-light">
+            <thead>
                 <tr>
                     <th>Nome</th>
-                    <th width="140" class="text-end">Ações</th>
+                    <th class="col-actions">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for obj in object_list %}
                 <tr>
-                    <td>{{ obj.nome }}</td>
-                    <td class="text-end">
-                        <a href="{% url 'cadastros:unidade-lotacao-editar' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
-                        <a href="{% url 'cadastros:unidade-lotacao-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                    <td data-label="Nome" class="fw-semibold">{{ obj.nome }}</td>
+                    <td data-label="Ações" class="col-actions">
+                        <div class="table-actions">
+                            <a href="{% url 'cadastros:unidade-lotacao-editar' obj.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'cadastros:unidade-lotacao-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="2" class="text-center text-muted py-4">Nenhuma unidade de lotação encontrada.</td></tr>
+                <tr>
+                    <td colspan="2">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-building"></i></div>
+                            <p class="empty-state-title">Nenhuma unidade de lotação encontrada</p>
+                            <p class="empty-state-text">Cadastre as unidades organizacionais para associar aos viajantes.</p>
+                            <a href="{% url 'cadastros:unidade-lotacao-cadastrar' %}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-lg me-1"></i> Cadastrar unidade
+                            </a>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>

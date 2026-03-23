@@ -5,19 +5,19 @@
 {% block page_title %}Veículos{% endblock %}
 
 {% block content %}
-<div class="page-header-cadastro d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Veículos</h2>
+<div class="page-header-cadastro">
+    <div></div>
     <div class="d-flex gap-2">
-        <a href="{% url 'cadastros:combustivel-lista' %}" class="btn btn-outline-secondary">Gerenciar Combustíveis</a>
-        <a href="{% url 'cadastros:veiculo-cadastrar' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Cadastrar</a>
+        <a href="{% url 'cadastros:combustivel-lista' %}" class="btn btn-outline-secondary btn-sm">Gerenciar Combustíveis</a>
+        <a href="{% url 'cadastros:veiculo-cadastrar' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Cadastrar</a>
     </div>
 </div>
 
-<div class="card filter-card mb-4">
+<div class="card filter-card mb-3">
     <div class="card-body py-3">
         <form method="get" class="row g-2 align-items-end">
-            <div class="col-12 col-md-4">
-                <label class="form-label small text-muted">Buscar</label>
+            <div class="col-12 col-md-5">
+                <label class="form-label small fw-semibold text-muted mb-1">Buscar</label>
                 <input type="text" name="q" class="form-control form-control-sm" placeholder="Placa, modelo, combustível, tipo ou status" value="{{ form_filter.q }}">
             </div>
             <div class="col-12 col-md-auto">
@@ -28,34 +28,47 @@
     </div>
 </div>
 
-<div class="card">
+<div class="card overflow-hidden">
     <div class="table-responsive">
         <table class="table table-hover table-cadastro mb-0">
-            <thead class="table-light">
+            <thead>
                 <tr>
                     <th>Placa</th>
                     <th>Modelo</th>
                     <th>Combustível</th>
                     <th>Tipo</th>
                     <th>Status</th>
-                    <th width="140" class="text-end">Ações</th>
+                    <th class="col-actions">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for obj in object_list %}
                 <tr>
-                    <td>{{ obj.placa_formatada }}</td>
-                    <td>{{ obj.modelo|default:"—" }}</td>
-                    <td>{% if obj.combustivel %}{{ obj.combustivel.nome }}{% else %}—{% endif %}</td>
-                    <td>{{ obj.get_tipo_display }}</td>
-                    <td><span class="{{ obj.status|status_badge_class }}">{{ obj.status|status_label }}</span></td>
-                    <td class="text-end">
-                        <a href="{% url 'cadastros:veiculo-editar' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
-                        <a href="{% url 'cadastros:veiculo-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                    <td data-label="Placa" class="fw-semibold">{{ obj.placa_formatada }}</td>
+                    <td data-label="Modelo">{{ obj.modelo|default:"—" }}</td>
+                    <td data-label="Combustível">{% if obj.combustivel %}{{ obj.combustivel.nome }}{% else %}—{% endif %}</td>
+                    <td data-label="Tipo">{{ obj.get_tipo_display }}</td>
+                    <td data-label="Status"><span class="{{ obj.status|status_badge_class }}">{{ obj.status|status_label }}</span></td>
+                    <td data-label="Ações" class="col-actions">
+                        <div class="table-actions">
+                            <a href="{% url 'cadastros:veiculo-editar' obj.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'cadastros:veiculo-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="6" class="text-center text-muted py-4">Nenhum veículo encontrado.</td></tr>
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-truck"></i></div>
+                            <p class="empty-state-title">Nenhum veículo encontrado</p>
+                            <p class="empty-state-text">Cadastre os veículos utilizados nas viagens.</p>
+                            <a href="{% url 'cadastros:veiculo-cadastrar' %}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-lg me-1"></i> Cadastrar veículo
+                            </a>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>

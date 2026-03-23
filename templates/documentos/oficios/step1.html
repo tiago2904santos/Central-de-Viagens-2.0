@@ -9,23 +9,26 @@
   {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
 
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Identificação</div>
-    <div class="card-body">
+    <div class="card-header-form">
+      <i class="bi bi-hash"></i>
+      <span>Identificação</span>
+    </div>
+    <div class="card-body pt-4">
       <div class="row g-3">
         <div class="col-md-3">
-          <label class="form-label">Número</label>
+          <label class="form-label fw-semibold">Número</label>
           <input type="text" name="numero" class="form-control" value="{{ oficio.numero|default:'' }}">
         </div>
         <div class="col-md-2">
-          <label class="form-label">Ano</label>
+          <label class="form-label fw-semibold">Ano</label>
           <input type="number" name="ano" class="form-control" value="{{ oficio.ano|default:'' }}" placeholder="{% now 'Y' %}">
         </div>
         <div class="col-md-3">
-          <label class="form-label">Protocolo</label>
+          <label class="form-label fw-semibold">Protocolo</label>
           <input type="text" name="protocolo" class="form-control" value="{{ oficio.protocolo|default:'' }}">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Data de criação</label>
+          <label class="form-label fw-semibold">Data de criação</label>
           <input type="date" name="data_criacao" class="form-control" value="{{ oficio.data_criacao|date:'Y-m-d'|default:'' }}">
         </div>
       </div>
@@ -33,10 +36,13 @@
   </div>
 
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Motivo</div>
-    <div class="card-body">
+    <div class="card-header-form">
+      <i class="bi bi-chat-text"></i>
+      <span>Motivo</span>
+    </div>
+    <div class="card-body pt-4">
       <div class="mb-3">
-        <label class="form-label">Modelo de motivo</label>
+        <label class="form-label fw-semibold">Modelo de motivo</label>
         <select name="modelo_motivo" id="id_modelo_motivo" class="form-select">
           <option value="">— Selecionar modelo —</option>
           {% for m in modelos_motivo %}
@@ -45,18 +51,21 @@
         </select>
       </div>
       <div class="mb-0">
-        <label class="form-label">Motivo</label>
+        <label class="form-label fw-semibold">Motivo</label>
         <textarea name="motivo" id="id_motivo" class="form-control" rows="4">{{ oficio.motivo|default:'' }}</textarea>
       </div>
     </div>
   </div>
 
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Custeio e destino</div>
-    <div class="card-body">
+    <div class="card-header-form">
+      <i class="bi bi-compass"></i>
+      <span>Custeio e destino</span>
+    </div>
+    <div class="card-body pt-4">
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label d-block">Tipo de custeio</label>
+          <label class="form-label fw-semibold d-block">Tipo de custeio</label>
           <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="custeio_tipo" id="custeio_proprio" value="PROPRIO" {% if oficio.custeio_tipo != 'EXTERNO' %}checked{% endif %} onchange="toggleCusteio()">
             <label class="form-check-label" for="custeio_proprio">Próprio</label>
@@ -70,7 +79,7 @@
           </div>
         </div>
         <div class="col-md-6">
-          <label class="form-label d-block">Tipo de destino</label>
+          <label class="form-label fw-semibold d-block">Tipo de destino</label>
           <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="tipo_destino" value="NACIONAL" {% if oficio.tipo_destino != 'INTERNACIONAL' %}checked{% endif %}>
             <label class="form-check-label">Nacional</label>
@@ -85,8 +94,11 @@
   </div>
 
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Evento (opcional)</div>
-    <div class="card-body">
+    <div class="card-header-form">
+      <i class="bi bi-calendar-event"></i>
+      <span>Evento <span class="fw-normal text-muted ms-1">(opcional)</span></span>
+    </div>
+    <div class="card-body pt-4">
       <select name="evento_id" id="id_evento_id" class="form-select mb-2" onchange="toggleNovoEvento()">
         <option value="">— Nenhum —</option>
         {% for ev in eventos %}
@@ -101,8 +113,11 @@
   </div>
 
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Viajantes</div>
-    <div class="card-body">
+    <div class="card-header-form">
+      <i class="bi bi-people"></i>
+      <span>Viajantes</span>
+    </div>
+    <div class="card-body pt-4">
       <input type="text" id="busca_viajante" class="form-control mb-3" placeholder="Buscar viajante...">
       <div class="scrollable-checklist">
         {% for v in todos_viajantes %}

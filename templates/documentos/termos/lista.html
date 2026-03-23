@@ -3,29 +3,31 @@
 {% block page_title %}Termos de autorização{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <span class="text-muted">{{ termos|length }} termo(s)</span>
-  <a href="{% url 'documentos:termo-novo' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Novo Termo</a>
+  <span class="text-muted small">{{ termos|length }} termo(s)</span>
+  <a href="{% url 'documentos:termo-novo' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Novo Termo</a>
 </div>
 {% if termos %}
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr><th>Número/Ano</th><th>Título</th><th>Status</th><th>Ofício</th><th>Roteiro</th><th>Viajante</th><th>Criado em</th><th class="text-end">Ações</th></tr>
+    <table class="table table-hover table-cadastro mb-0">
+      <thead>
+        <tr><th>Número/Ano</th><th>Título</th><th>Status</th><th>Ofício</th><th>Roteiro</th><th>Viajante</th><th>Criado em</th><th class="col-actions">Ações</th></tr>
       </thead>
       <tbody>
         {% for t in termos %}
         <tr>
-          <td>{% if t.numero and t.ano %}{{ t.numero }}/{{ t.ano }}{% else %}—{% endif %}</td>
-          <td>{{ t.titulo|default:"(sem título)" }}</td>
-          <td>{% if t.status == 'FINALIZADO' %}<span class="badge bg-success">Finalizado</span>{% else %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}</td>
-          <td>{{ t.oficio|default:"—" }}</td>
-          <td>{{ t.roteiro|default:"—" }}</td>
-          <td>{{ t.viajante|default:"—" }}</td>
-          <td>{{ t.criado_em|date:"d/m/Y" }}</td>
-          <td class="text-end">
-            <a href="{% url 'documentos:termo-editar' pk=t.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'documentos:termo-excluir' pk=t.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          <td data-label="Número">{% if t.numero and t.ano %}{{ t.numero }}/{{ t.ano }}{% else %}—{% endif %}</td>
+          <td data-label="Título" class="fw-semibold">{{ t.titulo|default:"(sem título)" }}</td>
+          <td data-label="Status">{% if t.status == 'FINALIZADO' %}<span class="status-badge status-badge-sm is-finalizado">Finalizado</span>{% else %}<span class="status-badge status-badge-sm is-rascunho">Rascunho</span>{% endif %}</td>
+          <td data-label="Ofício">{{ t.oficio|default:"—" }}</td>
+          <td data-label="Roteiro">{{ t.roteiro|default:"—" }}</td>
+          <td data-label="Viajante">{{ t.viajante|default:"—" }}</td>
+          <td data-label="Criado">{{ t.criado_em|date:"d/m/Y" }}</td>
+          <td data-label="Ações" class="col-actions">
+            <div class="table-actions">
+              <a href="{% url 'documentos:termo-editar' pk=t.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'documentos:termo-excluir' pk=t.pk %}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -34,10 +36,17 @@
   </div>
 </div>
 {% else %}
-<div class="text-center py-5">
-  <i class="bi bi-file-check fs-1 text-muted"></i>
-  <p class="text-muted mt-2">Nenhum termo cadastrado.</p>
-  <a href="{% url 'documentos:termo-novo' %}" class="btn btn-primary">Criar primeiro termo</a>
+<div class="card border-0 shadow-sm">
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <i class="bi bi-file-check"></i>
+    </div>
+    <p class="empty-state-title">Nenhum termo cadastrado</p>
+    <p class="empty-state-text">Termos de autorização formalizam permissões para os viajantes.</p>
+    <a href="{% url 'documentos:termo-novo' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Criar primeiro termo
+    </a>
+  </div>
 </div>
 {% endif %}
 {% endblock %}

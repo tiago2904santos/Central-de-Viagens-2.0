@@ -9,8 +9,11 @@
   {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
 
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Roteiro</div>
-    <div class="card-body">
+    <div class="card-header-form">
+      <i class="bi bi-signpost-2"></i>
+      <span>Roteiro</span>
+    </div>
+    <div class="card-body pt-4">
       <div class="mb-3">
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="roteiro_opcao" value="nenhum" id="rot_nenhum"
@@ -42,8 +45,11 @@
   </div>
 
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Diárias</div>
-    <div class="card-body">
+    <div class="card-header-form">
+      <i class="bi bi-calendar-range"></i>
+      <span>Diárias</span>
+    </div>
+    <div class="card-body pt-4">
       <div class="row g-3">
         <div class="col-md-3">
           <label class="form-label">Quantidade de diárias</label>
@@ -62,13 +68,14 @@
   </div>
 
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold d-flex justify-content-between align-items-center">
-      Trechos
-      <button type="button" class="btn btn-sm btn-outline-primary" onclick="addTrecho()">
+    <div class="card-header-form">
+      <i class="bi bi-map"></i>
+      <span>Trechos</span>
+      <button type="button" class="btn btn-sm btn-outline-primary ms-auto" onclick="addTrecho()">
         <i class="bi bi-plus-lg me-1"></i> Adicionar trecho
       </button>
     </div>
-    <div class="card-body" id="trechos_container">
+    <div class="card-body pt-3" id="trechos_container">
       {% for t in trechos %}
       <div class="row g-2 mb-3 trecho-row border rounded p-2">
         <div class="col-md-3">

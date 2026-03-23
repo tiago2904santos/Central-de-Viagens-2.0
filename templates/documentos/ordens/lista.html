@@ -3,25 +3,27 @@
 {% block page_title %}Ordens de serviço{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <span class="text-muted">{{ ordens|length }} ordem(s)</span>
-  <a href="{% url 'documentos:ordem-nova' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Nova Ordem</a>
+  <span class="text-muted small">{{ ordens|length }} ordem(s)</span>
+  <a href="{% url 'documentos:ordem-nova' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Nova Ordem</a>
 </div>
 {% if ordens %}
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr><th>Título</th><th>Status</th><th>Criado em</th><th class="text-end">Ações</th></tr>
+    <table class="table table-hover table-cadastro mb-0">
+      <thead>
+        <tr><th>Título</th><th>Status</th><th>Criado em</th><th class="col-actions">Ações</th></tr>
       </thead>
       <tbody>
         {% for o in ordens %}
         <tr>
-          <td>{{ o.titulo|default:"(sem título)" }}</td>
-          <td>{% if o.status == 'FINALIZADO' %}<span class="badge bg-success">Finalizado</span>{% else %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}</td>
-          <td>{{ o.criado_em|date:"d/m/Y" }}</td>
-          <td class="text-end">
-            <a href="{% url 'documentos:ordem-editar' pk=o.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'documentos:ordem-excluir' pk=o.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          <td data-label="Título" class="fw-semibold">{{ o.titulo|default:"(sem título)" }}</td>
+          <td data-label="Status">{% if o.status == 'FINALIZADO' %}<span class="status-badge status-badge-sm is-finalizado">Finalizado</span>{% else %}<span class="status-badge status-badge-sm is-rascunho">Rascunho</span>{% endif %}</td>
+          <td data-label="Criado">{{ o.criado_em|date:"d/m/Y" }}</td>
+          <td data-label="Ações" class="col-actions">
+            <div class="table-actions">
+              <a href="{% url 'documentos:ordem-editar' pk=o.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'documentos:ordem-excluir' pk=o.pk %}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -30,10 +32,17 @@
   </div>
 </div>
 {% else %}
-<div class="text-center py-5">
-  <i class="bi bi-card-checklist fs-1 text-muted"></i>
-  <p class="text-muted mt-2">Nenhuma ordem de serviço cadastrada.</p>
-  <a href="{% url 'documentos:ordem-nova' %}" class="btn btn-primary">Criar primeira ordem</a>
+<div class="card border-0 shadow-sm">
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <i class="bi bi-card-checklist"></i>
+    </div>
+    <p class="empty-state-title">Nenhuma ordem de serviço cadastrada</p>
+    <p class="empty-state-text">Ordens de serviço formalizam as autorizações de missão.</p>
+    <a href="{% url 'documentos:ordem-nova' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Criar primeira ordem
+    </a>
+  </div>
 </div>
 {% endif %}
 {% endblock %}

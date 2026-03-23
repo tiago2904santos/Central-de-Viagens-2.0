@@ -3,25 +3,27 @@
 {% block page_title %}Planos de trabalho{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <span class="text-muted">{{ planos|length }} plano(s)</span>
-  <a href="{% url 'documentos:plano-novo' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Novo Plano</a>
+  <span class="text-muted small">{{ planos|length }} plano(s)</span>
+  <a href="{% url 'documentos:plano-novo' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Novo Plano</a>
 </div>
 {% if planos %}
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr><th>Título</th><th>Status</th><th>Criado em</th><th class="text-end">Ações</th></tr>
+    <table class="table table-hover table-cadastro mb-0">
+      <thead>
+        <tr><th>Título</th><th>Status</th><th>Criado em</th><th class="col-actions">Ações</th></tr>
       </thead>
       <tbody>
         {% for p in planos %}
         <tr>
-          <td>{{ p.titulo|default:"(sem título)" }}</td>
-          <td>{% if p.status == 'FINALIZADO' %}<span class="badge bg-success">Finalizado</span>{% else %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}</td>
-          <td>{{ p.criado_em|date:"d/m/Y" }}</td>
-          <td class="text-end">
-            <a href="{% url 'documentos:plano-editar' pk=p.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'documentos:plano-excluir' pk=p.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          <td data-label="Título" class="fw-semibold">{{ p.titulo|default:"(sem título)" }}</td>
+          <td data-label="Status">{% if p.status == 'FINALIZADO' %}<span class="status-badge status-badge-sm is-finalizado">Finalizado</span>{% else %}<span class="status-badge status-badge-sm is-rascunho">Rascunho</span>{% endif %}</td>
+          <td data-label="Criado">{{ p.criado_em|date:"d/m/Y" }}</td>
+          <td data-label="Ações" class="col-actions">
+            <div class="table-actions">
+              <a href="{% url 'documentos:plano-editar' pk=p.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'documentos:plano-excluir' pk=p.pk %}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -30,10 +32,17 @@
   </div>
 </div>
 {% else %}
-<div class="text-center py-5">
-  <i class="bi bi-clipboard2-check fs-1 text-muted"></i>
-  <p class="text-muted mt-2">Nenhum plano de trabalho cadastrado.</p>
-  <a href="{% url 'documentos:plano-novo' %}" class="btn btn-primary">Criar primeiro plano</a>
+<div class="card border-0 shadow-sm">
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <i class="bi bi-clipboard2-check"></i>
+    </div>
+    <p class="empty-state-title">Nenhum plano de trabalho cadastrado</p>
+    <p class="empty-state-text">Planos de trabalho definem as atividades a serem realizadas.</p>
+    <a href="{% url 'documentos:plano-novo' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Criar primeiro plano
+    </a>
+  </div>
 </div>
 {% endif %}
 {% endblock %}

@@ -3,57 +3,69 @@
 {% block page_title %}{{ evento.nome }}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-end gap-2 mb-4">
-  <a href="{% url 'documentos:evento-editar' pk=evento.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i> Editar</a>
-  <a href="{% url 'documentos:evento-excluir' pk=evento.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i> Excluir</a>
+  <a href="{% url 'documentos:evento-editar' pk=evento.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil me-1"></i> Editar</a>
+  <a href="{% url 'documentos:evento-excluir' pk=evento.pk %}" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash me-1"></i> Excluir</a>
 </div>
 
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header bg-light fw-semibold">Dados do evento</div>
-  <div class="card-body">
+<div class="card border-0 shadow-sm mb-4 overflow-hidden">
+  <div class="card-header-form">
+    <i class="bi bi-calendar-event"></i>
+    <span>Dados do evento</span>
+  </div>
+  <div class="card-body pt-4">
     <dl class="row mb-0">
-      <dt class="col-sm-3">Nome</dt><dd class="col-sm-9">{{ evento.nome }}</dd>
-      <dt class="col-sm-3">Status</dt>
-      <dd class="col-sm-9">{% if evento.status == 'FINALIZADO' %}<span class="badge bg-success">Finalizado</span>{% else %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}</dd>
-      <dt class="col-sm-3">Data início</dt><dd class="col-sm-9">{{ evento.data_inicio|date:"d/m/Y"|default:"—" }}</dd>
-      <dt class="col-sm-3">Data fim</dt><dd class="col-sm-9">{{ evento.data_fim|date:"d/m/Y"|default:"—" }}</dd>
-      {% if evento.descricao %}<dt class="col-sm-3">Descrição</dt><dd class="col-sm-9">{{ evento.descricao }}</dd>{% endif %}
+      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase" style="font-size:.75rem;letter-spacing:.05em">Nome</dt><dd class="col-sm-9 fw-semibold">{{ evento.nome }}</dd>
+      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase" style="font-size:.75rem;letter-spacing:.05em">Status</dt>
+      <dd class="col-sm-9">{% if evento.status == 'FINALIZADO' %}<span class="status-badge status-badge-sm is-finalizado">Finalizado</span>{% else %}<span class="status-badge status-badge-sm is-rascunho">Rascunho</span>{% endif %}</dd>
+      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase" style="font-size:.75rem;letter-spacing:.05em">Data início</dt><dd class="col-sm-9">{{ evento.data_inicio|date:"d/m/Y"|default:"—" }}</dd>
+      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase" style="font-size:.75rem;letter-spacing:.05em">Data fim</dt><dd class="col-sm-9">{{ evento.data_fim|date:"d/m/Y"|default:"—" }}</dd>
+      {% if evento.descricao %}<dt class="col-sm-3 text-muted small fw-semibold text-uppercase" style="font-size:.75rem;letter-spacing:.05em">Descrição</dt><dd class="col-sm-9">{{ evento.descricao }}</dd>{% endif %}
     </dl>
   </div>
 </div>
 
 <div class="row g-3">
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-light fw-semibold">Ofícios ({{ oficios|length }})</div>
+    <div class="card border-0 shadow-sm h-100 overflow-hidden">
+      <div class="card-header-form">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Ofícios <span class="fw-normal text-muted">({{ oficios|length }})</span></span>
+      </div>
       <ul class="list-group list-group-flush">
         {% for o in oficios %}
-        <li class="list-group-item"><a href="{% url 'documentos:oficio-step1' pk=o.pk %}">{{ o.identificacao }}</a></li>
+        <li class="list-group-item py-2"><a href="{% url 'documentos:oficio-step1' pk=o.pk %}" class="text-decoration-none">{{ o.identificacao }}</a></li>
         {% empty %}
-        <li class="list-group-item text-muted small">Nenhum ofício.</li>
+        <li class="list-group-item text-muted small py-3">Nenhum ofício vinculado.</li>
         {% endfor %}
       </ul>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-light fw-semibold">Roteiros ({{ roteiros|length }})</div>
+    <div class="card border-0 shadow-sm h-100 overflow-hidden">
+      <div class="card-header-form">
+        <i class="bi bi-signpost-2"></i>
+        <span>Roteiros <span class="fw-normal text-muted">({{ roteiros|length }})</span></span>
+      </div>
       <ul class="list-group list-group-flush">
         {% for r in roteiros %}
-        <li class="list-group-item"><a href="{% url 'documentos:roteiro-editar' pk=r.pk %}">{{ r.nome|default:r }}</a></li>
+        <li class="list-group-item py-2"><a href="{% url 'documentos:roteiro-editar' pk=r.pk %}" class="text-decoration-none">{{ r.nome|default:r }}</a></li>
         {% empty %}
-        <li class="list-group-item text-muted small">Nenhum roteiro.</li>
+        <li class="list-group-item text-muted small py-3">Nenhum roteiro vinculado.</li>
         {% endfor %}
       </ul>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-light fw-semibold">Termos ({{ termos|length }})</div>
+    <div class="card border-0 shadow-sm h-100 overflow-hidden">
+      <div class="card-header-form">
+        <i class="bi bi-file-check"></i>
+        <span>Termos <span class="fw-normal text-muted">({{ termos|length }})</span></span>
+      </div>
       <ul class="list-group list-group-flush">
         {% for t in termos %}
-        <li class="list-group-item"><a href="{% url 'documentos:termo-editar' pk=t.pk %}">{{ t.titulo|default:t }}</a></li>
+        <li class="list-group-item py-2"><a href="{% url 'documentos:termo-editar' pk=t.pk %}" class="text-decoration-none">{{ t.titulo|default:t }}</a></li>
         {% empty %}
-        <li class="list-group-item text-muted small">Nenhum termo.</li>
+        <li class="list-group-item text-muted small py-3">Nenhum termo vinculado.</li>
         {% endfor %}
       </ul>
     </div>
