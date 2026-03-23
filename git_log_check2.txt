@@ -1,0 +1,3 @@
+﻿898a493 refactor: compacta topo do wizard de oficios conforme montagem
+a0b775d refactor: ajusta distribuicao de viajantes, veiculo e motorista nos cards de oficios
+7dc0a52 chore: checkpoint antes do ajuste fino do topo do wizard de oficios

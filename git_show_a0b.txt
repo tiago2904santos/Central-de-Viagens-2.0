@@ -1,0 +1,9 @@
+﻿commit a0b775dd106f44e4015ae952a178bb3a9777079d
+Author: Tiago dos Santos <tiago2904santos@gmail.com>
+Date:   Mon Mar 23 11:54:22 2026 -0300
+
+    refactor: ajusta distribuicao de viajantes, veiculo e motorista nos cards de oficios
+
+ static/css/style.css   | 22 +++++++-----
+ test_results_final.txt | 90 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 104 insertions(+), 8 deletions(-)

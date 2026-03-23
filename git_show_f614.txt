@@ -1,0 +1,29 @@
+﻿commit f614d68860bd3f6ab1d08a8a0abd74fa67cd150f
+Author: Tiago dos Santos <tiago2904santos@gmail.com>
+Date:   Mon Mar 23 11:49:38 2026 -0300
+
+    chore: checkpoint antes do ajuste de layout dos cards de oficios
+
+ ajustes_test.txt                                   | Bin 0 -> 3176 bytes
+ eventos/forms.py                                   |   8 +
+ eventos/migrations/0039_oficio_assunto_tipo.py     |  18 ++
+ eventos/models.py                                  |  14 ++
+ .../documentos/modelo_plano_de_trabalho.docx       | Bin 2101016 -> 2103788 bytes
+ eventos/resources/documentos/oficio_model.docx     | Bin 1720812 -> 1720715 bytes
+ eventos/services/documentos/context.py             |   1 +
+ eventos/services/documentos/oficio.py              |  37 ++-
+ eventos/services/documentos/plano_trabalho.py      |   1 +
+ eventos/tests/test_eventos.py                      | 118 ++++++++++
+ eventos/views.py                                   |   9 +-
+ git_diff_context.txt                               |   0
+ git_stash_pop.txt                                  |  29 +++
+ oficio_docs_test.txt                               | Bin 0 -> 73410 bytes
+ plano_template_inspect.txt                         |  69 ++++++
+ run_tests_now.ps1                                  |   4 +
+ templates/eventos/global/oficios_lista.html        |   2 +-
+ templates/eventos/oficio/wizard_step1.html         |   8 +
+ test_output_docum.txt                              | Bin 0 -> 8026 bytes
+ test_results.txt                                   |  71 ++++++
+ test_results_before.txt                            | 249 +++++++++++++++++++++
+ test_results_final.txt                             |  14 ++
+ 22 files changed, 639 insertions(+), 13 deletions(-)

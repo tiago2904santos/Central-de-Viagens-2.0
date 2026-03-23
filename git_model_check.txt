@@ -1,0 +1,11 @@
+﻿
+    ASSUNTO_TIPO_AUTORIZACAO = 'AUTORIZACAO'
+    ASSUNTO_TIPO_CONVALIDACAO = 'CONVALIDACAO'
+    ASSUNTO_TIPO_CHOICES = [
+        (ASSUNTO_TIPO_AUTORIZACAO, 'Autoriza├º├úo'),
+        (ASSUNTO_TIPO_CONVALIDACAO, 'Convalida├º├úo'),
+    assunto_tipo = models.CharField(
+        choices=ASSUNTO_TIPO_CHOICES,
+        default=ASSUNTO_TIPO_AUTORIZACAO,
+
+

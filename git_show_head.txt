@@ -1,0 +1,11 @@
+﻿commit 898a4939b33b4c3d9ac8c5195787581f1d1eefbd
+Author: Tiago dos Santos <tiago2904santos@gmail.com>
+Date:   Mon Mar 23 11:55:24 2026 -0300
+
+    refactor: compacta topo do wizard de oficios conforme montagem
+
+ git_add_output.txt    |  0
+ git_commit_output.txt | 15 +++++++++++
+ git_log_output.txt    |  5 ++++
+ static/css/style.css  | 72 +++++++++++++++++++++++++--------------------------
+ 4 files changed, 56 insertions(+), 36 deletions(-)
