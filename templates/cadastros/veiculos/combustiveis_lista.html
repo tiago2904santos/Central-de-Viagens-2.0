@@ -4,62 +4,60 @@
 {% block page_title %}Combustíveis{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="page-header-cadastro d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Combustíveis</h2>
-        <div class="d-flex gap-2">
-            {% if return_url %}<a href="{{ return_url }}" class="btn btn-outline-secondary">Voltar</a>{% else %}<a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary">Voltar para veículos</a>{% endif %}
-            <a href="{% url 'cadastros:combustivel-cadastrar' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Cadastrar</a>
-        </div>
+<div class="page-header-cadastro d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Combustíveis</h2>
+    <div class="d-flex gap-2">
+        {% if return_url %}<a href="{{ return_url }}" class="btn btn-outline-secondary">Voltar</a>{% else %}<a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary">Voltar para veículos</a>{% endif %}
+        <a href="{% url 'cadastros:combustivel-cadastrar' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Cadastrar</a>
     </div>
+</div>
 
-    <div class="card filter-card mb-4">
-        <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end">
-                <div class="col-12 col-md-4">
-                    <label class="form-label small text-muted">Buscar</label>
-                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Nome" value="{{ form_filter.q }}">
-                </div>
-                <div class="col-12 col-md-auto">
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-                    <a href="{% url 'cadastros:combustivel-lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-                </div>
-            </form>
-        </div>
+<div class="card filter-card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label small text-muted">Buscar</label>
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="Nome" value="{{ form_filter.q }}">
+            </div>
+            <div class="col-12 col-md-auto">
+                <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+                <a href="{% url 'cadastros:combustivel-lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover table-cadastro mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Nome</th>
-                        <th>Padrão</th>
-                        <th width="220" class="text-end">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for obj in object_list %}
-                    <tr>
-                        <td>{{ obj.nome }}</td>
-                        <td>{% if obj.is_padrao %}<span class="badge bg-primary">Padrão</span>{% else %}—{% endif %}</td>
-                        <td class="text-end">
-                            {% if not obj.is_padrao %}
-                            <form method="post" action="{% url 'cadastros:combustivel-definir-padrao' obj.pk %}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-outline-secondary">Definir como padrão</button>
-                            </form>
-                            {% endif %}
-                            <a href="{% url 'cadastros:combustivel-editar' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
-                            <a href="{% url 'cadastros:combustivel-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="3" class="text-center text-muted py-4">Nenhum combustível encontrado.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-cadastro mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome</th>
+                    <th>Padrão</th>
+                    <th width="220" class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in object_list %}
+                <tr>
+                    <td>{{ obj.nome }}</td>
+                    <td>{% if obj.is_padrao %}<span class="badge bg-primary">Padrão</span>{% else %}—{% endif %}</td>
+                    <td class="text-end">
+                        {% if not obj.is_padrao %}
+                        <form method="post" action="{% url 'cadastros:combustivel-definir-padrao' obj.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Definir como padrão</button>
+                        </form>
+                        {% endif %}
+                        <a href="{% url 'cadastros:combustivel-editar' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <a href="{% url 'cadastros:combustivel-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted py-4">Nenhum combustível encontrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

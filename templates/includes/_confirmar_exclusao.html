@@ -1,0 +1,15 @@
+<div class="confirm-delete-card card">
+  <div class="card-body">
+    <div class="d-flex align-items-center mb-3">
+      <i class="bi bi-exclamation-triangle-fill text-danger fs-2 me-3" aria-hidden="true"></i>
+      <h5 class="mb-0">{{ exclusao_titulo|default:"Confirmar exclusão" }}</h5>
+    </div>
+    <p class="mb-4">{{ exclusao_texto }}</p>
+    <form method="post" class="d-flex gap-2 flex-wrap">
+      {% csrf_token %}
+      {% if exclusao_hidden_fields %}{{ exclusao_hidden_fields }}{% endif %}
+      <button type="submit" class="btn btn-danger">{{ exclusao_btn_label|default:"Confirmar exclusão" }}</button>
+      <a href="{{ exclusao_url_cancelar }}" class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>

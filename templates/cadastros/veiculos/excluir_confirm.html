@@ -1,19 +1,7 @@
 {% extends 'base.html' %}
-
 {% block title %}Excluir veículo — Central de Viagens{% endblock %}
 {% block page_title %}Excluir veículo{% endblock %}
-
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="card">
-        <div class="card-body">
-            <p class="mb-3">Deseja realmente excluir o veículo <strong>{{ object.placa }}</strong> — {{ object.modelo }}?</p>
-            <form method="post" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Excluir</button>
-            </form>
-            <a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-        </div>
-    </div>
-</div>
+{% url 'cadastros:veiculo-lista' as _cancel_url %}
+{% include 'includes/_confirmar_exclusao.html' with exclusao_titulo="Excluir veículo" exclusao_texto="Deseja realmente excluir o veículo <strong>{{ object.placa }}</strong> — {{ object.modelo }}? Esta ação não pode ser desfeita." exclusao_url_cancelar=_cancel_url %}
 {% endblock %}

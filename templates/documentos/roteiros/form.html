@@ -2,7 +2,7 @@
 {% block title %}{% if roteiro %}Editar roteiro{% else %}Novo roteiro{% endif %}{% endblock %}
 {% block page_title %}{% if roteiro %}Editar roteiro{% else %}Novo roteiro{% endif %}{% endblock %}
 {% block content %}
-<div class="card border-0 shadow-sm" style="max-width:700px">
+<div class="card form-doc-card">
   <div class="card-body">
     <form method="post">
       {% csrf_token %}
@@ -25,7 +25,7 @@
         </select>
       </div>
       <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-success">Salvar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
         <a href="{% url 'documentos:roteiros' %}" class="btn btn-outline-secondary">Cancelar</a>
       </div>
     </form>

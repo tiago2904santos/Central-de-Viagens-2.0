@@ -4,30 +4,28 @@
 {% block page_title %}{% if is_create %}Cadastrar Cargo{% else %}Editar Cargo{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="card form-card">
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <label for="id_nome" class="form-label">{{ form.nome.label }}</label>
-                        {{ form.nome }}
-                        {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="col-12">
-                        <div class="form-check">
-                            {{ form.is_padrao }}
-                            <label class="form-check-label" for="id_is_padrao">Definir como padrão</label>
-                        </div>
+<div class="card form-card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label for="id_nome" class="form-label">{{ form.nome.label }}</label>
+                    {{ form.nome }}
+                    {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        {{ form.is_padrao }}
+                        <label class="form-check-label" for="id_is_padrao">Definir como padrão</label>
                     </div>
                 </div>
-                <div class="form-actions mt-4">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                    <a href="{% url 'cadastros:cargo-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="form-actions mt-4">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a href="{% url 'cadastros:cargo-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
     </div>
 </div>
 <script>

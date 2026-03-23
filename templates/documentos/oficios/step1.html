@@ -104,7 +104,7 @@
     <div class="card-header bg-light fw-semibold">Viajantes</div>
     <div class="card-body">
       <input type="text" id="busca_viajante" class="form-control mb-3" placeholder="Buscar viajante...">
-      <div style="max-height:300px;overflow-y:auto" class="border rounded p-2">
+      <div class="scrollable-checklist">
         {% for v in todos_viajantes %}
         {% with selected_ids=viajantes_selecionados|default:'' %}
         <div class="form-check viajante-item" data-nome="{{ v.nome|lower }}">

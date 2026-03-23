@@ -1,19 +1,62 @@
-<div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+<nav class="oficio-stepper" aria-label="Etapas do ofício">
   {% if oficio %}
-  <a href="{% url 'documentos:oficio-step1' pk=oficio.pk %}" class="badge text-decoration-none px-3 py-2 fs-6 {% if step == 1 %}bg-primary{% else %}bg-success{% endif %}">1. Dados gerais</a>
-  <i class="bi bi-chevron-right text-muted"></i>
-  {% if step >= 2 %}<a href="{% url 'documentos:oficio-step2' pk=oficio.pk %}" class="badge text-decoration-none px-3 py-2 fs-6 {% if step == 2 %}bg-primary{% else %}bg-success{% endif %}">2. Transporte</a>{% else %}<span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">2. Transporte</span>{% endif %}
-  <i class="bi bi-chevron-right text-muted"></i>
-  {% if step >= 3 %}<a href="{% url 'documentos:oficio-step3' pk=oficio.pk %}" class="badge text-decoration-none px-3 py-2 fs-6 {% if step == 3 %}bg-primary{% else %}bg-success{% endif %}">3. Roteiro</a>{% else %}<span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">3. Roteiro</span>{% endif %}
-  <i class="bi bi-chevron-right text-muted"></i>
-  {% if step >= 4 %}<a href="{% url 'documentos:oficio-step4' pk=oficio.pk %}" class="badge text-decoration-none px-3 py-2 fs-6 {% if step == 4 %}bg-primary{% else %}bg-success{% endif %}">4. Resumo</a>{% else %}<span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">4. Resumo</span>{% endif %}
+  <a href="{% url 'documentos:oficio-step1' pk=oficio.pk %}"
+     class="oficio-stepper-link {% if step == 1 %}is-active{% else %}is-done{% endif %}">
+    <span class="oficio-stepper-number">Passo 1</span>
+    <span class="oficio-stepper-label">Dados gerais</span>
+  </a>
+  {% if step >= 2 %}
+  <a href="{% url 'documentos:oficio-step2' pk=oficio.pk %}"
+     class="oficio-stepper-link {% if step == 2 %}is-active{% else %}is-done{% endif %}">
+    <span class="oficio-stepper-number">Passo 2</span>
+    <span class="oficio-stepper-label">Transporte</span>
+  </a>
   {% else %}
-  <span class="badge bg-primary px-3 py-2 fs-6">1. Dados gerais</span>
-  <i class="bi bi-chevron-right text-muted"></i>
-  <span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">2. Transporte</span>
-  <i class="bi bi-chevron-right text-muted"></i>
-  <span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">3. Roteiro</span>
-  <i class="bi bi-chevron-right text-muted"></i>
-  <span class="badge bg-secondary px-3 py-2 fs-6 opacity-50">4. Resumo</span>
+  <span class="oficio-stepper-link is-disabled">
+    <span class="oficio-stepper-number">Passo 2</span>
+    <span class="oficio-stepper-label">Transporte</span>
+  </span>
   {% endif %}
-</div>
+  {% if step >= 3 %}
+  <a href="{% url 'documentos:oficio-step3' pk=oficio.pk %}"
+     class="oficio-stepper-link {% if step == 3 %}is-active{% else %}is-done{% endif %}">
+    <span class="oficio-stepper-number">Passo 3</span>
+    <span class="oficio-stepper-label">Roteiro e Diárias</span>
+  </a>
+  {% else %}
+  <span class="oficio-stepper-link is-disabled">
+    <span class="oficio-stepper-number">Passo 3</span>
+    <span class="oficio-stepper-label">Roteiro e Diárias</span>
+  </span>
+  {% endif %}
+  {% if step >= 4 %}
+  <a href="{% url 'documentos:oficio-step4' pk=oficio.pk %}"
+     class="oficio-stepper-link {% if step == 4 %}is-active{% else %}is-done{% endif %}">
+    <span class="oficio-stepper-number">Passo 4</span>
+    <span class="oficio-stepper-label">Resumo</span>
+  </a>
+  {% else %}
+  <span class="oficio-stepper-link is-disabled">
+    <span class="oficio-stepper-number">Passo 4</span>
+    <span class="oficio-stepper-label">Resumo</span>
+  </span>
+  {% endif %}
+  {% else %}
+  <span class="oficio-stepper-link is-active">
+    <span class="oficio-stepper-number">Passo 1</span>
+    <span class="oficio-stepper-label">Dados gerais</span>
+  </span>
+  <span class="oficio-stepper-link is-disabled">
+    <span class="oficio-stepper-number">Passo 2</span>
+    <span class="oficio-stepper-label">Transporte</span>
+  </span>
+  <span class="oficio-stepper-link is-disabled">
+    <span class="oficio-stepper-number">Passo 3</span>
+    <span class="oficio-stepper-label">Roteiro e Diárias</span>
+  </span>
+  <span class="oficio-stepper-link is-disabled">
+    <span class="oficio-stepper-number">Passo 4</span>
+    <span class="oficio-stepper-label">Resumo</span>
+  </span>
+  {% endif %}
+</nav>
