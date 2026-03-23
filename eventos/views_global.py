@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta
 from urllib.parse import urlencode
@@ -91,7 +91,7 @@ def _resolve_ordering(filters, allowed_fields, default_key):
 
 def _get_default_pt_cargo():
     preferred_names = [
-        'AGENTE DE POLÍCIA CIVIL',
+        'AGENTE DE POLÃCIA CIVIL',
         'AGENTE DE POLICIA CIVIL',
     ]
     for name in preferred_names:
@@ -272,7 +272,7 @@ TERMO_STATUS_CARD_META = {
 }
 
 EMPTY_DISPLAY = '-'
-EMPTY_DISPLAY_ALIASES = {'-', '—', 'â€”'}
+EMPTY_DISPLAY_ALIASES = {'-', 'â€”', 'Ã¢â‚¬â€'}
 OFICIO_CONTEXT_CHOICES = [
     ('EVENTO', 'Com evento'),
     ('AVULSO', 'Sem evento'),
@@ -314,9 +314,9 @@ VIAGEM_STATUS_CARD_META = {
     'INDEFINIDA': {'label': 'Sem periodo', 'css_class': 'is-trip-muted'},
 }
 OFICIO_CARD_THEME_META = {
-    'green': {
+    'accent': {
         'label': 'Concluido',
-        'css_class': 'is-tone-green',
+        'css_class': 'is-tone-accent',
         'status_css_class': 'is-finalizado',
     },
     'orange': {
@@ -455,7 +455,7 @@ def _label_local(cidade, estado):
         return cidade.nome
     if estado:
         return estado.sigla
-    return '—'
+    return 'â€”'
 
 
 def _oficio_destinos_display(oficio):
@@ -466,20 +466,20 @@ def _oficio_destinos_display(oficio):
             getattr(trecho, 'destino_cidade', None),
             getattr(trecho, 'destino_estado', None),
         )
-        if label == '—' or label in seen:
+        if label == 'â€”' or label in seen:
             continue
         seen.add(label)
         labels.append(label)
     if labels:
         return ', '.join(labels)
-    return oficio.get_tipo_destino_display() or '—'
+    return oficio.get_tipo_destino_display() or 'â€”'
 
 
 def _roteiro_destinos_display(roteiro):
     labels = []
     for destino in roteiro.destinos.all():
         labels.append(_label_local(destino.cidade, destino.estado))
-    return ', '.join(labels) if labels else '—'
+    return ', '.join(labels) if labels else 'â€”'
 
 
 def _combine_date_time(date_value, time_value, fallback_time):
@@ -504,7 +504,7 @@ def _oficio_periodo_display(oficio):
     if retorno_chegada:
         pontos.append(retorno_chegada)
     if not pontos:
-        return 'â€”'
+        return 'Ã¢â‚¬â€'
     inicio = min(pontos)
     fim = max(pontos)
     if inicio.date() == fim.date():
@@ -524,7 +524,7 @@ def _oficio_viajantes_display(oficio):
 
 
 def _oficio_process_status_meta(oficio):
-    default_label = getattr(oficio, 'get_status_display', lambda: oficio.status)() or oficio.status or 'â€”'
+    default_label = getattr(oficio, 'get_status_display', lambda: oficio.status)() or oficio.status or 'Ã¢â‚¬â€'
     meta = OFICIO_STATUS_CARD_META.get(oficio.status, {})
     return {
         'label': meta.get('label', default_label),
@@ -532,7 +532,7 @@ def _oficio_process_status_meta(oficio):
     }
 
 
-def _document_card_status_meta(status_key, fallback_label='â€”'):
+def _document_card_status_meta(status_key, fallback_label='Ã¢â‚¬â€'):
     meta = DOCUMENT_STATUS_CARD_META.get(status_key, {})
     return {
         'label': meta.get('label', fallback_label),
@@ -578,7 +578,7 @@ def _build_oficio_document_actions(oficio, tipo_documento):
         status_key = 'not_applicable'
         detail = 'Documento nao suportado neste fluxo.'
 
-    status_meta = _document_card_status_meta(status_key, STATUS_LABELS.get(status_key, 'â€”'))
+    status_meta = _document_card_status_meta(status_key, STATUS_LABELS.get(status_key, 'Ã¢â‚¬â€'))
     return {
         'status_key': status_key,
         'status_label': status_meta['label'],
@@ -594,7 +594,7 @@ def _build_oficio_document_cards(oficio):
         {'label': 'Destino', 'value': oficio.destinos_display},
         {'label': 'Per\u00edodo', 'value': oficio.periodo_display},
         {'label': 'Viajantes', 'value': oficio.viajantes_display},
-        {'label': 'Protocolo', 'value': oficio.protocolo_formatado or 'â€”'},
+        {'label': 'Protocolo', 'value': oficio.protocolo_formatado or 'Ã¢â‚¬â€'},
     ]
     cards = []
 
@@ -636,8 +636,8 @@ def _build_oficio_document_cards(oficio):
                 'summary_items': [
                     {'label': 'Destino', 'value': oficio.destinos_display},
                     {'label': 'Per\u00edodo', 'value': oficio.periodo_display},
-                    {'label': 'Primeira sa\u00edda', 'value': justificativa_info['primeira_saida_display'] or 'â€”'},
-                    {'label': 'Protocolo', 'value': oficio.protocolo_formatado or 'â€”'},
+                    {'label': 'Primeira sa\u00edda', 'value': justificativa_info['primeira_saida_display'] or 'Ã¢â‚¬â€'},
+                    {'label': 'Protocolo', 'value': oficio.protocolo_formatado or 'Ã¢â‚¬â€'},
                 ],
                 'edit_url': reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
                 'actions': justificativa_document['actions'],
@@ -655,7 +655,7 @@ def _build_oficio_document_cards(oficio):
                 'status_label': termo_document['status_label'],
                 'status_css_class': termo_document['status_css_class'],
                 'detail': (
-                    'Marcado no resumo para geraÃ§Ã£o do termo preenchido.'
+                    'Marcado no resumo para geraÃƒÂ§ÃƒÂ£o do termo preenchido.'
                     if oficio.gerar_termo_preenchido and termo_document['status_key'] != 'available'
                     else termo_document['detail']
                 ),
@@ -1205,7 +1205,7 @@ def _oficio_list_theme(oficio, viagem_status, today=None):
     days_until = (inicio - hoje).days
     if hoje > fim:
         if oficio.status == Oficio.STATUS_FINALIZADO:
-            theme_key = 'green'
+            theme_key = 'accent'
             reason = 'Evento concluido com oficio finalizado.'
         else:
             theme_key = 'red'
@@ -1639,10 +1639,10 @@ def roteiro_global_lista(request):
                 (RoteiroEvento.TIPO_EVENTO, 'Vinculados a evento'),
             ],
             'order_by_choices': [
-                ('updated_at', 'Atualização'),
+                ('updated_at', 'AtualizaÃ§Ã£o'),
                 ('evento', 'Evento'),
                 ('status', 'Status'),
-                ('created_at', 'Criação'),
+                ('created_at', 'CriaÃ§Ã£o'),
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
             'novo_roteiro_url': (
@@ -1681,7 +1681,7 @@ def _build_plano_trabalho_status_meta(plano):
         return {
             'label': plano.get_status_display(),
             'badge_css_class': 'is-finalizado',
-            'theme_class': 'is-tone-green',
+            'theme_class': 'is-tone-accent',
         }
     return {
         'label': plano.get_status_display(),
@@ -1838,14 +1838,14 @@ def _build_plano_trabalho_form_ui_context(form, *, obj=None, preselected_event=N
     elif roteiro:
         for destino in roteiro.destinos.all():
             label = _label_local(getattr(destino, 'cidade', None), getattr(destino, 'estado', None))
-            if label == '—' or label in seen_destinos:
+            if label == 'â€”' or label in seen_destinos:
                 continue
             seen_destinos.add(label)
             destinos_labels.append(label)
     elif evento:
         for destino in evento.destinos.all():
             label = _label_local(getattr(destino, 'cidade', None), getattr(destino, 'estado', None))
-            if label == '—' or label in seen_destinos:
+            if label == 'â€”' or label in seen_destinos:
                 continue
             seen_destinos.add(label)
             destinos_labels.append(label)
@@ -1905,10 +1905,10 @@ def _build_plano_trabalho_form_ui_context(form, *, obj=None, preselected_event=N
         ],
         'glance': {
             'evento': getattr(evento, 'titulo', '') or 'Sem evento vinculado',
-            'oficios': ', '.join(oficio.numero_formatado or f'#{oficio.pk}' for oficio in related_oficios) or 'Sem ofícios vinculados',
+            'oficios': ', '.join(oficio.numero_formatado or f'#{oficio.pk}' for oficio in related_oficios) or 'Sem ofÃ­cios vinculados',
             'roteiro': (f'Roteiro #{roteiro.pk}' if roteiro else 'Sem roteiro definido'),
             'periodo': _format_periodo_curto(data_inicio, data_fim),
-            'destinos': ', '.join(destinos_labels) or 'Destinos preenchidos no formulário',
+            'destinos': ', '.join(destinos_labels) or 'Destinos preenchidos no formulÃ¡rio',
             'solicitante': solicitante_label,
             'atividades': [item['nome'] for item in selected_activities],
             'atividades_count_label': (
@@ -1976,8 +1976,8 @@ def planos_trabalho_global(request):
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'status_choices': PlanoTrabalho.STATUS_CHOICES,
             'order_by_choices': [
-                ('updated_at', 'Atualização'),
-                ('created_at', 'Criação'),
+                ('updated_at', 'AtualizaÃ§Ã£o'),
+                ('created_at', 'CriaÃ§Ã£o'),
                 ('status', 'Status'),
                 ('evento', 'Evento'),
             ],
@@ -2038,7 +2038,7 @@ def plano_trabalho_novo(request):
             'pt_glance': ui_context['glance'],
             'pt_selected_activity_codes': ui_context['selected_codes'],
             'plano_trabalho_atividades_catalogo': ATIVIDADES_CATALOGO,
-            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrão',
+            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
             'hide_page_header': True,
         },
@@ -2085,7 +2085,7 @@ def plano_trabalho_editar(request, pk):
             'pt_glance': ui_context['glance'],
             'pt_selected_activity_codes': ui_context['selected_codes'],
             'plano_trabalho_atividades_catalogo': ATIVIDADES_CATALOGO,
-            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrão',
+            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
             'hide_page_header': True,
         },
@@ -2104,7 +2104,7 @@ def plano_trabalho_excluir(request, pk):
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-planos-trabalho'))
     if request.method == 'POST':
         obj.delete()
-        messages.success(request, 'Plano de trabalho excluído.')
+        messages.success(request, 'Plano de trabalho excluÃ­do.')
         return redirect(return_to)
     return render(
         request,
@@ -2118,7 +2118,7 @@ def plano_trabalho_download(request, pk, formato):
     obj = get_object_or_404(PlanoTrabalho.objects.select_related('oficio').prefetch_related('oficios'), pk=pk)
     formato = _clean(formato).lower()
     if formato not in {DocumentoFormato.DOCX.value, DocumentoFormato.PDF.value}:
-        raise Http404('Formato inválido.')
+        raise Http404('Formato invÃ¡lido.')
     related_oficios = obj.get_oficios_relacionados() if hasattr(obj, 'get_oficios_relacionados') else list(obj.oficios.all())
     oficio_ref = related_oficios[0] if len(related_oficios) == 1 else None
     docx_bytes = render_plano_trabalho_docx(oficio_ref) if oficio_ref else render_plano_trabalho_model_docx(obj)
@@ -2172,11 +2172,11 @@ def ordens_servico_global(request):
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'status_choices': OrdemServico.STATUS_CHOICES,
             'order_by_choices': [
-                ('updated_at', 'Atualização'),
-                ('created_at', 'Criação'),
+                ('updated_at', 'AtualizaÃ§Ã£o'),
+                ('created_at', 'CriaÃ§Ã£o'),
                 ('status', 'Status'),
                 ('evento', 'Evento'),
-                ('numero', 'Número'),
+                ('numero', 'NÃºmero'),
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
             'ordem_novo_url': reverse('eventos:documentos-ordens-servico-novo'),
@@ -2200,7 +2200,7 @@ def ordem_servico_novo(request):
     form = OrdemServicoForm(request.POST or None, initial=initial)
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
-        messages.success(request, 'Ordem de serviço criada com sucesso.')
+        messages.success(request, 'Ordem de serviÃ§o criada com sucesso.')
         return redirect(return_to or reverse('eventos:documentos-ordens-servico-detalhe', kwargs={'pk': obj.pk}))
 
     return render(
@@ -2225,7 +2225,7 @@ def ordem_servico_editar(request, pk):
     form = OrdemServicoForm(request.POST or None, instance=obj)
     if request.method == 'POST' and form.is_valid():
         form.save()
-        messages.success(request, 'Ordem de serviço atualizada.')
+        messages.success(request, 'Ordem de serviÃ§o atualizada.')
         return redirect(return_to or reverse('eventos:documentos-ordens-servico-detalhe', kwargs={'pk': obj.pk}))
     return render(
         request,
@@ -2253,7 +2253,7 @@ def ordem_servico_excluir(request, pk):
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-ordens-servico'))
     if request.method == 'POST':
         obj.delete()
-        messages.success(request, 'Ordem de serviço excluída.')
+        messages.success(request, 'Ordem de serviÃ§o excluÃ­da.')
         return redirect(return_to)
     return render(
         request,
@@ -2267,7 +2267,7 @@ def ordem_servico_download(request, pk, formato):
     obj = get_object_or_404(OrdemServico.objects.select_related('oficio'), pk=pk)
     formato = _clean(formato).lower()
     if formato not in {DocumentoFormato.DOCX.value, DocumentoFormato.PDF.value}:
-        raise Http404('Formato inválido.')
+        raise Http404('Formato invÃ¡lido.')
     docx_bytes = (
         render_ordem_servico_docx(obj.oficio)
         if obj.oficio_id
@@ -2340,9 +2340,9 @@ def justificativas_global(request):
             'filters': filters,
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'order_by_choices': [
-                ('updated_at', 'Atualização'),
-                ('created_at', 'Criação'),
-                ('oficio', 'Ofício'),
+                ('updated_at', 'AtualizaÃ§Ã£o'),
+                ('created_at', 'CriaÃ§Ã£o'),
+                ('oficio', 'OfÃ­cio'),
                 ('modelo', 'Modelo'),
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
@@ -2419,7 +2419,7 @@ def justificativa_excluir(request, pk):
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-justificativas'))
     if request.method == 'POST':
         obj.delete()
-        messages.success(request, 'Justificativa excluída com sucesso.')
+        messages.success(request, 'Justificativa excluÃ­da com sucesso.')
         return redirect(return_to)
     return render(
         request,
@@ -2464,7 +2464,7 @@ def termos_global(request):
             if termo.viajante_id in viajante_ids:
                 oficios_relacionados.append(oficio)
         termo.oficios_relacionados = oficios_relacionados
-        termo.oficios_display = ', '.join(oficio.numero_formatado for oficio in oficios_relacionados) if oficios_relacionados else '—'
+        termo.oficios_display = ', '.join(oficio.numero_formatado for oficio in oficios_relacionados) if oficios_relacionados else 'â€”'
         termo.termos_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': termo.evento_id})
         termo.oficios_url = reverse('eventos:guiado-etapa-5', kwargs={'evento_id': termo.evento_id})
         termo.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': termo.evento_id})
@@ -2949,8 +2949,8 @@ def termos_global(request):
             'status_choices': TermoAutorizacao.STATUS_CHOICES,
             'modo_choices': TermoAutorizacao.MODO_CHOICES,
             'order_by_choices': [
-                ('updated_at', 'Atualização'),
-                ('created_at', 'Criação'),
+                ('updated_at', 'AtualizaÃ§Ã£o'),
+                ('created_at', 'CriaÃ§Ã£o'),
                 ('status', 'Status'),
                 ('evento', 'Evento'),
                 ('servidor', 'Servidor'),
@@ -3118,3 +3118,4 @@ def termo_autorizacao_download(request, pk, formato):
         f'attachment; filename="{_build_saved_termo_filename(obj, formato)}"'
     )
     return response
+
