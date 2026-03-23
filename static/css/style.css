@@ -1404,7 +1404,7 @@
 
 .oficio-list-core-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.7rem;
 }
 
@@ -1522,20 +1522,22 @@
 
 .oficio-list-transport-panel {
     display: grid;
-    gap: 0.68rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.56rem;
+    align-items: stretch;
 }
 
 .oficio-list-transport-panel__hero {
     display: grid;
-    gap: 0.24rem;
-    padding: 0.82rem 0.86rem;
+    gap: 0.2rem;
+    padding: 0.72rem 0.78rem;
     border-radius: 1rem;
 }
 
 .oficio-list-transport-panel__detail {
     display: grid;
-    gap: 0.3rem;
-    padding: 0.72rem 0.8rem;
+    gap: 0.24rem;
+    padding: 0.66rem 0.74rem;
     border-radius: 1rem;
 }
 
@@ -1570,8 +1572,7 @@
 }
 
 .oficio-list-transport-panel__divider {
-    height: 1px;
-    background: linear-gradient(90deg, rgba(var(--oficio-card-accent-rgb), 0), rgba(var(--oficio-card-accent-rgb), 0.22), rgba(var(--oficio-card-accent-rgb), 0));
+    display: none;
 }
 
 .oficio-list-card__secondary {
@@ -1874,6 +1875,11 @@
 
     .oficio-list-core-grid {
         grid-template-columns: 1fr;
+    }
+
+    .oficio-list-transport-panel {
+        grid-template-columns: 1fr;
+        gap: 0.52rem;
     }
 
     .oficio-list-term-row {
