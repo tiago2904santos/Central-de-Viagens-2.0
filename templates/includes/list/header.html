@@ -1,0 +1,43 @@
+{# 
+    Cabeçalho padrão reutilizável para uma página de lista
+    
+    Parâmetros:
+    - title: Título da lista (obrigatório)
+    - subtitle: Subtítulo/descrição (opcional)
+    - actions: Lista de objeto ações (opcional) - cada ação precisa ter:
+        - url
+        - label
+        - icon (opcional): classe BS icon ex "bi-plus-lg"
+        - variant (opcional): "primary", "outline-secondary", etc. padrão=primary
+    - mode_badge: (opcional) ex "simple" ou "complete" para mostrar badge de modo
+#}
+
+<header class="system-list-header system-list-header--standard">
+    <div class="system-list-header__content">
+        <div>
+            <h1 class="system-list-header__title">{{ title }}</h1>
+            {% if subtitle %}
+            <p class="system-list-header__subtitle">{{ subtitle }}</p>
+            {% endif %}
+        </div>
+        <div class="system-list-header__controls">
+            {% if mode_badge %}
+            {% include 'includes/list/mode_badge.html' with mode=mode_badge %}
+            {% endif %}
+            {% if actions %}
+            <div class="system-list-header__actions-group">
+                {% for action in actions %}
+                <a 
+                    href="{{ action.url }}"
+                    class="btn btn-{{ action.variant|default:'primary' }} system-list-action-btn"
+                    {% if action.title %}title="{{ action.title }}"{% endif %}
+                >
+                    {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}
+                    {{ action.label }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</header>

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Justificativas - Central de Viagens{% endblock %}
 {% block page_title %}Justificativas{% endblock %}
@@ -6,26 +7,20 @@
 {% block content %}
 <div class="container-fluid py-4 system-list-page system-list-page--simple">
     <div class="system-list-shell">
-    <div class="page-header-cadastro">
-        <div>
-            <h1 class="mb-1">Lista global de justificativas</h1>
-            <p class="text-muted mb-0">Acompanhamento honesto das justificativas vinculadas aos oficios.</p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary">Oficios</a>
-        </div>
-    </div>
+    {% url 'eventos:oficios-global' as oficios_url %}
+    {% include 'includes/list/page_header.html' with title='Lista global de justificativas' subtitle='Acompanhamento honesto das justificativas vinculadas aos oficios.' secondary_url=oficios_url secondary_label='Oficios' %}
+    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
 
     <div class="card filter-card system-filter-card">
         <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end">
+            <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
                 <div class="col-12 col-lg-4">
                     <label class="form-label small text-muted">Busca</label>
-                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, protocolo, texto ou destino">
+                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, protocolo, texto ou destino" data-list-autosubmit>
                 </div>
                 <div class="col-12 col-md-4 col-lg-3">
                     <label class="form-label small text-muted">Evento</label>
-                    <select name="evento_id" class="form-select form-select-sm">
+                    <select name="evento_id" class="form-select form-select-sm" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for evento in eventos_choices %}
                         <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
@@ -34,11 +29,11 @@
                 </div>
                 <div class="col-6 col-md-2 col-lg-1">
                     <label class="form-label small text-muted">Ano</label>
-                    <input type="text" name="ano" class="form-control form-control-sm" value="{{ filters.ano }}" placeholder="2026">
+                    <input type="text" name="ano" class="form-control form-control-sm" value="{{ filters.ano }}" placeholder="2026" data-list-autosubmit>
                 </div>
                 <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label small text-muted">Status</label>
-                    <select name="status" class="form-select form-select-sm">
+                    <select name="status" class="form-select form-select-sm" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for value, label in status_choices %}
                         <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
@@ -113,4 +108,8 @@
     {% include 'includes/pagination.html' %}
 </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}

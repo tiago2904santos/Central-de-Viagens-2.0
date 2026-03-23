@@ -4,20 +4,27 @@
 {% block page_title %}Modelos de justificativa{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="page-header-cadastro d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Modelos de justificativa</h2>
-        <div class="d-flex gap-2">
+<div class="container-fluid py-4 system-list-page system-list-page--simple">
+    <div class="system-list-shell">
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+        <div class="system-list-header__content">
+            <div>
+                <h1 class="system-list-header__title">Modelos de justificativa</h1>
+                <p class="system-list-header__subtitle">Modelos reutilizaveis para padronizar preenchimento de justificativas.</p>
+            </div>
+        </div>
+        <div class="system-list-header__actions-group">
             {% if volta_justificativa %}
-            <a href="{% url 'eventos:oficio-justificativa' volta_justificativa %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" class="btn btn-outline-secondary">Voltar para justificativa</a>
+            <a href="{% url 'eventos:oficio-justificativa' volta_justificativa %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" class="btn btn-outline-secondary system-list-action-btn">Voltar para justificativa</a>
             {% endif %}
-            <a href="{% url 'eventos:modelos-justificativa-cadastrar' %}{% if volta_justificativa or next_url %}?{% if volta_justificativa %}volta_justificativa={{ volta_justificativa|urlencode }}{% endif %}{% if volta_justificativa and next_url %}&{% endif %}{% if next_url %}next={{ next_url|urlencode }}{% endif %}{% endif %}" class="btn btn-primary">Cadastrar</a>
+            <a href="{% url 'eventos:modelos-justificativa-cadastrar' %}{% if volta_justificativa or next_url %}?{% if volta_justificativa %}volta_justificativa={{ volta_justificativa|urlencode }}{% endif %}{% if volta_justificativa and next_url %}&{% endif %}{% if next_url %}next={{ next_url|urlencode }}{% endif %}{% endif %}" class="btn btn-primary system-list-action-btn"><i class="bi bi-plus-lg me-1"></i>Cadastrar modelo</a>
         </div>
     </div>
+    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
 
-    <div class="card">
+    <div class="system-list-table-wrap">
         <div class="table-responsive">
-            <table class="table table-hover table-cadastro mb-0">
+            <table class="table table-hover table-cadastro mb-0 system-list-table">
                 <thead class="table-light">
                     <tr>
                         <th>Nome</th>
@@ -47,6 +54,7 @@
                 </tbody>
             </table>
         </div>
+    </div>
     </div>
 </div>
 {% endblock %}

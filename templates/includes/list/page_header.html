@@ -1,19 +1,21 @@
-<div class="page-header-cadastro system-list-header">
-    <div>
-        <h1 class="mb-1">{{ title }}</h1>
-        {% if subtitle %}
-        <p class="text-muted mb-0">{{ subtitle }}</p>
-        {% endif %}
+<div class="page-header-cadastro system-list-header system-list-header--standard">
+    <div class="system-list-header__content">
+        <div>
+            <h1 class="system-list-header__title">{{ title }}</h1>
+            {% if subtitle %}
+            <p class="system-list-header__subtitle">{{ subtitle }}</p>
+            {% endif %}
+        </div>
     </div>
-    <div class="d-flex gap-2 flex-wrap system-list-header__actions">
+    <div class="d-flex gap-2 flex-wrap system-list-header__actions system-list-header__actions-group">
         {% if tertiary_url %}
-        <a href="{{ tertiary_url }}" class="btn btn-outline-secondary">{{ tertiary_label|default:'Voltar' }}</a>
+        <a href="{{ tertiary_url }}" class="btn btn-outline-secondary system-list-action-btn">{{ tertiary_label|default:'Voltar' }}</a>
         {% endif %}
         {% if secondary_url %}
-        <a href="{{ secondary_url }}" class="btn btn-outline-secondary">{{ secondary_label }}</a>
+        <a href="{{ secondary_url }}" class="btn btn-outline-secondary system-list-action-btn">{{ secondary_label }}</a>
         {% endif %}
         {% if primary_url %}
-        <a href="{{ primary_url }}" class="btn {% if primary_variant %}btn-{{ primary_variant }}{% else %}btn-primary{% endif %} system-list-new-btn">
+        <a href="{{ primary_url }}" class="btn {% if primary_variant %}btn-{{ primary_variant }}{% else %}btn-primary{% endif %} system-list-new-btn system-list-action-btn">
             <i class="bi {{ primary_icon|default:'bi-plus-lg' }} me-1"></i>
             {{ primary_label }}
         </a>

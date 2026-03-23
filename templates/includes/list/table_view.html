@@ -1,0 +1,65 @@
+{#
+    Painel de lista em visualização de tabela
+    
+    Parâmetros:
+    - items: objetos a serem listados
+    - columns: lista de colunas com format { label, key [, css_class] }
+    - row_id_key: atributo usado para gerar id único da linha (opcional, ex 'pk')
+    - row_actions: ações para cada linha (opcional) - ex botão de editar, deletar
+    - empty_message: mensagem quando lista vazia (opcional)
+    - row_class: classe CSS extra para <tr> (opcional)
+#}
+
+<section class="system-list-view system-list-view--table">
+    {% if items %}
+    <div class="table-responsive">
+        <table class="table system-list-table">
+            <thead class="system-list-table__head">
+                <tr>
+                    {% for column in columns %}
+                    <th class="{% if column.css_class %}{{ column.css_class }}{% endif %}">
+                        {{ column.label }}
+                    </th>
+                    {% endfor %}
+                    {% if row_actions %}
+                    <th class="text-end">Ações</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody class="system-list-table__body">
+                {% for item in items %}
+                <tr class="system-list-table__row {% if row_class %}{{ row_class }}{% endif %}" {% if row_id_key %}id="row-{{ item|get_item:row_id_key }}"{% endif %}>
+                    {% for column in columns %}
+                    <td class="{% if column.css_class %}{{ column.css_class }}{% endif %}" data-label="{{ column.label }}">
+                        {{ item|get_item:column.key }}
+                    </td>
+                    {% endfor %}
+
+                    {% if row_actions %}
+                    <td class="text-end">
+                        <div class="system-list-table__actions">
+                            {% for action in row_actions %}
+                            <a 
+                                href="{{ action.url }}"
+                                class="btn btn-sm btn-doc-action {{ action.css_class|default:'btn-doc-action--secondary' }}"
+                                {% if action.title %}title="{{ action.title }}"{% endif %}
+                                {% if action.download %}data-direct-download="true"{% endif %}
+                            >
+                                {% if action.icon %}<i class="bi {{ action.icon }}"></i>{% endif %}
+                                {% if not action.icon_only %}<span>{{ action.label }}</span>{% endif %}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="system-list-view__empty">
+        <p class="text-muted">{{ empty_message|default:'Nenhum item encontrado.' }}</p>
+    </div>
+    {% endif %}
+</section>

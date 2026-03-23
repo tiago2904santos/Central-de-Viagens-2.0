@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Roteiros - Central de Viagens{% endblock %}
@@ -10,7 +10,7 @@
     {% include 'includes/list/page_header.html' with title='Lista global de roteiros' subtitle='Biblioteca operacional dos roteiros criados na etapa 2 dos eventos.' secondary_url=eventos_url secondary_label='Eventos' primary_url=novo_roteiro_url primary_label='Novo roteiro neste evento' %}
     <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
     {% if not novo_roteiro_url %}
-    <div class="alert alert-light border small py-2 px-3 mb-3">Selecione um evento no filtro para habilitar a criação vinculada.</div>
+    <div class="alert alert-light border small py-2 px-3 mb-3">Selecione um evento no filtro para habilitar a criacao vinculada.</div>
     {% endif %}
 
     <div class="card filter-card system-filter-card">
@@ -55,7 +55,7 @@
                     </select>
                 </div>
                 <div class="col-6 col-md-3 col-lg-2">
-                    <label class="form-label small text-muted">Direção</label>
+                    <label class="form-label small text-muted">Direcao</label>
                     <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
                         {% for value, label in order_dir_choices %}
                         <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
@@ -87,17 +87,17 @@
                     </tr>
                 </thead>
                 <tbody>
-                            <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                    {% for roteiro in object_list %}
                     <tr>
-                            <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Etapa 2</span></a>
+                        <td>
                             {% if roteiro.is_avulso %}
-                                <span class="badge bg-secondary me-1">Avulso</span>
-                            <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-journal-text"></i><span>Usar no oficio</span></a>
+                            <span class="badge bg-secondary me-1">Avulso</span>
+                            <span class="text-muted">Sem evento</span>
                             {% else %}
-                                <a href="{{ roteiro.evento_url }}" class="text-decoration-none">{{ roteiro.evento.titulo|default:"(sem titulo)" }}</a>
+                            <a href="{{ roteiro.evento_url }}" class="text-decoration-none">{{ roteiro.evento.titulo|default:"(sem titulo)" }}</a>
                             {% endif %}
                         </td>
-                        <td>{{ roteiro.origem_cidade.nome|default:roteiro.origem_estado.sigla|default:"—" }}</td>
+                        <td>{{ roteiro.origem_cidade.nome|default:roteiro.origem_estado.sigla|default:"-" }}</td>
                         <td>
                             <div>{{ roteiro.destinos_display }}</div>
                             <div class="small text-muted">

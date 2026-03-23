@@ -1,0 +1,129 @@
+{#
+    Toolbar de filtros padrão reutilizável para listas
+    
+    Parâmetros:
+    - filter_form_id: ID para o formulário (opcional, default "list-filter-form")
+    - autosubmit: boolean (opcional, default true) - auto submeter ao mudar filtro
+    - search_enabled: boolean (opcional, default true)
+    - search_name: nome do campo de busca (opcional, default "q")
+    - search_value: valor atual do filtro de busca
+    - search_placeholder: placeholder do campo (opcional)
+    - filters: lista de filtros customizados (cada um precisa ter: name, label, type, options, value)
+    - actions: ações da toolbar (como botão Filtrar, Limpar)
+    - result_text: texto de resultado (ex "5 ofícios encontrados")
+
+    Tipos de filtros suportados:
+    - select: dropdown select
+    - checkbox-group: grupo de checkboxes
+    - date: input date
+    - text: input text
+#}
+
+<section class="system-list-toolbar" aria-label="Filtro e busca">
+    <form 
+        method="get" 
+        class="system-list-toolbar__form"
+        id="{{ filter_form_id|default:'list-filter-form' }}"
+        {% if autosubmit|default:true %}data-list-autosubmit-form{% endif %}
+    >
+        {# Barra de busca principal #}
+        {% if search_enabled|default:true %}
+        <div class="system-list-toolbar__search-row">
+            <div class="system-list-toolbar__search-input-wrapper">
+                <input
+                    type="text"
+                    name="{{ search_name|default:'q' }}"
+                    class="form-control system-list-toolbar__search"
+                    value="{{ search_value }}"
+                    placeholder="{{ search_placeholder|default:'Buscar...' }}"
+                    {% if autosubmit|default:true %}data-list-autosubmit{% endif %}
+                >
+            </div>
+
+            {% if actions %}
+            <div class="system-list-toolbar__action-buttons">
+                {% for action in actions %}
+                <button 
+                    type="{{ action.type|default:'submit' }}"
+                    class="btn btn-{{ action.variant|default:'outline-primary' }} btn-sm"
+                    {% if action.onclick %}onclick="{{ action.onclick }}"{% endif %}
+                >
+                    {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}
+                    {{ action.label }}
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {# Filtros customizados #}
+        {% for filter in filters %}
+            {% if filter.type == 'select' %}
+            <div class="system-list-toolbar__filter-group">
+                <label class="form-label small">{{ filter.label }}</label>
+                <select 
+                    name="{{ filter.name }}"
+                    class="form-select form-select-sm"
+                    {% if autosubmit|default:true %}data-list-autosubmit{% endif %}
+                >
+                    {% for opt in filter.options %}
+                    <option value="{{ opt.value }}" {% if filter.value == opt.value %}selected{% endif %}>
+                        {{ opt.label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% elif filter.type == 'checkbox-group' %}
+            <div class="system-list-toolbar__filter-group">
+                <div class="system-list-toolbar__filter-label">{{ filter.label }}</div>
+                <div class="system-list-toolbar__checkbox-list">
+                    {% for opt in filter.options %}
+                    <label class="system-list-toolbar__checkbox-item">
+                        <input 
+                            type="checkbox"
+                            name="{{ filter.name }}"
+                            value="{{ opt.value }}"
+                            {% if opt.value in filter.value %}checked{% endif %}
+                            {% if autosubmit|default:true %}data-list-autosubmit{% endif %}
+                        >
+                        <span>{{ opt.label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% elif filter.type == 'date' %}
+            <div class="system-list-toolbar__filter-group">
+                <label class="form-label small">{{ filter.label }}</label>
+                <input
+                    type="date"
+                    name="{{ filter.name }}"
+                    value="{{ filter.value }}"
+                    class="form-control form-control-sm"
+                    {% if autosubmit|default:true %}data-list-autosubmit{% endif %}
+                >
+            </div>
+
+            {% elif filter.type == 'text' %}
+            <div class="system-list-toolbar__filter-group">
+                <label class="form-label small">{{ filter.label }}</label>
+                <input
+                    type="text"
+                    name="{{ filter.name }}"
+                    value="{{ filter.value }}"
+                    class="form-control form-control-sm"
+                    placeholder="{{ filter.placeholder|default:'' }}"
+                    {% if autosubmit|default:true %}data-list-autosubmit{% endif %}
+                >
+            </div>
+            {% endif %}
+        {% endfor %}
+    </form>
+
+    {# Resultado/contagem #}
+    {% if result_text %}
+    <div class="system-list-toolbar__result">{{ result_text }}</div>
+    {% endif %}
+</section>
