@@ -84,7 +84,10 @@
         {% if user.is_authenticated and not hide_page_header %}
         <header class="main-header">
             <div class="container-fluid">
-                <h1 class="page-title mb-0">{% block page_title %}{% endblock %}</h1>
+                <div class="main-header__bar">
+                    <h1 class="page-title mb-0">{% block page_title %}{% endblock %}</h1>
+                    <div class="main-header__user">Usuario: {{ user.get_full_name|default:user.username }}</div>
+                </div>
             </div>
         </header>
         {% endif %}
