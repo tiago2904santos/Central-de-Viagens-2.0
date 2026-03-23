@@ -8,8 +8,10 @@
   {% csrf_token %}
   {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Veículo</div>
+  <div class="card wizard-section-card">
+    <div class="card-header">
+      <span><i class="bi bi-truck me-2 text-primary"></i>Veículo</span>
+    </div>
     <div class="card-body">
       <div class="mb-3">
         <label class="form-label">Selecionar veículo cadastrado</label>
@@ -49,8 +51,10 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Motorista</div>
+  <div class="card wizard-section-card">
+    <div class="card-header">
+      <span><i class="bi bi-person-badge me-2 text-primary"></i>Motorista</span>
+    </div>
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-6">

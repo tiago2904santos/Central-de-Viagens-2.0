@@ -1,0 +1,15 @@
+{# Cabeçalho padrão para listas de documentos e cadastros.
+   Uso: {% include 'includes/_list_header.html' with title="Ofícios" count=oficios|length count_label="ofício(s)" cta_url=cta_url cta_label="Novo Ofício" %}
+   Nota: cta_url deve ser resolvido com {% url %} antes de chamar o include.
+#}
+<div class="page-header-cadastro">
+  <div>
+    <h2 class="mb-0">{{ title }}</h2>
+    {% if count is not None %}<p class="page-header-meta mb-0">{{ count }} {{ count_label|default:"registro(s)" }}</p>{% endif %}
+  </div>
+  {% if cta_url %}
+  <a href="{{ cta_url }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i> {{ cta_label|default:"Novo" }}
+  </a>
+  {% endif %}
+</div>

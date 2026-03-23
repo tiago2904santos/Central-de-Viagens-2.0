@@ -8,8 +8,8 @@
   {% csrf_token %}
   {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Identificação</div>
+  <div class="card wizard-section-card">
+    <div class="card-header">Identificação</div>
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-3">
@@ -32,8 +32,8 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Motivo</div>
+  <div class="card wizard-section-card">
+    <div class="card-header">Motivo</div>
     <div class="card-body">
       <div class="mb-3">
         <label class="form-label">Modelo de motivo</label>
@@ -51,8 +51,8 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Custeio e destino</div>
+  <div class="card wizard-section-card">
+    <div class="card-header">Custeio e destino</div>
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-6">
@@ -84,8 +84,8 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Evento (opcional)</div>
+  <div class="card wizard-section-card">
+    <div class="card-header">Evento (opcional)</div>
     <div class="card-body">
       <select name="evento_id" id="id_evento_id" class="form-select mb-2" onchange="toggleNovoEvento()">
         <option value="">— Nenhum —</option>
@@ -100,8 +100,8 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Viajantes</div>
+  <div class="card wizard-section-card">
+    <div class="card-header">Viajantes</div>
     <div class="card-body">
       <input type="text" id="busca_viajante" class="form-control mb-3" placeholder="Buscar viajante...">
       <div class="scrollable-checklist">

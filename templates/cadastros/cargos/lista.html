@@ -41,7 +41,7 @@
                 {% for obj in object_list %}
                 <tr>
                     <td>{{ obj.nome }}</td>
-                    <td>{% if obj.is_padrao %}<span class="badge bg-primary">Padrão</span>{% else %}—{% endif %}</td>
+                    <td>{% if obj.is_padrao %}<span class="status-badge is-info">Padrão</span>{% else %}—{% endif %}</td>
                     <td class="text-end">
                         {% if not obj.is_padrao %}
                         <form method="post" action="{% url 'cadastros:cargo-definir-padrao' obj.pk %}" class="d-inline">

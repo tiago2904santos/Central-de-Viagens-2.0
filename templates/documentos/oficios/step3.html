@@ -8,8 +8,10 @@
   {% csrf_token %}
   {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Roteiro</div>
+  <div class="card wizard-section-card">
+    <div class="card-header">
+      <span><i class="bi bi-map me-2 text-primary"></i>Roteiro</span>
+    </div>
     <div class="card-body">
       <div class="mb-3">
         <div class="form-check form-check-inline">
@@ -41,8 +43,10 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Diárias</div>
+  <div class="card wizard-section-card">
+    <div class="card-header">
+      <span><i class="bi bi-currency-dollar me-2 text-primary"></i>Diárias</span>
+    </div>
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-3">
@@ -61,9 +65,9 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold d-flex justify-content-between align-items-center">
-      Trechos
+  <div class="card wizard-section-card">
+    <div class="card-header">
+      <span><i class="bi bi-arrow-left-right me-2 text-primary"></i>Trechos</span>
       <button type="button" class="btn btn-sm btn-outline-primary" onclick="addTrecho()">
         <i class="bi bi-plus-lg me-1"></i> Adicionar trecho
       </button>

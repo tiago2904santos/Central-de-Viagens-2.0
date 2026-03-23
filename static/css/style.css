@@ -15,6 +15,41 @@
     --cv-shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
     --cv-page-padding: 1.5rem;
     --cv-focus-ring: rgba(29, 78, 216, 0.25);
+    --cv-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ----- Tipografia global ----- */
+body {
+    font-family: var(--cv-font);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv11', 'ss01';
+    font-size: 0.9375rem;
+    color: #212529;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+    font-family: var(--cv-font);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+}
+
+.form-label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.small, small {
+    font-size: 0.8125rem;
+}
+
+.btn {
+    font-family: var(--cv-font);
+    font-weight: 500;
+    letter-spacing: 0.01em;
 }
 
 /* ----- Login (tela inteira, sem sidebar) ----- */
@@ -441,8 +476,9 @@
 
 .page-title {
     font-size: 1.35rem;
-    font-weight: 600;
-    color: #212529;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.01em;
 }
 
 .main-content {
@@ -514,7 +550,7 @@
     transition: opacity 0.4s ease;
 }
 
-/* ----- Páginas de listagem (cadastros) ----- */
+/* ----- Páginas de listagem (cadastros e documentos) ----- */
 .page-header-cadastro {
     display: flex;
     flex-wrap: wrap;
@@ -524,23 +560,55 @@
     margin-bottom: 1.5rem;
 }
 
-.page-header-cadastro h1 {
+.page-header-cadastro h1,
+.page-header-cadastro h2 {
     font-size: 1.35rem;
-    font-weight: 600;
+    font-weight: 700;
     margin: 0;
+    color: #111827;
+    letter-spacing: -0.01em;
+}
+
+.page-header-cadastro .page-header-meta {
+    font-size: 0.8125rem;
+    color: #6c757d;
+    margin-top: 0.15rem;
 }
 
 .filter-card {
     margin-bottom: 1.25rem;
 }
 
-.table-cadastro {
+/* ----- Tabelas — padrão aplicado (cadastros e documentos) ----- */
+.table-cadastro,
+.table-doc {
     margin-bottom: 0;
 }
 
-.table-cadastro th {
-    font-weight: 600;
+.table-cadastro th,
+.table-doc th {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6b7280;
+    vertical-align: middle;
     white-space: nowrap;
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+    border-bottom-width: 1px;
+}
+
+.table-cadastro td,
+.table-doc td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.table-hover > tbody > tr:hover > * {
+    background-color: rgba(var(--cv-primary-rgb), 0.04) !important;
 }
 
 /* ----- Status badges (sistema unificado) ----- */
@@ -548,11 +616,12 @@
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
-    padding: 0.42rem 0.85rem;
-    font-size: 0.82rem;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.03em;
     border: 1px solid transparent;
+    font-family: var(--cv-font);
 }
 
 .status-badge-sm {
@@ -599,12 +668,21 @@
 }
 
 .status-badge.is-neutral,
+.status-badge.is-neutro,
 .status-badge.is-muted,
 .status-badge.is-dispensado,
 .status-badge.is-arquivado {
-    background: rgba(108, 117, 125, 0.12);
+    background: rgba(108, 117, 125, 0.10);
     color: #5c636a;
     border-color: rgba(108, 117, 125, 0.18);
+}
+
+.status-badge.is-count {
+    background: rgba(var(--cv-primary-rgb), 0.08);
+    color: var(--cv-primary);
+    border-color: rgba(var(--cv-primary-rgb), 0.15);
+    min-width: 1.75rem;
+    justify-content: center;
 }
 
 /* ----- Chips vinculo roteiro ----- */
@@ -670,6 +748,33 @@
     padding: 1.5rem;
 }
 
+/* ----- Cards do wizard (steps 1–3) ----- */
+.wizard-section-card {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 1rem;
+    box-shadow: none;
+    margin-bottom: 1.25rem;
+}
+
+.wizard-section-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--cv-sidebar-bg);
+    padding: 1rem 1.25rem;
+    letter-spacing: 0.01em;
+    border-radius: 1rem 1rem 0 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.wizard-section-card .card-body {
+    padding: 1.25rem;
+}
+
 /* ----- Utilitários ----- */
 .scrollable-checklist {
     max-height: 300px;
@@ -687,10 +792,14 @@
     font-size: 0.75rem;
 }
 
+.text-truncate-cell {
+    max-width: 300px;
+}
+
 /* ----- Configurações ----- */
-.configuracoes-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }
+.configuracoes-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.01em; }
 .configuracoes-subtitle { margin-bottom: 0; }
-.configuracao-section-title { font-size: 1rem; font-weight: 600; color: var(--cv-sidebar-bg, #1e3a5f); margin-bottom: 1rem; }
+.configuracao-section-title { font-size: 1rem; font-weight: 700; color: var(--cv-sidebar-bg, #1e3a5f); margin-bottom: 1rem; }
 .configuracao-section { padding-bottom: 0.5rem; }
 
 /* ----- Sidebar: itens desabilitados ----- */
@@ -802,9 +911,9 @@
 
 .oficio-summary-label {
     color: #6c757d;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 
@@ -875,3 +984,4 @@
         grid-template-columns: 1fr;
     }
 }
+

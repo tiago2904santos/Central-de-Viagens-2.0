@@ -16,7 +16,7 @@
         <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
           onclick="usarModelo('{{ m.pk }}', this)" data-texto="{{ m.texto }}">
           {{ m.nome }}
-          {% if m.is_padrao %}<span class="badge bg-primary">Padrão</span>{% endif %}
+          {% if m.is_padrao %}<span class="status-badge is-info">Padrão</span>{% endif %}
         </button>
         {% endfor %}
       </div>

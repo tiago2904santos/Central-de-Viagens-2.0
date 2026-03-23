@@ -17,7 +17,7 @@
         {% for m in modelos %}
         <tr>
           <td>{{ m.nome }}</td>
-          <td>{% if m.is_padrao %}<span class="badge bg-primary">Padrão</span>{% endif %}</td>
+          <td>{% if m.is_padrao %}<span class="status-badge is-info">Padrão</span>{% endif %}</td>
           <td>{{ m.criado_em|date:"d/m/Y" }}</td>
           <td class="text-end">
             <a href="{% url 'documentos:modelo-motivo-editar' pk=m.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>

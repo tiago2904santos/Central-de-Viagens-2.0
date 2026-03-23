@@ -79,7 +79,7 @@
         <span class="oficio-summary-value">
           {{ t.origem_nome }} → {{ t.destino_nome }}
           {% if t.data_saida %}<span class="text-muted ms-1 small">{{ t.data_saida|date:"d/m/Y" }}</span>{% endif %}
-          {% if t.is_retorno %}<span class="badge bg-secondary ms-1">Retorno</span>{% endif %}
+          {% if t.is_retorno %}<span class="status-badge is-neutro status-badge-sm ms-1">Retorno</span>{% endif %}
         </span>
       </div>
       {% endfor %}
