@@ -1,0 +1,5 @@
+﻿a0b775d refactor: ajusta distribuicao de viajantes, veiculo e motorista nos cards de oficios
+7dc0a52 chore: checkpoint antes do ajuste fino do topo do wizard de oficios
+f614d68 chore: checkpoint antes do ajuste de layout dos cards de oficios
+56ab28c chore: checkpoint antes das correcoes de destino e assunto no gerador de oficios
+c15d43b refactor: corrige cadastro de plano de trabalho e reorganiza fluxo
