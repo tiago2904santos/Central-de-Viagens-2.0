@@ -1,0 +1,23 @@
+﻿python : C:\Users\tiago\OneDrive\┴rea de Trabalho\central de viagens 
+2.0\config\settings.py:16: UserWarning: Arquivo .env nÒo encontrado na raiz do 
+projeto. Copie .env.example para .env e preencha as varißveis (ex.: 
+POSTGRES_*).
+No linha:1 caractere:1
++ python manage.py test eventos.tests.test_plano_trabalho 2>&1 | Out-Fi ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\tiago\....: POSTGRES_*). 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+Creating test database for alias 'default'...
+
+..............................
+----------------------------------------------------------------------
+Ran 30 tests in 21.694s
+
+OK
+Destroying test database for alias 'default'...
+
+Found 30 test(s).
+System check identified no issues (0 silenced).
