@@ -2371,6 +2371,7 @@ def _build_oficio_step1_initial(oficio):
         'data_criacao': data_criacao_exibicao,
         'modelo_motivo': modelo_inicial.pk if modelo_inicial else None,
         'motivo': oficio.motivo or (modelo_inicial.texto if modelo_inicial else ''),
+        'assunto_tipo': oficio.assunto_tipo or Oficio.ASSUNTO_TIPO_AUTORIZACAO,
         'custeio_tipo': oficio.custeio_tipo or Oficio.CUSTEIO_UNIDADE,
         'nome_instituicao_custeio': oficio.nome_instituicao_custeio or '',
         'viajantes': list(oficio.viajantes.values_list('pk', flat=True)),
@@ -2391,6 +2392,9 @@ def _autosave_oficio_step1(oficio, request):
     custeio_tipo = request.POST.get('custeio_tipo') or Oficio.CUSTEIO_UNIDADE
     if custeio_tipo not in dict(Oficio.CUSTEIO_CHOICES):
         custeio_tipo = Oficio.CUSTEIO_UNIDADE
+    assunto_tipo = request.POST.get('assunto_tipo') or Oficio.ASSUNTO_TIPO_AUTORIZACAO
+    if assunto_tipo not in dict(Oficio.ASSUNTO_TIPO_CHOICES):
+        assunto_tipo = Oficio.ASSUNTO_TIPO_AUTORIZACAO
     data_criacao = request.POST.get('data_criacao') or ''
     try:
         data_criacao_value = datetime.strptime(data_criacao, '%d/%m/%Y').date() if data_criacao else None
@@ -2406,6 +2410,7 @@ def _autosave_oficio_step1(oficio, request):
     oficio.data_criacao = data_criacao_value or oficio.data_criacao or timezone.localdate()
     oficio.modelo_motivo = modelo_motivo
     oficio.motivo = (request.POST.get('motivo') or '').strip()
+    oficio.assunto_tipo = assunto_tipo
     oficio.custeio_tipo = custeio_tipo
     oficio.nome_instituicao_custeio = (
         (request.POST.get('nome_instituicao_custeio') or '').strip()
@@ -2419,6 +2424,7 @@ def _autosave_oficio_step1(oficio, request):
             'data_criacao',
             'modelo_motivo',
             'motivo',
+            'assunto_tipo',
             'custeio_tipo',
             'nome_instituicao_custeio',
         ],
@@ -2493,11 +2499,12 @@ def oficio_step1(request, pk):
         )
         oficio.modelo_motivo = form.cleaned_data.get('modelo_motivo')
         oficio.motivo = (form.cleaned_data.get('motivo') or '').strip()
+        oficio.assunto_tipo = form.cleaned_data.get('assunto_tipo') or Oficio.ASSUNTO_TIPO_AUTORIZACAO
         oficio.custeio_tipo = form.cleaned_data.get('custeio_tipo') or Oficio.CUSTEIO_UNIDADE
         oficio.nome_instituicao_custeio = (form.cleaned_data.get('nome_instituicao_custeio') or '').strip()
         _save_oficio_preserving_status(oficio, [
             'protocolo', 'data_criacao', 'modelo_motivo',
-            'motivo', 'custeio_tipo', 'nome_instituicao_custeio',
+            'motivo', 'assunto_tipo', 'custeio_tipo', 'nome_instituicao_custeio',
         ])
         viajantes_oficio = form.cleaned_data.get('viajantes') or []
         oficio.viajantes.set(viajantes_oficio)

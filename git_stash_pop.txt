@@ -1,0 +1,29 @@
+﻿On branch refactor/arquitetura-documentos-independentes
+Your branch is ahead of 'origin/refactor/arquitetura-documentos-independentes' by 16 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   eventos/forms.py
+	modified:   eventos/models.py
+	modified:   eventos/resources/documentos/oficio_model.docx
+	modified:   eventos/services/documentos/oficio.py
+	modified:   eventos/tests/test_eventos.py
+	modified:   eventos/views.py
+	modified:   templates/eventos/global/oficios_lista.html
+	modified:   templates/eventos/oficio/wizard_step1.html
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	ajustes_test.txt
+	eventos/migrations/0039_oficio_assunto_tipo.py
+	git_stash_pop.txt
+	oficio_docs_test.txt
+	run_tests_now.ps1
+	test_output_docum.txt
+	test_results.txt
+	test_results_before.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+Dropped refs/stash@{0} (7ddd15196a68bcca59c9d5d2f0597c9a1c0bf7ef)

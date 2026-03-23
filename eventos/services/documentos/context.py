@@ -745,6 +745,7 @@ def build_plano_trabalho_document_context(oficio):
                     ]
                 ),
                 'custeio_resumo': context['custeio']['descricao'],
+                'objetivo': context['conteudo']['motivo'],
             },
         }
     )

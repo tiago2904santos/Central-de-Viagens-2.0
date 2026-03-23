@@ -1,0 +1,69 @@
+﻿python : c:\Users\tiago\OneDrive\┴rea de Trabalho\central de viagens 
+2.0\config\settings.py:16: UserWarning: Arquivo .env nÒo encontrado na raiz do 
+projeto. Copie .env.example para .env e preencha as varißveis (ex.: 
+POSTGRES_*).
+No linha:1 caractere:1
++ python -c "
++ ~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (c:\Users\tiago\....: POSTGRES_*). 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+'ANEXO 01'
+'PLANO DE TRABALHO N║{{numero_plano_trabalho}}/ASCOM\n'
+'BREVE CONTEXTUALIZAÃ├O'
+'A Assessoria de ComunicaþÒo Social da PolÝcia Civil do Paranß (PCPR), no Ômbito do programa ôPCPR na Comunidadeö, promoverß aþÒo itinerante no municÝpio de {{destino}}.'
+'A iniciativa visa atender Ó solicitaþÒo formulada pelo {{solicitante}} (OfÝcio em anexo), levando serviþos essenciais de policia judicißria Ós populaþ§es urbanas, rurais e ribeirinhas, especialmente em localidades de difÝcil acesso. '
+'A aþÒo tem como foco principal garantir o acesso Ó documentaþÒo bßsica e prestar orientaþ§es de polÝcia judicißria, promovendo cidadania e fortalecendo a aproximaþÒo institucional com a comunidade.'
+'METAS ESTABELECIDAS'
+'{{metas_formatada}}'
+'ATIVIDADES A SEREM DESENVOLVIDAS'
+'{{atividades_formatada}}'
+'4. ATUAÃ├O'
+'- Datas: {{dias_evento_extenso}}'
+'- {{locais_formatado}}'
+'- Horßrio de atendimento: {{horario_atendimento}}. '
+'- Efetivo: {{quantidade_de_servidores}}. '
+'{{unidade_movel}}'
+'O atendimento ao p·blico serß realizado das {{horario_atendimento}}, de forma gratuita, organizada e humanizada, garantindo acolhimento e eficiÛncia na prestaþÒo dos serviþos.'
+'5. VALOR TOTAL DO PLANO'
+'Valor total: {{valor_total}} ({{valor_total_por_extenso}}). '
+'Valor correspondente a {{diarias_x}}, por servidor, no valor unitßrio de {{valor_unitario}} ({{valor_unitario_por_extenso}}). '
+'6. RECURSOS NECESS┴RIOS'
+'{{recursos_formatado}}'
+'7. COORDENADOR DO EVENTO'
+'{{coordenaþÒo formatada}}'
+'8. CONSIDERAÃıES FINAIS'
+'A realizaþÒo da aþÒo no municÝpio de {{destino}} reforþa o compromisso institucional da PolÝcia Civil do Paranß com a promoþÒo da cidadania e com a ampliaþÒo do acesso a serviþos p·blicos essenciais, especialmente em regi§es com limitaþ§es de deslocamento e maior vulnerabilidade social. '
+'{{sede}}, {{data_extenso}}'
+'{{nome_chefia}}'
+'{{cargo_chefia}}'
+---PLACEHOLDERS---
+atividades_formatada
+cargo_chefia
+coordenaþÒo formatada
+data_extenso
+destino
+diarias_x
+dias_evento_extenso
+divisao
+email
+endereco
+horario_atendimento
+locais_formatado
+metas_formatada
+nome_chefia
+numero_plano_trabalho
+quantidade_de_servidores
+recursos_formatado
+sede
+solicitante
+telefone
+unidade
+unidade_movel
+unidade_rodape
+valor_total
+valor_total_por_extenso
+valor_unitario
+valor_unitario_por_extenso

@@ -1,0 +1,71 @@
+﻿python : C:\Users\tiago\OneDrive\┴rea de Trabalho\central de viagens 
+2.0\config\settings.py:16: UserWarning: Arquivo .env nÒo encontrado na raiz do 
+projeto. Copie .env.example para .env e preencha as varißveis (ex.: 
+POSTGRES_*).
+No linha:1 caractere:1
++ python manage.py test eventos.tests.test_eventos.OficioDocumentosTest ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\tiago\....: POSTGRES_*). 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+Creating test database for alias 'default'...
+
+......E.........F........ss....ssss.................
+======================================================================
+ERROR: test_contexto_documental_do_plano_trabalho (eventos.tests.test_eventos.O
+ficioDocumentosTest.test_contexto_documental_do_plano_trabalho)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\tiago\OneDrive\┴rea de Trabalho\central de viagens 
+2.0\eventos\tests\test_eventos.py", line 6271, in 
+test_contexto_documental_do_plano_trabalho
+    self.assertEqual(context['plano_trabalho']['objetivo'], 'Motivo 
+documental')
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+KeyError: 'objetivo'
+
+======================================================================
+FAIL: test_download_docx_do_plano_trabalho_quando_apto (eventos.tests.test_even
+tos.OficioDocumentosTest.test_download_docx_do_plano_trabalho_quando_apto)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\tiago\OneDrive\┴rea de Trabalho\central de viagens 
+2.0\eventos\tests\test_eventos.py", line 6456, in 
+test_download_docx_do_plano_trabalho_quando_apto
+    self.assertIn('Objetivo / finalidade', text)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'Objetivo / finalidade' not found in 'ANEXO 01\nPLANO DE 
+TRABALHO N║1/2026/ASCOM\n\nBREVE CONTEXTUALIZAÃ├O\nA Assessoria de ComunicaþÒo 
+Social da PolÝcia Civil do Paranß (PCPR), no Ômbito do programa ôPCPR na 
+Comunidadeö, promoverß aþÒo itinerante no municÝpio de Destino 
+Documental/PR.\nA iniciativa visa atender Ó solicitaþÒo formulada pelo  
+(OfÝcio em anexo), levando serviþos essenciais de policia judicißria Ós 
+populaþ§es urbanas, rurais e ribeirinhas, especialmente em localidades de 
+difÝcil acesso. \nA aþÒo tem como foco principal garantir o acesso Ó 
+documentaþÒo bßsica e prestar orientaþ§es de polÝcia judicißria, promovendo 
+cidadania e fortalecendo a aproximaþÒo institucional com a comunidade.\nMETAS 
+ESTABELECIDAS\nATIVIDADES A SEREM DESENVOLVIDAS\n4. ATUAÃ├O\n- Datas: 1 de 
+outubro de 2026 a 3 de outubro de 2026\n- Destino Documental/PR\n- Horßrio de 
+atendimento: . \n- Efetivo: Total: 1 servidor(es). \nO atendimento ao p·blico 
+serß realizado das , de forma gratuita, organizada e humanizada, garantindo 
+acolhimento e eficiÛncia na prestaþÒo dos serviþos.\n5. VALOR TOTAL DO 
+PLANO\nValor total: 377,72 (trezentos e setenta e sete reais e setenta e dois 
+centavos). \nValor correspondente a 1 x 100% + 1 x 30%, por servidor, no valor 
+unitßrio de 377,72 (trezentos e setenta e sete reais e setenta e dois 
+centavos). \n6. RECURSOS NECESS┴RIOS\n7. COORDENADOR DO EVENTO\n8. 
+CONSIDERAÃıES FINAIS\nA realizaþÒo da aþÒo no municÝpio de Destino 
+Documental/PR reforþa o compromisso institucional da PolÝcia Civil do Paranß 
+com a promoþÒo da cidadania e com a ampliaþÒo do acesso a serviþos p·blicos 
+essenciais, especialmente em regi§es com limitaþ§es de deslocamento e maior 
+vulnerabilidade social. \n, 23 de marþo de 2026'
+
+----------------------------------------------------------------------
+Ran 52 tests in 72.850s
+
+FAILED (failures=1, errors=1, skipped=6)
+Destroying test database for alias 'default'...
+
+Found 52 test(s).
+System check identified no issues (0 silenced).

@@ -97,6 +97,14 @@
 
               <div class="row g-3 mt-1">
                 <div class="col-md-6">
+                  <label class="form-label" for="{{ form.assunto_tipo.id_for_label }}">{{ form.assunto_tipo.label }}</label>
+                  {{ form.assunto_tipo }}
+                  {% if form.assunto_tipo.errors %}<div class="invalid-feedback d-block">{{ form.assunto_tipo.errors.0 }}</div>{% endif %}
+                </div>
+              </div>
+
+              <div class="row g-3 mt-1">
+                <div class="col-md-6">
                   <label class="form-label" for="{{ form.custeio_tipo.id_for_label }}">{{ form.custeio_tipo.label }}</label>
                   {{ form.custeio_tipo }}
                   {% if form.custeio_tipo.errors %}<div class="invalid-feedback d-block">{{ form.custeio_tipo.errors.0 }}</div>{% endif %}

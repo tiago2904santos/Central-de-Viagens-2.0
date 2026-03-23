@@ -3481,6 +3481,7 @@ class OficioWizardTest(TestCase):
             'protocolo': '12.345.678-9',
             'data_criacao': self.oficio.data_criacao.strftime('%d/%m/%Y'),
             'motivo': 'Motivo teste',
+            'assunto_tipo': Oficio.ASSUNTO_TIPO_AUTORIZACAO,
             'custeio_tipo': Oficio.CUSTEIO_UNIDADE,
             'viajantes': [],  # nenhum viajante
             'csrfmiddlewaretoken': csrf,
@@ -3498,6 +3499,7 @@ class OficioWizardTest(TestCase):
             'protocolo': '12.345.678-9',
             'data_criacao': self.oficio.data_criacao.strftime('%d/%m/%Y'),
             'motivo': 'Motivo',
+            'assunto_tipo': Oficio.ASSUNTO_TIPO_AUTORIZACAO,
             'custeio_tipo': Oficio.CUSTEIO_UNIDADE,
             'viajantes': [self.viajante.pk],
             'csrfmiddlewaretoken': csrf,
@@ -3591,6 +3593,7 @@ class OficioWizardTest(TestCase):
                 'protocolo': '12.345.678-9',
                 'data_criacao': self.oficio.data_criacao.strftime('%d/%m/%Y'),
                 'motivo': 'Motivo teste',
+                'assunto_tipo': Oficio.ASSUNTO_TIPO_AUTORIZACAO,
                 'custeio_tipo': Oficio.CUSTEIO_UNIDADE,
                 'viajantes': [self.viajante.pk],
             },
@@ -3709,6 +3712,7 @@ class OficioStep1AcceptanceTest(TestCase):
             'data_criacao': oficio.data_criacao.strftime('%d/%m/%Y'),
             'modelo_motivo': '',
             'motivo': 'Motivo base',
+            'assunto_tipo': Oficio.ASSUNTO_TIPO_AUTORIZACAO,
             'custeio_tipo': Oficio.CUSTEIO_UNIDADE,
             'nome_instituicao_custeio': '',
             'viajantes': [self.viajante_final.pk],
@@ -5614,6 +5618,7 @@ class OficioJustificativaTest(TestCase):
             'data_criacao': oficio.data_criacao.strftime('%d/%m/%Y'),
             'modelo_motivo': '',
             'motivo': 'Motivo com justificativa',
+            'assunto_tipo': Oficio.ASSUNTO_TIPO_AUTORIZACAO,
             'custeio_tipo': Oficio.CUSTEIO_UNIDADE,
             'nome_instituicao_custeio': '',
             'viajantes': [self.viajante.pk],
@@ -6140,6 +6145,7 @@ class OficioDocumentosTest(TestCase):
             'data_criacao': oficio.data_criacao.strftime('%d/%m/%Y'),
             'modelo_motivo': '',
             'motivo': 'Motivo documental',
+            'assunto_tipo': Oficio.ASSUNTO_TIPO_AUTORIZACAO,
             'custeio_tipo': Oficio.CUSTEIO_UNIDADE,
             'nome_instituicao_custeio': '',
             'viajantes': [self.viajante.pk],
@@ -7010,6 +7016,116 @@ class OficioDocumentosTest(TestCase):
         self.assertContains(response, 'Documentos do of')
 
 
+class OficioGeracaoDocumentoCorrecoesTest(TestCase):
+    """Testes para as correções de destino, assunto e protocolo no gerador de Ofícios."""
+
+    def setUp(self):
+        self.estado_pr = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado_sp = Estado.objects.create(nome='São Paulo', sigla='SP', codigo_ibge='35')
+        self.cidade_ctba = Cidade.objects.create(nome='Curitiba', estado=self.estado_pr, codigo_ibge='4106902')
+        self.cidade_sp = Cidade.objects.create(nome='São Paulo', estado=self.estado_sp, codigo_ibge='3550308')
+        self.cidade_interior_pr = Cidade.objects.create(nome='Londrina', estado=self.estado_pr, codigo_ibge='4113700')
+
+    def _criar_oficio_simples(self, assunto_tipo=None):
+        oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)
+        if assunto_tipo:
+            Oficio.objects.filter(pk=oficio.pk).update(assunto_tipo=assunto_tipo)
+            oficio.refresh_from_db()
+        return oficio
+
+    def _add_trecho(self, oficio, destino_cidade):
+        OficioTrecho.objects.create(
+            oficio=oficio,
+            ordem=oficio.trechos.count(),
+            destino_estado=destino_cidade.estado,
+            destino_cidade=destino_cidade,
+        )
+
+    def test_destino_cabecalho_e_sesp_quando_destino_fora_do_parana(self):
+        from eventos.services.documentos.oficio import _get_destino_cabecalho_oficio, DESTINO_FORA_PARANA
+        oficio = self._criar_oficio_simples()
+        self._add_trecho(oficio, self.cidade_sp)
+
+        resultado = _get_destino_cabecalho_oficio(oficio)
+
+        self.assertEqual(resultado, DESTINO_FORA_PARANA)
+        self.assertEqual(resultado, 'SESP')
+
+    def test_destino_cabecalho_e_gabinete_quando_destino_dentro_do_parana(self):
+        from eventos.services.documentos.oficio import _get_destino_cabecalho_oficio, DESTINO_DENTRO_PARANA
+        oficio = self._criar_oficio_simples()
+        self._add_trecho(oficio, self.cidade_interior_pr)
+
+        resultado = _get_destino_cabecalho_oficio(oficio)
+
+        self.assertEqual(resultado, DESTINO_DENTRO_PARANA)
+        self.assertEqual(resultado, 'GABINETE DO DELEGADO GERAL ADJUNTO')
+
+    def test_multiplos_destinos_com_um_fora_do_pr_resulta_em_sesp(self):
+        from eventos.services.documentos.oficio import _get_destino_cabecalho_oficio, DESTINO_FORA_PARANA
+        oficio = self._criar_oficio_simples()
+        self._add_trecho(oficio, self.cidade_ctba)
+        self._add_trecho(oficio, self.cidade_sp)
+
+        resultado = _get_destino_cabecalho_oficio(oficio)
+
+        self.assertEqual(resultado, DESTINO_FORA_PARANA)
+
+    def test_multiplos_destinos_todos_no_pr_resulta_em_gabinete(self):
+        from eventos.services.documentos.oficio import _get_destino_cabecalho_oficio, DESTINO_DENTRO_PARANA
+        oficio = self._criar_oficio_simples()
+        self._add_trecho(oficio, self.cidade_ctba)
+        self._add_trecho(oficio, self.cidade_interior_pr)
+
+        resultado = _get_destino_cabecalho_oficio(oficio)
+
+        self.assertEqual(resultado, DESTINO_DENTRO_PARANA)
+
+    def test_oficio_sem_trechos_resulta_em_gabinete(self):
+        from eventos.services.documentos.oficio import _get_destino_cabecalho_oficio, DESTINO_DENTRO_PARANA
+        oficio = self._criar_oficio_simples()
+
+        resultado = _get_destino_cabecalho_oficio(oficio)
+
+        self.assertEqual(resultado, DESTINO_DENTRO_PARANA)
+
+    def test_assunto_padrao_e_autorizacao(self):
+        from eventos.services.documentos.oficio import _get_assunto_for_oficio, ASSUNTO_AUTORIZACAO
+        oficio = self._criar_oficio_simples()
+
+        resultado = _get_assunto_for_oficio(oficio)
+
+        self.assertEqual(resultado, ASSUNTO_AUTORIZACAO)
+        self.assertEqual(resultado, 'Solicitação de autorização e concessão de diárias.')
+
+    def test_assunto_muda_para_convalidacao_quando_tipo_convalidacao(self):
+        from eventos.services.documentos.oficio import _get_assunto_for_oficio, ASSUNTO_CONVALIDACAO
+        oficio = self._criar_oficio_simples(assunto_tipo=Oficio.ASSUNTO_TIPO_CONVALIDACAO)
+
+        resultado = _get_assunto_for_oficio(oficio)
+
+        self.assertEqual(resultado, ASSUNTO_CONVALIDACAO)
+        self.assertEqual(resultado, 'Solicitação de convalidação e concessão de diárias.')
+
+    def test_col_solicitacao_fica_em_branco(self):
+        from eventos.services.documentos.oficio import _build_col_solicitacao
+        context_fake = {'viajantes': [{'nome': 'Fulano'}, {'nome': 'Beltrano'}]}
+
+        resultado = _build_col_solicitacao(context_fake)
+
+        self.assertEqual(resultado, '')
+
+    def test_assunto_tipo_default_e_autorizacao(self):
+        oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)
+        oficio.refresh_from_db()
+
+        self.assertEqual(oficio.assunto_tipo, Oficio.ASSUNTO_TIPO_AUTORIZACAO)
+
+    def test_choices_assunto_tipo_corretos(self):
+        self.assertIn(Oficio.ASSUNTO_TIPO_AUTORIZACAO, dict(Oficio.ASSUNTO_TIPO_CHOICES))
+        self.assertIn(Oficio.ASSUNTO_TIPO_CONVALIDACAO, dict(Oficio.ASSUNTO_TIPO_CHOICES))
+
+
 class OficioStep1AjustesFinosTest(TestCase):
     """Ajustes finos do Step 1 e gerenciadores auxiliares."""
 
@@ -7159,6 +7275,7 @@ class OficioStep1AjustesFinosTest(TestCase):
                 'data_criacao': oficio.data_criacao.strftime('%d/%m/%Y'),
                 'modelo_motivo': '',
                 'motivo': 'Fluxo após retorno',
+                'assunto_tipo': Oficio.ASSUNTO_TIPO_AUTORIZACAO,
                 'custeio_tipo': Oficio.CUSTEIO_UNIDADE,
                 'nome_instituicao_custeio': '',
                 'viajantes': [viajante.pk],
@@ -7206,6 +7323,7 @@ class OficioStep1ProtocolRegressionTest(TestCase):
             'protocolo': protocolo,
             'data_criacao': oficio.data_criacao.strftime('%d/%m/%Y'),
             'motivo': 'Motivo protocolo',
+            'assunto_tipo': Oficio.ASSUNTO_TIPO_AUTORIZACAO,
             'custeio_tipo': Oficio.CUSTEIO_UNIDADE,
             'nome_instituicao_custeio': '',
             'viajantes': [self.viajante.pk],

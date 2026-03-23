@@ -1157,6 +1157,13 @@ class Oficio(models.Model):
         (ROTEIRO_MODO_PROPRIO, 'Montar roteiro neste ofício'),
     ]
 
+    ASSUNTO_TIPO_AUTORIZACAO = 'AUTORIZACAO'
+    ASSUNTO_TIPO_CONVALIDACAO = 'CONVALIDACAO'
+    ASSUNTO_TIPO_CHOICES = [
+        (ASSUNTO_TIPO_AUTORIZACAO, 'Autorização'),
+        (ASSUNTO_TIPO_CONVALIDACAO, 'Convalidação'),
+    ]
+
     # Vínculos
     evento = models.ForeignKey(
         Evento,
@@ -1208,6 +1215,13 @@ class Oficio(models.Model):
         related_name='oficios', verbose_name='Modelo de motivo'
     )
     motivo = models.TextField('Motivo', blank=True, default='')
+    assunto_tipo = models.CharField(
+        'Tipo do assunto',
+        max_length=20,
+        choices=ASSUNTO_TIPO_CHOICES,
+        default=ASSUNTO_TIPO_AUTORIZACAO,
+        blank=True,
+    )
     gerar_termo_preenchido = models.BooleanField(
         'Gerar termo de autorização preenchido',
         default=False,

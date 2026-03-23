@@ -3,9 +3,11 @@ from .renderer import get_document_template_path, render_docx_template_bytes
 from .types import DocumentoOficioTipo
 
 
-ASSUNTO_LINHA_PADRAO = 'Solicitação de autorização e concessão de diárias e recursos para combustível.'
-ASSUNTO_OFICIO_PADRAO = '(AUTORIZAÇÃO)'
-ASSUNTO_TERMO_PADRAO = 'autorização'
+ASSUNTO_AUTORIZACAO = 'Solicitação de autorização e concessão de diárias.'
+ASSUNTO_CONVALIDACAO = 'Solicitação de convalidação e concessão de diárias.'
+
+DESTINO_FORA_PARANA = 'SESP'
+DESTINO_DENTRO_PARANA = 'GABINETE DO DELEGADO GERAL ADJUNTO'
 
 
 def _get_primary_signature(context):
@@ -70,11 +72,24 @@ def _build_col_rgcpf(context):
     return '\n'.join(linhas)
 
 
-def _build_col_solicitacao(context):
-    return _build_column_lines(
-        [ASSUNTO_LINHA_PADRAO for _ in context['viajantes']],
-        blank_lines=1,
+def _get_assunto_for_oficio(oficio):
+    if getattr(oficio, 'assunto_tipo', '') == 'CONVALIDACAO':
+        return ASSUNTO_CONVALIDACAO
+    return ASSUNTO_AUTORIZACAO
+
+
+def _get_destino_cabecalho_oficio(oficio):
+    fora_do_parana = (
+        oficio.trechos
+        .filter(destino_estado__isnull=False)
+        .exclude(destino_estado__sigla='PR')
+        .exists()
     )
+    return DESTINO_FORA_PARANA if fora_do_parana else DESTINO_DENTRO_PARANA
+
+
+def _build_col_solicitacao(context):
+    return ''
 
 
 def _build_roteiro_ida_cols(context):
@@ -125,7 +140,7 @@ def build_oficio_template_context(oficio):
         'nome_chefia': assinatura.get('nome', ''),
         'cargo_chefia': assinatura.get('cargo', ''),
         'unidade': unidade,
-        'orgao_destino': context['institucional']['orgao'] or context['institucional']['sigla_orgao'] or unidade,
+        'orgao_destino': _get_destino_cabecalho_oficio(oficio),
         'placa': context['veiculo']['placa_formatada'],
         'viatura': context['veiculo']['modelo'] or context['veiculo']['descricao'],
         'combustivel': context['veiculo']['combustivel'],
@@ -144,9 +159,9 @@ def build_oficio_template_context(oficio):
         'col_volta_saida': volta_saida,
         'col_volta_chegada': volta_chegada,
         'col_solicitacao': _build_col_solicitacao(context),
-        'assunto_linha': ASSUNTO_LINHA_PADRAO,
-        'assunto_oficio': ASSUNTO_OFICIO_PADRAO,
-        'assunto_termo': ASSUNTO_TERMO_PADRAO,
+        'assunto_linha': _get_assunto_for_oficio(oficio),
+        'assunto_oficio': '(CONVALIDAÇÃO)' if getattr(oficio, 'assunto_tipo', '') == 'CONVALIDACAO' else '(AUTORIZAÇÃO)',
+        'assunto_termo': 'convalidação' if getattr(oficio, 'assunto_tipo', '') == 'CONVALIDACAO' else 'autorização',
         'armamento': context['veiculo']['porte_transporte_armas'],
         'motivo': context['conteudo']['motivo'],
         'divisao': context['institucional']['divisao'],

@@ -71,6 +71,7 @@ def render_plano_trabalho_docx(oficio):
         'numero_plano_trabalho': context.get('numero_plano_trabalho', ''),
         'destino': context.get('destino', ''),
         'solicitante': context.get('solicitante', ''),
+            'objetivo': context.get('plano_trabalho', {}).get('objetivo', ''),
         'metas_formatada': context.get('metas_formatada', ''),
         'atividades_formatada': context.get('atividades_formatada', ''),
         'dias_evento_extenso': context.get('dias_evento_extenso', ''),
