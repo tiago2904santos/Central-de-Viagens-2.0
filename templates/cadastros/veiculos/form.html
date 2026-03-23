@@ -1,53 +1,61 @@
-{% extends 'base.html' %}
+{% extends 'includes/forms/form_base.html' %}
 
-{% block title %}{% if is_create %}Cadastrar Veículo{% else %}Editar Veículo{% endif %} — Central de Viagens{% endblock %}
-{% block page_title %}{% if is_create %}Cadastrar Veículo{% else %}Editar Veículo{% endif %}{% endblock %}
+{% block form_title_block %}{% if is_create %}Cadastrar Veiculo{% else %}Editar Veiculo{% endif %}{% endblock %}
+{% block form_page_title %}{% if is_create %}Cadastrar Veiculo{% else %}Editar Veiculo{% endif %}{% endblock %}
+{% block form_header_title %}{% if is_create %}Cadastrar Veiculo{% else %}Editar Veiculo{% endif %}{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    {% include 'cadastros/_aviso_rascunho.html' %}
-    <div class="card form-card">
-        <div class="card-body">
-            <form method="post" id="form-veiculo">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ next_url|default:'' }}">
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <label for="id_placa" class="form-label">{{ form.placa.label }}</label>
-                        <input type="text" name="placa" id="id_placa" class="form-control" maxlength="8" placeholder="ABC1234 ou ABC1D23" data-mask="placa" value="{% firstof form.initial.placa form.placa.value '' %}">
-                        {% if form.placa.errors %}<div class="invalid-feedback d-block">{{ form.placa.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label for="id_modelo" class="form-label">{{ form.modelo.label }}</label>
-                        {{ form.modelo }}
-                        {% if form.modelo.errors %}<div class="invalid-feedback d-block">{{ form.modelo.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label for="id_combustivel" class="form-label">{{ form.combustivel.label }}</label>
-                        {{ form.combustivel }}
-                        {% if form.combustivel.errors %}<div class="invalid-feedback d-block">{{ form.combustivel.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label for="id_tipo" class="form-label">{{ form.tipo.label }}</label>
-                        {{ form.tipo }}
-                        {% if form.tipo.errors %}<div class="invalid-feedback d-block">{{ form.tipo.errors.0 }}</div>{% endif %}
-                    </div>
-                </div>
-                {% if object %}<input type="hidden" name="veiculo_id" value="{{ object.pk }}">{% endif %}
-                <input type="hidden" name="return_url" value="{{ return_url }}">
-                <div class="form-actions mt-4">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                    {% if next_url %}
-                    <a href="{{ next_url }}" class="btn btn-outline-secondary">Cancelar</a>
-                    {% else %}
-                    <a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-                    {% endif %}
-                    <button type="submit" formaction="{% url 'cadastros:veiculo-rascunho-ir-combustiveis' %}" class="btn btn-link text-muted">Gerenciar Combustíveis</button>
-                </div>
-            </form>
-        </div>
+{% block form_header_subtitle %}
+<p class="text-muted mb-0">Cadastro padronizado de viaturas com identidade visual unificada.</p>
+{% endblock %}
+
+{% block form_page_notice %}
+{% include 'cadastros/_aviso_rascunho.html' %}
+{% endblock %}
+
+{% block form_id %}form-veiculo{% endblock %}
+
+{% block form_hidden %}
+<input type="hidden" name="next" value="{{ next_url|default:'' }}">
+{% if object %}<input type="hidden" name="veiculo_id" value="{{ object.pk }}">{% endif %}
+<input type="hidden" name="return_url" value="{{ return_url }}">
+{% endblock %}
+
+{% block form_fields %}
+<div class="row g-3">
+    <div class="col-12 col-md-6">
+        <label for="id_placa" class="form-label">{{ form.placa.label }}</label>
+        <input type="text" name="placa" id="id_placa" class="form-control" maxlength="8" placeholder="ABC1234 ou ABC1D23" data-mask="placa" value="{% firstof form.initial.placa form.placa.value '' %}">
+        {% if form.placa.errors %}<div class="invalid-feedback d-block">{{ form.placa.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="col-12 col-md-6">
+        <label for="id_modelo" class="form-label">{{ form.modelo.label }}</label>
+        {{ form.modelo }}
+        {% if form.modelo.errors %}<div class="invalid-feedback d-block">{{ form.modelo.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="col-12 col-md-6">
+        <label for="id_combustivel" class="form-label">{{ form.combustivel.label }}</label>
+        {{ form.combustivel }}
+        {% if form.combustivel.errors %}<div class="invalid-feedback d-block">{{ form.combustivel.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="col-12 col-md-6">
+        <label for="id_tipo" class="form-label">{{ form.tipo.label }}</label>
+        {{ form.tipo }}
+        {% if form.tipo.errors %}<div class="invalid-feedback d-block">{{ form.tipo.errors.0 }}</div>{% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block form_actions %}
+<button type="submit" class="btn btn-primary">Salvar</button>
+{% if next_url %}
+<a href="{{ next_url }}" class="btn btn-outline-secondary">Cancelar</a>
+{% else %}
+<a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+{% endif %}
+<button type="submit" formaction="{% url 'cadastros:veiculo-rascunho-ir-combustiveis' %}" class="btn btn-link text-muted">Gerenciar Combustiveis</button>
+{% endblock %}
+
+{% block extra_js %}
 <script>
 (function() {
     var modeloInput = document.getElementById('id_modelo');
@@ -55,7 +63,9 @@
         modeloInput.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() { if (modeloInput.value) modeloInput.value = modeloInput.value.toUpperCase(); });
-        } else if (modeloInput.value) modeloInput.value = modeloInput.value.toUpperCase();
+        } else if (modeloInput.value) {
+            modeloInput.value = modeloInput.value.toUpperCase();
+        }
     }
 })();
 </script>

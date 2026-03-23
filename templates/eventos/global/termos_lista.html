@@ -1,96 +1,97 @@
-{% extends 'base.html' %}
+{% extends 'includes/list/list_base.html' %}
 {% load static %}
 
-{% block title %}Termos - Central de Viagens{% endblock %}
-{% block page_title %}Termos{% endblock %}
+{% block page_title_block %}Termos{% endblock %}
+{% block page_header_title %}Termos{% endblock %}
+{% block list_title %}Lista global de termos{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--simple">
-    <div class="system-list-shell">
-    {% url 'eventos:lista' as eventos_url %}
-    {% include 'includes/list/page_header.html' with title='Lista global de termos' subtitle='Visao global dos participantes, status do termo e contexto operacional do evento.' secondary_url=eventos_url secondary_label='Eventos' %}
-    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+{% block list_subtitle %}
+<p class="system-list-header__subtitle">Visao global dos participantes, status do termo e contexto operacional do evento.</p>
+{% endblock %}
 
-    <div class="card filter-card system-filter-card">
-        <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
-                <div class="col-12 col-lg-5">
-                    <label class="form-label small text-muted">Busca</label>
-                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, participante ou cargo" data-list-autosubmit>
-                </div>
-                <div class="col-12 col-md-4 col-lg-4">
-                    <label class="form-label small text-muted">Evento</label>
-                    <select name="evento_id" class="form-select form-select-sm" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for evento in eventos_choices %}
-                        <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <label class="form-label small text-muted">Status</label>
-                    <select name="status" class="form-select form-select-sm" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-auto">
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-                    <a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-                </div>
-            </form>
-        </div>
+{% block list_header_actions %}
+<a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary system-list-action-btn">Eventos</a>
+{% endblock %}
+
+{% block list_mode_badge %}
+<div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+{% endblock %}
+
+{% block list_toolbar %}
+<form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
+    <div class="col-12 col-lg-5">
+        <label class="form-label small text-muted">Busca</label>
+        <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, participante ou cargo" data-list-autosubmit>
     </div>
-
-    <div class="system-list-table-wrap">
-        <div class="table-responsive">
-            <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
-                <thead class="table-light">
-                    <tr>
-                        <th>Participante</th>
-                        <th>Evento</th>
-                        <th>Oficios relacionados</th>
-                        <th>Status</th>
-                        <th>Atualizado</th>
-                        <th class="text-end" width="280">Acoes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for termo in object_list %}
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">{{ termo.viajante.nome|default:"(sem nome)" }}</div>
-                            <div class="small text-muted">{{ termo.viajante.cargo.nome|default:"Sem cargo" }}</div>
-                        </td>
-                        <td><a href="{{ termo.evento_url }}" class="text-decoration-none">{{ termo.evento.titulo|default:"(sem titulo)" }}</a></td>
-                        <td>{{ termo.oficios_display }}</td>
-                        <td>
-                            {% if termo.status == 'CONCLUIDO' %}
-                            <span class="badge bg-success">{{ termo.get_status_display }}</span>
-                            {% elif termo.status == 'DISPENSADO' %}
-                            <span class="badge bg-secondary">{{ termo.get_status_display }}</span>
-                            {% else %}
-                            <span class="badge bg-warning text-dark">{{ termo.get_status_display }}</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ termo.updated_at|date:"d/m/Y H:i" }}</td>
-                        <td class="text-end">
-                            <a href="{{ termo.termos_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir termos</span></a>
-                            <a href="{{ termo.oficios_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-journal-text"></i><span>Oficios</span></a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="text-center text-muted py-5">Nenhum termo encontrado.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="col-12 col-md-4 col-lg-4">
+        <label class="form-label small text-muted">Evento</label>
+        <select name="evento_id" class="form-select form-select-sm" data-list-autosubmit>
+            <option value="">Todos</option>
+            {% for evento in eventos_choices %}
+            <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
+            {% endfor %}
+        </select>
     </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <label class="form-label small text-muted">Status</label>
+        <select name="status" class="form-select form-select-sm" data-list-autosubmit>
+            <option value="">Todos</option>
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-6 col-md-auto">
+        <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+        <a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+    </div>
+</form>
+{% endblock %}
 
-    {% include 'includes/pagination.html' %}
-</div>
+{% block page_result_content %}
+<div class="system-list-table-wrap">
+    <div class="table-responsive">
+        <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
+            <thead class="table-light">
+                <tr>
+                    <th>Participante</th>
+                    <th>Evento</th>
+                    <th>Oficios relacionados</th>
+                    <th>Status</th>
+                    <th>Atualizado</th>
+                    <th class="text-end" width="280">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for termo in object_list %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ termo.viajante.nome|default:"(sem nome)" }}</div>
+                        <div class="small text-muted">{{ termo.viajante.cargo.nome|default:"Sem cargo" }}</div>
+                    </td>
+                    <td><a href="{{ termo.evento_url }}" class="text-decoration-none">{{ termo.evento.titulo|default:"(sem titulo)" }}</a></td>
+                    <td>{{ termo.oficios_display }}</td>
+                    <td>
+                        {% if termo.status == 'CONCLUIDO' %}
+                        <span class="badge bg-success">{{ termo.get_status_display }}</span>
+                        {% elif termo.status == 'DISPENSADO' %}
+                        <span class="badge bg-secondary">{{ termo.get_status_display }}</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">{{ termo.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ termo.updated_at|date:"d/m/Y H:i" }}</td>
+                    <td class="text-end">
+                        <a href="{{ termo.termos_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir termos</span></a>
+                        <a href="{{ termo.oficios_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-journal-text"></i><span>Oficios</span></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-5">Nenhum termo encontrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
 

@@ -11,12 +11,12 @@
     --cv-navy-700: #245276;
     --cv-navy-100: #dce8f5;
 
-    /* Acento energetico (verde agua) */
-    --cv-aqua-700: #0d8a83;
-    --cv-aqua-600: #12a39a;
-    --cv-aqua-500: #18b8ae;
-    --cv-aqua-200: #bdebe7;
-    --cv-aqua-100: #dcf7f4;
+    /* Identidade principal (verde) */
+    --cv-aqua-700: #0f8f63;
+    --cv-aqua-600: #12a06d;
+    --cv-aqua-500: #20b57d;
+    --cv-aqua-200: #c7efdf;
+    --cv-aqua-100: #e8faf2;
 
     /* Neutros */
     --cv-neutral-25: #fcfdff;
@@ -29,16 +29,16 @@
     --cv-neutral-900: #0f172a;
 
     /* Cores funcionais */
-    --cv-primary: var(--cv-navy-800);
-    --cv-primary-hover: var(--cv-navy-700);
-    --cv-secondary: var(--cv-aqua-600);
-    --cv-secondary-hover: var(--cv-aqua-700);
-    --cv-focus: rgba(18, 163, 154, 0.28);
-    --cv-glow: rgba(24, 184, 174, 0.26);
+    --cv-primary: var(--cv-aqua-600);
+    --cv-primary-hover: var(--cv-aqua-700);
+    --cv-secondary: var(--cv-navy-800);
+    --cv-secondary-hover: var(--cv-navy-700);
+    --cv-focus: rgba(18, 160, 109, 0.24);
+    --cv-glow: rgba(18, 160, 109, 0.26);
     --cv-border-soft: rgba(15, 23, 42, 0.09);
     --cv-surface: #ffffff;
-    --cv-app-bg: linear-gradient(160deg, #f7fafd 0%, #eff5fa 38%, #edf8f6 100%);
-    --cv-surface-elevated: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(248, 252, 255, 0.98));
+    --cv-app-bg: linear-gradient(160deg, #f4fbf7 0%, #eef8f3 36%, #ecf2f9 100%);
+    --cv-surface-elevated: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(245, 252, 248, 0.98));
     --cv-success: #0f766e;
     --cv-warning: #b45309;
     --cv-danger: #b91c1c;
@@ -55,7 +55,7 @@
 
     /* Gradientes */
     --cv-gradient-sidebar: linear-gradient(180deg, var(--cv-navy-800) 0%, var(--cv-navy-900) 62%, var(--cv-navy-950) 100%);
-    --cv-gradient-brand: linear-gradient(140deg, var(--cv-navy-800) 0%, var(--cv-navy-900) 60%, var(--cv-aqua-700) 150%);
+    --cv-gradient-brand: linear-gradient(140deg, var(--cv-aqua-600) 0%, #14996a 36%, var(--cv-navy-900) 100%);
 
     /* Border radius — refinado */
     --cv-card-radius: 0.75rem;
@@ -749,28 +749,28 @@ a:hover {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--cv-navy-800), var(--cv-navy-700));
-    border-color: var(--cv-navy-800);
+    background: linear-gradient(135deg, var(--cv-primary), var(--cv-primary-hover));
+    border-color: var(--cv-primary);
     color: #fff;
 }
 
 .btn-primary:hover,
 .btn-primary:focus-visible {
-    background: linear-gradient(135deg, var(--cv-navy-700), var(--cv-secondary));
-    border-color: var(--cv-secondary);
+    background: linear-gradient(135deg, var(--cv-primary-hover), var(--cv-secondary));
+    border-color: var(--cv-primary-hover);
     color: #fff;
     box-shadow: var(--cv-shadow-glow);
 }
 
 .btn-outline-primary {
-    border-color: rgba(18, 163, 154, 0.5);
+    border-color: rgba(18, 160, 109, 0.5);
     color: var(--cv-aqua-700);
-    background: rgba(220, 247, 244, 0.42);
+    background: rgba(232, 250, 242, 0.8);
 }
 
 .btn-outline-primary:hover,
 .btn-outline-primary:focus-visible {
-    border-color: var(--cv-secondary);
+    border-color: var(--cv-primary);
     color: #fff;
     background: linear-gradient(135deg, var(--cv-secondary), var(--cv-aqua-700));
 }
@@ -2291,7 +2291,7 @@ a:hover {
 }
 
 .btn-doc-action--primary {
-    background: linear-gradient(135deg, #163b6d 0%, #215ecf 100%);
+    background: linear-gradient(135deg, var(--cv-primary) 0%, var(--cv-secondary) 100%);
     border-color: transparent;
     color: #fff;
 }
@@ -2302,14 +2302,14 @@ a:hover {
 }
 
 .btn-doc-action--secondary {
-    background: #fff;
-    color: #27415f;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--cv-navy-800);
 }
 
 .btn-doc-action--secondary:hover,
 .btn-doc-action--secondary:focus {
-    color: #18324f;
-    border-color: rgba(33, 94, 207, 0.24);
+    color: var(--cv-navy-900);
+    border-color: rgba(26, 58, 87, 0.24);
 }
 
 .btn-doc-action--pdf {
@@ -2461,8 +2461,9 @@ a:hover {
     --oficios-panel-shadow: 0 20px 45px rgba(15, 23, 42, 0.06);
     padding-bottom: 6rem;
     background:
-        radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 28%),
-        linear-gradient(180deg, #f5f7fb 0%, #eef3f8 100%);
+    radial-gradient(circle at top right, rgba(18, 160, 109, 0.12), transparent 28%),
+    radial-gradient(circle at top left, rgba(26, 58, 87, 0.08), transparent 30%),
+    linear-gradient(180deg, #f3faf6 0%, #edf3f8 100%);
 }
 
 .oficios-list-shell {
@@ -2489,7 +2490,7 @@ a:hover {
 
 .oficios-list-header h1 {
     margin: 0;
-    color: #172554;
+    color: var(--cv-secondary);
     font-size: clamp(1.8rem, 2.3vw, 2.3rem);
     font-weight: 800;
     letter-spacing: -0.03em;
@@ -2515,7 +2516,7 @@ a:hover {
 }
 
 .oficios-quick-filter__label {
-    color: #475569;
+    color: var(--cv-primary-hover);
     font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.1em;
@@ -3280,6 +3281,41 @@ a:hover {
     font-size: 0.75rem;
 }
 
+/* ----- Base compartilhada de formularios ----- */
+.system-form-page {
+    --system-form-bg: linear-gradient(180deg, rgba(234, 250, 242, 0.52) 0%, rgba(238, 246, 252, 0.6) 100%);
+    --system-form-border: rgba(15, 23, 42, 0.08);
+    --system-form-shadow: 0 20px 36px rgba(15, 23, 42, 0.1);
+    --system-form-kicker: rgba(15, 31, 53, 0.64);
+    --system-form-section: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(243, 250, 246, 0.95));
+    background: var(--system-form-bg);
+    border-radius: 1.25rem;
+    padding-bottom: 2rem;
+}
+
+.system-form-shell {
+    width: min(1080px, 100%);
+}
+
+.system-form-header {
+    margin-bottom: 1.4rem;
+}
+
+.system-form-card {
+    border: 1px solid var(--system-form-border);
+    box-shadow: var(--system-form-shadow);
+    background: var(--system-form-section);
+}
+
+.system-form-card .form-text {
+    color: var(--cv-text-secondary);
+}
+
+.system-form-actions {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding-top: 1rem;
+}
+
 /* ----- Formulários em card ----- */
 .form-card .card-body {
     padding: 1.5rem;
@@ -3318,25 +3354,25 @@ a:hover {
 .oficio-wizard-page {
     --oficio-wizard-sticky-top: 0.9rem;
     --oficio-wizard-max-width: 1520px;
-    --oficio-wizard-accent: #0b6770;
-    --oficio-wizard-accent-strong: #124b79;
-    --oficio-wizard-accent-soft: rgba(11, 103, 112, 0.1);
+    --oficio-wizard-accent: var(--cv-primary);
+    --oficio-wizard-accent-strong: var(--cv-secondary);
+    --oficio-wizard-accent-soft: rgba(18, 160, 109, 0.12);
     --oficio-wizard-highlight: #d97706;
-    --oficio-wizard-ink: #10243f;
-    --oficio-wizard-muted: #5b6b81;
-    --oficio-wizard-line: rgba(16, 36, 63, 0.1);
+    --oficio-wizard-ink: var(--cv-navy-900);
+    --oficio-wizard-muted: var(--cv-text-secondary);
+    --oficio-wizard-line: rgba(15, 23, 42, 0.1);
     --oficio-wizard-surface: rgba(255, 255, 255, 0.92);
     --oficio-wizard-surface-strong: #ffffff;
-    --oficio-wizard-soft: linear-gradient(180deg, rgba(250, 252, 255, 0.98) 0%, rgba(243, 247, 252, 0.96) 100%);
-    --oficio-wizard-shadow: 0 30px 60px rgba(16, 36, 63, 0.12);
-    --oficio-wizard-shadow-soft: 0 16px 32px rgba(16, 36, 63, 0.08);
+    --oficio-wizard-soft: linear-gradient(180deg, rgba(247, 253, 249, 0.98) 0%, rgba(239, 247, 252, 0.96) 100%);
+    --oficio-wizard-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
+    --oficio-wizard-shadow-soft: 0 16px 32px rgba(15, 23, 42, 0.08);
     padding: 1rem 0 5rem;
     font-family: "Segoe UI Variable Display", "Aptos", "Segoe UI", sans-serif;
     color: var(--oficio-wizard-ink);
     background:
-        radial-gradient(circle at top right, rgba(11, 103, 112, 0.16), transparent 24%),
-        radial-gradient(circle at top left, rgba(18, 75, 121, 0.12), transparent 30%),
-        linear-gradient(180deg, #eef4fb 0%, #edf2f8 34%, #f5f8fb 100%);
+        radial-gradient(circle at top right, rgba(18, 160, 109, 0.16), transparent 24%),
+        radial-gradient(circle at top left, rgba(26, 58, 87, 0.12), transparent 30%),
+        linear-gradient(180deg, #edf8f1 0%, #edf3f9 34%, #f6f9fc 100%);
 }
 
 .oficio-wizard-page[data-glance-state="open"] {
@@ -4300,19 +4336,19 @@ a:hover {
 
 .oficio-wizard-page {
     --oficio-wizard-sticky-top: 0.7rem;
-    --oficio-wizard-accent: #0f766e;
-    --oficio-wizard-accent-strong: #0f5f8f;
-    --oficio-wizard-ink: #0f172a;
-    --oficio-wizard-muted: #475569;
+    --oficio-wizard-accent: var(--cv-primary);
+    --oficio-wizard-accent-strong: var(--cv-secondary);
+    --oficio-wizard-ink: var(--cv-navy-900);
+    --oficio-wizard-muted: var(--cv-text-secondary);
     --oficio-wizard-line: rgba(15, 23, 42, 0.08);
     --oficio-wizard-surface: #ffffff;
-    --oficio-wizard-soft: linear-gradient(180deg, #f8fbff 0%, #eff5fb 100%);
+    --oficio-wizard-soft: linear-gradient(180deg, #f4fbf7 0%, #edf5fb 100%);
     --oficio-wizard-shadow: 0 22px 48px rgba(15, 23, 42, 0.08);
     padding-bottom: 5rem;
     transition: padding-bottom 0.18s ease;
     background:
-        radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 30%),
-        linear-gradient(180deg, #f5f8fc 0%, #edf3f9 100%);
+        radial-gradient(circle at top right, rgba(18, 160, 109, 0.1), transparent 30%),
+        linear-gradient(180deg, #f2faf5 0%, #edf3f9 100%);
 }
 
 .oficio-wizard-page[data-glance-state="open"] {

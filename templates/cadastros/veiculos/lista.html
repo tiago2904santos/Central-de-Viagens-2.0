@@ -1,84 +1,88 @@
-{% extends 'base.html' %}
+{% extends 'includes/list/list_base.html' %}
 {% load cadastros_extras %}
 {% load static %}
 
-{% block title %}Veículos — Central de Viagens{% endblock %}
-{% block page_title %}Veículos{% endblock %}
+{% block page_title_block %}Veiculos{% endblock %}
+{% block page_header_title %}Veiculos{% endblock %}
+{% block list_title %}Veiculos{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--simple">
-    <div class="system-list-shell">
-    {% include 'includes/list/page_header.html' with title='Veiculos' subtitle='Lista simples para leitura rapida da frota e manutencao de cadastro.' secondary_url=combustiveis_url secondary_label='Gerenciar Combustiveis' primary_url=novo_veiculo_url primary_label='Cadastrar veiculo' %}
-    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+{% block list_subtitle %}
+<p class="system-list-header__subtitle">Lista simples para leitura rapida da frota e manutencao de cadastro.</p>
+{% endblock %}
 
-    <div class="card filter-card mb-4 system-filter-card">
-        <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
-                <div class="col-12 col-md-4">
-                    <label class="form-label small text-muted">Buscar</label>
-                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Placa, modelo, combustivel, tipo ou status" value="{{ form_filter.q }}" data-list-autosubmit>
-                </div>
-                <div class="col-6 col-md-3">
-                    <label class="form-label small text-muted">Ordenar por</label>
-                    <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
-                        {% for key, label in order_by_choices %}
-                        <option value="{{ key }}" {% if form_filter.order_by == key %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3">
-                    <label class="form-label small text-muted">Direção</label>
-                    <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
-                        {% for key, label in order_dir_choices %}
-                        <option value="{{ key }}" {% if form_filter.order_dir == key %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-12 col-md-auto">
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-                    <a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-                </div>
-            </form>
-        </div>
+{% block list_header_actions %}
+<a href="{{ combustiveis_url }}" class="btn btn-outline-secondary system-list-action-btn">Gerenciar Combustiveis</a>
+<a href="{{ novo_veiculo_url }}" class="btn btn-primary system-list-action-btn"><i class="bi bi-plus-lg me-1"></i>Cadastrar veiculo</a>
+{% endblock %}
+
+{% block list_mode_badge %}
+<div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+{% endblock %}
+
+{% block list_toolbar %}
+<form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
+    <div class="col-12 col-md-4">
+        <label class="form-label small text-muted">Buscar</label>
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Placa, modelo, combustivel, tipo ou status" value="{{ form_filter.q }}" data-list-autosubmit>
     </div>
-
-    <div class="system-list-table-wrap">
-        <div class="table-responsive">
-            <table class="table table-hover table-cadastro mb-0 system-list-table">
-                <thead class="table-light">
-                    <tr>
-                        <th>Placa</th>
-                        <th>Modelo</th>
-                        <th>Combustível</th>
-                        <th>Tipo</th>
-                        <th>Status</th>
-                        <th width="140" class="text-end">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for obj in object_list %}
-                    <tr>
-                        <td>{{ obj.placa_formatada }}</td>
-                        <td>{{ obj.modelo|default:"—" }}</td>
-                        <td>{% if obj.combustivel %}{{ obj.combustivel.nome }}{% else %}—{% endif %}</td>
-                        <td>{{ obj.get_tipo_display }}</td>
-                        <td><span class="{{ obj.status|status_badge_class }}">{{ obj.status|status_label }}</span></td>
-                        <td class="text-end">
-                            <a href="{% url 'cadastros:veiculo-editar' obj.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
-                            <a href="{% url 'cadastros:veiculo-excluir' obj.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--danger"><i class="bi bi-trash"></i><span>Excluir</span></a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="text-center text-muted py-4">Nenhum veículo encontrado.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="col-6 col-md-3">
+        <label class="form-label small text-muted">Ordenar por</label>
+        <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
+            {% for key, label in order_by_choices %}
+            <option value="{{ key }}" {% if form_filter.order_by == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
     </div>
+    <div class="col-6 col-md-3">
+        <label class="form-label small text-muted">Direcao</label>
+        <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
+            {% for key, label in order_dir_choices %}
+            <option value="{{ key }}" {% if form_filter.order_dir == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-12 col-md-auto">
+        <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+        <a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+    </div>
+</form>
+{% endblock %}
 
-    {% include 'includes/list/floating_new_button.html' with url=novo_veiculo_url label='Novo veiculo' icon='bi-plus-lg' %}
+{% block page_result_content %}
+<div class="system-list-table-wrap">
+    <div class="table-responsive">
+        <table class="table table-hover table-cadastro mb-0 system-list-table">
+            <thead class="table-light">
+                <tr>
+                    <th>Placa</th>
+                    <th>Modelo</th>
+                    <th>Combustivel</th>
+                    <th>Tipo</th>
+                    <th>Status</th>
+                    <th width="140" class="text-end">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in object_list %}
+                <tr>
+                    <td>{{ obj.placa_formatada }}</td>
+                    <td>{{ obj.modelo|default:"-" }}</td>
+                    <td>{% if obj.combustivel %}{{ obj.combustivel.nome }}{% else %}-{% endif %}</td>
+                    <td>{{ obj.get_tipo_display }}</td>
+                    <td><span class="{{ obj.status|status_badge_class }}">{{ obj.status|status_label }}</span></td>
+                    <td class="text-end">
+                        <a href="{% url 'cadastros:veiculo-editar' obj.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                        <a href="{% url 'cadastros:veiculo-excluir' obj.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--danger"><i class="bi bi-trash"></i><span>Excluir</span></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">Nenhum veiculo encontrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
+{% include 'includes/list/floating_new_button.html' with url=novo_veiculo_url label='Novo veiculo' icon='bi-plus-lg' %}
 {% endblock %}
 
 {% block extra_js %}

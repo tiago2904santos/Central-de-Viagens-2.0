@@ -1,141 +1,146 @@
-﻿{% extends 'base.html' %}
+﻿{% extends 'includes/list/list_base.html' %}
 {% load static %}
 
-{% block title %}Roteiros - Central de Viagens{% endblock %}
-{% block page_title %}Roteiros{% endblock %}
+{% block page_title_block %}Roteiros{% endblock %}
+{% block page_header_title %}Roteiros{% endblock %}
+{% block list_title %}Lista global de roteiros{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--simple">
-    <div class="system-list-shell">
-    {% include 'includes/list/page_header.html' with title='Lista global de roteiros' subtitle='Biblioteca operacional dos roteiros criados na etapa 2 dos eventos.' secondary_url=eventos_url secondary_label='Eventos' primary_url=novo_roteiro_url primary_label='Novo roteiro neste evento' %}
-    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
-    {% if not novo_roteiro_url %}
-    <div class="alert alert-light border small py-2 px-3 mb-3">Selecione um evento no filtro para habilitar a criacao vinculada.</div>
-    {% endif %}
+{% block list_subtitle %}
+<p class="system-list-header__subtitle">Biblioteca operacional dos roteiros criados na etapa 2 dos eventos.</p>
+{% endblock %}
 
-    <div class="card filter-card system-filter-card">
-        <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
-                <div class="col-12 col-lg-4">
-                    <label class="form-label small text-muted">Busca</label>
-                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, sede ou destino" data-list-autosubmit>
-                </div>
-                <div class="col-12 col-md-4 col-lg-4">
-                    <label class="form-label small text-muted">Evento</label>
-                    <select name="evento_id" class="form-select form-select-sm" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for evento in eventos_choices %}
-                        <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <label class="form-label small text-muted">Status</label>
-                    <select name="status" class="form-select form-select-sm" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <label class="form-label small text-muted">Tipo</label>
-                    <select name="tipo" class="form-select form-select-sm" data-list-autosubmit>
-                        {% for value, label in tipo_choices %}
-                        <option value="{{ value }}" {% if filters.tipo|upper == value|upper %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <label class="form-label small text-muted">Ordenar por</label>
-                    <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
-                        {% for value, label in order_by_choices %}
-                        <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <label class="form-label small text-muted">Direcao</label>
-                    <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
-                        {% for value, label in order_dir_choices %}
-                        <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-auto">
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-                    <a href="{% url 'eventos:roteiros-global' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-                </div>
-            </form>
-            {% if selected_event %}
-            <div class="small text-muted mt-2">O botao de novo roteiro usa o evento atualmente filtrado.</div>
-            {% endif %}
-        </div>
+{% block list_header_actions %}
+<a href="{{ eventos_url }}" class="btn btn-outline-secondary system-list-action-btn">Eventos</a>
+{% if novo_roteiro_url %}
+<a href="{{ novo_roteiro_url }}" class="btn btn-primary system-list-action-btn"><i class="bi bi-plus-lg me-1"></i>Novo roteiro neste evento</a>
+{% endif %}
+{% endblock %}
+
+{% block list_mode_badge %}
+<div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+{% if not novo_roteiro_url %}
+<div class="alert alert-light border small py-2 px-3 mb-3">Selecione um evento no filtro para habilitar a criacao vinculada.</div>
+{% endif %}
+{% endblock %}
+
+{% block list_toolbar %}
+<form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
+    <div class="col-12 col-lg-4">
+        <label class="form-label small text-muted">Busca</label>
+        <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, sede ou destino" data-list-autosubmit>
     </div>
-
-    <div class="system-list-table-wrap">
-        <div class="table-responsive">
-            <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
-                <thead class="table-light">
-                    <tr>
-                        <th>Evento / tipo</th>
-                        <th>Sede</th>
-                        <th>Destinos</th>
-                        <th>Status</th>
-                        <th>Oficios ligados</th>
-                        <th class="text-end" width="260">Acoes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for roteiro in object_list %}
-                    <tr>
-                        <td>
-                            {% if roteiro.is_avulso %}
-                            <span class="badge bg-secondary me-1">Avulso</span>
-                            <span class="text-muted">Sem evento</span>
-                            {% else %}
-                            <a href="{{ roteiro.evento_url }}" class="text-decoration-none">{{ roteiro.evento.titulo|default:"(sem titulo)" }}</a>
-                            {% endif %}
-                        </td>
-                        <td>{{ roteiro.origem_cidade.nome|default:roteiro.origem_estado.sigla|default:"-" }}</td>
-                        <td>
-                            <div>{{ roteiro.destinos_display }}</div>
-                            <div class="small text-muted">
-                                {% if roteiro.saida_dt %}{{ roteiro.saida_dt|date:"d/m/Y H:i" }}{% else %}Sem horario inicial{% endif %}
-                            </div>
-                        </td>
-                        <td>
-                            {% if roteiro.status == 'FINALIZADO' %}
-                            <span class="badge bg-success">Finalizado</span>
-                            {% else %}
-                            <span class="badge bg-warning text-dark">Rascunho</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ roteiro.oficios_count }}</td>
-                        <td class="text-end">
-                            <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                            {% if roteiro.etapa_url %}
-                            <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary">Etapa 2</a>
-                            {% endif %}
-                            {% if roteiro.oficios_url %}
-                            <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-outline-secondary">Usar no oficio</a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-5">Nenhum roteiro encontrado.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="col-12 col-md-4 col-lg-4">
+        <label class="form-label small text-muted">Evento</label>
+        <select name="evento_id" class="form-select form-select-sm" data-list-autosubmit>
+            <option value="">Todos</option>
+            {% for evento in eventos_choices %}
+            <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
+            {% endfor %}
+        </select>
     </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <label class="form-label small text-muted">Status</label>
+        <select name="status" class="form-select form-select-sm" data-list-autosubmit>
+            <option value="">Todos</option>
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <label class="form-label small text-muted">Tipo</label>
+        <select name="tipo" class="form-select form-select-sm" data-list-autosubmit>
+            {% for value, label in tipo_choices %}
+            <option value="{{ value }}" {% if filters.tipo|upper == value|upper %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <label class="form-label small text-muted">Ordenar por</label>
+        <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
+            {% for value, label in order_by_choices %}
+            <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <label class="form-label small text-muted">Direcao</label>
+        <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
+            {% for value, label in order_dir_choices %}
+            <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-6 col-md-auto">
+        <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+        <a href="{% url 'eventos:roteiros-global' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+    </div>
+</form>
+{% if selected_event %}
+<div class="small text-muted mt-2">O botao de novo roteiro usa o evento atualmente filtrado.</div>
+{% endif %}
+{% endblock %}
 
-    {% include 'includes/pagination.html' %}
-    {% include 'includes/list/floating_new_button.html' with url=novo_roteiro_avulso_url label='Novo roteiro avulso' icon='bi-plus-lg' %}
+{% block page_result_content %}
+<div class="system-list-table-wrap">
+    <div class="table-responsive">
+        <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
+            <thead class="table-light">
+                <tr>
+                    <th>Evento / tipo</th>
+                    <th>Sede</th>
+                    <th>Destinos</th>
+                    <th>Status</th>
+                    <th>Oficios ligados</th>
+                    <th class="text-end" width="260">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for roteiro in object_list %}
+                <tr>
+                    <td>
+                        {% if roteiro.is_avulso %}
+                        <span class="badge bg-secondary me-1">Avulso</span>
+                        <span class="text-muted">Sem evento</span>
+                        {% else %}
+                        <a href="{{ roteiro.evento_url }}" class="text-decoration-none">{{ roteiro.evento.titulo|default:"(sem titulo)" }}</a>
+                        {% endif %}
+                    </td>
+                    <td>{{ roteiro.origem_cidade.nome|default:roteiro.origem_estado.sigla|default:"-" }}</td>
+                    <td>
+                        <div>{{ roteiro.destinos_display }}</div>
+                        <div class="small text-muted">
+                            {% if roteiro.saida_dt %}{{ roteiro.saida_dt|date:"d/m/Y H:i" }}{% else %}Sem horario inicial{% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if roteiro.status == 'FINALIZADO' %}
+                        <span class="badge bg-success">Finalizado</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">Rascunho</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ roteiro.oficios_count }}</td>
+                    <td class="text-end">
+                        <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        {% if roteiro.etapa_url %}
+                        <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary">Etapa 2</a>
+                        {% endif %}
+                        {% if roteiro.oficios_url %}
+                        <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-outline-secondary">Usar no oficio</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-5">Nenhum roteiro encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
+{% include 'includes/list/floating_new_button.html' with url=novo_roteiro_avulso_url label='Novo roteiro avulso' icon='bi-plus-lg' %}
 {% endblock %}
 
 {% block extra_js %}

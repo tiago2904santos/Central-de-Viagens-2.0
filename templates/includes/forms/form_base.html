@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}{% block form_title_block %}Formulario{% endblock %} - Central de Viagens{% endblock %}
+{% block page_title %}{% block form_page_title %}Formulario{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 system-form-page">
+    <div class="system-form-shell">
+        <header class="page-header-cadastro system-form-header">
+            <div>
+                <h1 class="mb-1">{% block form_header_title %}Formulario{% endblock %}</h1>
+                {% block form_header_subtitle %}{% endblock %}
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                {% block form_header_actions %}{% endblock %}
+            </div>
+        </header>
+
+        {% block form_page_notice %}{% endblock %}
+
+        <div class="card form-card system-form-card">
+            <div class="card-body">
+                {% block form_before %}{% endblock %}
+                <form method="{% block form_method %}post{% endblock %}" id="{% block form_id %}system-form{% endblock %}" {% block form_attrs %}{% endblock %}>
+                    {% csrf_token %}
+                    {% block form_hidden %}{% endblock %}
+                    {% block form_fields %}{% endblock %}
+                    <div class="form-actions system-form-actions mt-4">
+                        {% block form_actions %}
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        {% endblock %}
+                    </div>
+                </form>
+                {% block form_after %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

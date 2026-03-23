@@ -15,23 +15,9 @@
     - page_pagination: Paginação (se houver)
     
     Exemplo:
-    
-    {% extends 'includes/list/list_base.html' %}
-    
-    {% block page_title_block %}Minha Lista{% endblock %}
-    {% block page_title %}Lista de Minhas Entidades{% endblock %}
-    
-    {% block page_header_actions %}
-    [lista de ações]
-    {% endblock %}
-    
-    {% block page_toolbar_filters %}
-    [lista de filtros]
-    {% endblock %}
-    
-    {% block page_result_content %}
-    [tabela, cards, ou conteúdo customizado]
-    {% endblock %}
+    - estender includes/list/list_base.html
+    - definir page_title_block e page_header_title
+    - preencher list_header_actions, list_toolbar e page_result_content
 #}
 
 {% block title %}{% block page_title_block %}Lista{% endblock %} - Central de Viagens{% endblock %}

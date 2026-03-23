@@ -1,29 +1,31 @@
-{% extends 'base.html' %}
+{% extends 'includes/forms/form_base.html' %}
 
-{% block title %}{% if is_create %}Cadastrar Unidade de Lotação{% else %}Editar Unidade de Lotação{% endif %} — Central de Viagens{% endblock %}
-{% block page_title %}{% if is_create %}Cadastrar Unidade de Lotação{% else %}Editar Unidade de Lotação{% endif %}{% endblock %}
+{% block form_title_block %}{% if is_create %}Cadastrar Unidade de Lotacao{% else %}Editar Unidade de Lotacao{% endif %}{% endblock %}
+{% block form_page_title %}{% if is_create %}Cadastrar Unidade de Lotacao{% else %}Editar Unidade de Lotacao{% endif %}{% endblock %}
+{% block form_header_title %}{% if is_create %}Cadastrar Unidade de Lotacao{% else %}Editar Unidade de Lotacao{% endif %}{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="card form-card">
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <label for="id_nome" class="form-label">{{ form.nome.label }}</label>
-                        {{ form.nome }}
-                        {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
-                    </div>
-                </div>
-                <div class="form-actions mt-4">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                    <a href="{% url 'cadastros:unidade-lotacao-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-                </div>
-            </form>
-        </div>
+{% block form_header_subtitle %}
+<p class="text-muted mb-0">Unifique as unidades no mesmo padrao premium de cadastro do sistema.</p>
+{% endblock %}
+
+{% block form_id %}form-unidade-lotacao{% endblock %}
+
+{% block form_fields %}
+<div class="row g-3">
+    <div class="col-12 col-md-6">
+        <label for="id_nome" class="form-label">{{ form.nome.label }}</label>
+        {{ form.nome }}
+        {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block form_actions %}
+<button type="submit" class="btn btn-primary">Salvar</button>
+<a href="{% url 'cadastros:unidade-lotacao-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+{% endblock %}
+
+{% block extra_js %}
 <script>
 (function() {
     var nomeInput = document.getElementById('id_nome');
