@@ -8,15 +8,18 @@
   {% csrf_token %}
 
   {% if modelos %}
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Modelos de justificativa</div>
-    <div class="card-body">
+  <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+    <div class="card-header-form">
+      <i class="bi bi-journal-bookmark"></i>
+      <span>Modelos de justificativa</span>
+    </div>
+    <div class="card-body pt-3">
       <div class="list-group list-group-flush">
         {% for m in modelos %}
-        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2"
           onclick="usarModelo('{{ m.pk }}', this)" data-texto="{{ m.texto }}">
-          {{ m.nome }}
-          {% if m.is_padrao %}<span class="badge bg-primary">Padrão</span>{% endif %}
+          <span class="fw-semibold">{{ m.nome }}</span>
+          {% if m.is_padrao %}<span class="status-badge status-badge-sm is-info">Padrão</span>{% endif %}
         </button>
         {% endfor %}
       </div>
@@ -26,9 +29,12 @@
 
   <input type="hidden" name="modelo_id" id="id_modelo_id" value="{{ just.modelo_id|default:oficio.modelo_justificativa_id|default:'' }}">
 
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Texto da justificativa</div>
-    <div class="card-body">
+  <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+    <div class="card-header-form">
+      <i class="bi bi-text-paragraph"></i>
+      <span>Texto da justificativa</span>
+    </div>
+    <div class="card-body pt-4">
       <textarea name="justificativa_texto" id="id_justificativa_texto" class="form-control" rows="8">{{ just.texto|default:oficio.justificativa_texto|default:'' }}</textarea>
     </div>
   </div>

@@ -9,10 +9,13 @@
   {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
 
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Veículo</div>
-    <div class="card-body">
+    <div class="card-header-form">
+      <i class="bi bi-truck"></i>
+      <span>Veículo</span>
+    </div>
+    <div class="card-body pt-4">
       <div class="mb-3">
-        <label class="form-label">Selecionar veículo cadastrado</label>
+        <label class="form-label fw-semibold">Selecionar veículo cadastrado</label>
         <select name="veiculo_id" id="id_veiculo_id" class="form-select" onchange="toggleVeiculoManual()">
           <option value="">— Inserir manualmente —</option>
           {% for v in veiculos %}
@@ -23,19 +26,19 @@
       <div id="div_veiculo_manual" {% if oficio.veiculo_id %}style="display:none"{% endif %}>
         <div class="row g-3">
           <div class="col-md-3">
-            <label class="form-label">Placa</label>
+            <label class="form-label fw-semibold">Placa</label>
             <input type="text" name="placa" class="form-control" value="{{ oficio.placa|default:'' }}">
           </div>
           <div class="col-md-4">
-            <label class="form-label">Modelo</label>
+            <label class="form-label fw-semibold">Modelo</label>
             <input type="text" name="modelo_veiculo" class="form-control" value="{{ oficio.modelo_veiculo|default:'' }}">
           </div>
           <div class="col-md-3">
-            <label class="form-label">Combustível</label>
+            <label class="form-label fw-semibold">Combustível</label>
             <input type="text" name="combustivel_snapshot" class="form-control" value="{{ oficio.combustivel_snapshot|default:'' }}">
           </div>
           <div class="col-md-2">
-            <label class="form-label">Tipo de viatura</label>
+            <label class="form-label fw-semibold">Tipo de viatura</label>
             <input type="text" name="tipo_viatura" class="form-control" value="{{ oficio.tipo_viatura|default:'' }}">
           </div>
         </div>
@@ -50,11 +53,14 @@
   </div>
 
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light fw-semibold">Motorista</div>
-    <div class="card-body">
+    <div class="card-header-form">
+      <i class="bi bi-person-badge"></i>
+      <span>Motorista</span>
+    </div>
+    <div class="card-body pt-4">
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label">Motorista</label>
+          <label class="form-label fw-semibold">Motorista</label>
           <select name="motorista_id" class="form-select">
             <option value="">— Nenhum —</option>
             {% for m in motoristas %}
@@ -69,15 +75,15 @@
           </div>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Nº ofício do motorista</label>
+          <label class="form-label fw-semibold">Nº ofício do motorista</label>
           <input type="text" name="motorista_oficio_numero" class="form-control" value="{{ oficio.motorista_oficio_numero|default:'' }}">
         </div>
         <div class="col-md-2">
-          <label class="form-label">Ano</label>
+          <label class="form-label fw-semibold">Ano</label>
           <input type="number" name="motorista_oficio_ano" class="form-control" value="{{ oficio.motorista_oficio_ano|default:'' }}">
         </div>
         <div class="col-md-6">
-          <label class="form-label">Protocolo do motorista</label>
+          <label class="form-label fw-semibold">Protocolo do motorista</label>
           <input type="text" name="motorista_protocolo" class="form-control" value="{{ oficio.motorista_protocolo|default:'' }}">
         </div>
       </div>

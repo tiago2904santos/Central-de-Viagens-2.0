@@ -3,27 +3,29 @@
 {% block page_title %}Justificativas{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <span class="text-muted">{{ justificativas|length }} justificativa(s)</span>
-  <a href="{% url 'documentos:justificativa-nova' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Nova Justificativa</a>
+  <span class="text-muted small">{{ justificativas|length }} justificativa(s)</span>
+  <a href="{% url 'documentos:justificativa-nova' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Nova Justificativa</a>
 </div>
 {% if justificativas %}
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr><th>Ofício</th><th>Título / assunto</th><th>Status</th><th>Modelo</th><th>Criado em</th><th class="text-end">Ações</th></tr>
+    <table class="table table-hover table-cadastro mb-0">
+      <thead>
+        <tr><th>Ofício</th><th>Título / assunto</th><th>Status</th><th>Modelo</th><th>Criado em</th><th class="col-actions">Ações</th></tr>
       </thead>
       <tbody>
         {% for j in justificativas %}
         <tr>
-          <td>{{ j.oficio }}</td>
-          <td>{{ j.titulo|default:"(sem título)" }}</td>
-          <td>{% if j.status == 'FINALIZADO' %}<span class="badge bg-success">Finalizado</span>{% else %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}</td>
-          <td>{{ j.modelo|default:"—" }}</td>
-          <td>{{ j.criado_em|date:"d/m/Y" }}</td>
-          <td class="text-end">
-            <a href="{% url 'documentos:justificativa-editar' pk=j.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'documentos:justificativa-excluir' pk=j.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          <td data-label="Ofício">{{ j.oficio }}</td>
+          <td data-label="Título" class="fw-semibold">{{ j.titulo|default:"(sem título)" }}</td>
+          <td data-label="Status">{% if j.status == 'FINALIZADO' %}<span class="status-badge status-badge-sm is-finalizado">Finalizado</span>{% else %}<span class="status-badge status-badge-sm is-rascunho">Rascunho</span>{% endif %}</td>
+          <td data-label="Modelo">{{ j.modelo|default:"—" }}</td>
+          <td data-label="Criado">{{ j.criado_em|date:"d/m/Y" }}</td>
+          <td data-label="Ações" class="col-actions">
+            <div class="table-actions">
+              <a href="{% url 'documentos:justificativa-editar' pk=j.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'documentos:justificativa-excluir' pk=j.pk %}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -32,10 +34,17 @@
   </div>
 </div>
 {% else %}
-<div class="text-center py-5">
-  <i class="bi bi-journal-text fs-1 text-muted"></i>
-  <p class="text-muted mt-2">Nenhuma justificativa cadastrada.</p>
-  <a href="{% url 'documentos:justificativa-nova' %}" class="btn btn-primary">Criar primeira justificativa</a>
+<div class="card border-0 shadow-sm">
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <i class="bi bi-journal-text"></i>
+    </div>
+    <p class="empty-state-title">Nenhuma justificativa cadastrada</p>
+    <p class="empty-state-text">Justificativas fundamentam as necessidades das viagens.</p>
+    <a href="{% url 'documentos:justificativa-nova' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Criar primeira justificativa
+    </a>
+  </div>
 </div>
 {% endif %}
 {% endblock %}

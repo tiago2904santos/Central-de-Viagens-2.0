@@ -458,6 +458,7 @@
 
 .dashboard-card {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .dashboard-card:hover {
@@ -473,6 +474,99 @@
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
+    flex-shrink: 0;
+    /* Force unified color - override any inline/utility classes */
+    background: rgba(var(--cv-primary-rgb), 0.1) !important;
+    color: var(--cv-primary) !important;
+}
+
+.dashboard-card .card-body h6 {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.dashboard-card .card-body h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #212529;
+}
+
+/* ----- Hub de documentos ----- */
+.hub-doc-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.hub-doc-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--cv-shadow-md);
+}
+
+.hub-doc-card .hub-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--cv-card-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+    background: rgba(var(--cv-primary-rgb), 0.1);
+    color: var(--cv-primary);
+}
+
+.hub-doc-card .hub-card-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(var(--cv-primary-rgb), 0.1);
+    color: var(--cv-primary);
+}
+
+/* ----- Empty states ----- */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+}
+
+.empty-state-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(var(--cv-primary-rgb), 0.08);
+    color: var(--cv-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.empty-state-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 0.4rem;
+}
+
+.empty-state-text {
+    font-size: 0.88rem;
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+    max-width: 320px;
 }
 
 /* ----- Botões principais ----- */
@@ -534,13 +628,78 @@
     margin-bottom: 1.25rem;
 }
 
+/* ----- Tabelas premium ----- */
 .table-cadastro {
     margin-bottom: 0;
 }
 
-.table-cadastro th {
-    font-weight: 600;
+.table-cadastro > thead {
+    background: var(--cv-sidebar-bg);
+}
+
+.table-cadastro > thead > tr > th {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.88);
+    padding: 0.85rem 1rem;
+    border: none;
     white-space: nowrap;
+}
+
+.table-cadastro > thead > tr > th:first-child {
+    border-radius: 0;
+}
+
+.table-cadastro > tbody > tr > td {
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
+    border-color: rgba(0, 0, 0, 0.05);
+    font-size: 0.9rem;
+}
+
+.table-cadastro > tbody > tr:hover {
+    background: rgba(var(--cv-primary-rgb), 0.04);
+}
+
+.table-cadastro .col-actions {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.table-cadastro .td-main {
+    font-weight: 600;
+    color: #212529;
+}
+
+.table-cadastro .td-meta {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
+}
+
+/* Ações na tabela */
+.table-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+}
+
+.table-actions .btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.4rem;
+    font-size: 0.85rem;
 }
 
 /* ----- Status badges (sistema unificado) ----- */
@@ -648,7 +807,47 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-top: 1.25rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+/* ----- Cabeçalhos de seção dentro de cards de formulário ----- */
+.form-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+    background: rgba(var(--cv-primary-rgb), 0.05);
+    border-bottom: 1px solid rgba(var(--cv-primary-rgb), 0.1);
+    border-radius: var(--cv-card-radius) var(--cv-card-radius) 0 0;
+}
+
+.form-section-header i {
+    font-size: 1rem;
+    color: var(--cv-primary);
+    opacity: 0.85;
+}
+
+.form-section-header-text {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--cv-sidebar-bg);
+    letter-spacing: 0.01em;
+}
+
+/* Cabeçalhos de card padrão (wizard + forms) */
+.card-header-form {
+    padding: 0.85rem 1.25rem;
+    background: rgba(var(--cv-primary-rgb), 0.05);
+    border-bottom: 1px solid rgba(var(--cv-primary-rgb), 0.1);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--cv-sidebar-bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
 }
 
 /* ----- Formulários de documentos (base compartilhada) ----- */
@@ -690,7 +889,16 @@
 /* ----- Configurações ----- */
 .configuracoes-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }
 .configuracoes-subtitle { margin-bottom: 0; }
-.configuracao-section-title { font-size: 1rem; font-weight: 600; color: var(--cv-sidebar-bg, #1e3a5f); margin-bottom: 1rem; }
+.configuracao-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cv-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(var(--cv-primary-rgb), 0.15);
+}
 .configuracao-section { padding-bottom: 0.5rem; }
 
 /* ----- Sidebar: itens desabilitados ----- */
@@ -873,5 +1081,90 @@
 
     .oficio-summary-grid--two {
         grid-template-columns: 1fr;
+    }
+
+    .table-cadastro > thead {
+        display: none;
+    }
+
+    .table-cadastro > tbody > tr {
+        display: block;
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        border-radius: var(--cv-card-radius);
+        margin-bottom: 0.75rem;
+        padding: 0.25rem 0;
+    }
+
+    .table-cadastro > tbody > tr > td {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        font-size: 0.875rem;
+    }
+
+    .table-cadastro > tbody > tr > td::before {
+        content: attr(data-label);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #6c757d;
+        min-width: 90px;
+        flex-shrink: 0;
+        padding-top: 0.1rem;
+    }
+
+    .table-cadastro > tbody > tr > td.col-actions {
+        justify-content: flex-end;
+    }
+
+    .table-actions .btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .page-header-cadastro {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-header-cadastro .d-flex {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+
+    .filter-card .row {
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .oficio-summary-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .oficio-summary-actions-group {
+        flex-direction: column;
+    }
+
+    .oficio-summary-actions-group .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .hub-doc-card .d-flex.gap-2 {
+        flex-direction: column;
+    }
+
+    .hub-doc-card .d-flex.gap-2 .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
