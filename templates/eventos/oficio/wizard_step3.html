@@ -5,7 +5,7 @@
 {% block page_title %}Roteiro e diárias{% endblock %}
 
 {% block content %}
-<div class="container-fluid pt-0 pb-4 oficio-wizard-page" data-glance-state="closed">
+<div class="container-fluid pt-0 pb-4 oficio-wizard-page oficio-step3-page" data-glance-state="closed">
   <div class="oficio-wizard-shell">
     {% include 'eventos/oficio/_wizard_header.html' %}
 
@@ -34,23 +34,30 @@
             {% if step3_seed_source_label %}<div class="alert alert-info py-2">{{ step3_seed_source_label }}</div>{% endif %}
 
             <section class="oficio-stage-section mb-1">
-              <div class="mb-3">
-                <div>
-                  <div class="fw-semibold mb-2">1. Fonte do roteiro</div>
-                  <div class="small text-muted">Escolha um roteiro salvo do banco ou monte um roteiro novo neste ofício. O botão de calcular diárias valida, reutiliza e salva o roteiro atual sem duplicar registro.</div>
-                </div>
+              <div class="oficio-step3-section-head mb-3">
+                <h3 class="oficio-step3-section-title">1. Fonte do roteiro</h3>
+                <p class="oficio-step3-section-text">Escolha um roteiro salvo do banco ou monte um roteiro novo neste ofício. O cálculo de diárias valida, reutiliza e salva o roteiro atual sem duplicar registro.</p>
               </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="roteiro_modo" id="id_roteiro_modo_evento" value="EVENTO_EXISTENTE" {% if roteiro_modo == 'EVENTO_EXISTENTE' %}checked{% endif %} {% if not has_event_routes %}disabled{% endif %}>
-                <label class="form-check-label" for="id_roteiro_modo_evento">Usar roteiro salvo</label>
+              <div class="oficio-step3-mode-grid mb-3">
+                <label class="oficio-step3-mode-option">
+                  <input class="form-check-input" type="radio" name="roteiro_modo" id="id_roteiro_modo_evento" value="EVENTO_EXISTENTE" {% if roteiro_modo == 'EVENTO_EXISTENTE' %}checked{% endif %} {% if not has_event_routes %}disabled{% endif %}>
+                  <span>
+                    <strong>Usar roteiro salvo</strong>
+                    <small>Reaproveita um roteiro já validado para acelerar o preenchimento.</small>
+                  </span>
+                </label>
+                <label class="oficio-step3-mode-option">
+                  <input class="form-check-input" type="radio" name="roteiro_modo" id="id_roteiro_modo_proprio" value="ROTEIRO_PROPRIO" {% if roteiro_modo != 'EVENTO_EXISTENTE' %}checked{% endif %}>
+                  <span>
+                    <strong>Montar roteiro neste ofício</strong>
+                    <small>Permite ajustar destinos e trechos de forma totalmente livre.</small>
+                  </span>
+                </label>
               </div>
-              <div class="form-check mb-3">
-                <input class="form-check-input" type="radio" name="roteiro_modo" id="id_roteiro_modo_proprio" value="ROTEIRO_PROPRIO" {% if roteiro_modo != 'EVENTO_EXISTENTE' %}checked{% endif %}>
-                <label class="form-check-label" for="id_roteiro_modo_proprio">Montar roteiro neste ofício</label>
-              </div>
-              <div id="roteiro-selector-wrapper">
-                <label class="form-label" for="id_roteiro_evento_id">Roteiro salvo</label>
-                <select name="roteiro_evento_id" id="id_roteiro_evento_id" class="form-select" {% if not has_event_routes %}disabled{% endif %}>
+              <div id="roteiro-selector-wrapper" class="oficio-step3-routes-panel">
+                <label class="form-label" for="id_roteiro_busca">Roteiros salvos</label>
+                <input type="search" id="id_roteiro_busca" class="form-control" placeholder="Buscar por destino, tipo ou trecho..." {% if not has_event_routes %}disabled{% endif %}>
+                <select name="roteiro_evento_id" id="id_roteiro_evento_id" class="d-none" {% if not has_event_routes %}disabled{% endif %}>
                   <option value="">Selecione</option>
                   {% for roteiro in roteiros_evento %}
                   <option value="{{ roteiro.id }}" {% if roteiro_evento_id == roteiro.id %}selected{% endif %}>{{ roteiro.label }}{% if roteiro.tipo_label %} — {{ roteiro.tipo_label }}{% endif %}</option>
@@ -58,11 +65,12 @@
                 </select>
                 <div class="form-text">
                   {% if has_event_routes %}
-                  Selecionar um roteiro salvo carrega os trechos no editor. As edições do ofício não alteram o roteiro original salvo.
+                  Filtre e selecione um roteiro para carregar os trechos no editor. As edições do ofício não alteram o original salvo.
                   {% else %}
                   Nenhum roteiro salvo válido está disponível no banco.
                   {% endif %}
                 </div>
+                <div id="roteiro-lista" class="oficio-step3-route-list mt-2"></div>
                 <div class="small text-muted mt-2" id="roteiro-selector-resumo"></div>
               </div>
             </section>
@@ -89,13 +97,19 @@
                 </div>
 
                 <div class="col-12">
-                  <div class="fw-semibold mb-2">3. Destinos</div>
-                  <div id="destinos-container"></div>
-                  <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary btn-sm mt-2">Adicionar destino</button>
+                  <div class="oficio-step3-section-head mb-2">
+                    <h3 class="oficio-step3-section-title">3. Destinos</h3>
+                    <p class="oficio-step3-section-text">Reordene por arrastar e soltar para atualizar automaticamente a sequência dos trechos.</p>
+                  </div>
+                  <div id="destinos-container" class="oficio-step3-destinos-stack"></div>
+                  <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary mt-2 w-100">Adicionar destino</button>
                 </div>
 
                 <div class="col-12">
-                  <div class="fw-semibold mb-2">4. Trechos de ida</div>
+                  <div class="oficio-step3-section-head mb-2">
+                    <h3 class="oficio-step3-section-title">4. Trechos de ida</h3>
+                    <p class="oficio-step3-section-text">Preencha tempo de viagem e tempo adicional para obter o tempo total automaticamente.</p>
+                  </div>
                   <div id="trechos-gerados-container" class="d-grid gap-2">
                     <p class="text-muted small mb-0">Selecione a sede e ao menos um destino para editar os trechos.</p>
                   </div>
@@ -104,7 +118,10 @@
             </section>
 
             <section class="oficio-stage-section">
-              <div class="fw-semibold mb-2">5. Retorno</div>
+              <div class="oficio-step3-section-head mb-2">
+                <h3 class="oficio-step3-section-title">5. Retorno</h3>
+                <p class="oficio-step3-section-text">Use a mesma lógica da ida: tempo de viagem + tempo adicional = tempo total.</p>
+              </div>
               <div class="rota-bloco" id="retorno-card">
                   <div class="row g-3">
                     <div class="col-md-6">
@@ -147,39 +164,18 @@
                     </div>
                     <div class="col-12">
                       <div class="row g-3 align-items-end">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                           <label class="form-label small">Tempo de viagem</label>
                           <input type="text" class="form-control" id="id_retorno_tempo_viagem_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
                           <input type="hidden" name="retorno_tempo_cru_estimado_min" id="id_retorno_tempo_cru_estimado_min" value="{{ retorno_state.tempo_cru_estimado_min|default:'' }}">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                           <label class="form-label small">Tempo adicional</label>
                           <input type="number" min="0" step="15" class="form-control" name="retorno_tempo_adicional_min" id="id_retorno_tempo_adicional_min" value="{{ retorno_state.tempo_adicional_min|default:0 }}">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                           <label class="form-label small">Tempo total</label>
                           <input type="text" class="form-control" id="id_retorno_tempo_total" value="" readonly>
-                        </div>
-                        <div class="col-md-3 d-grid">
-                          <button type="button" class="btn btn-outline-secondary" id="btn-estimar-retorno">Estimar automaticamente</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-12 rota-estimativa{% if not retorno_state.distancia_km and not retorno_state.rota_fonte %} d-none{% endif %}" id="retorno-estimativa-wrapper">
-                      <div class="border rounded p-3 bg-white">
-                        <div class="row g-3">
-                          <div class="col-md-4">
-                            <div class="small text-muted">Distância</div>
-                            <div class="fw-semibold" id="retorno-distancia-texto">{% if retorno_state.distancia_km %}{{ retorno_state.distancia_km }} km{% else %}-{% endif %}</div>
-                          </div>
-                          <div class="col-md-4">
-                            <div class="small text-muted">Tempo estimado de viagem</div>
-                            <div class="fw-semibold" id="retorno-tempo-estimado-texto">-</div>
-                          </div>
-                          <div class="col-md-4">
-                            <div class="small text-muted">Fonte</div>
-                            <div class="fw-semibold" id="retorno-rota-fonte-texto">{{ retorno_state.rota_fonte|default:"-" }}</div>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -194,21 +190,33 @@
             </section>
 
             <section class="oficio-stage-section">
-              <div class="fw-semibold mb-2">6. Calculadora de diárias</div>
-              <div class="border rounded p-3 bg-white">
-                <div class="d-flex justify-content-end align-items-center gap-2 mb-2">
-                  <button type="button" id="btn-calcular-diarias" class="btn btn-outline-primary btn-sm">Calcular diárias</button>
+              <div class="oficio-step3-diarias">
+                <div class="oficio-step3-diarias-head">
+                  <div>
+                    <h3 class="oficio-step3-section-title">6. Calculadora de diárias</h3>
+                    <p class="oficio-step3-section-text">Atualize o resumo financeiro com base no roteiro preenchido nesta etapa.</p>
+                  </div>
+                  <button type="button" id="btn-calcular-diarias" class="btn btn-primary">Calcular diárias</button>
                 </div>
-                <div id="diarias-status" class="small text-muted mb-2">Aguardando cálculo.</div>
+                <div id="diarias-status" class="oficio-step3-diarias-status">Aguardando cálculo.</div>
                 <div id="diarias-error" class="alert alert-danger py-2 d-none"></div>
                 <div id="diarias-results"{% if not step3_diarias_resultado %} class="d-none"{% endif %}>
-                  <div class="row g-2 mb-3">
-                    <div class="col-md-4"><div class="border rounded p-2"><div class="small text-muted">Tipo destino</div><div class="fw-semibold" id="diarias-tipo">{{ step3_diarias_resultado.tipo_destino|default:step3_preview.tipo_destino|default:"-" }}</div></div></div>
-                    <div class="col-md-4"><div class="border rounded p-2"><div class="small text-muted">Diárias</div><div class="fw-semibold" id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"-" }}</div></div></div>
-                    <div class="col-md-4"><div class="border rounded p-2"><div class="small text-muted">Valor total</div><div class="fw-semibold" id="diarias-valor">{{ step3_diarias_resultado.totais.total_valor|default:"-" }}</div></div></div>
+                  <div class="oficio-step3-diarias-summary mb-3">
+                    <div class="oficio-step3-diarias-summary-item">
+                      <span class="label">Tipo destino</span>
+                      <strong id="diarias-tipo">{{ step3_diarias_resultado.tipo_destino|default:step3_preview.tipo_destino|default:"-" }}</strong>
+                    </div>
+                    <div class="oficio-step3-diarias-summary-item">
+                      <span class="label">Diárias</span>
+                      <strong id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"-" }}</strong>
+                    </div>
+                    <div class="oficio-step3-diarias-summary-item is-highlight">
+                      <span class="label">Valor total</span>
+                      <strong id="diarias-valor">{{ step3_diarias_resultado.totais.total_valor|default:"-" }}</strong>
+                    </div>
                   </div>
-                  <div class="small mb-2"><strong>Valor por extenso:</strong> <span id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"-" }}</span></div>
-                  <div class="table-responsive">
+                  <div class="oficio-step3-diarias-extenso mb-2"><strong>Valor por extenso:</strong> <span id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"-" }}</span></div>
+                  <div class="table-responsive oficio-step3-diarias-table-wrap">
                     <table class="table table-sm mb-0">
                       <thead><tr><th>Tipo</th><th>Saída</th><th>Chegada</th><th>Diárias</th><th>Adicional</th><th>Subtotal</th></tr></thead>
                       <tbody id="diarias-table-body">
@@ -237,7 +245,7 @@
               {% if oficio.pk %}
               <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger" data-autosave-link="1">Excluir</a>
               {% endif %}
-              <button type="submit" name="avancar" value="1" class="btn btn-primary">Salvar e avançar</button>
+              <button type="submit" name="avancar" value="1" class="btn btn-primary" data-autosave-navigate="{{ next_step_url }}">Avançar</button>
             </div>
 
           </form>
@@ -269,11 +277,11 @@
   const routeMap = {};
   routes.forEach((item) => { routeMap[String(item.id)] = item; });
   const apiCidades = '{{ api_cidades_por_estado_url }}';
-  const apiEstimar = '{{ api_estimar_trecho_url }}';
   const apiDiarias = '{{ api_calcular_diarias_url }}';
-  const destinoEstadoFixoId = '{{ destino_estado_fixo_id|default:"" }}';
-  const destinoEstadoFixoNome = '{{ destino_estado_fixo_nome|default:"Paraná (PR)"|escapejs }}';
+  const destinoEstadoDefaultId = '{{ destino_estado_fixo_id|default:"" }}';
+  const destinoEstadoDefaultNome = '{{ destino_estado_fixo_nome|default:"Paraná (PR)"|escapejs }}';
   const csrf = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+  const roteiroBuscaInput = $('id_roteiro_busca');
   let applyingState = false;
   let ownSnapshot = initialState.roteiro_modo === 'ROTEIRO_PROPRIO' ? JSON.parse(JSON.stringify(initialState)) : null;
 
@@ -321,48 +329,6 @@
     const parsed = parseInt(value, 10);
     return Number.isNaN(parsed) ? null : parsed;
   }
-  function resolveAdditionalMinutesByDistance(distanceKm) {
-    const distance = parseFloat(String(distanceKm == null ? '' : distanceKm).replace(',', '.'));
-    if (Number.isNaN(distance) || distance < 0) {
-      return null;
-    }
-    if (distance <= 60) return 15;
-    if (distance <= 120) return 20;
-    if (distance <= 200) return 25;
-    if (distance <= 300) return 35;
-    if (distance <= 450) return 45;
-    if (distance <= 600) return 60;
-    return 75;
-  }
-  function resolveEstimatedTravelMinutes(data) {
-    const directMinutes = parseMinutesValue(data && data.tempo_viagem_estimado_min);
-    if (directMinutes != null) return directMinutes;
-    const legacyMinutes = parseMinutesValue(data && data.tempo_cru_estimado_min);
-    if (legacyMinutes != null) return legacyMinutes;
-    if (data && data.tempo_viagem_estimado_hhmm) {
-      return parseDurationInput(data.tempo_viagem_estimado_hhmm);
-    }
-    const total = parseMinutesValue(data && data.duracao_estimada_min);
-    const additional = parseMinutesValue(data && data.tempo_adicional_sugerido_min);
-    if (total != null) {
-      return Math.max(total - (additional || 0), 0);
-    }
-    return null;
-  }
-  function resolveSuggestedAdditionalMinutes(data, travelMinutes) {
-    const byDistance = resolveAdditionalMinutesByDistance(
-      data && (data.distancia_km != null ? data.distancia_km : data.distancia_rodoviaria_km)
-    );
-    if (byDistance != null) return byDistance;
-    const suggested = parseMinutesValue(data && data.tempo_adicional_sugerido_min);
-    if (suggested != null) return Math.max(suggested, 0);
-    const total = parseMinutesValue(data && data.duracao_estimada_min);
-    if (total != null && travelMinutes != null) {
-      return Math.max(total - travelMinutes, 0);
-    }
-    return null;
-  }
-  function km(v) { v = parseFloat(String(v || '').replace(',', '.')); return Number.isNaN(v) ? '-' : v.toFixed(2).replace('.', ',') + ' km'; }
   function dtBr(d, h) { if (!d && !h) return ''; if (!d) return h || ''; const p = d.split('-'); return p[2] + '/' + p[1] + '/' + p[0] + (h ? ' ' + h : ''); }
   function selectedText(el) { return el && el.selectedIndex >= 0 && el.options[el.selectedIndex] ? String(el.options[el.selectedIndex].text || '').trim() : ''; }
 
@@ -418,9 +384,60 @@
   }
 
   function staleDiarias() { $('diarias-status').textContent = 'Cálculo desatualizado. Clique em "Calcular diárias".'; }
+  function routePeriodSummary(route) {
+    const trechos = (route && route.state && route.state.trechos) || [];
+    const retorno = (route && route.state && route.state.retorno) || {};
+    if (!trechos.length) return 'Sem período informado';
+    const inicio = dtBr(trechos[0].saida_data || '', trechos[0].saida_hora || '');
+    const ultimo = trechos[trechos.length - 1] || {};
+    const fim = dtBr(retorno.chegada_data || ultimo.chegada_data || '', retorno.chegada_hora || ultimo.chegada_hora || '');
+    return inicio && fim ? (inicio + ' até ' + fim) : (inicio || fim || 'Sem período informado');
+  }
+
+  function routeDestinationsSummary(route) {
+    const trechos = (route && route.state && route.state.trechos) || [];
+    const names = [];
+    trechos.forEach((trecho) => {
+      const nome = String(trecho.destino_nome || '').trim();
+      if (nome && names.indexOf(nome) === -1) names.push(nome);
+    });
+    if (!names.length) return 'Sem destinos';
+    return names.slice(0, 3).join(' • ') + (names.length > 3 ? (' +' + (names.length - 3)) : '');
+  }
+
+  function renderRouteList(filterText) {
+    const target = $('roteiro-lista');
+    if (!target) return;
+    const selectedId = String($('id_roteiro_evento_id').value || '');
+    const term = String(filterText || '').trim().toLowerCase();
+    const filtered = routes.filter((route) => {
+      if (!term) return true;
+      const text = [route.label, route.resumo, route.tipo_label, routePeriodSummary(route), routeDestinationsSummary(route)].join(' ').toLowerCase();
+      return text.indexOf(term) !== -1;
+    });
+
+    if (!filtered.length) {
+      target.innerHTML = '<div class="oficio-step3-route-empty">Nenhum roteiro encontrado para o filtro informado.</div>';
+      return;
+    }
+
+    target.innerHTML = filtered.map((route) => {
+      const rid = String(route.id);
+      const activeClass = rid === selectedId ? ' is-active' : '';
+      return '' +
+        '<button type="button" class="oficio-step3-route-item' + activeClass + '" data-route-id="' + esc(rid) + '">' +
+          '<span class="route-title">' + esc(route.label || ('Roteiro #' + rid)) + '</span>' +
+          '<span class="route-meta">' + esc(route.tipo_label || 'Roteiro salvo') + '</span>' +
+          '<span class="route-destinos">' + esc(routeDestinationsSummary(route)) + '</span>' +
+          '<span class="route-periodo">' + esc(routePeriodSummary(route)) + '</span>' +
+        '</button>';
+    }).join('');
+  }
+
   function routeResumo() {
     const route = routeMap[String($('id_roteiro_evento_id').value || '')];
     $('roteiro-selector-resumo').textContent = route ? ((route.tipo_label ? route.tipo_label + ' — ' : '') + route.resumo) : '';
+    renderRouteList(roteiroBuscaInput ? roteiroBuscaInput.value : '');
   }
 
   function setPreviewValue(id, value) {
@@ -506,7 +523,7 @@
       roteiro_evento_label: '',
       sede_estado_id: $('id_sede_estado').value || null,
       sede_cidade_id: $('id_sede_cidade').value || null,
-      destinos_atuais: [{ estado_id: null, cidade_id: null }],
+      destinos_atuais: [{ estado_id: destinoEstadoDefaultId || null, cidade_id: null }],
       trechos: [],
       retorno: {
         origem_nome: '',
@@ -531,6 +548,9 @@
     const eventMode = $('id_roteiro_modo_evento').checked;
     $('roteiro-selector-wrapper').classList.toggle('d-none', !eventMode);
     $('id_roteiro_evento_id').disabled = !eventMode || !routes.length;
+    if (roteiroBuscaInput) {
+      roteiroBuscaInput.disabled = !eventMode || !routes.length;
+    }
     routeResumo();
   }
 
@@ -542,6 +562,18 @@
     });
   }
 
+  function reindexDestinoRows() {
+    getDestinoRows().forEach((row, idx) => {
+      row.dataset.index = String(idx);
+      const estado = row.querySelector('.destino-estado');
+      const cidade = row.querySelector('.destino-cidade');
+      const dragHandle = row.querySelector('.destino-drag-handle');
+      if (estado) estado.name = 'destino_estado_' + idx;
+      if (cidade) cidade.name = 'destino_cidade_' + idx;
+      if (dragHandle) dragHandle.setAttribute('aria-label', 'Arrastar destino ' + (idx + 1));
+    });
+  }
+
   function getDestinoRows() {
     return Array.from($('destinos-container').querySelectorAll('.destino-row'));
   }
@@ -550,34 +582,103 @@
     if ($('id_roteiro_modo_proprio').checked) ownSnapshot = captureCurrentState();
   }
 
+  function estadoOptionsMarkup(selectedId) {
+    const sedeEstado = $('id_sede_estado');
+    const options = sedeEstado ? Array.from(sedeEstado.options) : [];
+    return options.map((option) => {
+      const value = String(option.value || '');
+      const text = String(option.textContent || '').trim();
+      if (!value) {
+        return '<option value="">---------</option>';
+      }
+      const selected = String(selectedId || '') === value ? ' selected' : '';
+      return '<option value="' + esc(value) + '"' + selected + '>' + esc(text) + '</option>';
+    }).join('');
+  }
+
+  function bindDestinoDragAndDrop(row) {
+    row.addEventListener('dragstart', function(event) {
+      row.classList.add('is-dragging');
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', row.dataset.index || '0');
+    });
+    row.addEventListener('dragend', function() {
+      row.classList.remove('is-dragging');
+      getDestinoRows().forEach((item) => item.classList.remove('is-drop-target'));
+    });
+    row.addEventListener('dragover', function(event) {
+      event.preventDefault();
+      if (!row.classList.contains('is-dragging')) {
+        row.classList.add('is-drop-target');
+      }
+    });
+    row.addEventListener('dragleave', function() {
+      row.classList.remove('is-drop-target');
+    });
+    row.addEventListener('drop', function(event) {
+      event.preventDefault();
+      const fromIndex = parseInt(event.dataTransfer.getData('text/plain') || '-1', 10);
+      const rows = getDestinoRows();
+      const dragged = rows[fromIndex];
+      if (!dragged || dragged === row) {
+        row.classList.remove('is-drop-target');
+        return;
+      }
+      const container = $('destinos-container');
+      const allRows = getDestinoRows();
+      const targetIndex = allRows.indexOf(row);
+      const draggedIndex = allRows.indexOf(dragged);
+      if (draggedIndex < targetIndex) {
+        container.insertBefore(dragged, row.nextSibling);
+      } else {
+        container.insertBefore(dragged, row);
+      }
+      row.classList.remove('is-drop-target');
+      reindexDestinoRows();
+      renderTrechos(captureCurrentState());
+      clearDiarias();
+      renderPreview();
+      updateOwnSnapshot();
+      scheduleAutosave();
+    });
+  }
+
   async function addDestinoRow(destino) {
     const idx = getDestinoRows().length;
     const row = document.createElement('div');
-    row.className = 'destino-row row g-2 mb-2 align-items-end';
+    row.className = 'destino-row row g-2 align-items-end';
+    row.draggable = true;
+    row.dataset.index = String(idx);
+    const selectedEstadoId = destino && destino.estado_id ? destino.estado_id : (destinoEstadoDefaultId || '');
     row.innerHTML =
-      '<div class="col-md-4">' +
-        '<label class="form-label small">UF</label>' +
-        '<input type="hidden" name="destino_estado_' + idx + '" class="destino-estado" value="' + esc(destinoEstadoFixoId || destino.estado_id || '') + '">' +
-        '<input type="text" class="form-control form-control-sm" value="' + esc(destinoEstadoFixoNome) + '" readonly>' +
-      '</div>' +
-      '<div class="col-md-6">' +
-        '<label class="form-label small">Cidade</label>' +
-        '<select name="destino_cidade_' + idx + '" class="form-select form-select-sm destino-cidade"><option value="">---------</option></select>' +
+      '<div class="col-md-1 destino-drag-col">' +
+        '<button type="button" class="btn btn-sm btn-outline-secondary destino-drag-handle" aria-label="Arrastar destino ' + (idx + 1) + '">&#9776;</button>' +
       '</div>' +
       '<div class="col-md-2">' +
-        '<button type="button" class="btn btn-outline-danger btn-sm btn-remover-destino">Remover</button>' +
+        '<label class="form-label small">UF</label>' +
+        '<select name="destino_estado_' + idx + '" class="form-select destino-estado">' + estadoOptionsMarkup(selectedEstadoId) + '</select>' +
+      '</div>' +
+      '<div class="col-md-7">' +
+        '<label class="form-label small">Cidade</label>' +
+        '<select name="destino_cidade_' + idx + '" class="form-select destino-cidade"><option value="">---------</option></select>' +
+      '</div>' +
+      '<div class="col-md-2 destino-remove-col">' +
+        '<button type="button" class="btn btn-outline-danger btn-remover-destino">Remover</button>' +
       '</div>';
     $('destinos-container').appendChild(row);
+    const estadoSelect = row.querySelector('.destino-estado');
     const cidadeSelect = row.querySelector('.destino-cidade');
-    if (destinoEstadoFixoId || destino.estado_id) {
-      await loadCities(cidadeSelect, destinoEstadoFixoId || destino.estado_id, destino.cidade_id);
+    if (selectedEstadoId) {
+      await loadCities(cidadeSelect, selectedEstadoId, destino.cidade_id);
     }
+    bindDestinoDragAndDrop(row);
+    reindexDestinoRows();
     refreshDestinoButtons();
   }
 
   async function renderDestinos(destinos) {
     $('destinos-container').innerHTML = '';
-    const items = Array.isArray(destinos) && destinos.length ? destinos : [{ estado_id: null, cidade_id: null }];
+    const items = Array.isArray(destinos) && destinos.length ? destinos : [{ estado_id: destinoEstadoDefaultId || null, cidade_id: null }];
     for (const destino of items) {
       await addDestinoRow(destino || { estado_id: null, cidade_id: null });
     }
@@ -615,8 +716,6 @@
     const tempoViagemInput = card.querySelector('.trecho-tempo-viagem-hhmm');
     const adicionalInput = card.querySelector('[name="trecho_' + ordem + '_tempo_adicional_min"]');
     const duracaoInput = card.querySelector('[name="trecho_' + ordem + '_duracao_estimada_min"]');
-    const fonteInput = card.querySelector('[name="trecho_' + ordem + '_rota_fonte"]');
-    const estimativaWrapper = card.querySelector('.rota-estimativa');
     if (tempoViagemInput) {
       const normalizedTempo = normalizeDurationInput(tempoViagemInput.value);
       if (document.activeElement !== tempoViagemInput) {
@@ -642,20 +741,8 @@
     if (tempoViagemInput && document.activeElement !== tempoViagemInput) {
       tempoViagemInput.value = formatDurationInput(cru);
     }
-    const cruEl = card.querySelector('.trecho-tempo-estimado');
     const totalInput = card.querySelector('.trecho-tempo-total');
-    const fonteEl = card.querySelector('.trecho-rota-fonte');
-    if (cruEl) cruEl.textContent = cru ? hhmm(cru) : '-';
     if (totalInput) totalInput.value = total ? hhmm(total) : '';
-    if (fonteEl) {
-      const fonte = ((fonteInput || {}).value || '').trim();
-      fonteEl.textContent = fonte ? (fonte === 'ESTIMATIVA_LOCAL' ? 'estimativa local' : fonte) : '-';
-    }
-    if (estimativaWrapper) {
-      const distanciaValue = (card.querySelector('[name="trecho_' + ordem + '_distancia_km"]') || {}).value || '';
-      const fonteValue = ((fonteInput || {}).value || '').trim();
-      estimativaWrapper.classList.toggle('d-none', !(distanciaValue || fonteValue));
-    }
     if (suggestArrival && total > 0) {
       const saidaData = card.querySelector('[name="trecho_' + ordem + '_saida_data"]');
       const saidaHora = card.querySelector('[name="trecho_' + ordem + '_saida_hora"]');
@@ -677,8 +764,6 @@
     const tempoViagemInput = $('id_retorno_tempo_viagem_hhmm');
     const adicionalInput = $('id_retorno_tempo_adicional_min');
     const duracaoInput = $('id_retorno_duracao_estimada_min');
-    const distanciaInput = $('id_retorno_distancia_km');
-    const fonteInput = $('id_retorno_rota_fonte');
     if (tempoViagemInput) {
       const normalizedTempo = normalizeDurationInput(tempoViagemInput.value);
       if (document.activeElement !== tempoViagemInput) {
@@ -701,22 +786,6 @@
       tempoViagemInput.value = formatDurationInput(cru);
     }
     setReadonlyValue('id_retorno_tempo_total', total ? hhmm(total) : '');
-    if ($('retorno-tempo-estimado-texto')) {
-      $('retorno-tempo-estimado-texto').textContent = cru ? hhmm(cru) : '-';
-    }
-    if ($('retorno-distancia-texto')) {
-      $('retorno-distancia-texto').textContent = (distanciaInput && distanciaInput.value) ? km(distanciaInput.value) : '-';
-    }
-    if ($('retorno-rota-fonte-texto')) {
-      const fonte = (fonteInput && fonteInput.value) ? fonteInput.value : '';
-      $('retorno-rota-fonte-texto').textContent = fonte ? (fonte === 'ESTIMATIVA_LOCAL' ? 'estimativa local' : fonte) : '-';
-    }
-    if ($('retorno-estimativa-wrapper')) {
-      $('retorno-estimativa-wrapper').classList.toggle(
-        'd-none',
-        !((distanciaInput && distanciaInput.value) || (fonteInput && fonteInput.value))
-      );
-    }
     if (suggestArrival && total > 0 && $('id_retorno_saida_data').value && $('id_retorno_saida_hora').value) {
       const start = new Date($('id_retorno_saida_data').value + 'T' + $('id_retorno_saida_hora').value);
       if (!Number.isNaN(start.getTime())) {
@@ -734,7 +803,7 @@
     const tempoAdicional = value.tempo_adicional_min != null && value.tempo_adicional_min !== '' ? value.tempo_adicional_min : 0;
     const rotaFonte = value.rota_fonte || '';
     return '' +
-      '<div class="card" data-key="' + esc(trecho.key) + '" data-ordem="' + ordem + '" data-origem-nome="' + esc(trecho.origem_nome) + '" data-destino-nome="' + esc(trecho.destino_nome) + '" data-origem-estado-id="' + esc(trecho.origem_estado_id) + '" data-origem-cidade-id="' + esc(trecho.origem_cidade_id) + '" data-destino-estado-id="' + esc(trecho.destino_estado_id) + '" data-destino-cidade-id="' + esc(trecho.destino_cidade_id) + '">' +
+      '<div class="card oficio-step3-trecho-card" data-key="' + esc(trecho.key) + '" data-ordem="' + ordem + '" data-origem-nome="' + esc(trecho.origem_nome) + '" data-destino-nome="' + esc(trecho.destino_nome) + '" data-origem-estado-id="' + esc(trecho.origem_estado_id) + '" data-origem-cidade-id="' + esc(trecho.origem_cidade_id) + '" data-destino-estado-id="' + esc(trecho.destino_estado_id) + '" data-destino-cidade-id="' + esc(trecho.destino_cidade_id) + '">' +
         '<div class="card-header py-2 d-flex justify-content-between align-items-center">' +
           '<span class="fw-semibold">Trecho ' + (ordem + 1) + '</span>' +
           '<span class="small text-muted">' + esc(trecho.origem_nome) + ' &rarr; ' + esc(trecho.destino_nome) + '</span>' +
@@ -761,19 +830,9 @@
                 '</div>' +
               '</div>' +
             '</div>' +
-            '<div class="col-md-3"><label class="form-label small">Tempo de viagem</label><input type="text" class="form-control form-control-sm trecho-tempo-viagem-hhmm" value="' + esc(formatDurationInput(tempoCru)) + '" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off"><input type="hidden" name="trecho_' + ordem + '_tempo_cru_estimado_min" value="' + esc(tempoCru) + '"></div>' +
-            '<div class="col-md-3"><label class="form-label small">Tempo adicional</label><input type="number" min="0" step="15" class="form-control form-control-sm" name="trecho_' + ordem + '_tempo_adicional_min" value="' + esc(tempoAdicional) + '"></div>' +
-            '<div class="col-md-3"><label class="form-label small">Tempo total</label><input type="text" class="form-control form-control-sm trecho-tempo-total" value="" readonly></div>' +
-            '<div class="col-md-3 d-grid"><button type="button" class="btn btn-outline-secondary btn-sm btn-estimar-trecho">Estimar automaticamente</button></div>' +
-            '<div class="col-12 rota-estimativa ' + ((distancia || rotaFonte) ? '' : 'd-none') + '">' +
-              '<div class="border rounded p-3 bg-white">' +
-                '<div class="row g-3">' +
-                  '<div class="col-md-4"><div class="small text-muted">Distância</div><div class="fw-semibold trecho-distancia">' + (distancia ? km(distancia) : '-') + '</div></div>' +
-                  '<div class="col-md-4"><div class="small text-muted">Tempo estimado de viagem</div><div class="fw-semibold trecho-tempo-estimado">' + (tempoCru ? hhmm(tempoCru) : '-') + '</div></div>' +
-                  '<div class="col-md-4"><div class="small text-muted">Fonte</div><div class="fw-semibold trecho-rota-fonte">' + (rotaFonte ? esc(rotaFonte === 'ESTIMATIVA_LOCAL' ? 'estimativa local' : rotaFonte) : '-') + '</div></div>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
+            '<div class="col-md-4"><label class="form-label small">Tempo de viagem</label><input type="text" class="form-control form-control-sm trecho-tempo-viagem-hhmm" value="' + esc(formatDurationInput(tempoCru)) + '" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off"><input type="hidden" name="trecho_' + ordem + '_tempo_cru_estimado_min" value="' + esc(tempoCru) + '"></div>' +
+            '<div class="col-md-4"><label class="form-label small">Tempo adicional</label><input type="number" min="0" step="15" class="form-control form-control-sm" name="trecho_' + ordem + '_tempo_adicional_min" value="' + esc(tempoAdicional) + '"></div>' +
+            '<div class="col-md-4"><label class="form-label small">Tempo total</label><input type="text" class="form-control form-control-sm trecho-tempo-total" value="" readonly></div>' +
             '<div class="col-12"><div class="small text-danger d-none trecho-erro"></div></div>' +
           '</div>' +
           '<input type="hidden" name="trecho_' + ordem + '_distancia_km" value="' + esc(distancia) + '">' +
@@ -956,119 +1015,6 @@
     applyingState = false;
   }
 
-  async function estimateTrecho(card) {
-    const btn = card.querySelector('.btn-estimar-trecho');
-    const erro = card.querySelector('.trecho-erro');
-    const origemCidadeId = card.dataset.origemCidadeId || '';
-    const destinoCidadeId = card.dataset.destinoCidadeId || '';
-    if (!origemCidadeId || !destinoCidadeId) return;
-    erro.classList.add('d-none');
-    erro.textContent = '';
-    btn.disabled = true;
-    try {
-      const response = await fetch(apiEstimar, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrf,
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          origem_cidade_id: parseInt(origemCidadeId, 10),
-          destino_cidade_id: parseInt(destinoCidadeId, 10)
-        })
-      });
-      const data = await response.json();
-      if (!data.ok) throw new Error(data.erro || 'Erro ao estimar o trecho.');
-      const ordem = card.dataset.ordem;
-      const distInput = card.querySelector('[name="trecho_' + ordem + '_distancia_km"]');
-      const cruInput = card.querySelector('[name="trecho_' + ordem + '_tempo_cru_estimado_min"]');
-      const duracaoInput = card.querySelector('[name="trecho_' + ordem + '_duracao_estimada_min"]');
-      const fonteInput = card.querySelector('[name="trecho_' + ordem + '_rota_fonte"]');
-      const adicional = card.querySelector('[name="trecho_' + ordem + '_tempo_adicional_min"]');
-      const tempoViagemField = card.querySelector('.trecho-tempo-viagem-hhmm');
-      const travelMinutes = resolveEstimatedTravelMinutes(data);
-      const additionalMinutes = resolveSuggestedAdditionalMinutes(data, travelMinutes);
-      const totalMinutes = parseMinutesValue(data && data.duracao_estimada_min);
-      if (distInput) distInput.value = data.distancia_km != null ? String(data.distancia_km) : '';
-      if (cruInput) cruInput.value = travelMinutes != null ? String(travelMinutes) : '';
-      if (fonteInput) fonteInput.value = data.rota_fonte || '';
-      if (adicional && additionalMinutes != null) adicional.value = String(additionalMinutes);
-      if (duracaoInput) {
-        duracaoInput.value = totalMinutes != null ? String(totalMinutes) : '';
-      }
-      if (tempoViagemField) {
-        tempoViagemField.value = travelMinutes != null ? formatDurationInput(travelMinutes) : '';
-      }
-      const distanciaEl = card.querySelector('.trecho-distancia');
-      if (distanciaEl) distanciaEl.textContent = data.distancia_km != null ? km(data.distancia_km) : '-';
-      recalcCard(card, true);
-      clearDiarias();
-      renderPreview();
-      updateOwnSnapshot();
-      scheduleAutosave();
-    } catch (error) {
-      erro.textContent = error.message || 'Erro ao estimar o trecho.';
-      erro.classList.remove('d-none');
-    } finally {
-      btn.disabled = false;
-    }
-  }
-
-  async function estimateRetorno() {
-    const btn = $('btn-estimar-retorno');
-    const erro = $('retorno-erro');
-    const cards = Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]'));
-    const ultimoCard = cards.length ? cards[cards.length - 1] : null;
-    if (!ultimoCard) {
-      return;
-    }
-    erro.classList.add('d-none');
-    erro.textContent = '';
-    btn.disabled = true;
-    try {
-      const response = await fetch(apiEstimar, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrf,
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          origem_cidade_id: parseInt(ultimoCard.dataset.destinoCidadeId, 10),
-          destino_cidade_id: parseInt($('id_sede_cidade').value, 10)
-        })
-      });
-      const data = await response.json();
-      if (!data.ok) throw new Error(data.erro || 'Erro ao estimar o retorno.');
-      const travelMinutes = resolveEstimatedTravelMinutes(data);
-      const additionalMinutes = resolveSuggestedAdditionalMinutes(data, travelMinutes);
-      const totalMinutes = parseMinutesValue(data && data.duracao_estimada_min);
-      $('id_retorno_distancia_km').value = data.distancia_km != null ? String(data.distancia_km) : '';
-      $('id_retorno_tempo_cru_estimado_min').value = travelMinutes != null ? String(travelMinutes) : '';
-      $('id_retorno_duracao_estimada_min').value = totalMinutes != null ? String(totalMinutes) : '';
-      $('id_retorno_rota_fonte').value = data.rota_fonte || '';
-      if (additionalMinutes != null) {
-        $('id_retorno_tempo_adicional_min').value = String(additionalMinutes);
-      }
-      if ($('id_retorno_tempo_viagem_hhmm')) {
-        $('id_retorno_tempo_viagem_hhmm').value = travelMinutes != null ? formatDurationInput(travelMinutes) : '';
-      }
-      recalcRetorno(true);
-      clearDiarias();
-      renderPreview();
-      updateOwnSnapshot();
-      scheduleAutosave();
-    } catch (error) {
-      erro.textContent = error.message || 'Erro ao estimar o retorno.';
-      erro.classList.remove('d-none');
-    } finally {
-      btn.disabled = false;
-    }
-  }
-
   async function calculateDiarias() {
     const btn = $('btn-calcular-diarias');
     btn.disabled = true;
@@ -1109,6 +1055,10 @@
     if (applyingState) return;
     const row = event.target.closest('.destino-row');
     if (!row) return;
+    if (event.target.classList.contains('destino-estado')) {
+      const cidadeSelect = row.querySelector('.destino-cidade');
+      await loadCities(cidadeSelect, event.target.value || '', null);
+    }
     renderTrechos(captureCurrentState());
     clearDiarias();
     renderPreview();
@@ -1121,6 +1071,7 @@
     const rows = getDestinoRows();
     if (rows.length <= 1) return;
     btn.closest('.destino-row').remove();
+    reindexDestinoRows();
     refreshDestinoButtons();
     renderTrechos(captureCurrentState());
     clearDiarias();
@@ -1130,12 +1081,27 @@
   });
 
   $('btn-adicionar-destino').addEventListener('click', async () => {
-    await addDestinoRow({ estado_id: null, cidade_id: null });
+    await addDestinoRow({ estado_id: destinoEstadoDefaultId || null, cidade_id: null });
     renderTrechos(captureCurrentState());
     clearDiarias();
     renderPreview();
     updateOwnSnapshot();
     scheduleAutosave();
+  });
+
+  if (roteiroBuscaInput) {
+    roteiroBuscaInput.addEventListener('input', function() {
+      renderRouteList(roteiroBuscaInput.value || '');
+    });
+  }
+
+  $('roteiro-lista').addEventListener('click', function(event) {
+    const button = event.target.closest('[data-route-id]');
+    if (!button) return;
+    const routeId = button.getAttribute('data-route-id') || '';
+    if (!routeId) return;
+    $('id_roteiro_evento_id').value = routeId;
+    $('id_roteiro_evento_id').dispatchEvent(new Event('change', { bubbles: true }));
   });
 
   $('id_sede_estado').addEventListener('change', async () => {
@@ -1192,14 +1158,6 @@
     updateOwnSnapshot();
   });
 
-  $('trechos-gerados-container').addEventListener('click', async (event) => {
-    const card = event.target.closest('.card[data-key]');
-    if (!card) return;
-    if (event.target.closest('.btn-estimar-trecho')) {
-      await estimateTrecho(card);
-    }
-  });
-
   ['id_retorno_saida_data', 'id_retorno_saida_hora', 'id_retorno_chegada_data', 'id_retorno_chegada_hora', 'id_retorno_tempo_viagem_hhmm', 'id_retorno_tempo_adicional_min'].forEach((id) => {
     $(id).addEventListener('input', () => {
       if (applyingState) return;
@@ -1212,7 +1170,6 @@
     });
   });
 
-  $('btn-estimar-retorno').addEventListener('click', estimateRetorno);
   $('btn-calcular-diarias').addEventListener('click', calculateDiarias);
 
   $('id_roteiro_evento_id').addEventListener('change', async () => {

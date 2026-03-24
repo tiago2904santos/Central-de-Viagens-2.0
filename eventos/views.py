@@ -3229,7 +3229,7 @@ def _get_oficio_step3_seed_state(oficio, route_options, route_state_map):
     return _build_step3_empty_state(oficio, roteiro_modo=Oficio.ROTEIRO_MODO_PROPRIO)
 
 
-def _build_step3_state_from_post(request, oficio=None, route_state_map=None, forced_destino_estado_id=None):
+def _build_step3_state_from_post(request, oficio=None, route_state_map=None):
     route_state_map = route_state_map or {}
     roteiro_modo = (request.POST.get('roteiro_modo') or '').strip()
     if roteiro_modo not in {Oficio.ROTEIRO_MODO_EVENTO, Oficio.ROTEIRO_MODO_PROPRIO}:
@@ -3238,11 +3238,6 @@ def _build_step3_state_from_post(request, oficio=None, route_state_map=None, for
     sede_estado_id = _parse_int(request.POST.get('sede_estado'))
     sede_cidade_id = _parse_int(request.POST.get('sede_cidade'))
     destinos_list = _parse_destinos_post(request)
-    if forced_destino_estado_id:
-        destinos_list = [
-            (forced_destino_estado_id, cidade_id)
-            for _estado_id, cidade_id in destinos_list
-        ]
     has_structure = bool(
         sede_estado_id
         or sede_cidade_id
@@ -3314,7 +3309,6 @@ def _build_step3_state_from_post(request, oficio=None, route_state_map=None, for
     else:
         state['roteiro_evento_id'] = None
         state['roteiro_evento_label'] = ''
-    _normalize_step3_state_destinos_para_parana(state, forced_destino_estado_id)
     return state
 
 
@@ -4435,7 +4429,6 @@ def oficio_step3(request, pk):
             request,
             oficio=oficio,
             route_state_map=route_state_map,
-            forced_destino_estado_id=getattr(destino_estado_fixo, 'pk', None),
         )
         _autosave_oficio_step3(oficio, step3_state)
         return _autosave_success_response()
@@ -4444,7 +4437,6 @@ def oficio_step3(request, pk):
             request,
             oficio=oficio,
             route_state_map=route_state_map,
-            forced_destino_estado_id=getattr(destino_estado_fixo, 'pk', None),
         )
         validated = _validate_step3_state(step3_state, oficio=oficio)
         if validated['ok']:
@@ -4471,7 +4463,6 @@ def oficio_step3(request, pk):
         validation_errors = validated['errors']
     else:
         step3_state = _get_oficio_step3_seed_state(oficio, route_options, route_state_map)
-        _normalize_step3_state_destinos_para_parana(step3_state, getattr(destino_estado_fixo, 'pk', None))
 
     try:
         diarias_resultado = _calculate_step3_diarias_from_state(oficio, step3_state)
@@ -4497,7 +4488,6 @@ def oficio_step3(request, pk):
         'next_step_url': reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
         'estados': estados_qs,
         'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
-        'api_estimar_trecho_url': reverse('eventos:trechos-estimar'),
         'api_calcular_diarias_url': reverse('eventos:oficio-step3-calcular-diarias', kwargs={'pk': oficio.pk}),
         'sede_estado_id': step3_state.get('sede_estado_id'),
         'sede_cidade_id': step3_state.get('sede_cidade_id'),
@@ -4570,12 +4560,10 @@ def _autosave_oficio_step4(oficio, request):
 def oficio_step3_calcular_diarias(request, pk):
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
     _, route_state_map = _build_step3_route_options(oficio)
-    destino_estado_fixo = _get_parana_estado()
     step3_state = _build_step3_state_from_post(
         request,
         oficio=oficio,
         route_state_map=route_state_map,
-        forced_destino_estado_id=getattr(destino_estado_fixo, 'pk', None),
     )
     validated = _validate_step3_state(step3_state, oficio=oficio)
     if not validated['ok']:
