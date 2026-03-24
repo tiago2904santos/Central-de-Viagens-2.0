@@ -252,7 +252,7 @@
               {% if oficio.pk %}
               <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger" data-autosave-link="1">Excluir</a>
               {% endif %}
-              <button type="submit" name="avancar" value="1" class="btn btn-primary">Salvar e avançar</button>
+              <button type="submit" name="avancar" value="1" class="btn btn-primary" data-autosave-navigate="{{ next_step_url }}">Avançar</button>
             </div>
 
           </form>

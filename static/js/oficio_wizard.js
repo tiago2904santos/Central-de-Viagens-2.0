@@ -55,9 +55,23 @@
       if (!name) {
         return;
       }
-      var chip = document.createElement('span');
+      var chip = document.createElement('div');
       chip.className = 'oficio-glance-chip';
-      chip.textContent = name;
+      var nomeSpan = document.createElement('span');
+      nomeSpan.className = 'oficio-glance-chip-nome';
+      nomeSpan.textContent = name;
+      chip.appendChild(nomeSpan);
+      if (typeof item !== 'string') {
+        var cargo = String((item && item.cargo) || '').trim();
+        var lotacao = String((item && item.lotacao) || '').trim();
+        var sub = [cargo, lotacao].filter(Boolean).join(' · ');
+        if (sub) {
+          var subSpan = document.createElement('span');
+          subSpan.className = 'oficio-glance-chip-sub';
+          subSpan.textContent = sub;
+          chip.appendChild(subSpan);
+        }
+      }
       list.appendChild(chip);
     });
   }
@@ -227,8 +241,12 @@
         if (submitter && submitter.dataset && submitter.dataset.autosaveBypass === '1') {
           return;
         }
+        var nextUrl = (submitter && submitter.getAttribute('data-autosave-navigate')) || '';
         event.preventDefault();
-        flush();
+        var p = flush();
+        if (nextUrl) {
+          p.finally(function() { window.location.href = nextUrl; });
+        }
       });
     }
 

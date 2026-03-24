@@ -1297,12 +1297,6 @@ class OficioStep1Form(FormComErroInvalidMixin, forms.Form):
         label='Motivo da viagem',
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
     )
-    assunto_tipo = forms.ChoiceField(
-        required=True,
-        choices=Oficio.ASSUNTO_TIPO_CHOICES,
-        label='Tipo do ofício',
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
     custeio_tipo = forms.ChoiceField(
         required=True,
         choices=Oficio.CUSTEIO_CHOICES,
@@ -1337,8 +1331,6 @@ class OficioStep1Form(FormComErroInvalidMixin, forms.Form):
         self.fields['viajantes'].queryset = viajantes_qs.select_related('cargo').distinct().order_by('nome')
         if not self.initial.get('custeio_tipo'):
             self.initial['custeio_tipo'] = Oficio.CUSTEIO_UNIDADE
-        if not self.initial.get('assunto_tipo'):
-            self.initial['assunto_tipo'] = Oficio.ASSUNTO_TIPO_AUTORIZACAO
         custeio_value = (
             self.data.get('custeio_tipo')
             if self.is_bound

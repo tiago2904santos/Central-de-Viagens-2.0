@@ -47,7 +47,12 @@
         </div>
         <div class="oficio-glance-travelers-list" id="summary-viajantes-list">
           {% for viajante in wizard_glance.viajantes %}
-          <span class="oficio-glance-chip">{{ viajante }}</span>
+          <div class="oficio-glance-chip">
+            <span class="oficio-glance-chip-nome">{{ viajante.nome }}</span>
+            {% if viajante.cargo or viajante.lotacao %}
+            <span class="oficio-glance-chip-sub">{{ viajante.cargo }}{% if viajante.cargo and viajante.lotacao %} &middot; {% endif %}{{ viajante.lotacao }}</span>
+            {% endif %}
+          </div>
           {% empty %}
           <span class="oficio-glance-empty">Adicione ao menos um servidor para visualizar a equipe aqui.</span>
           {% endfor %}

@@ -37,7 +37,7 @@
                 </div>
               </div>
               <div class="row g-3">
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <label class="form-label" for="{{ form.oficio_numero.id_for_label }}">{{ form.oficio_numero.label }}</label>
                   {{ form.oficio_numero }}
                   {% if form.oficio_numero.errors %}<div class="invalid-feedback d-block">{{ form.oficio_numero.errors.0 }}</div>{% endif %}
@@ -47,7 +47,7 @@
                   {{ form.protocolo }}
                   {% if form.protocolo.errors %}<div class="invalid-feedback d-block">{{ form.protocolo.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <label class="form-label" for="{{ form.data_criacao.id_for_label }}">{{ form.data_criacao.label }}</label>
                   {{ form.data_criacao }}
                   {% if form.data_criacao.errors %}<div class="invalid-feedback d-block">{{ form.data_criacao.errors.0 }}</div>{% endif %}
@@ -92,14 +92,6 @@
                   >
                     Salvar motivo atual como novo modelo
                   </button>
-                </div>
-              </div>
-
-              <div class="row g-3 mt-1">
-                <div class="col-md-6">
-                  <label class="form-label" for="{{ form.assunto_tipo.id_for_label }}">{{ form.assunto_tipo.label }}</label>
-                  {{ form.assunto_tipo }}
-                  {% if form.assunto_tipo.errors %}<div class="invalid-feedback d-block">{{ form.assunto_tipo.errors.0 }}</div>{% endif %}
                 </div>
               </div>
 
@@ -155,7 +147,12 @@
                 <div id="viajantes-chip-list" class="d-flex flex-wrap gap-2">
                   {% for viajante in selected_viajantes %}
                   <span class="badge text-bg-light border d-inline-flex align-items-center gap-2" data-viajante-chip="{{ viajante.pk }}">
-                    <span>{{ viajante.nome }}</span>
+                    <span>
+                      {{ viajante.nome }}
+                      {% if viajante.cargo or viajante.unidade_lotacao %}
+                      <small class="text-muted fw-normal"> &mdash; {{ viajante.cargo }}{% if viajante.cargo and viajante.unidade_lotacao %} &middot; {% endif %}{{ viajante.unidade_lotacao }}</small>
+                      {% endif %}
+                    </span>
                     <button
                       type="button"
                       class="btn btn-sm p-0 border-0 bg-transparent text-danger"
@@ -176,7 +173,7 @@
               {% if oficio.pk %}
               <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger" data-autosave-link="1">Excluir</a>
               {% endif %}
-              <button type="submit" name="avancar" value="1" class="btn btn-primary">Salvar e avançar</button>
+              <button type="submit" name="avancar" value="1" class="btn btn-primary" data-autosave-navigate="{{ next_step_url }}">Avançar</button>
             </div>
           </form>
         </div>

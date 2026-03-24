@@ -106,6 +106,7 @@ def serializar_viajante_para_autocomplete(viajante):
     rg = getattr(viajante, 'rg_formatado', '') or getattr(viajante, 'rg', '') or ''
     cpf = getattr(viajante, 'cpf_formatado', '') or getattr(viajante, 'cpf', '') or ''
     cargo = getattr(getattr(viajante, 'cargo', None), 'nome', '') or ''
+    lotacao = getattr(getattr(viajante, 'unidade_lotacao', None), 'nome', '') or ''
     detalhes = []
     if rg:
         detalhes.append(f'RG: {rg}')
@@ -122,6 +123,7 @@ def serializar_viajante_para_autocomplete(viajante):
         'rg': rg,
         'cpf': cpf,
         'cargo': cargo,
+        'lotacao': lotacao,
     }
 
 

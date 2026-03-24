@@ -1352,6 +1352,23 @@ class Oficio(models.Model):
     def format_protocolo(cls, value):
         return format_protocolo_visual(value)
 
+    def compute_assunto_tipo(self):
+        """Regra automática: data_criacao >= data_saida_sede → CONVALIDACAO, caso contrário AUTORIZACAO."""
+        data_criacao = self.data_criacao
+        if not data_criacao:
+            return self.ASSUNTO_TIPO_AUTORIZACAO
+        # Tenta usar o primeiro trecho de ida
+        first_trecho = self.trechos.order_by('ordem', 'pk').first() if self.pk else None
+        if first_trecho and first_trecho.saida_data:
+            data_saida = first_trecho.saida_data
+        elif self.evento_id and self.evento and self.evento.data_inicio:
+            data_saida = self.evento.data_inicio
+        else:
+            return self.ASSUNTO_TIPO_AUTORIZACAO
+        if data_criacao >= data_saida:
+            return self.ASSUNTO_TIPO_CONVALIDACAO
+        return self.ASSUNTO_TIPO_AUTORIZACAO
+
     @property
     def protocolo_formatado(self):
         return self.format_protocolo(self.protocolo)

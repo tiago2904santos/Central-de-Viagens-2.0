@@ -5374,6 +5374,7 @@ a:hover {
     min-height: 0;
     overflow: hidden;
     padding-top: 0.24rem;
+    padding-bottom: 2rem;
 }
 
 .oficio-wizard-page .oficio-glance-layout {
@@ -5462,7 +5463,11 @@ a:hover {
 }
 
 .oficio-wizard-page .oficio-glance-chip {
-    min-height: 2.15rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    min-height: auto;
     padding: 0.45rem 0.8rem;
     border-radius: 999px;
     border: 1px solid rgba(16, 36, 63, 0.08);
@@ -5471,6 +5476,34 @@ a:hover {
     font-size: 0.84rem;
     font-weight: 700;
     box-shadow: 0 10px 22px rgba(16, 36, 63, 0.08);
+}
+
+.oficio-wizard-page .oficio-glance-chip::before {
+    display: none;
+}
+
+.oficio-wizard-page .oficio-glance-chip-nome {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.oficio-wizard-page .oficio-glance-chip-nome::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #1a3f69 0%, #1f4c7d 100%);
+    flex: 0 0 0.45rem;
+}
+
+.oficio-wizard-page .oficio-glance-chip-sub {
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.65;
+    padding-left: 0.85rem;
 }
 
 .oficio-wizard-page .oficio-glance-empty {
