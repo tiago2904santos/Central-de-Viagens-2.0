@@ -19,6 +19,15 @@
         {% block form_page_notice %}{% endblock %}
 
         <div class="card form-card system-form-card">
+            <div class="card-header card-header-form">
+                <div class="card-header-form-icon" aria-hidden="true">
+                    <i class="bi {% block form_header_icon %}bi-ui-checks-grid{% endblock %}"></i>
+                </div>
+                <div class="card-header-form-content">
+                    <h2 class="card-header-form-title">{% block form_card_title %}Dados do formulario{% endblock %}</h2>
+                    {% block form_card_subtitle %}{% endblock %}
+                </div>
+            </div>
             <div class="card-body">
                 {% block form_before %}{% endblock %}
                 <form method="{% block form_method %}post{% endblock %}" id="{% block form_id %}system-form{% endblock %}" {% block form_attrs %}{% endblock %}>

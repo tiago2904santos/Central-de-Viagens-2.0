@@ -3299,6 +3299,48 @@ a:hover {
     box-shadow: var(--system-form-shadow);
     background: var(--system-form-section);
     border-radius: var(--cv-card-radius-lg);
+    overflow: hidden;
+}
+
+.card-header-form {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 249, 253, 0.95) 100%);
+    padding: 1rem 1.25rem;
+}
+
+.card-header-form-icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(16, 36, 63, 0.12);
+    background: rgba(56, 139, 222, 0.1);
+    color: var(--cv-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex: 0 0 auto;
+}
+
+.card-header-form-content {
+    min-width: 0;
+}
+
+.card-header-form-title {
+    margin: 0;
+    font-size: 1.06rem;
+    font-weight: 700;
+    color: var(--cv-navy-900);
+    letter-spacing: 0.01em;
+}
+
+.card-header-form-subtitle {
+    margin: 0.2rem 0 0;
+    color: var(--cv-text-secondary);
+    font-size: 0.89rem;
 }
 
 .system-form-card .form-text {
@@ -3308,6 +3350,12 @@ a:hover {
 .system-form-actions {
     border-top: 1px solid rgba(15, 23, 42, 0.08);
     padding-top: 1rem;
+    margin-top: 1.3rem;
+}
+
+.system-form-card .form-label {
+    font-weight: 600;
+    color: var(--cv-navy-900);
 }
 
 /* ----- FormulÃ¡rios em card ----- */

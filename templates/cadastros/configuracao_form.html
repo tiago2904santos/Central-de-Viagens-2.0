@@ -1,125 +1,128 @@
-{% extends 'base.html' %}
+{% extends 'includes/forms/form_base.html' %}
 
-{% block title %}Configurações do sistema — Central de Viagens{% endblock %}
-{% block page_title %}Configurações do sistema{% endblock %}
+{% block form_title_block %}Configurações do sistema{% endblock %}
+{% block form_page_title %}Configurações do sistema{% endblock %}
+{% block form_header_title %}Configurações do sistema{% endblock %}
+{% block form_card_title %}Configurações do sistema{% endblock %}
+{% block form_header_icon %}bi-sliders2-vertical{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="configuracoes-header mb-4">
-        <h2 class="configuracoes-title">Configurações do sistema</h2>
-        <p class="configuracoes-subtitle text-muted">Parâmetros globais do processo de viagens</p>
-    </div>
+{% block form_header_subtitle %}
+<p class="text-muted mb-0">Parâmetros globais do processo de viagens</p>
+{% endblock %}
 
-    <div id="cep-erro-alert" class="alert alert-danger d-none" role="alert"></div>
+{% block form_id %}form-configuracoes{% endblock %}
 
-    <div class="card form-card">
-        <div class="card-body">
-            <form method="post" id="form-configuracoes">
-                {% csrf_token %}
-                <div class="configuracao-section">
-                    <h5 class="configuracao-section-title">Cabeçalho (DIVISÃO, UNIDADE, SIGLA)</h5>
-                    <div class="row g-3">
-                        <div class="col-12 col-md-4">
-                            <label for="id_divisao" class="form-label">{{ form.divisao.label }}</label>
-                            {{ form.divisao }}
-                            {% if form.divisao.errors %}<div class="invalid-feedback d-block">{{ form.divisao.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <label for="id_unidade" class="form-label">{{ form.unidade.label }}</label>
-                            {{ form.unidade }}
-                            {% if form.unidade.errors %}<div class="invalid-feedback d-block">{{ form.unidade.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <label for="id_sigla_orgao" class="form-label">{{ form.sigla_orgao.label }}</label>
-                            {{ form.sigla_orgao }}
-                            {% if form.sigla_orgao.errors %}<div class="invalid-feedback d-block">{{ form.sigla_orgao.errors.0 }}</div>{% endif %}
-                        </div>
-                    </div>
-                </div>
+{% block form_card_subtitle %}
+<p class="card-header-form-subtitle">Ajuste cabeçalho, contato, endereco e assinaturas com padrao visual unico.</p>
+{% endblock %}
 
-                <div class="configuracao-section mt-4">
-                    <h5 class="configuracao-section-title">Rodapé — Endereço (preenchimento por CEP)</h5>
-                    <div class="row g-3">
-                        <div class="col-12 col-md-3">
-                            <label for="id_cep" class="form-label">{{ form.cep.label }}</label>
-                            {{ form.cep }}
-                            {% if form.cep.errors %}<div class="invalid-feedback d-block">{{ form.cep.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-12 col-md-5">
-                            <label for="id_logradouro" class="form-label">{{ form.logradouro.label }}</label>
-                            {{ form.logradouro }}
-                            {% if form.logradouro.errors %}<div class="invalid-feedback d-block">{{ form.logradouro.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-12 col-md-2">
-                            <label for="id_numero" class="form-label">{{ form.numero.label }}</label>
-                            {{ form.numero }}
-                            {% if form.numero.errors %}<div class="invalid-feedback d-block">{{ form.numero.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label for="id_bairro" class="form-label">{{ form.bairro.label }}</label>
-                            {{ form.bairro }}
-                            {% if form.bairro.errors %}<div class="invalid-feedback d-block">{{ form.bairro.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <label for="id_cidade_endereco" class="form-label">{{ form.cidade_endereco.label }}</label>
-                            {{ form.cidade_endereco }}
-                            {% if form.cidade_endereco.errors %}<div class="invalid-feedback d-block">{{ form.cidade_endereco.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-12 col-md-2">
-                            <label for="id_uf" class="form-label">{{ form.uf.label }}</label>
-                            {{ form.uf }}
-                            {% if form.uf.errors %}<div class="invalid-feedback d-block">{{ form.uf.errors.0 }}</div>{% endif %}
-                        </div>
-                    </div>
-                </div>
+{% block form_before %}
+<div id="cep-erro-alert" class="alert alert-danger d-none" role="alert"></div>
+{% endblock %}
 
-                <div class="configuracao-section mt-4">
-                    <h5 class="configuracao-section-title">Contato</h5>
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                            <label for="id_telefone" class="form-label">{{ form.telefone.label }}</label>
-                            {{ form.telefone }}
-                            {% if form.telefone.errors %}<div class="invalid-feedback d-block">{{ form.telefone.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label for="id_email" class="form-label">{{ form.email.label }}</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>{% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="configuracao-section mt-4">
-                    <h5 class="configuracao-section-title">Assinaturas (Viajantes)</h5>
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                            <label for="id_assinatura_oficio" class="form-label">{{ form.assinatura_oficio.label }}</label>
-                            {{ form.assinatura_oficio }}
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label for="id_assinatura_justificativas" class="form-label">{{ form.assinatura_justificativas.label }}</label>
-                            {{ form.assinatura_justificativas }}
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label for="id_assinatura_planos_trabalho" class="form-label">{{ form.assinatura_planos_trabalho.label }}</label>
-                            {{ form.assinatura_planos_trabalho }}
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label for="id_assinatura_ordens_servico" class="form-label">{{ form.assinatura_ordens_servico.label }}</label>
-                            {{ form.assinatura_ordens_servico }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-actions mt-4">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                    <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
-                </div>
-            </form>
+{% block form_fields %}
+<div class="configuracao-section">
+    <h5 class="configuracao-section-title">Cabeçalho (DIVISÃO, UNIDADE, SIGLA)</h5>
+    <div class="row g-3">
+        <div class="col-12 col-md-4">
+            <label for="id_divisao" class="form-label">{{ form.divisao.label }}</label>
+            {{ form.divisao }}
+            {% if form.divisao.errors %}<div class="invalid-feedback d-block">{{ form.divisao.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-4">
+            <label for="id_unidade" class="form-label">{{ form.unidade.label }}</label>
+            {{ form.unidade }}
+            {% if form.unidade.errors %}<div class="invalid-feedback d-block">{{ form.unidade.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-4">
+            <label for="id_sigla_orgao" class="form-label">{{ form.sigla_orgao.label }}</label>
+            {{ form.sigla_orgao }}
+            {% if form.sigla_orgao.errors %}<div class="invalid-feedback d-block">{{ form.sigla_orgao.errors.0 }}</div>{% endif %}
         </div>
     </div>
 </div>
 
+<div class="configuracao-section mt-4">
+    <h5 class="configuracao-section-title">Rodapé — Endereço (preenchimento por CEP)</h5>
+    <div class="row g-3">
+        <div class="col-12 col-md-3">
+            <label for="id_cep" class="form-label">{{ form.cep.label }}</label>
+            {{ form.cep }}
+            {% if form.cep.errors %}<div class="invalid-feedback d-block">{{ form.cep.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-5">
+            <label for="id_logradouro" class="form-label">{{ form.logradouro.label }}</label>
+            {{ form.logradouro }}
+            {% if form.logradouro.errors %}<div class="invalid-feedback d-block">{{ form.logradouro.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-2">
+            <label for="id_numero" class="form-label">{{ form.numero.label }}</label>
+            {{ form.numero }}
+            {% if form.numero.errors %}<div class="invalid-feedback d-block">{{ form.numero.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="id_bairro" class="form-label">{{ form.bairro.label }}</label>
+            {{ form.bairro }}
+            {% if form.bairro.errors %}<div class="invalid-feedback d-block">{{ form.bairro.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-4">
+            <label for="id_cidade_endereco" class="form-label">{{ form.cidade_endereco.label }}</label>
+            {{ form.cidade_endereco }}
+            {% if form.cidade_endereco.errors %}<div class="invalid-feedback d-block">{{ form.cidade_endereco.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-2">
+            <label for="id_uf" class="form-label">{{ form.uf.label }}</label>
+            {{ form.uf }}
+            {% if form.uf.errors %}<div class="invalid-feedback d-block">{{ form.uf.errors.0 }}</div>{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="configuracao-section mt-4">
+    <h5 class="configuracao-section-title">Contato</h5>
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label for="id_telefone" class="form-label">{{ form.telefone.label }}</label>
+            {{ form.telefone }}
+            {% if form.telefone.errors %}<div class="invalid-feedback d-block">{{ form.telefone.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="id_email" class="form-label">{{ form.email.label }}</label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="configuracao-section mt-4">
+    <h5 class="configuracao-section-title">Assinaturas (Viajantes)</h5>
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label for="id_assinatura_oficio" class="form-label">{{ form.assinatura_oficio.label }}</label>
+            {{ form.assinatura_oficio }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="id_assinatura_justificativas" class="form-label">{{ form.assinatura_justificativas.label }}</label>
+            {{ form.assinatura_justificativas }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="id_assinatura_planos_trabalho" class="form-label">{{ form.assinatura_planos_trabalho.label }}</label>
+            {{ form.assinatura_planos_trabalho }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="id_assinatura_ordens_servico" class="form-label">{{ form.assinatura_ordens_servico.label }}</label>
+            {{ form.assinatura_ordens_servico }}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block form_actions %}
+<button type="submit" class="btn btn-primary">Salvar</button>
+<a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+{% endblock %}
+
+{% block extra_js %}
 <script>
 (function() {
     var apiCepUrl = "{{ api_consulta_cep_url }}";

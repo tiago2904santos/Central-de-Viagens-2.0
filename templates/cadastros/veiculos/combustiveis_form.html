@@ -1,35 +1,41 @@
-{% extends 'base.html' %}
+{% extends 'includes/forms/form_base.html' %}
 
-{% block title %}{% if is_create %}Cadastrar Combustível{% else %}Editar Combustível{% endif %} — Central de Viagens{% endblock %}
-{% block page_title %}{% if is_create %}Cadastrar Combustível{% else %}Editar Combustível{% endif %}{% endblock %}
+{% block form_title_block %}{% if is_create %}Cadastrar Combustível{% else %}Editar Combustível{% endif %}{% endblock %}
+{% block form_page_title %}{% if is_create %}Cadastrar Combustível{% else %}Editar Combustível{% endif %}{% endblock %}
+{% block form_header_title %}{% if is_create %}Cadastrar Combustível{% else %}Editar Combustível{% endif %}{% endblock %}
+{% block form_card_title %}{% if is_create %}Cadastrar Combustível{% else %}Editar Combustível{% endif %}{% endblock %}
+{% block form_header_icon %}bi-fuel-pump{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="card form-card">
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <label for="id_nome" class="form-label">{{ form.nome.label }}</label>
-                        {{ form.nome }}
-                        {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="col-12">
-                        <div class="form-check">
-                            {{ form.is_padrao }}
-                            <label class="form-check-label" for="id_is_padrao">Definir como padrão</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-actions mt-4">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                    <a href="{% url 'cadastros:combustivel-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-                </div>
-            </form>
+{% block form_header_subtitle %}
+<p class="text-muted mb-0">Padrao premium para cadastro de combustiveis e definicao de opcao padrao.</p>
+{% endblock %}
+
+{% block form_card_subtitle %}
+<p class="card-header-form-subtitle">Mantenha os tipos de combustivel organizados para uso nos fluxos de transporte.</p>
+{% endblock %}
+
+{% block form_fields %}
+<div class="row g-3">
+    <div class="col-12 col-md-6">
+        <label for="id_nome" class="form-label">{{ form.nome.label }}</label>
+        {{ form.nome }}
+        {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="col-12">
+        <div class="form-check">
+            {{ form.is_padrao }}
+            <label class="form-check-label" for="id_is_padrao">Definir como padrão</label>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block form_actions %}
+<button type="submit" class="btn btn-primary">Salvar</button>
+<a href="{% url 'cadastros:combustivel-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+{% endblock %}
+
+{% block extra_js %}
 <script>
 (function() {
     var nomeInput = document.getElementById('id_nome');

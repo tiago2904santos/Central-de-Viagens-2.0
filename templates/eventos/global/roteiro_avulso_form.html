@@ -4,7 +4,7 @@
 {% block page_title %}Roteiros — {% if object %}Editar roteiro avulso{% else %}Cadastrar roteiro avulso{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-4 system-form-page">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
             <h1 class="h4 mb-0">{% if object %}Editar roteiro avulso{% else %}Cadastrar roteiro avulso{% endif %}</h1>
@@ -21,7 +21,14 @@
     </div>
     {% endif %}
 
-    <div class="card form-card">
+    <div class="card form-card system-form-card">
+        <div class="card-header card-header-form">
+            <div class="card-header-form-icon" aria-hidden="true"><i class="bi bi-sign-turn-right"></i></div>
+            <div class="card-header-form-content">
+                <h2 class="card-header-form-title">{% if object %}Editar roteiro avulso{% else %}Cadastrar roteiro avulso{% endif %}</h2>
+                <p class="card-header-form-subtitle">Monte um roteiro independente com a mesma hierarquia visual dos demais cadastros premium.</p>
+            </div>
+        </div>
         <div class="card-body">
             <form method="post" id="form-roteiro">
                 {% csrf_token %}
@@ -93,7 +100,7 @@
                         <small class="text-muted">Salvo em maiúsculas.</small>
                     </div>
                 </div>
-                <div class="form-actions mt-4">
+                <div class="form-actions system-form-actions mt-4">
                     <button type="submit" class="btn btn-primary">Salvar</button>
                     <a href="{% url 'eventos:roteiros-global' %}" class="btn btn-outline-secondary">Cancelar</a>
                 </div>

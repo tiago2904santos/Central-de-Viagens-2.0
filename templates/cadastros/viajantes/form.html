@@ -3,9 +3,15 @@
 {% block form_title_block %}{% if is_create %}Cadastrar Viajante{% else %}Editar Viajante{% endif %}{% endblock %}
 {% block form_page_title %}{% if is_create %}Cadastrar Viajante{% else %}Editar Viajante{% endif %}{% endblock %}
 {% block form_header_title %}{% if is_create %}Cadastrar Viajante{% else %}Editar Viajante{% endif %}{% endblock %}
+{% block form_card_title %}{% if is_create %}Cadastrar Viajante{% else %}Editar Viajante{% endif %}{% endblock %}
+{% block form_header_icon %}bi-people{% endblock %}
 
 {% block form_header_subtitle %}
 <p class="text-muted mb-0">Padrao unificado para dados de servidores e viajantes com mascaras preservadas.</p>
+{% endblock %}
+
+{% block form_card_subtitle %}
+<p class="card-header-form-subtitle">Mantenha identificacao pessoal, cargo e lotacao no mesmo padrão visual premium.</p>
 {% endblock %}
 
 {% block form_page_notice %}

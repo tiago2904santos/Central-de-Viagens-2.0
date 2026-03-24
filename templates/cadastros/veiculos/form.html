@@ -3,9 +3,15 @@
 {% block form_title_block %}{% if is_create %}Cadastrar Veiculo{% else %}Editar Veiculo{% endif %}{% endblock %}
 {% block form_page_title %}{% if is_create %}Cadastrar Veiculo{% else %}Editar Veiculo{% endif %}{% endblock %}
 {% block form_header_title %}{% if is_create %}Cadastrar Veiculo{% else %}Editar Veiculo{% endif %}{% endblock %}
+{% block form_card_title %}{% if is_create %}Cadastrar Veiculo{% else %}Editar Veiculo{% endif %}{% endblock %}
+{% block form_header_icon %}bi-truck-front{% endblock %}
 
 {% block form_header_subtitle %}
 <p class="text-muted mb-0">Cadastro padronizado de viaturas com identidade visual unificada.</p>
+{% endblock %}
+
+{% block form_card_subtitle %}
+<p class="card-header-form-subtitle">Centralize placa, modelo, combustivel e tipo da viatura em um bloco administrativo consistente.</p>
 {% endblock %}
 
 {% block form_page_notice %}
