@@ -3974,7 +3974,7 @@ def _build_oficio_step3_preview(oficio, state=None, diarias_resultado=None):
         trechos_preview.append(
             {
                 'ordem': trecho.get('ordem', 0),
-                'rota': f"{trecho.get('origem_nome') or 'â€”'} â†’ {trecho.get('destino_nome') or 'â€”'}",
+                'rota': f"{trecho.get('origem_nome') or '\u2014'} \u2192 {trecho.get('destino_nome') or '\u2014'}",
                 'saida': _step3_format_date_time_br(trecho.get('saida_data'), trecho.get('saida_hora')),
                 'chegada': _step3_format_date_time_br(trecho.get('chegada_data'), trecho.get('chegada_hora')),
                 'distancia': _step3_decimal_input(trecho.get('distancia_km')),
@@ -3989,7 +3989,7 @@ def _build_oficio_step3_preview(oficio, state=None, diarias_resultado=None):
             or retorno.get('saida_data')
             or retorno.get('chegada_data')
         ),
-        'rota': f"{retorno.get('origem_nome') or 'â€”'} â†’ {retorno.get('destino_nome') or 'â€”'}",
+        'rota': f"{retorno.get('origem_nome') or '\u2014'} \u2192 {retorno.get('destino_nome') or '\u2014'}",
         'saida': _step3_format_date_time_br(retorno.get('saida_data'), retorno.get('saida_hora')),
         'chegada': _step3_format_date_time_br(retorno.get('chegada_data'), retorno.get('chegada_hora')),
     }
