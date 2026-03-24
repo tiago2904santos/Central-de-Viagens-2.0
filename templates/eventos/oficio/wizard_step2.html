@@ -42,7 +42,6 @@
               <h2 class="oficio-stage-title">Transporte e motorista</h2>
               <p class="oficio-stage-description">Defina viatura, condutor e regras de carona com o formulário reorganizado em blocos mais claros.</p>
             </div>
-            <span class="oficio-inline-summary" id="vehicle-inline-summary">{{ wizard_glance.veiculo|default:"Defina a viatura" }}</span>
           </div>
 
           <form method="post" id="oficio-step2-form" class="oficio-stage-form">
@@ -66,8 +65,8 @@
                 <a href="{{ cadastrar_veiculo_url }}" class="btn btn-outline-secondary btn-sm" data-autosave-link="1">Cadastrar nova viatura</a>
               </div>
 
-              <div class="row g-3 align-items-end">
-                <div class="col-md-4">
+              <div class="row g-3">
+                <div class="col-md-6">
                   <label class="form-label" for="{{ form.placa.id_for_label }}">Placa</label>
                   <div class="position-relative" id="placa-search-wrapper">
                     {{ form.placa }}
@@ -86,15 +85,15 @@
                     {{ step2_preview.veiculo_lookup.message|default:'Digite a placa para localizar a viatura ou preencha manualmente.' }}
                   </div>
                 </div>
-              </div>
-
-              <div class="row g-3 mt-1">
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <label class="form-label" for="{{ form.modelo.id_for_label }}">Modelo</label>
                   {{ form.modelo }}
                   {% if form.modelo.errors %}<div class="invalid-feedback d-block">{{ form.modelo.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="col-md-4">
+              </div>
+
+              <div class="row g-3 mt-1">
+                <div class="col-md-6">
                   <label class="form-label" for="{{ form.combustivel.id_for_label }}">Combustível</label>
                   {{ form.combustivel }}
                   <datalist id="combustivel-opcoes">
@@ -104,14 +103,15 @@
                   </datalist>
                   {% if form.combustivel.errors %}<div class="invalid-feedback d-block">{{ form.combustivel.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label" for="{{ form.tipo_viatura.id_for_label }}">Tipo viatura</label>
+                <div class="col-md-6">
+                  <label class="form-label" for="{{ form.tipo_viatura.id_for_label }}">Tipo de viatura</label>
                   {{ form.tipo_viatura }}
+                  {% if form.tipo_viatura.errors %}<div class="invalid-feedback d-block">{{ form.tipo_viatura.errors.0 }}</div>{% endif %}
                 </div>
               </div>
 
               <div class="row g-3 mt-1">
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <label class="form-label" for="{{ form.porte_transporte_armas.id_for_label }}">Porte/transporte de armas</label>
                   {{ form.porte_transporte_armas }}
                   {% if form.porte_transporte_armas.errors %}<div class="invalid-feedback d-block">{{ form.porte_transporte_armas.errors.0 }}</div>{% endif %}
@@ -158,21 +158,24 @@
                   ></div>
                 </div>
                 <div class="form-text">A busca mostra apenas servidores finalizados e continua disponível para trocar o motorista.</div>
-                <div class="border rounded p-3 mt-3">
+                <div class="oficio-motorista-selected-panel mt-3">
                   <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
                     <span class="small fw-semibold text-uppercase">Motorista selecionado</span>
                   </div>
                   <div id="motorista-chip-list" class="d-flex flex-wrap gap-2">
                     {% if selected_motorista_payload %}
-                    <span class="badge text-bg-light border d-inline-flex align-items-center gap-2" data-motorista-chip="{{ selected_motorista_payload.id }}">
-                      <span>{{ selected_motorista_payload.nome }}</span>
+                    <div class="oficio-motorista-chip" data-motorista-chip="{{ selected_motorista_payload.id }}">
+                      <span class="oficio-motorista-nome">{{ selected_motorista_payload.nome }}</span>
+                      {% if selected_motorista_payload.cargo or selected_motorista_payload.lotacao %}
+                      <span class="oficio-motorista-sub">{{ selected_motorista_payload.cargo }}{% if selected_motorista_payload.cargo and selected_motorista_payload.lotacao %} &middot; {% endif %}{{ selected_motorista_payload.lotacao }}</span>
+                      {% endif %}
                       <button
                         type="button"
-                        class="btn btn-sm p-0 border-0 bg-transparent text-danger"
+                        class="oficio-motorista-remove"
                         data-remove-motorista="{{ selected_motorista_payload.id }}"
                         aria-label="Remover motorista {{ selected_motorista_payload.nome }}"
                       >&times;</button>
-                    </span>
+                    </div>
                     {% else %}
                     <span class="text-muted small" id="motorista-chip-empty">Nenhum servidor selecionado.</span>
                     {% endif %}
@@ -181,8 +184,6 @@
               </div>
 
               {% if form.motorista_viajante.errors %}<div class="invalid-feedback d-block mt-2">{{ form.motorista_viajante.errors.0 }}</div>{% endif %}
-            </div>
-
             <div class="row g-3 mt-1{% if not mostrar_motorista_manual %} d-none{% endif %}" id="motorista-manual-wrapper">
               <div class="col-12">
                 <label class="form-label" for="{{ form.motorista_nome.id_for_label }}">Motorista (nome manual)</label>
@@ -211,36 +212,51 @@
               </div>
             </div>
 
-              <div class="oficio-selection-panel mt-3">
-                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-                  <span class="small fw-semibold text-uppercase">Leitura rápida do motorista</span>
+              <div class="oficio-motorista-preview-section">
+                <div class="oficio-motorista-preview-head">
+                  <span class="oficio-motorista-preview-title">Leitura rápida do motorista</span>
                 </div>
                 <div id="motorista-preview-body">
                   {% if step2_preview.motorista.has_value %}
-                  <div class="border rounded p-2" data-motorista-preview-card>
-                    <div class="fw-semibold" id="preview-motorista-nome">{{ step2_preview.motorista.nome_display }}</div>
+                  <div class="oficio-motorista-preview-card" data-motorista-preview-card>
+                    <div class="oficio-motorista-preview-nome" id="preview-motorista-nome">{{ step2_preview.motorista.nome_display }}</div>
                     {% if step2_preview.motorista.show_cargo or step2_preview.motorista.show_rg or step2_preview.motorista.show_cpf or step2_preview.motorista.show_oficio or step2_preview.motorista.show_protocolo %}
-                    <div class="small text-muted mt-1" id="preview-motorista-details">
+                    <div class="oficio-motorista-preview-details" id="preview-motorista-details">
                       {% if step2_preview.motorista.show_cargo %}
-                      <div id="preview-motorista-cargo-row">Cargo: <span id="preview-motorista-cargo">{{ step2_preview.motorista.cargo }}</span></div>
+                      <div class="oficio-motorista-preview-row" id="preview-motorista-cargo-row">
+                        <span class="oficio-motorista-preview-label">Cargo</span>
+                        <span class="oficio-motorista-preview-value" id="preview-motorista-cargo">{{ step2_preview.motorista.cargo }}</span>
+                      </div>
                       {% endif %}
                       {% if step2_preview.motorista.show_rg %}
-                      <div id="preview-motorista-rg-row">RG: <span id="preview-motorista-rg">{{ step2_preview.motorista.rg }}</span></div>
+                      <div class="oficio-motorista-preview-row" id="preview-motorista-rg-row">
+                        <span class="oficio-motorista-preview-label">RG</span>
+                        <span class="oficio-motorista-preview-value" id="preview-motorista-rg">{{ step2_preview.motorista.rg }}</span>
+                      </div>
                       {% endif %}
                       {% if step2_preview.motorista.show_cpf %}
-                      <div id="preview-motorista-cpf-row">CPF: <span id="preview-motorista-cpf">{{ step2_preview.motorista.cpf }}</span></div>
+                      <div class="oficio-motorista-preview-row" id="preview-motorista-cpf-row">
+                        <span class="oficio-motorista-preview-label">CPF</span>
+                        <span class="oficio-motorista-preview-value" id="preview-motorista-cpf">{{ step2_preview.motorista.cpf }}</span>
+                      </div>
                       {% endif %}
                       {% if step2_preview.motorista.show_oficio %}
-                      <div id="preview-motorista-oficio-row">Ofício: <span id="preview-motorista-oficio">{{ step2_preview.motorista.oficio }}</span></div>
+                      <div class="oficio-motorista-preview-row" id="preview-motorista-oficio-row">
+                        <span class="oficio-motorista-preview-label">Ofício</span>
+                        <span class="oficio-motorista-preview-value" id="preview-motorista-oficio">{{ step2_preview.motorista.oficio }}</span>
+                      </div>
                       {% endif %}
                       {% if step2_preview.motorista.show_protocolo %}
-                      <div id="preview-motorista-protocolo-row">Protocolo motorista: <span id="preview-motorista-protocolo">{{ step2_preview.motorista.protocolo }}</span></div>
+                      <div class="oficio-motorista-preview-row" id="preview-motorista-protocolo-row">
+                        <span class="oficio-motorista-preview-label">Protocolo motorista</span>
+                        <span class="oficio-motorista-preview-value" id="preview-motorista-protocolo">{{ step2_preview.motorista.protocolo }}</span>
+                      </div>
                       {% endif %}
                     </div>
                     {% endif %}
                   </div>
                   {% else %}
-                  <p class="text-muted small mb-0" id="motorista-preview-empty">Nenhum motorista definido.</p>
+                  <p class="oficio-motorista-preview-empty" id="motorista-preview-empty">Nenhum motorista definido.</p>
                   {% endif %}
                 </div>
               </div>
