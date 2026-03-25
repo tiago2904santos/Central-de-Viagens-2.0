@@ -6112,12 +6112,12 @@ a:hover {
 
 .oficio-step3-page .oficio-step3-diarias {
     display: grid;
-    gap: 1rem;
-    padding: 1.2rem;
-    border: 1px solid rgba(16, 36, 63, 0.1);
-    border-radius: 1.35rem;
-    background: linear-gradient(180deg, rgba(251, 253, 255, 0.98) 0%, rgba(242, 247, 252, 0.96) 100%);
-    box-shadow: 0 16px 34px rgba(16, 36, 63, 0.09);
+    gap: 0.85rem;
+    padding: 1.28rem;
+    border: 1px solid rgba(16, 36, 63, 0.12);
+    border-radius: 1.4rem;
+    background: linear-gradient(180deg, rgba(251, 253, 255, 0.99) 0%, rgba(243, 248, 253, 0.97) 100%);
+    box-shadow: 0 18px 36px rgba(16, 36, 63, 0.1);
 }
 
 .oficio-step3-page .oficio-step3-diarias-eyebrow {
@@ -6134,61 +6134,67 @@ a:hover {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.85rem;
     flex-wrap: wrap;
 }
 
 .oficio-step3-page .oficio-step3-diarias-head-copy {
     min-width: 0;
+    display: grid;
+    gap: 0.28rem;
 }
 
 .oficio-step3-page .oficio-step3-diarias-head-action {
-    display: grid;
-    justify-items: end;
-    gap: 0.45rem;
-    min-width: min(100%, 17rem);
-    padding: 0.8rem 0.9rem;
-    border: 1px solid rgba(31, 76, 125, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    min-width: min(100%, 19rem);
+    padding: 0.72rem 0.8rem;
+    border: 1px solid rgba(31, 76, 125, 0.15);
     border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.78);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
 }
 
 .oficio-step3-page .oficio-step3-diarias-button {
-    min-width: 12.75rem;
-    font-weight: 700;
-    box-shadow: 0 10px 20px rgba(31, 76, 125, 0.16);
+    min-width: 13.25rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    box-shadow: 0 10px 18px rgba(31, 76, 125, 0.18);
 }
 
 .oficio-step3-page .oficio-step3-diarias-status {
     margin: 0;
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.72rem;
+    font-weight: 800;
     letter-spacing: 0.03em;
-    color: #64748b;
+    color: #475569;
     text-align: right;
 }
 
 .oficio-step3-page .oficio-step3-diarias-overview {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.95fr);
-    gap: 0.9rem;
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 1.12fr);
+    gap: 0.78rem;
     align-items: stretch;
 }
 
 .oficio-step3-page .oficio-step3-diarias-summary {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.8rem;
+    gap: 0.65rem;
 }
 
 .oficio-step3-page .oficio-step3-diarias-summary-item {
     display: grid;
     align-content: start;
-    gap: 0.35rem;
-    padding: 0.95rem 1rem;
-    border: 1px solid rgba(16, 36, 63, 0.08);
+    gap: 0.28rem;
+    padding: 0.82rem 0.92rem;
+    border: 1px solid rgba(16, 36, 63, 0.09);
     border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(255, 255, 255, 0.99);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
@@ -6201,20 +6207,21 @@ a:hover {
 }
 
 .oficio-step3-page .oficio-step3-diarias-summary-item strong {
-    font-size: 1.15rem;
+    font-size: 1.12rem;
+    font-weight: 800;
     line-height: 1.2;
     color: var(--oficio-wizard-ink);
 }
 
 .oficio-step3-page .oficio-step3-diarias-total-card {
     display: grid;
-    align-content: start;
-    gap: 0.65rem;
-    padding: 1.05rem 1.1rem;
-    border: 1px solid rgba(31, 76, 125, 0.18);
-    border-radius: 1.08rem;
-    background: linear-gradient(165deg, rgba(255, 255, 255, 0.99) 0%, rgba(238, 246, 252, 0.98) 100%);
-    box-shadow: 0 14px 28px rgba(16, 36, 63, 0.08);
+    align-content: center;
+    gap: 0.48rem;
+    padding: 1rem 1.08rem;
+    border: 1px solid rgba(31, 76, 125, 0.22);
+    border-radius: 1.18rem;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.99) 0%, rgba(236, 246, 253, 0.98) 100%);
+    box-shadow: 0 16px 30px rgba(16, 36, 63, 0.12);
 }
 
 .oficio-step3-page .oficio-step3-diarias-total-card .label {
@@ -6225,37 +6232,22 @@ a:hover {
     font-weight: 800;
 }
 
+.oficio-step3-page .oficio-step3-diarias-total-value,
 .oficio-step3-page #diarias-valor {
-    font-size: clamp(1.55rem, 2.1vw, 2rem);
-    line-height: 1;
+    font-size: clamp(1.88rem, 2.6vw, 2.45rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
     color: var(--oficio-wizard-accent-strong);
-}
-
-.oficio-step3-page .oficio-step3-diarias-extenso {
-    display: grid;
-    gap: 0.28rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(16, 36, 63, 0.08);
-}
-
-.oficio-step3-page .oficio-step3-diarias-extenso-label {
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #64748b;
-}
-
-.oficio-step3-page .oficio-step3-diarias-extenso-value {
-    margin: 0;
-    font-size: 0.84rem;
-    color: #334155;
-    line-height: 1.5;
 }
 
 .oficio-step3-page .oficio-step3-diarias-table-section {
     display: grid;
-    gap: 0.55rem;
+    gap: 0.5rem;
+    padding: 0.8rem 0.82rem 0.84rem;
+    border: 1px solid rgba(16, 36, 63, 0.09);
+    border-radius: 1.06rem;
+    background: rgba(255, 255, 255, 0.84);
 }
 
 .oficio-step3-page .oficio-step3-diarias-table-head {
@@ -6265,17 +6257,17 @@ a:hover {
 }
 
 .oficio-step3-page .oficio-step3-diarias-table-title {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 800;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #64748b;
+    color: #475569;
 }
 
 .oficio-step3-page .oficio-step3-diarias-table-wrap {
-    border: 1px solid rgba(16, 36, 63, 0.08);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(16, 36, 63, 0.11);
+    border-radius: 0.92rem;
+    background: rgba(255, 255, 255, 0.98);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
@@ -6283,21 +6275,21 @@ a:hover {
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #64748b;
+    color: #475569;
     border-bottom-color: rgba(16, 36, 63, 0.08);
-    background: rgba(244, 248, 252, 0.96);
-    padding: 0.8rem 0.9rem;
+    background: rgba(242, 247, 252, 0.97);
+    padding: 0.74rem 0.86rem;
 }
 
 .oficio-step3-page .oficio-step3-diarias-table-wrap tbody td {
-    padding: 0.85rem 0.9rem;
+    padding: 0.74rem 0.86rem;
     vertical-align: top;
     color: #1e293b;
-    border-color: rgba(16, 36, 63, 0.06);
+    border-color: rgba(16, 36, 63, 0.07);
 }
 
 .oficio-step3-page .oficio-step3-diarias-table-wrap tbody td:last-child {
-    font-weight: 700;
+    font-weight: 800;
     color: var(--oficio-wizard-accent-strong);
 }
 

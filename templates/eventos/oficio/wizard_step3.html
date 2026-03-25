@@ -219,11 +219,7 @@
                     </div>
                     <div class="oficio-step3-diarias-total-card">
                       <span class="label">Valor total</span>
-                      <strong id="diarias-valor">{{ step3_diarias_resultado.totais.total_valor|default:"-" }}</strong>
-                      <div class="oficio-step3-diarias-extenso">
-                        <span class="oficio-step3-diarias-extenso-label">Valor por extenso</span>
-                        <p class="oficio-step3-diarias-extenso-value" id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"-" }}</p>
-                      </div>
+                      <strong id="diarias-valor" class="oficio-step3-diarias-total-value">{{ step3_diarias_resultado.totais.total_valor|default:"-" }}</strong>
                     </div>
                   </div>
                   <div class="oficio-step3-diarias-table-section">
@@ -984,7 +980,6 @@
     $('diarias-tipo').textContent = result.tipo_destino || '-';
     $('diarias-qtd').textContent = totais.total_diarias || '-';
     $('diarias-valor').textContent = totais.total_valor || '-';
-    $('diarias-extenso').textContent = totais.valor_extenso || '-';
     $('diarias-table-body').innerHTML = (result.periodos || []).map((periodo) => (
       '<tr>' +
         '<td>' + esc(periodo.tipo || '-') + '</td>' +
