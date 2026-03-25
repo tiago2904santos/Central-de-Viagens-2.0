@@ -412,7 +412,7 @@
   }
 
   function staleDiarias() {
-    setDiariasStatus('stale', 'Cálculo desatualizado.');
+    setDiariasStatus('stale', 'Cálculo desatualizado');
   }
   function routePeriodSummary(route) {
     const trechos = (route && route.state && route.state.trechos) || [];
@@ -1008,7 +1008,7 @@
 
     const totais = result.totais || {};
     $('diarias-results').classList.remove('d-none');
-  setDiariasStatus('updated', 'Cálculo atualizado.');
+  setDiariasStatus('updated', 'Cálculo atualizado');
     setDiariasButtonLabel(true, false);
     $('diarias-tipo').textContent = result.tipo_destino || '-';
     $('diarias-qtd').textContent = totais.total_diarias || '-';
@@ -1095,7 +1095,7 @@
       applyDiarias(data);
       if (Object.prototype.hasOwnProperty.call(data, 'justificativa_required')) {
         syncJustificativaStep(data.justificativa_url, !!data.justificativa_required);
-        setDiariasStatus('updated', 'Cálculo atualizado.');
+        setDiariasStatus('updated', 'Cálculo atualizado');
       }
       scheduleAutosave();
     } catch (error) {
