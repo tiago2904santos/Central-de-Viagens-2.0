@@ -192,34 +192,48 @@
             <section class="oficio-stage-section">
               <div class="oficio-step3-diarias">
                 <div class="oficio-step3-diarias-head">
-                  <div>
-                    <h3 class="oficio-step3-section-title">6. Calculadora de diárias</h3>
-                    <p class="oficio-step3-section-text">Atualize o resumo financeiro com base no roteiro preenchido nesta etapa.</p>
+                  <div class="oficio-step3-diarias-head-copy">
+                    <span class="oficio-step3-diarias-eyebrow">Resumo financeiro</span>
+                    <div>
+                      <h3 class="oficio-step3-section-title">6. Calculadora de diárias</h3>
+                      <p class="oficio-step3-section-text">Atualize o resumo financeiro com base no roteiro preenchido nesta etapa.</p>
+                    </div>
                   </div>
-                  <button type="button" id="btn-calcular-diarias" class="btn btn-primary">Calcular diárias</button>
+                  <div class="oficio-step3-diarias-head-action">
+                    <button type="button" id="btn-calcular-diarias" class="btn btn-primary oficio-step3-diarias-button">{% if step3_diarias_resultado %}Recalcular diárias{% else %}Calcular diárias{% endif %}</button>
+                    <div id="diarias-status" class="oficio-step3-diarias-status">Aguardando cálculo.</div>
+                  </div>
                 </div>
-                <div id="diarias-status" class="oficio-step3-diarias-status">Aguardando cálculo.</div>
                 <div id="diarias-error" class="alert alert-danger py-2 d-none"></div>
                 <div id="diarias-results"{% if not step3_diarias_resultado %} class="d-none"{% endif %}>
-                  <div class="oficio-step3-diarias-summary mb-3">
-                    <div class="oficio-step3-diarias-summary-item">
-                      <span class="label">Tipo destino</span>
-                      <strong id="diarias-tipo">{{ step3_diarias_resultado.tipo_destino|default:step3_preview.tipo_destino|default:"-" }}</strong>
+                  <div class="oficio-step3-diarias-overview mb-3">
+                    <div class="oficio-step3-diarias-summary">
+                      <div class="oficio-step3-diarias-summary-item">
+                        <span class="label">Tipo destino</span>
+                        <strong id="diarias-tipo">{{ step3_diarias_resultado.tipo_destino|default:step3_preview.tipo_destino|default:"-" }}</strong>
+                      </div>
+                      <div class="oficio-step3-diarias-summary-item">
+                        <span class="label">Diárias</span>
+                        <strong id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"-" }}</strong>
+                      </div>
                     </div>
-                    <div class="oficio-step3-diarias-summary-item">
-                      <span class="label">Diárias</span>
-                      <strong id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"-" }}</strong>
-                    </div>
-                    <div class="oficio-step3-diarias-summary-item is-highlight">
+                    <div class="oficio-step3-diarias-total-card">
                       <span class="label">Valor total</span>
                       <strong id="diarias-valor">{{ step3_diarias_resultado.totais.total_valor|default:"-" }}</strong>
+                      <div class="oficio-step3-diarias-extenso">
+                        <span class="oficio-step3-diarias-extenso-label">Valor por extenso</span>
+                        <p class="oficio-step3-diarias-extenso-value" id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"-" }}</p>
+                      </div>
                     </div>
                   </div>
-                  <div class="oficio-step3-diarias-extenso mb-2"><strong>Valor por extenso:</strong> <span id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"-" }}</span></div>
-                  <div class="table-responsive oficio-step3-diarias-table-wrap">
-                    <table class="table table-sm mb-0">
-                      <thead><tr><th>Tipo</th><th>Saída</th><th>Chegada</th><th>Diárias</th><th>Adicional</th><th>Subtotal</th></tr></thead>
-                      <tbody id="diarias-table-body">
+                  <div class="oficio-step3-diarias-table-section">
+                    <div class="oficio-step3-diarias-table-head">
+                      <span class="oficio-step3-diarias-table-title">Detalhamento final</span>
+                    </div>
+                    <div class="table-responsive oficio-step3-diarias-table-wrap">
+                      <table class="table table-sm mb-0">
+                        <thead><tr><th>Tipo</th><th>Saída</th><th>Chegada</th><th>Diárias</th><th>Adicional</th><th>Subtotal</th></tr></thead>
+                        <tbody id="diarias-table-body">
                         {% if step3_diarias_resultado %}
                           {% for periodo in step3_diarias_resultado.periodos %}
                           <tr>
@@ -232,8 +246,9 @@
                           </tr>
                           {% endfor %}
                         {% endif %}
-                      </tbody>
-                    </table>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -383,7 +398,19 @@
     return map;
   }
 
-  function staleDiarias() { $('diarias-status').textContent = 'Cálculo desatualizado. Clique em "Calcular diárias".'; }
+  function setDiariasButtonLabel(hasData, isLoading) {
+    const btn = $('btn-calcular-diarias');
+    if (!btn) return;
+    if (isLoading) {
+      btn.textContent = hasData ? 'Recalculando diárias...' : 'Calculando diárias...';
+      return;
+    }
+    btn.textContent = hasData ? 'Recalcular diárias' : 'Calcular diárias';
+  }
+
+  function staleDiarias() {
+    $('diarias-status').textContent = 'Cálculo desatualizado. Clique em "Calcular diárias".';
+  }
   function routePeriodSummary(route) {
     const trechos = (route && route.state && route.state.trechos) || [];
     const retorno = (route && route.state && route.state.retorno) || {};
@@ -942,6 +969,7 @@
     if (!hasData) {
       $('diarias-results').classList.add('d-none');
       $('diarias-status').textContent = 'Aguardando cálculo.';
+      setDiariasButtonLabel(false, false);
       $('id_tipo_destino').value = '';
       $('id_quantidade_diarias').value = '';
       $('id_valor_diarias').value = '';
@@ -952,6 +980,7 @@
     const totais = result.totais || {};
     $('diarias-results').classList.remove('d-none');
     $('diarias-status').textContent = 'Cálculo atualizado.';
+  setDiariasButtonLabel(true, false);
     $('diarias-tipo').textContent = result.tipo_destino || '-';
     $('diarias-qtd').textContent = totais.total_diarias || '-';
     $('diarias-valor').textContent = totais.total_valor || '-';
@@ -1016,7 +1045,9 @@
 
   async function calculateDiarias() {
     const btn = $('btn-calcular-diarias');
+    const hasExistingData = !$('diarias-results').classList.contains('d-none');
     btn.disabled = true;
+    setDiariasButtonLabel(hasExistingData, true);
     $('diarias-error').classList.add('d-none');
     $('diarias-status').textContent = 'Calculando diárias...';
     try {
@@ -1047,6 +1078,7 @@
       $('diarias-status').textContent = 'Falha no cálculo.';
     } finally {
       btn.disabled = false;
+      setDiariasButtonLabel(!$('diarias-results').classList.contains('d-none'), false);
     }
   }
 
