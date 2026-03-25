@@ -80,14 +80,14 @@
                   {{ form.motivo }}
                   {% if form.motivo.errors %}<div class="invalid-feedback d-block">{{ form.motivo.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="col-md-5">
+                <div class="col-12">
                   <input type="hidden" name="novo_modelo_nome" id="id_novo_modelo_nome" value="">
                   <button
                     type="submit"
                     name="salvar_modelo_motivo"
                     value="1"
                     id="btn-salvar-modelo-motivo"
-                    class="btn btn-outline-primary"
+                    class="btn btn-outline-primary w-100"
                     data-autosave-bypass="1"
                   >
                     Salvar motivo atual como novo modelo
@@ -347,19 +347,23 @@
     suggestionItems.forEach(function(item, index) {
       var button = document.createElement('button');
       button.type = 'button';
-      button.className = 'list-group-item list-group-item-action d-flex flex-column align-items-start';
+      button.className = 'list-group-item list-group-item-action oficio-viajante-result-item';
       button.setAttribute('data-suggestion-index', String(index));
-      var nomeRow = document.createElement('span');
-      nomeRow.className = 'fw-semibold';
-      nomeRow.textContent = item.label || item.nome || 'Viajante';
-      button.appendChild(nomeRow);
+
+      var topRow = document.createElement('span');
+      topRow.className = 'oficio-viajante-result-top';
+      var nome = String(item.nome || item.label || 'Viajante').trim();
+      var rg = String(item.rg || '').trim();
+      var cpf = String(item.cpf || '').trim();
+      var cargo = String(item.cargo || '').trim();
+      topRow.textContent = [nome, rg ? ('RG ' + rg) : '', cpf ? ('CPF ' + cpf) : '', cargo].filter(Boolean).join(' • ');
+      button.appendChild(topRow);
+
       var lotacaoSug = String((item && item.lotacao) || '').trim();
-      if (lotacaoSug) {
-        var lotacaoRow = document.createElement('small');
-        lotacaoRow.className = 'text-muted';
-        lotacaoRow.textContent = lotacaoSug;
-        button.appendChild(lotacaoRow);
-      }
+      var lotacaoRow = document.createElement('span');
+      lotacaoRow.className = 'oficio-viajante-result-bottom';
+      lotacaoRow.textContent = lotacaoSug || 'Lotação não informada';
+      button.appendChild(lotacaoRow);
       button.addEventListener('click', function() {
         addSelectedViajante(item);
       });

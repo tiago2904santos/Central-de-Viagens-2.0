@@ -93,7 +93,7 @@
               </div>
 
               <div class="row g-3 mt-1">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label class="form-label" for="{{ form.combustivel.id_for_label }}">Combustível</label>
                   {{ form.combustivel }}
                   <datalist id="combustivel-opcoes">
@@ -103,15 +103,12 @@
                   </datalist>
                   {% if form.combustivel.errors %}<div class="invalid-feedback d-block">{{ form.combustivel.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label class="form-label" for="{{ form.tipo_viatura.id_for_label }}">Tipo de viatura</label>
                   {{ form.tipo_viatura }}
                   {% if form.tipo_viatura.errors %}<div class="invalid-feedback d-block">{{ form.tipo_viatura.errors.0 }}</div>{% endif %}
                 </div>
-              </div>
-
-              <div class="row g-3 mt-1">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label class="form-label" for="{{ form.porte_transporte_armas.id_for_label }}">Porte/transporte de armas</label>
                   {{ form.porte_transporte_armas }}
                   {% if form.porte_transporte_armas.errors %}<div class="invalid-feedback d-block">{{ form.porte_transporte_armas.errors.0 }}</div>{% endif %}

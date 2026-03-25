@@ -163,7 +163,7 @@
                       </div>
                     </div>
                     <div class="col-12">
-                      <div class="row g-3 align-items-end">
+                      <div class="row g-3 align-items-end oficio-step3-time-calc-grid">
                         <div class="col-md-4">
                           <label class="form-label small">Tempo de viagem</label>
                           <input type="text" class="form-control" id="id_retorno_tempo_viagem_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
@@ -200,8 +200,8 @@
                     </div>
                   </div>
                   <div class="oficio-step3-diarias-head-action">
+                    <div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending">Aguardando cálculo.</div>
                     <button type="button" id="btn-calcular-diarias" class="btn btn-primary oficio-step3-diarias-button">{% if step3_diarias_resultado %}Recalcular diárias{% else %}Calcular diárias{% endif %}</button>
-                    <div id="diarias-status" class="oficio-step3-diarias-status">Aguardando cálculo.</div>
                   </div>
                 </div>
                 <div id="diarias-error" class="alert alert-danger py-2 d-none"></div>
@@ -404,8 +404,15 @@
     btn.textContent = hasData ? 'Recalcular diárias' : 'Calcular diárias';
   }
 
+  function setDiariasStatus(state, text) {
+    const status = $('diarias-status');
+    if (!status) return;
+    status.dataset.state = state || 'pending';
+    status.textContent = text || '';
+  }
+
   function staleDiarias() {
-    $('diarias-status').textContent = 'Cálculo desatualizado. Clique em "Calcular diárias".';
+    setDiariasStatus('stale', 'Cálculo desatualizado.');
   }
   function routePeriodSummary(route) {
     const trechos = (route && route.state && route.state.trechos) || [];
@@ -676,11 +683,11 @@
       '<div class="col-md-1 destino-drag-col">' +
         '<button type="button" class="btn btn-sm btn-outline-secondary destino-drag-handle" aria-label="Arrastar destino ' + (idx + 1) + '">&#9776;</button>' +
       '</div>' +
-      '<div class="col-md-2">' +
+      '<div class="col-md-3">' +
         '<label class="form-label small">UF</label>' +
         '<select name="destino_estado_' + idx + '" class="form-select destino-estado">' + estadoOptionsMarkup(selectedEstadoId) + '</select>' +
       '</div>' +
-      '<div class="col-md-7">' +
+      '<div class="col-md-6">' +
         '<label class="form-label small">Cidade</label>' +
         '<select name="destino_cidade_' + idx + '" class="form-select destino-cidade"><option value="">---------</option></select>' +
       '</div>' +
@@ -852,9 +859,11 @@
                 '</div>' +
               '</div>' +
             '</div>' +
-            '<div class="col-md-4"><label class="form-label small">Tempo de viagem</label><input type="text" class="form-control form-control-sm trecho-tempo-viagem-hhmm" value="' + esc(formatDurationInput(tempoCru)) + '" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off"><input type="hidden" name="trecho_' + ordem + '_tempo_cru_estimado_min" value="' + esc(tempoCru) + '"></div>' +
-            '<div class="col-md-4"><label class="form-label small">Tempo adicional</label><input type="number" min="0" step="15" class="form-control form-control-sm" name="trecho_' + ordem + '_tempo_adicional_min" value="' + esc(tempoAdicional) + '"></div>' +
-            '<div class="col-md-4"><label class="form-label small">Tempo total</label><input type="text" class="form-control form-control-sm trecho-tempo-total" value="" readonly></div>' +
+            '<div class="col-12"><div class="row g-3 align-items-end oficio-step3-time-calc-grid">' +
+              '<div class="col-md-4"><label class="form-label small">Tempo de viagem</label><input type="text" class="form-control form-control-sm trecho-tempo-viagem-hhmm" value="' + esc(formatDurationInput(tempoCru)) + '" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off"><input type="hidden" name="trecho_' + ordem + '_tempo_cru_estimado_min" value="' + esc(tempoCru) + '"></div>' +
+              '<div class="col-md-4"><label class="form-label small">Tempo adicional</label><input type="number" min="0" step="15" class="form-control form-control-sm" name="trecho_' + ordem + '_tempo_adicional_min" value="' + esc(tempoAdicional) + '"></div>' +
+              '<div class="col-md-4"><label class="form-label small">Tempo total</label><input type="text" class="form-control form-control-sm trecho-tempo-total" value="" readonly></div>' +
+            '</div></div>' +
             '<div class="col-12"><div class="small text-danger d-none trecho-erro"></div></div>' +
           '</div>' +
           '<input type="hidden" name="trecho_' + ordem + '_distancia_km" value="' + esc(distancia) + '">' +
@@ -864,7 +873,9 @@
       '</div>';
   }
 
-  function renderTrechos(seedState) {
+  function renderTrechos(seedState, options) {
+    const opts = options || {};
+    const preferSeed = !!opts.preferSeed;
     const sedeEstadoId = $('id_sede_estado').value || null;
     const sedeCidadeId = $('id_sede_cidade').value || null;
     const sedeNome = selectedText($('id_sede_cidade'));
@@ -900,7 +911,12 @@
       origemNome = destino.cidade_nome || '';
     });
 
-    $('trechos-gerados-container').innerHTML = trechos.map((trecho) => buildTrechoCard(trecho, currentMap[trecho.key] || seedMap[trecho.key] || {})).join('');
+    $('trechos-gerados-container').innerHTML = trechos.map((trecho) => {
+      const currentValue = currentMap[trecho.key] || {};
+      const seedValue = seedMap[trecho.key] || {};
+      const mergedValue = preferSeed ? Object.assign({}, currentValue, seedValue) : Object.assign({}, seedValue, currentValue);
+      return buildTrechoCard(trecho, mergedValue);
+    }).join('');
     $('trechos-gerados-container').querySelectorAll('.card[data-key]').forEach((card) => recalcCard(card, false));
     updateRetornoCities();
     recalcRetorno(false);
@@ -964,7 +980,7 @@
     $('diarias-error').classList.add('d-none');
     if (!hasData) {
       $('diarias-results').classList.add('d-none');
-      $('diarias-status').textContent = 'Aguardando cálculo.';
+      setDiariasStatus('pending', 'Aguardando cálculo.');
       setDiariasButtonLabel(false, false);
       $('id_tipo_destino').value = '';
       $('id_quantidade_diarias').value = '';
@@ -975,7 +991,7 @@
 
     const totais = result.totais || {};
     $('diarias-results').classList.remove('d-none');
-    $('diarias-status').textContent = 'Cálculo atualizado.';
+  setDiariasStatus('updated', 'Cálculo atualizado.');
     setDiariasButtonLabel(true, false);
     $('diarias-tipo').textContent = result.tipo_destino || '-';
     $('diarias-qtd').textContent = totais.total_diarias || '-';
@@ -1021,13 +1037,13 @@
     $('id_sede_estado').value = current.sede_estado_id || '';
     await loadCities($('id_sede_cidade'), current.sede_estado_id, current.sede_cidade_id);
     await renderDestinos(current.destinos_atuais);
-    renderTrechos(current);
+    renderTrechos(current, { preferSeed: true });
     $('id_retorno_saida_data').value = current.retorno && current.retorno.saida_data ? current.retorno.saida_data : '';
     $('id_retorno_saida_hora').value = current.retorno && current.retorno.saida_hora ? current.retorno.saida_hora : '';
     $('id_retorno_chegada_data').value = current.retorno && current.retorno.chegada_data ? current.retorno.chegada_data : '';
     $('id_retorno_chegada_hora').value = current.retorno && current.retorno.chegada_hora ? current.retorno.chegada_hora : '';
     $('id_retorno_distancia_km').value = current.retorno && current.retorno.distancia_km ? current.retorno.distancia_km : '';
-    $('id_retorno_tempo_cru_estimado_min').value = current.retorno && current.retorno.tempo_cru_estimado_min ? current.retorno.tempo_cru_estimado_min : '';
+    $('id_retorno_tempo_cru_estimado_min').value = current.retorno && current.retorno.tempo_cru_estimado_min != null ? current.retorno.tempo_cru_estimado_min : '';
     $('id_retorno_tempo_adicional_min').value = current.retorno && current.retorno.tempo_adicional_min != null ? current.retorno.tempo_adicional_min : 0;
     $('id_retorno_duracao_estimada_min').value = current.retorno && current.retorno.duracao_estimada_min ? current.retorno.duracao_estimada_min : '';
     $('id_retorno_rota_fonte').value = current.retorno && current.retorno.rota_fonte ? current.retorno.rota_fonte : '';
@@ -1044,7 +1060,7 @@
     btn.disabled = true;
     setDiariasButtonLabel(hasExistingData, true);
     $('diarias-error').classList.add('d-none');
-    $('diarias-status').textContent = 'Calculando diárias...';
+    setDiariasStatus('pending', 'Calculando diárias...');
     try {
       const response = await fetch(apiDiarias, {
         method: 'POST',
@@ -1062,15 +1078,13 @@
       applyDiarias(data);
       if (Object.prototype.hasOwnProperty.call(data, 'justificativa_required')) {
         syncJustificativaStep(data.justificativa_url, !!data.justificativa_required);
-        $('diarias-status').textContent = data.justificativa_required
-          ? 'Cálculo atualizado. Justificativa habilitada no menu.'
-          : 'Cálculo atualizado.';
+        setDiariasStatus('updated', 'Cálculo atualizado.');
       }
       scheduleAutosave();
     } catch (error) {
       $('diarias-error').textContent = error.message || 'Erro ao calcular as diarias.';
       $('diarias-error').classList.remove('d-none');
-      $('diarias-status').textContent = 'Falha no cálculo.';
+      setDiariasStatus('error', 'Falha no cálculo.');
     } finally {
       btn.disabled = false;
       setDiariasButtonLabel(!$('diarias-results').classList.contains('d-none'), false);
