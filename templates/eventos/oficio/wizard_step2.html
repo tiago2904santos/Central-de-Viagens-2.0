@@ -127,10 +127,11 @@
                 </div>
               </div>
 
-              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                <label class="form-label mb-0" for="motorista-autocomplete-input">
+              <div class="oficio-motorista-stack">
+              <div class="d-flex justify-content-between align-items-center oficio-motorista-toolbar flex-wrap gap-2">
+                <label class="form-label mb-0 oficio-motorista-toolbar-label" for="motorista-autocomplete-input">
                   Motorista servidor
-                  <span id="motorista-carona-hint" class="text-muted small{% if not mostrar_campos_carona %} d-none{% endif %}">(carona)</span>
+                  <span id="motorista-carona-hint" class="oficio-carona-pill oficio-carona-pill-inline{% if not mostrar_campos_carona %} d-none{% endif %}">Carona</span>
                 </label>
                 <div class="d-flex gap-2 flex-wrap">
                   <a href="{{ cadastrar_viajante_url }}" class="btn btn-outline-secondary btn-sm" data-autosave-link="1">Adicionar servidor</a>
@@ -157,16 +158,31 @@
                     style="z-index: 20;"
                   ></div>
                 </div>
-                <div class="form-text">A busca mostra apenas servidores finalizados e continua disponível para trocar o motorista.</div>
-                <div class="oficio-motorista-selected-panel mt-3">
-                  <span class="oficio-motorista-preview-title">Motorista selecionado</span>
-                  <div id="motorista-chip-list">
+                <div class="form-text">Busque e selecione um servidor; você pode trocar a qualquer momento.</div>
+                <div class="oficio-motorista-selected-panel">
+                  <div class="oficio-motorista-selected-head">
+                    <span class="oficio-motorista-preview-title">Motorista selecionado</span>
+                    <span class="oficio-motorista-selected-meta" id="motorista-selected-meta">{% if selected_motorista_payload %}Servidor escolhido{% else %}Aguardando seleção{% endif %}</span>
+                  </div>
+                  <div id="motorista-chip-list" class="oficio-motorista-selected-body">
                     {% if selected_motorista_payload %}
                     <div class="oficio-motorista-chip" data-motorista-chip="{{ selected_motorista_payload.id }}">
-                      <span class="oficio-motorista-nome">{{ selected_motorista_payload.nome }}</span>
-                      {% if selected_motorista_payload.lotacao %}
-                      <span class="oficio-motorista-sub">{{ selected_motorista_payload.lotacao }}</span>
-                      {% endif %}
+                      <div class="oficio-motorista-main">
+                        <div class="oficio-motorista-line">
+                          <span class="oficio-motorista-nome">{{ selected_motorista_payload.nome }}</span>
+                          {% if mostrar_campos_carona %}
+                          <span class="oficio-carona-pill">Carona</span>
+                          {% endif %}
+                        </div>
+                        <div class="oficio-motorista-meta">
+                          {% if selected_motorista_payload.lotacao %}
+                          <span class="oficio-motorista-sub">{{ selected_motorista_payload.lotacao }}</span>
+                          {% endif %}
+                          {% if selected_motorista_payload.cargo %}
+                          <span class="oficio-motorista-sub">{{ selected_motorista_payload.cargo }}</span>
+                          {% endif %}
+                        </div>
+                      </div>
                       <button
                         type="button"
                         class="oficio-motorista-remove"
@@ -212,59 +228,6 @@
                 </div>
               </div>
             </div>
-
-              <div class="oficio-motorista-preview-section">
-                <div class="oficio-motorista-preview-head">
-                  <span class="oficio-motorista-preview-title">Leitura rápida do motorista</span>
-                </div>
-                <div id="motorista-preview-body">
-                  {% if step2_preview.motorista.has_value %}
-                  <div class="oficio-motorista-preview-card" data-motorista-preview-card>
-                    <div class="d-flex align-items-start gap-2 flex-wrap">
-                      <span class="oficio-motorista-preview-nome" id="preview-motorista-nome">{{ step2_preview.motorista.nome }}</span>
-                      {% if step2_preview.motorista.is_carona %}
-                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle oficio-carona-badge">Carona</span>
-                      {% endif %}
-                    </div>
-                    {% if step2_preview.motorista.show_cargo or step2_preview.motorista.show_rg or step2_preview.motorista.show_cpf or step2_preview.motorista.show_oficio or step2_preview.motorista.show_protocolo %}
-                    <div class="oficio-motorista-preview-details" id="preview-motorista-details">
-                      {% if step2_preview.motorista.show_cargo %}
-                      <div class="oficio-motorista-preview-row" id="preview-motorista-cargo-row">
-                        <span class="oficio-motorista-preview-label">Cargo</span>
-                        <span class="oficio-motorista-preview-value" id="preview-motorista-cargo">{{ step2_preview.motorista.cargo }}</span>
-                      </div>
-                      {% endif %}
-                      {% if step2_preview.motorista.show_rg %}
-                      <div class="oficio-motorista-preview-row" id="preview-motorista-rg-row">
-                        <span class="oficio-motorista-preview-label">RG</span>
-                        <span class="oficio-motorista-preview-value" id="preview-motorista-rg">{{ step2_preview.motorista.rg }}</span>
-                      </div>
-                      {% endif %}
-                      {% if step2_preview.motorista.show_cpf %}
-                      <div class="oficio-motorista-preview-row" id="preview-motorista-cpf-row">
-                        <span class="oficio-motorista-preview-label">CPF</span>
-                        <span class="oficio-motorista-preview-value" id="preview-motorista-cpf">{{ step2_preview.motorista.cpf }}</span>
-                      </div>
-                      {% endif %}
-                      {% if step2_preview.motorista.show_oficio %}
-                      <div class="oficio-motorista-preview-row" id="preview-motorista-oficio-row">
-                        <span class="oficio-motorista-preview-label">Ofício</span>
-                        <span class="oficio-motorista-preview-value" id="preview-motorista-oficio">{{ step2_preview.motorista.oficio }}</span>
-                      </div>
-                      {% endif %}
-                      {% if step2_preview.motorista.show_protocolo %}
-                      <div class="oficio-motorista-preview-row" id="preview-motorista-protocolo-row">
-                        <span class="oficio-motorista-preview-label">Protocolo motorista</span>
-                        <span class="oficio-motorista-preview-value" id="preview-motorista-protocolo">{{ step2_preview.motorista.protocolo }}</span>
-                      </div>
-                      {% endif %}
-                    </div>
-                    {% endif %}
-                  </div>
-                  {% else %}
-                  <p class="oficio-motorista-preview-empty" id="motorista-preview-empty">Nenhum motorista definido.</p>
-                  {% endif %}
-                </div>
               </div>
             </section>
 
@@ -313,11 +276,11 @@
   var motoristaChipList = document.getElementById('motorista-chip-list');
   var motoristaCaronaWrapper = document.getElementById('motorista-carona-wrapper');
   var motoristaCaronaHint = document.getElementById('motorista-carona-hint');
+  var motoristaSelectedMeta = document.getElementById('motorista-selected-meta');
   var motoristaOficioNumeroInput = document.getElementById('{{ form.motorista_oficio_numero.id_for_label }}');
   var motoristaOficioAnoInput = document.getElementById('{{ form.motorista_oficio_ano.id_for_label }}');
   var motoristaProtocoloInput = document.getElementById('{{ form.motorista_protocolo.id_for_label }}');
   var btnToggleMotoristaMode = document.getElementById('btn-toggle-motorista-mode');
-  var motoristaPreviewBody = document.getElementById('motorista-preview-body');
   var motoristaSemCadastroValue = '{{ motorista_sem_cadastro_value }}';
   var placaSearchWrapper = document.getElementById('placa-search-wrapper');
   var placaSearchResults = document.getElementById('placa-search-results');
@@ -360,15 +323,6 @@
     }
   }
 
-  function escapeHtml(value) {
-    return String(value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
   function setHidden(element, hidden) {
     if (!element) {
       return;
@@ -398,14 +352,6 @@
     }
   }
 
-  function formatProtocolo(value) {
-    var digits = String(value || '').replace(/\D/g, '').slice(0, 9);
-    if (digits.length !== 9) {
-      return String(value || '').trim();
-    }
-    return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '-' + digits.slice(8);
-  }
-
   function isManualMotorista() {
     return motoristaValueInput && String(motoristaValueInput.value || '').trim() === motoristaSemCadastroValue;
   }
@@ -429,15 +375,6 @@
       return String(motoristaManualInput ? motoristaManualInput.value : '').trim();
     }
     return String(motoristaTemServidorSelecionado() ? (selectedMotorista.nome || '') : '').trim();
-  }
-
-  function motoristaOficioCompleto() {
-    var numero = String(motoristaOficioNumeroInput ? motoristaOficioNumeroInput.value : '').replace(/\D/g, '');
-    var ano = String(motoristaOficioAnoInput ? motoristaOficioAnoInput.value : '').replace(/\D/g, '');
-    if (!numero || !ano) {
-      return '';
-    }
-    return numero + '/' + ano;
   }
 
   function updateLookupStatus(message, found) {
@@ -484,6 +421,7 @@
     if (!motoristaChipList || isManualMotorista()) {
       return;
     }
+    var carona = isMotoristaCarona();
     motoristaChipList.innerHTML = '';
     if (!motoristaTemServidorSelecionado()) {
       var emptyState = document.createElement('span');
@@ -498,18 +436,48 @@
     chip.className = 'oficio-motorista-chip';
     chip.setAttribute('data-motorista-chip', String(selectedMotorista.id));
 
+    var main = document.createElement('div');
+    main.className = 'oficio-motorista-main';
+
+    var header = document.createElement('div');
+    header.className = 'oficio-motorista-line';
+
     var nomeEl = document.createElement('span');
     nomeEl.className = 'oficio-motorista-nome';
     nomeEl.textContent = selectedMotorista.nome || selectedMotorista.label || 'Motorista';
-    chip.appendChild(nomeEl);
+    header.appendChild(nomeEl);
+
+    if (carona) {
+      var caronaBadge = document.createElement('span');
+      caronaBadge.className = 'oficio-carona-pill';
+      caronaBadge.textContent = 'Carona';
+      header.appendChild(caronaBadge);
+    }
+    main.appendChild(header);
+
+    var meta = document.createElement('div');
+    meta.className = 'oficio-motorista-meta';
 
     var lotacaomotorista = String((selectedMotorista && selectedMotorista.lotacao) || '').trim();
     if (lotacaomotorista) {
       var lotacaoMotoristaEl = document.createElement('span');
       lotacaoMotoristaEl.className = 'oficio-motorista-sub';
       lotacaoMotoristaEl.textContent = lotacaomotorista;
-      chip.appendChild(lotacaoMotoristaEl);
+      meta.appendChild(lotacaoMotoristaEl);
     }
+
+    var cargoMotorista = String((selectedMotorista && selectedMotorista.cargo) || '').trim();
+    if (cargoMotorista) {
+      var cargoMotoristaEl = document.createElement('span');
+      cargoMotoristaEl.className = 'oficio-motorista-sub';
+      cargoMotoristaEl.textContent = cargoMotorista;
+      meta.appendChild(cargoMotoristaEl);
+    }
+
+    if (meta.children.length) {
+      main.appendChild(meta);
+    }
+    chip.appendChild(main);
 
     var removeButton = document.createElement('button');
     removeButton.type = 'button';
@@ -524,57 +492,22 @@
     motoristaChipList.appendChild(chip);
   }
 
-  function renderMotoristaPreview() {
-    if (!motoristaPreviewBody) {
+  function updateMotoristaSelectedMeta() {
+    if (!motoristaSelectedMeta) {
       return;
     }
-
     var manual = isManualMotorista();
     var carona = isMotoristaCarona();
     var nome = motoristaNomeAtual();
     if (!nome) {
-      motoristaPreviewBody.innerHTML = '<p class="oficio-motorista-preview-empty" id="motorista-preview-empty">Nenhum motorista definido.</p>';
+      motoristaSelectedMeta.textContent = 'Aguardando seleção';
       return;
     }
-
-    var html = '<div class="oficio-motorista-preview-card" data-motorista-preview-card>';
-    html += '<div class="d-flex align-items-start gap-2 flex-wrap">';
-    html += '<span class="oficio-motorista-preview-nome" id="preview-motorista-nome">' + escapeHtml(nome) + '</span>';
-    if (carona) {
-      html += '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle oficio-carona-badge">Carona</span>';
+    if (manual) {
+      motoristaSelectedMeta.textContent = carona ? 'Manual (carona)' : 'Manual';
+      return;
     }
-    html += '</div>';
-
-    var details = [];
-    if (!manual && selectedMotorista) {
-      if (selectedMotorista.cargo) {
-        details.push('<div class="oficio-motorista-preview-row" id="preview-motorista-cargo-row"><span class="oficio-motorista-preview-label">Cargo</span><span class="oficio-motorista-preview-value" id="preview-motorista-cargo">' + escapeHtml(selectedMotorista.cargo) + '</span></div>');
-      }
-      if (selectedMotorista.rg) {
-        details.push('<div class="oficio-motorista-preview-row" id="preview-motorista-rg-row"><span class="oficio-motorista-preview-label">RG</span><span class="oficio-motorista-preview-value" id="preview-motorista-rg">' + escapeHtml(selectedMotorista.rg) + '</span></div>');
-      }
-      if (selectedMotorista.cpf) {
-        details.push('<div class="oficio-motorista-preview-row" id="preview-motorista-cpf-row"><span class="oficio-motorista-preview-label">CPF</span><span class="oficio-motorista-preview-value" id="preview-motorista-cpf">' + escapeHtml(selectedMotorista.cpf) + '</span></div>');
-      }
-    }
-
-    if (carona) {
-      var oficioMotoristaAtual = motoristaOficioCompleto();
-      var protocoloMotoristaAtual = formatProtocolo(motoristaProtocoloInput ? motoristaProtocoloInput.value : '');
-      if (oficioMotoristaAtual) {
-        details.push('<div class="oficio-motorista-preview-row" id="preview-motorista-oficio-row"><span class="oficio-motorista-preview-label">Ofício</span><span class="oficio-motorista-preview-value" id="preview-motorista-oficio">' + escapeHtml(oficioMotoristaAtual) + '</span></div>');
-      }
-      if (protocoloMotoristaAtual) {
-        details.push('<div class="oficio-motorista-preview-row" id="preview-motorista-protocolo-row"><span class="oficio-motorista-preview-label">Protocolo</span><span class="oficio-motorista-preview-value" id="preview-motorista-protocolo">' + escapeHtml(protocoloMotoristaAtual) + '</span></div>');
-      }
-    }
-
-    if (details.length) {
-      html += '<div class="oficio-motorista-preview-details" id="preview-motorista-details">' + details.join('') + '</div>';
-    }
-
-    html += '</div>';
-    motoristaPreviewBody.innerHTML = html;
+    motoristaSelectedMeta.textContent = carona ? 'Servidor externo aos viajantes' : 'Servidor vinculado ao ofício';
   }
 
   function updateMotoristaToggleButton() {
@@ -615,7 +548,7 @@
     }
 
     renderMotoristaChip();
-    renderMotoristaPreview();
+    updateMotoristaSelectedMeta();
     updateMotoristaToggleButton();
   }
 
@@ -1117,14 +1050,14 @@
   if (motoristaManualInput) {
     motoristaManualInput.addEventListener('input', function() {
       this.value = this.value.toUpperCase();
-      renderMotoristaPreview();
+      updateMotoristaSelectedMeta();
     });
   }
   if (motoristaOficioNumeroInput) {
-    motoristaOficioNumeroInput.addEventListener('input', renderMotoristaPreview);
+    motoristaOficioNumeroInput.addEventListener('input', updateMotoristaSelectedMeta);
   }
   if (motoristaProtocoloInput) {
-    motoristaProtocoloInput.addEventListener('input', renderMotoristaPreview);
+    motoristaProtocoloInput.addEventListener('input', updateMotoristaSelectedMeta);
   }
 
   document.addEventListener('click', function(event) {
