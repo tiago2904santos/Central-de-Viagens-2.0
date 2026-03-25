@@ -803,6 +803,23 @@
       const parsedTempo = parseDurationInput(normalizedTempo);
       if (cruInput) cruInput.value = parsedTempo != null ? String(parsedTempo) : '';
     }
+
+    // Se o retorno vier com datas/horarios, mas sem tempo cru, deriva o tempo real da diferença.
+    if (cruInput && String(cruInput.value || '').trim() === '') {
+      const saidaData = $('id_retorno_saida_data').value || '';
+      const saidaHora = $('id_retorno_saida_hora').value || '';
+      const chegadaData = $('id_retorno_chegada_data').value || '';
+      const chegadaHora = $('id_retorno_chegada_hora').value || '';
+      if (saidaData && saidaHora && chegadaData && chegadaHora) {
+        const start = new Date(saidaData + 'T' + saidaHora);
+        const end = new Date(chegadaData + 'T' + chegadaHora);
+        if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && end.getTime() >= start.getTime()) {
+          const derivedCru = Math.round((end.getTime() - start.getTime()) / 60000);
+          cruInput.value = derivedCru > 0 ? String(derivedCru) : '';
+        }
+      }
+    }
+
     const cru = parseInt((cruInput || {}).value || 0, 10) || 0;
     let adicional = parseInt((adicionalInput || {}).value || 0, 10);
     if (Number.isNaN(adicional) || adicional < 0) adicional = 0;

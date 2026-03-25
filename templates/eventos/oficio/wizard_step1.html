@@ -98,7 +98,16 @@
               <div class="row g-3 mt-1">
                 <div class="col-md-6">
                   <label class="form-label" for="{{ form.custeio_tipo.id_for_label }}">{{ form.custeio_tipo.label }}</label>
-                  {{ form.custeio_tipo }}
+                  <div class="d-none">
+                    {{ form.custeio_tipo }}
+                  </div>
+                  <div class="oficio-custeio-picker" id="custeio-picker">
+                    <button type="button" class="oficio-custeio-picker-trigger" id="custeio-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+                      <span class="oficio-custeio-picker-label" id="custeio-picker-label">Selecione o custeio</span>
+                      <span class="oficio-custeio-picker-icon" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="oficio-custeio-picker-list d-none" id="custeio-picker-list" role="listbox" aria-label="Opções de custeio"></div>
+                  </div>
                   {% if form.custeio_tipo.errors %}<div class="invalid-feedback d-block">{{ form.custeio_tipo.errors.0 }}</div>{% endif %}
                 </div>
                 <div class="col-md-6" id="nome-instituicao-wrapper"{% if not mostrar_nome_instituicao %} style="display:none;"{% endif %}>
@@ -211,6 +220,10 @@
   var chipCount = document.getElementById('viajantes-chip-count');
   var selectedDataElement = document.getElementById('viajantes-selected-data');
   var buscarViajantesUrl = buscaWrapper ? buscaWrapper.getAttribute('data-search-url') : '';
+  var custeioPicker = document.getElementById('custeio-picker');
+  var custeioPickerTrigger = document.getElementById('custeio-picker-trigger');
+  var custeioPickerLabel = document.getElementById('custeio-picker-label');
+  var custeioPickerList = document.getElementById('custeio-picker-list');
   var selectedMap = new Map();
   var suggestionItems = [];
   var activeIndex = -1;
@@ -284,6 +297,77 @@
       instituicaoInput.value = '';
     }
     updateGeneralPreview();
+  }
+
+  function closeCusteioPicker() {
+    if (!custeioPickerTrigger || !custeioPickerList) {
+      return;
+    }
+    custeioPickerTrigger.setAttribute('aria-expanded', 'false');
+    custeioPickerList.classList.add('d-none');
+  }
+
+  function updateCusteioPickerLabel() {
+    if (!custeioPickerLabel || !custeioSelect) {
+      return;
+    }
+    var label = getChoiceLabel(custeioSelect);
+    custeioPickerLabel.textContent = label || 'Selecione o custeio';
+  }
+
+  function renderCusteioPickerOptions() {
+    if (!custeioPickerList || !custeioSelect) {
+      return;
+    }
+    custeioPickerList.innerHTML = '';
+    Array.prototype.forEach.call(custeioSelect.options || [], function(option) {
+      var value = String(option.value || '').trim();
+      if (!value) {
+        return;
+      }
+      var item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'oficio-custeio-picker-item' + (custeioSelect.value === option.value ? ' is-active' : '');
+      item.setAttribute('role', 'option');
+      item.setAttribute('aria-selected', custeioSelect.value === option.value ? 'true' : 'false');
+      item.textContent = String(option.textContent || '').trim();
+      item.addEventListener('click', function() {
+        if (custeioSelect.value !== option.value) {
+          custeioSelect.value = option.value;
+          custeioSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        closeCusteioPicker();
+      });
+      custeioPickerList.appendChild(item);
+    });
+  }
+
+  function setupCusteioPicker() {
+    if (!custeioPicker || !custeioPickerTrigger || !custeioPickerList || !custeioSelect) {
+      return;
+    }
+    renderCusteioPickerOptions();
+    updateCusteioPickerLabel();
+    custeioPickerTrigger.addEventListener('click', function() {
+      var isOpen = custeioPickerTrigger.getAttribute('aria-expanded') === 'true';
+      if (isOpen) {
+        closeCusteioPicker();
+        return;
+      }
+      renderCusteioPickerOptions();
+      custeioPickerTrigger.setAttribute('aria-expanded', 'true');
+      custeioPickerList.classList.remove('d-none');
+    });
+    document.addEventListener('click', function(event) {
+      if (!custeioPicker.contains(event.target)) {
+        closeCusteioPicker();
+      }
+    });
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeCusteioPicker();
+      }
+    });
   }
 
   async function preencherMotivoPorModelo() {
@@ -520,6 +604,8 @@
   if (custeioSelect) {
     custeioSelect.addEventListener('change', function() {
       toggleInstituicao();
+      updateCusteioPickerLabel();
+      renderCusteioPickerOptions();
       scheduleAutosave();
     });
   }
@@ -600,6 +686,7 @@
   });
 
   toggleInstituicao();
+  setupCusteioPicker();
   updateGeneralPreview();
   syncSelectedState();
 })();
