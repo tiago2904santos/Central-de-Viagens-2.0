@@ -2301,7 +2301,7 @@ def _build_oficio_wizard_glance_data(oficio, step1_preview=None, step2_preview=N
         data_label = step3_preview.get('periodo_display') or ''
     return {
         'oficio': step1_preview.get('oficio') or '',
-        'protocolo': step1_preview.get('protocolo') or '',
+        'protocolo': format_protocolo(step1_preview.get('protocolo') or ''),
         'viajantes_count': len(viajantes),
         'viajantes': [
             {

@@ -7382,6 +7382,13 @@ class OficioStep1ProtocolRegressionTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '12.345.678-9')
 
+    def test_glance_context_reexibe_protocolo_mascarado(self):
+        oficio = self._criar_oficio()
+        Oficio.objects.filter(pk=oficio.pk).update(protocolo='123456789')
+        response = self.client.get(reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['wizard_glance']['protocolo'], '12.345.678-9')
+
     def test_get_edicao_nao_muda_numero_nem_data(self):
         oficio = self._criar_oficio()
         oficio.refresh_from_db()

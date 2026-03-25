@@ -1,4 +1,25 @@
 (function() {
+  function onlyDigits(value) {
+    return String(value || '').replace(/\D/g, '');
+  }
+
+  function formatProtocolDisplay(value) {
+    var digits = onlyDigits(value).slice(0, 9);
+    if (!digits) {
+      return '';
+    }
+    if (digits.length <= 2) {
+      return digits;
+    }
+    if (digits.length <= 5) {
+      return digits.slice(0, 2) + '.' + digits.slice(2);
+    }
+    if (digits.length <= 8) {
+      return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5);
+    }
+    return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '-' + digits.slice(8);
+  }
+
   function qs(selector) {
     return document.querySelector(selector);
   }
@@ -21,6 +42,9 @@
       return;
     }
     var text = String(value || '').trim();
+    if (id === 'summary-protocolo') {
+      text = formatProtocolDisplay(text);
+    }
     element.textContent = text || getEmptyText(element, fallback);
   }
 

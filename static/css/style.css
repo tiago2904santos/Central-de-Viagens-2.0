@@ -5620,10 +5620,81 @@ a:hover {
 }
 
 .oficio-wizard-page .oficio-selection-panel {
+    display: grid;
+    gap: 0.85rem;
     padding: 1rem 1.05rem;
     border: 1px solid rgba(16, 36, 63, 0.08);
     border-radius: 1.2rem;
     background: rgba(248, 251, 254, 0.9);
+}
+
+.oficio-wizard-page .oficio-selection-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.oficio-wizard-page .oficio-selection-panel-title {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #64748b;
+    line-height: 1;
+}
+
+.oficio-wizard-page .oficio-selection-panel-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.15rem;
+    min-height: 2.15rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #1a3f69 0%, #1f4c7d 100%);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 800;
+    box-shadow: 0 10px 22px rgba(16, 36, 63, 0.12);
+}
+
+.oficio-wizard-page .oficio-selection-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.58rem;
+}
+
+.oficio-wizard-page .oficio-selection-chip {
+    position: relative;
+    padding-right: 2rem;
+}
+
+.oficio-wizard-page .oficio-selection-chip-remove {
+    position: absolute;
+    top: 0.34rem;
+    right: 0.34rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.3rem;
+    height: 1.3rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: rgba(185, 28, 28, 0.08);
+    color: var(--bs-red);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.oficio-wizard-page .oficio-selection-chip-remove:hover {
+    background: rgba(185, 28, 28, 0.16);
+    transform: scale(1.06);
 }
 
 .oficio-wizard-page .oficio-inline-summary {

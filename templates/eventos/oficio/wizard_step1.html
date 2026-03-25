@@ -140,28 +140,26 @@
                 {% endfor %}
               </div>
               <div class="oficio-selection-panel mt-3">
-                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-                  <span class="small fw-semibold text-uppercase">Viajantes selecionados</span>
-                  <span class="badge text-bg-secondary" id="viajantes-chip-count">{{ selected_viajantes|length }}</span>
+                <div class="oficio-selection-panel-head">
+                  <span class="oficio-selection-panel-title">Viajantes selecionados</span>
+                  <span class="oficio-selection-panel-count" id="viajantes-chip-count">{{ selected_viajantes|length }}</span>
                 </div>
-                <div id="viajantes-chip-list" class="d-flex flex-wrap gap-2">
+                <div id="viajantes-chip-list" class="oficio-selection-chip-list">
                   {% for viajante in selected_viajantes %}
-                  <span class="badge text-bg-light border d-inline-flex align-items-center gap-2" data-viajante-chip="{{ viajante.pk }}">
-                    <span class="d-flex flex-column align-items-start">
-                      <span class="fw-semibold">{{ viajante.nome }}</span>
-                      {% if viajante.unidade_lotacao %}
-                      <small class="text-muted fw-normal">{{ viajante.unidade_lotacao }}</small>
-                      {% endif %}
-                    </span>
+                  <div class="oficio-glance-chip oficio-selection-chip" data-viajante-chip="{{ viajante.pk }}">
+                    <span class="oficio-glance-chip-nome">{{ viajante.nome }}</span>
+                    {% if viajante.unidade_lotacao %}
+                    <span class="oficio-glance-chip-sub">{{ viajante.unidade_lotacao.nome }}</span>
+                    {% endif %}
                     <button
                       type="button"
-                      class="btn btn-sm p-0 border-0 bg-transparent text-danger"
+                      class="oficio-selection-chip-remove"
                       data-remove-viajante="{{ viajante.pk }}"
                       aria-label="Remover viajante {{ viajante.nome }}"
                     >&times;</button>
-                  </span>
+                  </div>
                   {% empty %}
-                  <span class="text-muted small" id="viajantes-chip-empty">Nenhum viajante selecionado.</span>
+                  <span class="oficio-glance-empty" id="viajantes-chip-empty">Nenhum viajante selecionado.</span>
                   {% endfor %}
                 </div>
               </div>
@@ -393,34 +391,31 @@
     chipsContainer.innerHTML = '';
     if (!selectedMap.size) {
       var emptyState = document.createElement('span');
-      emptyState.className = 'text-muted small';
+      emptyState.className = 'oficio-glance-empty';
       emptyState.id = 'viajantes-chip-empty';
       emptyState.textContent = 'Nenhum viajante selecionado.';
       chipsContainer.appendChild(emptyState);
     } else {
       selectedMap.forEach(function(item, id) {
-        var chip = document.createElement('span');
-        chip.className = 'badge text-bg-light border d-inline-flex align-items-center gap-2';
+        var chip = document.createElement('div');
+        chip.className = 'oficio-glance-chip oficio-selection-chip';
         chip.setAttribute('data-viajante-chip', id);
 
-        var label = document.createElement('span');
-        label.className = 'd-flex flex-column align-items-start';
         var nomeEl = document.createElement('span');
-        nomeEl.className = 'fw-semibold';
+        nomeEl.className = 'oficio-glance-chip-nome';
         nomeEl.textContent = item.nome || item.label || 'Viajante';
-        label.appendChild(nomeEl);
+        chip.appendChild(nomeEl);
         var lotacao = String((item && item.lotacao) || '').trim();
         if (lotacao) {
-          var lotacaoEl = document.createElement('small');
-          lotacaoEl.className = 'text-muted fw-normal';
+          var lotacaoEl = document.createElement('span');
+          lotacaoEl.className = 'oficio-glance-chip-sub';
           lotacaoEl.textContent = lotacao;
-          label.appendChild(lotacaoEl);
+          chip.appendChild(lotacaoEl);
         }
-        chip.appendChild(label);
 
         var removeButton = document.createElement('button');
         removeButton.type = 'button';
-        removeButton.className = 'btn btn-sm p-0 border-0 bg-transparent text-danger';
+        removeButton.className = 'oficio-selection-chip-remove';
         removeButton.setAttribute('data-remove-viajante', id);
         removeButton.setAttribute('aria-label', 'Remover viajante ' + (item.nome || ''));
         removeButton.innerHTML = '&times;';
