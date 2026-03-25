@@ -301,6 +301,8 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         widget=forms.SelectMultiple(attrs={'class': '', 'size': 6}),
     )
     destinos_payload = forms.CharField(required=False, widget=forms.HiddenInput())
+    coordenadores_ids = forms.CharField(required=False, widget=forms.HiddenInput())
+
     class Meta:
         model = PlanoTrabalho
         fields = [
@@ -437,6 +439,10 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
                 related_ids = [self.instance.oficio_id]
             self.initial['oficios_relacionados'] = related_ids
             self.initial['destinos_payload'] = json.dumps(self.instance.destinos_json or [])
+
+            # Pre-populate coordenadores_ids from existing M2M
+            coord_ids = list(self.instance.coordenadores.values_list('pk', flat=True))
+            self.initial['coordenadores_ids'] = ','.join(str(pk) for pk in coord_ids)
 
         if self.instance and self.instance.pk and self.instance.atividades_codigos:
             self.initial['atividades_codigos'] = [
@@ -774,12 +780,25 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
                 instance.evento_id = next(iter(related_event_ids))
         if related_oficios and not instance.oficio_id:
             instance.oficio = related_oficios[0]
+        # Parse coordenadores ids from hidden field
+        coordenadores_ids_raw = (self.cleaned_data.get('coordenadores_ids') or '').strip()
+        coordenadores_ids = []
+        if coordenadores_ids_raw:
+            for part in coordenadores_ids_raw.split(','):
+                part = part.strip()
+                if part.isdigit():
+                    coordenadores_ids.append(int(part))
+
         if commit:
             self._assign_auto_number(instance)
             instance.save()
             instance.oficios.set(related_oficios)
+            if coordenadores_ids is not None:
+                from .models import CoordenadorOperacional as _CO
+                instance.coordenadores.set(_CO.objects.filter(pk__in=coordenadores_ids, ativo=True))
         else:
             self._pending_oficios = related_oficios
+            self._pending_coordenadores_ids = coordenadores_ids
         return instance
 
 

@@ -1,456 +1,176 @@
 ﻿{% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho - Central de Viagens{% endblock %}
-{% block page_title %}{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho{% endblock %}
+{% block title %}{% if object %}Editar{% else %}Novo{% endif %} Plano de Trabalho — Central de Viagens{% endblock %}
+{% block page_title %}{% if object %}Editar{% else %}Novo{% endif %} Plano de Trabalho{% endblock %}
 
 {% block extra_css %}
 <style>
-  .pt2-wrap {
-    max-width: 1220px;
-    margin: 0 auto;
-    display: grid;
-    gap: 1rem;
+  /* ── Step display toggling (all other visuals come from oficio global CSS) ── */
+  .pt-step { display: none; }
+  .pt-step.is-active { display: block; }
+
+  /* Stepper buttons — JS-driven (not <a> links) */
+  .pt-stepper-btn {
+    all: unset;
+    cursor: pointer;
+    display: contents;
   }
 
-  .pt2-hero {
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    background: #fff;
-    padding: 1rem 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.9rem;
-    flex-wrap: wrap;
-  }
-
-  .pt2-overline {
-    color: #64748b;
-    font-size: 0.72rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .pt2-title {
-    margin: 0.15rem 0 0;
-    color: #10243f;
-    font-size: 1.45rem;
-    font-weight: 850;
-    line-height: 1.12;
-  }
-
-  .pt2-sub {
-    margin: 0.35rem 0 0;
-    color: #5b6f85;
-    font-size: 0.88rem;
-    line-height: 1.5;
-    max-width: 72ch;
-  }
-
-  .pt2-badges {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    flex-wrap: wrap;
-  }
-
-  .pt2-badge {
-    border: 1px solid #e2e8f0;
-    border-radius: 999px;
-    padding: 0.34rem 0.68rem;
-    color: #1f3856;
-    background: #f8fbff;
-    font-size: 0.77rem;
-    font-weight: 700;
-  }
-
-  .pt2-wizard {
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    background: #fff;
-    padding: 0.9rem 1rem;
-    display: grid;
-    gap: 0.9rem;
-  }
-
-  .pt2-stepper {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 0.5rem;
-  }
-
-  .pt2-step-link {
-    min-height: 3.1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 11px;
-    background: #fff;
-    color: #304861;
-    padding: 0.5rem 0.55rem;
-    text-align: left;
-    display: grid;
-    gap: 0.16rem;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, background 0.18s ease;
-  }
-
-  .pt2-step-link:hover {
-    border-color: #cdd9e7;
-    box-shadow: 0 7px 18px rgba(15, 23, 42, 0.06);
-  }
-
-  .pt2-step-link.is-current {
-    border-color: #5b87b6;
-    background: #f7fbff;
-    box-shadow: 0 10px 22px rgba(37, 99, 154, 0.16);
-    transform: translateY(-1px);
-  }
-
-  .pt2-step-link.is-complete {
-    border-color: #bfd2e4;
-    background: #f8fcff;
-  }
-
-  .pt2-step-link:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-  }
-
-  .pt2-step-index {
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #6b7f95;
-  }
-
-  .pt2-step-name {
-    font-size: 0.82rem;
-    font-weight: 750;
-    line-height: 1.2;
-    color: #1b3655;
-  }
-
-  .pt2-step-head {
-    border-top: 1px solid #eef2f6;
-    padding-top: 0.7rem;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-  }
-
-  .pt2-step-title {
-    margin: 0;
-    color: #10243f;
-    font-size: 1.15rem;
-    font-weight: 820;
-  }
-
-  .pt2-step-description {
-    margin: 0.18rem 0 0;
-    color: #5d7288;
-    font-size: 0.84rem;
-  }
-
-  .pt2-step {
-    display: none;
-    gap: 1.2rem;
-    padding-top: 0.2rem;
-  }
-
-  .pt2-step.is-active {
-    display: grid;
-  }
-
-  .pt2-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    background: #fff;
-    padding: 0.95rem 1rem;
-    display: grid;
-    gap: 0.9rem;
-  }
-
-  .pt2-card-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.4rem 0.8rem;
-    flex-wrap: wrap;
-  }
-
-  .pt2-card-title {
-    margin: 0;
-    color: #173452;
-    font-size: 1rem;
-    font-weight: 800;
-  }
-
-  .pt2-card-meta {
-    margin: 0;
-    color: #71839a;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
-
-  .pt2-grid {
-    display: grid;
-    gap: 0.9rem 1rem;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-
-  .pt2-col-3 { grid-column: span 3; }
-  .pt2-col-4 { grid-column: span 4; }
-  .pt2-col-5 { grid-column: span 5; }
-  .pt2-col-6 { grid-column: span 6; }
-  .pt2-col-7 { grid-column: span 7; }
-  .pt2-col-8 { grid-column: span 8; }
-  .pt2-col-12 { grid-column: span 12; }
-
-  .pt2-label {
-    margin-bottom: 0.26rem;
-    color: #6b7f95;
-    font-size: 0.69rem;
-    letter-spacing: 0.07em;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
-
-  .pt2-wrap .form-control {
-    min-height: 2.7rem;
-    border-radius: 10px;
-  }
-
-  .pt2-wrap textarea.form-control {
-    min-height: 6.5rem;
-  }
-
-  .pt2-soft {
-    color: #63798f;
-    font-size: 0.78rem;
-    margin: 0.2rem 0 0;
-  }
-
-  .pt2-row-shell {
-    border: 1px solid #e6edf4;
-    border-radius: 10px;
-    padding: 0.62rem;
-    background: #fbfdff;
-  }
-
-  .pt2-dest-list,
-  .pt2-ef-list {
-    display: grid;
-    gap: 0.62rem;
-  }
-
-  .pt2-actions-inline {
-    display: flex;
-    gap: 0.55rem;
-    flex-wrap: wrap;
-  }
-
-  .pt2-activity-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.6rem;
-  }
-
-  .pt2-activity-item {
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 0.62rem;
-    background: #fff;
-  }
-
-  .pt2-activity-item .form-check {
-    margin: 0;
-  }
-
-  .pt2-activity-item .form-check-label {
-    color: #244665;
-    font-size: 0.86rem;
-    font-weight: 600;
-  }
-
-  .pt2-diarias {
+  /* Diárias calculator two-column layout */
+  .pt-diarias-shell {
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-    gap: 1rem;
-    align-items: stretch;
+    gap: 1.1rem;
+    align-items: start;
   }
+  @media (max-width: 860px) { .pt-diarias-shell { grid-template-columns: 1fr; } }
 
-  .pt2-diarias-inputs {
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    background: #fff;
-    padding: 0.9rem;
-    display: grid;
-    gap: 0.8rem;
-  }
-
-  .pt2-diarias-output {
+  .pt-diarias-output {
     border: 1px solid #cfe0f0;
-    border-radius: 12px;
+    border-radius: 14px;
     background: linear-gradient(150deg, #f8fbff 0%, #edf5fd 100%);
-    box-shadow: 0 16px 30px rgba(37, 99, 154, 0.14);
-    padding: 0.95rem;
-    display: grid;
-    gap: 0.8rem;
-    align-content: start;
-  }
-
-  .pt2-diarias-total-label {
-    color: #5c7491;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
-
-  .pt2-diarias-total-value {
-    color: #143a63;
-    font-size: 1.95rem;
-    line-height: 1.04;
-    font-weight: 900;
-  }
-
-  .pt2-diarias-kpis {
-    display: grid;
-    gap: 0.5rem;
-  }
-
-  .pt2-diarias-kpi {
-    border: 1px solid #d8e6f4;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.85);
-    padding: 0.58rem 0.62rem;
-    display: grid;
-    gap: 0.12rem;
-  }
-
-  .pt2-diarias-kpi strong {
-    color: #153f67;
-    font-size: 0.94rem;
-    font-weight: 820;
-  }
-
-  .pt2-review-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    box-shadow: 0 16px 30px rgba(37,99,154,.14);
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
     gap: 0.9rem;
   }
+  .pt-diarias-total-label {
+    color: #5c7491; font-size: .68rem; letter-spacing: .09em;
+    font-weight: 800; text-transform: uppercase;
+  }
+  .pt-diarias-total-value {
+    color: #143a63; font-size: 2rem; line-height: 1.04;
+    font-weight: 900; letter-spacing: -.01em;
+  }
+  .pt-diarias-kpis { display: grid; gap: .45rem; }
+  .pt-diarias-kpi {
+    border: 1px solid #d8e6f4; border-radius: 10px;
+    background: rgba(255,255,255,.85); padding: .55rem .65rem;
+  }
+  .pt-diarias-kpi strong { color: #153f67; font-size: .93rem; font-weight: 820; }
 
-  .pt2-review-list {
+  /* Activity checkboxes */
+  .pt-activity-grid {
     display: grid;
-    gap: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
   }
+  @media (max-width: 640px) { .pt-activity-grid { grid-template-columns: 1fr; } }
+  .pt-activity-item {
+    border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: .6rem .7rem; background: #fff;
+  }
+  .pt-activity-item .form-check { margin: 0; }
+  .pt-activity-item .form-check-label { color: #244665; font-size: .85rem; font-weight: 600; }
 
-  .pt2-review-row {
+  /* Review step */
+  .pt-review-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.7rem;
-    align-items: baseline;
-    padding: 0.52rem 0;
-    border-bottom: 1px solid #edf2f7;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
   }
-
-  .pt2-review-row:last-child {
-    border-bottom: 0;
+  @media (max-width: 760px) { .pt-review-grid { grid-template-columns: 1fr; } }
+  .pt-review-list { display: grid; gap: 0; }
+  .pt-review-row {
+    display: flex; justify-content: space-between; gap: .7rem;
+    align-items: baseline; padding: .5rem 0;
+    border-bottom: 1px solid #edf2f7; font-size: .86rem;
   }
+  .pt-review-row:last-child { border-bottom: 0; }
+  .pt-review-label { color: #6c8097; font-weight: 700; }
+  .pt-review-value { color: #163a5f; font-weight: 760; text-align: right; max-width: 60%; }
 
-  .pt2-review-label {
-    color: #6c8097;
-    font-size: 0.74rem;
-    font-weight: 700;
-  }
-
-  .pt2-review-value {
-    color: #163a5f;
-    font-size: 0.86rem;
-    font-weight: 760;
-  }
-
-  .pt2-nav {
-    border-top: 1px solid #edf2f7;
-    padding-top: 0.8rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.7rem;
-    flex-wrap: wrap;
-  }
-
-  .pt2-nav-left,
-  .pt2-nav-right {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    flex-wrap: wrap;
-  }
-
-  @media (max-width: 1100px) {
-    .pt2-stepper {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 991px) {
-    .pt2-col-3,
-    .pt2-col-4,
-    .pt2-col-5,
-    .pt2-col-6,
-    .pt2-col-7,
-    .pt2-col-8,
-    .pt2-col-12 {
-      grid-column: span 12;
-    }
-
-    .pt2-diarias,
-    .pt2-review-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .pt2-activity-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 720px) {
-    .pt2-stepper {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .pt2-hero,
-    .pt2-wizard,
-    .pt2-card {
-      padding: 0.82rem;
-    }
+  /* Destination row */
+  .pt-dest-row {
+    border: 1px solid #e6edf4; border-radius: 10px;
+    padding: .65rem; background: #fbfdff;
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
-  <div class="pt2-wrap">
-    <section class="pt2-hero">
-      <div>
-        <div class="pt2-overline">Documento guiado</div>
-        <h1 class="pt2-title">{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho</h1>
-        <p class="pt2-sub">Fluxo em etapas para preencher com mais clareza: geral, equipe, roteiro, transporte, diarias e revisao final.</p>
-      </div>
-      <div class="pt2-badges">
-        <span class="pt2-badge">Plano {% if object %}{{ object.numero_formatado }}{% else %}{{ proximo_numero_pt }}{% endif %}</span>
-        <span class="pt2-badge">{{ data_geracao_preview|date:'d/m/Y' }}</span>
-      </div>
-    </section>
+<div class="container-fluid pt-0 pb-4 oficio-wizard-page" data-glance-state="closed">
+  <div class="oficio-wizard-shell">
 
+    {# ──────────────────────── HEADER (sticky) ──────────────────────── #}
+    <div class="oficio-wizard-header" data-oficio-sticky-header>
+      <div class="oficio-wizard-header-card">
+        <div class="oficio-wizard-header-main">
+          <div class="oficio-wizard-header-copy">
+            <span class="oficio-wizard-eyebrow">Documento operacional</span>
+            <h1>{% if object %}Editar{% else %}Novo{% endif %} Plano de Trabalho</h1>
+            <p class="oficio-wizard-header-support">
+              Fluxo guiado em 6 etapas: informações gerais, equipe, roteiro,
+              coordenação, diárias e revisão final.
+            </p>
+          </div>
+          <div class="oficio-wizard-header-badges">
+            <div class="oficio-wizard-header-badge">
+              <span>Número</span>
+              <strong>{% if object %}{{ object.numero_formatado }}{% else %}{{ proximo_numero_pt }}{% endif %}</strong>
+            </div>
+            <div class="oficio-wizard-header-badge">
+              <span>Data</span>
+              <strong>{{ data_geracao_preview|date:'d/m/Y' }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="oficio-wizard-stepper-shell">
+          <nav class="oficio-stepper" aria-label="Etapas do Plano de Trabalho" style="--oficio-step-count: 6;">
+            <button type="button" class="oficio-stepper-link is-active" data-step-target="0" aria-current="step">
+              <span class="oficio-stepper-badge">1</span>
+              <span class="oficio-stepper-copy">
+                <span class="oficio-stepper-state">Etapa 1</span>
+                <span class="oficio-stepper-label">Informações gerais</span>
+              </span>
+            </button>
+            <button type="button" class="oficio-stepper-link" data-step-target="1">
+              <span class="oficio-stepper-badge">2</span>
+              <span class="oficio-stepper-copy">
+                <span class="oficio-stepper-state">Etapa 2</span>
+                <span class="oficio-stepper-label">Equipe e efetivo</span>
+              </span>
+            </button>
+            <button type="button" class="oficio-stepper-link" data-step-target="2">
+              <span class="oficio-stepper-badge">3</span>
+              <span class="oficio-stepper-copy">
+                <span class="oficio-stepper-state">Etapa 3</span>
+                <span class="oficio-stepper-label">Roteiro</span>
+              </span>
+            </button>
+            <button type="button" class="oficio-stepper-link" data-step-target="3">
+              <span class="oficio-stepper-badge">4</span>
+              <span class="oficio-stepper-copy">
+                <span class="oficio-stepper-state">Etapa 4</span>
+                <span class="oficio-stepper-label">Coordenação</span>
+              </span>
+            </button>
+            <button type="button" class="oficio-stepper-link" data-step-target="4">
+              <span class="oficio-stepper-badge">5</span>
+              <span class="oficio-stepper-copy">
+                <span class="oficio-stepper-state">Etapa 5</span>
+                <span class="oficio-stepper-label">Diárias</span>
+              </span>
+            </button>
+            <button type="button" class="oficio-stepper-link" data-step-target="5">
+              <span class="oficio-stepper-badge">6</span>
+              <span class="oficio-stepper-copy">
+                <span class="oficio-stepper-state">Etapa 6</span>
+                <span class="oficio-stepper-label">Revisão</span>
+              </span>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    {# ──────────────────────── ALERTAS DE VALIDAÇÃO ──────────────────────── #}
     {% if form.errors or form.non_field_errors %}
-    <div class="alert alert-danger" role="alert">
-      <strong>Existem campos invalidos.</strong>
+    <div class="alert alert-danger mt-3 mb-0" role="alert">
+      <strong>Existem campos inválidos.</strong>
       <ul class="mb-0 mt-2">
         {% for field in form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}{% endfor %}
         {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
@@ -458,204 +178,253 @@
     </div>
     {% endif %}
 
-    <form method="post" novalidate id="pt-form" class="pt2-wizard">
-      {% csrf_token %}
-      <input type="hidden" name="return_to" value="{{ return_to }}">
-      <input type="hidden" name="context_source" value="{{ context_source }}">
-      <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
-      <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
-      <input type="hidden" name="data_criacao" value="{{ form.data_criacao.value|default:data_geracao_preview|date:'Y-m-d' }}">
-      {{ form.destinos_payload }}
+    {# ──────────────────────── PAINEL PRINCIPAL ──────────────────────── #}
+    <div class="card oficio-stage-panel" style="margin-top: 1rem;">
+      <div class="card-body">
 
-      <div class="pt2-stepper" id="pt2-stepper">
-        <button type="button" class="pt2-step-link" data-step-target="0">
-          <span class="pt2-step-index">Etapa 1</span>
-          <span class="pt2-step-name">Informacoes gerais</span>
-        </button>
-        <button type="button" class="pt2-step-link" data-step-target="1">
-          <span class="pt2-step-index">Etapa 2</span>
-          <span class="pt2-step-name">Equipe e participantes</span>
-        </button>
-        <button type="button" class="pt2-step-link" data-step-target="2">
-          <span class="pt2-step-index">Etapa 3</span>
-          <span class="pt2-step-name">Roteiro</span>
-        </button>
-        <button type="button" class="pt2-step-link" data-step-target="3">
-          <span class="pt2-step-index">Etapa 4</span>
-          <span class="pt2-step-name">Transporte e apoio</span>
-        </button>
-        <button type="button" class="pt2-step-link" data-step-target="4">
-          <span class="pt2-step-index">Etapa 5</span>
-          <span class="pt2-step-name">Diarias</span>
-        </button>
-        <button type="button" class="pt2-step-link" data-step-target="5">
-          <span class="pt2-step-index">Etapa 6</span>
-          <span class="pt2-step-name">Revisao final</span>
-        </button>
-      </div>
+        <form method="post" novalidate id="pt-form">
+          {% csrf_token %}
+          <input type="hidden" name="return_to" value="{{ return_to }}">
+          <input type="hidden" name="context_source" value="{{ context_source }}">
+          <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
+          <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
+          <input type="hidden" name="data_criacao" value="{{ form.data_criacao.value|default:data_geracao_preview|date:'Y-m-d' }}">
+          {{ form.destinos_payload }}
+          {{ form.coordenadores_ids }}
 
-      <div class="pt2-step-head">
-        <div>
-          <h2 class="pt2-step-title" id="pt2-current-step-title">Informacoes gerais</h2>
-          <p class="pt2-step-description" id="pt2-current-step-description">Defina o contexto do plano, periodo e vinculos principais.</p>
-        </div>
-        <span class="pt2-badge" id="pt2-progress-chip">1 / 6</span>
-      </div>
+          {# ════════════ ETAPA 1 — INFORMAÇÕES GERAIS ════════════ #}
+          <div class="pt-step is-active" data-step-index="0">
 
-      <section class="pt2-step" data-step-index="0">
-        <article class="pt2-card">
-          <div class="pt2-card-head">
-            <h3 class="pt2-card-title">Contexto do documento</h3>
-            <p class="pt2-card-meta">Vinculos opcionais</p>
-          </div>
-          <div class="pt2-grid">
-            <div class="pt2-col-4">
-              <label class="pt2-label" for="{{ form.evento.id_for_label }}">Evento</label>
-              {{ form.evento }}
-              {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
+            <div class="oficio-stage-intro">
+              <span class="oficio-stage-kicker">Etapa 1</span>
+              <h2 class="oficio-stage-title">Informações gerais</h2>
+              <p class="oficio-stage-description">Defina o contexto do plano: vínculos, período e solicitante.</p>
             </div>
-            <div class="pt2-col-4">
-              <label class="pt2-label" for="{{ form.oficio.id_for_label }}">Oficio principal</label>
-              {{ form.oficio }}
-              {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
-            </div>
-            <div class="pt2-col-4">
-              <label class="pt2-label" for="{{ form.roteiro.id_for_label }}">Roteiro principal</label>
-              {{ form.roteiro }}
-              {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
-            </div>
-            <div class="pt2-col-12">
-              <label class="pt2-label" for="{{ form.oficios_relacionados.id_for_label }}">Oficios relacionados</label>
-              {{ form.oficios_relacionados }}
-              {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
-            </div>
-          </div>
-        </article>
 
-        <article class="pt2-card">
-          <div class="pt2-card-head">
-            <h3 class="pt2-card-title">Solicitacao e periodo</h3>
-            <p class="pt2-card-meta">Dados basicos</p>
-          </div>
-          <div class="pt2-grid">
-            <div class="pt2-col-6">
-              <label class="pt2-label" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
-              {{ form.solicitante_escolha }}
-              <div id="col-solicitante-outros" class="mt-2">{{ form.solicitante_outros }}</div>
-              <div id="col-salvar-solicitante" class="form-check mt-2">
-                {{ form.salvar_solicitante_outros }}
-                <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">Salvar no gerenciador</label>
-              </div>
-            </div>
-            <div class="pt2-col-6">
-              <label class="pt2-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horario de atendimento</label>
-              {{ form.horario_atendimento_padrao }}
-              <div id="col-horario-manual" class="mt-2">{{ form.horario_atendimento_manual }}</div>
-            </div>
-            <div class="pt2-col-4">
-              <label class="pt2-label" for="{{ form.evento_data_unica.id_for_label }}">Tipo de periodo</label>
-              <div class="pt2-row-shell">
-                <div class="form-check mb-0">
-                  {{ form.evento_data_unica }}
-                  <label class="form-check-label" for="{{ form.evento_data_unica.id_for_label }}">Data unica</label>
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Vínculos opcionais</h3>
+                  <p class="oficio-stage-section-text">Associe o plano a um evento, ofício ou roteiro já cadastrado.</p>
                 </div>
               </div>
-            </div>
-            <div class="pt2-col-4">
-              <label class="pt2-label" for="{{ form.evento_data_inicio.id_for_label }}">Saida</label>
-              {{ form.evento_data_inicio }}
-              {% if form.evento_data_inicio.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_inicio.errors.0 }}</div>{% endif %}
-            </div>
-            <div class="pt2-col-4" id="col-data-fim">
-              <label class="pt2-label" for="{{ form.evento_data_fim.id_for_label }}">Retorno</label>
-              {{ form.evento_data_fim }}
-              {% if form.evento_data_fim.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_fim.errors.0 }}</div>{% endif %}
-            </div>
-          </div>
-        </article>
-      </section>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label" for="{{ form.evento.id_for_label }}">Evento</label>
+                  {{ form.evento }}
+                  {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício principal</label>
+                  {{ form.oficio }}
+                  {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="{{ form.roteiro.id_for_label }}">Roteiro principal</label>
+                  {{ form.roteiro }}
+                  {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="{{ form.oficios_relacionados.id_for_label }}">Ofícios relacionados</label>
+                  {{ form.oficios_relacionados }}
+                  {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
+                </div>
+              </div>
+            </section>
 
-      <section class="pt2-step" data-step-index="1">
-        <article class="pt2-card">
-          <div class="pt2-card-head">
-            <h3 class="pt2-card-title">Equipe e efetivo</h3>
-            <p class="pt2-card-meta">Composicao</p>
-          </div>
-          <div class="pt2-ef-list" id="efetivo-rows">
-            {{ efetivo_formset.management_form }}
-            {% for row in efetivo_formset %}
-            <div class="pt2-row-shell" data-ef-row>
-              {{ row.id }}
-              <div class="pt2-grid">
-                <div class="pt2-col-7">
-                  <label class="pt2-label" for="{{ row.cargo.id_for_label }}">Cargo</label>
-                  {{ row.cargo }}
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Solicitante e período</h3>
+                  <p class="oficio-stage-section-text">Quem solicita e quais as datas do evento.</p>
                 </div>
-                <div class="pt2-col-3">
-                  <label class="pt2-label" for="{{ row.quantidade.id_for_label }}">Quantidade</label>
-                  {{ row.quantidade }}
-                </div>
-                <div class="pt2-col-2">
-                  <div class="form-check mt-4">
-                    {{ row.DELETE }}
-                    <label class="form-check-label" for="{{ row.DELETE.id_for_label }}">Remover</label>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
+                  {{ form.solicitante_escolha }}
+                  <div id="col-solicitante-outros" class="mt-2">{{ form.solicitante_outros }}</div>
+                  <div id="col-salvar-solicitante" class="form-check mt-2">
+                    {{ form.salvar_solicitante_outros }}
+                    <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">Salvar no gerenciador</label>
                   </div>
                 </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horário de atendimento</label>
+                  {{ form.horario_atendimento_padrao }}
+                  <div id="col-horario-manual" class="mt-2">{{ form.horario_atendimento_manual }}</div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label d-block">Tipo de período</label>
+                  <div class="border rounded-3 px-3 py-2">
+                    <div class="form-check mb-0">
+                      {{ form.evento_data_unica }}
+                      <label class="form-check-label" for="{{ form.evento_data_unica.id_for_label }}">Data única</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="{{ form.evento_data_inicio.id_for_label }}">Data de saída</label>
+                  {{ form.evento_data_inicio }}
+                  {% if form.evento_data_inicio.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_inicio.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-4" id="col-data-fim">
+                  <label class="form-label" for="{{ form.evento_data_fim.id_for_label }}">Data de retorno</label>
+                  {{ form.evento_data_fim }}
+                  {% if form.evento_data_fim.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_fim.errors.0 }}</div>{% endif %}
+                </div>
               </div>
-            </div>
-            {% endfor %}
+            </section>
           </div>
-          <div class="pt2-actions-inline">
-            <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-efetivo">Adicionar cargo</button>
-            <span class="pt2-soft">Cargo inicial sugerido: {{ pt_default_cargo_label }}</span>
-          </div>
-          <div>
-            <label class="pt2-label" for="{{ form.quantidade_servidores.id_for_label }}">Quantidade total de efetivos</label>
-            {{ form.quantidade_servidores }}
-          </div>
-        </article>
-      </section>
 
-      <section class="pt2-step" data-step-index="2">
-        <article class="pt2-card">
-          <div class="pt2-card-head">
-            <h3 class="pt2-card-title">Roteiro e destinos</h3>
-            <p class="pt2-card-meta">Planejamento geografico</p>
-          </div>
-          <div class="pt2-grid">
-            <div class="pt2-col-12">
-              <div id="destinos-container" class="pt2-dest-list"></div>
-              <div class="pt2-actions-inline mt-1">
-                <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-destino">Adicionar destino</button>
+          {# ════════════ ETAPA 2 — EQUIPE E EFETIVO ════════════ #}
+          <div class="pt-step" data-step-index="1">
+
+            <div class="oficio-stage-intro">
+              <span class="oficio-stage-kicker">Etapa 2</span>
+              <h2 class="oficio-stage-title">Equipe e efetivo</h2>
+              <p class="oficio-stage-description">Monte a composição com cargos e quantidades.</p>
+            </div>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Composição do efetivo</h3>
+                  <p class="oficio-stage-section-text">Adicione linhas de cargo + quantidade. Cargo sugerido: {{ pt_default_cargo_label }}.</p>
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-efetivo">+ Adicionar cargo</button>
               </div>
-              {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
-            </div>
-          </div>
-        </article>
-      </section>
 
-      <section class="pt2-step" data-step-index="3">
-        <article class="pt2-card">
-          <div class="pt2-card-head">
-            <h3 class="pt2-card-title">Transporte e coordenacao</h3>
-            <p class="pt2-card-meta">Apoio operacional</p>
+              <div id="efetivo-rows">
+                {{ efetivo_formset.management_form }}
+                {% for row in efetivo_formset %}
+                <div class="border rounded-3 p-3 mb-2 bg-white" data-ef-row>
+                  {{ row.id }}
+                  <div class="row g-3 align-items-end">
+                    <div class="col-md-7">
+                      <label class="form-label" for="{{ row.cargo.id_for_label }}">Cargo</label>
+                      {{ row.cargo }}
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label" for="{{ row.quantidade.id_for_label }}">Qtd.</label>
+                      {{ row.quantidade }}
+                    </div>
+                    <div class="col-md-2">
+                      <div class="form-check">
+                        {{ row.DELETE }}
+                        <label class="form-check-label text-danger small" for="{{ row.DELETE.id_for_label }}">Remover</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+
+              <div class="row g-3 mt-1">
+                <div class="col-md-4">
+                  <label class="form-label" for="{{ form.quantidade_servidores.id_for_label }}">Total de servidores</label>
+                  {{ form.quantidade_servidores }}
+                  <div class="form-text">Calculado automaticamente.</div>
+                </div>
+              </div>
+            </section>
           </div>
-          <div class="pt2-grid">
-            <div class="pt2-col-6">
-              <label class="pt2-label" for="{{ form.coordenador_operacional.id_for_label }}">Coordenacao operacional</label>
-              {{ form.coordenador_operacional }}
-              <p class="pt2-soft">Nao encontrou? <a href="{{ pt_coordenador_operacional_create_url }}" target="_blank" rel="noopener">Cadastrar no banco de coordenadores</a>.</p>
+
+          {# ════════════ ETAPA 3 — ROTEIRO ════════════ #}
+          <div class="pt-step" data-step-index="2">
+
+            <div class="oficio-stage-intro">
+              <span class="oficio-stage-kicker">Etapa 3</span>
+              <h2 class="oficio-stage-title">Roteiro e destinos</h2>
+              <p class="oficio-stage-description">Informe os destinos do deslocamento.</p>
             </div>
-            <div class="pt2-col-6">
-              <label class="pt2-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenacao administrativa</label>
-              {{ form.coordenador_administrativo }}
-              <p class="pt2-soft">Origem: banco de viajantes finalizados.</p>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Destinos</h3>
+                  <p class="oficio-stage-section-text">Adicione um ou mais destinos (estado + cidade).</p>
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-destino">+ Adicionar destino</button>
+              </div>
+              <div id="destinos-container" class="d-grid gap-2"></div>
+              {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block mt-1">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
+            </section>
+          </div>
+
+          {# ════════════ ETAPA 4 — COORDENAÇÃO ════════════ #}
+          <div class="pt-step" data-step-index="3">
+
+            <div class="oficio-stage-intro">
+              <span class="oficio-stage-kicker">Etapa 4</span>
+              <h2 class="oficio-stage-title">Coordenação e atividades</h2>
+              <p class="oficio-stage-description">Selecione coordenadores, defina as atividades e revise metas.</p>
             </div>
-            <div class="pt2-col-12">
-              <label class="pt2-label">Atividades previstas</label>
-              <div class="pt2-activity-grid">
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Coordenadores operacionais</h3>
+                  <p class="oficio-stage-section-text">Busque e selecione um ou mais coordenadores operacionais ativos.</p>
+                </div>
+                <a href="{{ pt_coordenador_operacional_create_url }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">Cadastrar novo</a>
+              </div>
+
+              <label class="form-label mb-1" for="coord-autocomplete-input">Buscar coordenador</label>
+              <div class="position-relative" id="coord-autocomplete-wrapper" data-search-url="{{ buscar_coordenadores_url }}">
+                <input
+                  type="text"
+                  id="coord-autocomplete-input"
+                  class="form-control"
+                  placeholder="Digite nome ou cargo…"
+                  autocomplete="off"
+                >
+                <div
+                  id="coord-autocomplete-results"
+                  class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none"
+                  style="z-index: 20;"
+                ></div>
+              </div>
+              <div class="form-text mb-2">Clique em um resultado para adicionar à seleção.</div>
+
+              <div class="oficio-selection-panel">
+                <div class="oficio-selection-panel-head">
+                  <span class="oficio-selection-panel-title">Coordenadores selecionados</span>
+                  <span class="badge text-bg-secondary" id="coord-chip-count">0</span>
+                </div>
+                <div id="coord-chip-list" class="oficio-selection-chip-list">
+                  <span class="oficio-glance-empty" id="coord-chip-empty">Nenhum coordenador selecionado.</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Coordenação administrativa</h3>
+                  <p class="oficio-stage-section-text">Servidor do banco de viajantes com papel administrativo.</p>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenador administrativo</label>
+                  {{ form.coordenador_administrativo }}
+                  <div class="form-text">Origem: viajantes finalizados.</div>
+                  {% if form.coordenador_administrativo.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_administrativo.errors.0 }}</div>{% endif %}
+                </div>
+              </div>
+            </section>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Atividades previstas</h3>
+                  <p class="oficio-stage-section-text">Marque as atividades que serão realizadas neste plano.</p>
+                </div>
+              </div>
+              <div class="pt-activity-grid">
                 {% for atividade in plano_trabalho_atividades_catalogo %}
-                <label class="pt2-activity-item" for="pt-atividade-{{ atividade.codigo }}">
+                <label class="pt-activity-item" for="pt-atividade-{{ atividade.codigo }}">
                   <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="atividades_codigos" value="{{ atividade.codigo }}" id="pt-atividade-{{ atividade.codigo }}" {% if atividade.codigo in pt_selected_activity_codes %}checked{% endif %}>
                     <span class="form-check-label">{{ atividade.nome }}</span>
@@ -663,653 +432,700 @@
                 </label>
                 {% endfor %}
               </div>
-            </div>
-            <div class="pt2-col-6">
-              <label class="pt2-label" for="{{ form.metas_formatadas.id_for_label }}">Metas automaticas</label>
-              {{ form.metas_formatadas }}
-            </div>
-            <div class="pt2-col-6">
-              <label class="pt2-label" for="{{ form.recursos_texto.id_for_label }}">Recursos necessarios</label>
-              {{ form.recursos_texto }}
-            </div>
-          </div>
-        </article>
-      </section>
+            </section>
 
-      <section class="pt2-step" data-step-index="4">
-        <article class="pt2-card">
-          <div class="pt2-card-head">
-            <h3 class="pt2-card-title">Calculadora de diarias</h3>
-            <p class="pt2-card-meta">Resumo financeiro em destaque</p>
-          </div>
-
-          <div class="pt2-diarias">
-            <div class="pt2-diarias-inputs">
-              <div class="pt2-grid">
-                <div class="pt2-col-6">
-                  <label class="pt2-label" for="pt2-diarias-data-inicio">Data de saida</label>
-                  <input type="text" id="pt2-diarias-data-inicio" class="form-control" readonly>
-                </div>
-                <div class="pt2-col-6">
-                  <label class="pt2-label" for="pt2-diarias-data-fim">Data de retorno</label>
-                  <input type="text" id="pt2-diarias-data-fim" class="form-control" readonly>
-                </div>
-                <div class="pt2-col-6">
-                  <label class="pt2-label" for="{{ form.diarias_quantidade.id_for_label }}">Quantidade de diarias</label>
-                  {{ form.diarias_quantidade }}
-                </div>
-                <div class="pt2-col-6">
-                  <label class="pt2-label" for="{{ form.diarias_valor_unitario.id_for_label }}">Valor por servidor</label>
-                  {{ form.diarias_valor_unitario }}
-                </div>
-                <div class="pt2-col-12">
-                  <label class="pt2-label" for="{{ form.diarias_valor_total.id_for_label }}">Valor total oficial</label>
-                  {{ form.diarias_valor_total }}
-                </div>
-                <div class="pt2-col-12">
-                  <label class="pt2-label" for="{{ form.diarias_valor_extenso.id_for_label }}">Valor total por extenso</label>
-                  {{ form.diarias_valor_extenso }}
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Metas e recursos</h3>
+                  <p class="oficio-stage-section-text">Gerados automaticamente pelas atividades selecionadas.</p>
                 </div>
               </div>
-            </div>
-
-            <aside class="pt2-diarias-output">
-              <div>
-                <div class="pt2-diarias-total-label">Total estimado</div>
-                <div class="pt2-diarias-total-value" id="pt2-live-total">R$ 0,00</div>
-              </div>
-              <div class="pt2-diarias-kpis">
-                <div class="pt2-diarias-kpi">
-                  <span class="pt2-label">Diarias estimadas</span>
-                  <strong id="pt2-live-diarias">0 diaria(s)</strong>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="{{ form.metas_formatadas.id_for_label }}">Metas automáticas</label>
+                  {{ form.metas_formatadas }}
                 </div>
-                <div class="pt2-diarias-kpi">
-                  <span class="pt2-label">Valor por dia</span>
-                  <strong id="pt2-live-unit">R$ 0,00</strong>
-                </div>
-                <div class="pt2-diarias-kpi">
-                  <span class="pt2-label">Efetivo</span>
-                  <strong id="pt2-live-efetivo">0 servidor(es)</strong>
+                <div class="col-md-6">
+                  <label class="form-label" for="{{ form.recursos_texto.id_for_label }}">Recursos necessários</label>
+                  {{ form.recursos_texto }}
                 </div>
               </div>
-              <p class="pt2-soft mb-0">Atualizacao em tempo real com base no periodo, efetivo e valores calculados/preenchidos.</p>
-            </aside>
-          </div>
-        </article>
-      </section>
-
-      <section class="pt2-step" data-step-index="5">
-        <article class="pt2-card">
-          <div class="pt2-card-head">
-            <h3 class="pt2-card-title">Revisao final</h3>
-            <p class="pt2-card-meta">Leitura executiva</p>
+            </section>
           </div>
 
-          <div class="pt2-review-grid">
-            <div class="pt2-card">
-              <div class="pt2-card-head">
-                <h4 class="pt2-card-title">Resumo geral</h4>
-                <p class="pt2-card-meta">Planejamento</p>
-              </div>
-              <div class="pt2-review-list" id="pt2-review-main"></div>
+          {# ════════════ ETAPA 5 — DIÁRIAS ════════════ #}
+          <div class="pt-step" data-step-index="4">
+
+            <div class="oficio-stage-intro">
+              <span class="oficio-stage-kicker">Etapa 5</span>
+              <h2 class="oficio-stage-title">Calculadora de diárias</h2>
+              <p class="oficio-stage-description">Resultado calculado automaticamente a partir do período e efetivo.</p>
             </div>
-            <div class="pt2-card">
-              <div class="pt2-card-head">
-                <h4 class="pt2-card-title">Financeiro</h4>
-                <p class="pt2-card-meta">Diarias</p>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Simulação financeira</h3>
+                  <p class="oficio-stage-section-text">Valores calculados em tempo real. Ajuste manualmente se necessário.</p>
+                </div>
               </div>
-              <div class="pt2-review-list" id="pt2-review-finance"></div>
+
+              <div class="pt-diarias-shell">
+                <div class="row g-3">
+                  <div class="col-6">
+                    <label class="form-label">Data de saída (do plano)</label>
+                    <input type="text" id="pt-diarias-data-inicio" class="form-control" readonly>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label">Data de retorno (do plano)</label>
+                    <input type="text" id="pt-diarias-data-fim" class="form-control" readonly>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label" for="{{ form.diarias_quantidade.id_for_label }}">Quantidade de diárias</label>
+                    {{ form.diarias_quantidade }}
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label" for="{{ form.diarias_valor_unitario.id_for_label }}">Valor por servidor</label>
+                    {{ form.diarias_valor_unitario }}
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="{{ form.diarias_valor_total.id_for_label }}">Valor total oficial</label>
+                    {{ form.diarias_valor_total }}
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="{{ form.diarias_valor_extenso.id_for_label }}">Valor total por extenso</label>
+                    {{ form.diarias_valor_extenso }}
+                  </div>
+                </div>
+
+                <aside class="pt-diarias-output">
+                  <div>
+                    <div class="pt-diarias-total-label">Total estimado</div>
+                    <div class="pt-diarias-total-value" id="pt-live-total">R$ 0,00</div>
+                  </div>
+                  <div class="pt-diarias-kpis">
+                    <div class="pt-diarias-kpi">
+                      <div class="form-text mb-0">Diárias estimadas</div>
+                      <strong id="pt-live-diarias">0 diária(s)</strong>
+                    </div>
+                    <div class="pt-diarias-kpi">
+                      <div class="form-text mb-0">Valor por dia</div>
+                      <strong id="pt-live-unit">R$ 0,00</strong>
+                    </div>
+                    <div class="pt-diarias-kpi">
+                      <div class="form-text mb-0">Efetivo</div>
+                      <strong id="pt-live-efetivo">0 servidor(es)</strong>
+                    </div>
+                  </div>
+                  <p class="form-text mb-0">Atualização em tempo real com base no período, efetivo e valores preenchidos.</p>
+                </aside>
+              </div>
+            </section>
+          </div>
+
+          {# ════════════ ETAPA 6 — REVISÃO ════════════ #}
+          <div class="pt-step" data-step-index="5">
+
+            <div class="oficio-stage-intro">
+              <span class="oficio-stage-kicker">Etapa 6</span>
+              <h2 class="oficio-stage-title">Revisão final</h2>
+              <p class="oficio-stage-description">Valide os pontos essenciais antes de salvar.</p>
+            </div>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Resumo executivo</h3>
+                  <p class="oficio-stage-section-text">Leitura instantânea de todos os dados preenchidos.</p>
+                </div>
+              </div>
+              <div class="pt-review-grid">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <p class="fw-bold text-uppercase mb-2" style="font-size:.7rem;letter-spacing:.08em;color:#6c8097;">Planejamento</p>
+                    <div class="pt-review-list" id="pt-review-main"></div>
+                  </div>
+                </div>
+                <div class="card h-100">
+                  <div class="card-body">
+                    <p class="fw-bold text-uppercase mb-2" style="font-size:.7rem;letter-spacing:.08em;color:#6c8097;">Financeiro</p>
+                    <div class="pt-review-list" id="pt-review-finance"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {# ════════════ RODAPÉ DE NAVEGAÇÃO ════════════ #}
+          <div class="oficio-wizard-footer-actions">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+              <button type="button" class="btn btn-outline-secondary" id="pt-prev" disabled>← Voltar</button>
+              <button type="button" class="btn btn-outline-primary" id="pt-next">Avançar →</button>
+              <span class="badge text-bg-light text-muted align-self-center" id="pt-progress-chip">1 / 6</span>
+            </div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+              <button class="btn btn-primary" type="submit">Salvar plano</button>
+              {% if object %}
+              <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">DOCX</a>
+              <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">PDF</a>
+              {% endif %}
+              <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Cancelar</a>
             </div>
           </div>
-        </article>
-      </section>
+        </form>
 
-      <div class="pt2-nav">
-        <div class="pt2-nav-left">
-          <button type="button" class="btn btn-outline-secondary" id="pt2-prev">Voltar etapa</button>
-          <button type="button" class="btn btn-outline-primary" id="pt2-next">Avancar etapa</button>
-        </div>
-        <div class="pt2-nav-right">
-          <button class="btn btn-primary" type="submit">Salvar plano e preparar geracao</button>
-          {% if object %}
-          <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">DOCX</a>
-          <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">PDF</a>
-          {% endif %}
-          <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Voltar</a>
-        </div>
       </div>
-    </form>
+    </div>
   </div>
 </div>
+
+{{ selected_coordenadores_payload|json_script:"coordenadores-selected-data" }}
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/oficio_wizard.js' %}"></script>
 <script>
-  (function () {
-    const form = document.getElementById('pt-form');
-    if (!form) return;
+(function () {
+  'use strict';
 
-    const stepTitles = [
-      { title: 'Informacoes gerais', description: 'Defina o contexto do plano, periodo e vinculos principais.' },
-      { title: 'Equipe e participantes', description: 'Organize o efetivo com distribuicao de cargos e quantidade.' },
-      { title: 'Roteiro', description: 'Monte o deslocamento em destinos objetivos e reutilizaveis.' },
-      { title: 'Transporte e apoio', description: 'Consolide coordenacao, atividades e recursos operacionais.' },
-      { title: 'Diarias', description: 'Acompanhe a simulacao em destaque com leitura imediata.' },
-      { title: 'Revisao final', description: 'Valide os pontos-chave antes de salvar e gerar documentos.' }
+  const form = document.getElementById('pt-form');
+  if (!form) return;
+
+  // ── Referencias gerais ──
+  const stepLinks  = Array.from(document.querySelectorAll('[data-step-target]'));
+  const steps      = Array.from(document.querySelectorAll('.pt-step'));
+  const prevBtn    = document.getElementById('pt-prev');
+  const nextBtn    = document.getElementById('pt-next');
+  const progressEl = document.getElementById('pt-progress-chip');
+  let currentStep  = 0;
+
+  function showStep(index) {
+    currentStep = Math.max(0, Math.min(index, steps.length - 1));
+    steps.forEach((step, idx) => {
+      step.classList.toggle('is-active', idx === currentStep);
+    });
+    stepLinks.forEach((link, idx) => {
+      link.classList.toggle('is-active',    idx === currentStep);
+      link.classList.toggle('is-completed', idx < currentStep);
+      link.removeAttribute('aria-current');
+      if (idx === currentStep) link.setAttribute('aria-current', 'step');
+    });
+    if (progressEl) progressEl.textContent = (currentStep + 1) + ' / ' + steps.length;
+    prevBtn.disabled = currentStep === 0;
+    nextBtn.textContent = currentStep === steps.length - 1 ? '✓ Revisão final' : 'Avançar →';
+    if (currentStep === steps.length - 1) renderReview();
+    refreshPickers(form);
+  }
+
+  stepLinks.forEach((link) => {
+    link.addEventListener('click', function () {
+      const target = parseInt(link.getAttribute('data-step-target') || '0', 10);
+      if (!Number.isNaN(target)) showStep(target);
+    });
+  });
+  prevBtn.addEventListener('click', () => showStep(currentStep - 1));
+  nextBtn.addEventListener('click', () => showStep(Math.min(currentStep + 1, steps.length - 1)));
+
+  // ── Selects ──
+  const eventSelect        = document.getElementById('{{ form.evento.id_for_label }}');
+  const oficioSelect       = document.getElementById('{{ form.oficio.id_for_label }}');
+  const oficiosSelect      = document.getElementById('{{ form.oficios_relacionados.id_for_label }}');
+  const roteiroSelect      = document.getElementById('{{ form.roteiro.id_for_label }}');
+  const solicitanteSelect  = document.getElementById('{{ form.solicitante_escolha.id_for_label }}');
+  const solOutrosWrap      = document.getElementById('col-solicitante-outros');
+  const salvarSolWrap      = document.getElementById('col-salvar-solicitante');
+  const horarioPadrao      = document.getElementById('{{ form.horario_atendimento_padrao.id_for_label }}');
+  const horarioManualWrap  = document.getElementById('col-horario-manual');
+  const dataUnica          = document.getElementById('{{ form.evento_data_unica.id_for_label }}');
+  const dataInicio         = document.getElementById('{{ form.evento_data_inicio.id_for_label }}');
+  const dataFim            = document.getElementById('{{ form.evento_data_fim.id_for_label }}');
+  const colDataFim         = document.getElementById('col-data-fim');
+  const coordAdmSelect     = document.getElementById('{{ form.coordenador_administrativo.id_for_label }}');
+
+  const destinosContainer  = document.getElementById('destinos-container');
+  const destinosPayload    = document.getElementById('{{ form.destinos_payload.id_for_label }}');
+  const cidadesApiBase     = '{{ api_cidades_por_estado_url|escapejs }}';
+
+  const totalFormsInput    = document.getElementById('id_efetivo-TOTAL_FORMS');
+  const efetivoRows        = document.getElementById('efetivo-rows');
+  const qtdServidores      = document.getElementById('{{ form.quantidade_servidores.id_for_label }}');
+
+  const diariasQtd         = document.getElementById('{{ form.diarias_quantidade.id_for_label }}');
+  const diariasUnit        = document.getElementById('{{ form.diarias_valor_unitario.id_for_label }}');
+  const diariasTotal       = document.getElementById('{{ form.diarias_valor_total.id_for_label }}');
+  const liveTotal          = document.getElementById('pt-live-total');
+  const liveDiarias        = document.getElementById('pt-live-diarias');
+  const liveUnit           = document.getElementById('pt-live-unit');
+  const liveEfetivo        = document.getElementById('pt-live-efetivo');
+  const diariasInicioMirror= document.getElementById('pt-diarias-data-inicio');
+  const diariasFimMirror   = document.getElementById('pt-diarias-data-fim');
+  const reviewMain         = document.getElementById('pt-review-main');
+  const reviewFinance      = document.getElementById('pt-review-finance');
+
+  // ── Select pickers ──
+  function refreshPickers(root) {
+    if (window.OficioWizard && typeof window.OficioWizard.refreshSelectPickers === 'function') {
+      window.OficioWizard.refreshSelectPickers(root || form);
+    }
+  }
+
+  function forceSearchable(sel, ph) {
+    if (!sel) return;
+    sel.setAttribute('data-oficio-picker-search', 'always');
+    if (ph) sel.setAttribute('data-oficio-picker-search-placeholder', ph);
+  }
+
+  forceSearchable(oficiosSelect,  'Filtrar ofícios...');
+  forceSearchable(oficioSelect,   'Filtrar ofício...');
+  forceSearchable(roteiroSelect,  'Filtrar roteiro...');
+  forceSearchable(coordAdmSelect, 'Filtrar servidor...');
+  forceSearchable(eventSelect,    'Filtrar evento...');
+
+  // ── Solicitante / Horario toggles ──
+  function toggleSolicitanteOutros() {
+    if (!solicitanteSelect) return;
+    const show = solicitanteSelect.value === '__OUTROS__';
+    if (solOutrosWrap) solOutrosWrap.style.display = show ? '' : 'none';
+    if (salvarSolWrap) salvarSolWrap.style.display = show ? '' : 'none';
+  }
+
+  function toggleHorarioManual() {
+    if (!horarioPadrao || !horarioManualWrap) return;
+    horarioManualWrap.style.display = horarioPadrao.value === '__OUTROS__' ? '' : 'none';
+  }
+
+  function toggleDataFim() {
+    if (!dataUnica || !colDataFim) return;
+    colDataFim.style.display = dataUnica.checked ? 'none' : '';
+    if (dataUnica.checked && dataInicio && dataFim) dataFim.value = dataInicio.value;
+    updateDiariasLive();
+  }
+
+  // ── Filtro por evento ──
+  function filterByEvent(sel) {
+    if (!sel || !eventSelect) return;
+    const eventId = String(eventSelect.value || '').trim();
+    Array.from(sel.options).forEach((opt) => {
+      if (!opt.value) { opt.hidden = false; return; }
+      const optEvent = String(opt.dataset.eventId || '').trim();
+      opt.hidden = !!eventId && !!optEvent && optEvent !== eventId;
+    });
+    refreshPickers(sel);
+  }
+
+  // ── Destinos ──
+  async function fetchCidades(estadoId) {
+    if (!estadoId) return [];
+    const url = cidadesApiBase.replace('/0/', '/' + estadoId + '/');
+    const r = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    if (!r.ok) return [];
+    return r.json();
+  }
+
+  async function mountCidadeOptions(sel, estadoId, selId) {
+    sel.innerHTML = '<option value="">Selecione...</option>';
+    const list = await fetchCidades(estadoId);
+    list.forEach((c) => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.nome;
+      if (String(selId || '') === String(c.id)) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    refreshPickers(sel);
+  }
+
+  async function addDestinoRow(dest) {
+    const row = document.createElement('div');
+    row.className = 'pt-dest-row';
+    row.innerHTML =
+      '<div class="row g-2 align-items-end">' +
+        '<div class="col-md-5"><label class="form-label">Estado</label>' +
+          '<select class="destino-estado form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">' +
+            '<option value="">Selecione...</option>' +
+            '{% for estado in estados_choices %}<option value="{{ estado.pk }}">{{ estado.nome }} ({{ estado.sigla }})</option>{% endfor %}' +
+          '</select></div>' +
+        '<div class="col-md-5"><label class="form-label">Cidade</label>' +
+          '<select class="destino-cidade form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade...">' +
+            '<option value="">Selecione...</option></select></div>' +
+        '<div class="col-md-2 d-flex align-items-end">' +
+          '<button type="button" class="btn btn-outline-danger w-100 btn-rem-destino">✕</button></div>' +
+      '</div>';
+    destinosContainer.appendChild(row);
+    refreshPickers(row);
+    const estadoSel = row.querySelector('.destino-estado');
+    const cidadeSel = row.querySelector('.destino-cidade');
+    estadoSel.value = String(dest.estado_id || '');
+    if (estadoSel.value) await mountCidadeOptions(cidadeSel, estadoSel.value, dest.cidade_id || '');
+    refreshPickers(row);
+  }
+
+  function collectDestinos() {
+    const rows = Array.from(destinosContainer.querySelectorAll('.pt-dest-row'));
+    const payload = [];
+    rows.forEach((row) => {
+      const eSel = row.querySelector('.destino-estado');
+      const cSel = row.querySelector('.destino-cidade');
+      if (!eSel || !cSel || !eSel.value || !cSel.value) return;
+      const eText = eSel.options[eSel.selectedIndex] ? eSel.options[eSel.selectedIndex].textContent : '';
+      const cText = cSel.options[cSel.selectedIndex] ? cSel.options[cSel.selectedIndex].textContent : '';
+      const sigla = /\(([^)]+)\)\s*$/.exec(eText);
+      payload.push({
+        estado_id: parseInt(eSel.value, 10),
+        estado_sigla: sigla ? sigla[1] : '',
+        cidade_id: parseInt(cSel.value, 10),
+        cidade_nome: cText,
+      });
+    });
+    if (destinosPayload) destinosPayload.value = JSON.stringify(payload);
+  }
+
+  async function bootstrapDestinos() {
+    let initial = [];
+    try { initial = JSON.parse((destinosPayload && destinosPayload.value) || '[]'); } catch (_) {}
+    if (!Array.isArray(initial) || !initial.length) initial = [{ estado_id: '', cidade_id: '' }];
+    for (const item of initial) await addDestinoRow(item || {});
+    collectDestinos();
+  }
+
+  destinosContainer.addEventListener('change', async (ev) => {
+    const row = ev.target.closest('.pt-dest-row');
+    if (!row) return;
+    if (ev.target.classList.contains('destino-estado')) {
+      await mountCidadeOptions(row.querySelector('.destino-cidade'), ev.target.value, '');
+    }
+    collectDestinos();
+  });
+
+  destinosContainer.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.btn-rem-destino');
+    if (!btn) return;
+    const rows = destinosContainer.querySelectorAll('.pt-dest-row');
+    if (rows.length <= 1) return;
+    btn.closest('.pt-dest-row').remove();
+    collectDestinos();
+    refreshPickers(destinosContainer);
+  });
+
+  document.getElementById('btn-add-destino').addEventListener('click', async () => {
+    await addDestinoRow({ estado_id: '', cidade_id: '' });
+    collectDestinos();
+  });
+
+  // ── Efetivo ──
+  function syncEfetivoTotal() {
+    if (!qtdServidores) return;
+    const rows = Array.from(efetivoRows.querySelectorAll('[data-ef-row]'));
+    let total = 0;
+    rows.forEach((row) => {
+      const qty = row.querySelector('input[name$="-quantidade"]');
+      const del = row.querySelector('input[name$="-DELETE"]');
+      if (!qty || (del && del.checked)) return;
+      const value = parseInt(qty.value || '0', 10);
+      if (!Number.isNaN(value) && value > 0) total += value;
+    });
+    qtdServidores.value = total > 0 ? String(total) : '';
+    updateDiariasLive();
+    renderReview();
+  }
+
+  function reindexEfetivoRows() {
+    const rows = Array.from(efetivoRows.querySelectorAll('[data-ef-row]'));
+    rows.forEach((row, index) => {
+      row.querySelectorAll('input, select, label').forEach((el) => {
+        ['name', 'id', 'for'].forEach((attr) => {
+          const cur = el.getAttribute(attr);
+          if (!cur) return;
+          el.setAttribute(attr, cur.replace(/efetivo-(\d+)-/g, 'efetivo-' + index + '-'));
+        });
+      });
+    });
+    if (totalFormsInput) totalFormsInput.value = String(rows.length);
+    refreshPickers(efetivoRows);
+  }
+
+  function addEfetivoRow() {
+    const rows = efetivoRows.querySelectorAll('[data-ef-row]');
+    if (!rows.length) return;
+    const clone = rows[rows.length - 1].cloneNode(true);
+    clone.querySelectorAll('input, select').forEach((el) => {
+      if (el.name && el.name.endsWith('-id')) { el.value = ''; return; }
+      if (el.name && el.name.endsWith('-DELETE')) { el.checked = false; return; }
+      if (el.tagName === 'SELECT') { el.selectedIndex = 0; return; }
+      if (el.type === 'number') { el.value = '1'; return; }
+      if (el.type !== 'hidden') el.value = '';
+    });
+    efetivoRows.appendChild(clone);
+    reindexEfetivoRows();
+    syncEfetivoTotal();
+  }
+
+  document.getElementById('btn-add-efetivo').addEventListener('click', addEfetivoRow);
+  efetivoRows.addEventListener('change', syncEfetivoTotal);
+  efetivoRows.addEventListener('input', syncEfetivoTotal);
+
+  // ── Diárias ──
+  function parseCurrency(val) {
+    const raw = String(val || '').trim();
+    if (!raw) return 0;
+    const n = parseFloat(raw.replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function formatCurrency(val) {
+    try { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0); }
+    catch (_) { return 'R$ ' + (val || 0).toFixed(2); }
+  }
+
+  function parseDiariasQtd() {
+    const raw = String((diariasQtd && diariasQtd.value) || '');
+    const m = raw.match(/[0-9]+([.,][0-9]+)?/);
+    if (!m) return 0;
+    const n = parseFloat(m[0].replace(',', '.'));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function getPeriodoFallback() {
+    if (!dataInicio || !dataFim || !dataInicio.value || !dataFim.value) return 0;
+    const s = new Date(dataInicio.value + 'T00:00:00');
+    const e = new Date(dataFim.value + 'T00:00:00');
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e < s) return 0;
+    const d = Math.floor((e.getTime() - s.getTime()) / 86400000) + 1;
+    return d > 0 ? d : 0;
+  }
+
+  function updateDiariasLive() {
+    const totalOficial = parseCurrency(diariasTotal ? diariasTotal.value : '');
+    const unitField    = parseCurrency(diariasUnit  ? diariasUnit.value  : '');
+    const qtd          = parseDiariasQtd() || getPeriodoFallback();
+    const efetivo      = parseInt((qtdServidores && qtdServidores.value) || '0', 10) || 0;
+
+    let unit = unitField;
+    if (!unit && totalOficial && qtd) unit = totalOficial / qtd;
+    let total = totalOficial;
+    if (!total && unit && qtd) total = unit * qtd;
+
+    if (diariasInicioMirror) diariasInicioMirror.value = dataInicio && dataInicio.value ? dataInicio.value : '—';
+    if (diariasFimMirror)    diariasFimMirror.value    = dataFim   && dataFim.value    ? dataFim.value    : '—';
+    if (liveTotal)    liveTotal.textContent   = formatCurrency(total);
+    if (liveDiarias)  liveDiarias.textContent = (qtd || 0) + ' diária(s)';
+    if (liveUnit)     liveUnit.textContent    = formatCurrency(unit);
+    if (liveEfetivo)  liveEfetivo.textContent = (efetivo || 0) + ' servidor(es)';
+  }
+
+  // ── Revisão ──
+  function selectedText(sel) {
+    if (!sel || sel.selectedIndex < 0) return '—';
+    const opt = sel.options[sel.selectedIndex];
+    return opt ? String(opt.textContent || '').trim() : '—';
+  }
+
+  function countAtividades() {
+    return document.querySelectorAll('input[name="atividades_codigos"]:checked').length;
+  }
+
+  function renderReview() {
+    if (!reviewMain || !reviewFinance) return;
+    let destinos = [];
+    try { destinos = JSON.parse((destinosPayload && destinosPayload.value) || '[]'); } catch (_) {}
+
+    const mainRows = [
+      ['Evento',      selectedText(eventSelect)],
+      ['Ofício',      selectedText(oficioSelect)],
+      ['Roteiro',     selectedText(roteiroSelect)],
+      ['Solicitante', selectedText(solicitanteSelect)],
+      ['Período',     ((dataInicio && dataInicio.value) ? dataInicio.value : '—') + ' → ' + ((dataFim && dataFim.value) ? dataFim.value : '—')],
+      ['Destinos',    destinos.length ? destinos.map((d) => d.cidade_nome).join(', ') : '—'],
+      ['Efetivo',     (qtdServidores && qtdServidores.value) || '0'],
+      ['Atividades',  String(countAtividades())],
     ];
 
-    const stepLinks = Array.from(document.querySelectorAll('[data-step-target]'));
-    const steps = Array.from(document.querySelectorAll('.pt2-step'));
-    const prevBtn = document.getElementById('pt2-prev');
-    const nextBtn = document.getElementById('pt2-next');
-    const titleEl = document.getElementById('pt2-current-step-title');
-    const descEl = document.getElementById('pt2-current-step-description');
-    const progressEl = document.getElementById('pt2-progress-chip');
-    let currentStep = 0;
+    const financeRows = [
+      ['Diárias',    (diariasQtd   && diariasQtd.value)   || '—'],
+      ['Valor/dia',  (diariasUnit  && diariasUnit.value)   || '—'],
+      ['Total',      (diariasTotal && diariasTotal.value)  || '—'],
+      ['Extenso',    (document.getElementById('{{ form.diarias_valor_extenso.id_for_label }}') || {}).value || '—'],
+    ];
 
-    function showStep(index) {
-      currentStep = Math.max(0, Math.min(index, steps.length - 1));
-      steps.forEach((step, idx) => {
-        step.classList.toggle('is-active', idx === currentStep);
-      });
-      stepLinks.forEach((link, idx) => {
-        link.classList.toggle('is-current', idx === currentStep);
-        link.classList.toggle('is-complete', idx < currentStep);
-      });
-      const meta = stepTitles[currentStep] || { title: 'Etapa', description: '' };
-      titleEl.textContent = meta.title;
-      descEl.textContent = meta.description;
-      progressEl.textContent = (currentStep + 1) + ' / ' + steps.length;
-      prevBtn.disabled = currentStep === 0;
-      nextBtn.textContent = currentStep === steps.length - 1 ? 'Ir para revisao' : 'Avancar etapa';
-      if (currentStep === steps.length - 1) {
-        renderReview();
-      }
+    reviewMain.innerHTML    = mainRows.map((r) => `<div class="pt-review-row"><span class="pt-review-label">${r[0]}</span><span class="pt-review-value">${r[1]}</span></div>`).join('');
+    reviewFinance.innerHTML = financeRows.map((r) => `<div class="pt-review-row"><span class="pt-review-label">${r[0]}</span><span class="pt-review-value">${r[1]}</span></div>`).join('');
+  }
+
+  // ── Coordenadores (chip-based, identical to viajantes) ──
+  const coordWrapper = document.getElementById('coord-autocomplete-wrapper');
+  const coordInput   = document.getElementById('coord-autocomplete-input');
+  const coordResults = document.getElementById('coord-autocomplete-results');
+  const coordChips   = document.getElementById('coord-chip-list');
+  const coordCount   = document.getElementById('coord-chip-count');
+  const coordEmpty   = document.getElementById('coord-chip-empty');
+  const coordIdsInput= document.getElementById('{{ form.coordenadores_ids.id_for_label }}');
+  const buscarUrl    = coordWrapper ? coordWrapper.getAttribute('data-search-url') : '';
+  const coordMap     = new Map();
+  let   coordDebounce= null;
+
+  function parseSelectedCoords() {
+    const el = document.getElementById('coordenadores-selected-data');
+    if (!el) return [];
+    try { return JSON.parse(el.textContent || '[]'); } catch (_) { return []; }
+  }
+
+  function syncCoordIds() {
+    const ids = Array.from(coordMap.keys());
+    if (coordIdsInput) coordIdsInput.value = ids.join(',');
+    if (coordCount)    coordCount.textContent = String(ids.length);
+  }
+
+  function addCoord(id, item) {
+    const strId = String(id);
+    if (coordMap.has(strId)) return;
+    coordMap.set(strId, item);
+    if (coordEmpty) coordEmpty.style.display = 'none';
+
+    const chip = document.createElement('div');
+    chip.className = 'oficio-glance-chip oficio-selection-chip';
+    chip.setAttribute('data-coord-chip', strId);
+
+    const nome = document.createElement('span');
+    nome.className = 'oficio-glance-chip-nome';
+    nome.textContent = item.nome;
+    chip.appendChild(nome);
+
+    if (item.cargo) {
+      const cargo = document.createElement('span');
+      cargo.className = 'oficio-glance-chip-sub';
+      cargo.textContent = item.cargo;
+      chip.appendChild(cargo);
     }
 
-    stepLinks.forEach((link) => {
-      link.addEventListener('click', function () {
-        const target = parseInt(link.getAttribute('data-step-target') || '0', 10);
-        if (Number.isNaN(target)) return;
-        showStep(target);
-      });
+    const rmBtn = document.createElement('button');
+    rmBtn.type = 'button';
+    rmBtn.className = 'oficio-selection-chip-remove';
+    rmBtn.setAttribute('data-remove-coord', strId);
+    rmBtn.setAttribute('aria-label', 'Remover ' + item.nome);
+    rmBtn.textContent = '×';
+    chip.appendChild(rmBtn);
+    coordChips.appendChild(chip);
+    syncCoordIds();
+  }
+
+  function removeCoord(id) {
+    const strId = String(id);
+    coordMap.delete(strId);
+    const chip = coordChips.querySelector('[data-coord-chip="' + strId + '"]');
+    if (chip) chip.remove();
+    if (coordMap.size === 0 && coordEmpty) coordEmpty.style.display = '';
+    syncCoordIds();
+  }
+
+  if (coordChips) {
+    coordChips.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('[data-remove-coord]');
+      if (btn) removeCoord(btn.getAttribute('data-remove-coord'));
     });
+  }
 
-    prevBtn.addEventListener('click', function () {
-      showStep(currentStep - 1);
-    });
+  // Pre-load existing coordinators
+  parseSelectedCoords().forEach((item) => {
+    if (item && item.id) addCoord(String(item.id), item);
+  });
+  if (coordMap.size > 0 && coordEmpty) coordEmpty.style.display = 'none';
 
-    nextBtn.addEventListener('click', function () {
-      showStep(Math.min(currentStep + 1, steps.length - 1));
-    });
-
-    const eventSelect = document.getElementById('{{ form.evento.id_for_label }}');
-    const oficioSelect = document.getElementById('{{ form.oficio.id_for_label }}');
-    const oficiosSelect = document.getElementById('{{ form.oficios_relacionados.id_for_label }}');
-    const roteiroSelect = document.getElementById('{{ form.roteiro.id_for_label }}');
-    const solicitanteSelect = document.getElementById('{{ form.solicitante_escolha.id_for_label }}');
-    const solicitanteOutrosWrap = document.getElementById('col-solicitante-outros');
-    const salvarSolicitanteWrap = document.getElementById('col-salvar-solicitante');
-    const horarioPadrao = document.getElementById('{{ form.horario_atendimento_padrao.id_for_label }}');
-    const horarioManualWrap = document.getElementById('col-horario-manual');
-    const dataUnica = document.getElementById('{{ form.evento_data_unica.id_for_label }}');
-    const dataInicio = document.getElementById('{{ form.evento_data_inicio.id_for_label }}');
-    const dataFim = document.getElementById('{{ form.evento_data_fim.id_for_label }}');
-    const colDataFim = document.getElementById('col-data-fim');
-
-    const destinosContainer = document.getElementById('destinos-container');
-    const destinosPayload = document.getElementById('{{ form.destinos_payload.id_for_label }}');
-    const cidadesApiBase = '{{ api_cidades_por_estado_url|escapejs }}';
-
-    const totalFormsInput = document.getElementById('id_efetivo-TOTAL_FORMS');
-    const efetivoRows = document.getElementById('efetivo-rows');
-    const addEfetivoButton = document.getElementById('btn-add-efetivo');
-    const quantidadeServidores = document.getElementById('{{ form.quantidade_servidores.id_for_label }}');
-
-    const diariasQuantidadeInput = document.getElementById('{{ form.diarias_quantidade.id_for_label }}');
-    const diariasUnitarioInput = document.getElementById('{{ form.diarias_valor_unitario.id_for_label }}');
-    const diariasTotalInput = document.getElementById('{{ form.diarias_valor_total.id_for_label }}');
-    const liveTotal = document.getElementById('pt2-live-total');
-    const liveDiarias = document.getElementById('pt2-live-diarias');
-    const liveUnit = document.getElementById('pt2-live-unit');
-    const liveEfetivo = document.getElementById('pt2-live-efetivo');
-    const diariasDataInicioMirror = document.getElementById('pt2-diarias-data-inicio');
-    const diariasDataFimMirror = document.getElementById('pt2-diarias-data-fim');
-
-    const reviewMain = document.getElementById('pt2-review-main');
-    const reviewFinance = document.getElementById('pt2-review-finance');
-
-    function refreshSelectPickers(root) {
-      if (window.OficioWizard && typeof window.OficioWizard.refreshSelectPickers === 'function') {
-        window.OficioWizard.refreshSelectPickers(root || form);
-      }
-    }
-
-    function forceSearchableSelect(selectEl, placeholder) {
-      if (!selectEl) return;
-      selectEl.setAttribute('data-oficio-picker-search', 'always');
-      if (placeholder) {
-        selectEl.setAttribute('data-oficio-picker-search-placeholder', placeholder);
-      }
-    }
-
-    forceSearchableSelect(oficiosSelect, 'Filtrar oficios...');
-    forceSearchableSelect(oficioSelect, 'Filtrar oficio...');
-    forceSearchableSelect(roteiroSelect, 'Filtrar roteiro...');
-    forceSearchableSelect(document.getElementById('{{ form.coordenador_operacional.id_for_label }}'), 'Filtrar coordenador...');
-    forceSearchableSelect(document.getElementById('{{ form.coordenador_administrativo.id_for_label }}'), 'Filtrar servidor...');
-
-    function toggleSolicitanteOutros() {
-      if (!solicitanteSelect) return;
-      const show = solicitanteSelect.value === '__OUTROS__';
-      if (solicitanteOutrosWrap) solicitanteOutrosWrap.style.display = show ? '' : 'none';
-      if (salvarSolicitanteWrap) salvarSolicitanteWrap.style.display = show ? '' : 'none';
-    }
-
-    function toggleHorarioManual() {
-      if (!horarioPadrao || !horarioManualWrap) return;
-      horarioManualWrap.style.display = horarioPadrao.value === '__OUTROS__' ? '' : 'none';
-    }
-
-    function toggleDataFim() {
-      if (!dataUnica || !colDataFim) return;
-      colDataFim.style.display = dataUnica.checked ? 'none' : '';
-      if (dataUnica.checked && dataInicio && dataFim) {
-        dataFim.value = dataInicio.value;
-      }
-      updateDiariasLive();
-    }
-
-    function filterByEvent(selectEl) {
-      if (!selectEl || !eventSelect) return;
-      const eventId = String(eventSelect.value || '').trim();
-      Array.from(selectEl.options).forEach((opt) => {
-        if (!opt.value) {
-          opt.hidden = false;
-          return;
-        }
-        const optEvent = String(opt.dataset.eventId || '').trim();
-        opt.hidden = !!eventId && !!optEvent && optEvent !== eventId;
-      });
-      refreshSelectPickers(selectEl);
-    }
-
-    async function fetchCitiesByEstado(estadoId) {
-      if (!estadoId) return [];
-      const url = cidadesApiBase.replace('/0/', '/' + estadoId + '/');
-      const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-      if (!response.ok) return [];
-      return response.json();
-    }
-
-    async function mountCityOptions(selectEl, estadoId, selectedCidadeId) {
-      selectEl.innerHTML = '<option value="">Selecione...</option>';
-      const cidades = await fetchCitiesByEstado(estadoId);
-      cidades.forEach((cidade) => {
-        const opt = document.createElement('option');
-        opt.value = cidade.id;
-        opt.textContent = cidade.nome;
-        if (String(selectedCidadeId || '') === String(cidade.id)) {
-          opt.selected = true;
-        }
-        selectEl.appendChild(opt);
-      });
-      refreshSelectPickers(selectEl);
-    }
-
-    async function addDestinoRow(destino) {
-      const row = document.createElement('div');
-      row.className = 'pt2-row-shell pt-dest-row';
-      row.innerHTML = `
-        <div class="pt2-grid">
-          <div class="pt2-col-5">
-            <label class="pt2-label">Estado</label>
-            <select class="destino-estado" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF..."><option value="">Selecione...</option>{% for estado in estados_choices %}<option value="{{ estado.pk }}">{{ estado.nome }} ({{ estado.sigla }})</option>{% endfor %}</select>
-          </div>
-          <div class="pt2-col-5">
-            <label class="pt2-label">Cidade</label>
-            <select class="destino-cidade" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..."><option value="">Selecione...</option></select>
-          </div>
-          <div class="pt2-col-2">
-            <button type="button" class="btn btn-outline-danger w-100 btn-rem-destino">Remover</button>
-          </div>
-        </div>`;
-      destinosContainer.appendChild(row);
-      refreshSelectPickers(row);
-      const estadoSel = row.querySelector('.destino-estado');
-      const cidadeSel = row.querySelector('.destino-cidade');
-      estadoSel.value = String(destino.estado_id || '');
-      if (estadoSel.value) {
-        await mountCityOptions(cidadeSel, estadoSel.value, destino.cidade_id || '');
-      }
-      refreshSelectPickers(row);
-    }
-
-    function collectDestinos() {
-      const rows = Array.from(destinosContainer.querySelectorAll('.pt-dest-row'));
-      const payload = [];
-      rows.forEach((row) => {
-        const estadoSel = row.querySelector('.destino-estado');
-        const cidadeSel = row.querySelector('.destino-cidade');
-        if (!estadoSel || !cidadeSel || !estadoSel.value || !cidadeSel.value) return;
-        const estadoTexto = estadoSel.options[estadoSel.selectedIndex] ? estadoSel.options[estadoSel.selectedIndex].textContent : '';
-        const cidadeTexto = cidadeSel.options[cidadeSel.selectedIndex] ? cidadeSel.options[cidadeSel.selectedIndex].textContent : '';
-        const sigla = /\(([^)]+)\)\s*$/.exec(estadoTexto);
-        payload.push({
-          estado_id: parseInt(estadoSel.value, 10),
-          estado_sigla: sigla ? sigla[1] : '',
-          cidade_id: parseInt(cidadeSel.value, 10),
-          cidade_nome: cidadeTexto,
-        });
-      });
-      destinosPayload.value = JSON.stringify(payload);
-    }
-
-    async function bootstrapDestinos() {
-      let initial = [];
-      try {
-        initial = JSON.parse(destinosPayload.value || '[]');
-      } catch (_err) {
-        initial = [];
-      }
-      if (!Array.isArray(initial) || !initial.length) {
-        initial = [{ estado_id: '', cidade_id: '' }];
-      }
-      for (const item of initial) {
-        await addDestinoRow(item || {});
-      }
-      collectDestinos();
-    }
-
-    function syncEfetivoTotal() {
-      if (!quantidadeServidores) return;
-      const rows = Array.from(efetivoRows.querySelectorAll('[data-ef-row]'));
-      let total = 0;
-      rows.forEach((row) => {
-        const qty = row.querySelector('input[name$="-quantidade"]');
-        const del = row.querySelector('input[name$="-DELETE"]');
-        if (!qty || (del && del.checked)) return;
-        const value = parseInt(qty.value || '0', 10);
-        if (!Number.isNaN(value) && value > 0) {
-          total += value;
-        }
-      });
-      quantidadeServidores.value = total > 0 ? String(total) : '';
-      updateDiariasLive();
-      renderReview();
-    }
-
-    function reindexEfetivoRows() {
-      const rows = Array.from(efetivoRows.querySelectorAll('[data-ef-row]'));
-      rows.forEach((row, index) => {
-        row.querySelectorAll('input, select, label').forEach((el) => {
-          ['name', 'id', 'for'].forEach((attr) => {
-            const current = el.getAttribute(attr);
-            if (!current) return;
-            el.setAttribute(attr, current.replace(/efetivo-(\d+)-/g, 'efetivo-' + index + '-'));
+  if (coordInput) {
+    coordInput.addEventListener('input', () => {
+      clearTimeout(coordDebounce);
+      const q = coordInput.value.trim();
+      if (!q || !buscarUrl) { if (coordResults) coordResults.classList.add('d-none'); return; }
+      coordDebounce = setTimeout(async () => {
+        try {
+          const r = await fetch(buscarUrl + '?q=' + encodeURIComponent(q), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
           });
-        });
-      });
-      if (totalFormsInput) {
-        totalFormsInput.value = String(rows.length);
-      }
-      refreshSelectPickers(efetivoRows);
-    }
-
-    function addEfetivoRow() {
-      const rows = efetivoRows.querySelectorAll('[data-ef-row]');
-      if (!rows.length) return;
-      const clone = rows[rows.length - 1].cloneNode(true);
-      clone.querySelectorAll('input, select').forEach((el) => {
-        if (el.name && el.name.endsWith('-id')) {
-          el.value = '';
-          return;
-        }
-        if (el.name && el.name.endsWith('-DELETE')) {
-          el.checked = false;
-          return;
-        }
-        if (el.tagName === 'SELECT') {
-          el.selectedIndex = 0;
-          return;
-        }
-        if (el.type === 'number') {
-          el.value = '1';
-          return;
-        }
-        if (el.type !== 'hidden') {
-          el.value = '';
-        }
-      });
-      efetivoRows.appendChild(clone);
-      reindexEfetivoRows();
-      syncEfetivoTotal();
-    }
-
-    function parseCurrency(value) {
-      const raw = String(value || '').trim();
-      if (!raw) return 0;
-      const normalized = raw.replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, '');
-      const num = parseFloat(normalized);
-      return Number.isFinite(num) ? num : 0;
-    }
-
-    function formatCurrency(value) {
-      try {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
-      } catch (_err) {
-        return 'R$ ' + (value || 0).toFixed(2);
-      }
-    }
-
-    function parseDiariasQuantidade() {
-      const raw = String((diariasQuantidadeInput && diariasQuantidadeInput.value) || '');
-      const match = raw.match(/[0-9]+([.,][0-9]+)?/);
-      if (!match) return 0;
-      const num = parseFloat(match[0].replace(',', '.'));
-      return Number.isFinite(num) ? num : 0;
-    }
-
-    function getPeriodoDiariasFallback() {
-      if (!dataInicio || !dataFim || !dataInicio.value || !dataFim.value) {
-        return 0;
-      }
-      const start = new Date(dataInicio.value + 'T00:00:00');
-      const end = new Date(dataFim.value + 'T00:00:00');
-      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
-        return 0;
-      }
-      const diffDays = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
-      return diffDays > 0 ? diffDays : 0;
-    }
-
-    function updateDiariasLive() {
-      const totalOficial = parseCurrency(diariasTotalInput ? diariasTotalInput.value : '');
-      const unitFromField = parseCurrency(diariasUnitarioInput ? diariasUnitarioInput.value : '');
-      const qtdDiarias = parseDiariasQuantidade() || getPeriodoDiariasFallback();
-      const efetivo = parseInt((quantidadeServidores && quantidadeServidores.value) || '0', 10) || 0;
-
-      let unit = unitFromField;
-      if (!unit && totalOficial && qtdDiarias) {
-        unit = totalOficial / qtdDiarias;
-      }
-
-      let total = totalOficial;
-      if (!total && unit && qtdDiarias) {
-        total = unit * qtdDiarias;
-      }
-
-      if (diariasDataInicioMirror) {
-        diariasDataInicioMirror.value = dataInicio && dataInicio.value ? dataInicio.value : '-';
-      }
-      if (diariasDataFimMirror) {
-        diariasDataFimMirror.value = dataFim && dataFim.value ? dataFim.value : '-';
-      }
-      if (liveTotal) liveTotal.textContent = formatCurrency(total);
-      if (liveDiarias) liveDiarias.textContent = (qtdDiarias || 0) + ' diaria(s)';
-      if (liveUnit) liveUnit.textContent = formatCurrency(unit);
-      if (liveEfetivo) liveEfetivo.textContent = (efetivo || 0) + ' servidor(es)';
-    }
-
-    function selectedText(selectEl) {
-      if (!selectEl || selectEl.selectedIndex < 0) return '-';
-      const option = selectEl.options[selectEl.selectedIndex];
-      return option ? String(option.textContent || '').trim() : '-';
-    }
-
-    function countAtividadesSelecionadas() {
-      return document.querySelectorAll('input[name="atividades_codigos"]:checked').length;
-    }
-
-    function renderReview() {
-      if (!reviewMain || !reviewFinance) return;
-
-      let destinos = [];
-      try {
-        destinos = JSON.parse(destinosPayload.value || '[]');
-      } catch (_err) {
-        destinos = [];
-      }
-
-      const mainRows = [
-        ['Evento', selectedText(eventSelect)],
-        ['Oficio principal', selectedText(oficioSelect)],
-        ['Roteiro', selectedText(roteiroSelect)],
-        ['Solicitante', selectedText(solicitanteSelect)],
-        ['Periodo', (dataInicio && dataInicio.value ? dataInicio.value : '-') + ' ate ' + (dataFim && dataFim.value ? dataFim.value : '-')],
-        ['Destinos', destinos.length ? destinos.map((d) => d.cidade_nome).join(', ') : '-'],
-        ['Efetivo', (quantidadeServidores && quantidadeServidores.value) ? quantidadeServidores.value : '0'],
-        ['Atividades', String(countAtividadesSelecionadas())]
-      ];
-
-      const financeRows = [
-        ['Diarias', (diariasQuantidadeInput && diariasQuantidadeInput.value) || '-'],
-        ['Valor unitario', (diariasUnitarioInput && diariasUnitarioInput.value) || '-'],
-        ['Valor total', (diariasTotalInput && diariasTotalInput.value) || '-'],
-        ['Extenso', (document.getElementById('{{ form.diarias_valor_extenso.id_for_label }}') || {}).value || '-']
-      ];
-
-      reviewMain.innerHTML = mainRows.map((row) => (
-        '<div class="pt2-review-row"><span class="pt2-review-label">' + row[0] + '</span><span class="pt2-review-value">' + row[1] + '</span></div>'
-      )).join('');
-
-      reviewFinance.innerHTML = financeRows.map((row) => (
-        '<div class="pt2-review-row"><span class="pt2-review-label">' + row[0] + '</span><span class="pt2-review-value">' + row[1] + '</span></div>'
-      )).join('');
-    }
-
-    document.getElementById('btn-add-destino').addEventListener('click', async () => {
-      await addDestinoRow({ estado_id: '', cidade_id: '' });
-      collectDestinos();
+          if (!r.ok) return;
+          const data = await r.json();
+          const results = Array.isArray(data.results) ? data.results : [];
+          coordResults.innerHTML = '';
+          if (!results.length) { coordResults.classList.add('d-none'); return; }
+          results.forEach((item) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'list-group-item list-group-item-action py-2 px-3';
+            btn.innerHTML =
+              '<strong class="d-block" style="font-size:.88rem">' + item.nome + '</strong>' +
+              (item.cargo ? '<span class="text-muted" style="font-size:.78rem">' + item.cargo + (item.unidade ? ' — ' + item.unidade : '') + '</span>' : '');
+            btn.addEventListener('click', () => {
+              addCoord(item.id, item);
+              coordInput.value = '';
+              coordResults.classList.add('d-none');
+            });
+            coordResults.appendChild(btn);
+          });
+          coordResults.classList.remove('d-none');
+        } catch (_) {}
+      }, 250);
     });
 
-    destinosContainer.addEventListener('change', async (event) => {
-      const row = event.target.closest('.pt-dest-row');
-      if (!row) return;
-      if (event.target.classList.contains('destino-estado')) {
-        const cidadeSel = row.querySelector('.destino-cidade');
-        await mountCityOptions(cidadeSel, event.target.value, '');
-      }
-      collectDestinos();
+    coordInput.addEventListener('blur', () => {
+      setTimeout(() => { if (coordResults) coordResults.classList.add('d-none'); }, 200);
     });
+  }
 
-    destinosContainer.addEventListener('click', (event) => {
-      const btn = event.target.closest('.btn-rem-destino');
-      if (!btn) return;
-      const rows = destinosContainer.querySelectorAll('.pt-dest-row');
-      if (rows.length <= 1) return;
-      btn.closest('.pt-dest-row').remove();
-      collectDestinos();
-      refreshSelectPickers(destinosContainer);
-    });
-
-    if (addEfetivoButton) {
-      addEfetivoButton.addEventListener('click', addEfetivoRow);
-    }
-
-    efetivoRows.addEventListener('change', syncEfetivoTotal);
-    efetivoRows.addEventListener('input', syncEfetivoTotal);
-
-    if (eventSelect) {
-      eventSelect.addEventListener('change', () => {
-        filterByEvent(oficioSelect);
-        filterByEvent(oficiosSelect);
-        filterByEvent(roteiroSelect);
-        renderReview();
-      });
+  // ── Reactive listeners ──
+  if (eventSelect) {
+    eventSelect.addEventListener('change', () => {
       filterByEvent(oficioSelect);
       filterByEvent(oficiosSelect);
       filterByEvent(roteiroSelect);
-    }
-
-    if (solicitanteSelect) {
-      solicitanteSelect.addEventListener('change', () => {
-        toggleSolicitanteOutros();
-        renderReview();
-      });
-    }
-
-    if (horarioPadrao) {
-      horarioPadrao.addEventListener('change', toggleHorarioManual);
-    }
-
-    if (dataUnica) {
-      dataUnica.addEventListener('change', toggleDataFim);
-    }
-
-    if (dataInicio) {
-      dataInicio.addEventListener('change', () => {
-        if (dataUnica && dataUnica.checked && dataFim) {
-          dataFim.value = dataInicio.value;
-        }
-        updateDiariasLive();
-        renderReview();
-      });
-    }
-
-    if (dataFim) {
-      dataFim.addEventListener('change', () => {
-        updateDiariasLive();
-        renderReview();
-      });
-    }
-
-    [diariasQuantidadeInput, diariasUnitarioInput, diariasTotalInput].forEach((el) => {
-      if (!el) return;
-      el.addEventListener('input', () => {
-        updateDiariasLive();
-        renderReview();
-      });
-      el.addEventListener('change', () => {
-        updateDiariasLive();
-        renderReview();
-      });
+      renderReview();
     });
+    filterByEvent(oficioSelect);
+    filterByEvent(oficiosSelect);
+    filterByEvent(roteiroSelect);
+  }
 
-    document.querySelectorAll('input[name="atividades_codigos"]').forEach((checkbox) => {
-      checkbox.addEventListener('change', renderReview);
-    });
+  if (solicitanteSelect) solicitanteSelect.addEventListener('change', () => { toggleSolicitanteOutros(); renderReview(); });
+  if (horarioPadrao) horarioPadrao.addEventListener('change', toggleHorarioManual);
+  if (dataUnica) dataUnica.addEventListener('change', toggleDataFim);
 
-    form.addEventListener('submit', () => {
-      collectDestinos();
-      reindexEfetivoRows();
-      syncEfetivoTotal();
-    });
-
-    if (quantidadeServidores) {
-      quantidadeServidores.readOnly = true;
-    }
-
-    toggleSolicitanteOutros();
-    toggleHorarioManual();
-    toggleDataFim();
-    bootstrapDestinos().then(() => {
-      syncEfetivoTotal();
+  if (dataInicio) {
+    dataInicio.addEventListener('change', () => {
+      if (dataUnica && dataUnica.checked && dataFim) dataFim.value = dataInicio.value;
       updateDiariasLive();
       renderReview();
-      refreshSelectPickers(form);
     });
-    showStep(0);
-  })();
+  }
+  if (dataFim) dataFim.addEventListener('change', () => { updateDiariasLive(); renderReview(); });
+
+  [diariasQtd, diariasUnit, diariasTotal].forEach((el) => {
+    if (!el) return;
+    el.addEventListener('input',  () => { updateDiariasLive(); renderReview(); });
+    el.addEventListener('change', () => { updateDiariasLive(); renderReview(); });
+  });
+
+  document.querySelectorAll('input[name="atividades_codigos"]').forEach((cb) => {
+    cb.addEventListener('change', renderReview);
+  });
+
+  form.addEventListener('submit', () => {
+    collectDestinos();
+    reindexEfetivoRows();
+    syncEfetivoTotal();
+  });
+
+  // ── Init ──
+  if (qtdServidores) qtdServidores.readOnly = true;
+  toggleSolicitanteOutros();
+  toggleHorarioManual();
+  toggleDataFim();
+
+  bootstrapDestinos().then(() => {
+    syncEfetivoTotal();
+    updateDiariasLive();
+    renderReview();
+    refreshPickers(form);
+  });
+
+  showStep(0);
+})();
 </script>
 {% endblock %}

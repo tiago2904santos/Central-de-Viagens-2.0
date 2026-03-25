@@ -143,6 +143,27 @@ def _get_coordenador_operacional_create_url():
         return ''
 
 
+@require_http_methods(['GET'])
+def plano_trabalho_coordenadores_api(request):
+    """API de busca de coordenadores operacionais para o Plano de Trabalho."""
+    q = (request.GET.get('q') or '').strip()
+    if not q:
+        return JsonResponse({'results': []})
+    from .models import CoordenadorOperacional
+    qs = CoordenadorOperacional.objects.filter(ativo=True)
+    qs = qs.filter(Q(nome__icontains=q) | Q(cargo__icontains=q) | Q(unidade__icontains=q))
+    results = []
+    for coord in qs.order_by('ordem', 'nome')[:20]:
+        results.append({
+            'id': coord.pk,
+            'nome': coord.nome,
+            'cargo': coord.cargo or '',
+            'unidade': coord.unidade or '',
+            'display': f'{coord.cargo} — {coord.nome}' if coord.cargo else coord.nome,
+        })
+    return JsonResponse({'results': results})
+
+
 def _build_plano_trabalho_efetivo_formset(request, *, instance=None):
     has_payload = request.method == 'POST' and any(k.startswith('efetivo-') for k in request.POST.keys())
     default_cargo = _get_default_pt_cargo()
@@ -2040,6 +2061,8 @@ def plano_trabalho_novo(request):
             'plano_trabalho_atividades_catalogo': ATIVIDADES_CATALOGO,
             'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
+            'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
+            'selected_coordenadores_payload': [],
             'hide_page_header': True,
         },
     )
@@ -2087,6 +2110,11 @@ def plano_trabalho_editar(request, pk):
             'plano_trabalho_atividades_catalogo': ATIVIDADES_CATALOGO,
             'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
+            'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
+            'selected_coordenadores_payload': [
+                {'id': c.pk, 'nome': c.nome, 'cargo': c.cargo or '', 'display': f'{c.cargo} — {c.nome}' if c.cargo else c.nome}
+                for c in obj.coordenadores.filter(ativo=True)
+            ],
             'hide_page_header': True,
         },
     )

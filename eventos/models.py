@@ -298,6 +298,12 @@ class PlanoTrabalho(models.Model):
         verbose_name='Coordenador administrativo',
     )
     coordenador_municipal = models.CharField('Coordenador municipal', max_length=200, blank=True, default='')
+    coordenadores = models.ManyToManyField(
+        'CoordenadorOperacional',
+        blank=True,
+        related_name='planos_trabalho_coordenando',
+        verbose_name='Coordenadores',
+    )
     destinos_json = models.JSONField('Destinos estruturados', blank=True, default=list)
     evento_data_unica = models.BooleanField('Evento em um único dia', default=False)
     evento_data_inicio = models.DateField('Data inicial do evento', null=True, blank=True)
