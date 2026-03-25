@@ -19,7 +19,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Evento</label>
-                    <select name="evento_id" class="form-select form-select-sm" data-list-autosubmit>
+                    <select name="evento_id" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for evento in eventos_choices %}
                         <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Oficio</label>
-                    <select name="oficio_id" class="form-select form-select-sm" data-list-autosubmit>
+                    <select name="oficio_id" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for oficio in oficios_choices %}
                         <option value="{{ oficio.pk }}" {% if filters.oficio_id == oficio.pk|stringformat:"s" %}selected{% endif %}>{{ oficio.numero_formatado }}</option>
@@ -37,7 +37,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Modelo</label>
-                    <select name="modo_geracao" class="form-select form-select-sm" data-list-autosubmit>
+                    <select name="modo_geracao" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for value, label in modo_choices %}
                         <option value="{{ value }}" {% if filters.modo_geracao == value %}selected{% endif %}>{{ label }}</option>
@@ -46,7 +46,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-1">
                     <label class="form-label small text-muted">Status</label>
-                    <select name="status" class="form-select form-select-sm" data-list-autosubmit>
+                    <select name="status" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for value, label in status_choices %}
                         <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
@@ -55,7 +55,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-1">
                     <label class="form-label small text-muted">Ordenar</label>
-                    <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
+                    <select name="order_by" data-list-autosubmit>
                         {% for value, label in order_by_choices %}
                         <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -63,7 +63,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-1">
                     <label class="form-label small text-muted">Direção</label>
-                    <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
+                    <select name="order_dir" data-list-autosubmit>
                         {% for value, label in order_dir_choices %}
                         <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -95,8 +95,8 @@
                     </div>
                 </div>
                 <div class="termo-list-card__actions termo-list-card__actions--top">
-                    <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" data-direct-download="true"><i class="bi bi-filetype-docx"></i><span>DOCX</span></a>
-                    <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf" data-direct-download="true"><i class="bi bi-filetype-pdf"></i><span>PDF</span></a>
+                    <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" data-direct-download="true"><i class="bi bi-filetype-docx"></i></a>
+                    <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf" data-direct-download="true"><i class="bi bi-filetype-pdf"></i></a>
                 </div>
             </div>
 

@@ -78,7 +78,7 @@
                             <div class="destino-row row g-2 mb-2 align-items-end">
                                 <div class="col-md-4">
                                     <label class="form-label small">Estado</label>
-                                    <select name="destino_estado_{{ forloop.counter0 }}" class="form-select form-select-sm destino-estado">
+                                    <select name="destino_estado_{{ forloop.counter0 }}" class="destino-estado">
                                         {% for e in estados %}
                                         <option value="{{ e.pk }}" {% if d.estado_id == e.pk %}selected{% endif %}>{{ e.nome }} ({{ e.sigla }})</option>
                                         {% endfor %}
@@ -86,7 +86,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small">Cidade</label>
-                                    <select name="destino_cidade_{{ forloop.counter0 }}" class="form-select form-select-sm destino-cidade" data-estado-id="{{ d.estado_id|default:'' }}" data-cidade-id="{{ d.cidade_id|default:'' }}">
+                                    <select name="destino_cidade_{{ forloop.counter0 }}" class="destino-cidade" data-estado-id="{{ d.estado_id|default:'' }}" data-cidade-id="{{ d.cidade_id|default:'' }}">
                                         <option value="">---------</option>
                                         {% if d.cidade %}<option value="{{ d.cidade_id }}" selected>{{ d.cidade.nome }}</option>{% endif %}
                                     </select>
@@ -217,8 +217,8 @@
             var id = e.id || e.pk;
             optionsEstados += '<option value="' + id + '"' + (id == estadoId ? ' selected' : '') + '>' + (e.nome || e.sigla) + '</option>';
         });
-        row.innerHTML = '<div class="col-md-4"><label class="form-label small">Estado</label><select name="destino_estado_' + idx + '" class="form-select form-select-sm destino-estado">' + optionsEstados + '</select></div>' +
-            '<div class="col-md-4"><label class="form-label small">Cidade</label><select name="destino_cidade_' + idx + '" class="form-select form-select-sm destino-cidade" data-estado-id="' + (estadoId || '') + '"><option value="">---------</option></select></div>' +
+        row.innerHTML = '<div class="col-md-4"><label class="form-label small">Estado</label><select name="destino_estado_' + idx + '" class="destino-estado">' + optionsEstados + '</select></div>' +
+            '<div class="col-md-4"><label class="form-label small">Cidade</label><select name="destino_cidade_' + idx + '" class="destino-cidade" data-estado-id="' + (estadoId || '') + '"><option value="">---------</option></select></div>' +
             '<div class="col-md-2"><button type="button" class="btn btn-outline-danger btn-sm btn-remover-destino">Remover</button></div>';
         container.appendChild(row);
         const estadoSelect = row.querySelector('.destino-estado');

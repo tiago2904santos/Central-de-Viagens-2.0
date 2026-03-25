@@ -18,7 +18,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-2">
                     <label class="form-label small text-muted">Status</label>
-                    <select name="status" class="form-select form-select-sm" data-list-autosubmit>
+                    <select name="status" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for valor, label in status_choices %}
                         <option value="{{ valor }}" {% if form_filter.status == valor %}selected{% endif %}>{{ label }}</option>
@@ -27,7 +27,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-xl-3">
                     <label class="form-label small text-muted">Tipo de demanda</label>
-                    <select name="tipo_id" class="form-select form-select-sm" data-list-autosubmit>
+                    <select name="tipo_id" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for t in tipos_demanda_list %}
                         <option value="{{ t.pk }}" {% if form_filter.tipo_id == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nome }}</option>
@@ -38,7 +38,7 @@
                     <div class="system-sort-row">
                         <div>
                             <label class="form-label small text-muted">Ordenar por</label>
-                            <select name="order_by" class="form-select form-select-sm" data-list-autosubmit>
+                            <select name="order_by" data-list-autosubmit>
                                 {% for key, label in order_by_choices %}
                                 <option value="{{ key }}" {% if form_filter.order_by == key %}selected{% endif %}>{{ label }}</option>
                                 {% endfor %}
@@ -46,7 +46,7 @@
                         </div>
                         <div>
                             <label class="form-label small text-muted">Direção</label>
-                            <select name="order_dir" class="form-select form-select-sm" data-list-autosubmit>
+                            <select name="order_dir" data-list-autosubmit>
                                 {% for key, label in order_dir_choices %}
                                 <option value="{{ key }}" {% if form_filter.order_dir == key %}selected{% endif %}>{{ label }}</option>
                                 {% endfor %}

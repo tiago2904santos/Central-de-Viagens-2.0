@@ -108,7 +108,7 @@ PlanoTrabalhoEfetivoFormSet = inlineformset_factory(
     extra=1,
     can_delete=True,
     widgets={
-        'cargo': forms.Select(attrs={'class': 'form-select'}),
+        'cargo': forms.Select(),
         'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
     },
 )

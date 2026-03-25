@@ -38,7 +38,7 @@
   .pt-k { font-size: .68rem; letter-spacing: .07em; text-transform: uppercase; font-weight: 800; color: #60758a; margin-bottom: .23rem; }
   .pt-system { border: 1px dashed #c5d4e2; border-radius: 12px; background: #f8fbff; padding: .5rem .65rem; }
   .pt-system .v { color: #1b3d5d; font-weight: 800; }
-  .pt-main .form-control, .pt-main .form-select { min-height: 41px; border-radius: 10px; }
+  .pt-main .form-control { min-height: 41px; border-radius: 10px; }
   .pt-main textarea.form-control { min-height: 95px; }
   .pt-soft { font-size: .78rem; color: #637b90; margin: .2rem 0 0; }
   .pt-linkage details { border: 1px solid #d4e0ec; border-radius: 12px; background: #f8fbff; padding: .45rem .65rem; }
@@ -142,7 +142,7 @@
               </div>
               <div class="pt-col-12">
                 <label class="pt-k" for="{{ form.oficios_relacionados.id_for_label }}">Oficios relacionados (multiplos)</label>
-                <select class="form-select" id="{{ form.oficios_relacionados.id_for_label }}" name="oficios_relacionados" multiple size="5">
+                <select id="{{ form.oficios_relacionados.id_for_label }}" name="oficios_relacionados" multiple size="5">
                   {% with selected=form.oficios_relacionados.value %}
                   {% for oficio in form.fields.oficios_relacionados.queryset %}
                   <option value="{{ oficio.pk }}" data-event-id="{{ oficio.evento_id|default:'' }}" {% if selected and oficio.pk|stringformat:'s' in selected %}selected{% endif %}>{{ oficio.numero_formatado|default:'#' }} - {{ oficio.motivo|truncatechars:90 }}</option>
@@ -430,11 +430,11 @@
         <div class="row g-2 align-items-end">
           <div class="col-md-5">
             <label class="pt-k">Estado</label>
-            <select class="form-select destino-estado"><option value="">Selecione...</option>{% for estado in estados_choices %}<option value="{{ estado.pk }}">{{ estado.nome }} ({{ estado.sigla }})</option>{% endfor %}</select>
+            <select class="destino-estado"><option value="">Selecione...</option>{% for estado in estados_choices %}<option value="{{ estado.pk }}">{{ estado.nome }} ({{ estado.sigla }})</option>{% endfor %}</select>
           </div>
           <div class="col-md-5">
             <label class="pt-k">Cidade</label>
-            <select class="form-select destino-cidade"><option value="">Selecione...</option></select>
+            <select class="destino-cidade"><option value="">Selecione...</option></select>
           </div>
           <div class="col-md-2">
             <button type="button" class="btn btn-outline-danger w-100 btn-rem-destino">Remover</button>

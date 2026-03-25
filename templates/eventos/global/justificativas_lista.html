@@ -20,7 +20,7 @@
                 </div>
                 <div class="col-12 col-md-4 col-lg-3">
                     <label class="form-label small text-muted">Evento</label>
-                    <select name="evento_id" class="form-select form-select-sm" data-list-autosubmit>
+                    <select name="evento_id" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for evento in eventos_choices %}
                         <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
@@ -33,7 +33,7 @@
                 </div>
                 <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label small text-muted">Status</label>
-                    <select name="status" class="form-select form-select-sm" data-list-autosubmit>
+                    <select name="status" data-list-autosubmit>
                         <option value="">Todos</option>
                         {% for value, label in status_choices %}
                         <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>

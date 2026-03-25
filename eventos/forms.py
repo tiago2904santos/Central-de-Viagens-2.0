@@ -38,7 +38,41 @@ from core.utils.masks import format_placa, format_protocolo, normalize_placa
 from .utils import buscar_veiculo_finalizado_por_placa, mapear_tipo_viatura_para_oficio, normalize_protocolo
 
 
+LEGACY_SELECT_WIDGET_CLASSES = {
+    'custom-select',
+    'cv-select-base',
+    'form-select',
+    'form-select-sm',
+    'oficios-sort-select',
+    'termo-context-select',
+}
+
+
+def _sanitize_select_widget(widget):
+    if not isinstance(widget, forms.Select):
+        return
+
+    classes = [
+        token
+        for token in str(widget.attrs.get('class', '')).split()
+        if token not in LEGACY_SELECT_WIDGET_CLASSES
+    ]
+    if classes:
+        widget.attrs['class'] = ' '.join(classes)
+    else:
+        widget.attrs.pop('class', None)
+
+    widget.attrs.pop('data-searchable-select', None)
+    widget.attrs.pop('data-searchable-placeholder', None)
+    widget.attrs.pop('style', None)
+
+
 class FormComErroInvalidMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in getattr(self, 'fields', {}).values():
+            _sanitize_select_widget(field.widget)
+
     def full_clean(self):
         super().full_clean()
         for name in self.errors:
@@ -58,15 +92,15 @@ class EventoForm(FormComErroInvalidMixin, forms.ModelForm):
         ]
         widgets = {
             'titulo': forms.TextInput(attrs={'class': 'form-control'}),
-            'tipo_demanda': forms.Select(attrs={'class': 'form-select'}),
+            'tipo_demanda': forms.Select(attrs={'class': ''}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'data_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'estado_principal': forms.Select(attrs={'class': 'form-select', 'data-cidades-target': 'cidade_principal'}),
-            'cidade_principal': forms.Select(attrs={'class': 'form-select'}),
-            'cidade_base': forms.Select(attrs={'class': 'form-select'}),
+            'estado_principal': forms.Select(attrs={'class': '', 'data-cidades-target': 'cidade_principal'}),
+            'cidade_principal': forms.Select(attrs={'class': ''}),
+            'cidade_base': forms.Select(attrs={'class': ''}),
             'tem_convite_ou_oficio_evento': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
+            'status': forms.Select(attrs={'class': ''}),
         }
 
     def clean(self):
@@ -165,13 +199,13 @@ class CoordenadorOperacionalForm(FormComErroInvalidMixin, forms.ModelForm):
         label='Cargo',
         queryset=Cargo.objects.none(),
         required=False,
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     lotacao_base = forms.ModelChoiceField(
         label='Lotação',
         queryset=UnidadeLotacao.objects.none(),
         required=False,
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
 
     class Meta:
@@ -243,7 +277,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
     solicitante_escolha = forms.ChoiceField(
         label='Solicitante',
         required=False,
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     salvar_solicitante_outros = forms.BooleanField(
         label='Salvar este solicitante no gerenciador',
@@ -253,7 +287,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
     horario_atendimento_padrao = forms.ChoiceField(
         label='Horário de atendimento',
         required=False,
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     horario_atendimento_manual = forms.CharField(
         label='Horário de atendimento (manual)',
@@ -264,7 +298,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         label='Ofícios relacionados',
         queryset=Oficio.objects.none(),
         required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': 6}),
+        widget=forms.SelectMultiple(attrs={'class': '', 'size': 6}),
     )
     destinos_payload = forms.CharField(required=False, widget=forms.HiddenInput())
     class Meta:
@@ -292,12 +326,12 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         ]
         widgets = {
             'data_criacao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'evento': forms.Select(attrs={'class': 'form-select'}),
-            'oficio': forms.Select(attrs={'class': 'form-select'}),
-            'roteiro': forms.Select(attrs={'class': 'form-select'}),
+            'evento': forms.Select(attrs={'class': ''}),
+            'oficio': forms.Select(attrs={'class': ''}),
+            'roteiro': forms.Select(attrs={'class': ''}),
             'solicitante_outros': forms.TextInput(attrs={'class': 'form-control'}),
-            'coordenador_operacional': forms.Select(attrs={'class': 'form-select'}),
-            'coordenador_administrativo': forms.Select(attrs={'class': 'form-select'}),
+            'coordenador_operacional': forms.Select(attrs={'class': ''}),
+            'coordenador_administrativo': forms.Select(attrs={'class': ''}),
             'destinos_json': forms.HiddenInput(),
             'evento_data_unica': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'evento_data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -769,9 +803,9 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
             'numero': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'ano': forms.NumberInput(attrs={'class': 'form-control', 'min': 2000}),
             'data_criacao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'evento': forms.Select(attrs={'class': 'form-select'}),
-            'oficio': forms.Select(attrs={'class': 'form-select'}),
+            'status': forms.Select(attrs={'class': ''}),
+            'evento': forms.Select(attrs={'class': ''}),
+            'oficio': forms.Select(attrs={'class': ''}),
             'finalidade': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'responsaveis': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'designacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -807,7 +841,7 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
         required=False,
         widget=forms.SelectMultiple(
             attrs={
-                'class': 'form-select termo-context-select',
+                'class': '',
                 'size': 6,
                 'data-preview-source': 'oficios',
             }
@@ -826,8 +860,8 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
             'data_evento_fim',
         ]
         widgets = {
-            'evento': forms.Select(attrs={'class': 'form-select', 'data-preview-source': 'evento'}),
-            'roteiro': forms.Select(attrs={'class': 'form-select', 'data-preview-source': 'roteiro'}),
+            'evento': forms.Select(attrs={'class': '', 'data-preview-source': 'evento'}),
+            'roteiro': forms.Select(attrs={'class': '', 'data-preview-source': 'roteiro'}),
             'destino': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Curitiba/PR, Londrina/PR...'}),
             'data_evento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'data_evento_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -971,7 +1005,7 @@ class TermoAutorizacaoEdicaoForm(FormComErroInvalidMixin, forms.ModelForm):
     oficios = forms.ModelMultipleChoiceField(
         queryset=Oficio.objects.none(),
         required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select termo-context-select', 'size': 6}),
+        widget=forms.SelectMultiple(attrs={'class': '', 'size': 6}),
     )
 
     class Meta:
@@ -984,8 +1018,8 @@ class TermoAutorizacaoEdicaoForm(FormComErroInvalidMixin, forms.ModelForm):
             'data_evento_fim',
         ]
         widgets = {
-            'evento': forms.Select(attrs={'class': 'form-select'}),
-            'roteiro': forms.Select(attrs={'class': 'form-select'}),
+            'evento': forms.Select(attrs={'class': ''}),
+            'roteiro': forms.Select(attrs={'class': ''}),
             'destino': forms.TextInput(attrs={'class': 'form-control'}),
             'data_evento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'data_evento_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -1074,7 +1108,7 @@ class OficioJustificativaForm(FormComErroInvalidMixin, forms.Form):
         required=False,
         label='Modelo de justificativa',
         empty_label='---------',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     justificativa_texto = forms.CharField(
         required=False,
@@ -1127,8 +1161,8 @@ class JustificativaForm(FormComErroInvalidMixin, forms.ModelForm):
         model = Justificativa
         fields = ['oficio', 'modelo', 'texto']
         widgets = {
-            'oficio': forms.Select(attrs={'class': 'form-select'}),
-            'modelo': forms.Select(attrs={'class': 'form-select'}),
+            'oficio': forms.Select(attrs={'class': ''}),
+            'modelo': forms.Select(attrs={'class': ''}),
             'texto': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
         }
 
@@ -1181,8 +1215,8 @@ class RoteiroEventoForm(FormComErroInvalidMixin, forms.ModelForm):
             'observacoes',
         ]
         widgets = {
-            'origem_estado': forms.Select(attrs={'class': 'form-select'}),
-            'origem_cidade': forms.Select(attrs={'class': 'form-select'}),
+            'origem_estado': forms.Select(attrs={'class': ''}),
+            'origem_cidade': forms.Select(attrs={'class': ''}),
             'saida_dt': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
             'retorno_saida_dt': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
@@ -1213,14 +1247,14 @@ class EventoEtapa3Form(FormComErroInvalidMixin, forms.Form):
         required=True,
         empty_label='---------',
         label='Veículo',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     motorista = forms.ModelChoiceField(
         queryset=Viajante.objects.none(),
         required=True,
         empty_label='---------',
         label='Motorista',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     viajantes_participantes = forms.ModelMultipleChoiceField(
         queryset=Viajante.objects.none(),
@@ -1290,7 +1324,7 @@ class OficioStep1Form(FormComErroInvalidMixin, forms.Form):
         required=False,
         label='Modelo de motivo',
         empty_label='---------',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     motivo = forms.CharField(
         required=False,
@@ -1301,7 +1335,7 @@ class OficioStep1Form(FormComErroInvalidMixin, forms.Form):
         required=True,
         choices=Oficio.CUSTEIO_CHOICES,
         label='Custeio',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     nome_instituicao_custeio = forms.CharField(
         required=False, max_length=200, label='Nome instituição de custeio',
@@ -1385,14 +1419,14 @@ class LegacyOficioStep2Form(FormComErroInvalidMixin, forms.Form):
         required=False,
         choices=[('', '---------')] + list(Oficio.TIPO_VIATURA_CHOICES),
         label='Tipo viatura',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     motorista_viajante = forms.ModelChoiceField(
         queryset=Viajante.objects.none(),
         required=False,
         empty_label='---------',
         label='Motorista (viajante)',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     motorista_nome = forms.CharField(
         required=False, max_length=120, label='Motorista (nome manual)',
@@ -1491,7 +1525,7 @@ class OficioStep2Form(FormComErroInvalidMixin, forms.Form):
         required=False,
         choices=[('', '---------')] + list(Oficio.TIPO_VIATURA_CHOICES),
         label='Tipo viatura',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     porte_transporte_armas = forms.TypedChoiceField(
         required=False,
@@ -1499,7 +1533,7 @@ class OficioStep2Form(FormComErroInvalidMixin, forms.Form):
         choices=SIM_NAO_CHOICES,
         coerce=lambda value: str(value) == '1',
         empty_value=True,
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': ''}),
     )
     motorista_viajante = forms.ChoiceField(
         required=False,

@@ -14,24 +14,24 @@
     <div class="row g-2">
       <div class="col-md-4"><input class="form-control" type="text" name="q" placeholder="Buscar" value="{{ filters.q }}" data-list-autosubmit></div>
       <div class="col-md-3">
-        <select class="form-select" name="evento_id" data-list-autosubmit>
+        <select name="evento_id" data-list-autosubmit>
           <option value="">Evento (todos)</option>
           {% for e in eventos_choices %}<option value="{{ e.pk }}" {% if filters.evento_id == e.pk|stringformat:'s' %}selected{% endif %}>{{ e.titulo|default:'(sem título)' }}</option>{% endfor %}
         </select>
       </div>
       <div class="col-md-3">
-        <select class="form-select" name="status" data-list-autosubmit>
+        <select name="status" data-list-autosubmit>
           <option value="">Status (todos)</option>
           {% for value,label in status_choices %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
         </select>
       </div>
       <div class="col-md-2">
-        <select class="form-select" name="order_by" data-list-autosubmit>
+        <select name="order_by" data-list-autosubmit>
           {% for key, label in order_by_choices %}<option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
         </select>
       </div>
       <div class="col-md-2">
-        <select class="form-select" name="order_dir" data-list-autosubmit>
+        <select name="order_dir" data-list-autosubmit>
           {% for key, label in order_dir_choices %}<option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
         </select>
       </div>

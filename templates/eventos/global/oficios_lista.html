@@ -49,13 +49,13 @@
                         data-list-autosubmit
                     >
 
-                    <select class="form-select oficios-sort-select" name="order_by" data-list-autosubmit>
+                    <select name="order_by" data-list-autosubmit>
                         {% for key, label in order_by_choices %}
                         <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>Ordenar por: {{ label }}</option>
                         {% endfor %}
                     </select>
 
-                    <select class="form-select oficios-sort-select" name="order_dir" data-list-autosubmit>
+                    <select name="order_dir" data-list-autosubmit>
                         {% for key, label in order_dir_choices %}
                         <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -109,7 +109,7 @@
                 </div>
 
                 <div class="oficios-filter-main-row oficios-filter-main-row--dates">
-                    <select class="form-select oficios-sort-select" name="date_scope" data-list-autosubmit>
+                    <select name="date_scope" data-list-autosubmit>
                         {% for key, label in date_scope_choices %}
                         <option value="{{ key }}" {% if filters.date_scope == key %}selected{% endif %}>Periodo: {{ label }}</option>
                         {% endfor %}
@@ -299,10 +299,6 @@
                                     <i class="bi bi-box-arrow-up-right"></i>
                                     <span>Abrir</span>
                                 </a>
-                                <a href="{{ oficio.justificativa.edit_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                                    <i class="bi bi-pencil-square"></i>
-                                    <span>Editar</span>
-                                </a>
                                 {% for action in oficio.justificativa.downloads %}
                                 {% if action.available %}
                                 <a
@@ -311,7 +307,6 @@
                                     data-direct-download="true"
                                 >
                                     <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
-                                    <span>{{ action.label }}</span>
                                 </a>
                                 {% endif %}
                                 {% endfor %}
@@ -343,13 +338,11 @@
                                             {% if termo.download_docx_url %}
                                             <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" data-direct-download="true">
                                                 <i class="bi bi-filetype-docx"></i>
-                                                <span>DOCX</span>
                                             </a>
                                             {% endif %}
                                             {% if termo.download_pdf_url %}
                                             <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf" data-direct-download="true">
                                                 <i class="bi bi-filetype-pdf"></i>
-                                                <span>PDF</span>
                                             </a>
                                             {% endif %}
                                         </div>

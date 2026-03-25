@@ -79,7 +79,7 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label" for="id_sede_estado">2. UF (Sede)</label>
-                  <select name="sede_estado" id="id_sede_estado" class="form-select">
+                  <select name="sede_estado" id="id_sede_estado" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">
                     <option value="">---------</option>
                     {% for estado in estados %}
                     <option value="{{ estado.pk }}" {% if sede_estado_id == estado.pk %}selected{% endif %}>{{ estado.nome }} ({{ estado.sigla }})</option>
@@ -88,7 +88,7 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="id_sede_cidade">Cidade (Sede)</label>
-                  <select name="sede_cidade" id="id_sede_cidade" class="form-select">
+                  <select name="sede_cidade" id="id_sede_cidade" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade...">
                     <option value="">---------</option>
                     {% for cidade in sede_cidades_qs %}
                     <option value="{{ cidade.pk }}" {% if sede_cidade_id == cidade.pk %}selected{% endif %}>{{ cidade.nome }}</option>
@@ -300,6 +300,12 @@
     if (autosave) autosave.schedule();
   }
 
+  function refreshSelectPickers(root) {
+    if (window.OficioWizard && typeof window.OficioWizard.refreshSelectPickers === 'function') {
+      window.OficioWizard.refreshSelectPickers(root || form);
+    }
+  }
+
   function cidadesUrl(id) { return apiCidades.replace(/\/0\/?$/, '/' + id + '/'); }
   function pad(v) { return v < 10 ? '0' + v : String(v); }
   function hhmm(min) { min = parseInt(min || 0, 10) || 0; if (!min) return '-'; return pad(Math.floor(min / 60)) + ':' + pad(min % 60); }
@@ -344,7 +350,12 @@
   function selectedText(el) { return el && el.selectedIndex >= 0 && el.options[el.selectedIndex] ? String(el.options[el.selectedIndex].text || '').trim() : ''; }
 
   function loadCities(select, estadoId, selectedId) {
-    if (!estadoId) { select.innerHTML = '<option value="">---------</option>'; select.disabled = true; return Promise.resolve(); }
+    if (!estadoId) {
+      select.innerHTML = '<option value="">---------</option>';
+      select.disabled = true;
+      refreshSelectPickers(select);
+      return Promise.resolve();
+    }
     select.disabled = true;
     return fetch(cidadesUrl(estadoId))
       .then((r) => r.json())
@@ -359,7 +370,10 @@
           select.appendChild(option);
         });
       })
-      .finally(() => { select.disabled = false; });
+      .finally(() => {
+        select.disabled = false;
+        refreshSelectPickers(select);
+      });
   }
 
   function currentTrechosMap() {
@@ -685,16 +699,17 @@
       '</div>' +
       '<div class="col-md-3">' +
         '<label class="form-label small">UF</label>' +
-        '<select name="destino_estado_' + idx + '" class="form-select destino-estado">' + estadoOptionsMarkup(selectedEstadoId) + '</select>' +
+        '<select name="destino_estado_' + idx + '" class="destino-estado" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">' + estadoOptionsMarkup(selectedEstadoId) + '</select>' +
       '</div>' +
       '<div class="col-md-6">' +
         '<label class="form-label small">Cidade</label>' +
-        '<select name="destino_cidade_' + idx + '" class="form-select destino-cidade"><option value="">---------</option></select>' +
+        '<select name="destino_cidade_' + idx + '" class="destino-cidade" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..."><option value="">---------</option></select>' +
       '</div>' +
       '<div class="col-md-2 destino-remove-col">' +
         '<button type="button" class="btn btn-outline-danger btn-remover-destino">Remover</button>' +
       '</div>';
     $('destinos-container').appendChild(row);
+    refreshSelectPickers(row);
     const estadoSelect = row.querySelector('.destino-estado');
     const cidadeSelect = row.querySelector('.destino-cidade');
     if (selectedEstadoId) {

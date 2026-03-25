@@ -7,11 +7,11 @@
 {% block form_header_icon %}bi-people{% endblock %}
 
 {% block form_header_subtitle %}
-<p class="text-muted mb-0">Padrao unificado para dados de servidores e viajantes com mascaras preservadas.</p>
+<p class="text-muted mb-0">Padrão unificado para dados de servidores e viajantes com máscaras preservadas.</p>
 {% endblock %}
 
 {% block form_card_subtitle %}
-<p class="card-header-form-subtitle">Mantenha identificacao pessoal, cargo e lotacao no mesmo padrão visual premium.</p>
+<p class="card-header-form-subtitle">Mantenha identificação pessoal, cargo e lotação no mesmo padrão visual premium.</p>
 {% endblock %}
 
 {% block form_page_notice %}
@@ -45,7 +45,7 @@
         <label for="id_unidade_lotacao" class="form-label">{{ form.unidade_lotacao.label }}</label>
         <div class="d-flex gap-2 align-items-start">
             <div class="flex-grow-1">{{ form.unidade_lotacao }}</div>
-            <button type="submit" formaction="{% url 'cadastros:viajante-rascunho-ir-unidades' %}" class="btn btn-outline-secondary btn-sm">Gerenciar Unidades de Lotacao</button>
+            <button type="submit" formaction="{% url 'cadastros:viajante-rascunho-ir-unidades' %}" class="btn btn-outline-secondary btn-sm">Gerenciar Unidades de Lotação</button>
         </div>
         {% if form.unidade_lotacao.errors %}<div class="invalid-feedback d-block">{{ form.unidade_lotacao.errors.0 }}</div>{% endif %}
     </div>

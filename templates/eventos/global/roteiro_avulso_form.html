@@ -41,7 +41,7 @@
                     </div>
                     <div class="col-12 col-md-6">
                         <label for="id_origem_cidade" class="form-label">Cidade (Sede)</label>
-                        <select name="origem_cidade" id="id_origem_cidade" class="form-select{% if form.origem_cidade.errors %} is-invalid{% endif %}">
+                        <select name="origem_cidade" id="id_origem_cidade" class="{% if form.origem_cidade.errors %}is-invalid{% endif %}">
                             <option value="">---------</option>
                             {% for c in form.fields.origem_cidade.queryset %}
                             <option value="{{ c.pk }}" {% if form.origem_cidade.value == c.pk or form.instance.origem_cidade_id == c.pk %}selected{% endif %}>{{ c.nome }}</option>
@@ -58,7 +58,7 @@
                             <div class="destino-row row g-2 mb-2 align-items-end">
                                 <div class="col-md-4">
                                     <label class="form-label small">UF</label>
-                                    <select name="destino_estado_{{ forloop.counter0 }}" class="form-select form-select-sm destino-estado">
+                                    <select name="destino_estado_{{ forloop.counter0 }}" class="destino-estado">
                                         {% for e in estados %}
                                         <option value="{{ e.pk }}" {% if d.estado_id == e.pk %}selected{% endif %}>{{ e.nome }} ({{ e.sigla }})</option>
                                         {% endfor %}
@@ -66,7 +66,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small">Cidade</label>
-                                    <select name="destino_cidade_{{ forloop.counter0 }}" class="form-select form-select-sm destino-cidade" data-estado-id="{{ d.estado_id|default:'' }}" data-cidade-id="{{ d.cidade_id|default:'' }}">
+                                    <select name="destino_cidade_{{ forloop.counter0 }}" class="destino-cidade" data-estado-id="{{ d.estado_id|default:'' }}" data-cidade-id="{{ d.cidade_id|default:'' }}">
                                         <option value="">---------</option>
                                         {% if d.cidade %}<option value="{{ d.cidade_id }}" selected>{{ d.cidade.nome }}</option>{% endif %}
                                     </select>
@@ -165,7 +165,7 @@
         row.innerHTML = `
             <div class="col-md-4">
                 <label class="form-label small">UF</label>
-                <select name="destino_estado_${idx}" class="form-select form-select-sm destino-estado">
+                <select name="destino_estado_${idx}" class="destino-estado">
                     {% for e in estados %}
                     <option value="{{ e.pk }}">{{ e.nome }} ({{ e.sigla }})</option>
                     {% endfor %}
@@ -173,7 +173,7 @@
             </div>
             <div class="col-md-4">
                 <label class="form-label small">Cidade</label>
-                <select name="destino_cidade_${idx}" class="form-select form-select-sm destino-cidade" data-estado-id="" data-cidade-id="">
+                <select name="destino_cidade_${idx}" class="destino-cidade" data-estado-id="" data-cidade-id="">
                     <option value="">---------</option>
                 </select>
             </div>

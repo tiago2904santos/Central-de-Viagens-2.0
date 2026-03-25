@@ -315,7 +315,12 @@
     bindGlanceDrawer: bindGlanceDrawer,
     createAutosave: createAutosave,
     setGlanceValue: setGlanceValue,
-    renderGlanceTravelers: renderGlanceTravelers
+    renderGlanceTravelers: renderGlanceTravelers,
+    refreshSelectPickers: function(root) {
+      if (window.OficioSelectPicker) {
+        window.OficioSelectPicker.refresh(root || document);
+      }
+    }
   };
 
   if (document.readyState === 'loading') {

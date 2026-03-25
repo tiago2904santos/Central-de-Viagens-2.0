@@ -34,28 +34,29 @@
 
       <div class="oficio-step4-layout mb-3">
         <section class="oficio-summary-hero oficio-step4-hero">
-          <div class="oficio-step4-hero-head">
-            <div>
-              <h2 class="oficio-step4-title">Resumo executivo do ofício</h2>
-              <p class="oficio-step4-subtitle">Conferência final com leitura orientada por prioridade: missão, logística, equipe e documentação para fechamento seguro.</p>
+          <div class="oficio-step4-hero-topline">
+            <div class="oficio-step4-hero-title-group">
+              <span class="oficio-step4-overline">Conferência final</span>
+              <h2 class="oficio-step4-title">OFÍCIO {{ oficio.numero_formatado|default:"—" }}</h2>
             </div>
-            <div class="oficio-step4-hero-kpis">
-              <div class="oficio-step4-hero-kpi">
-                <span class="oficio-summary-label">Ofício</span>
-                <strong>{{ oficio.numero_formatado|default:"—" }}</strong>
-              </div>
-              <div class="oficio-step4-hero-kpi">
-                <span class="oficio-summary-label">Protocolo</span>
-                <strong>{{ oficio.protocolo_formatado|default:"—" }}</strong>
-              </div>
-              <div class="oficio-step4-hero-kpi">
-                <span class="oficio-summary-label">Status</span>
-                <strong>{{ oficio.get_status_display|default:"—" }}</strong>
-              </div>
-              <div class="oficio-step4-hero-kpi">
-                <span class="oficio-summary-label">Viajantes</span>
-                <strong>{{ selected_viajantes|length }}</strong>
-              </div>
+            <span class="oficio-step4-status-badge">{{ oficio.get_status_display|default:"—" }}</span>
+          </div>
+          <div class="oficio-step4-meta-strip">
+            <div class="oficio-step4-meta-item">
+              <span class="oficio-summary-label">Protocolo</span>
+              <strong>{{ oficio.protocolo_formatado|default:"—" }}</strong>
+            </div>
+            <div class="oficio-step4-meta-item">
+              <span class="oficio-summary-label">Custeio</span>
+              <strong>{{ step1_preview.custeio|default:"—" }}</strong>
+            </div>
+            <div class="oficio-step4-meta-item">
+              <span class="oficio-summary-label">Período</span>
+              <strong>{{ step3_preview.periodo_display|default:"—" }}</strong>
+            </div>
+            <div class="oficio-step4-meta-item">
+              <span class="oficio-summary-label">Total estimado</span>
+              <strong>{{ step3_preview.diarias.valor_total|default:"—" }}</strong>
             </div>
           </div>
         </section>
@@ -67,27 +68,18 @@
                 <h2>Roteiro, retorno e diárias</h2>
                 <span class="oficio-step4-head-meta">Núcleo da missão</span>
               </div>
-              <div class="oficio-step4-kpis oficio-step4-kpis--route">
-                <div class="oficio-step4-kpi">
+              <div class="oficio-step4-route-overview">
+                <div class="oficio-step4-overview-item">
                   <span class="oficio-summary-label">Modo do roteiro</span>
                   <strong>{{ step3_preview.roteiro_modo_label|default:"—" }}</strong>
                 </div>
-                <div class="oficio-step4-kpi">
+                <div class="oficio-step4-overview-item">
                   <span class="oficio-summary-label">Fonte</span>
                   <strong>{{ step3_preview.roteiro_evento_label|default:"Roteiro próprio" }}</strong>
                 </div>
-                <div class="oficio-step4-kpi">
-                  <span class="oficio-summary-label">Tipo de destino</span>
-                  <strong>{{ step3_preview.tipo_destino|default:"—" }}</strong>
-                </div>
-                <div class="oficio-step4-kpi">
-                  <span class="oficio-summary-label">Diárias estimadas</span>
-                  <strong>{{ step3_preview.diarias.quantidade|default:"—" }}</strong>
-                </div>
-                <div class="oficio-step4-kpi oficio-step4-kpi--wide">
-                  <span class="oficio-summary-label">Valor total estimado</span>
-                  <strong>{{ step3_preview.diarias.valor_total|default:"—" }}</strong>
-                  <span class="text-muted small">{{ step3_preview.diarias.valor_extenso|default:"—" }}</span>
+                <div class="oficio-step4-overview-item">
+                  <span class="oficio-summary-label">Destino principal</span>
+                  <strong>{{ step3_preview.destino_principal|default:"—" }}</strong>
                 </div>
               </div>
 
@@ -98,17 +90,38 @@
                   {% for trecho in step3_preview.trechos %}
                   <article class="oficio-step4-route-item">
                     <div class="oficio-step4-route-title">{{ trecho.rota }}</div>
-                    <div class="small text-muted">Saída: {{ trecho.saida|default:"—" }}</div>
-                    <div class="small text-muted">Chegada: {{ trecho.chegada|default:"—" }}</div>
-                    {% if trecho.tempo_total %}<div class="small text-muted">Tempo total: {{ trecho.tempo_total }}</div>{% endif %}
+                    <div class="oficio-step4-route-times">
+                      <div class="oficio-step4-route-time">
+                        <span class="oficio-summary-label">Saída</span>
+                        <strong>{{ trecho.saida|default:"—" }}</strong>
+                      </div>
+                      <div class="oficio-step4-route-time">
+                        <span class="oficio-summary-label">Chegada</span>
+                        <strong>{{ trecho.chegada|default:"—" }}</strong>
+                      </div>
+                      {% if trecho.tempo_total %}
+                      <div class="oficio-step4-route-time">
+                        <span class="oficio-summary-label">Tempo total</span>
+                        <strong>{{ trecho.tempo_total }}</strong>
+                      </div>
+                      {% endif %}
+                    </div>
                   </article>
                   {% endfor %}
                   {% if step3_preview.retorno.show %}
                   <article class="oficio-step4-route-item oficio-step4-route-item--retorno">
                     <div class="oficio-step4-route-title">Retorno</div>
-                    <div class="small text-muted">{{ step3_preview.retorno.rota }}</div>
-                    <div class="small text-muted">Saída: {{ step3_preview.retorno.saida|default:"—" }}</div>
-                    <div class="small text-muted">Chegada: {{ step3_preview.retorno.chegada|default:"—" }}</div>
+                    <div class="oficio-step4-route-subtitle">{{ step3_preview.retorno.rota }}</div>
+                    <div class="oficio-step4-route-times">
+                      <div class="oficio-step4-route-time">
+                        <span class="oficio-summary-label">Saída</span>
+                        <strong>{{ step3_preview.retorno.saida|default:"—" }}</strong>
+                      </div>
+                      <div class="oficio-step4-route-time">
+                        <span class="oficio-summary-label">Chegada</span>
+                        <strong>{{ step3_preview.retorno.chegada|default:"—" }}</strong>
+                      </div>
+                    </div>
                   </article>
                   {% endif %}
                 </div>
@@ -123,40 +136,48 @@
                 <h2>Transporte, motorista e viatura</h2>
                 <span class="oficio-step4-head-meta">Operação logística</span>
               </div>
-              <div class="oficio-step4-split">
-                <div class="oficio-step4-surface">
+              <div class="oficio-step4-split oficio-step4-transport-grid">
+                <div class="oficio-step4-surface oficio-step4-surface--outlined">
                   <h3>Viatura</h3>
-                  <div class="oficio-summary-meta">
-                    <div class="oficio-summary-row">
+                  <div class="oficio-step4-detail-grid">
+                    <div class="oficio-step4-detail-item">
                       <span class="oficio-summary-label">Placa</span>
                       <span class="oficio-summary-value">{{ step2_preview.placa|default:"—" }}</span>
                     </div>
-                    <div class="oficio-summary-row">
+                    <div class="oficio-step4-detail-item">
                       <span class="oficio-summary-label">Modelo</span>
                       <span class="oficio-summary-value">{{ step2_preview.modelo|default:"—" }}</span>
                     </div>
-                    <div class="oficio-summary-row">
+                    <div class="oficio-step4-detail-item">
                       <span class="oficio-summary-label">Combustível</span>
                       <span class="oficio-summary-value">{{ step2_preview.combustivel|default:"—" }}</span>
                     </div>
-                    <div class="oficio-summary-row">
+                    <div class="oficio-step4-detail-item">
                       <span class="oficio-summary-label">Tipo de viatura</span>
                       <span class="oficio-summary-value">{{ step2_preview.tipo_viatura_label|default:"—" }}</span>
                     </div>
+                    <div class="oficio-step4-detail-item">
+                      <span class="oficio-summary-label">Porte/transporte de armas</span>
+                      <span class="oficio-summary-value">{{ step2_preview.porte_transporte_armas_label|default:"—" }}</span>
+                    </div>
                   </div>
                 </div>
-                <div class="oficio-step4-surface">
+                <div class="oficio-step4-surface oficio-step4-surface--outlined">
                   <h3>Motorista</h3>
-                  <div class="oficio-summary-meta">
-                    <div class="oficio-summary-row">
+                  <div class="oficio-step4-detail-grid">
+                    <div class="oficio-step4-detail-item">
                       <span class="oficio-summary-label">Nome</span>
                       <span class="oficio-summary-value">{{ step2_preview.motorista.nome_display|default:"—" }}</span>
                     </div>
-                    <div class="oficio-summary-row">
+                    <div class="oficio-step4-detail-item">
+                      <span class="oficio-summary-label">Vínculo</span>
+                      <span class="oficio-summary-value">{% if oficio.motorista_carona %}Motorista carona{% else %}Servidor do ofício{% endif %}</span>
+                    </div>
+                    <div class="oficio-step4-detail-item">
                       <span class="oficio-summary-label">Ofício do motorista</span>
                       <span class="oficio-summary-value">{{ oficio.motorista_oficio_formatado|default:"—" }}</span>
                     </div>
-                    <div class="oficio-summary-row">
+                    <div class="oficio-step4-detail-item">
                       <span class="oficio-summary-label">Protocolo do motorista</span>
                       <span class="oficio-summary-value">{{ oficio.motorista_protocolo_formatado|default:"—" }}</span>
                     </div>
@@ -170,26 +191,26 @@
                 <h2>Motivo e justificativa</h2>
                 <span class="oficio-step4-head-meta">Contexto formal e prazo</span>
               </div>
-              <div class="oficio-step4-kpis">
-                <div class="oficio-step4-kpi">
+              <div class="oficio-step4-facts-grid">
+                <div class="oficio-step4-fact">
                   <span class="oficio-summary-label">Status da justificativa</span>
                   <strong>{{ justificativa_info.status_label }}</strong>
                 </div>
-                <div class="oficio-step4-kpi">
+                <div class="oficio-step4-fact">
                   <span class="oficio-summary-label">Prazo mínimo</span>
                   <strong>{{ justificativa_info.prazo_minimo_dias }} dia(s)</strong>
                 </div>
-                <div class="oficio-step4-kpi">
+                <div class="oficio-step4-fact">
                   <span class="oficio-summary-label">Primeira saída</span>
                   <strong>{{ justificativa_info.primeira_saida_display|default:"—" }}</strong>
                 </div>
               </div>
               <div class="oficio-step4-text-columns">
-                <div class="oficio-step4-surface">
+                <div class="oficio-step4-surface oficio-step4-surface--outlined">
                   <h3>Motivo do deslocamento</h3>
                   <p class="mb-0">{{ oficio.motivo|default:"—" }}</p>
                 </div>
-                <div class="oficio-step4-surface">
+                <div class="oficio-step4-surface oficio-step4-surface--outlined">
                   <h3>Texto da justificativa</h3>
                   <div class="oficio-text-preview oficio-step4-justificativa-text{% if not justificativa_info.texto %} text-muted{% endif %}">
                     {{ justificativa_info.texto|default:"Nenhuma justificativa preenchida até o momento." }}
@@ -200,126 +221,122 @@
           </main>
 
           <aside class="oficio-step4-side">
-            <section class="oficio-summary-section oficio-step4-card oficio-step4-card--identificacao">
-              <div class="oficio-step4-card-head">
-                <h2>Identificação</h2>
-                <span class="oficio-step4-head-meta">Dados-base</span>
-              </div>
-              <div class="oficio-step4-meta-list">
-                <div class="oficio-summary-row">
-                  <span class="oficio-summary-label">Ofício</span>
-                  <span class="oficio-summary-value">{{ oficio.numero_formatado|default:"—" }}</span>
-                </div>
-                <div class="oficio-summary-row">
-                  <span class="oficio-summary-label">Protocolo</span>
-                  <span class="oficio-summary-value">{{ oficio.protocolo_formatado|default:"—" }}</span>
-                </div>
-                <div class="oficio-summary-row">
-                  <span class="oficio-summary-label">Status</span>
-                  <span class="oficio-summary-value">{{ oficio.get_status_display|default:"—" }}</span>
-                </div>
-                <div class="oficio-summary-row">
-                  <span class="oficio-summary-label">Custeio</span>
-                  <span class="oficio-summary-value">{{ step1_preview.custeio|default:"—" }}</span>
-                </div>
-              </div>
-            </section>
-
             <section class="oficio-summary-section oficio-step4-card oficio-step4-card--equipe">
               <div class="oficio-step4-card-head">
                 <h2>Equipe</h2>
-                <span class="oficio-step4-head-meta">Composição da viagem</span>
+                <span class="oficio-step4-head-meta">{{ selected_viajantes|length }} integrante{% if selected_viajantes|length != 1 %}s{% endif %}</span>
               </div>
-              <div class="oficio-step4-kpi">
-                <span class="oficio-summary-label">Total de viajantes</span>
-                <strong>{{ selected_viajantes|length }}</strong>
-              </div>
-              <div class="oficio-step4-chip-list">
+              <ul class="oficio-step4-people-list">
                 {% for viajante in selected_viajantes %}
-                <span class="oficio-step4-chip">{{ viajante.nome }}</span>
+                <li class="oficio-step4-people-item">
+                  <span class="oficio-step4-people-name">{{ viajante.nome }}</span>
+                  <span class="oficio-step4-people-meta">
+                    {% if viajante.cargo_id and viajante.cargo %}{{ viajante.cargo.nome }}{% endif %}
+                    {% if viajante.cargo_id and viajante.cargo and viajante.unidade_lotacao_id and viajante.unidade_lotacao %} • {% endif %}
+                    {% if viajante.unidade_lotacao_id and viajante.unidade_lotacao %}{{ viajante.unidade_lotacao.nome }}{% endif %}
+                  </span>
+                </li>
                 {% empty %}
-                <span class="text-muted">Nenhum viajante selecionado.</span>
+                <li class="text-muted">Nenhum viajante selecionado.</li>
                 {% endfor %}
+              </ul>
+            </section>
+
+            <section class="oficio-summary-section oficio-step4-card oficio-step4-card--resumo-viagem">
+              <div class="oficio-step4-card-head">
+                <h2>Resumo da viagem</h2>
+                <span class="oficio-step4-head-meta">Leitura rápida</span>
+              </div>
+              <div class="oficio-step4-summary-list">
+                <div class="oficio-summary-row">
+                  <span class="oficio-summary-label">Total de diárias</span>
+                  <span class="oficio-summary-value">{{ step3_preview.diarias.quantidade|default:"—" }}</span>
+                </div>
+                <div class="oficio-summary-row">
+                  <span class="oficio-summary-label">Trechos</span>
+                  <span class="oficio-summary-value">{{ step3_preview.trechos|length }}{% if step3_preview.retorno.show %} + retorno{% endif %}</span>
+                </div>
+                <div class="oficio-summary-row">
+                  <span class="oficio-summary-label">Equipe</span>
+                  <span class="oficio-summary-value">{{ selected_viajantes|length }} integrante{% if selected_viajantes|length != 1 %}s{% endif %}</span>
+                </div>
+                <div class="oficio-summary-row">
+                  <span class="oficio-summary-label">Termos automáticos</span>
+                  <span class="oficio-summary-value">{% if oficio.gerar_termo_preenchido %}Sim{% else %}Não{% endif %}</span>
+                </div>
               </div>
             </section>
 
             <section class="oficio-summary-section oficio-step4-card oficio-step4-card--termos">
               <div class="oficio-step4-card-head">
                 <h2>Termos de autorização</h2>
-                <span class="oficio-step4-head-meta">Configuração de geração</span>
+                <span class="oficio-step4-head-meta">Decisão de fechamento</span>
               </div>
-              <form method="post" id="oficio-step4-form" class="d-grid gap-3">
+              <form method="post" id="oficio-step4-form" class="oficio-step4-choice-form">
                 {% csrf_token %}
-                <div>
-                  <label class="form-label fw-semibold">Gerar termo de autorização já preenchido?</label>
-                  <div class="oficio-choice-group">
-                    <div class="oficio-choice-card">
-                      <div class="form-check">
-                        <input class="form-check-input" type="radio" name="gerar_termo_preenchido" id="id_gerar_termo_sim" value="1" {% if oficio.gerar_termo_preenchido %}checked{% endif %}>
-                        <label class="form-check-label" for="id_gerar_termo_sim">
-                          <span class="oficio-choice-title">Sim</span>
-                          <span class="text-muted small">Ao finalizar, será gerado 1 termo por servidor ou viajante e persistido no banco.</span>
-                        </label>
-                      </div>
-                    </div>
-                    <div class="oficio-choice-card">
-                      <div class="form-check">
-                        <input class="form-check-input" type="radio" name="gerar_termo_preenchido" id="id_gerar_termo_nao" value="0" {% if not oficio.gerar_termo_preenchido %}checked{% endif %}>
-                        <label class="form-check-label" for="id_gerar_termo_nao">
-                          <span class="oficio-choice-title">Não</span>
-                          <span class="text-muted small">Finaliza o ofício sem gerar termos neste momento.</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="small text-muted mt-2">
-                    {% if termo_autorizacao.available %}
-                      Há termo(s) disponível(is) para download.
-                    {% elif termo_autorizacao.errors %}
-                      {{ termo_autorizacao.errors.0 }}
-                    {% else %}
-                      O termo de autorização será habilitado quando os dados obrigatórios estiverem consistentes.
-                    {% endif %}
-                  </div>
+                <div class="oficio-step4-choice-heading">Gerar termos?</div>
+                <div class="oficio-step4-choice-group">
+                  <label class="oficio-step4-choice-option" for="id_gerar_termo_sim">
+                    <input class="form-check-input" type="radio" name="gerar_termo_preenchido" id="id_gerar_termo_sim" value="1" {% if oficio.gerar_termo_preenchido %}checked{% endif %}>
+                    <span class="oficio-step4-choice-copy">
+                      <span class="oficio-step4-choice-title">Sim</span>
+                      <span class="oficio-step4-choice-text">Será gerado automaticamente um termo para cada viajante.</span>
+                    </span>
+                  </label>
+                  <label class="oficio-step4-choice-option" for="id_gerar_termo_nao">
+                    <input class="form-check-input" type="radio" name="gerar_termo_preenchido" id="id_gerar_termo_nao" value="0" {% if not oficio.gerar_termo_preenchido %}checked{% endif %}>
+                    <span class="oficio-step4-choice-copy">
+                      <span class="oficio-step4-choice-title">Não</span>
+                      <span class="oficio-step4-choice-text">Finaliza o ofício agora e deixa os termos para outro momento.</span>
+                    </span>
+                  </label>
+                </div>
+                <div class="oficio-step4-choice-note">
+                  {% if termo_autorizacao.available %}
+                    Há termo(s) disponível(is) para download.
+                  {% elif termo_autorizacao.errors %}
+                    {{ termo_autorizacao.errors.0 }}
+                  {% else %}
+                    O termo será habilitado quando os dados obrigatórios estiverem consistentes.
+                  {% endif %}
                 </div>
               </form>
             </section>
           </aside>
         </div>
-      </div>
-
-      <div class="oficio-summary-actions mt-4 p-3 bg-white" data-oficio-footer-actions="1">
-        <div class="oficio-summary-actions-group">
-          <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary" data-autosave-link="1">
-            <span>Voltar para lista</span>
-          </a>
-          {% if oficio.pk %}
-          <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger" data-autosave-link="1">
-            <span>Excluir</span>
-          </a>
+        <div class="oficio-summary-actions oficio-step4-footer" data-oficio-footer-actions="1">
+          <div class="oficio-summary-actions-group">
+            <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary" data-autosave-link="1">
+              <span>Voltar para lista</span>
+            </a>
+            {% if oficio.pk %}
+            <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger" data-autosave-link="1">
+              <span>Excluir</span>
+            </a>
+            {% endif %}
+            {% for action in oficio_downloads.actions %}
+            <a
+              href="{{ action.url }}"
+              class="btn btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}"
+              data-autosave-link="1"
+            >
+              <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
+              <span>{{ action.download_label }}</span>
+            </a>
+            {% endfor %}
+            {% if oficio.status != 'FINALIZADO' %}
+            <button type="submit" form="oficio-step4-form" name="finalizar" value="1" class="btn btn-doc-action btn-doc-action--primary" data-autosave-bypass="1">
+              <i class="bi bi-check2-circle"></i>
+              <span>Finalizar Ofício</span>
+            </button>
+            {% endif %}
+          </div>
+          {% if oficio_downloads.errors %}
+          <div class="oficio-summary-actions-note">
+            {{ oficio_downloads.errors.0 }}
+          </div>
           {% endif %}
-          {% if oficio.status != 'FINALIZADO' %}
-          <button type="submit" form="oficio-step4-form" name="finalizar" value="1" class="btn btn-doc-action btn-doc-action--primary" data-autosave-bypass="1">
-            <i class="bi bi-check2-circle"></i>
-            <span>Finalizar Ofício</span>
-          </button>
-          {% endif %}
-          {% for action in oficio_downloads.actions %}
-          <a
-            href="{{ action.url }}"
-            class="btn btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}"
-            data-autosave-link="1"
-          >
-            <i class="bi {% if action.label == 'PDF' %}bi-filetype-pdf{% else %}bi-filetype-docx{% endif %}"></i>
-            <span>{{ action.download_label }}</span>
-          </a>
-          {% endfor %}
         </div>
-        {% if oficio_downloads.errors %}
-        <div class="oficio-summary-actions-note">
-          {{ oficio_downloads.errors.0 }}
-        </div>
-        {% endif %}
       </div>
     </div>
   </div>

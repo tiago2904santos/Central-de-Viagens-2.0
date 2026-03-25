@@ -73,7 +73,7 @@
                         <div class="row g-2 align-items-end">
                             <div class="col-12 col-md-6">
                                 <label class="form-label small">Viatura</label>
-                                <select name="veiculo_id" class="form-select form-select-sm">
+                                <select name="veiculo_id">
                                     <option value="">Selecione...</option>
                                     {% for veiculo in veiculos %}
                                     <option value="{{ veiculo.pk }}">{{ veiculo.placa_formatada|default:veiculo.placa }} — {{ veiculo.modelo|default:"(sem modelo)" }}</option>
@@ -155,14 +155,14 @@
                                     {% endfor %}
                                 </td>
                                 <td>
-                                    <select name="status_{{ row.viajante.pk }}" class="form-select form-select-sm" style="min-width: 10rem;">
+                                    <select name="status_{{ row.viajante.pk }}">
                                         {% for value, label in status_choices %}
                                         <option value="{{ value }}" {% if row.termo.status == value %}selected{% endif %}>{{ label }}</option>
                                         {% endfor %}
                                     </select>
                                 </td>
                                 <td>
-                                    <select name="modalidade_{{ row.viajante.pk }}" class="form-select form-select-sm" style="min-width: 12rem;">
+                                    <select name="modalidade_{{ row.viajante.pk }}">
                                         {% for value, label in modalidade_choices %}
                                         <option value="{{ value }}" {% if row.termo.modalidade == value %}selected{% endif %}>{{ label }}</option>
                                         {% endfor %}
