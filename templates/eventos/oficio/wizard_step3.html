@@ -200,7 +200,7 @@
                     </div>
                   </div>
                   <div class="oficio-step3-diarias-head-action">
-                    <div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending">Aguardando cálculo.</div>
+                    <div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending" role="status" aria-live="polite">Aguardando cálculo.</div>
                     <button type="button" id="btn-calcular-diarias" class="btn btn-primary oficio-step3-diarias-button">{% if step3_diarias_resultado %}Recalcular diárias{% else %}Calcular diárias{% endif %}</button>
                   </div>
                 </div>
@@ -412,7 +412,7 @@
   }
 
   function staleDiarias() {
-    setDiariasStatus('stale', 'Cálculo desatualizado');
+    setDiariasStatus('stale', 'Cálculo desatualizado.');
   }
   function routePeriodSummary(route) {
     const trechos = (route && route.state && route.state.trechos) || [];
@@ -1008,7 +1008,7 @@
 
     const totais = result.totais || {};
     $('diarias-results').classList.remove('d-none');
-  setDiariasStatus('updated', 'Cálculo atualizado');
+    setDiariasStatus('updated', 'Cálculo atualizado.');
     setDiariasButtonLabel(true, false);
     $('diarias-tipo').textContent = result.tipo_destino || '-';
     $('diarias-qtd').textContent = totais.total_diarias || '-';
@@ -1095,7 +1095,7 @@
       applyDiarias(data);
       if (Object.prototype.hasOwnProperty.call(data, 'justificativa_required')) {
         syncJustificativaStep(data.justificativa_url, !!data.justificativa_required);
-        setDiariasStatus('updated', 'Cálculo atualizado');
+        setDiariasStatus('updated', 'Cálculo atualizado.');
       }
       scheduleAutosave();
     } catch (error) {
