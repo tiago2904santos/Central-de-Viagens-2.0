@@ -5738,6 +5738,15 @@ a:hover {
     line-height: 1.4;
 }
 
+.oficio-wizard-page .oficio-carona-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.2em 0.55em;
+    align-self: center;
+    flex-shrink: 0;
+}
+
 .oficio-wizard-page .oficio-motorista-preview-section {
     display: grid;
     gap: 1rem;
