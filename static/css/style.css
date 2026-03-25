@@ -2944,6 +2944,277 @@ select.form-control[size]:not([size="1"]) {
     }
 }
 
+/* ----- Oficios Step 4: repaginacao executiva do resumo ----- */
+.oficio-step4-page .oficio-step4-layout {
+    display: grid;
+    gap: 1rem;
+}
+
+.oficio-step4-page .oficio-step4-hero {
+    margin-bottom: 0;
+    padding: 1.25rem 1.35rem;
+}
+
+.oficio-step4-page .oficio-step4-hero-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.95rem;
+    align-items: flex-start;
+}
+
+.oficio-step4-page .oficio-step4-title {
+    margin: 0;
+    color: var(--oficio-wizard-accent-strong);
+    font-size: 1.16rem;
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.oficio-step4-page .oficio-step4-subtitle {
+    margin: 0.38rem 0 0;
+    max-width: 60ch;
+    color: var(--oficio-wizard-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.oficio-step4-page .oficio-step4-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: start;
+}
+
+.oficio-step4-page .oficio-step4-card {
+    padding: 1.05rem 1.1rem;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.oficio-step4-page .oficio-step4-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.85rem;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.oficio-step4-page .oficio-step4-card-head h2 {
+    margin: 0;
+    color: var(--oficio-wizard-ink);
+    font-size: 1rem;
+    font-weight: 850;
+    line-height: 1.35;
+}
+
+.oficio-step4-page .oficio-step4-head-meta {
+    color: var(--oficio-wizard-muted);
+    font-size: 0.76rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.oficio-step4-page .oficio-step4-card h3 {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--oficio-wizard-accent-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 800;
+}
+
+.oficio-step4-page .oficio-step4-card--identificacao {
+    grid-column: span 7;
+}
+
+.oficio-step4-page .oficio-step4-card--equipe {
+    grid-column: span 5;
+}
+
+.oficio-step4-page .oficio-step4-card--transporte {
+    grid-column: span 5;
+}
+
+.oficio-step4-page .oficio-step4-card--roteiro {
+    grid-column: span 7;
+}
+
+.oficio-step4-page .oficio-step4-card--justificativa {
+    grid-column: span 8;
+}
+
+.oficio-step4-page .oficio-step4-card--termos {
+    grid-column: span 4;
+}
+
+.oficio-step4-page .oficio-step4-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.65rem;
+}
+
+.oficio-step4-page .oficio-step4-kpi {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.62rem 0.7rem;
+    border-radius: 0.95rem;
+    border: 1px solid rgba(16, 36, 63, 0.08);
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.oficio-step4-page .oficio-step4-kpi strong {
+    font-size: 0.96rem;
+    font-weight: 850;
+    color: var(--oficio-wizard-accent-strong);
+    line-height: 1.35;
+}
+
+.oficio-step4-page .oficio-step4-kpi--wide {
+    grid-column: span 2;
+}
+
+.oficio-step4-page .oficio-step4-highlight {
+    border-radius: 1rem;
+    border: 1px solid rgba(16, 36, 63, 0.09);
+    background: rgba(248, 250, 252, 0.92);
+    padding: 0.75rem 0.85rem;
+}
+
+.oficio-step4-page .oficio-step4-highlight p {
+    color: var(--oficio-wizard-ink);
+    font-size: 0.93rem;
+    line-height: 1.5;
+}
+
+.oficio-step4-page .oficio-step4-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-content: flex-start;
+}
+
+.oficio-step4-page .oficio-step4-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    max-width: 100%;
+    padding: 0.36rem 0.72rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(16, 36, 63, 0.1);
+    color: var(--oficio-wizard-accent-strong);
+    font-size: 0.83rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.oficio-step4-page .oficio-step4-split {
+    display: grid;
+    gap: 0.65rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.oficio-step4-page .oficio-step4-surface {
+    display: grid;
+    gap: 0.7rem;
+    border: 1px solid rgba(16, 36, 63, 0.07);
+    border-radius: 0.95rem;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.7rem 0.76rem;
+}
+
+.oficio-step4-page .oficio-step4-routes-wrap {
+    display: grid;
+    gap: 0.68rem;
+}
+
+.oficio-step4-page .oficio-step4-routes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0.58rem;
+}
+
+.oficio-step4-page .oficio-step4-route-item {
+    border: 1px solid rgba(16, 36, 63, 0.08);
+    border-radius: 0.95rem;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.72rem 0.8rem;
+    display: grid;
+    gap: 0.2rem;
+}
+
+.oficio-step4-page .oficio-step4-route-item--retorno {
+    background: rgba(248, 250, 252, 0.96);
+}
+
+.oficio-step4-page .oficio-step4-route-title {
+    color: var(--oficio-wizard-ink);
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.oficio-step4-page .oficio-step4-justificativa-text {
+    min-height: 7.2rem;
+}
+
+.oficio-step4-page .oficio-step4-card--termos .oficio-choice-group {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.62rem;
+}
+
+.oficio-step4-page .oficio-step4-card--termos .oficio-choice-card {
+    padding: 0.82rem 0.9rem;
+}
+
+@media (max-width: 1199.98px) {
+    .oficio-step4-page .oficio-step4-card--identificacao,
+    .oficio-step4-page .oficio-step4-card--equipe,
+    .oficio-step4-page .oficio-step4-card--transporte,
+    .oficio-step4-page .oficio-step4-card--roteiro,
+    .oficio-step4-page .oficio-step4-card--justificativa,
+    .oficio-step4-page .oficio-step4-card--termos {
+        grid-column: span 6;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .oficio-step4-page .oficio-step4-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .oficio-step4-page .oficio-step4-card--identificacao,
+    .oficio-step4-page .oficio-step4-card--equipe,
+    .oficio-step4-page .oficio-step4-card--transporte,
+    .oficio-step4-page .oficio-step4-card--roteiro,
+    .oficio-step4-page .oficio-step4-card--justificativa,
+    .oficio-step4-page .oficio-step4-card--termos {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .oficio-step4-page .oficio-step4-hero,
+    .oficio-step4-page .oficio-step4-card {
+        padding: 0.9rem;
+    }
+
+    .oficio-step4-page .oficio-step4-kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .oficio-step4-page .oficio-step4-kpi--wide {
+        grid-column: auto;
+    }
+
+    .oficio-step4-page .oficio-step4-split {
+        grid-template-columns: 1fr;
+    }
+}
+
 .termo-mode-card {
     border: 1px solid rgba(13, 110, 253, 0.08);
     border-radius: 1.1rem;
