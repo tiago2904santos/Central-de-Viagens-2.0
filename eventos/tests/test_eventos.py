@@ -4470,15 +4470,16 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertContains(response, '98.765.432-1')
         self.assertContains(response, 'id="summary-viajantes-meta"')
         self.assertContains(response, 'id="summary-data-evento"')
-        self.assertEqual(response.context['wizard_glance']['data_evento'], '10/01/2026 até 12/01/2026')
-        self.assertContains(response, 'id="preview-motorista-nome"')
-        self.assertContains(response, f'{self.motorista_externo.nome} (carona)')
-        self.assertContains(
-            response,
-            f'id="preview-motorista-oficio">12/{tz.localdate().year}</span>',
-        )
-        self.assertContains(response, 'id="preview-motorista-protocolo">12.345.678-9</span>')
+        self.assertIn('10/01/2026', response.context['wizard_glance']['data_evento'])
+        self.assertIn('12/01/2026', response.context['wizard_glance']['data_evento'])
+        self.assertContains(response, f'data-motorista-chip="{self.motorista_externo.pk}"')
+        self.assertContains(response, self.motorista_externo.nome)
+        self.assertContains(response, 'class="oficio-carona-pill">Carona</span>', html=False)
+        self.assertContains(response, 'id="motorista-carona-wrapper"')
+        self.assertContains(response, 'value="12"')
+        self.assertContains(response, 'value="12.345.678-9"')
         self.assertNotContains(response, 'Relatório rápido')
+        self.assertNotContains(response, 'Leitura rápida do motorista')
 
     def test_step2_resumo_manual_carona_mostra_documentos_sem_dados_cadastrais(self):
         oficio = self._criar_oficio(ano=2026)
@@ -4496,12 +4497,13 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertTrue(preview['show_oficio'])
         self.assertTrue(preview['show_protocolo'])
         server_html, _ = self._split_step2_response(response)
-        self.assertIn('preview-motorista-nome">MOTORISTA MANUAL (carona)', server_html)
-        self.assertIn(f'id="preview-motorista-oficio">12/{tz.localdate().year}</span>', server_html)
-        self.assertIn('id="preview-motorista-protocolo">12.345.678-9</span>', server_html)
-        self.assertNotIn('id="preview-motorista-cargo-row"', server_html)
-        self.assertNotIn('id="preview-motorista-rg-row"', server_html)
-        self.assertNotIn('id="preview-motorista-cpf-row"', server_html)
+        self.assertIn('name="motorista_nome"', server_html)
+        self.assertIn('value="MOTORISTA MANUAL"', server_html)
+        self.assertIn(f'/{tz.localdate().year}</span>', server_html)
+        self.assertIn('value="12.345.678-9"', server_html)
+        self.assertIn('id="motorista-carona-wrapper"', server_html)
+        self.assertNotIn('preview-motorista-nome"', server_html)
+        self.assertNotIn('Leitura rápida do motorista', server_html)
 
     def test_step2_motorista_do_oficio_nao_exibe_linhas_vazias_de_carona_no_resumo(self):
         oficio = self._criar_oficio(ano=2026)
