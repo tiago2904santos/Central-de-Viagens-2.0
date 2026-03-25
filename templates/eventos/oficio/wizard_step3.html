@@ -427,7 +427,6 @@
       return '' +
         '<button type="button" class="oficio-step3-route-item' + activeClass + '" data-route-id="' + esc(rid) + '">' +
           '<span class="route-title">' + esc(route.label || ('Roteiro #' + rid)) + '</span>' +
-          '<span class="route-meta">' + esc(route.tipo_label || 'Roteiro salvo') + '</span>' +
           '<span class="route-destinos">' + esc(routeDestinationsSummary(route)) + '</span>' +
           '<span class="route-periodo">' + esc(routePeriodSummary(route)) + '</span>' +
         '</button>';

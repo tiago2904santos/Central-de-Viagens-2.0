@@ -62,14 +62,12 @@
       nomeSpan.textContent = name;
       chip.appendChild(nomeSpan);
       if (typeof item !== 'string') {
-        var cargo = String((item && item.cargo) || '').trim();
         var lotacao = String((item && item.lotacao) || '').trim();
-        var sub = [cargo, lotacao].filter(Boolean).join(' · ');
-        if (sub) {
-          var subSpan = document.createElement('span');
-          subSpan.className = 'oficio-glance-chip-sub';
-          subSpan.textContent = sub;
-          chip.appendChild(subSpan);
+        if (lotacao) {
+          var lotacaoSpan = document.createElement('span');
+          lotacaoSpan.className = 'oficio-glance-chip-sub';
+          lotacaoSpan.textContent = lotacao;
+          chip.appendChild(lotacaoSpan);
         }
       }
       list.appendChild(chip);

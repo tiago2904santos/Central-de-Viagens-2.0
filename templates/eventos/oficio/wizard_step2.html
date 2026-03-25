@@ -166,8 +166,8 @@
                     {% if selected_motorista_payload %}
                     <div class="oficio-motorista-chip" data-motorista-chip="{{ selected_motorista_payload.id }}">
                       <span class="oficio-motorista-nome">{{ selected_motorista_payload.nome }}</span>
-                      {% if selected_motorista_payload.cargo or selected_motorista_payload.lotacao %}
-                      <span class="oficio-motorista-sub">{{ selected_motorista_payload.cargo }}{% if selected_motorista_payload.cargo and selected_motorista_payload.lotacao %} &middot; {% endif %}{{ selected_motorista_payload.lotacao }}</span>
+                      {% if selected_motorista_payload.lotacao %}
+                      <span class="oficio-motorista-sub">{{ selected_motorista_payload.lotacao }}</span>
                       {% endif %}
                       <button
                         type="button"
@@ -493,7 +493,18 @@
     chip.setAttribute('data-motorista-chip', String(selectedMotorista.id));
 
     var label = document.createElement('span');
-    label.textContent = selectedMotorista.nome || selectedMotorista.label || 'Motorista';
+    label.className = 'd-flex flex-column align-items-start';
+    var nomeEl = document.createElement('span');
+    nomeEl.className = 'fw-semibold';
+    nomeEl.textContent = selectedMotorista.nome || selectedMotorista.label || 'Motorista';
+    label.appendChild(nomeEl);
+    var lotacaomotorista = String((selectedMotorista && selectedMotorista.lotacao) || '').trim();
+    if (lotacaomotorista) {
+      var lotacaoMotoristaEl = document.createElement('small');
+      lotacaoMotoristaEl.className = 'text-muted fw-normal';
+      lotacaoMotoristaEl.textContent = lotacaomotorista;
+      label.appendChild(lotacaoMotoristaEl);
+    }
     chip.appendChild(label);
 
     var removeButton = document.createElement('button');
@@ -915,9 +926,19 @@
     motoristaSuggestionItems.forEach(function(item, index) {
       var button = document.createElement('button');
       button.type = 'button';
-      button.className = 'list-group-item list-group-item-action';
+      button.className = 'list-group-item list-group-item-action d-flex flex-column align-items-start';
       button.setAttribute('data-motorista-suggestion', String(index));
-      button.textContent = item.label || item.nome || 'Servidor';
+      var nomeRowM = document.createElement('span');
+      nomeRowM.className = 'fw-semibold';
+      nomeRowM.textContent = item.label || item.nome || 'Servidor';
+      button.appendChild(nomeRowM);
+      var lotacaoSugM = String((item && item.lotacao) || '').trim();
+      if (lotacaoSugM) {
+        var lotacaoRowM = document.createElement('small');
+        lotacaoRowM.className = 'text-muted';
+        lotacaoRowM.textContent = lotacaoSugM;
+        button.appendChild(lotacaoRowM);
+      }
       button.addEventListener('click', function() {
         selectMotorista(item);
       });

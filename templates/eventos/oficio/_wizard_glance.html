@@ -49,8 +49,8 @@
           {% for viajante in wizard_glance.viajantes %}
           <div class="oficio-glance-chip">
             <span class="oficio-glance-chip-nome">{{ viajante.nome }}</span>
-            {% if viajante.cargo or viajante.lotacao %}
-            <span class="oficio-glance-chip-sub">{{ viajante.cargo }}{% if viajante.cargo and viajante.lotacao %} &middot; {% endif %}{{ viajante.lotacao }}</span>
+            {% if viajante.lotacao %}
+            <span class="oficio-glance-chip-sub">{{ viajante.lotacao }}</span>
             {% endif %}
           </div>
           {% empty %}
