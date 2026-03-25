@@ -1,4 +1,10 @@
-{% extends 'base.html' %}
+"""Rewrites planos_trabalho_form.html with UX simplification (Phase 3)."""
+import pathlib
+
+ROOT = pathlib.Path(__file__).parent
+DEST = ROOT / "templates/eventos/documentos/planos_trabalho_form.html"
+
+CONTENT = r"""{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}{% if object %}Editar{% else %}Novo{% endif %} Plano de Trabalho — Central de Viagens{% endblock %}
@@ -1327,3 +1333,7 @@
 })();
 </script>
 {% endblock %}
+"""
+
+DEST.write_text(CONTENT, encoding="utf-8")
+print(f"Written {DEST} — {len(CONTENT)} chars, {CONTENT.count(chr(10))} lines")
