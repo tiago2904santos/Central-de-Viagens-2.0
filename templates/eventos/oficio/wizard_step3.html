@@ -207,6 +207,10 @@
                 <div id="diarias-error" class="alert alert-danger py-2 d-none"></div>
                 <div id="diarias-results"{% if not step3_diarias_resultado %} class="d-none"{% endif %}>
                   <div class="oficio-step3-diarias-overview mb-3">
+                    <div class="oficio-step3-diarias-total-card">
+                      <span class="label">Valor total</span>
+                      <strong id="diarias-valor" class="oficio-step3-diarias-total-value">{{ step3_diarias_resultado.totais.total_valor|default:"-" }}</strong>
+                    </div>
                     <div class="oficio-step3-diarias-summary">
                       <div class="oficio-step3-diarias-summary-item">
                         <span class="label">Tipo destino</span>
@@ -216,10 +220,6 @@
                         <span class="label">Diárias</span>
                         <strong id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"-" }}</strong>
                       </div>
-                    </div>
-                    <div class="oficio-step3-diarias-total-card">
-                      <span class="label">Valor total</span>
-                      <strong id="diarias-valor" class="oficio-step3-diarias-total-value">{{ step3_diarias_resultado.totais.total_valor|default:"-" }}</strong>
                     </div>
                   </div>
                   <div class="oficio-step3-diarias-table-section">
@@ -976,7 +976,7 @@
     const totais = result.totais || {};
     $('diarias-results').classList.remove('d-none');
     $('diarias-status').textContent = 'Cálculo atualizado.';
-  setDiariasButtonLabel(true, false);
+    setDiariasButtonLabel(true, false);
     $('diarias-tipo').textContent = result.tipo_destino || '-';
     $('diarias-qtd').textContent = totais.total_diarias || '-';
     $('diarias-valor').textContent = totais.total_valor || '-';

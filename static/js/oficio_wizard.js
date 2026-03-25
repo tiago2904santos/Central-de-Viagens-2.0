@@ -43,7 +43,9 @@
     }
     var text = String(value || '').trim();
     if (id === 'summary-protocolo') {
-      text = formatProtocolDisplay(text);
+      text = formatProtocolDisplay(text) || getEmptyText(element, fallback);
+      element.textContent = text;
+      return;
     }
     element.textContent = text || getEmptyText(element, fallback);
   }
