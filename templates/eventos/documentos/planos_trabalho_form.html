@@ -1,104 +1,455 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block title %}{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho - Central de Viagens{% endblock %}
 {% block page_title %}{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho{% endblock %}
 
 {% block extra_css %}
 <style>
-  .pt-wrap { max-width: 1240px; margin: 0 auto; }
-  .pt-main { display: grid; gap: .9rem; }
-  .pt-head {
-    border: 1px solid #d7e1eb;
-    border-radius: 16px;
-    padding: .9rem 1rem;
-    background: linear-gradient(140deg, #fbfdff 0%, #f2f7fc 100%);
-    box-shadow: 0 6px 18px rgba(20, 40, 60, .07);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: .8rem;
-    flex-wrap: wrap;
+  .pt2-wrap {
+    max-width: 1220px;
+    margin: 0 auto;
+    display: grid;
+    gap: 1rem;
   }
-  .pt-title { margin: 0; color: #142f49; font-size: 1.35rem; font-weight: 800; }
-  .pt-sub { margin: .2rem 0 0; color: #5f7388; font-size: .86rem; }
-  .pt-chip { border: 1px solid #c7d5e3; border-radius: 999px; padding: .28rem .62rem; font-size: .76rem; font-weight: 700; color: #213c59; background: #f7fbff; }
-  .pt-panel { border: 1px solid #d7e1eb; border-radius: 16px; background: #fff; overflow: hidden; }
-  .pt-panel-head { padding: .78rem .95rem; border-bottom: 1px solid #e8eef5; display: flex; align-items: center; justify-content: space-between; gap: .7rem; }
-  .pt-panel-title { margin: 0; font-size: 1rem; font-weight: 800; color: #173754; }
-  .pt-panel-sub { margin: 0; font-size: .78rem; color: #5c748b; }
-  .pt-panel-body { padding: .9rem .95rem; }
-  .pt-grid { display: grid; gap: .7rem; grid-template-columns: repeat(12, minmax(0, 1fr)); }
-  .pt-col-3 { grid-column: span 3; }
-  .pt-col-4 { grid-column: span 4; }
-  .pt-col-5 { grid-column: span 5; }
-  .pt-col-6 { grid-column: span 6; }
-  .pt-col-7 { grid-column: span 7; }
-  .pt-col-8 { grid-column: span 8; }
-  .pt-col-12 { grid-column: span 12; }
-  .pt-k { font-size: .68rem; letter-spacing: .07em; text-transform: uppercase; font-weight: 800; color: #60758a; margin-bottom: .23rem; }
-  .pt-system { border: 1px dashed #c5d4e2; border-radius: 12px; background: #f8fbff; padding: .5rem .65rem; }
-  .pt-system .v { color: #1b3d5d; font-weight: 800; }
-  .pt-main .form-control { min-height: 41px; border-radius: 10px; }
-  .pt-main textarea.form-control { min-height: 95px; }
-  .pt-soft { font-size: .78rem; color: #637b90; margin: .2rem 0 0; }
-  .pt-linkage details { border: 1px solid #d4e0ec; border-radius: 12px; background: #f8fbff; padding: .45rem .65rem; }
-  .pt-linkage summary { cursor: pointer; font-weight: 700; color: #1f4667; }
-  .pt-dest-row,
-  .pt-ef-row { border: 1px solid #d7e2ed; border-radius: 11px; background: #fbfdff; padding: .48rem; margin-bottom: .46rem; }
-  .pt-ops { display: grid; gap: .75rem; grid-template-columns: 1fr 1fr; }
-  .pt-sim { border: 1px solid #ccdae8; border-radius: 13px; background: linear-gradient(150deg, #f8fcff 0%, #eef5fc 100%); padding: .65rem; }
-  .pt-sim-grid { display: grid; gap: .5rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .pt-sim-tile { border: 1px solid #c7d7e7; border-radius: 11px; background: #fff; padding: .44rem .5rem; }
-  .pt-acts { display: grid; gap: .5rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .pt-act { border: 1px solid #d1deea; border-radius: 11px; padding: .52rem .56rem; background: linear-gradient(180deg, #fff 0%, #f8fbff 100%); }
-  .pt-act .form-check { margin: 0; }
-  .pt-act .form-check-label { color: #244665; font-size: .86rem; font-weight: 600; }
-  .pt-footer {
-    position: sticky;
-    bottom: .2rem;
-    border: 1px solid #c6d5e3;
+
+  .pt2-hero {
+    border: 1px solid #e5e7eb;
     border-radius: 14px;
-    background: rgba(252, 254, 255, .98);
-    box-shadow: 0 8px 20px rgba(15, 37, 58, .08);
-    padding: .65rem .75rem;
+    background: #fff;
+    padding: 1rem 1.1rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: .65rem;
+    justify-content: space-between;
+    gap: 0.9rem;
     flex-wrap: wrap;
   }
-  .pt-footer .btn { border-radius: 10px; font-weight: 700; }
+
+  .pt2-overline {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .pt2-title {
+    margin: 0.15rem 0 0;
+    color: #10243f;
+    font-size: 1.45rem;
+    font-weight: 850;
+    line-height: 1.12;
+  }
+
+  .pt2-sub {
+    margin: 0.35rem 0 0;
+    color: #5b6f85;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    max-width: 72ch;
+  }
+
+  .pt2-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+
+  .pt2-badge {
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 0.34rem 0.68rem;
+    color: #1f3856;
+    background: #f8fbff;
+    font-size: 0.77rem;
+    font-weight: 700;
+  }
+
+  .pt2-wizard {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fff;
+    padding: 0.9rem 1rem;
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .pt2-stepper {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .pt2-step-link {
+    min-height: 3.1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 11px;
+    background: #fff;
+    color: #304861;
+    padding: 0.5rem 0.55rem;
+    text-align: left;
+    display: grid;
+    gap: 0.16rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, background 0.18s ease;
+  }
+
+  .pt2-step-link:hover {
+    border-color: #cdd9e7;
+    box-shadow: 0 7px 18px rgba(15, 23, 42, 0.06);
+  }
+
+  .pt2-step-link.is-current {
+    border-color: #5b87b6;
+    background: #f7fbff;
+    box-shadow: 0 10px 22px rgba(37, 99, 154, 0.16);
+    transform: translateY(-1px);
+  }
+
+  .pt2-step-link.is-complete {
+    border-color: #bfd2e4;
+    background: #f8fcff;
+  }
+
+  .pt2-step-link:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .pt2-step-index {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7f95;
+  }
+
+  .pt2-step-name {
+    font-size: 0.82rem;
+    font-weight: 750;
+    line-height: 1.2;
+    color: #1b3655;
+  }
+
+  .pt2-step-head {
+    border-top: 1px solid #eef2f6;
+    padding-top: 0.7rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .pt2-step-title {
+    margin: 0;
+    color: #10243f;
+    font-size: 1.15rem;
+    font-weight: 820;
+  }
+
+  .pt2-step-description {
+    margin: 0.18rem 0 0;
+    color: #5d7288;
+    font-size: 0.84rem;
+  }
+
+  .pt2-step {
+    display: none;
+    gap: 1.2rem;
+    padding-top: 0.2rem;
+  }
+
+  .pt2-step.is-active {
+    display: grid;
+  }
+
+  .pt2-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.95rem 1rem;
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .pt2-card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.4rem 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .pt2-card-title {
+    margin: 0;
+    color: #173452;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .pt2-card-meta {
+    margin: 0;
+    color: #71839a;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .pt2-grid {
+    display: grid;
+    gap: 0.9rem 1rem;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .pt2-col-3 { grid-column: span 3; }
+  .pt2-col-4 { grid-column: span 4; }
+  .pt2-col-5 { grid-column: span 5; }
+  .pt2-col-6 { grid-column: span 6; }
+  .pt2-col-7 { grid-column: span 7; }
+  .pt2-col-8 { grid-column: span 8; }
+  .pt2-col-12 { grid-column: span 12; }
+
+  .pt2-label {
+    margin-bottom: 0.26rem;
+    color: #6b7f95;
+    font-size: 0.69rem;
+    letter-spacing: 0.07em;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .pt2-wrap .form-control {
+    min-height: 2.7rem;
+    border-radius: 10px;
+  }
+
+  .pt2-wrap textarea.form-control {
+    min-height: 6.5rem;
+  }
+
+  .pt2-soft {
+    color: #63798f;
+    font-size: 0.78rem;
+    margin: 0.2rem 0 0;
+  }
+
+  .pt2-row-shell {
+    border: 1px solid #e6edf4;
+    border-radius: 10px;
+    padding: 0.62rem;
+    background: #fbfdff;
+  }
+
+  .pt2-dest-list,
+  .pt2-ef-list {
+    display: grid;
+    gap: 0.62rem;
+  }
+
+  .pt2-actions-inline {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .pt2-activity-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .pt2-activity-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.62rem;
+    background: #fff;
+  }
+
+  .pt2-activity-item .form-check {
+    margin: 0;
+  }
+
+  .pt2-activity-item .form-check-label {
+    color: #244665;
+    font-size: 0.86rem;
+    font-weight: 600;
+  }
+
+  .pt2-diarias {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .pt2-diarias-inputs {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.9rem;
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .pt2-diarias-output {
+    border: 1px solid #cfe0f0;
+    border-radius: 12px;
+    background: linear-gradient(150deg, #f8fbff 0%, #edf5fd 100%);
+    box-shadow: 0 16px 30px rgba(37, 99, 154, 0.14);
+    padding: 0.95rem;
+    display: grid;
+    gap: 0.8rem;
+    align-content: start;
+  }
+
+  .pt2-diarias-total-label {
+    color: #5c7491;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .pt2-diarias-total-value {
+    color: #143a63;
+    font-size: 1.95rem;
+    line-height: 1.04;
+    font-weight: 900;
+  }
+
+  .pt2-diarias-kpis {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .pt2-diarias-kpi {
+    border: 1px solid #d8e6f4;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 0.58rem 0.62rem;
+    display: grid;
+    gap: 0.12rem;
+  }
+
+  .pt2-diarias-kpi strong {
+    color: #153f67;
+    font-size: 0.94rem;
+    font-weight: 820;
+  }
+
+  .pt2-review-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .pt2-review-list {
+    display: grid;
+    gap: 0;
+  }
+
+  .pt2-review-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.7rem;
+    align-items: baseline;
+    padding: 0.52rem 0;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  .pt2-review-row:last-child {
+    border-bottom: 0;
+  }
+
+  .pt2-review-label {
+    color: #6c8097;
+    font-size: 0.74rem;
+    font-weight: 700;
+  }
+
+  .pt2-review-value {
+    color: #163a5f;
+    font-size: 0.86rem;
+    font-weight: 760;
+  }
+
+  .pt2-nav {
+    border-top: 1px solid #edf2f7;
+    padding-top: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+  }
+
+  .pt2-nav-left,
+  .pt2-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 1100px) {
+    .pt2-stepper {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
 
   @media (max-width: 991px) {
-    .pt-col-3, .pt-col-4, .pt-col-5, .pt-col-6, .pt-col-7, .pt-col-8, .pt-col-12 { grid-column: span 12; }
-    .pt-ops { grid-template-columns: 1fr; }
-    .pt-acts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .pt-sim-grid { grid-template-columns: 1fr; }
-    .pt-footer { position: static; }
+    .pt2-col-3,
+    .pt2-col-4,
+    .pt2-col-5,
+    .pt2-col-6,
+    .pt2-col-7,
+    .pt2-col-8,
+    .pt2-col-12 {
+      grid-column: span 12;
+    }
+
+    .pt2-diarias,
+    .pt2-review-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .pt2-activity-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
-  @media (max-width: 640px) {
-    .pt-acts { grid-template-columns: 1fr; }
+  @media (max-width: 720px) {
+    .pt2-stepper {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pt2-hero,
+    .pt2-wizard,
+    .pt2-card {
+      padding: 0.82rem;
+    }
   }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-3">
-  <div class="pt-wrap">
-    <div class="pt-head">
+  <div class="pt2-wrap">
+    <section class="pt2-hero">
       <div>
-        <h1 class="pt-title">{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho</h1>
-        <p class="pt-sub">Fluxo operacional com blocos mais enxutos, hierarquia clara e foco em preenchimento rapido.</p>
+        <div class="pt2-overline">Documento guiado</div>
+        <h1 class="pt2-title">{% if object %}Editar{% else %}Novo{% endif %} plano de trabalho</h1>
+        <p class="pt2-sub">Fluxo em etapas para preencher com mais clareza: geral, equipe, roteiro, transporte, diarias e revisao final.</p>
       </div>
-      <div class="d-flex gap-2 flex-wrap align-items-center">
-        <span class="pt-chip">Plano {% if object %}{{ object.numero_formatado }}{% else %}{{ proximo_numero_pt }}{% endif %}</span>
-        <span class="pt-chip">{{ data_geracao_preview|date:'d/m/Y' }}</span>
+      <div class="pt2-badges">
+        <span class="pt2-badge">Plano {% if object %}{{ object.numero_formatado }}{% else %}{{ proximo_numero_pt }}{% endif %}</span>
+        <span class="pt2-badge">{{ data_geracao_preview|date:'d/m/Y' }}</span>
       </div>
-    </div>
+    </section>
 
     {% if form.errors or form.non_field_errors %}
-    <div class="alert alert-danger mt-2" role="alert">
+    <div class="alert alert-danger" role="alert">
       <strong>Existem campos invalidos.</strong>
       <ul class="mb-0 mt-2">
         {% for field in form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}{% endfor %}
@@ -107,7 +458,7 @@
     </div>
     {% endif %}
 
-    <form method="post" novalidate id="pt-form" class="pt-main mt-2">
+    <form method="post" novalidate id="pt-form" class="pt2-wizard">
       {% csrf_token %}
       <input type="hidden" name="return_to" value="{{ return_to }}">
       <input type="hidden" name="context_source" value="{{ context_source }}">
@@ -116,223 +467,316 @@
       <input type="hidden" name="data_criacao" value="{{ form.data_criacao.value|default:data_geracao_preview|date:'Y-m-d' }}">
       {{ form.destinos_payload }}
 
-      <section class="pt-panel pt-linkage">
-        <div class="pt-panel-head">
-          <h2 class="pt-panel-title">Vinculo opcional (evento, oficio, roteiro)</h2>
-          <p class="pt-panel-sub">Expansivel e nao obrigatorio</p>
-        </div>
-        <div class="pt-panel-body">
-          <details>
-            <summary>Associar vinculo documental</summary>
-            <div class="pt-grid mt-2">
-              <div class="pt-col-4">
-                <label class="pt-k" for="{{ form.evento.id_for_label }}">Evento</label>
-                {{ form.evento }}
-                {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
-              </div>
-              <div class="pt-col-4">
-                <label class="pt-k" for="{{ form.oficio.id_for_label }}">Oficio principal</label>
-                {{ form.oficio }}
-                {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
-              </div>
-              <div class="pt-col-4">
-                <label class="pt-k" for="{{ form.roteiro.id_for_label }}">Roteiro principal</label>
-                {{ form.roteiro }}
-                {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
-              </div>
-              <div class="pt-col-12">
-                <label class="pt-k" for="{{ form.oficios_relacionados.id_for_label }}">Oficios relacionados (multiplos)</label>
-                <select id="{{ form.oficios_relacionados.id_for_label }}" name="oficios_relacionados" multiple size="5">
-                  {% with selected=form.oficios_relacionados.value %}
-                  {% for oficio in form.fields.oficios_relacionados.queryset %}
-                  <option value="{{ oficio.pk }}" data-event-id="{{ oficio.evento_id|default:'' }}" {% if selected and oficio.pk|stringformat:'s' in selected %}selected{% endif %}>{{ oficio.numero_formatado|default:'#' }} - {{ oficio.motivo|truncatechars:90 }}</option>
-                  {% endfor %}
-                  {% endwith %}
-                </select>
-                {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
-              </div>
-            </div>
-          </details>
-        </div>
-      </section>
+      <div class="pt2-stepper" id="pt2-stepper">
+        <button type="button" class="pt2-step-link" data-step-target="0">
+          <span class="pt2-step-index">Etapa 1</span>
+          <span class="pt2-step-name">Informacoes gerais</span>
+        </button>
+        <button type="button" class="pt2-step-link" data-step-target="1">
+          <span class="pt2-step-index">Etapa 2</span>
+          <span class="pt2-step-name">Equipe e participantes</span>
+        </button>
+        <button type="button" class="pt2-step-link" data-step-target="2">
+          <span class="pt2-step-index">Etapa 3</span>
+          <span class="pt2-step-name">Roteiro</span>
+        </button>
+        <button type="button" class="pt2-step-link" data-step-target="3">
+          <span class="pt2-step-index">Etapa 4</span>
+          <span class="pt2-step-name">Transporte e apoio</span>
+        </button>
+        <button type="button" class="pt2-step-link" data-step-target="4">
+          <span class="pt2-step-index">Etapa 5</span>
+          <span class="pt2-step-name">Diarias</span>
+        </button>
+        <button type="button" class="pt2-step-link" data-step-target="5">
+          <span class="pt2-step-index">Etapa 6</span>
+          <span class="pt2-step-name">Revisao final</span>
+        </button>
+      </div>
 
-      <section class="pt-panel">
-        <div class="pt-panel-head">
-          <h2 class="pt-panel-title">Bloco 1: destinos, solicitante, data do evento e horario</h2>
-          <p class="pt-panel-sub">Preenchimento principal do plano</p>
+      <div class="pt2-step-head">
+        <div>
+          <h2 class="pt2-step-title" id="pt2-current-step-title">Informacoes gerais</h2>
+          <p class="pt2-step-description" id="pt2-current-step-description">Defina o contexto do plano, periodo e vinculos principais.</p>
         </div>
-        <div class="pt-panel-body">
-          <div class="pt-grid">
-            <div class="pt-col-7">
-              <div class="pt-k">Destinos</div>
-              <div id="destinos-container"></div>
-              <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-destino">Adicionar destino</button>
-              {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
+        <span class="pt2-badge" id="pt2-progress-chip">1 / 6</span>
+      </div>
+
+      <section class="pt2-step" data-step-index="0">
+        <article class="pt2-card">
+          <div class="pt2-card-head">
+            <h3 class="pt2-card-title">Contexto do documento</h3>
+            <p class="pt2-card-meta">Vinculos opcionais</p>
+          </div>
+          <div class="pt2-grid">
+            <div class="pt2-col-4">
+              <label class="pt2-label" for="{{ form.evento.id_for_label }}">Evento</label>
+              {{ form.evento }}
+              {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
             </div>
-            <div class="pt-col-5">
-              <div class="pt-system">
-                <div class="pt-k">Solicitante</div>
-                {{ form.solicitante_escolha }}
-                <div id="col-solicitante-outros" class="mt-2">
-                  {{ form.solicitante_outros }}
-                </div>
-                <div id="col-salvar-solicitante" class="form-check mt-2">
-                  {{ form.salvar_solicitante_outros }}
-                  <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">Salvar no gerenciador</label>
-                </div>
+            <div class="pt2-col-4">
+              <label class="pt2-label" for="{{ form.oficio.id_for_label }}">Oficio principal</label>
+              {{ form.oficio }}
+              {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="pt2-col-4">
+              <label class="pt2-label" for="{{ form.roteiro.id_for_label }}">Roteiro principal</label>
+              {{ form.roteiro }}
+              {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="pt2-col-12">
+              <label class="pt2-label" for="{{ form.oficios_relacionados.id_for_label }}">Oficios relacionados</label>
+              {{ form.oficios_relacionados }}
+              {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+        </article>
+
+        <article class="pt2-card">
+          <div class="pt2-card-head">
+            <h3 class="pt2-card-title">Solicitacao e periodo</h3>
+            <p class="pt2-card-meta">Dados basicos</p>
+          </div>
+          <div class="pt2-grid">
+            <div class="pt2-col-6">
+              <label class="pt2-label" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
+              {{ form.solicitante_escolha }}
+              <div id="col-solicitante-outros" class="mt-2">{{ form.solicitante_outros }}</div>
+              <div id="col-salvar-solicitante" class="form-check mt-2">
+                {{ form.salvar_solicitante_outros }}
+                <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">Salvar no gerenciador</label>
               </div>
-              <div class="pt-system mt-2">
-                <div class="pt-k">Data do evento</div>
-                <div class="form-check mb-2">
+            </div>
+            <div class="pt2-col-6">
+              <label class="pt2-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horario de atendimento</label>
+              {{ form.horario_atendimento_padrao }}
+              <div id="col-horario-manual" class="mt-2">{{ form.horario_atendimento_manual }}</div>
+            </div>
+            <div class="pt2-col-4">
+              <label class="pt2-label" for="{{ form.evento_data_unica.id_for_label }}">Tipo de periodo</label>
+              <div class="pt2-row-shell">
+                <div class="form-check mb-0">
                   {{ form.evento_data_unica }}
                   <label class="form-check-label" for="{{ form.evento_data_unica.id_for_label }}">Data unica</label>
                 </div>
-                <div class="row g-2">
-                  <div class="col-md-6">
-                    {{ form.evento_data_inicio }}
-                    {% if form.evento_data_inicio.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_inicio.errors.0 }}</div>{% endif %}
-                  </div>
-                  <div class="col-md-6" id="col-data-fim">
-                    {{ form.evento_data_fim }}
-                    {% if form.evento_data_fim.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_fim.errors.0 }}</div>{% endif %}
-                  </div>
-                </div>
-              </div>
-              <div class="pt-system mt-2">
-                <div class="pt-k">Horario de atendimento</div>
-                {{ form.horario_atendimento_padrao }}
-                <div id="col-horario-manual" class="mt-2">{{ form.horario_atendimento_manual }}</div>
               </div>
             </div>
+            <div class="pt2-col-4">
+              <label class="pt2-label" for="{{ form.evento_data_inicio.id_for_label }}">Saida</label>
+              {{ form.evento_data_inicio }}
+              {% if form.evento_data_inicio.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_inicio.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="pt2-col-4" id="col-data-fim">
+              <label class="pt2-label" for="{{ form.evento_data_fim.id_for_label }}">Retorno</label>
+              {{ form.evento_data_fim }}
+              {% if form.evento_data_fim.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_fim.errors.0 }}</div>{% endif %}
+            </div>
           </div>
-        </div>
+        </article>
       </section>
 
-      <section class="pt-panel">
-        <div class="pt-panel-head">
-          <h2 class="pt-panel-title">Bloco 2: efetivo e simulacao de diarias</h2>
-          <p class="pt-panel-sub">Centro operacional do plano</p>
-        </div>
-        <div class="pt-panel-body pt-ops">
-          <div>
+      <section class="pt2-step" data-step-index="1">
+        <article class="pt2-card">
+          <div class="pt2-card-head">
+            <h3 class="pt2-card-title">Equipe e efetivo</h3>
+            <p class="pt2-card-meta">Composicao</p>
+          </div>
+          <div class="pt2-ef-list" id="efetivo-rows">
             {{ efetivo_formset.management_form }}
-            <div id="efetivo-rows">
-              {% for row in efetivo_formset %}
-              <div class="pt-ef-row" data-ef-row>
-                {{ row.id }}
-                <div class="row g-2 align-items-end">
-                  <div class="col-md-7">
-                    <label class="pt-k" for="{{ row.cargo.id_for_label }}">Cargo</label>
-                    {{ row.cargo }}
-                  </div>
-                  <div class="col-md-3">
-                    <label class="pt-k" for="{{ row.quantidade.id_for_label }}">Quantidade</label>
-                    {{ row.quantidade }}
-                  </div>
-                  <div class="col-md-2">
-                    <div class="form-check mt-4">
-                      {{ row.DELETE }}
-                      <label class="form-check-label" for="{{ row.DELETE.id_for_label }}">Remover</label>
-                    </div>
+            {% for row in efetivo_formset %}
+            <div class="pt2-row-shell" data-ef-row>
+              {{ row.id }}
+              <div class="pt2-grid">
+                <div class="pt2-col-7">
+                  <label class="pt2-label" for="{{ row.cargo.id_for_label }}">Cargo</label>
+                  {{ row.cargo }}
+                </div>
+                <div class="pt2-col-3">
+                  <label class="pt2-label" for="{{ row.quantidade.id_for_label }}">Quantidade</label>
+                  {{ row.quantidade }}
+                </div>
+                <div class="pt2-col-2">
+                  <div class="form-check mt-4">
+                    {{ row.DELETE }}
+                    <label class="form-check-label" for="{{ row.DELETE.id_for_label }}">Remover</label>
                   </div>
                 </div>
               </div>
-              {% endfor %}
             </div>
-            <div class="d-flex gap-2 align-items-center mt-2 flex-wrap">
-              <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-efetivo">Adicionar cargo</button>
-              <span class="pt-soft">Cargo inicial sugerido: {{ pt_default_cargo_label }}</span>
-            </div>
-            <div class="mt-2">
-              <label class="pt-k" for="{{ form.quantidade_servidores.id_for_label }}">Quantidade de efetivos</label>
-              {{ form.quantidade_servidores }}
-            </div>
-          </div>
-
-          <div class="pt-sim">
-            <div class="pt-sim-grid">
-              <div class="pt-sim-tile">
-                <div class="pt-k">Composicao de diarias</div>
-                {{ form.diarias_quantidade }}
-              </div>
-              <div class="pt-sim-tile">
-                <div class="pt-k">Valor por efetivo</div>
-                {{ form.diarias_valor_unitario }}
-              </div>
-              <div class="pt-sim-tile">
-                <div class="pt-k">Valor total</div>
-                {{ form.diarias_valor_total }}
-              </div>
-            </div>
-            <div class="mt-2">
-              <div class="pt-k">Valor total por extenso</div>
-              {{ form.diarias_valor_extenso }}
-            </div>
-            <p class="pt-soft">Simulacao alinhada ao padrao operacional do Oficio, considerando os vinculos e o total de efetivo.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="pt-panel">
-        <div class="pt-panel-head">
-          <h2 class="pt-panel-title">Bloco 3: atividades, metas automaticas e recursos</h2>
-          <p class="pt-panel-sub">Catalogo operacional com saida automatizada</p>
-        </div>
-        <div class="pt-panel-body">
-          <div class="pt-acts">
-            {% for atividade in plano_trabalho_atividades_catalogo %}
-            <label class="pt-act" for="pt-atividade-{{ atividade.codigo }}">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="atividades_codigos" value="{{ atividade.codigo }}" id="pt-atividade-{{ atividade.codigo }}" {% if atividade.codigo in pt_selected_activity_codes %}checked{% endif %}>
-                <span class="form-check-label">{{ atividade.nome }}</span>
-              </div>
-            </label>
             {% endfor %}
           </div>
-          <div class="pt-grid mt-2">
-            <div class="pt-col-6">
-              <label class="pt-k" for="{{ form.metas_formatadas.id_for_label }}">Metas automaticas</label>
+          <div class="pt2-actions-inline">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-efetivo">Adicionar cargo</button>
+            <span class="pt2-soft">Cargo inicial sugerido: {{ pt_default_cargo_label }}</span>
+          </div>
+          <div>
+            <label class="pt2-label" for="{{ form.quantidade_servidores.id_for_label }}">Quantidade total de efetivos</label>
+            {{ form.quantidade_servidores }}
+          </div>
+        </article>
+      </section>
+
+      <section class="pt2-step" data-step-index="2">
+        <article class="pt2-card">
+          <div class="pt2-card-head">
+            <h3 class="pt2-card-title">Roteiro e destinos</h3>
+            <p class="pt2-card-meta">Planejamento geografico</p>
+          </div>
+          <div class="pt2-grid">
+            <div class="pt2-col-12">
+              <div id="destinos-container" class="pt2-dest-list"></div>
+              <div class="pt2-actions-inline mt-1">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-destino">Adicionar destino</button>
+              </div>
+              {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="pt2-step" data-step-index="3">
+        <article class="pt2-card">
+          <div class="pt2-card-head">
+            <h3 class="pt2-card-title">Transporte e coordenacao</h3>
+            <p class="pt2-card-meta">Apoio operacional</p>
+          </div>
+          <div class="pt2-grid">
+            <div class="pt2-col-6">
+              <label class="pt2-label" for="{{ form.coordenador_operacional.id_for_label }}">Coordenacao operacional</label>
+              {{ form.coordenador_operacional }}
+              <p class="pt2-soft">Nao encontrou? <a href="{{ pt_coordenador_operacional_create_url }}" target="_blank" rel="noopener">Cadastrar no banco de coordenadores</a>.</p>
+            </div>
+            <div class="pt2-col-6">
+              <label class="pt2-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenacao administrativa</label>
+              {{ form.coordenador_administrativo }}
+              <p class="pt2-soft">Origem: banco de viajantes finalizados.</p>
+            </div>
+            <div class="pt2-col-12">
+              <label class="pt2-label">Atividades previstas</label>
+              <div class="pt2-activity-grid">
+                {% for atividade in plano_trabalho_atividades_catalogo %}
+                <label class="pt2-activity-item" for="pt-atividade-{{ atividade.codigo }}">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="atividades_codigos" value="{{ atividade.codigo }}" id="pt-atividade-{{ atividade.codigo }}" {% if atividade.codigo in pt_selected_activity_codes %}checked{% endif %}>
+                    <span class="form-check-label">{{ atividade.nome }}</span>
+                  </div>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="pt2-col-6">
+              <label class="pt2-label" for="{{ form.metas_formatadas.id_for_label }}">Metas automaticas</label>
               {{ form.metas_formatadas }}
             </div>
-            <div class="pt-col-6">
-              <label class="pt-k" for="{{ form.recursos_texto.id_for_label }}">Recursos necessarios</label>
+            <div class="pt2-col-6">
+              <label class="pt2-label" for="{{ form.recursos_texto.id_for_label }}">Recursos necessarios</label>
               {{ form.recursos_texto }}
-              <p class="pt-soft">Preparado para automacao com base nas atividades selecionadas.</p>
             </div>
           </div>
-        </div>
+        </article>
       </section>
 
-      <section class="pt-panel">
-        <div class="pt-panel-head">
-          <h2 class="pt-panel-title">Bloco 4: coordenacao</h2>
-          <p class="pt-panel-sub">Banco proprio para coordenacao operacional e viajantes para administrativa</p>
-        </div>
-        <div class="pt-panel-body">
-          <div class="pt-grid">
-            <div class="pt-col-6">
-              <label class="pt-k" for="{{ form.coordenador_operacional.id_for_label }}">Coordenacao operacional</label>
-              {{ form.coordenador_operacional }}
-              <p class="pt-soft">Nao encontrou? <a href="{{ pt_coordenador_operacional_create_url }}" target="_blank" rel="noopener">Cadastrar no banco de coordenadores</a>.</p>
+      <section class="pt2-step" data-step-index="4">
+        <article class="pt2-card">
+          <div class="pt2-card-head">
+            <h3 class="pt2-card-title">Calculadora de diarias</h3>
+            <p class="pt2-card-meta">Resumo financeiro em destaque</p>
+          </div>
+
+          <div class="pt2-diarias">
+            <div class="pt2-diarias-inputs">
+              <div class="pt2-grid">
+                <div class="pt2-col-6">
+                  <label class="pt2-label" for="pt2-diarias-data-inicio">Data de saida</label>
+                  <input type="text" id="pt2-diarias-data-inicio" class="form-control" readonly>
+                </div>
+                <div class="pt2-col-6">
+                  <label class="pt2-label" for="pt2-diarias-data-fim">Data de retorno</label>
+                  <input type="text" id="pt2-diarias-data-fim" class="form-control" readonly>
+                </div>
+                <div class="pt2-col-6">
+                  <label class="pt2-label" for="{{ form.diarias_quantidade.id_for_label }}">Quantidade de diarias</label>
+                  {{ form.diarias_quantidade }}
+                </div>
+                <div class="pt2-col-6">
+                  <label class="pt2-label" for="{{ form.diarias_valor_unitario.id_for_label }}">Valor por servidor</label>
+                  {{ form.diarias_valor_unitario }}
+                </div>
+                <div class="pt2-col-12">
+                  <label class="pt2-label" for="{{ form.diarias_valor_total.id_for_label }}">Valor total oficial</label>
+                  {{ form.diarias_valor_total }}
+                </div>
+                <div class="pt2-col-12">
+                  <label class="pt2-label" for="{{ form.diarias_valor_extenso.id_for_label }}">Valor total por extenso</label>
+                  {{ form.diarias_valor_extenso }}
+                </div>
+              </div>
             </div>
-            <div class="pt-col-6">
-              <label class="pt-k" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenacao administrativa</label>
-              {{ form.coordenador_administrativo }}
-              <p class="pt-soft">Origem: banco de viajantes finalizados, com padrao definido nas configuracoes.</p>
+
+            <aside class="pt2-diarias-output">
+              <div>
+                <div class="pt2-diarias-total-label">Total estimado</div>
+                <div class="pt2-diarias-total-value" id="pt2-live-total">R$ 0,00</div>
+              </div>
+              <div class="pt2-diarias-kpis">
+                <div class="pt2-diarias-kpi">
+                  <span class="pt2-label">Diarias estimadas</span>
+                  <strong id="pt2-live-diarias">0 diaria(s)</strong>
+                </div>
+                <div class="pt2-diarias-kpi">
+                  <span class="pt2-label">Valor por dia</span>
+                  <strong id="pt2-live-unit">R$ 0,00</strong>
+                </div>
+                <div class="pt2-diarias-kpi">
+                  <span class="pt2-label">Efetivo</span>
+                  <strong id="pt2-live-efetivo">0 servidor(es)</strong>
+                </div>
+              </div>
+              <p class="pt2-soft mb-0">Atualizacao em tempo real com base no periodo, efetivo e valores calculados/preenchidos.</p>
+            </aside>
+          </div>
+        </article>
+      </section>
+
+      <section class="pt2-step" data-step-index="5">
+        <article class="pt2-card">
+          <div class="pt2-card-head">
+            <h3 class="pt2-card-title">Revisao final</h3>
+            <p class="pt2-card-meta">Leitura executiva</p>
+          </div>
+
+          <div class="pt2-review-grid">
+            <div class="pt2-card">
+              <div class="pt2-card-head">
+                <h4 class="pt2-card-title">Resumo geral</h4>
+                <p class="pt2-card-meta">Planejamento</p>
+              </div>
+              <div class="pt2-review-list" id="pt2-review-main"></div>
+            </div>
+            <div class="pt2-card">
+              <div class="pt2-card-head">
+                <h4 class="pt2-card-title">Financeiro</h4>
+                <p class="pt2-card-meta">Diarias</p>
+              </div>
+              <div class="pt2-review-list" id="pt2-review-finance"></div>
             </div>
           </div>
-        </div>
+        </article>
       </section>
 
-      <div class="pt-footer">
-        <div class="d-flex gap-2 flex-wrap">
+      <div class="pt2-nav">
+        <div class="pt2-nav-left">
+          <button type="button" class="btn btn-outline-secondary" id="pt2-prev">Voltar etapa</button>
+          <button type="button" class="btn btn-outline-primary" id="pt2-next">Avancar etapa</button>
+        </div>
+        <div class="pt2-nav-right">
           <button class="btn btn-primary" type="submit">Salvar plano e preparar geracao</button>
           {% if object %}
           <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">DOCX</a>
           <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">PDF</a>
           {% endif %}
+          <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Voltar</a>
         </div>
-        <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Voltar</a>
       </div>
     </form>
   </div>
@@ -344,6 +788,60 @@
   (function () {
     const form = document.getElementById('pt-form');
     if (!form) return;
+
+    const stepTitles = [
+      { title: 'Informacoes gerais', description: 'Defina o contexto do plano, periodo e vinculos principais.' },
+      { title: 'Equipe e participantes', description: 'Organize o efetivo com distribuicao de cargos e quantidade.' },
+      { title: 'Roteiro', description: 'Monte o deslocamento em destinos objetivos e reutilizaveis.' },
+      { title: 'Transporte e apoio', description: 'Consolide coordenacao, atividades e recursos operacionais.' },
+      { title: 'Diarias', description: 'Acompanhe a simulacao em destaque com leitura imediata.' },
+      { title: 'Revisao final', description: 'Valide os pontos-chave antes de salvar e gerar documentos.' }
+    ];
+
+    const stepLinks = Array.from(document.querySelectorAll('[data-step-target]'));
+    const steps = Array.from(document.querySelectorAll('.pt2-step'));
+    const prevBtn = document.getElementById('pt2-prev');
+    const nextBtn = document.getElementById('pt2-next');
+    const titleEl = document.getElementById('pt2-current-step-title');
+    const descEl = document.getElementById('pt2-current-step-description');
+    const progressEl = document.getElementById('pt2-progress-chip');
+    let currentStep = 0;
+
+    function showStep(index) {
+      currentStep = Math.max(0, Math.min(index, steps.length - 1));
+      steps.forEach((step, idx) => {
+        step.classList.toggle('is-active', idx === currentStep);
+      });
+      stepLinks.forEach((link, idx) => {
+        link.classList.toggle('is-current', idx === currentStep);
+        link.classList.toggle('is-complete', idx < currentStep);
+      });
+      const meta = stepTitles[currentStep] || { title: 'Etapa', description: '' };
+      titleEl.textContent = meta.title;
+      descEl.textContent = meta.description;
+      progressEl.textContent = (currentStep + 1) + ' / ' + steps.length;
+      prevBtn.disabled = currentStep === 0;
+      nextBtn.textContent = currentStep === steps.length - 1 ? 'Ir para revisao' : 'Avancar etapa';
+      if (currentStep === steps.length - 1) {
+        renderReview();
+      }
+    }
+
+    stepLinks.forEach((link) => {
+      link.addEventListener('click', function () {
+        const target = parseInt(link.getAttribute('data-step-target') || '0', 10);
+        if (Number.isNaN(target)) return;
+        showStep(target);
+      });
+    });
+
+    prevBtn.addEventListener('click', function () {
+      showStep(currentStep - 1);
+    });
+
+    nextBtn.addEventListener('click', function () {
+      showStep(Math.min(currentStep + 1, steps.length - 1));
+    });
 
     const eventSelect = document.getElementById('{{ form.evento.id_for_label }}');
     const oficioSelect = document.getElementById('{{ form.oficio.id_for_label }}');
@@ -368,6 +866,39 @@
     const addEfetivoButton = document.getElementById('btn-add-efetivo');
     const quantidadeServidores = document.getElementById('{{ form.quantidade_servidores.id_for_label }}');
 
+    const diariasQuantidadeInput = document.getElementById('{{ form.diarias_quantidade.id_for_label }}');
+    const diariasUnitarioInput = document.getElementById('{{ form.diarias_valor_unitario.id_for_label }}');
+    const diariasTotalInput = document.getElementById('{{ form.diarias_valor_total.id_for_label }}');
+    const liveTotal = document.getElementById('pt2-live-total');
+    const liveDiarias = document.getElementById('pt2-live-diarias');
+    const liveUnit = document.getElementById('pt2-live-unit');
+    const liveEfetivo = document.getElementById('pt2-live-efetivo');
+    const diariasDataInicioMirror = document.getElementById('pt2-diarias-data-inicio');
+    const diariasDataFimMirror = document.getElementById('pt2-diarias-data-fim');
+
+    const reviewMain = document.getElementById('pt2-review-main');
+    const reviewFinance = document.getElementById('pt2-review-finance');
+
+    function refreshSelectPickers(root) {
+      if (window.OficioWizard && typeof window.OficioWizard.refreshSelectPickers === 'function') {
+        window.OficioWizard.refreshSelectPickers(root || form);
+      }
+    }
+
+    function forceSearchableSelect(selectEl, placeholder) {
+      if (!selectEl) return;
+      selectEl.setAttribute('data-oficio-picker-search', 'always');
+      if (placeholder) {
+        selectEl.setAttribute('data-oficio-picker-search-placeholder', placeholder);
+      }
+    }
+
+    forceSearchableSelect(oficiosSelect, 'Filtrar oficios...');
+    forceSearchableSelect(oficioSelect, 'Filtrar oficio...');
+    forceSearchableSelect(roteiroSelect, 'Filtrar roteiro...');
+    forceSearchableSelect(document.getElementById('{{ form.coordenador_operacional.id_for_label }}'), 'Filtrar coordenador...');
+    forceSearchableSelect(document.getElementById('{{ form.coordenador_administrativo.id_for_label }}'), 'Filtrar servidor...');
+
     function toggleSolicitanteOutros() {
       if (!solicitanteSelect) return;
       const show = solicitanteSelect.value === '__OUTROS__';
@@ -386,6 +917,7 @@
       if (dataUnica.checked && dataInicio && dataFim) {
         dataFim.value = dataInicio.value;
       }
+      updateDiariasLive();
     }
 
     function filterByEvent(selectEl) {
@@ -399,6 +931,7 @@
         const optEvent = String(opt.dataset.eventId || '').trim();
         opt.hidden = !!eventId && !!optEvent && optEvent !== eventId;
       });
+      refreshSelectPickers(selectEl);
     }
 
     async function fetchCitiesByEstado(estadoId) {
@@ -421,32 +954,35 @@
         }
         selectEl.appendChild(opt);
       });
+      refreshSelectPickers(selectEl);
     }
 
     async function addDestinoRow(destino) {
       const row = document.createElement('div');
-      row.className = 'pt-dest-row';
+      row.className = 'pt2-row-shell pt-dest-row';
       row.innerHTML = `
-        <div class="row g-2 align-items-end">
-          <div class="col-md-5">
-            <label class="pt-k">Estado</label>
-            <select class="destino-estado"><option value="">Selecione...</option>{% for estado in estados_choices %}<option value="{{ estado.pk }}">{{ estado.nome }} ({{ estado.sigla }})</option>{% endfor %}</select>
+        <div class="pt2-grid">
+          <div class="pt2-col-5">
+            <label class="pt2-label">Estado</label>
+            <select class="destino-estado" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF..."><option value="">Selecione...</option>{% for estado in estados_choices %}<option value="{{ estado.pk }}">{{ estado.nome }} ({{ estado.sigla }})</option>{% endfor %}</select>
           </div>
-          <div class="col-md-5">
-            <label class="pt-k">Cidade</label>
-            <select class="destino-cidade"><option value="">Selecione...</option></select>
+          <div class="pt2-col-5">
+            <label class="pt2-label">Cidade</label>
+            <select class="destino-cidade" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..."><option value="">Selecione...</option></select>
           </div>
-          <div class="col-md-2">
+          <div class="pt2-col-2">
             <button type="button" class="btn btn-outline-danger w-100 btn-rem-destino">Remover</button>
           </div>
         </div>`;
       destinosContainer.appendChild(row);
+      refreshSelectPickers(row);
       const estadoSel = row.querySelector('.destino-estado');
       const cidadeSel = row.querySelector('.destino-cidade');
       estadoSel.value = String(destino.estado_id || '');
       if (estadoSel.value) {
         await mountCityOptions(cidadeSel, estadoSel.value, destino.cidade_id || '');
       }
+      refreshSelectPickers(row);
     }
 
     function collectDestinos() {
@@ -482,6 +1018,7 @@
       for (const item of initial) {
         await addDestinoRow(item || {});
       }
+      collectDestinos();
     }
 
     function syncEfetivoTotal() {
@@ -498,6 +1035,8 @@
         }
       });
       quantidadeServidores.value = total > 0 ? String(total) : '';
+      updateDiariasLive();
+      renderReview();
     }
 
     function reindexEfetivoRows() {
@@ -514,6 +1053,7 @@
       if (totalFormsInput) {
         totalFormsInput.value = String(rows.length);
       }
+      refreshSelectPickers(efetivoRows);
     }
 
     function addEfetivoRow() {
@@ -546,8 +1086,121 @@
       syncEfetivoTotal();
     }
 
+    function parseCurrency(value) {
+      const raw = String(value || '').trim();
+      if (!raw) return 0;
+      const normalized = raw.replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, '');
+      const num = parseFloat(normalized);
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function formatCurrency(value) {
+      try {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+      } catch (_err) {
+        return 'R$ ' + (value || 0).toFixed(2);
+      }
+    }
+
+    function parseDiariasQuantidade() {
+      const raw = String((diariasQuantidadeInput && diariasQuantidadeInput.value) || '');
+      const match = raw.match(/[0-9]+([.,][0-9]+)?/);
+      if (!match) return 0;
+      const num = parseFloat(match[0].replace(',', '.'));
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function getPeriodoDiariasFallback() {
+      if (!dataInicio || !dataFim || !dataInicio.value || !dataFim.value) {
+        return 0;
+      }
+      const start = new Date(dataInicio.value + 'T00:00:00');
+      const end = new Date(dataFim.value + 'T00:00:00');
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+        return 0;
+      }
+      const diffDays = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+      return diffDays > 0 ? diffDays : 0;
+    }
+
+    function updateDiariasLive() {
+      const totalOficial = parseCurrency(diariasTotalInput ? diariasTotalInput.value : '');
+      const unitFromField = parseCurrency(diariasUnitarioInput ? diariasUnitarioInput.value : '');
+      const qtdDiarias = parseDiariasQuantidade() || getPeriodoDiariasFallback();
+      const efetivo = parseInt((quantidadeServidores && quantidadeServidores.value) || '0', 10) || 0;
+
+      let unit = unitFromField;
+      if (!unit && totalOficial && qtdDiarias) {
+        unit = totalOficial / qtdDiarias;
+      }
+
+      let total = totalOficial;
+      if (!total && unit && qtdDiarias) {
+        total = unit * qtdDiarias;
+      }
+
+      if (diariasDataInicioMirror) {
+        diariasDataInicioMirror.value = dataInicio && dataInicio.value ? dataInicio.value : '-';
+      }
+      if (diariasDataFimMirror) {
+        diariasDataFimMirror.value = dataFim && dataFim.value ? dataFim.value : '-';
+      }
+      if (liveTotal) liveTotal.textContent = formatCurrency(total);
+      if (liveDiarias) liveDiarias.textContent = (qtdDiarias || 0) + ' diaria(s)';
+      if (liveUnit) liveUnit.textContent = formatCurrency(unit);
+      if (liveEfetivo) liveEfetivo.textContent = (efetivo || 0) + ' servidor(es)';
+    }
+
+    function selectedText(selectEl) {
+      if (!selectEl || selectEl.selectedIndex < 0) return '-';
+      const option = selectEl.options[selectEl.selectedIndex];
+      return option ? String(option.textContent || '').trim() : '-';
+    }
+
+    function countAtividadesSelecionadas() {
+      return document.querySelectorAll('input[name="atividades_codigos"]:checked').length;
+    }
+
+    function renderReview() {
+      if (!reviewMain || !reviewFinance) return;
+
+      let destinos = [];
+      try {
+        destinos = JSON.parse(destinosPayload.value || '[]');
+      } catch (_err) {
+        destinos = [];
+      }
+
+      const mainRows = [
+        ['Evento', selectedText(eventSelect)],
+        ['Oficio principal', selectedText(oficioSelect)],
+        ['Roteiro', selectedText(roteiroSelect)],
+        ['Solicitante', selectedText(solicitanteSelect)],
+        ['Periodo', (dataInicio && dataInicio.value ? dataInicio.value : '-') + ' ate ' + (dataFim && dataFim.value ? dataFim.value : '-')],
+        ['Destinos', destinos.length ? destinos.map((d) => d.cidade_nome).join(', ') : '-'],
+        ['Efetivo', (quantidadeServidores && quantidadeServidores.value) ? quantidadeServidores.value : '0'],
+        ['Atividades', String(countAtividadesSelecionadas())]
+      ];
+
+      const financeRows = [
+        ['Diarias', (diariasQuantidadeInput && diariasQuantidadeInput.value) || '-'],
+        ['Valor unitario', (diariasUnitarioInput && diariasUnitarioInput.value) || '-'],
+        ['Valor total', (diariasTotalInput && diariasTotalInput.value) || '-'],
+        ['Extenso', (document.getElementById('{{ form.diarias_valor_extenso.id_for_label }}') || {}).value || '-']
+      ];
+
+      reviewMain.innerHTML = mainRows.map((row) => (
+        '<div class="pt2-review-row"><span class="pt2-review-label">' + row[0] + '</span><span class="pt2-review-value">' + row[1] + '</span></div>'
+      )).join('');
+
+      reviewFinance.innerHTML = financeRows.map((row) => (
+        '<div class="pt2-review-row"><span class="pt2-review-label">' + row[0] + '</span><span class="pt2-review-value">' + row[1] + '</span></div>'
+      )).join('');
+    }
+
     document.getElementById('btn-add-destino').addEventListener('click', async () => {
       await addDestinoRow({ estado_id: '', cidade_id: '' });
+      collectDestinos();
     });
 
     destinosContainer.addEventListener('change', async (event) => {
@@ -567,6 +1220,7 @@
       if (rows.length <= 1) return;
       btn.closest('.pt-dest-row').remove();
       collectDestinos();
+      refreshSelectPickers(destinosContainer);
     });
 
     if (addEfetivoButton) {
@@ -581,27 +1235,60 @@
         filterByEvent(oficioSelect);
         filterByEvent(oficiosSelect);
         filterByEvent(roteiroSelect);
+        renderReview();
       });
       filterByEvent(oficioSelect);
       filterByEvent(oficiosSelect);
       filterByEvent(roteiroSelect);
     }
+
     if (solicitanteSelect) {
-      solicitanteSelect.addEventListener('change', toggleSolicitanteOutros);
+      solicitanteSelect.addEventListener('change', () => {
+        toggleSolicitanteOutros();
+        renderReview();
+      });
     }
+
     if (horarioPadrao) {
       horarioPadrao.addEventListener('change', toggleHorarioManual);
     }
+
     if (dataUnica) {
       dataUnica.addEventListener('change', toggleDataFim);
     }
+
     if (dataInicio) {
       dataInicio.addEventListener('change', () => {
         if (dataUnica && dataUnica.checked && dataFim) {
           dataFim.value = dataInicio.value;
         }
+        updateDiariasLive();
+        renderReview();
       });
     }
+
+    if (dataFim) {
+      dataFim.addEventListener('change', () => {
+        updateDiariasLive();
+        renderReview();
+      });
+    }
+
+    [diariasQuantidadeInput, diariasUnitarioInput, diariasTotalInput].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('input', () => {
+        updateDiariasLive();
+        renderReview();
+      });
+      el.addEventListener('change', () => {
+        updateDiariasLive();
+        renderReview();
+      });
+    });
+
+    document.querySelectorAll('input[name="atividades_codigos"]').forEach((checkbox) => {
+      checkbox.addEventListener('change', renderReview);
+    });
 
     form.addEventListener('submit', () => {
       collectDestinos();
@@ -609,12 +1296,20 @@
       syncEfetivoTotal();
     });
 
-    quantidadeServidores.readOnly = true;
+    if (quantidadeServidores) {
+      quantidadeServidores.readOnly = true;
+    }
+
     toggleSolicitanteOutros();
     toggleHorarioManual();
     toggleDataFim();
-    bootstrapDestinos();
-    syncEfetivoTotal();
+    bootstrapDestinos().then(() => {
+      syncEfetivoTotal();
+      updateDiariasLive();
+      renderReview();
+      refreshSelectPickers(form);
+    });
+    showStep(0);
   })();
 </script>
 {% endblock %}
