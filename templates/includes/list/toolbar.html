@@ -64,7 +64,7 @@
                 <label class="form-label small">{{ filter.label }}</label>
                 <select 
                     name="{{ filter.name }}"
-                    class="form-select form-select-sm"
+                    class="form-select form-select-sm cv-select-base"
                     {% if autosubmit|default:true %}data-list-autosubmit{% endif %}
                 >
                     {% for opt in filter.options %}
