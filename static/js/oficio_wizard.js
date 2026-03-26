@@ -222,10 +222,83 @@
     };
   }
 
+  var UNIDADES = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove',
+    'dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+  var DEZENAS = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+  var CENTENAS = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos',
+    'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+
+  function numeroPorExtenso(n) {
+    if (n < 0) { return ''; }
+    if (n < 20) { return UNIDADES[n]; }
+    if (n < 100) {
+      var d = Math.floor(n / 10);
+      var u = n % 10;
+      return u ? DEZENAS[d] + ' e ' + UNIDADES[u] : DEZENAS[d];
+    }
+    if (n === 100) { return 'cem'; }
+    if (n < 1000) {
+      var c = Math.floor(n / 100);
+      var r = n % 100;
+      return r ? CENTENAS[c] + ' e ' + numeroPorExtenso(r) : CENTENAS[c];
+    }
+    if (n < 2000) {
+      var r = n % 1000;
+      if (!r) { return 'mil'; }
+      var restStr = numeroPorExtenso(r);
+      return (r < 100 || r % 100 === 0) ? 'mil e ' + restStr : 'mil ' + restStr;
+    }
+    if (n < 1000000) {
+      var m = Math.floor(n / 1000);
+      var r = n % 1000;
+      var milStr = numeroPorExtenso(m) + ' mil';
+      if (!r) { return milStr; }
+      var restStr = numeroPorExtenso(r);
+      return (r < 100 || r % 100 === 0) ? milStr + ' e ' + restStr : milStr + ' ' + restStr;
+    }
+    return String(n);
+  }
+
+  function valorBrlPorExtenso(valor) {
+    var num = parseFloat(String(valor).replace(',', '.'));
+    if (isNaN(num) || num <= 0) { return ''; }
+    var centavosTotal = Math.round(num * 100);
+    var reais = Math.floor(centavosTotal / 100);
+    var centavos = centavosTotal % 100;
+    var parts = [];
+    if (reais > 0) {
+      parts.push(numeroPorExtenso(reais) + (reais === 1 ? ' real' : ' reais'));
+    }
+    if (centavos > 0) {
+      parts.push(numeroPorExtenso(centavos) + (centavos === 1 ? ' centavo' : ' centavos'));
+    }
+    return parts.join(' e ');
+  }
+
+  function bindDiariasCalc(options) {
+    var opts = options || {};
+    var valorInput = opts.valorInput || document.querySelector('[name="valor_diarias"]');
+    var extensoInput = opts.extensoInput || document.querySelector('[name="valor_diarias_extenso"]');
+    if (!valorInput || !extensoInput) { return; }
+
+    function updateExtenso() {
+      var v = valorInput.value;
+      if (!v) { extensoInput.value = ''; return; }
+      var resultado = valorBrlPorExtenso(v);
+      if (resultado) { extensoInput.value = resultado; }
+    }
+
+    valorInput.addEventListener('change', updateExtenso);
+    valorInput.addEventListener('blur', updateExtenso);
+  }
+
   window.OficioWizard = {
+    bindDiariasCalc: bindDiariasCalc,
     bindStickyLayout: bindStickyLayout,
     createAutosave: createAutosave,
-    syncQuickReportLayout: syncQuickReportLayout
+    numeroPorExtenso: numeroPorExtenso,
+    syncQuickReportLayout: syncQuickReportLayout,
+    valorBrlPorExtenso: valorBrlPorExtenso
   };
 
   if (document.readyState === 'loading') {
