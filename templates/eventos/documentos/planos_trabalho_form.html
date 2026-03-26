@@ -517,10 +517,12 @@
                   <div class="col-12">
                     <label class="form-label" for="{{ form.diarias_quantidade.id_for_label }}">Qtd. de diárias</label>
                     {{ form.diarias_quantidade }}
-                    <div id="pt-diarias-suggestion" class="pt-diarias-suggestion mt-1" role="status" aria-live="polite">
-                      <span id="pt-diarias-suggestion-text"></span>
-                      <button type="button" id="btn-aplicar-sugestao" class="btn btn-sm btn-outline-primary ms-auto">Aplicar</button>
+                    <div class="mt-2 d-flex gap-2 flex-wrap">
+                      <button type="button" id="btn-calcular-diarias" class="btn btn-outline-primary btn-sm">Calcular diárias</button>
                     </div>
+                    <div id="diarias-erro" class="alert alert-danger py-2 px-3 mt-2 mb-0" role="alert" style="display:none;"></div>
+                    <div id="pt-diarias-suggestion" class="pt-diarias-suggestion mt-2" role="status" aria-live="polite" style="display:none;"></div>
+                    <div class="form-text mt-1" id="diarias-resumo">—</div>
                   </div>
                   <div class="col-6">
                     <label class="form-label" for="{{ form.diarias_valor_unitario.id_for_label }}">Valor / diária</label>
@@ -543,7 +545,7 @@
                   <div class="pt-diarias-kpis">
                     <div class="pt-diarias-kpi">
                       <div class="form-text mb-0">Diárias</div>
-                      <strong id="pt-live-diarias">0</strong>
+                      <strong id="diarias-qtd">0</strong>
                     </div>
                     <div class="pt-diarias-kpi">
                       <div class="form-text mb-0">Valor / dia</div>
@@ -554,7 +556,7 @@
                       <strong id="pt-live-efetivo">0</strong>
                     </div>
                     <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Período</div>
+                      <div class="form-text mb-0">Duração real</div>
                       <strong id="pt-live-periodo">—</strong>
                     </div>
                   </div>
@@ -700,8 +702,11 @@
   const diariasQtd          = document.getElementById('{{ form.diarias_quantidade.id_for_label }}');
   const diariasUnit         = document.getElementById('{{ form.diarias_valor_unitario.id_for_label }}');
   const diariasTotal        = document.getElementById('{{ form.diarias_valor_total.id_for_label }}');
+  const btnCalcularDiarias  = document.getElementById('btn-calcular-diarias');
+  const diariasErroEl       = document.getElementById('diarias-erro');
+  const diariasResumoEl     = document.getElementById('diarias-resumo');
+  const diariasQtdEl        = document.getElementById('diarias-qtd');
   const liveTotal           = document.getElementById('pt-live-total');
-  const liveDiarias         = document.getElementById('pt-live-diarias');
   const liveUnit            = document.getElementById('pt-live-unit');
   const liveEfetivo         = document.getElementById('pt-live-efetivo');
   const livePeriodo         = document.getElementById('pt-live-periodo');
@@ -995,7 +1000,7 @@
       nextBtn.textContent = 'Avançar →';
     }
     if (currentStep === steps.length - 1) renderReview();
-    if (currentStep === 4) { syncDiariasMirrors(); showDiariasSuggestion(); }
+    if (currentStep === 4) { syncDiariasMirrors(); updateDiariasUI(); }
     refreshPickers(steps[currentStep]);
     if (target !== previousStep) triggerAutosave();
   }
@@ -1083,28 +1088,40 @@
   }
 
   // ══════════════════════════════════════════════════════════
-  //  DIÁRIAS — on-demand suggestion (user-controlled)
+  //  DIÁRIAS — CÁLCULO EXCLUSIVO POR DESLOCAMENTO REAL
   // ══════════════════════════════════════════════════════════
-  function showDiariasSuggestion() {
-    const dias   = planoState.datas.dias;
-    const suggEl = document.getElementById('pt-diarias-suggestion');
-    const txtEl  = document.getElementById('pt-diarias-suggestion-text');
-    if (!suggEl || !txtEl) return;
-    if (dias > 0 && (!diariasQtd || !diariasQtd.value)) {
-      txtEl.textContent = 'Sugestão: ' + dias + ' diária' + (dias !== 1 ? 's' : '') + ' (baseado no período)';
-      suggEl.classList.add('is-visible');
-    } else {
-      suggEl.classList.remove('is-visible');
-    }
+  function hideDiariaErro() {
+    if (!diariasErroEl) return;
+    diariasErroEl.textContent = '';
+    diariasErroEl.style.display = 'none';
   }
 
-  function applySuggestedDiarias() {
-    const dias = planoState.datas.dias;
-    if (!dias || !diariasQtd) return;
-    diariasQtd.value = String(dias);
-    const suggEl = document.getElementById('pt-diarias-suggestion');
-    if (suggEl) suggEl.classList.remove('is-visible');
-    computeDiarias();
+  function showDiariaErro(msg) {
+    if (!diariasErroEl) return;
+    diariasErroEl.textContent = msg;
+    diariasErroEl.style.display = 'block';
+  }
+
+  function formatDiariasQtdValue(qtd) {
+    if (!Number.isFinite(qtd)) return '0';
+    return Number.isInteger(qtd) ? String(qtd) : String(qtd).replace('.', ',');
+  }
+
+  function updateDiariasUI() {
+    const qtd = Number((planoState.diarias && planoState.diarias.qtd) || 0);
+    const horas = Number((planoState.diarias && planoState.diarias.horas) || 0);
+    const qtdLabel = formatDiariasQtdValue(qtd);
+
+    if (diariasQtdEl) diariasQtdEl.textContent = qtdLabel;
+    if (diariasQtd) diariasQtd.value = qtdLabel;
+
+    const dias = horas > 0 ? Math.floor(horas / 24) : 0;
+    const horasRest = horas > 0 ? Math.floor(horas % 24) : 0;
+    const resumo = horas > 0 ? (dias + ' dias e ' + horasRest + ' horas') : '—';
+
+    if (diariasResumoEl) diariasResumoEl.textContent = resumo;
+    if (livePeriodo) livePeriodo.textContent = resumo;
+    hideDiariaErro();
   }
 
   function syncDiariasMirrors() {
@@ -1112,31 +1129,101 @@
     if (diariasFimMirror)    diariasFimMirror.value    = planoState.datas.fim    ? fmtDate(planoState.datas.fim)    : '—';
   }
 
+  function updateDeslocamento() {
+    const ds = dataSaidaSede ? dataSaidaSede.value : '';
+    const hs = horaSaidaSede ? horaSaidaSede.value : '';
+    const dc = dataChegadaSede ? dataChegadaSede.value : '';
+    const hc = horaChegadaSede ? horaChegadaSede.value : '';
+
+    if (!planoState.deslocamento) {
+      planoState.deslocamento = { saida: null, chegada: null };
+    }
+
+    planoState.deslocamento.saida = (ds && hs) ? new Date(ds + 'T' + hs) : null;
+    planoState.deslocamento.chegada = (dc && hc) ? new Date(dc + 'T' + hc) : null;
+
+    notify();
+  }
+
+  function calcularDiarias() {
+    const deslocamento = planoState.deslocamento || { saida: null, chegada: null };
+    const saida = deslocamento.saida;
+    const chegada = deslocamento.chegada;
+
+    console.log(planoState.deslocamento);
+
+    if (!saida || !chegada) {
+      showDiariaErro('Preencha data e hora de saída e chegada da sede.');
+      return;
+    }
+
+    if (chegada <= saida) {
+      showDiariaErro('Data de chegada deve ser maior que saída');
+      return;
+    }
+
+    const diffMs = chegada - saida;
+    const diffHoras = diffMs / (1000 * 60 * 60);
+    let diarias = 0;
+
+    if (diffHoras >= 24) {
+      diarias = Math.floor(diffHoras / 24);
+      const resto = diffHoras % 24;
+      if (resto >= 12) {
+        diarias += 0.5;
+      }
+    } else if (diffHoras >= 12) {
+      diarias = 0.5;
+    }
+
+    const prev = planoState.diarias || { unitario: 0, total: 0 };
+    planoState.diarias = {
+      qtd: diarias,
+      horas: diffHoras,
+      unitario: Number(prev.unitario || 0),
+      total: Number(prev.total || 0),
+    };
+
+    updateDiariasUI();
+    computeDiarias();
+    notify();
+  }
+
+  function onDeslocamentoChange() {
+    updateDeslocamento();
+    const desloc = planoState.deslocamento || {};
+    if (desloc.saida && desloc.chegada) {
+      calcularDiarias();
+    }
+  }
+
   function computeDiarias() {
     syncDiariasMirrors();
     const totalOficial = parseCurrency(diariasTotal ? diariasTotal.value : '');
     const unitField    = parseCurrency(diariasUnit  ? diariasUnit.value  : '');
-    const qtdRaw = (() => {
+    const qtdFromState = Number((planoState.diarias && planoState.diarias.qtd) || 0);
+    const qtdFromField = (() => {
       const raw = String((diariasQtd && diariasQtd.value) || '');
-      const m   = raw.match(/[0-9]+([.,][0-9]+)?/);
+      const m = raw.match(/[0-9]+([.,][0-9]+)?/);
       if (!m) return 0;
       const n = parseFloat(m[0].replace(',', '.'));
       return Number.isFinite(n) ? n : 0;
     })();
-    const qtd     = qtdRaw || planoState.datas.dias || 0;
+    const qtd = qtdFromState || qtdFromField;
     const efetivo = parseInt((qtdServidores && qtdServidores.value) || '0', 10) || 0;
     let unit  = unitField;
     if (!unit && totalOficial && qtd) unit = totalOficial / qtd;
     let total = totalOficial;
     if (!total && unit && qtd) total = unit * qtd;
 
-    planoState.diarias = { qtd, unitario: unit, total };
+    const horas = Number((planoState.diarias && planoState.diarias.horas) || 0);
+    planoState.diarias = { qtd, horas, unitario: unit, total };
 
     if (liveTotal)   liveTotal.textContent   = formatCurrency(total);
-    if (liveDiarias) liveDiarias.textContent = qtd + ' diária(s)';
+    if (diariasQtdEl) diariasQtdEl.textContent = formatDiariasQtdValue(qtd);
     if (liveUnit)    liveUnit.textContent    = formatCurrency(unit);
     if (liveEfetivo) liveEfetivo.textContent = efetivo + ' servidor(es)';
-    if (livePeriodo) livePeriodo.textContent = planoState.datas.dias ? planoState.datas.dias + ' dias' : '—';
+    if (livePeriodo && !horas) livePeriodo.textContent = '—';
     notify();
   }
 
@@ -1498,63 +1585,6 @@
   }
 
   // ══════════════════════════════════════════════════════════
-  //  DIÁRIAS — CÁLCULO BASEADO EM DATA/HORA REAL
-  // ══════════════════════════════════════════════════════════
-  function updateDeslocamento() {
-    const dataSaida = dataSaidaSede ? dataSaidaSede.value : '';
-    const horaSaida = horaSaidaSede ? horaSaidaSede.value : '';
-    const dataChegada = dataChegadaSede ? dataChegadaSede.value : '';
-    const horaChegada = horaChegadaSede ? horaChegadaSede.value : '';
-
-    if (!planoState.deslocamento) {
-      planoState.deslocamento = { saida: null, chegada: null };
-    }
-
-    if (dataSaida && horaSaida) {
-      planoState.deslocamento.saida = new Date(`${dataSaida}T${horaSaida}`);
-    } else {
-      planoState.deslocamento.saida = null;
-    }
-
-    if (dataChegada && horaChegada) {
-      planoState.deslocamento.chegada = new Date(`${dataChegada}T${horaChegada}`);
-    } else {
-      planoState.deslocamento.chegada = null;
-    }
-
-    calcularDiarias();
-    notify();
-  }
-
-  function calcularDiarias() {
-    if (!planoState.deslocamento) {
-      planoState.deslocamento = { saida: null, chegada: null };
-    }
-
-    const { saida, chegada } = planoState.deslocamento;
-
-    if (!saida || !chegada) return;
-
-    const diffMs = chegada - saida;
-    const diffHoras = diffMs / (1000 * 60 * 60);
-
-    let diarias = 0;
-
-    if (diffHoras >= 24) {
-      diarias = Math.floor(diffHoras / 24);
-    } else if (diffHoras >= 12) {
-      diarias = 0.5;
-    } else {
-      diarias = 0;
-    }
-
-    if (!planoState.diarias) planoState.diarias = { qtd: 0, unitario: 0, total: 0 };
-    planoState.diarias.qtd = diarias;
-
-    notify();
-  }
-
-  // ══════════════════════════════════════════════════════════
   //  EFETIVO — REMOVER LINHA
   // ══════════════════════════════════════════════════════════
   function removeEfetivoRow(btn) {
@@ -1614,10 +1644,11 @@
   if (dataFim)           dataFim.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
 
   // ── Deslocamento (saída e chegada da sede) ──
-  if (dataSaidaSede)   dataSaidaSede.addEventListener('change',   () => { updateDeslocamento(); syncMetaState(); triggerAutosave(); });
-  if (horaSaidaSede)   horaSaidaSede.addEventListener('change',   () => { updateDeslocamento(); syncMetaState(); triggerAutosave(); });
-  if (dataChegadaSede) dataChegadaSede.addEventListener('change', () => { updateDeslocamento(); syncMetaState(); triggerAutosave(); });
-  if (horaChegadaSede) horaChegadaSede.addEventListener('change', () => { updateDeslocamento(); syncMetaState(); triggerAutosave(); });
+  if (dataSaidaSede)   dataSaidaSede.addEventListener('blur',   () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
+  if (horaSaidaSede)   horaSaidaSede.addEventListener('blur',   () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
+  if (dataChegadaSede) dataChegadaSede.addEventListener('blur', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
+  if (horaChegadaSede) horaChegadaSede.addEventListener('blur', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
+  if (btnCalcularDiarias) btnCalcularDiarias.addEventListener('click', () => { onDeslocamentoChange(); calcularDiarias(); syncMetaState(); triggerAutosave(); });
 
   // ── Remover linha equipe ──
   document.addEventListener('click', (e) => {
@@ -1634,11 +1665,9 @@
 
   [diariasQtd, diariasUnit, diariasTotal].forEach((el) => {
     if (!el) return;
-    el.addEventListener('input',  () => { computeDiarias(); if (el === diariasQtd) showDiariasSuggestion(); });
-    el.addEventListener('change', () => { computeDiarias(); syncMetaState(); triggerAutosave(); if (el === diariasQtd) showDiariasSuggestion(); });
+    el.addEventListener('input',  () => { computeDiarias(); });
+    el.addEventListener('change', () => { computeDiarias(); syncMetaState(); triggerAutosave(); });
   });
-  const btnAplicarSugestao = document.getElementById('btn-aplicar-sugestao');
-  if (btnAplicarSugestao) btnAplicarSugestao.addEventListener('click', applySuggestedDiarias);
 
   document.querySelectorAll('input[name="atividades_codigos"]').forEach((cb) => {
     cb.addEventListener('change', () => { syncMetaState(); triggerAutosave(); if (currentStep === 5) renderReview(); });
@@ -1668,6 +1697,7 @@
   toggleHorarioManual();
   toggleDataFim();
   parseDateRange();
+  onDeslocamentoChange();
   syncMetaState();
   bootstrapDestinos().then(() => {
     syncEfetivoTotal();
