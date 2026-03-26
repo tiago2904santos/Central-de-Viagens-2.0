@@ -1995,14 +1995,14 @@ def plano_trabalho_autosave(request):
         return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
 
     plano_id = _autosave_int(payload.get('id'))
-    if plano_id:
-        plano = PlanoTrabalho.objects.filter(pk=plano_id).first()
-        if not plano:
-            return JsonResponse({'success': False, 'error': 'Plano não encontrado.'}, status=404)
-    else:
-        plano = PlanoTrabalho(status=PlanoTrabalho.STATUS_RASCUNHO, data_criacao=timezone.localdate())
+    if not plano_id:
+        return JsonResponse({'success': False, 'error': 'ID do plano é obrigatório.'}, status=400)
+    plano = PlanoTrabalho.objects.filter(pk=plano_id).first()
+    if not plano:
+        return JsonResponse({'success': False, 'error': 'Plano não encontrado.'}, status=404)
 
-    plano.status = PlanoTrabalho.STATUS_RASCUNHO
+    if _autosave_bool(payload.get('force_rascunho')):
+        plano.status = PlanoTrabalho.STATUS_RASCUNHO
     plano.data_criacao = _autosave_date(payload.get('data_criacao')) or plano.data_criacao or timezone.localdate()
     plano.evento_id = _autosave_int(payload.get('evento_id'))
     plano.oficio_id = _autosave_int(payload.get('oficio_id'))
@@ -2093,26 +2093,6 @@ def plano_trabalho_autosave(request):
     )
 
 
-@require_http_methods(['GET'])
-def plano_trabalho_ultimo_rascunho(request):
-    draft = (
-        PlanoTrabalho.objects.filter(status=PlanoTrabalho.STATUS_RASCUNHO)
-        .order_by('-updated_at')
-        .first()
-    )
-    if not draft:
-        return JsonResponse({'success': True, 'has_draft': False})
-    return JsonResponse(
-        {
-            'success': True,
-            'has_draft': True,
-            'id': draft.pk,
-            'updated_at': timezone.localtime(draft.updated_at).isoformat(),
-            'edit_url': reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': draft.pk}),
-        }
-    )
-
-
 def planos_trabalho_global(request):
     filters = _base_documento_filters(request)
     queryset = (
@@ -2177,6 +2157,25 @@ def plano_trabalho_novo(request):
     return_to = _get_safe_return_to(request, return_to_default)
     context_source = _get_context_source(request)
     preselected_event, preselected_oficio = _resolve_preselected_context(request)
+
+    if request.method == 'GET':
+        novo = PlanoTrabalho.objects.create(
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+            data_criacao=timezone.localdate(),
+            evento=preselected_event,
+            oficio=preselected_oficio,
+        )
+        if preselected_oficio:
+            novo.oficios.add(preselected_oficio)
+        query = {}
+        if return_to:
+            query['return_to'] = return_to
+        if context_source:
+            query['context_source'] = context_source
+        edit_url = reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': novo.pk})
+        if query:
+            edit_url = f"{edit_url}?{urlencode(query)}"
+        return redirect(edit_url)
 
     initial = {}
     if preselected_event:
@@ -2244,8 +2243,13 @@ def plano_trabalho_editar(request, pk):
             rows = _extract_efetivo_rows(request.POST, prefix='efetivo')
             _save_efetivo_rows(obj, rows)
             _refresh_plano_diarias(obj)
-        messages.success(request, 'Plano de trabalho atualizado.')
-        return redirect(return_to or reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': obj.pk}))
+        if request.POST.get('finalizar'):
+            obj.status = PlanoTrabalho.STATUS_FINALIZADO
+            obj.save(update_fields=['status', 'updated_at'])
+            messages.success(request, 'Plano de trabalho finalizado.')
+            return redirect(return_to or reverse('eventos:documentos-planos-trabalho'))
+        messages.success(request, 'Plano de trabalho atualizado como rascunho.')
+        return redirect(return_to or reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': obj.pk}))
 
     ui_context = _build_plano_trabalho_form_ui_context(
         form,
@@ -2279,6 +2283,7 @@ def plano_trabalho_editar(request, pk):
                 for c in obj.coordenadores.filter(ativo=True)
             ],
             'hide_page_header': True,
+            'plano_id': obj.pk,
         },
     )
 
