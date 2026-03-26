@@ -1196,13 +1196,6 @@
     }
   });
 
-  subscribe(() => {
-    calcularDiarias({ suppressErrors: true, silentNotify: true });
-    calcularValorTotalDiarias();
-    updateSummary();
-    updateValorExtensoUI();
-  });
-
   function renderMetas() {
     renderAtividadesRealtime();
   }
@@ -1378,7 +1371,8 @@
     liveTotal.textContent = formatCurrency(total);
   }
 
-  function calcularValorTotalDiarias() {
+  function calcularValorTotalDiarias(options) {
+    const opts = options || {};
     const qtd = Number((planoState.diarias && planoState.diarias.qtd) || 0);
     const valorUnitario = Number((planoState.diarias && (planoState.diarias.valor_unitario || planoState.diarias.unitario)) || 0);
     const pessoas = getQuantidadePessoas();
@@ -1387,6 +1381,11 @@
     updateValorTotalUI();
     if (diariasTotal) diariasTotal.value = total > 0 ? total.toFixed(2).replace('.', ',') : '';
     updateSummary();
+
+    if (opts.callApi === false) {
+      updateValorExtensoUI();
+      return;
+    }
 
     fetch(calcularDiariasApiUrl, {
       method: 'POST',
@@ -1489,8 +1488,7 @@
     };
 
     updateDiariasUI();
-    computeDiarias();
-    calcularValorTotalDiarias();
+    computeDiarias({ silentNotify: true, callApi: opts.callApi !== false });
     if (!opts.silentNotify) notify();
   }
 
@@ -1502,7 +1500,8 @@
     }
   }
 
-  function computeDiarias() {
+  function computeDiarias(options) {
+    const opts = options || {};
     syncDiariasMirrors();
     const unitField    = parseCurrency(diariasUnit  ? diariasUnit.value  : '');
     const qtdFromState = Number((planoState.diarias && planoState.diarias.qtd) || 0);
@@ -1526,9 +1525,8 @@
     if (liveUnit)    liveUnit.textContent    = formatCurrency(unit);
     if (liveEfetivo) liveEfetivo.textContent = efetivo + ' servidor(es)';
     if (livePeriodo && !horas) livePeriodo.textContent = '—';
-    calcularValorTotalDiarias();
-    notify();
-    return Number(getEquipeTotalValue() || 0);
+    calcularValorTotalDiarias({ callApi: opts.callApi !== false });
+    if (!opts.silentNotify) notify();
   }
 
   // ══════════════════════════════════════════════════════════
