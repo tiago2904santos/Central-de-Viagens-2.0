@@ -54,6 +54,42 @@
   .oficio-meta strong { color: #111827; font-weight: 700; }
   .oficio-wizard-stepper-shell { overflow-x: auto; }
 
+  /* ── Visual standard (aligned with Ofícios) ── */
+  .oficio-card,
+  .oficio-stage-section,
+  .oficio-selection-panel,
+  .oficio-kpi-card {
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+  }
+  .oficio-stage-section { padding: 16px; }
+
+  .oficio-expandable { border-radius: 12px; border: 1px solid #e5e7eb; background: #fff; overflow: hidden; }
+  .oficio-expandable-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 12px 14px; cursor: pointer; border-bottom: 1px solid #eef2f7;
+    font-weight: 700; color: #1f3f62;
+  }
+  .oficio-expandable.closed .oficio-expandable-body { display: none; }
+  .oficio-expandable .toggle {
+    width: 28px; height: 28px; border-radius: 999px; border: 1px solid #d7e3ef;
+    background: #f8fbff; color: #335e88; font-weight: 900;
+  }
+  .oficio-expandable:not(.closed) .toggle::before { content: "−"; }
+  .oficio-expandable.closed .toggle::before { content: "+"; }
+  .hidden { display: none !important; }
+
+  .total-servidores-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+  }
+
   /* ── Summary bar (3 items) ── */
   .pt-summary-bar {
     display: flex; flex-wrap: wrap; align-items: stretch;
@@ -116,16 +152,84 @@
   @keyframes pt-chip-in { from{ opacity:0; transform:scale(.88); } to{ opacity:1; transform:scale(1); } }
   .pt-chip-anim { animation:pt-chip-in .15s ease both; }
 
-  /* ── Activity grid ── */
-  .pt-activity-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.55rem; }
-  @media(max-width:640px){ .pt-activity-grid{ grid-template-columns:1fr; } }
+  /* ── Activity grid + realtime experience ── */
+  .pt-activity-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; }
+  @media(max-width:900px){ .pt-activity-grid{ grid-template-columns:1fr; } }
   .pt-activity-item {
-    border:1px solid #e5e7eb; border-radius:10px; padding:.6rem .7rem;
-    background:#fff; cursor:pointer; transition:border-color .15s,background .15s;
+    border:1px solid #d8e5f2;
+    border-radius:14px;
+    padding:.75rem .8rem;
+    background:linear-gradient(160deg,#ffffff 0%,#f7fbff 100%);
+    cursor:pointer;
+    transition:border-color .18s, box-shadow .18s, transform .18s, background .18s;
   }
-  .pt-activity-item:has(.form-check-input:checked){ border-color:#5b87b6; background:#f5faff; }
+  .pt-activity-item:hover {
+    border-color:#9abfe0;
+    box-shadow:0 10px 22px rgba(26,94,153,.1);
+    transform:translateY(-1px);
+  }
+  .pt-activity-item:has(.form-check-input:checked){
+    border-color:#3276b4;
+    background:linear-gradient(160deg,#eef7ff 0%,#ffffff 100%);
+    box-shadow:0 10px 24px rgba(21,88,147,.14);
+  }
   .pt-activity-item .form-check{ margin:0; pointer-events:none; }
-  .pt-activity-item .form-check-label{ color:#244665; font-size:.85rem; font-weight:600; pointer-events:none; }
+  .pt-activity-item .form-check-label{ color:#183a5a; font-size:.88rem; font-weight:700; pointer-events:none; line-height:1.35; }
+
+  .pt-activity-tools { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+  .pt-activity-counter {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:132px; padding:.26rem .6rem; border-radius:999px;
+    border:1px solid #bdd4ea; background:#f0f7ff; color:#245885;
+    font-size:.74rem; font-weight:800; letter-spacing:.02em;
+  }
+
+  .pt-activity-live {
+    border:1px solid #d2e2f1;
+    border-radius:14px;
+    background:linear-gradient(155deg,#f8fcff 0%,#edf6ff 100%);
+    padding:1rem;
+    box-shadow:0 10px 24px rgba(26,90,147,.1);
+  }
+  .pt-activity-live-title {
+    margin:0;
+    color:#113b63;
+    font-size:.9rem;
+    font-weight:800;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+  .pt-activity-live-subtitle {
+    margin:.25rem 0 .7rem;
+    color:#4f6f90;
+    font-size:.82rem;
+  }
+  .pt-activity-live-list {
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:.5rem;
+    max-height:220px;
+    overflow:auto;
+  }
+  .pt-activity-live-list li {
+    border:1px solid #d9e8f6;
+    border-radius:10px;
+    background:#fff;
+    padding:.52rem .62rem;
+    color:#1b456b;
+    font-size:.82rem;
+    line-height:1.35;
+  }
+  .pt-activity-live-empty {
+    border:1px dashed #b8cee3;
+    border-radius:10px;
+    background:#fafdff;
+    color:#5d7a98;
+    font-size:.82rem;
+    padding:.6rem .7rem;
+  }
 
   /* ── Review ── */
   .pt-review-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
@@ -226,22 +330,6 @@
     <div class="card oficio-stage-panel" style="margin-top:1rem;">
       <div class="card-body">
 
-        {# ══ RESUMO — 3 itens ══ #}
-        <div class="pt-summary-bar" id="pt-summary-bar" aria-label="Resumo do plano">
-          <div class="pt-summary-item">
-            <span class="pt-summary-label">Período</span>
-            <span class="pt-summary-value" id="pts-periodo">—</span>
-          </div>
-          <div class="pt-summary-item">
-            <span class="pt-summary-label">Pessoas</span>
-            <span class="pt-summary-value" id="pts-equipe">—</span>
-          </div>
-          <div class="pt-summary-item pt-summary-valor">
-            <span class="pt-summary-label">Estimativa</span>
-            <span class="pt-summary-value" id="pts-valor">—</span>
-          </div>
-        </div>
-
         <form method="post" novalidate id="pt-form">
           {% csrf_token %}
           <input type="hidden" name="return_to" value="{{ return_to }}">
@@ -261,31 +349,47 @@
             </div>
 
             <section class="oficio-stage-section">
-              <div class="oficio-stage-section-head">
-                <div>
-                  <h3 class="oficio-stage-section-title">Dados institucionais</h3>
+              <div class="oficio-expandable" data-open="true" id="pt-vinculo-expandable">
+                <div class="oficio-expandable-header">
+                  <span>Dados institucionais</span>
+                  <button type="button" class="toggle" aria-label="Expandir/Recolher"></button>
                 </div>
-              </div>
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label" for="{{ form.evento.id_for_label }}">Evento</label>
-                  {{ form.evento }}
-                  {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício principal</label>
-                  {{ form.oficio }}
-                  {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label" for="{{ form.roteiro.id_for_label }}">Roteiro</label>
-                  {{ form.roteiro }}
-                  {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
-                </div>
-                <div class="col-12">
-                  <label class="form-label" for="{{ form.oficios_relacionados.id_for_label }}">Ofícios relacionados</label>
-                  {{ form.oficios_relacionados }}
-                  {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
+                <div class="oficio-expandable-body p-3">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="vincular-documento">
+                    <label class="form-check-label" for="vincular-documento">Vincular a documento existente</label>
+                  </div>
+
+                  <div id="vinculo-container" class="hidden">
+                    <ul class="nav nav-pills nav-fill mb-3" id="vinculo-tabs" role="tablist">
+                      <li class="nav-item"><button type="button" class="nav-link active" data-vinculo-tab="eventos">Eventos</button></li>
+                      <li class="nav-item"><button type="button" class="nav-link" data-vinculo-tab="oficios">Ofícios</button></li>
+                      <li class="nav-item"><button type="button" class="nav-link" data-vinculo-tab="roteiros">Roteiros</button></li>
+                    </ul>
+
+                    <div class="row g-3">
+                      <div class="col-md-4" data-vinculo-pane="eventos">
+                        <label class="form-label" for="{{ form.evento.id_for_label }}">Evento</label>
+                        {{ form.evento }}
+                        {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
+                      </div>
+                      <div class="col-md-4" data-vinculo-pane="oficios">
+                        <label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício principal</label>
+                        {{ form.oficio }}
+                        {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
+                      </div>
+                      <div class="col-md-4" data-vinculo-pane="roteiros">
+                        <label class="form-label" for="{{ form.roteiro.id_for_label }}">Roteiro</label>
+                        {{ form.roteiro }}
+                        {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
+                      </div>
+                      <div class="col-12" data-vinculo-pane="oficios">
+                        <label class="form-label" for="{{ form.oficios_relacionados.id_for_label }}">Ofícios relacionados</label>
+                        {{ form.oficios_relacionados }}
+                        {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -322,24 +426,31 @@
               </div>
               <div class="row g-3">
                 <div class="col-md-3">
-                  <label class="form-label d-block">Tipo</label>
-                  <div class="border rounded-3 px-3 py-2 bg-white">
-                    <div class="form-check mb-0">
-                      {{ form.evento_data_unica }}
-                      <label class="form-check-label" for="{{ form.evento_data_unica.id_for_label }}">Data única</label>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label" for="{{ form.evento_data_inicio.id_for_label }}">Data de saída</label>
+                  <label class="form-label" for="{{ form.evento_data_inicio.id_for_label }}">Data início</label>
                   {{ form.evento_data_inicio }}
                   {% if form.evento_data_inicio.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_inicio.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="col-md-4" id="col-data-fim">
-                  <label class="form-label" for="{{ form.evento_data_fim.id_for_label }}">Data de retorno</label>
+                <div class="col-md-3">
+                  <label class="form-label" for="hora_saida_sede">Hora início</label>
+                  <input type="time" id="hora_saida_sede" name="hora_saida_sede" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-3" id="col-data-fim">
+                  <label class="form-label" for="{{ form.evento_data_fim.id_for_label }}">Data fim</label>
                   {{ form.evento_data_fim }}
                   {% if form.evento_data_fim.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_fim.errors.0 }}</div>{% endif %}
                 </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="hora_chegada_sede">Hora fim</label>
+                  <input type="time" id="hora_chegada_sede" name="hora_chegada_sede" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-12">
+                  <div class="form-check mb-0">
+                    {{ form.evento_data_unica }}
+                    <label class="form-check-label" for="{{ form.evento_data_unica.id_for_label }}">Data única</label>
+                  </div>
+                </div>
+                <input type="hidden" id="data_saida_sede" name="data_saida_sede">
+                <input type="hidden" id="data_chegada_sede" name="data_chegada_sede">
               </div>
             </section>
 
@@ -380,12 +491,12 @@
                 </div>
                 {% endfor %}
               </div>
-              <div class="row g-3 mt-1">
-                <div class="col-md-4">
-                  <label class="form-label" for="{{ form.quantidade_servidores.id_for_label }}">Total de servidores</label>
-                  {{ form.quantidade_servidores }}
-                  <div class="form-text">Calculado a partir das linhas acima.</div>
+              <div class="mt-2">
+                <div class="total-servidores-box">
+                  <span>Total de servidores</span>
+                  <strong id="total-servidores">0</strong>
                 </div>
+                <div class="d-none">{{ form.quantidade_servidores }}</div>
               </div>
 
               <div class="oficio-stage-section-head mt-3">
@@ -422,7 +533,7 @@
               </div>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenador administrativo</label>
+                  <label class="form-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenador administrativo <span class="badge bg-success">Principal</span></label>
                   {{ form.coordenador_administrativo }}
                   <div class="form-text">Origem: viajantes finalizados.</div>
                   {% if form.coordenador_administrativo.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_administrativo.errors.0 }}</div>{% endif %}
@@ -464,9 +575,11 @@
                 <div>
                   <h3 class="oficio-stage-section-title">Atividades previstas</h3>
                 </div>
-                <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <div class="pt-activity-tools">
+                  <span class="pt-activity-counter" id="pt-activity-counter">0 selecionada(s)</span>
                   <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-selecionar-todas-atividades">Selecionar todos</button>
                   <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-limpar-atividades">Limpar seleção</button>
+                  <a href="{% url 'eventos:plano-trabalho-atividades-lista' %}" class="btn btn-outline-primary btn-sm">Gerenciar atividades</a>
                 </div>
               </div>
               <div class="pt-activity-grid">
@@ -490,10 +603,20 @@
               </div>
               <div class="row g-3">
                 <div class="col-md-6">
+                  <div class="pt-activity-live mb-3">
+                    <h4 class="pt-activity-live-title">Metas em tempo real</h4>
+                    <p class="pt-activity-live-subtitle">Cada meta aparece conforme a atividade é marcada.</p>
+                    <ul class="pt-activity-live-list" id="pt-live-metas-list"></ul>
+                  </div>
                   <label class="form-label" for="{{ form.metas_formatadas.id_for_label }}">Metas</label>
                   {{ form.metas_formatadas }}
                 </div>
                 <div class="col-md-6">
+                  <div class="pt-activity-live mb-3">
+                    <h4 class="pt-activity-live-title">Recursos em tempo real</h4>
+                    <p class="pt-activity-live-subtitle">Recursos necessários por atividade selecionada.</p>
+                    <ul class="pt-activity-live-list" id="pt-live-recursos-list"></ul>
+                  </div>
                   <label class="form-label" for="{{ form.recursos_texto.id_for_label }}">Recursos</label>
                   {{ form.recursos_texto }}
                 </div>
@@ -524,22 +647,6 @@
                   <div class="col-6">
                     <label class="form-label">Retorno (do período)</label>
                     <input type="text" id="pt-diarias-data-fim" class="form-control form-control-sm text-muted" readonly tabindex="-1">
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Saída da sede (data)</label>
-                    <input type="date" id="data_saida_sede" name="data_saida_sede" class="form-control form-control-sm">
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Saída da sede (hora)</label>
-                    <input type="time" id="hora_saida_sede" name="hora_saida_sede" class="form-control form-control-sm">
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Chegada na sede (data)</label>
-                    <input type="date" id="data_chegada_sede" name="data_chegada_sede" class="form-control form-control-sm">
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Chegada na sede (hora)</label>
-                    <input type="time" id="hora_chegada_sede" name="hora_chegada_sede" class="form-control form-control-sm">
                   </div>
                   <div class="col-12">
                     <label class="form-label" for="{{ form.diarias_quantidade.id_for_label }}">Qtd. de diárias</label>
@@ -651,6 +758,7 @@
 </div>
 
 {{ selected_coordenadores_payload|json_script:"coordenadores-selected-data" }}
+{{ plano_trabalho_atividades_catalogo|json_script:"pt-atividades-catalogo" }}
 {% endblock %}
 
 {% block extra_js %}
@@ -669,6 +777,7 @@
     id: null,
     datas:         { inicio: '', fim: '', dias: 0 },
     equipe:        { total: 0 },
+    coordenador_principal: { nome: 'Juliana Villela de Barros' },
     coordenadores: [],   // [{id, nome, cargo, isPrincipal}]
     roteiro:       [],
     diarias:       { qtd: 0, valor_unitario: 0, unitario: 0, total: 0, valor_extenso: '' },
@@ -730,6 +839,7 @@
   const totalFormsInput     = document.getElementById('id_efetivo-TOTAL_FORMS');
   const efetivoRows         = document.getElementById('efetivo-rows');
   const qtdServidores       = document.getElementById('{{ form.quantidade_servidores.id_for_label }}');
+  const totalServidoresEl   = document.getElementById('total-servidores');
   const diariasQtd          = document.getElementById('{{ form.diarias_quantidade.id_for_label }}');
   const diariasUnit         = document.getElementById('{{ form.diarias_valor_unitario.id_for_label }}');
   const diariasTotal        = document.getElementById('{{ form.diarias_valor_total.id_for_label }}');
@@ -747,6 +857,11 @@
   const diariasFimMirror    = document.getElementById('pt-diarias-data-fim');
   const reviewMain          = document.getElementById('pt-review-main');
   const reviewFinance       = document.getElementById('pt-review-finance');
+  const metasInput          = document.getElementById('{{ form.metas_formatadas.id_for_label }}');
+  const recursosInput       = document.getElementById('{{ form.recursos_texto.id_for_label }}');
+  const atividadesCounterEl = document.getElementById('pt-activity-counter');
+  const liveMetasList       = document.getElementById('pt-live-metas-list');
+  const liveRecursosList    = document.getElementById('pt-live-recursos-list');
   const stsPeriodo          = document.getElementById('pts-periodo');
   const stsEquipe           = document.getElementById('pts-equipe');
   const stsValor            = document.getElementById('pts-valor');
@@ -764,14 +879,33 @@
   const horaSaidaSede       = document.getElementById('hora_saida_sede');
   const dataChegadaSede     = document.getElementById('data_chegada_sede');
   const horaChegadaSede     = document.getElementById('hora_chegada_sede');
+  const vincularDocumentoInput = document.getElementById('vincular-documento');
+  const vinculoContainer    = document.getElementById('vinculo-container');
   const autosaveUrl         = '{% url "eventos:documentos-planos-trabalho-autosave" %}';
   const calcularDiariasApiUrl = '{% url "eventos:documentos-planos-trabalho-calcular-diarias-api" %}';
   const buscarUrl           = coordWrapper ? coordWrapper.getAttribute('data-search-url') : '';
+  const estadoPadrao        = (window.CONFIG_ESTADO || 'PR').toUpperCase();
   let   coordDebounce       = null;
   let autosaveTimeout       = null;
   let autosaveInFlight      = false;
   let autosavePending       = false;
   let autosaveLastSavedAt   = null;
+
+  let atividadesCatalogo = [];
+  let atividadesByCodigo = {};
+  const atividadesScript = document.getElementById('pt-atividades-catalogo');
+  if (atividadesScript) {
+    try {
+      atividadesCatalogo = JSON.parse(atividadesScript.textContent || '[]') || [];
+    } catch (_) {
+      atividadesCatalogo = [];
+    }
+  }
+  atividadesByCodigo = atividadesCatalogo.reduce((acc, item) => {
+    if (!item || !item.codigo) return acc;
+    acc[String(item.codigo)] = item;
+    return acc;
+  }, {});
 
   // ══════════════════════════════════════════════════════════
   //  UTILITIES
@@ -821,6 +955,14 @@
       out.push(parsed);
     });
     return out;
+  }
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
   function getCSRFToken() {
     const token = form.querySelector('input[name="csrfmiddlewaretoken"]');
@@ -968,49 +1110,13 @@
       saveDraft();
     }, 1500);
   }
-  // ── Blocking step error ──────────────────────────────────
-  function showStepError(message) {
-    let el = document.getElementById('pt-step-error');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'pt-step-error';
-      el.className = 'alert alert-danger py-2 px-3 mb-3';
-      el.setAttribute('role', 'alert');
-      form.insertBefore(el, form.firstChild);
-    }
-    el.textContent = '\u26a0\ufe0f ' + message;
-    el.style.display = '';
-    clearTimeout(el._t);
-    el._t = setTimeout(() => { if (el) el.style.display = 'none'; }, 6000);
-  }
-
   // ══════════════════════════════════════════════════════════
-  //  STEP NAVIGATION — BLOCKING VALIDATION
+  //  STEP NAVIGATION — FREE FLOW
   // ══════════════════════════════════════════════════════════
-  // Return false to BLOCK advance. Null = no check.
-  const stepValidations = [
-    () => { // 0 → 1: must have saída date and at least one team member
-      if (!dataInicio || !dataInicio.value) {
-        showStepError('Informe a data de saída antes de avançar.');
-        return false;
-      }
-      if (planoState.equipe.total < 1) {
-        showStepError('Adicione ao menos um membro no efetivo antes de avançar.');
-        return false;
-      }
-    },
-    null,
-    null,
-    null,
-  ];
 
   function showStep(index) {
     const target = Math.max(0, Math.min(index, steps.length - 1));
     const previousStep = currentStep;
-    if (target > currentStep) {
-      const validate = stepValidations[currentStep];
-      if (typeof validate === 'function' && validate() === false) return;
-    }
     currentStep = target;
     steps.forEach((s, i) => s.classList.toggle('is-active', i === currentStep));
     stepLinks.forEach((link, i) => {
@@ -1034,14 +1140,18 @@
     if (target !== previousStep) triggerAutosave();
   }
 
+  function goToStep(step) {
+    showStep(step);
+  }
+
   stepLinks.forEach((link) => {
     link.addEventListener('click', () => {
       const t = parseInt(link.getAttribute('data-step-target') || '0', 10);
-      if (!Number.isNaN(t)) showStep(t);
+      if (!Number.isNaN(t)) goToStep(t);
     });
   });
-  prevBtn.addEventListener('click', () => showStep(currentStep - 1));
-  nextBtn.addEventListener('click', () => showStep(Math.min(currentStep + 1, steps.length - 1)));
+  prevBtn.addEventListener('click', () => goToStep(currentStep - 1));
+  nextBtn.addEventListener('click', () => goToStep(Math.min(currentStep + 1, steps.length - 1)));
 
   // ══════════════════════════════════════════════════════════
   //  SUMMARY BAR — 3 items only
@@ -1101,6 +1211,54 @@
     if (dataUnica.checked && dataInicio && dataFim) dataFim.value = dataInicio.value;
   }
 
+  function syncDeslocamentoDatesFromPeriodo() {
+    if (dataSaidaSede && dataInicio) dataSaidaSede.value = dataInicio.value || '';
+    if (dataChegadaSede) {
+      const fim = (dataUnica && dataUnica.checked && dataInicio) ? dataInicio.value : ((dataFim && dataFim.value) || '');
+      dataChegadaSede.value = fim || '';
+    }
+  }
+
+  function setupExpandablePanels() {
+    document.querySelectorAll('.oficio-expandable-header').forEach((header) => {
+      header.addEventListener('click', () => {
+        const parent = header.closest('.oficio-expandable');
+        if (parent) parent.classList.toggle('closed');
+      });
+    });
+  }
+
+  function setupVinculoToggle() {
+    if (!vincularDocumentoInput || !vinculoContainer) return;
+    vincularDocumentoInput.addEventListener('change', (e) => {
+      vinculoContainer.classList.toggle('hidden', !e.target.checked);
+    });
+
+    document.querySelectorAll('[data-vinculo-tab]').forEach((tabBtn) => {
+      tabBtn.addEventListener('click', () => {
+        const target = tabBtn.getAttribute('data-vinculo-tab');
+        document.querySelectorAll('[data-vinculo-tab]').forEach((btn) => btn.classList.remove('active'));
+        tabBtn.classList.add('active');
+        document.querySelectorAll('[data-vinculo-pane]').forEach((pane) => {
+          const show = pane.getAttribute('data-vinculo-pane') === target;
+          pane.style.display = show ? '' : 'none';
+        });
+      });
+    });
+
+    const firstTab = document.querySelector('[data-vinculo-tab]');
+    if (firstTab) firstTab.click();
+  }
+
+  function applyDefaultCoordenadorAdministrativo() {
+    if (!coordAdmSelect || coordAdmSelect.value) return;
+    const alvo = (planoState.coordenador_principal && planoState.coordenador_principal.nome) || '';
+    if (!alvo) return;
+    const normalized = alvo.toLowerCase();
+    const opt = Array.from(coordAdmSelect.options).find((item) => String(item.textContent || '').toLowerCase().includes(normalized));
+    if (opt) coordAdmSelect.value = opt.value;
+  }
+
   // ══════════════════════════════════════════════════════════
   //  DATE → STATE  (no auto-suggest — user chooses)
   // ══════════════════════════════════════════════════════════
@@ -1119,6 +1277,7 @@
   function onDatasChange() {
     toggleDataFim();
     parseDateRange();
+    syncDeslocamentoDatesFromPeriodo();
     notify();
   }
 
@@ -1392,6 +1551,13 @@
     const estadoSel = row.querySelector('.destino-estado');
     const cidadeSel = row.querySelector('.destino-cidade');
     estadoSel.value = String(dest.estado_id || '');
+    if (!estadoSel.value && estadoPadrao) {
+      const defaultOpt = Array.from(estadoSel.options).find((opt) => {
+        const text = String(opt.textContent || '').toUpperCase();
+        return text.endsWith('(' + estadoPadrao + ')');
+      });
+      if (defaultOpt) estadoSel.value = defaultOpt.value;
+    }
     if (estadoSel.value) await mountCidadeOptions(cidadeSel, estadoSel.value, dest.cidade_id || '');
     refreshPickers(row);
   }
@@ -1453,6 +1619,7 @@
       if (!isNaN(v) && v > 0) total += v;
     });
     qtdServidores.value     = total > 0 ? String(total) : '';
+    if (totalServidoresEl) totalServidoresEl.textContent = String(total || 0);
     planoState.equipe.total = total;
     syncMetaState();
     computeDiarias();
@@ -1480,7 +1647,7 @@
       if (el.name && el.name.endsWith('-id'))     { el.value = '';     return; }
       if (el.name && el.name.endsWith('-DELETE')) { el.checked = false; return; }
       if (el.tagName === 'SELECT') { el.selectedIndex = 0; return; }
-      if (el.type === 'number')   { el.value = '1'; return; }
+      if (el.type === 'number')   { el.value = '0'; return; }
       if (el.type !== 'hidden')   { el.value = ''; }
     });
     efetivoRows.appendChild(clone);
@@ -1680,7 +1847,7 @@
       row('Duração',         s.datas.dias   ? s.datas.dias + ' dia(s)' : '—'),
       row('Destinos',        s.roteiro.length ? s.roteiro.map((d) => d.cidade_nome || '?').join(', ') : '—'),
       row('Efetivo',         s.equipe.total > 0 ? String(s.equipe.total) : '—'),
-      row('Coord. principal',principal ? principal.nome : '—'),
+      row('Coord. principal',principal ? principal.nome : (s.coordenador_principal && s.coordenador_principal.nome ? s.coordenador_principal.nome : '—')),
       row('Atividades',      String(countAtividades())),
     ].join('');
     const extEl = document.getElementById('{{ form.diarias_valor_extenso.id_for_label }}');
@@ -1690,6 +1857,63 @@
       row('Total',     (diariasTotal && diariasTotal.value) || '—'),
       row('Extenso',   extEl ? (extEl.value || '—') : '—'),
     ].join('');
+  }
+
+  function selectedAtividadesCatalogo() {
+    const codigos = Array.from(document.querySelectorAll('input[name="atividades_codigos"]:checked')).map((el) => el.value);
+    return codigos
+      .map((codigo) => atividadesByCodigo[codigo])
+      .filter((item) => !!item);
+  }
+
+  function renderAtividadesRealtime() {
+    const itens = selectedAtividadesCatalogo();
+    const metas = itens.map((item) => String(item.meta || '').trim()).filter((v) => v);
+    const recursos = [];
+    const recursosSeen = new Set();
+    itens.forEach((item) => {
+      const recurso = String(item.recurso_necessario || '').trim();
+      if (!recurso || recursosSeen.has(recurso)) return;
+      recursosSeen.add(recurso);
+      recursos.push(recurso);
+    });
+
+    if (metasInput) metasInput.value = metas.join('\n\n');
+    if (recursosInput) {
+      const nomes = itens.map((item) => String(item.nome || '').trim()).filter((v) => v);
+      const linhas = [];
+      if (itens.length > 0) {
+        linhas.push('Recursos operacionais, materiais de atendimento, equipamentos de apoio e suporte logístico compatíveis com as atividades selecionadas.');
+        linhas.push('Escopo previsto: ' + nomes.join('; ') + '.');
+      }
+      if (recursos.length > 0) {
+        linhas.push('Recursos específicos por atividade:');
+        recursos.forEach((linha) => linhas.push('• ' + linha));
+      }
+      if (itens.some((item) => String(item.codigo || '').toUpperCase() === 'UNIDADE_MOVEL')) {
+        linhas.push('Prever unidade móvel institucional e o suporte operacional associado.');
+      }
+      recursosInput.value = linhas.join('\n');
+    }
+
+    if (atividadesCounterEl) {
+      atividadesCounterEl.textContent = itens.length + ' selecionada(s)';
+    }
+
+    if (liveMetasList) {
+      if (!metas.length) {
+        liveMetasList.innerHTML = '<li class="pt-activity-live-empty">Selecione uma atividade para visualizar as metas.</li>';
+      } else {
+        liveMetasList.innerHTML = metas.map((meta) => '<li>' + escapeHtml(meta) + '</li>').join('');
+      }
+    }
+    if (liveRecursosList) {
+      if (!recursos.length) {
+        liveRecursosList.innerHTML = '<li class="pt-activity-live-empty">Selecione uma atividade para visualizar os recursos necessários.</li>';
+      } else {
+        liveRecursosList.innerHTML = recursos.map((recurso) => '<li>' + escapeHtml(recurso) + '</li>').join('');
+      }
+    }
   }
 
   // ══════════════════════════════════════════════════════════
@@ -1713,6 +1937,7 @@
     checkboxes.forEach(cb => {
       cb.checked = true;
     });
+    renderAtividadesRealtime();
     syncMetaState();
     triggerAutosave();
     if (currentStep === 4) renderReview();
@@ -1724,6 +1949,7 @@
     checkboxes.forEach(cb => {
       cb.checked = false;
     });
+    renderAtividadesRealtime();
     syncMetaState();
     triggerAutosave();
     if (currentStep === 4) renderReview();
@@ -1747,14 +1973,12 @@
   }
   if (solicitanteSelect) solicitanteSelect.addEventListener('change', () => { toggleSolicitanteOutros(); syncMetaState(); triggerAutosave(); });
   if (horarioPadrao)     horarioPadrao.addEventListener('change', () => { toggleHorarioManual(); syncMetaState(); triggerAutosave(); });
-  if (dataUnica)         dataUnica.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
-  if (dataInicio)        dataInicio.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
-  if (dataFim)           dataFim.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
+  if (dataUnica)         dataUnica.addEventListener('change', () => { onDatasChange(); onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
+  if (dataInicio)        dataInicio.addEventListener('change', () => { onDatasChange(); onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
+  if (dataFim)           dataFim.addEventListener('change', () => { onDatasChange(); onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
 
   // ── Deslocamento (saída e chegada da sede) ──
-  if (dataSaidaSede)   dataSaidaSede.addEventListener('blur',   () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
   if (horaSaidaSede)   horaSaidaSede.addEventListener('blur',   () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (dataChegadaSede) dataChegadaSede.addEventListener('blur', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
   if (horaChegadaSede) horaChegadaSede.addEventListener('blur', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
   if (btnCalcularDiarias) btnCalcularDiarias.addEventListener('click', () => { onDeslocamentoChange(); calcularDiarias(); syncMetaState(); triggerAutosave(); });
 
@@ -1792,7 +2016,12 @@
   }
 
   document.querySelectorAll('input[name="atividades_codigos"]').forEach((cb) => {
-    cb.addEventListener('change', () => { syncMetaState(); triggerAutosave(); if (currentStep === 4) renderReview(); });
+    cb.addEventListener('change', () => {
+      renderAtividadesRealtime();
+      syncMetaState();
+      triggerAutosave();
+      if (currentStep === 4) renderReview();
+    });
   });
   form.addEventListener('focusout', (event) => {
     const target = event.target;
@@ -1815,11 +2044,16 @@
   //  INIT
   // ══════════════════════════════════════════════════════════
   if (qtdServidores) qtdServidores.readOnly = true;
+  setupExpandablePanels();
+  setupVinculoToggle();
   toggleSolicitanteOutros();
   toggleHorarioManual();
   toggleDataFim();
+  applyDefaultCoordenadorAdministrativo();
   parseDateRange();
+  syncDeslocamentoDatesFromPeriodo();
   onDeslocamentoChange();
+  renderAtividadesRealtime();
   syncMetaState();
   bootstrapDestinos().then(() => {
     syncEfetivoTotal();
