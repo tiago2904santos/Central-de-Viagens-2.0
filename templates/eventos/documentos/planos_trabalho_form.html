@@ -113,6 +113,7 @@
             <span class="oficio-wizard-eyebrow">Documento operacional</span>
             <h1>{% if object %}Editar{% else %}Novo{% endif %} Plano de Trabalho</h1>
             <p class="oficio-wizard-header-support">Preencha cada etapa em ordem. Use Voltar e Avançar para navegar.</p>
+            <p class="mb-0 mt-1 small text-muted" id="autosave-status" aria-live="polite">Rascunho ainda não salvo.</p>
           </div>
           <div class="oficio-wizard-header-badges">
             <div class="oficio-wizard-header-badge">
@@ -578,6 +579,7 @@
               <span class="badge text-bg-light text-muted" id="pt-progress-chip">1 / 6</span>
             </div>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+              <button type="button" class="btn btn-outline-secondary" id="pt-save-draft">Salvar como rascunho</button>
               <button class="btn btn-primary" type="submit">Salvar plano</button>
               {% if object %}
               <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">DOCX</a>
@@ -610,12 +612,34 @@
   //  CENTRAL STATE
   // ══════════════════════════════════════════════════════════
   const planoState = {
+    id: null,
     datas:         { inicio: '', fim: '', dias: 0 },
     equipe:        { total: 0 },
     coordenadores: [],   // [{id, nome, cargo, isPrincipal}]
     roteiro:       [],
     diarias:       { qtd: 0, unitario: 0, total: 0 },
+    meta: {
+      data_criacao: '',
+      evento_id: null,
+      oficio_id: null,
+      oficios_relacionados_ids: [],
+      roteiro_id: null,
+      solicitante_escolha: '',
+      solicitante_outros: '',
+      salvar_solicitante_outros: false,
+      horario_atendimento_padrao: '',
+      horario_atendimento_manual: '',
+      evento_data_unica: false,
+      coordenador_administrativo_id: null,
+      atividades_codigos: [],
+      diarias_quantidade: '',
+      diarias_valor_unitario: '',
+      diarias_valor_total: '',
+      diarias_valor_extenso: '',
+    },
   };
+  const initialPlanoId = parseInt('{{ object.pk|default:"" }}', 10);
+  if (!Number.isNaN(initialPlanoId)) planoState.id = initialPlanoId;
 
   const _subs = [];
   function subscribe(fn) { _subs.push(fn); }
@@ -674,8 +698,16 @@
   const coordEmpty          = document.getElementById('coord-chip-empty');
   const coordIdsInput       = document.getElementById('{{ form.coordenadores_ids.id_for_label }}');
   const coordSearchState    = document.getElementById('coord-searching-state');
+  const autosaveStatusEl    = document.getElementById('autosave-status');
+  const saveDraftBtn        = document.getElementById('pt-save-draft');
+  const autosaveUrl         = '{% url "eventos:documentos-planos-trabalho-autosave" %}';
+  const resumeDraftUrl      = '{% url "eventos:documentos-planos-trabalho-ultimo-rascunho" %}';
   const buscarUrl           = coordWrapper ? coordWrapper.getAttribute('data-search-url') : '';
   let   coordDebounce       = null;
+  let autosaveTimeout       = null;
+  let autosaveInFlight      = false;
+  let autosavePending       = false;
+  let autosaveLastSavedAt   = null;
 
   // ══════════════════════════════════════════════════════════
   //  UTILITIES
@@ -710,6 +742,168 @@
     if (!sel || sel.selectedIndex < 0) return '—';
     const opt = sel.options[sel.selectedIndex];
     return opt ? String(opt.textContent || '').trim() : '—';
+  }
+  function parseIntOrNull(val) {
+    const raw = String(val || '').trim();
+    return /^\d+$/.test(raw) ? parseInt(raw, 10) : null;
+  }
+  function uniqueIntArray(values) {
+    const out = [];
+    const seen = new Set();
+    (values || []).forEach((item) => {
+      const parsed = parseIntOrNull(item);
+      if (!parsed || seen.has(parsed)) return;
+      seen.add(parsed);
+      out.push(parsed);
+    });
+    return out;
+  }
+  function getCSRFToken() {
+    const token = form.querySelector('input[name="csrfmiddlewaretoken"]');
+    return token ? token.value : '';
+  }
+  function formatElapsedLabel(dateRef) {
+    if (!dateRef) return '';
+    const elapsed = Math.max(0, Math.floor((Date.now() - dateRef.getTime()) / 1000));
+    if (elapsed < 1) return 'agora';
+    if (elapsed === 1) return 'há 1 segundo';
+    if (elapsed < 60) return 'há ' + elapsed + ' segundos';
+    const minutes = Math.floor(elapsed / 60);
+    if (minutes === 1) return 'há 1 minuto';
+    return 'há ' + minutes + ' minutos';
+  }
+  function setAutosaveStatus(state, message) {
+    if (!autosaveStatusEl) return;
+    if (state === 'saving') {
+      autosaveStatusEl.textContent = 'Salvando...';
+      autosaveStatusEl.classList.remove('text-danger', 'text-success');
+      return;
+    }
+    if (state === 'error') {
+      autosaveStatusEl.textContent = message || 'Erro ao salvar automaticamente';
+      autosaveStatusEl.classList.add('text-danger');
+      autosaveStatusEl.classList.remove('text-success');
+      return;
+    }
+    if (state === 'saved') {
+      autosaveStatusEl.classList.remove('text-danger');
+      autosaveStatusEl.classList.add('text-success');
+      autosaveStatusEl.textContent = 'Salvo automaticamente • ' + formatElapsedLabel(autosaveLastSavedAt);
+      return;
+    }
+    autosaveStatusEl.classList.remove('text-danger', 'text-success');
+    autosaveStatusEl.textContent = message || 'Rascunho ainda não salvo.';
+  }
+  function refreshSavedElapsedStatus() {
+    if (!autosaveLastSavedAt) return;
+    setAutosaveStatus('saved');
+  }
+  function syncMetaState() {
+    planoState.meta.data_criacao = (form.querySelector('input[name="data_criacao"]') || {}).value || '';
+    planoState.meta.evento_id = parseIntOrNull(eventSelect && eventSelect.value);
+    planoState.meta.oficio_id = parseIntOrNull(oficioSelect && oficioSelect.value);
+    planoState.meta.oficios_relacionados_ids = uniqueIntArray(
+      oficiosSelect ? Array.from(oficiosSelect.selectedOptions).map((opt) => opt.value) : []
+    );
+    planoState.meta.roteiro_id = parseIntOrNull(roteiroSelect && roteiroSelect.value);
+    planoState.meta.solicitante_escolha = (solicitanteSelect && solicitanteSelect.value) || '';
+    planoState.meta.solicitante_outros = (form.querySelector('[name="solicitante_outros"]') || {}).value || '';
+    planoState.meta.salvar_solicitante_outros = !!((form.querySelector('[name="salvar_solicitante_outros"]') || {}).checked);
+    planoState.meta.horario_atendimento_padrao = (horarioPadrao && horarioPadrao.value) || '';
+    planoState.meta.horario_atendimento_manual = (form.querySelector('[name="horario_atendimento_manual"]') || {}).value || '';
+    planoState.meta.evento_data_unica = !!(dataUnica && dataUnica.checked);
+    planoState.meta.coordenador_administrativo_id = parseIntOrNull(coordAdmSelect && coordAdmSelect.value);
+    planoState.meta.atividades_codigos = Array.from(document.querySelectorAll('input[name="atividades_codigos"]:checked')).map((el) => el.value);
+    planoState.meta.diarias_quantidade = (diariasQtd && diariasQtd.value) || '';
+    planoState.meta.diarias_valor_unitario = (diariasUnit && diariasUnit.value) || '';
+    planoState.meta.diarias_valor_total = (diariasTotal && diariasTotal.value) || '';
+    planoState.meta.diarias_valor_extenso = (document.getElementById('{{ form.diarias_valor_extenso.id_for_label }}') || {}).value || '';
+  }
+  function buildPayloadFromState() {
+    return {
+      id: planoState.id,
+      data_criacao: planoState.meta.data_criacao,
+      evento_id: planoState.meta.evento_id,
+      oficio_id: planoState.meta.oficio_id,
+      oficios_relacionados_ids: planoState.meta.oficios_relacionados_ids,
+      roteiro_id: planoState.meta.roteiro_id,
+      solicitante_escolha: planoState.meta.solicitante_escolha,
+      solicitante_outros: planoState.meta.solicitante_outros,
+      salvar_solicitante_outros: planoState.meta.salvar_solicitante_outros,
+      horario_atendimento_padrao: planoState.meta.horario_atendimento_padrao,
+      horario_atendimento_manual: planoState.meta.horario_atendimento_manual,
+      evento_data_unica: planoState.meta.evento_data_unica,
+      evento_data_inicio: planoState.datas.inicio || '',
+      evento_data_fim: planoState.datas.fim || '',
+      destinos_payload: planoState.roteiro,
+      coordenadores_ids: planoState.coordenadores.map((item) => item.id),
+      coordenador_administrativo_id: planoState.meta.coordenador_administrativo_id,
+      quantidade_servidores: planoState.equipe.total || null,
+      atividades_codigos: planoState.meta.atividades_codigos,
+      diarias_quantidade: planoState.meta.diarias_quantidade,
+      diarias_valor_unitario: planoState.meta.diarias_valor_unitario,
+      diarias_valor_total: planoState.meta.diarias_valor_total,
+      diarias_valor_extenso: planoState.meta.diarias_valor_extenso,
+    };
+  }
+  async function saveDraft() {
+    if (autosaveInFlight) {
+      autosavePending = true;
+      return;
+    }
+    autosaveInFlight = true;
+    syncMetaState();
+    collectDestinos();
+    reindexEfetivoRows();
+    syncEfetivoTotal();
+    const payload = buildPayloadFromState();
+    setAutosaveStatus('saving');
+    try {
+      const response = await fetch(autosaveUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Falha de rede');
+      const data = await response.json();
+      if (data && data.id) planoState.id = data.id;
+      autosaveLastSavedAt = data && data.updated_at ? new Date(data.updated_at) : new Date();
+      setAutosaveStatus('saved');
+    } catch (_) {
+      setAutosaveStatus('error');
+    } finally {
+      autosaveInFlight = false;
+      if (autosavePending) {
+        autosavePending = false;
+        triggerAutosave();
+      }
+    }
+  }
+  function triggerAutosave() {
+    clearTimeout(autosaveTimeout);
+    autosaveTimeout = setTimeout(() => {
+      saveDraft();
+    }, 1500);
+  }
+  async function checkRecentDraft() {
+    if (planoState.id) return;
+    try {
+      const response = await fetch(resumeDraftUrl, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+        },
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!data || !data.has_draft || !data.edit_url) return;
+      const proceed = window.confirm('Deseja continuar de onde parou?');
+      if (proceed) window.location.href = data.edit_url;
+    } catch (_) {}
   }
 
   // ── Blocking step error ──────────────────────────────────
@@ -752,6 +946,7 @@
 
   function showStep(index) {
     const target = Math.max(0, Math.min(index, steps.length - 1));
+    const previousStep = currentStep;
     if (target > currentStep) {
       const validate = stepValidations[currentStep];
       if (typeof validate === 'function' && validate() === false) return;
@@ -776,6 +971,7 @@
     if (currentStep === steps.length - 1) renderReview();
     if (currentStep === 4) { syncDiariasMirrors(); showDiariasSuggestion(); }
     refreshPickers(steps[currentStep]);
+    if (target !== previousStep) triggerAutosave();
   }
 
   stepLinks.forEach((link) => {
@@ -993,6 +1189,7 @@
     });
     planoState.roteiro = payload;
     if (destinosPayload) destinosPayload.value = JSON.stringify(payload);
+    syncMetaState();
     notify();
   }
   async function bootstrapDestinos() {
@@ -1037,6 +1234,7 @@
     });
     qtdServidores.value     = total > 0 ? String(total) : '';
     planoState.equipe.total = total;
+    syncMetaState();
     computeDiarias();
     notify();
   }
@@ -1079,6 +1277,7 @@
   function syncCoordIds() {
     if (coordIdsInput) coordIdsInput.value = planoState.coordenadores.map((c) => c.id).join(',');
     if (coordCount)   coordCount.textContent = String(planoState.coordenadores.length);
+    syncMetaState();
   }
 
   function renderCoordChips() {
@@ -1280,28 +1479,41 @@
       filterByEvent(oficioSelect);
       filterByEvent(oficiosSelect);
       filterByEvent(roteiroSelect);
+      syncMetaState();
+      triggerAutosave();
     });
     filterByEvent(oficioSelect);
     filterByEvent(oficiosSelect);
     filterByEvent(roteiroSelect);
   }
-  if (solicitanteSelect) solicitanteSelect.addEventListener('change', toggleSolicitanteOutros);
-  if (horarioPadrao)     horarioPadrao.addEventListener('change', toggleHorarioManual);
-  if (dataUnica)         dataUnica.addEventListener('change', onDatasChange);
-  if (dataInicio)        dataInicio.addEventListener('change', onDatasChange);
-  if (dataFim)           dataFim.addEventListener('change', onDatasChange);
+  if (solicitanteSelect) solicitanteSelect.addEventListener('change', () => { toggleSolicitanteOutros(); syncMetaState(); triggerAutosave(); });
+  if (horarioPadrao)     horarioPadrao.addEventListener('change', () => { toggleHorarioManual(); syncMetaState(); triggerAutosave(); });
+  if (dataUnica)         dataUnica.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
+  if (dataInicio)        dataInicio.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
+  if (dataFim)           dataFim.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
 
   [diariasQtd, diariasUnit, diariasTotal].forEach((el) => {
     if (!el) return;
     el.addEventListener('input',  () => { computeDiarias(); if (el === diariasQtd) showDiariasSuggestion(); });
-    el.addEventListener('change', () => { computeDiarias(); if (el === diariasQtd) showDiariasSuggestion(); });
+    el.addEventListener('change', () => { computeDiarias(); syncMetaState(); triggerAutosave(); if (el === diariasQtd) showDiariasSuggestion(); });
   });
   const btnAplicarSugestao = document.getElementById('btn-aplicar-sugestao');
   if (btnAplicarSugestao) btnAplicarSugestao.addEventListener('click', applySuggestedDiarias);
 
   document.querySelectorAll('input[name="atividades_codigos"]').forEach((cb) => {
-    cb.addEventListener('change', () => { if (currentStep === 5) renderReview(); });
+    cb.addEventListener('change', () => { syncMetaState(); triggerAutosave(); if (currentStep === 5) renderReview(); });
   });
+  form.addEventListener('focusout', (event) => {
+    const target = event.target;
+    if (!target || !target.matches('input, select, textarea')) return;
+    syncMetaState();
+    triggerAutosave();
+  });
+  if (saveDraftBtn) {
+    saveDraftBtn.addEventListener('click', async () => {
+      await saveDraft();
+    });
+  }
   form.addEventListener('submit', () => {
     collectDestinos();
     reindexEfetivoRows();
@@ -1316,13 +1528,18 @@
   toggleHorarioManual();
   toggleDataFim();
   parseDateRange();
+  syncMetaState();
   bootstrapDestinos().then(() => {
     syncEfetivoTotal();
     computeDiarias();
+    syncMetaState();
     notify();
     refreshPickers(form);
   });
   showStep(0);
+  setAutosaveStatus('idle');
+  setInterval(refreshSavedElapsedStatus, 1000);
+  checkRecentDraft();
 
 })();
 </script>

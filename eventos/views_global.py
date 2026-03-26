@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+import json
 from datetime import date, datetime, time, timedelta
 from urllib.parse import urlencode
 
@@ -54,6 +55,7 @@ from .services.documentos.ordem_servico import render_ordem_servico_docx, render
 from .services.documentos.plano_trabalho import render_plano_trabalho_docx, render_plano_trabalho_model_docx
 from .services.documentos.termo_autorizacao import render_saved_termo_autorizacao_docx
 from .services.plano_trabalho_domain import ATIVIDADES_CATALOGO
+from .services.plano_trabalho_domain import build_metas_formatada, build_recursos_necessarios_formatado
 from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
@@ -1948,6 +1950,167 @@ def _resolve_preselected_context(request):
     preselected_event = Evento.objects.filter(pk=preselected_event_id).first() if preselected_event_id else None
     preselected_oficio = Oficio.objects.filter(pk=preselected_oficio_id).first() if preselected_oficio_id else None
     return preselected_event, preselected_oficio
+
+
+def _autosave_bool(value):
+    return str(value or '').strip().lower() in {'1', 'true', 'on', 'yes'}
+
+
+def _autosave_int(value):
+    raw = str(value or '').strip()
+    return int(raw) if raw.isdigit() else None
+
+
+def _autosave_date(value):
+    raw = _clean(value)
+    if not raw:
+        return None
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        return None
+
+
+def _normalize_horario_autosave(padrao, manual):
+    horario = _clean(padrao)
+    if horario == PlanoTrabalhoForm.HORARIO_OUTROS:
+        horario = _clean(manual)
+    if not horario:
+        return ''
+    if '-' in horario and 'até' not in horario:
+        parts = [part.strip() for part in horario.split('-', 1)]
+        if len(parts) == 2 and parts[0] and parts[1]:
+            horario = f'{parts[0]} até {parts[1]}'
+    return horario
+
+
+@require_http_methods(['POST'])
+def plano_trabalho_autosave(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except (TypeError, ValueError, UnicodeDecodeError):
+        return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
+
+    if not isinstance(payload, dict):
+        return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
+
+    plano_id = _autosave_int(payload.get('id'))
+    if plano_id:
+        plano = PlanoTrabalho.objects.filter(pk=plano_id).first()
+        if not plano:
+            return JsonResponse({'success': False, 'error': 'Plano não encontrado.'}, status=404)
+    else:
+        plano = PlanoTrabalho(status=PlanoTrabalho.STATUS_RASCUNHO, data_criacao=timezone.localdate())
+
+    plano.status = PlanoTrabalho.STATUS_RASCUNHO
+    plano.data_criacao = _autosave_date(payload.get('data_criacao')) or plano.data_criacao or timezone.localdate()
+    plano.evento_id = _autosave_int(payload.get('evento_id'))
+    plano.oficio_id = _autosave_int(payload.get('oficio_id'))
+    plano.roteiro_id = _autosave_int(payload.get('roteiro_id'))
+    plano.coordenador_administrativo_id = _autosave_int(payload.get('coordenador_administrativo_id'))
+
+    solicitante_escolha = _clean(payload.get('solicitante_escolha'))
+    solicitante_outros = _clean(payload.get('solicitante_outros'))
+    if solicitante_escolha and solicitante_escolha.isdigit():
+        plano.solicitante_id = int(solicitante_escolha)
+        plano.solicitante_outros = ''
+    elif solicitante_escolha == PlanoTrabalhoForm.OUTROS_CHOICE:
+        plano.solicitante_id = None
+        plano.solicitante_outros = solicitante_outros
+    else:
+        plano.solicitante_id = None
+        plano.solicitante_outros = solicitante_outros
+
+    plano.horario_atendimento = _normalize_horario_autosave(
+        payload.get('horario_atendimento_padrao'),
+        payload.get('horario_atendimento_manual'),
+    )
+    plano.evento_data_unica = _autosave_bool(payload.get('evento_data_unica'))
+    plano.evento_data_inicio = _autosave_date(payload.get('evento_data_inicio'))
+    plano.evento_data_fim = _autosave_date(payload.get('evento_data_fim'))
+    if plano.evento_data_unica and plano.evento_data_inicio:
+        plano.evento_data_fim = plano.evento_data_inicio
+
+    qtd_servidores = _autosave_int(payload.get('quantidade_servidores'))
+    plano.quantidade_servidores = qtd_servidores if qtd_servidores and qtd_servidores > 0 else None
+
+    atividades = payload.get('atividades_codigos')
+    if isinstance(atividades, str):
+        atividades = [item.strip() for item in atividades.split(',') if item.strip()]
+    if not isinstance(atividades, list):
+        atividades = []
+    atividades = [str(item).strip().upper() for item in atividades if str(item).strip()]
+    plano.atividades_codigos = ','.join(dict.fromkeys(atividades))
+    plano.metas_formatadas = build_metas_formatada(plano.atividades_codigos)
+    plano.recursos_texto = build_recursos_necessarios_formatado(plano.atividades_codigos)
+
+    destinos = payload.get('destinos_payload')
+    if not isinstance(destinos, list):
+        destinos = []
+    plano.destinos_json = destinos
+
+    plano.diarias_quantidade = _clean(payload.get('diarias_quantidade'))
+    plano.diarias_valor_unitario = _clean(payload.get('diarias_valor_unitario'))
+    plano.diarias_valor_total = _clean(payload.get('diarias_valor_total'))
+    plano.diarias_valor_extenso = _clean(payload.get('diarias_valor_extenso'))
+
+    plano.save()
+
+    oficios_relacionados_ids = payload.get('oficios_relacionados_ids')
+    if not isinstance(oficios_relacionados_ids, list):
+        oficios_relacionados_ids = []
+    parsed_oficios_ids = []
+    for item in oficios_relacionados_ids:
+        parsed = _autosave_int(item)
+        if parsed:
+            parsed_oficios_ids.append(parsed)
+    if plano.oficio_id and plano.oficio_id not in parsed_oficios_ids:
+        parsed_oficios_ids.append(plano.oficio_id)
+    plano.oficios.set(Oficio.objects.filter(pk__in=parsed_oficios_ids))
+
+    coordenadores_ids = payload.get('coordenadores_ids')
+    if isinstance(coordenadores_ids, str):
+        coordenadores_ids = [item.strip() for item in coordenadores_ids.split(',') if item.strip()]
+    if not isinstance(coordenadores_ids, list):
+        coordenadores_ids = []
+    parsed_coord_ids = []
+    for item in coordenadores_ids:
+        parsed = _autosave_int(item)
+        if parsed:
+            parsed_coord_ids.append(parsed)
+    plano.coordenadores.set(plano.coordenadores.model.objects.filter(pk__in=parsed_coord_ids, ativo=True))
+    if parsed_coord_ids:
+        plano.coordenador_operacional_id = parsed_coord_ids[0]
+        plano.save(update_fields=['coordenador_operacional', 'updated_at'])
+
+    return JsonResponse(
+        {
+            'success': True,
+            'id': plano.pk,
+            'status': plano.status,
+            'updated_at': timezone.localtime(plano.updated_at).isoformat(),
+        }
+    )
+
+
+@require_http_methods(['GET'])
+def plano_trabalho_ultimo_rascunho(request):
+    draft = (
+        PlanoTrabalho.objects.filter(status=PlanoTrabalho.STATUS_RASCUNHO)
+        .order_by('-updated_at')
+        .first()
+    )
+    if not draft:
+        return JsonResponse({'success': True, 'has_draft': False})
+    return JsonResponse(
+        {
+            'success': True,
+            'has_draft': True,
+            'id': draft.pk,
+            'updated_at': timezone.localtime(draft.updated_at).isoformat(),
+            'edit_url': reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': draft.pk}),
+        }
+    )
 
 
 def planos_trabalho_global(request):
