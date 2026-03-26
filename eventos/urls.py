@@ -49,6 +49,11 @@ urlpatterns = [
     path('tipos-demanda/cadastrar/', login_required(views.tipos_demanda_cadastrar), name='tipos-demanda-cadastrar'),
     path('tipos-demanda/<int:pk>/editar/', login_required(views.tipos_demanda_editar), name='tipos-demanda-editar'),
     path('tipos-demanda/<int:pk>/excluir/', login_required(views.tipos_demanda_excluir), name='tipos-demanda-excluir'),
+    # Atividades do Plano de Trabalho
+    path('plano-trabalho-atividades/', login_required(views.plano_trabalho_atividades_lista), name='plano-trabalho-atividades-lista'),
+    path('plano-trabalho-atividades/cadastrar/', login_required(views.plano_trabalho_atividades_cadastrar), name='plano-trabalho-atividades-cadastrar'),
+    path('plano-trabalho-atividades/<int:pk>/editar/', login_required(views.plano_trabalho_atividades_editar), name='plano-trabalho-atividades-editar'),
+    path('plano-trabalho-atividades/<int:pk>/excluir/', login_required(views.plano_trabalho_atividades_excluir), name='plano-trabalho-atividades-excluir'),
     # Modelos de motivo (ofício step 1)
     path('modelos-motivo/', login_required(views.modelos_motivo_lista), name='modelos-motivo-lista'),
     path('modelos-motivo/cadastrar/', login_required(views.modelos_motivo_cadastrar), name='modelos-motivo-cadastrar'),

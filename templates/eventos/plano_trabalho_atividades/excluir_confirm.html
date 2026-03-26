@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir atividade - Plano de Trabalho{% endblock %}
+{% block page_title %}Excluir atividade{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="card form-card">
+    <div class="card-body">
+      <p class="mb-1">Confirma excluir a atividade <strong>{{ object.codigo }} - {{ object.nome }}</strong>?</p>
+      <p class="text-muted mb-4">Se ela estiver em uso em algum plano, a exclusao sera bloqueada.</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Excluir</button>
+        <a href="{% url 'eventos:plano-trabalho-atividades-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

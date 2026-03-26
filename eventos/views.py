@@ -22,6 +22,7 @@ from cadastros.models import ConfiguracaoSistema, Cidade, Estado, Veiculo, Viaja
 from core.utils.masks import format_placa, format_protocolo, normalize_placa, only_digits
 
 from .models import (
+    AtividadePlanoTrabalho,
     Evento,
     EventoDestino,
     EventoFinalizacao,
@@ -41,6 +42,7 @@ from .models import (
     TipoDemandaEvento,
 )
 from .forms import (
+    AtividadePlanoTrabalhoForm,
     EventoEtapa1Form,
     EventoFinalizacaoForm,
     ModeloJustificativaForm,
@@ -1333,6 +1335,78 @@ def tipos_demanda_excluir(request, pk):
         return redirect('eventos:tipos-demanda-lista')
     context = {'object': obj, 'volta_etapa1': request.GET.get('volta_etapa1', '')}
     return render(request, 'eventos/tipos_demanda/excluir_confirm.html', context)
+
+
+# ---------- Modelos de motivo (CRUD) ----------
+
+
+@login_required
+def plano_trabalho_atividades_lista(request):
+    """Lista de atividades gerenciáveis do Plano de Trabalho."""
+    lista = AtividadePlanoTrabalho.objects.all().order_by('ordem', 'nome')
+    context = {
+        'object_list': lista,
+        'hide_page_header': True,
+    }
+    return render(request, 'eventos/plano_trabalho_atividades/lista.html', context)
+
+
+@login_required
+def plano_trabalho_atividades_cadastrar(request):
+    """Cadastro de atividade do Plano de Trabalho com meta e recurso obrigatórios."""
+    form = AtividadePlanoTrabalhoForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Atividade cadastrada com sucesso.')
+        return redirect('eventos:plano-trabalho-atividades-lista')
+    context = {
+        'form': form,
+        'object': None,
+        'hide_page_header': True,
+    }
+    return render(request, 'eventos/plano_trabalho_atividades/form.html', context)
+
+
+@login_required
+def plano_trabalho_atividades_editar(request, pk):
+    """Edição de atividade do Plano de Trabalho."""
+    obj = get_object_or_404(AtividadePlanoTrabalho, pk=pk)
+    form = AtividadePlanoTrabalhoForm(request.POST or None, instance=obj)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Atividade atualizada com sucesso.')
+        return redirect('eventos:plano-trabalho-atividades-lista')
+    context = {
+        'form': form,
+        'object': obj,
+        'hide_page_header': True,
+    }
+    return render(request, 'eventos/plano_trabalho_atividades/form.html', context)
+
+
+@login_required
+def plano_trabalho_atividades_excluir(request, pk):
+    """Exclusão de atividade (bloqueia se em uso em Plano de Trabalho)."""
+    obj = get_object_or_404(AtividadePlanoTrabalho, pk=pk)
+    if request.method == 'POST':
+        codigo = obj.codigo
+        em_uso = PlanoTrabalho.objects.filter(
+            Q(atividades_codigos=codigo)
+            | Q(atividades_codigos__startswith=f'{codigo},')
+            | Q(atividades_codigos__endswith=f',{codigo}')
+            | Q(atividades_codigos__contains=f',{codigo},')
+        ).exists()
+        if em_uso:
+            messages.error(request, 'Não é possível excluir: atividade em uso por pelo menos um Plano de Trabalho.')
+            return redirect('eventos:plano-trabalho-atividades-editar', pk=obj.pk)
+        obj.delete()
+        messages.success(request, 'Atividade excluída com sucesso.')
+        return redirect('eventos:plano-trabalho-atividades-lista')
+    return render(
+        request,
+        'eventos/plano_trabalho_atividades/excluir_confirm.html',
+        {'object': obj, 'hide_page_header': True},
+    )
 
 
 # ---------- Modelos de motivo (CRUD) ----------

@@ -60,8 +60,11 @@ from .services.documentos.renderer import (
 from .services.documentos.ordem_servico import render_ordem_servico_docx, render_ordem_servico_model_docx
 from .services.documentos.plano_trabalho import render_plano_trabalho_docx, render_plano_trabalho_model_docx
 from .services.documentos.termo_autorizacao import render_saved_termo_autorizacao_docx
-from .services.plano_trabalho_domain import ATIVIDADES_CATALOGO
-from .services.plano_trabalho_domain import build_metas_formatada, build_recursos_necessarios_formatado
+from .services.plano_trabalho_domain import (
+    build_metas_formatada,
+    build_recursos_necessarios_formatado,
+    get_atividades_catalogo,
+)
 from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
@@ -1728,6 +1731,7 @@ def _resolve_plano_trabalho_periodo(plano, related_event):
 
 
 def _decorate_plano_trabalho_list_items(items):
+    atividades_catalogo = get_atividades_catalogo()
     for plano in items:
         related_oficios = plano.get_oficios_relacionados() if hasattr(plano, 'get_oficios_relacionados') else []
         related_event = plano.get_evento_relacionado() if hasattr(plano, 'get_evento_relacionado') else plano.evento
@@ -1736,7 +1740,7 @@ def _decorate_plano_trabalho_list_items(items):
         periodo_display = _resolve_plano_trabalho_periodo(plano, related_event)
         atividades_labels = [
             item['nome']
-            for item in ATIVIDADES_CATALOGO
+            for item in atividades_catalogo
             if item['codigo'] in {
                 codigo.strip()
                 for codigo in _clean(plano.atividades_codigos).split(',')
@@ -1907,8 +1911,9 @@ def _build_plano_trabalho_form_ui_context(form, *, obj=None, preselected_event=N
         selected_codes = [codigo.strip() for codigo in obj.atividades_codigos.split(',') if codigo.strip()]
     else:
         selected_codes = form.data.getlist('atividades_codigos') if form.is_bound else list(form.initial.get('atividades_codigos') or [])
+    atividades_catalogo = get_atividades_catalogo()
     selected_activities = [
-        item for item in ATIVIDADES_CATALOGO
+        item for item in atividades_catalogo
         if item['codigo'] in selected_codes
     ]
 
@@ -2279,7 +2284,7 @@ def plano_trabalho_novo(request):
             'pt_header_badges': ui_context['header_badges'],
             'pt_glance': ui_context['glance'],
             'pt_selected_activity_codes': ui_context['selected_codes'],
-            'plano_trabalho_atividades_catalogo': ATIVIDADES_CATALOGO,
+            'plano_trabalho_atividades_catalogo': get_atividades_catalogo(),
             'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
             'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
@@ -2333,7 +2338,7 @@ def plano_trabalho_editar(request, pk):
             'pt_header_badges': ui_context['header_badges'],
             'pt_glance': ui_context['glance'],
             'pt_selected_activity_codes': ui_context['selected_codes'],
-            'plano_trabalho_atividades_catalogo': ATIVIDADES_CATALOGO,
+            'plano_trabalho_atividades_catalogo': get_atividades_catalogo(),
             'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
             'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),

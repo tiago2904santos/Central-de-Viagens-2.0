@@ -222,6 +222,36 @@ class CoordenadorOperacional(models.Model):
         return f'{self.cargo or "—"} {self.nome}'.strip()
 
 
+class AtividadePlanoTrabalho(models.Model):
+    """Catálogo gerenciável de atividades do Plano de Trabalho."""
+
+    codigo = models.CharField('Código', max_length=40, unique=True)
+    nome = models.CharField('Nome', max_length=255)
+    meta = models.TextField('Meta')
+    recurso_necessario = models.TextField('Recursos necessários')
+    ordem = models.PositiveIntegerField('Ordem', default=100)
+    ativo = models.BooleanField('Ativo', default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['ordem', 'nome']
+        verbose_name = 'Atividade (Plano de Trabalho)'
+        verbose_name_plural = 'Atividades (Plano de Trabalho)'
+
+    def __str__(self):
+        return f'{self.codigo} - {self.nome}'
+
+    def save(self, *args, **kwargs):
+        if self.codigo:
+            self.codigo = slugify(self.codigo).replace('-', '_').upper()
+        if self.nome:
+            self.nome = self.nome.strip()
+        self.meta = (self.meta or '').strip()
+        self.recurso_necessario = (self.recurso_necessario or '').strip()
+        super().save(*args, **kwargs)
+
+
 class PlanoTrabalho(models.Model):
     """Documento independente de Plano de Trabalho, com vínculo opcional a evento e múltiplos ofícios."""
 

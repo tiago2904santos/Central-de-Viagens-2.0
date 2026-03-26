@@ -1,0 +1,58 @@
+{% extends 'includes/forms/form_base.html' %}
+
+{% block form_title_block %}{% if object %}Editar atividade{% else %}Nova atividade{% endif %} - Plano de Trabalho{% endblock %}
+{% block form_page_title %}{% if object %}Editar atividade{% else %}Nova atividade{% endif %} - Plano de Trabalho{% endblock %}
+{% block form_header_title %}{% if object %}Editar atividade{% else %}Nova atividade{% endif %}{% endblock %}
+{% block form_card_title %}{% if object %}Editar atividade{% else %}Nova atividade{% endif %}{% endblock %}
+{% block form_header_icon %}bi-list-check{% endblock %}
+
+{% block form_header_subtitle %}
+<p class="text-muted mb-0">Ao adicionar uma atividade, o preenchimento de meta e recursos necessarios e obrigatorio.</p>
+{% endblock %}
+
+{% block form_fields %}
+<div class="row g-3">
+  <div class="col-md-4">
+    <label for="id_codigo" class="form-label">{{ form.codigo.label }}</label>
+    {{ form.codigo }}
+    {% if form.codigo.errors %}<div class="invalid-feedback d-block">{{ form.codigo.errors.0 }}</div>{% endif %}
+  </div>
+  <div class="col-md-8">
+    <label for="id_nome" class="form-label">{{ form.nome.label }}</label>
+    {{ form.nome }}
+    {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
+  </div>
+  <div class="col-12">
+    <label for="id_meta" class="form-label">{{ form.meta.label }}</label>
+    {{ form.meta }}
+    <div class="form-text">Obrigatorio: esta meta sera exibida automaticamente no Plano de Trabalho.</div>
+    {% if form.meta.errors %}<div class="invalid-feedback d-block">{{ form.meta.errors.0 }}</div>{% endif %}
+  </div>
+  <div class="col-12">
+    <label for="id_recurso_necessario" class="form-label">{{ form.recurso_necessario.label }}</label>
+    {{ form.recurso_necessario }}
+    <div class="form-text">Obrigatorio: descreva os recursos minimos para executar a atividade.</div>
+    {% if form.recurso_necessario.errors %}<div class="invalid-feedback d-block">{{ form.recurso_necessario.errors.0 }}</div>{% endif %}
+  </div>
+  <div class="col-md-4">
+    <label for="id_ordem" class="form-label">{{ form.ordem.label }}</label>
+    {{ form.ordem }}
+    {% if form.ordem.errors %}<div class="invalid-feedback d-block">{{ form.ordem.errors.0 }}</div>{% endif %}
+  </div>
+  <div class="col-md-4 d-flex align-items-end">
+    <div class="form-check mb-2">
+      {{ form.ativo }}
+      <label class="form-check-label" for="id_ativo">{{ form.ativo.label }}</label>
+    </div>
+    {% if form.ativo.errors %}<div class="invalid-feedback d-block">{{ form.ativo.errors.0 }}</div>{% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block form_actions %}
+<button type="submit" class="btn btn-primary">Salvar atividade</button>
+<a href="{% url 'eventos:plano-trabalho-atividades-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+{% if object %}
+<a href="{% url 'eventos:plano-trabalho-atividades-excluir' object.pk %}" class="btn btn-outline-danger">Excluir</a>
+{% endif %}
+{% endblock %}

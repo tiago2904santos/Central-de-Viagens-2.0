@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Atividades do Plano de Trabalho - Central de Viagens{% endblock %}
+{% block page_title %}Atividades do Plano de Trabalho{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 system-list-page system-list-page--simple">
+  <div class="system-list-shell">
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+      <div class="system-list-header__content">
+        <div>
+          <h1 class="system-list-header__title">Gerenciamento de atividades</h1>
+          <p class="system-list-header__subtitle">Cadastre, edite e organize atividades com metas e recursos obrigatorios.</p>
+        </div>
+      </div>
+      <div class="system-list-header__actions-group">
+        <a href="{% url 'eventos:plano-trabalho-atividades-cadastrar' %}" class="btn btn-primary system-list-action-btn">
+          <i class="bi bi-plus-lg me-1"></i>Nova atividade
+        </a>
+      </div>
+    </div>
+
+    <div class="system-list-table-wrap">
+      <div class="table-responsive">
+        <table class="table table-hover table-cadastro mb-0 system-list-table">
+          <thead class="table-light">
+            <tr>
+              <th>Codigo</th>
+              <th>Atividade</th>
+              <th>Meta</th>
+              <th>Recurso necessario</th>
+              <th class="text-center">Status</th>
+              <th class="text-center">Ordem</th>
+              <th width="220" class="text-end">Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for obj in object_list %}
+            <tr>
+              <td><span class="badge bg-light text-dark border">{{ obj.codigo }}</span></td>
+              <td class="fw-semibold">{{ obj.nome }}</td>
+              <td>{{ obj.meta|truncatechars:120 }}</td>
+              <td>{{ obj.recurso_necessario|truncatechars:120 }}</td>
+              <td class="text-center">
+                {% if obj.ativo %}
+                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Ativa</span>
+                {% else %}
+                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Inativa</span>
+                {% endif %}
+              </td>
+              <td class="text-center">{{ obj.ordem }}</td>
+              <td class="text-end">
+                <a href="{% url 'eventos:plano-trabalho-atividades-editar' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                <a href="{% url 'eventos:plano-trabalho-atividades-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">Nenhuma atividade cadastrada.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

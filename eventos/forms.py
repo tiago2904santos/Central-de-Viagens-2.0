@@ -14,6 +14,7 @@ from eventos.services.oficio_schema import oficio_justificativa_schema_available
 from eventos.services.justificativa import get_oficio_justificativa, get_oficio_justificativa_texto
 from eventos.termos import build_termo_context, build_termo_preview_payload
 from .models import (
+    AtividadePlanoTrabalho,
     Evento,
     EventoFinalizacao,
     EventoParticipante,
@@ -30,9 +31,9 @@ from .models import (
     TipoDemandaEvento,
 )
 from .services.plano_trabalho_domain import (
-    ATIVIDADES_CATALOGO,
     build_metas_formatada,
     build_recursos_necessarios_formatado,
+    get_atividades_catalogo,
 )
 from .services.diarias import PeriodMarker, calculate_periodized_diarias
 from core.utils.masks import format_placa, format_protocolo, normalize_placa
@@ -47,6 +48,17 @@ LEGACY_SELECT_WIDGET_CLASSES = {
     'oficios-sort-select',
     'termo-context-select',
 }
+
+
+def _to_decimal(value):
+    raw = str(value or '').strip()
+    if not raw:
+        return None
+    normalized = raw.replace('R$', '').replace('r$', '').replace(' ', '').replace('.', '').replace(',', '.')
+    try:
+        return Decimal(normalized)
+    except (InvalidOperation, TypeError, ValueError):
+        return None
 
 
 def _sanitize_select_widget(widget):
@@ -275,13 +287,58 @@ class CoordenadorOperacionalForm(FormComErroInvalidMixin, forms.ModelForm):
         return instance
 
 
+class AtividadePlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
+    class Meta:
+        model = AtividadePlanoTrabalho
+        fields = ['codigo', 'nome', 'meta', 'recurso_necessario', 'ordem', 'ativo']
+        widgets = {
+            'codigo': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 40, 'placeholder': 'Ex.: CIN_EXTRA'}),
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 255}),
+            'meta': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'recurso_necessario': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'ordem': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_codigo(self):
+        value = (self.cleaned_data.get('codigo') or '').strip().upper().replace('-', '_').replace(' ', '_')
+        if not value:
+            raise forms.ValidationError('Informe um código para a atividade.')
+        if not re.match(r'^[A-Z0-9_]+$', value):
+            raise forms.ValidationError('Use apenas letras, números e underscore (_).')
+        qs = AtividadePlanoTrabalho.objects.filter(codigo=value)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError('Já existe uma atividade com este código.')
+        return value
+
+    def clean_nome(self):
+        value = ' '.join((self.cleaned_data.get('nome') or '').strip().split())
+        if not value:
+            raise forms.ValidationError('Informe o nome da atividade.')
+        return value
+
+    def clean_meta(self):
+        value = (self.cleaned_data.get('meta') or '').strip()
+        if not value:
+            raise forms.ValidationError('A meta é obrigatória para criar uma atividade.')
+        return value
+
+    def clean_recurso_necessario(self):
+        value = (self.cleaned_data.get('recurso_necessario') or '').strip()
+        if not value:
+            raise forms.ValidationError('Informe os recursos necessários para a atividade.')
+        return value
+
+
 class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
     OUTROS_CHOICE = '__OUTROS__'
     HORARIO_OUTROS = '__OUTROS__'
 
     atividades_codigos = forms.MultipleChoiceField(
         label='Atividades (PT)',
-        choices=[(item['codigo'], item['nome']) for item in ATIVIDADES_CATALOGO],
+        choices=[],
         required=False,
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
     )
@@ -377,6 +434,9 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['coordenador_administrativo'].queryset = Viajante.objects.filter(
             status=Viajante.STATUS_FINALIZADO
         ).select_related('cargo', 'unidade_lotacao').order_by('nome')
+        self.fields['atividades_codigos'].choices = [
+            (item['codigo'], item['nome']) for item in get_atividades_catalogo()
+        ]
         self.fields['metas_formatadas'].widget.attrs['readonly'] = True
         self.fields['recursos_texto'].widget.attrs['readonly'] = True
         self.fields['diarias_quantidade'].widget.attrs['readonly'] = True
