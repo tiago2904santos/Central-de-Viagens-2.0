@@ -9,7 +9,50 @@
   /* ── Step transitions ── */
   .pt-step { display: none; }
   .pt-step.is-active { display: block; animation: pt-step-in 0.18s ease both; }
-  @keyframes pt-step-in { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pt-step-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── Header hardening + institutional meta ── */
+  .oficio-wizard-page .oficio-wizard-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 12px 16px;
+    margin: 0 -16px;
+  }
+  .oficio-wizard-page .oficio-wizard-header-card {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .oficio-wizard-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .oficio-title { color: #0f172a; font-size: 1.18rem; font-weight: 800; line-height: 1.2; }
+  .oficio-subtitle { color: #64748b; font-size: .86rem; }
+  .oficio-meta {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 13px;
+    color: #6b7280;
+    flex-wrap: wrap;
+  }
+  .oficio-meta strong { color: #111827; font-weight: 700; }
+  .oficio-wizard-stepper-shell { overflow-x: auto; }
 
   /* ── Summary bar (3 items) ── */
   .pt-summary-bar {
@@ -96,6 +139,10 @@
   /* ── Destination row ── */
   .pt-dest-row{ border:1px solid #e6edf4; border-radius:10px; padding:.65rem; background:#fbfdff; }
 
+  /* ── Better visual breathing ── */
+  .oficio-stage-section { margin-bottom: 24px; }
+  .oficio-stage-section-head { margin-bottom: 8px; }
+
   /* ── Step error alert ── */
   #pt-step-error{ transition:opacity .25s ease; }
 
@@ -111,65 +158,51 @@
     {# ──────────────────────── STICKY HEADER ──────────────────────── #}
     <div class="oficio-wizard-header" data-oficio-sticky-header>
       <div class="oficio-wizard-header-card">
-        <div class="oficio-wizard-header-main">
-          <div class="oficio-wizard-header-copy">
-            <span class="oficio-wizard-eyebrow">Documento operacional</span>
-            <h1>{% if object %}Editar{% else %}Novo{% endif %} Plano de Trabalho</h1>
-            <p class="oficio-wizard-header-support">Preencha cada etapa em ordem. Use Voltar e Avançar para navegar.</p>
+        <div class="oficio-wizard-header-top">
+          <div>
+            <div class="oficio-title">Plano de Trabalho</div>
+            <div class="oficio-subtitle">Preenchimento guiado</div>
             <p class="mb-0 mt-1 small text-muted" id="autosave-status" aria-live="polite">Rascunho ainda não salvo.</p>
           </div>
-          <div class="oficio-wizard-header-badges">
-            <div class="oficio-wizard-header-badge">
-              <span>Número</span>
-              <strong>{% if object %}{{ object.numero_formatado }}{% else %}{{ proximo_numero_pt }}{% endif %}</strong>
-            </div>
-            <div class="oficio-wizard-header-badge">
-              <span>Data</span>
-              <strong>{{ data_geracao_preview|date:'d/m/Y' }}</strong>
-            </div>
+          <div class="oficio-meta" aria-label="Metadados do plano">
+            <div><span>Nº:</span> <strong>{% if object %}{{ object.numero_formatado }}{% else %}{{ proximo_numero_pt }}{% endif %}</strong></div>
+            <div><span>Data:</span> <strong>{{ data_geracao_preview|date:'d/m/Y' }}</strong></div>
           </div>
         </div>
         <div class="oficio-wizard-stepper-shell">
-          <nav class="oficio-stepper" aria-label="Etapas" style="--oficio-step-count:6;">
+          <nav class="oficio-stepper" aria-label="Etapas" style="--oficio-step-count:5;">
             <button type="button" class="oficio-stepper-link is-active" data-step-target="0" aria-current="step">
               <span class="oficio-stepper-badge">1</span>
               <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 1 de 6</span>
+                <span class="oficio-stepper-state">Passo 1 de 5</span>
                 <span class="oficio-stepper-label">Contexto</span>
               </span>
             </button>
             <button type="button" class="oficio-stepper-link" data-step-target="1">
               <span class="oficio-stepper-badge">2</span>
               <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 2 de 6</span>
-                <span class="oficio-stepper-label">Datas e Roteiro</span>
+                <span class="oficio-stepper-state">Passo 2 de 5</span>
+                <span class="oficio-stepper-label">Roteiro</span>
               </span>
             </button>
             <button type="button" class="oficio-stepper-link" data-step-target="2">
               <span class="oficio-stepper-badge">3</span>
               <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 3 de 6</span>
-                <span class="oficio-stepper-label">Equipe</span>
+                <span class="oficio-stepper-state">Passo 3 de 5</span>
+                <span class="oficio-stepper-label">Atividades</span>
               </span>
             </button>
             <button type="button" class="oficio-stepper-link" data-step-target="3">
               <span class="oficio-stepper-badge">4</span>
               <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 4 de 6</span>
-                <span class="oficio-stepper-label">Atividades</span>
+                <span class="oficio-stepper-state">Passo 4 de 5</span>
+                <span class="oficio-stepper-label">Diárias</span>
               </span>
             </button>
             <button type="button" class="oficio-stepper-link" data-step-target="4">
               <span class="oficio-stepper-badge">5</span>
               <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 5 de 6</span>
-                <span class="oficio-stepper-label">Diárias</span>
-              </span>
-            </button>
-            <button type="button" class="oficio-stepper-link" data-step-target="5">
-              <span class="oficio-stepper-badge">6</span>
-              <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 6 de 6</span>
+                <span class="oficio-stepper-state">Passo 5 de 5</span>
                 <span class="oficio-stepper-label">Revisão</span>
               </span>
             </button>
@@ -222,15 +255,15 @@
           {# ════ PASSO 1 — CONTEXTO ════ #}
           <div class="pt-step is-active" data-step-index="0">
             <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 1 de 6</span>
-              <h2 class="oficio-stage-title">Contexto</h2>
-              <p class="oficio-stage-description">Vincule o documento e defina o solicitante.</p>
+              <span class="oficio-stage-kicker">Passo 1 de 5</span>
+              <h2 class="oficio-stage-title">Contexto geral</h2>
+              <p class="oficio-stage-description">Consolide vínculos, período e equipe em uma única etapa.</p>
             </div>
 
             <section class="oficio-stage-section">
               <div class="oficio-stage-section-head">
                 <div>
-                  <h3 class="oficio-stage-section-title">Vínculos opcionais</h3>
+                  <h3 class="oficio-stage-section-title">Dados institucionais</h3>
                 </div>
               </div>
               <div class="row g-3">
@@ -280,20 +313,11 @@
                 </div>
               </div>
             </section>
-          </div>
-
-          {# ════ PASSO 2 — DATAS E ROTEIRO ════ #}
-          <div class="pt-step" data-step-index="1">
-            <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 2 de 6</span>
-              <h2 class="oficio-stage-title">Datas e Roteiro</h2>
-              <p class="oficio-stage-description">Informe as datas e os destinos do deslocamento.</p>
-            </div>
 
             <section class="oficio-stage-section">
               <div class="oficio-stage-section-head">
                 <div>
-                  <h3 class="oficio-stage-section-title">Período do deslocamento</h3>
+                  <h3 class="oficio-stage-section-title">Período</h3>
                 </div>
               </div>
               <div class="row g-3">
@@ -322,24 +346,11 @@
             <section class="oficio-stage-section">
               <div class="oficio-stage-section-head">
                 <div>
-                  <h3 class="oficio-stage-section-title">Destinos</h3>
+                  <h3 class="oficio-stage-section-title">Equipe</h3>
+                  <p class="oficio-stage-section-text">Efetivo e coordenação operacional do plano.</p>
                 </div>
-                <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-destino">+ Adicionar destino</button>
               </div>
-              <div id="destinos-container" class="d-grid gap-2"></div>
-              {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block mt-1">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
-            </section>
-          </div>
 
-          {# ════ PASSO 3 — EQUIPE ════ #}
-          <div class="pt-step" data-step-index="2">
-            <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 3 de 6</span>
-              <h2 class="oficio-stage-title">Equipe</h2>
-              <p class="oficio-stage-description">Informe o efetivo e selecione os coordenadores.</p>
-            </div>
-
-            <section class="oficio-stage-section">
               <div class="oficio-stage-section-head">
                 <div>
                   <h3 class="oficio-stage-section-title">Efetivo por cargo</h3>
@@ -376,10 +387,8 @@
                   <div class="form-text">Calculado a partir das linhas acima.</div>
                 </div>
               </div>
-            </section>
 
-            <section class="oficio-stage-section">
-              <div class="oficio-stage-section-head">
+              <div class="oficio-stage-section-head mt-3">
                 <div>
                   <h3 class="oficio-stage-section-title">Coordenadores operacionais</h3>
                   <p class="oficio-stage-section-text">O primeiro selecionado é o coordenador principal. Para alterar, use o botão em cada chip.</p>
@@ -389,11 +398,11 @@
 
               <label class="form-label mb-1" for="coord-autocomplete-input">Buscar coordenador</label>
               <div class="position-relative" id="coord-autocomplete-wrapper" data-search-url="{{ buscar_coordenadores_url }}">
-                <input type="text" id="coord-autocomplete-input" class="form-control" placeholder="Digite nome ou cargo…" autocomplete="off">
+                <input type="text" id="coord-autocomplete-input" class="form-control" placeholder="Digite nome ou cargo..." autocomplete="off">
                 <div id="coord-autocomplete-results" class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none" style="z-index:20;"></div>
               </div>
               <div class="pt-coord-search-state" id="coord-searching-state">
-                <span class="pt-coord-spinner"></span>&nbsp;Buscando…
+                <span class="pt-coord-spinner"></span>&nbsp;Buscando...
               </div>
 
               <div class="oficio-selection-panel mt-2">
@@ -405,10 +414,8 @@
                   <span class="oficio-glance-empty" id="coord-chip-empty">Nenhum coordenador selecionado.</span>
                 </div>
               </div>
-            </section>
 
-            <section class="oficio-stage-section">
-              <div class="oficio-stage-section-head">
+              <div class="oficio-stage-section-head mt-3">
                 <div>
                   <h3 class="oficio-stage-section-title">Coordenação administrativa</h3>
                 </div>
@@ -424,10 +431,30 @@
             </section>
           </div>
 
-          {# ════ PASSO 4 — ATIVIDADES ════ #}
-          <div class="pt-step" data-step-index="3">
+          {# ════ PASSO 2 — ROTEIRO ════ #}
+          <div class="pt-step" data-step-index="1">
             <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 4 de 6</span>
+              <span class="oficio-stage-kicker">Passo 2 de 5</span>
+              <h2 class="oficio-stage-title">Roteiro</h2>
+              <p class="oficio-stage-description">Defina os destinos e a lógica operacional do deslocamento.</p>
+            </div>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Destinos</h3>
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-destino">+ Adicionar destino</button>
+              </div>
+              <div id="destinos-container" class="d-grid gap-2"></div>
+              {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block mt-1">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
+            </section>
+          </div>
+
+          {# ════ PASSO 4 — ATIVIDADES ════ #}
+          <div class="pt-step" data-step-index="2">
+            <div class="oficio-stage-intro">
+              <span class="oficio-stage-kicker">Passo 3 de 5</span>
               <h2 class="oficio-stage-title">Atividades</h2>
               <p class="oficio-stage-description">Marque as atividades previstas para este plano.</p>
             </div>
@@ -475,9 +502,9 @@
           </div>
 
           {# ════ PASSO 5 — DIÁRIAS ════ #}
-          <div class="pt-step" data-step-index="4">
+          <div class="pt-step" data-step-index="3">
             <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 5 de 6</span>
+              <span class="oficio-stage-kicker">Passo 4 de 5</span>
               <h2 class="oficio-stage-title">Diárias</h2>
               <p class="oficio-stage-description">Informe as quantidades e valores. Se o período estiver preenchido, uma sugestão aparecerá abaixo.</p>
             </div>
@@ -570,9 +597,9 @@
           </div>
 
           {# ════ PASSO 6 — REVISÃO ════ #}
-          <div class="pt-step" data-step-index="5">
+          <div class="pt-step" data-step-index="4">
             <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 6 de 6</span>
+              <span class="oficio-stage-kicker">Passo 5 de 5</span>
               <h2 class="oficio-stage-title">Revisão</h2>
               <p class="oficio-stage-description">Verifique os dados antes de salvar.</p>
             </div>
@@ -603,7 +630,7 @@
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
               <button type="button" class="btn btn-outline-secondary" id="pt-prev" disabled>← Voltar</button>
               <button type="button" class="btn btn-outline-primary" id="pt-next">Avançar →</button>
-              <span class="badge text-bg-light text-muted" id="pt-progress-chip">1 / 6</span>
+              <span class="badge text-bg-light text-muted" id="pt-progress-chip">1 / 5</span>
             </div>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
               <button type="button" class="btn btn-outline-secondary" id="pt-save-draft">Salvar como rascunho</button>
@@ -962,19 +989,17 @@
   // ══════════════════════════════════════════════════════════
   // Return false to BLOCK advance. Null = no check.
   const stepValidations = [
-    null,   // 0 → 1: no block
-    () => { // 1 → 2: must have saída date
+    () => { // 0 → 1: must have saída date and at least one team member
       if (!dataInicio || !dataInicio.value) {
         showStepError('Informe a data de saída antes de avançar.');
         return false;
       }
-    },
-    () => { // 2 → 3: must have at least one person
       if (planoState.equipe.total < 1) {
         showStepError('Adicione ao menos um membro no efetivo antes de avançar.');
         return false;
       }
     },
+    null,
     null,
     null,
   ];
@@ -1004,7 +1029,7 @@
       nextBtn.textContent = 'Avançar →';
     }
     if (currentStep === steps.length - 1) renderReview();
-    if (currentStep === 4) { syncDiariasMirrors(); updateDiariasUI(); }
+    if (currentStep === 3) { syncDiariasMirrors(); updateDiariasUI(); }
     refreshPickers(steps[currentStep]);
     if (target !== previousStep) triggerAutosave();
   }
@@ -1690,7 +1715,7 @@
     });
     syncMetaState();
     triggerAutosave();
-    if (currentStep === 5) renderReview();
+    if (currentStep === 4) renderReview();
     notify();
   }
 
@@ -1701,7 +1726,7 @@
     });
     syncMetaState();
     triggerAutosave();
-    if (currentStep === 5) renderReview();
+    if (currentStep === 4) renderReview();
     notify();
   }
 
@@ -1767,7 +1792,7 @@
   }
 
   document.querySelectorAll('input[name="atividades_codigos"]').forEach((cb) => {
-    cb.addEventListener('change', () => { syncMetaState(); triggerAutosave(); if (currentStep === 5) renderReview(); });
+    cb.addEventListener('change', () => { syncMetaState(); triggerAutosave(); if (currentStep === 4) renderReview(); });
   });
   form.addEventListener('focusout', (event) => {
     const target = event.target;
