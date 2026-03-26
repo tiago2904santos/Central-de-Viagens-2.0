@@ -274,40 +274,33 @@
           </div>
         </div>
         <div class="oficio-wizard-stepper-shell">
-          <nav class="oficio-stepper" aria-label="Etapas" style="--oficio-step-count:5;">
+          <nav class="oficio-stepper" aria-label="Etapas" style="--oficio-step-count:4;">
             <button type="button" class="oficio-stepper-link is-active" data-step-target="0" aria-current="step">
               <span class="oficio-stepper-badge">1</span>
               <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 1 de 5</span>
-                <span class="oficio-stepper-label">Contexto</span>
+                <span class="oficio-stepper-state">Passo 1 de 4</span>
+                <span class="oficio-stepper-label">Pessoas</span>
               </span>
             </button>
             <button type="button" class="oficio-stepper-link" data-step-target="1">
               <span class="oficio-stepper-badge">2</span>
               <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 2 de 5</span>
-                <span class="oficio-stepper-label">Roteiro</span>
+                <span class="oficio-stepper-state">Passo 2 de 4</span>
+                <span class="oficio-stepper-label">Período + destinos</span>
               </span>
             </button>
             <button type="button" class="oficio-stepper-link" data-step-target="2">
               <span class="oficio-stepper-badge">3</span>
               <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 3 de 5</span>
+                <span class="oficio-stepper-state">Passo 3 de 4</span>
                 <span class="oficio-stepper-label">Atividades</span>
               </span>
             </button>
             <button type="button" class="oficio-stepper-link" data-step-target="3">
               <span class="oficio-stepper-badge">4</span>
               <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 4 de 5</span>
-                <span class="oficio-stepper-label">Diárias</span>
-              </span>
-            </button>
-            <button type="button" class="oficio-stepper-link" data-step-target="4">
-              <span class="oficio-stepper-badge">5</span>
-              <span class="oficio-stepper-copy">
-                <span class="oficio-stepper-state">Passo 5 de 5</span>
-                <span class="oficio-stepper-label">Revisão</span>
+                <span class="oficio-stepper-state">Passo 4 de 4</span>
+                <span class="oficio-stepper-label">Roteiro + diárias</span>
               </span>
             </button>
           </nav>
@@ -340,68 +333,22 @@
           {{ form.destinos_payload }}
           {{ form.coordenadores_ids }}
 
-          {# ════ PASSO 1 — CONTEXTO ════ #}
+          {# ════ PASSO 1 — PESSOAS ════ #}
           <div class="pt-step is-active" data-step-index="0">
             <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 1 de 5</span>
-              <h2 class="oficio-stage-title">Contexto geral</h2>
-              <p class="oficio-stage-description">Consolide vínculos, período e equipe em uma única etapa.</p>
+              <span class="oficio-stage-kicker">Passo 1 de 4</span>
+              <h2 class="oficio-stage-title">Pessoas</h2>
+              <p class="oficio-stage-description">Preencha solicitante e equipe (efetivo, cargos e coordenação).</p>
             </div>
-
-            <section class="oficio-stage-section">
-              <div class="oficio-expandable" data-open="true" id="pt-vinculo-expandable">
-                <div class="oficio-expandable-header">
-                  <span>Dados institucionais</span>
-                  <button type="button" class="toggle" aria-label="Expandir/Recolher"></button>
-                </div>
-                <div class="oficio-expandable-body p-3">
-                  <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="vincular-documento">
-                    <label class="form-check-label" for="vincular-documento">Vincular a documento existente</label>
-                  </div>
-
-                  <div id="vinculo-container" class="hidden">
-                    <ul class="nav nav-pills nav-fill mb-3" id="vinculo-tabs" role="tablist">
-                      <li class="nav-item"><button type="button" class="nav-link active" data-vinculo-tab="eventos">Eventos</button></li>
-                      <li class="nav-item"><button type="button" class="nav-link" data-vinculo-tab="oficios">Ofícios</button></li>
-                      <li class="nav-item"><button type="button" class="nav-link" data-vinculo-tab="roteiros">Roteiros</button></li>
-                    </ul>
-
-                    <div class="row g-3">
-                      <div class="col-md-4" data-vinculo-pane="eventos">
-                        <label class="form-label" for="{{ form.evento.id_for_label }}">Evento</label>
-                        {{ form.evento }}
-                        {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
-                      </div>
-                      <div class="col-md-4" data-vinculo-pane="oficios">
-                        <label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício principal</label>
-                        {{ form.oficio }}
-                        {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
-                      </div>
-                      <div class="col-md-4" data-vinculo-pane="roteiros">
-                        <label class="form-label" for="{{ form.roteiro.id_for_label }}">Roteiro</label>
-                        {{ form.roteiro }}
-                        {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
-                      </div>
-                      <div class="col-12" data-vinculo-pane="oficios">
-                        <label class="form-label" for="{{ form.oficios_relacionados.id_for_label }}">Ofícios relacionados</label>
-                        {{ form.oficios_relacionados }}
-                        {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
 
             <section class="oficio-stage-section">
               <div class="oficio-stage-section-head">
                 <div>
-                  <h3 class="oficio-stage-section-title">Solicitante e horário</h3>
+                  <h3 class="oficio-stage-section-title">Solicitante</h3>
                 </div>
               </div>
               <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-md-12">
                   <label class="form-label" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
                   {{ form.solicitante_escolha }}
                   <div id="col-solicitante-outros" class="mt-2">{{ form.solicitante_outros }}</div>
@@ -410,47 +357,6 @@
                     <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">Salvar no gerenciador</label>
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <label class="form-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horário de atendimento</label>
-                  {{ form.horario_atendimento_padrao }}
-                  <div id="col-horario-manual" class="mt-2">{{ form.horario_atendimento_manual }}</div>
-                </div>
-              </div>
-            </section>
-
-            <section class="oficio-stage-section">
-              <div class="oficio-stage-section-head">
-                <div>
-                  <h3 class="oficio-stage-section-title">Período</h3>
-                </div>
-              </div>
-              <div class="row g-3">
-                <div class="col-md-3">
-                  <label class="form-label" for="{{ form.evento_data_inicio.id_for_label }}">Data início</label>
-                  {{ form.evento_data_inicio }}
-                  {% if form.evento_data_inicio.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_inicio.errors.0 }}</div>{% endif %}
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label" for="hora_saida_sede">Hora início</label>
-                  <input type="time" id="hora_saida_sede" name="hora_saida_sede" class="form-control form-control-sm">
-                </div>
-                <div class="col-md-3" id="col-data-fim">
-                  <label class="form-label" for="{{ form.evento_data_fim.id_for_label }}">Data fim</label>
-                  {{ form.evento_data_fim }}
-                  {% if form.evento_data_fim.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_fim.errors.0 }}</div>{% endif %}
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label" for="hora_chegada_sede">Hora fim</label>
-                  <input type="time" id="hora_chegada_sede" name="hora_chegada_sede" class="form-control form-control-sm">
-                </div>
-                <div class="col-md-12">
-                  <div class="form-check mb-0">
-                    {{ form.evento_data_unica }}
-                    <label class="form-check-label" for="{{ form.evento_data_unica.id_for_label }}">Data única</label>
-                  </div>
-                </div>
-                <input type="hidden" id="data_saida_sede" name="data_saida_sede">
-                <input type="hidden" id="data_chegada_sede" name="data_chegada_sede">
               </div>
             </section>
 
@@ -542,13 +448,93 @@
             </section>
           </div>
 
-          {# ════ PASSO 2 — ROTEIRO ════ #}
+          {# ════ PASSO 2 — PERÍODO + DESTINOS ════ #}
           <div class="pt-step" data-step-index="1">
             <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 2 de 5</span>
-              <h2 class="oficio-stage-title">Roteiro</h2>
-              <p class="oficio-stage-description">Defina os destinos e a lógica operacional do deslocamento.</p>
+              <span class="oficio-stage-kicker">Passo 2 de 4</span>
+              <h2 class="oficio-stage-title">Período + destinos</h2>
+              <p class="oficio-stage-description">Defina o contexto do evento e os destinos da atuação.</p>
             </div>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-expandable" data-open="true" id="pt-vinculo-expandable">
+                <div class="oficio-expandable-header">
+                  <span>Dados institucionais</span>
+                  <button type="button" class="toggle" aria-label="Expandir/Recolher"></button>
+                </div>
+                <div class="oficio-expandable-body p-3">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="vincular-documento">
+                    <label class="form-check-label" for="vincular-documento">Vincular a documento existente</label>
+                  </div>
+
+                  <div id="vinculo-container" class="hidden">
+                    <ul class="nav nav-pills nav-fill mb-3" id="vinculo-tabs" role="tablist">
+                      <li class="nav-item"><button type="button" class="nav-link active" data-vinculo-tab="eventos">Eventos</button></li>
+                      <li class="nav-item"><button type="button" class="nav-link" data-vinculo-tab="oficios">Ofícios</button></li>
+                      <li class="nav-item"><button type="button" class="nav-link" data-vinculo-tab="roteiros">Roteiros</button></li>
+                    </ul>
+
+                    <div class="row g-3">
+                      <div class="col-md-4" data-vinculo-pane="eventos">
+                        <label class="form-label" for="{{ form.evento.id_for_label }}">Evento</label>
+                        {{ form.evento }}
+                        {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
+                      </div>
+                      <div class="col-md-4" data-vinculo-pane="oficios">
+                        <label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício principal</label>
+                        {{ form.oficio }}
+                        {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
+                      </div>
+                      <div class="col-md-4" data-vinculo-pane="roteiros">
+                        <label class="form-label" for="{{ form.roteiro.id_for_label }}">Roteiro</label>
+                        {{ form.roteiro }}
+                        {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
+                      </div>
+                      <div class="col-12" data-vinculo-pane="oficios">
+                        <label class="form-label" for="{{ form.oficios_relacionados.id_for_label }}">Ofícios relacionados</label>
+                        {{ form.oficios_relacionados }}
+                        {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Período e horário de atendimento</h3>
+                </div>
+              </div>
+              <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                  <label class="form-label" for="{{ form.evento_data_inicio.id_for_label }}">Data do evento (início)</label>
+                  {{ form.evento_data_inicio }}
+                  {% if form.evento_data_inicio.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_inicio.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-3" id="col-data-fim">
+                  <label class="form-label" for="{{ form.evento_data_fim.id_for_label }}">Data do evento (fim)</label>
+                  {{ form.evento_data_fim }}
+                  {% if form.evento_data_fim.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_fim.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horário de atendimento</label>
+                  {{ form.horario_atendimento_padrao }}
+                </div>
+                <div class="col-md-3" id="col-horario-manual">
+                  <label class="form-label" for="{{ form.horario_atendimento_manual.id_for_label }}">Horário manual</label>
+                  {{ form.horario_atendimento_manual }}
+                </div>
+                <div class="col-md-12">
+                  <div class="form-check mb-0">
+                    {{ form.evento_data_unica }}
+                    <label class="form-check-label" for="{{ form.evento_data_unica.id_for_label }}">Data única</label>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             <section class="oficio-stage-section">
               <div class="oficio-stage-section-head">
@@ -562,10 +548,10 @@
             </section>
           </div>
 
-          {# ════ PASSO 4 — ATIVIDADES ════ #}
+          {# ════ PASSO 3 — ATIVIDADES ════ #}
           <div class="pt-step" data-step-index="2">
             <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 3 de 5</span>
+              <span class="oficio-stage-kicker">Passo 3 de 4</span>
               <h2 class="oficio-stage-title">Atividades</h2>
               <p class="oficio-stage-description">Marque as atividades previstas para este plano.</p>
             </div>
@@ -624,18 +610,44 @@
             </section>
           </div>
 
-          {# ════ PASSO 5 — DIÁRIAS ════ #}
+          {# ════ PASSO 4 — ROTEIRO + DIÁRIAS ════ #}
           <div class="pt-step" data-step-index="3">
             <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 4 de 5</span>
-              <h2 class="oficio-stage-title">Diárias</h2>
-              <p class="oficio-stage-description">Informe as quantidades e valores. Se o período estiver preenchido, uma sugestão aparecerá abaixo.</p>
+              <span class="oficio-stage-kicker">Passo 4 de 4</span>
+              <h2 class="oficio-stage-title">Roteiro + diárias</h2>
+              <p class="oficio-stage-description">Use saída/retorno da sede para cálculo real das diárias.</p>
             </div>
 
             <section class="oficio-stage-section">
               <div class="oficio-stage-section-head">
                 <div>
-                  <h3 class="oficio-stage-section-title">Calculadora financeira</h3>
+                  <h3 class="oficio-stage-section-title">Roteiro de deslocamento</h3>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label" for="data_saida_sede">Saída da sede (data)</label>
+                  <input type="date" id="data_saida_sede" name="data_saida_sede" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="hora_saida_sede">Saída da sede (hora)</label>
+                  <input type="time" id="hora_saida_sede" name="hora_saida_sede" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="data_chegada_sede">Chegada na sede (data)</label>
+                  <input type="date" id="data_chegada_sede" name="data_chegada_sede" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="hora_chegada_sede">Chegada na sede (hora)</label>
+                  <input type="time" id="hora_chegada_sede" name="hora_chegada_sede" class="form-control form-control-sm">
+                </div>
+              </div>
+            </section>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Calculadora de diárias</h3>
                 </div>
               </div>
               <div class="pt-diarias-shell">
@@ -703,41 +715,12 @@
             </section>
           </div>
 
-          {# ════ PASSO 6 — REVISÃO ════ #}
-          <div class="pt-step" data-step-index="4">
-            <div class="oficio-stage-intro">
-              <span class="oficio-stage-kicker">Passo 5 de 5</span>
-              <h2 class="oficio-stage-title">Revisão</h2>
-              <p class="oficio-stage-description">Verifique os dados antes de salvar.</p>
-            </div>
-
-            <section class="oficio-stage-section">
-              <div class="oficio-stage-section-head">
-                <div><h3 class="oficio-stage-section-title">Resumo completo</h3></div>
-              </div>
-              <div class="pt-review-grid">
-                <div class="card h-100">
-                  <div class="card-body">
-                    <p class="fw-bold text-uppercase mb-2" style="font-size:.7rem;letter-spacing:.08em;color:#6c8097;">Planejamento</p>
-                    <div class="pt-review-list" id="pt-review-main"></div>
-                  </div>
-                </div>
-                <div class="card h-100">
-                  <div class="card-body">
-                    <p class="fw-bold text-uppercase mb-2" style="font-size:.7rem;letter-spacing:.08em;color:#6c8097;">Financeiro</p>
-                    <div class="pt-review-list" id="pt-review-finance"></div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-
           {# ════ FOOTER ════ #}
           <div class="oficio-wizard-footer-actions">
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
               <button type="button" class="btn btn-outline-secondary" id="pt-prev" disabled>← Voltar</button>
               <button type="button" class="btn btn-outline-primary" id="pt-next">Avançar →</button>
-              <span class="badge text-bg-light text-muted" id="pt-progress-chip">1 / 5</span>
+              <span class="badge text-bg-light text-muted" id="pt-progress-chip">1 / 4</span>
             </div>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
               <button type="button" class="btn btn-outline-secondary" id="pt-save-draft">Salvar como rascunho</button>
@@ -775,13 +758,31 @@
   // ══════════════════════════════════════════════════════════
   const planoState = {
     id: null,
-    datas:         { inicio: '', fim: '', dias: 0 },
-    equipe:        { total: 0 },
+    solicitante: {},
+    equipe: [],
+    evento: {
+      data_inicio: null,
+      data_fim: null,
+      horario_inicio: null,
+      horario_fim: null,
+    },
+    destinos: [],
+    atividades: [],
+    metas: [],
+    recursos: [],
+    datas: { inicio: '', fim: '', dias: 0 },
     coordenador_principal: { nome: 'Juliana Villela de Barros' },
     coordenadores: [],   // [{id, nome, cargo, isPrincipal}]
-    roteiro:       [],
-    diarias:       { qtd: 0, valor_unitario: 0, unitario: 0, total: 0, valor_extenso: '' },
-    deslocamento:  { saida: null, chegada: null },  // data/hora real de saída e chegada da sede
+    roteiro: [],
+    diarias: { qtd: 0, valor_unitario: 0, unitario: 0, total: 0, valor_extenso: '' },
+    deslocamento: {
+      saida_data: null,
+      saida_hora: null,
+      chegada_data: null,
+      chegada_hora: null,
+      saida: null,
+      chegada: null,
+    },
     meta: {
       data_criacao: '',
       evento_id: null,
@@ -817,6 +818,7 @@
   const prevBtn     = document.getElementById('pt-prev');
   const nextBtn     = document.getElementById('pt-next');
   const progressEl  = document.getElementById('pt-progress-chip');
+  const TOTAL_STEPS = 4;
   let   currentStep = 0;
 
   const eventSelect         = document.getElementById('{{ form.evento.id_for_label }}');
@@ -855,8 +857,6 @@
   const livePeriodo         = document.getElementById('pt-live-periodo');
   const diariasInicioMirror = document.getElementById('pt-diarias-data-inicio');
   const diariasFimMirror    = document.getElementById('pt-diarias-data-fim');
-  const reviewMain          = document.getElementById('pt-review-main');
-  const reviewFinance       = document.getElementById('pt-review-finance');
   const metasInput          = document.getElementById('{{ form.metas_formatadas.id_for_label }}');
   const recursosInput       = document.getElementById('{{ form.recursos_texto.id_for_label }}');
   const atividadesCounterEl = document.getElementById('pt-activity-counter');
@@ -1024,6 +1024,24 @@
     planoState.meta.diarias_valor_unitario = (diariasUnit && diariasUnit.value) || '';
     planoState.meta.diarias_valor_total = (diariasTotal && diariasTotal.value) || '';
     planoState.meta.diarias_valor_extenso = (diariasExtensoInput && diariasExtensoInput.value) || planoState.diarias.valor_extenso || '';
+
+    planoState.solicitante = {
+      escolha: planoState.meta.solicitante_escolha,
+      outros: planoState.meta.solicitante_outros,
+    };
+    planoState.evento = {
+      data_inicio: (dataInicio && dataInicio.value) || null,
+      data_fim: (dataFim && dataFim.value) || null,
+      horario_inicio: planoState.meta.horario_atendimento_padrao || null,
+      horario_fim: planoState.meta.horario_atendimento_manual || null,
+    };
+  }
+
+  function getEquipeTotalValue() {
+    if (Array.isArray(planoState.equipe)) {
+      return planoState.equipe.reduce((acc, item) => acc + Number((item && item.quantidade) || 0), 0);
+    }
+    return Number((planoState.equipe && planoState.equipe.total) || 0);
   }
   function buildPayloadFromState() {
     return {
@@ -1044,7 +1062,7 @@
       destinos_payload: planoState.roteiro,
       coordenadores_ids: planoState.coordenadores.map((item) => item.id),
       coordenador_administrativo_id: planoState.meta.coordenador_administrativo_id,
-      quantidade_servidores: planoState.equipe.total || null,
+      quantidade_servidores: getEquipeTotalValue() || null,
       atividades_codigos: planoState.meta.atividades_codigos,
       diarias_quantidade: planoState.meta.diarias_quantidade,
       diarias_valor_unitario: planoState.meta.diarias_valor_unitario,
@@ -1115,26 +1133,26 @@
   // ══════════════════════════════════════════════════════════
 
   function showStep(index) {
-    const target = Math.max(0, Math.min(index, steps.length - 1));
+    const maxStep = Math.min(TOTAL_STEPS, steps.length) - 1;
+    const target = Math.max(0, Math.min(index, maxStep));
     const previousStep = currentStep;
     currentStep = target;
-    steps.forEach((s, i) => s.classList.toggle('is-active', i === currentStep));
+    steps.forEach((s, i) => s.classList.toggle('is-active', i === currentStep && i <= maxStep));
     stepLinks.forEach((link, i) => {
-      link.classList.toggle('is-active',    i === currentStep);
-      link.classList.toggle('is-completed', i < currentStep);
+      const visible = i <= maxStep;
+      link.style.display = visible ? '' : 'none';
+      link.classList.toggle('is-active', visible && i === currentStep);
+      link.classList.toggle('is-completed', visible && i < currentStep);
       link.removeAttribute('aria-current');
       if (i === currentStep) link.setAttribute('aria-current', 'step');
     });
-    if (progressEl) progressEl.textContent = (currentStep + 1) + ' / ' + steps.length;
+    if (progressEl) progressEl.textContent = (currentStep + 1) + ' / ' + TOTAL_STEPS;
     prevBtn.disabled = currentStep === 0;
-    if (currentStep === steps.length - 2) {
-      nextBtn.textContent = 'Ver revisão →';
-    } else if (currentStep === steps.length - 1) {
+    if (currentStep === maxStep) {
       nextBtn.textContent = '\u2713 Pronto';
     } else {
       nextBtn.textContent = 'Avançar →';
     }
-    if (currentStep === steps.length - 1) renderReview();
     if (currentStep === 3) { syncDiariasMirrors(); updateDiariasUI(); }
     refreshPickers(steps[currentStep]);
     if (target !== previousStep) triggerAutosave();
@@ -1151,7 +1169,7 @@
     });
   });
   prevBtn.addEventListener('click', () => goToStep(currentStep - 1));
-  nextBtn.addEventListener('click', () => goToStep(Math.min(currentStep + 1, steps.length - 1)));
+  nextBtn.addEventListener('click', () => goToStep(Math.min(currentStep + 1, TOTAL_STEPS - 1)));
 
   // ══════════════════════════════════════════════════════════
   //  SUMMARY BAR — 3 items only
@@ -1168,8 +1186,9 @@
         stsPeriodo.textContent = '—';
       }
     }
-    if (stsEquipe) stsEquipe.textContent = equipe.total > 0
-      ? equipe.total + ' servidor' + (equipe.total !== 1 ? 'es' : '')
+    const totalEquipe = getEquipeTotalValue();
+    if (stsEquipe) stsEquipe.textContent = totalEquipe > 0
+      ? totalEquipe + ' servidor' + (totalEquipe !== 1 ? 'es' : '')
       : '—';
     if (stsValor) {
       const est = diarias.total || 0;
@@ -1178,9 +1197,23 @@
   });
 
   subscribe(() => {
+    calcularDiarias({ suppressErrors: true, silentNotify: true });
     calcularValorTotalDiarias();
     updateSummary();
     updateValorExtensoUI();
+  });
+
+  function renderMetas() {
+    renderAtividadesRealtime();
+  }
+
+  function renderRecursos() {
+    // renderAtividadesRealtime já atualiza recursos e metas de forma sincronizada.
+  }
+
+  subscribe(() => {
+    renderMetas();
+    renderRecursos();
   });
 
   // ══════════════════════════════════════════════════════════
@@ -1272,6 +1305,8 @@
       if (!isNaN(s) && !isNaN(e) && e >= s) dias = Math.floor((e - s) / 86400000) + 1;
     }
     planoState.datas = { inicio, fim, dias };
+    planoState.evento.data_inicio = inicio || null;
+    planoState.evento.data_fim = fim || null;
   }
 
   function onDatasChange() {
@@ -1321,8 +1356,7 @@
   function getQuantidadePessoas() {
     const manual = parseInt((qtdServidores && qtdServidores.value) || '0', 10);
     if (Number.isFinite(manual) && manual > 0) return manual;
-    if (planoState.equipe && Array.isArray(planoState.equipe)) return planoState.equipe.length;
-    return Number((planoState.equipe && planoState.equipe.total) || 0);
+    return Number(getEquipeTotalValue() || 0);
   }
 
   function updateSummary() {
@@ -1390,8 +1424,8 @@
   }
 
   function syncDiariasMirrors() {
-    if (diariasInicioMirror) diariasInicioMirror.value = planoState.datas.inicio ? fmtDate(planoState.datas.inicio) : '—';
-    if (diariasFimMirror)    diariasFimMirror.value    = planoState.datas.fim    ? fmtDate(planoState.datas.fim)    : '—';
+    if (diariasInicioMirror) diariasInicioMirror.value = (dataSaidaSede && dataSaidaSede.value) ? fmtDate(dataSaidaSede.value) : '—';
+    if (diariasFimMirror)    diariasFimMirror.value    = (dataChegadaSede && dataChegadaSede.value) ? fmtDate(dataChegadaSede.value) : '—';
   }
 
   function updateDeslocamento() {
@@ -1401,29 +1435,32 @@
     const hc = horaChegadaSede ? horaChegadaSede.value : '';
 
     if (!planoState.deslocamento) {
-      planoState.deslocamento = { saida: null, chegada: null };
+      planoState.deslocamento = { saida_data: null, saida_hora: null, chegada_data: null, chegada_hora: null, saida: null, chegada: null };
     }
 
+    planoState.deslocamento.saida_data = ds || null;
+    planoState.deslocamento.saida_hora = hs || null;
+    planoState.deslocamento.chegada_data = dc || null;
+    planoState.deslocamento.chegada_hora = hc || null;
     planoState.deslocamento.saida = (ds && hs) ? new Date(ds + 'T' + hs) : null;
     planoState.deslocamento.chegada = (dc && hc) ? new Date(dc + 'T' + hc) : null;
 
     notify();
   }
 
-  function calcularDiarias() {
+  function calcularDiarias(options) {
+    const opts = options || {};
     const deslocamento = planoState.deslocamento || { saida: null, chegada: null };
     const saida = deslocamento.saida;
     const chegada = deslocamento.chegada;
 
-    console.log(planoState.deslocamento);
-
     if (!saida || !chegada) {
-      showDiariaErro('Preencha data e hora de saída e chegada da sede.');
+      if (!opts.suppressErrors) showDiariaErro('Preencha data e hora de saída e chegada da sede.');
       return;
     }
 
     if (chegada <= saida) {
-      showDiariaErro('Data de chegada deve ser maior que saída');
+      if (!opts.suppressErrors) showDiariaErro('Data de chegada deve ser maior que saída');
       return;
     }
 
@@ -1454,14 +1491,14 @@
     updateDiariasUI();
     computeDiarias();
     calcularValorTotalDiarias();
-    notify();
+    if (!opts.silentNotify) notify();
   }
 
   function onDeslocamentoChange() {
     updateDeslocamento();
     const desloc = planoState.deslocamento || {};
     if (desloc.saida && desloc.chegada) {
-      calcularDiarias();
+      calcularDiarias({ suppressErrors: true });
     }
   }
 
@@ -1491,6 +1528,7 @@
     if (livePeriodo && !horas) livePeriodo.textContent = '—';
     calcularValorTotalDiarias();
     notify();
+    return Number(getEquipeTotalValue() || 0);
   }
 
   // ══════════════════════════════════════════════════════════
@@ -1574,6 +1612,7 @@
       payload.push({ estado_id: parseInt(eSel.value, 10), estado_sigla: sigla ? sigla[1] : '', cidade_id: parseInt(cSel.value, 10), cidade_nome: cText });
     });
     planoState.roteiro = payload;
+    planoState.destinos = payload;
     if (destinosPayload) destinosPayload.value = JSON.stringify(payload);
     syncMetaState();
     notify();
@@ -1611,16 +1650,24 @@
   function syncEfetivoTotal() {
     if (!qtdServidores) return;
     let total = 0;
+    const equipePayload = [];
     Array.from(efetivoRows.querySelectorAll('[data-ef-row]')).forEach((row) => {
       const qty = row.querySelector('input[name$="-quantidade"]');
       const del = row.querySelector('input[name$="-DELETE"]');
       if (!qty || (del && del.checked)) return;
       const v = parseInt(qty.value || '0', 10);
-      if (!isNaN(v) && v > 0) total += v;
+      if (!isNaN(v) && v > 0) {
+        total += v;
+        const cargo = row.querySelector('select[name$="-cargo"]');
+        equipePayload.push({
+          cargo_id: cargo && cargo.value ? parseIntOrNull(cargo.value) : null,
+          quantidade: v,
+        });
+      }
     });
     qtdServidores.value     = total > 0 ? String(total) : '';
     if (totalServidoresEl) totalServidoresEl.textContent = String(total || 0);
-    planoState.equipe.total = total;
+    planoState.equipe = equipePayload;
     syncMetaState();
     computeDiarias();
     calcularValorTotalDiarias();
@@ -1824,41 +1871,6 @@
     });
   }
 
-  // ══════════════════════════════════════════════════════════
-  //  REVIEW RENDER
-  // ══════════════════════════════════════════════════════════
-  function countAtividades() {
-    return document.querySelectorAll('input[name="atividades_codigos"]:checked').length;
-  }
-  function renderReview() {
-    if (!reviewMain || !reviewFinance) return;
-    const s = planoState;
-    const principal = s.coordenadores.find((c) => c.isPrincipal);
-    function row(label, value) {
-      return '<div class="pt-review-row"><span class="pt-review-label">' + label + '</span><span class="pt-review-value">' + (value || '—') + '</span></div>';
-    }
-    reviewMain.innerHTML = [
-      row('Evento',          selectedText(eventSelect)),
-      row('Ofício',          selectedText(oficioSelect)),
-      row('Roteiro',         selectedText(roteiroSelect)),
-      row('Solicitante',     selectedText(solicitanteSelect)),
-      row('Saída',           s.datas.inicio ? fmtDate(s.datas.inicio) : '—'),
-      row('Retorno',         s.datas.fim    ? fmtDate(s.datas.fim)    : '—'),
-      row('Duração',         s.datas.dias   ? s.datas.dias + ' dia(s)' : '—'),
-      row('Destinos',        s.roteiro.length ? s.roteiro.map((d) => d.cidade_nome || '?').join(', ') : '—'),
-      row('Efetivo',         s.equipe.total > 0 ? String(s.equipe.total) : '—'),
-      row('Coord. principal',principal ? principal.nome : (s.coordenador_principal && s.coordenador_principal.nome ? s.coordenador_principal.nome : '—')),
-      row('Atividades',      String(countAtividades())),
-    ].join('');
-    const extEl = document.getElementById('{{ form.diarias_valor_extenso.id_for_label }}');
-    reviewFinance.innerHTML = [
-      row('Diárias',   (diariasQtd   && diariasQtd.value)  || '—'),
-      row('Valor/dia', (diariasUnit  && diariasUnit.value)  || '—'),
-      row('Total',     (diariasTotal && diariasTotal.value) || '—'),
-      row('Extenso',   extEl ? (extEl.value || '—') : '—'),
-    ].join('');
-  }
-
   function selectedAtividadesCatalogo() {
     const codigos = Array.from(document.querySelectorAll('input[name="atividades_codigos"]:checked')).map((el) => el.value);
     return codigos
@@ -1877,6 +1889,10 @@
       recursosSeen.add(recurso);
       recursos.push(recurso);
     });
+
+    planoState.atividades = itens.map((item) => ({ codigo: item.codigo, nome: item.nome }));
+    planoState.metas = metas;
+    planoState.recursos = recursos;
 
     if (metasInput) metasInput.value = metas.join('\n\n');
     if (recursosInput) {
@@ -1940,7 +1956,6 @@
     renderAtividadesRealtime();
     syncMetaState();
     triggerAutosave();
-    if (currentStep === 4) renderReview();
     notify();
   }
 
@@ -1952,7 +1967,6 @@
     renderAtividadesRealtime();
     syncMetaState();
     triggerAutosave();
-    if (currentStep === 4) renderReview();
     notify();
   }
 
@@ -2020,7 +2034,6 @@
       renderAtividadesRealtime();
       syncMetaState();
       triggerAutosave();
-      if (currentStep === 4) renderReview();
     });
   });
   form.addEventListener('focusout', (event) => {
