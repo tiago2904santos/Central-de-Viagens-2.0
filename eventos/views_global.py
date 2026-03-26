@@ -2132,13 +2132,16 @@ def plano_trabalho_autosave(request):
 
 @require_http_methods(['POST'])
 def plano_trabalho_calcular_diarias_api(request):
-    try:
-        payload = json.loads(request.body.decode('utf-8') or '{}')
-    except (TypeError, ValueError, UnicodeDecodeError):
-        return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
-
-    if not isinstance(payload, dict):
-        return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
+    payload = {}
+    if request.content_type and 'application/json' in request.content_type:
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except (TypeError, ValueError, UnicodeDecodeError):
+            return JsonResponse({'success': False, 'ok': False, 'error': 'Payload inválido.'}, status=400)
+        if not isinstance(payload, dict):
+            return JsonResponse({'success': False, 'ok': False, 'error': 'Payload inválido.'}, status=400)
+    else:
+        payload = {key: value for key, value in request.POST.items()}
 
     def _safe_int(value):
         try:
@@ -2151,6 +2154,15 @@ def plano_trabalho_calcular_diarias_api(request):
     valor_unitario = payload.get('valor')
     pessoas = _safe_int(payload.get('pessoas')) or 1
 
+    servidores_raw = payload.get('servidores')
+    if servidores_raw:
+        try:
+            parsed_servidores = json.loads(servidores_raw)
+            if isinstance(parsed_servidores, list) and parsed_servidores:
+                pessoas = len(parsed_servidores)
+        except (TypeError, ValueError):
+            pass
+
     saida_data = str(payload.get('saida_data') or payload.get('data_saida') or '').strip()
     saida_hora = str(payload.get('saida_hora') or payload.get('hora_saida') or '').strip()
     chegada_data = str(payload.get('chegada_data') or payload.get('data_retorno') or '').strip()
@@ -2162,7 +2174,7 @@ def plano_trabalho_calcular_diarias_api(request):
             chegada_dt = datetime.fromisoformat(f'{chegada_data}T{chegada_hora}')
             diff_horas = (chegada_dt - saida_dt).total_seconds() / 3600.0
             if diff_horas <= 0:
-                return JsonResponse({'success': False, 'error': 'Data de chegada deve ser maior que saída.'}, status=400)
+                return JsonResponse({'success': False, 'ok': False, 'error': 'Data de chegada deve ser maior que saída.'}, status=400)
             qtd_calc = 0.0
             if diff_horas >= 24:
                 qtd_calc = float(int(diff_horas // 24))
@@ -2173,17 +2185,28 @@ def plano_trabalho_calcular_diarias_api(request):
                 qtd_calc = 0.5
             qtd = qtd_calc
         except (TypeError, ValueError):
-            return JsonResponse({'success': False, 'error': 'Período de deslocamento inválido.'}, status=400)
+            return JsonResponse({'success': False, 'ok': False, 'error': 'Período de deslocamento inválido.'}, status=400)
 
     dados = calcular_diarias_com_valor(qtd, valor_unitario, pessoas)
+    qtd_str = str(dados['quantidade_diarias'])
+    total_str = str(dados['valor_total'])
+    extenso = dados['valor_extenso']
 
     return JsonResponse(
         {
+            'ok': True,
             'success': True,
-            'qtd_diarias': str(dados['quantidade_diarias']),
-            'quantidade_diarias': str(dados['quantidade_diarias']),
-            'valor_total': str(dados['valor_total']),
-            'valor_extenso': dados['valor_extenso'],
+            'tipo_destino': '-',
+            'totais': {
+                'total_diarias': qtd_str,
+                'total_valor': total_str,
+                'valor_extenso': extenso,
+            },
+            'periodos': [],
+            'qtd_diarias': qtd_str,
+            'quantidade_diarias': qtd_str,
+            'valor_total': total_str,
+            'valor_extenso': extenso,
         }
     )
 
