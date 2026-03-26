@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Testes do módulo de Plano de Trabalho: domínio (atividades/metas), contexto e termo sem assinatura."""
-from datetime import date, datetime, time
-from decimal import Decimal
-from unittest.mock import patch
+from datetime import date, time
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -17,7 +15,6 @@ from eventos.models import (
     PlanoTrabalho,
     SolicitantePlanoTrabalho,
 )
-from eventos.services.diarias import PeriodMarker, calculate_periodized_diarias
 from eventos.services.documentos.context import build_plano_trabalho_document_context
 from eventos.services.documentos.plano_trabalho import render_plano_trabalho_model_docx
 from eventos.services.plano_trabalho_domain import (
@@ -96,7 +93,7 @@ class PlanoTrabalhoContextTest(TestCase):
             'numero_plano_trabalho', 'destino', 'solicitante', 'metas_formatada',
             'atividades_formatada', 'dias_evento_extenso', 'locais_formatado',
             'horario_atendimento', 'quantidade_de_servidores', 'unidade_movel',
-            'valor_total', 'valor_total_por_extenso', 'diarias_x', 'valor_unitario',
+            'valor_total', 'valor_total_por_extenso', 'valor_unitario',
             'coordenacao_formatada', 'recursos_formatado', 'data_extenso',
         ):
             self.assertIn(key, ctx, msg=f'Falta chave {key}')
@@ -162,23 +159,13 @@ class PlanoTrabalhoContextTest(TestCase):
         # Deve ser uma string (pode ser vazia se sem config, mas nunca deve dar erro)
         self.assertIsInstance(ctx['numero_plano_trabalho'], str)
 
-    @patch('eventos.services.documentos.context._get_plano_trabalho_markers_chegada')
-    @patch('eventos.services.documentos.context.calculate_periodized_diarias')
-    def test_valores_diarias_preenchidos_do_calculo(self, mock_calc, mock_markers):
-        mock_markers.return_value = ([object()], datetime(2026, 3, 18, 11, 30))
-        mock_calc.return_value = {
-            'totais': {
-                'total_valor': '1234,56',
-                'valor_extenso': 'mil duzentos e trinta e quatro reais e cinquenta e seis centavos',
-                'total_diarias': '1 x 100% + 1 x 30%',
-                'valor_por_servidor': '617,28',
-            }
-        }
+    def test_campos_financeiros_do_plano_ficam_em_branco(self):
         PlanoTrabalho.objects.create(evento=self.evento, oficio=self.oficio, recursos_texto='Objetivo')
         ctx = build_plano_trabalho_document_context(self.oficio)
-        self.assertEqual(ctx['valor_total'], '1234,56')
-        self.assertEqual(ctx['diarias_x'], '1 x 100% + 1 x 30%')
-        self.assertEqual(ctx['valor_unitario'], '617,28')
+        self.assertEqual(ctx['valor_total'], '')
+        self.assertEqual(ctx['valor_total_por_extenso'], '')
+        self.assertEqual(ctx['valor_unitario'], '')
+        self.assertEqual(ctx['valor_unitario_por_extenso'], '')
 
 
 class PlanoTrabalhoModelDocxTest(TestCase):

@@ -35,7 +35,6 @@ from .services.plano_trabalho_domain import (
     build_recursos_necessarios_formatado,
     get_atividades_catalogo,
 )
-from .services.diarias import PeriodMarker, calculate_periodized_diarias
 from core.utils.masks import format_placa, format_protocolo, normalize_placa
 from .utils import buscar_veiculo_finalizado_por_placa, mapear_tipo_viatura_para_oficio, normalize_protocolo
 
@@ -388,10 +387,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'horario_atendimento',
             'quantidade_servidores',
             'metas_formatadas',
-            'diarias_quantidade',
-            'diarias_valor_total',
-            'diarias_valor_unitario',
-            'diarias_valor_extenso',
             'recursos_texto',
         ]
         widgets = {
@@ -409,10 +404,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'horario_atendimento': forms.TextInput(attrs={'class': 'form-control'}),
             'quantidade_servidores': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'metas_formatadas': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'diarias_quantidade': forms.TextInput(attrs={'class': 'form-control'}),
-            'diarias_valor_total': forms.TextInput(attrs={'class': 'form-control'}),
-            'diarias_valor_unitario': forms.TextInput(attrs={'class': 'form-control'}),
-            'diarias_valor_extenso': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'recursos_texto': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
@@ -439,10 +430,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         ]
         self.fields['metas_formatadas'].widget.attrs['readonly'] = True
         self.fields['recursos_texto'].widget.attrs['readonly'] = True
-        self.fields['diarias_quantidade'].widget.attrs['readonly'] = True
-        self.fields['diarias_valor_total'].widget.attrs['readonly'] = True
-        self.fields['diarias_valor_unitario'].widget.attrs['readonly'] = True
-        self.fields['diarias_valor_extenso'].widget.attrs['readonly'] = True
 
         self.initial.setdefault('data_criacao', timezone.localdate())
         config = ConfiguracaoSistema.objects.order_by('pk').first()
@@ -529,53 +516,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         with transaction.atomic():
             proximo = PlanoTrabalho.get_next_available_numero(ano_atual)
         return f'{proximo:02d}/{ano_atual}'
-
-    def _build_markers_for_diarias(self, cleaned_data):
-        roteiro = cleaned_data.get('roteiro')
-        if roteiro:
-            trechos = list(roteiro.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk'))
-            markers = []
-            chegada_final = None
-            for trecho in trechos:
-                if trecho.saida_dt and trecho.destino_cidade_id:
-                    markers.append(
-                        PeriodMarker(
-                            saida=trecho.saida_dt,
-                            destino_cidade=trecho.destino_cidade.nome,
-                            destino_uf=(trecho.destino_estado.sigla if trecho.destino_estado_id else ''),
-                        )
-                    )
-                if trecho.chegada_dt and (not chegada_final or trecho.chegada_dt > chegada_final):
-                    chegada_final = trecho.chegada_dt
-            if markers and chegada_final:
-                return markers, chegada_final
-
-        oficios = list(cleaned_data.get('oficios_relacionados') or [])
-        if not oficios and cleaned_data.get('oficio'):
-            oficios = [cleaned_data.get('oficio')]
-        for oficio in oficios:
-            trechos = list(oficio.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk'))
-            if not trechos:
-                continue
-            markers = []
-            for trecho in trechos:
-                if not trecho.saida_data or not trecho.saida_hora:
-                    markers = []
-                    break
-                if not trecho.destino_cidade_id:
-                    continue
-                markers.append(
-                    PeriodMarker(
-                        saida=datetime.combine(trecho.saida_data, trecho.saida_hora),
-                        destino_cidade=trecho.destino_cidade.nome,
-                        destino_uf=(trecho.destino_estado.sigla if trecho.destino_estado_id else ''),
-                    )
-                )
-            if not markers:
-                continue
-            if oficio.retorno_chegada_data and oficio.retorno_chegada_hora:
-                return markers, datetime.combine(oficio.retorno_chegada_data, oficio.retorno_chegada_hora)
-        return [], None
 
     def _parse_destinos_payload(self, payload_text):
         payload = []
@@ -749,27 +689,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         cleaned_data['evento_data_inicio'] = data_inicio
         cleaned_data['evento_data_fim'] = data_fim
 
-        qtd = cleaned_data.get('quantidade_servidores') or 1
-        markers, chegada_final = self._build_markers_for_diarias(cleaned_data)
-        if markers and chegada_final:
-            try:
-                result = calculate_periodized_diarias(markers, chegada_final, quantidade_servidores=int(qtd))
-                totais = (result or {}).get('totais') or {}
-                cleaned_data['diarias_quantidade'] = totais.get('total_diarias', '') or ''
-                cleaned_data['diarias_valor_total'] = totais.get('total_valor', '') or ''
-                cleaned_data['diarias_valor_unitario'] = totais.get('valor_por_servidor', '') or ''
-                cleaned_data['diarias_valor_extenso'] = totais.get('valor_extenso', '') or ''
-            except Exception:
-                cleaned_data['diarias_quantidade'] = ''
-                cleaned_data['diarias_valor_total'] = ''
-                cleaned_data['diarias_valor_unitario'] = ''
-                cleaned_data['diarias_valor_extenso'] = ''
-        else:
-            cleaned_data['diarias_quantidade'] = ''
-            cleaned_data['diarias_valor_total'] = ''
-            cleaned_data['diarias_valor_unitario'] = ''
-            cleaned_data['diarias_valor_extenso'] = ''
-
         codigos = cleaned_data.get('atividades_codigos', [])
         cleaned_data['metas_formatadas'] = build_metas_formatada(','.join(codigos) if codigos else '')
         cleaned_data['recursos_texto'] = build_recursos_necessarios_formatado(','.join(codigos) if codigos else '')
@@ -806,13 +725,6 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         instance.metas_formatadas = self.cleaned_data.get('metas_formatadas') or ''
         instance.recursos_texto = self.cleaned_data.get('recursos_texto') or ''
         instance.destinos_json = self.cleaned_data.get('destinos_json') or []
-        instance.diarias_quantidade = self.cleaned_data.get('diarias_quantidade') or ''
-        instance.diarias_valor_total = self.cleaned_data.get('diarias_valor_total') or ''
-        instance.diarias_valor_unitario = self.cleaned_data.get('diarias_valor_unitario') or ''
-        instance.diarias_valor_extenso = self.cleaned_data.get('diarias_valor_extenso') or ''
-        instance.quantidade_diarias = _to_decimal(instance.diarias_quantidade)
-        instance.valor_diarias = _to_decimal(instance.diarias_valor_total)
-        instance.valor_diarias_extenso = instance.diarias_valor_extenso or ''
         instance.coordenador_municipal = ''
         instance.observacoes = ''
         instance.status = PlanoTrabalho.STATUS_RASCUNHO

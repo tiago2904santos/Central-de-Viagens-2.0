@@ -1,5 +1,4 @@
 from django.utils import timezone
-from utils.valor_extenso import valor_por_extenso_ptbr
 
 from .context import (
     _build_coordenacao_formatada,
@@ -40,7 +39,6 @@ def _render_from_context(document, context):
         add_label_value(document, 'Unidade móvel', context['unidade_movel'])
 
     add_section_heading(document, '5. VALOR TOTAL DO PLANO')
-    add_label_value(document, 'Composição (diárias)', context.get('diarias_x', ''))
     add_label_value(document, 'Valor unitário', context.get('valor_unitario', ''))
     add_label_value(document, 'Valor unitário por extenso', context.get('valor_unitario_por_extenso', ''))
     add_label_value(document, 'Valor total', context.get('valor_total', ''))
@@ -68,9 +66,6 @@ def _render_from_context(document, context):
 
 def render_plano_trabalho_docx(oficio):
     context = build_plano_trabalho_document_context(oficio)
-    valor_total_extenso = plano_trabalho.valor_diarias_extenso or plano_trabalho.diarias_valor_extenso or ''
-    if not valor_total_extenso and plano_trabalho.valor_diarias is not None:
-        valor_total_extenso = valor_por_extenso_ptbr(plano_trabalho.valor_diarias)
 
     mapping = {
         'numero_plano_trabalho': context.get('numero_plano_trabalho', ''),
@@ -84,7 +79,6 @@ def render_plano_trabalho_docx(oficio):
         'horario_atendimento': context.get('horario_atendimento', ''),
         'quantidade_de_servidores': context.get('quantidade_de_servidores', ''),
         'unidade_movel': context.get('unidade_movel', ''),
-        'diarias_x': context.get('diarias_x', ''),
         'valor_unitario': context.get('valor_unitario', ''),
         'valor_unitario_por_extenso': context.get('valor_unitario_por_extenso', ''),
         'valor_total': context.get('valor_total', ''),
@@ -160,7 +154,6 @@ def render_plano_trabalho_model_docx(plano_trabalho):
         'unidade_movel': '',
         'valor_total': '',
         'valor_total_por_extenso': '',
-        'diarias_x': '',
         'valor_unitario': '',
         'valor_unitario_por_extenso': '',
         'recursos_formatado': plano_trabalho.recursos_texto,
@@ -179,11 +172,10 @@ def render_plano_trabalho_model_docx(plano_trabalho):
         'horario_atendimento': context.get('horario_atendimento', ''),
         'quantidade_de_servidores': context.get('quantidade_de_servidores', ''),
         'unidade_movel': context.get('unidade_movel', ''),
-        'diarias_x': plano_trabalho.diarias_quantidade or context.get('diarias_x', ''),
-        'valor_unitario': plano_trabalho.diarias_valor_unitario or context.get('valor_unitario', ''),
-        'valor_unitario_por_extenso': '',
-        'valor_total': plano_trabalho.diarias_valor_total or context.get('valor_total', ''),
-        'valor_total_por_extenso': valor_total_extenso or context.get('valor_total_por_extenso', ''),
+        'valor_unitario': context.get('valor_unitario', ''),
+        'valor_unitario_por_extenso': context.get('valor_unitario_por_extenso', ''),
+        'valor_total': context.get('valor_total', ''),
+        'valor_total_por_extenso': context.get('valor_total_por_extenso', ''),
         'recursos_formatado': context.get('recursos_formatado', ''),
         'coordenacao_formatada': context.get('coordenacao_formatada', ''),
         'coordenação formatada': context.get('coordenacao_formatada', ''),

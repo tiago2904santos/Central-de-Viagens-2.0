@@ -1,4 +1,3 @@
-from datetime import datetime
 from django.db import models
 
 from cadastros.models import AssinaturaConfiguracao, ConfiguracaoSistema
@@ -9,11 +8,6 @@ from eventos.models import (
     OficioTrecho,
     OrdemServico,
     PlanoTrabalho,
-)
-from eventos.services.diarias import (
-    PeriodMarker,
-    calculate_periodized_diarias,
-    valor_por_extenso_ptbr,
 )
 from eventos.services.justificativa import (
     get_dias_antecedencia_oficio,
@@ -463,38 +457,6 @@ def _get_ordem_servico_for_oficio(oficio):
     return None
 
 
-def _get_plano_trabalho_markers_chegada(oficio):
-    """
-    Constrói lista de PeriodMarker e datetime de chegada à sede a partir dos trechos e retorno do ofício.
-    Retorna (markers, chegada_final_sede) ou ([], None) se dados insuficientes.
-    """
-    trechos = list(
-        oficio.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk')
-    )
-    if not trechos:
-        return [], None
-    markers = []
-    for t in trechos:
-        if not t.saida_data or not t.saida_hora:
-            return [], None
-        cidade_nome = t.destino_cidade.nome if t.destino_cidade_id else ''
-        uf_sigla = t.destino_estado.sigla if t.destino_estado_id else ''
-        markers.append(
-            PeriodMarker(
-                saida=datetime.combine(t.saida_data, t.saida_hora),
-                destino_cidade=cidade_nome,
-                destino_uf=uf_sigla,
-            )
-        )
-    if not oficio.retorno_chegada_data or not oficio.retorno_chegada_hora:
-        return [], None
-    chegada_final = datetime.combine(
-        oficio.retorno_chegada_data,
-        oficio.retorno_chegada_hora,
-    )
-    return markers, chegada_final
-
-
 def _get_pt_total_servidores(plano, evento):
     """Total de servidores do plano a partir do documento; fallback para composição legada por evento."""
     if plano:
@@ -640,35 +602,6 @@ def build_plano_trabalho_document_context(oficio):
     horario_atendimento = _text_or_empty(plano.horario_atendimento if plano else '')
     recursos_formatado = _text_or_empty(plano.recursos_texto if plano else '')
 
-    total_servidores_pt = _get_pt_total_servidores(plano, evento)
-    markers, chegada_final = _get_plano_trabalho_markers_chegada(oficio)
-    diarias_pt = {}
-    if markers and chegada_final:
-        try:
-            diarias_pt = calculate_periodized_diarias(
-                markers,
-                chegada_final,
-                quantidade_servidores=total_servidores_pt,
-            )
-        except Exception:
-            pass
-
-    totais = (diarias_pt or {}).get('totais') or {}
-    total_valor_str = totais.get('total_valor', '') or context['diarias']['valor']
-    valor_extenso_pt = totais.get('valor_extenso', '') or context['diarias']['valor_extenso']
-    diarias_x = totais.get('total_diarias', '') or context['diarias']['quantidade']
-    valor_unitario_str = totais.get('valor_por_servidor', '')
-    if not valor_unitario_str and total_servidores_pt and diarias_pt:
-        from decimal import Decimal, InvalidOperation
-        try:
-            raw = (totais.get('total_valor') or '0').strip().replace('.', '').replace(',', '.')
-            total_decimal = Decimal(raw)
-            unit = (total_decimal / total_servidores_pt).quantize(Decimal('0.01'))
-            valor_unitario_str = f'{unit:.2f}'.replace('.', ',')
-        except (InvalidOperation, ZeroDivisionError):
-            valor_unitario_str = ''
-    valor_unitario_extenso = valor_por_extenso_ptbr(valor_unitario_str) if valor_unitario_str else ''
-
     quantidade_de_servidores_texto = _build_quantidade_servidores_texto(plano, evento)
 
     dias_evento_extenso = ''
@@ -702,11 +635,10 @@ def build_plano_trabalho_document_context(oficio):
             'horario_atendimento': horario_atendimento,
             'quantidade_de_servidores': quantidade_de_servidores_texto,
             'unidade_movel': get_unidade_movel_text(atividades_codigos),
-            'valor_total': total_valor_str,
-            'valor_total_por_extenso': valor_extenso_pt,
-            'diarias_x': diarias_x,
-            'valor_unitario': valor_unitario_str,
-            'valor_unitario_por_extenso': valor_unitario_extenso,
+            'valor_total': '',
+            'valor_total_por_extenso': '',
+            'valor_unitario': '',
+            'valor_unitario_por_extenso': '',
             'recursos_formatado': recursos_formatado,
             'coordenacao_formatada': _build_coordenacao_formatada(plano) if plano else '',
             'plano_trabalho': {
@@ -727,17 +659,6 @@ def build_plano_trabalho_document_context(oficio):
                 'roteiro_resumo': context['roteiro']['resumo_linhas'],
                 'transporte_resumo': ' | '.join(
                     [part for part in [context['veiculo']['descricao'], context['motorista']['descricao']] if part]
-                ),
-                'diarias_resumo': ' | '.join(
-                    [
-                        part
-                        for part in [
-                            context['diarias']['tipo_destino'],
-                            f"{context['diarias']['quantidade']} diária(s)" if context['diarias']['quantidade'] else '',
-                            context['diarias']['valor'],
-                        ]
-                        if part
-                    ]
                 ),
                 'custeio_resumo': context['custeio']['descricao'],
                 'objetivo': context['conteudo']['motivo'],
