@@ -2,6 +2,7 @@ import uuid
 import json
 import re
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
 from django import forms
 from django.db import transaction
@@ -255,6 +256,16 @@ class CoordenadorOperacionalForm(FormComErroInvalidMixin, forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
+        def _to_decimal(value):
+            raw = str(value or '').strip()
+            if not raw:
+                return None
+            normalized = raw.replace('R$', '').replace('r$', '').replace(' ', '').replace('.', '').replace(',', '.')
+            try:
+                return Decimal(normalized)
+            except (InvalidOperation, TypeError, ValueError):
+                return None
+
         instance = super().save(commit=False)
         instance.cargo = (self.cleaned_data.get('cargo') or '').strip()
         instance.unidade = (self.cleaned_data.get('unidade') or '').strip()
@@ -739,6 +750,9 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         instance.diarias_valor_total = self.cleaned_data.get('diarias_valor_total') or ''
         instance.diarias_valor_unitario = self.cleaned_data.get('diarias_valor_unitario') or ''
         instance.diarias_valor_extenso = self.cleaned_data.get('diarias_valor_extenso') or ''
+        instance.quantidade_diarias = _to_decimal(instance.diarias_quantidade)
+        instance.valor_diarias = _to_decimal(instance.diarias_valor_total)
+        instance.valor_diarias_extenso = instance.diarias_valor_extenso or ''
         instance.coordenador_municipal = ''
         instance.observacoes = ''
         instance.status = PlanoTrabalho.STATUS_RASCUNHO

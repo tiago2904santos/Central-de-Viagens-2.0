@@ -1,4 +1,5 @@
 from django.utils import timezone
+from utils.valor_extenso import valor_por_extenso_ptbr
 
 from .context import (
     _build_coordenacao_formatada,
@@ -67,6 +68,10 @@ def _render_from_context(document, context):
 
 def render_plano_trabalho_docx(oficio):
     context = build_plano_trabalho_document_context(oficio)
+    valor_total_extenso = plano_trabalho.valor_diarias_extenso or plano_trabalho.diarias_valor_extenso or ''
+    if not valor_total_extenso and plano_trabalho.valor_diarias is not None:
+        valor_total_extenso = valor_por_extenso_ptbr(plano_trabalho.valor_diarias)
+
     mapping = {
         'numero_plano_trabalho': context.get('numero_plano_trabalho', ''),
         'destino': context.get('destino', ''),
@@ -178,7 +183,7 @@ def render_plano_trabalho_model_docx(plano_trabalho):
         'valor_unitario': plano_trabalho.diarias_valor_unitario or context.get('valor_unitario', ''),
         'valor_unitario_por_extenso': '',
         'valor_total': plano_trabalho.diarias_valor_total or context.get('valor_total', ''),
-        'valor_total_por_extenso': plano_trabalho.diarias_valor_extenso or context.get('valor_total_por_extenso', ''),
+        'valor_total_por_extenso': valor_total_extenso or context.get('valor_total_por_extenso', ''),
         'recursos_formatado': context.get('recursos_formatado', ''),
         'coordenacao_formatada': context.get('coordenacao_formatada', ''),
         'coordenação formatada': context.get('coordenacao_formatada', ''),

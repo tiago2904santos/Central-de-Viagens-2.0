@@ -11,6 +11,7 @@ urlpatterns = [
     path('documentos/', login_required(views_global.documentos_hub), name='documentos-hub'),
     path('documentos/planos-trabalho/', login_required(views_global.planos_trabalho_global), name='documentos-planos-trabalho'),
     path('documentos/planos-trabalho/coordenadores/', login_required(views_global.plano_trabalho_coordenadores_api), name='documentos-planos-trabalho-coordenadores-api'),
+    path('api/calcular-diarias/', login_required(views_global.plano_trabalho_calcular_diarias_api), name='documentos-planos-trabalho-calcular-diarias-api'),
     path('documentos/planos-trabalho/autosave/', login_required(views_global.plano_trabalho_autosave), name='documentos-planos-trabalho-autosave'),
     path('documentos/planos-trabalho/novo/', login_required(views_global.plano_trabalho_novo), name='documentos-planos-trabalho-novo'),
     path('documentos/planos-trabalho/<int:pk>/', login_required(views_global.plano_trabalho_detalhe), name='documentos-planos-trabalho-detalhe'),

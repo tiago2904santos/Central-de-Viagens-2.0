@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
+from utils.valor_extenso import valor_por_extenso_ptbr
+
 
 TABELA_DIARIAS = {
     'INTERIOR': {
@@ -72,22 +74,18 @@ def formatar_valor_diarias(valor: Decimal) -> str:
     return f'{quantizado:.2f}'.replace('.', ',')
 
 
-def valor_por_extenso_ptbr(valor) -> str:
-    if valor in (None, ''):
-        return '(preencher manualmente)'
-    try:
-        if isinstance(valor, str):
-            normalizado = valor.replace('R$', '').replace('r$', '').replace(' ', '').replace('.', '').replace(',', '.')
-            valor_decimal = Decimal(normalizado)
-        else:
-            valor_decimal = Decimal(valor)
-    except (InvalidOperation, TypeError, ValueError):
-        return '(preencher manualmente)'
-    try:
-        from num2words import num2words  # type: ignore
-        return num2words(valor_decimal, lang='pt_BR', to='currency')
-    except Exception:
-        return '(preencher manualmente)'
+def calcular_diarias_com_valor(qtd, valor_unitario, pessoas):
+    qtd_decimal = Decimal(str(qtd or 0))
+    valor_unitario_decimal = Decimal(str(valor_unitario or 0))
+    pessoas_decimal = Decimal(str(pessoas or 0))
+
+    total = qtd_decimal * valor_unitario_decimal * pessoas_decimal
+
+    return {
+        'quantidade_diarias': qtd_decimal,
+        'valor_total': total,
+        'valor_extenso': valor_por_extenso_ptbr(total),
+    }
 
 
 def classify(cidade: str | None, uf: str | None) -> str:

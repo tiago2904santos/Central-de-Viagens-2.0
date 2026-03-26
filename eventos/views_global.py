@@ -38,7 +38,13 @@ from .models import (
     RoteiroEvento,
     TermoAutorizacao,
 )
-from .services.diarias import PeriodMarker, TABELA_DIARIAS, calculate_periodized_diarias, formatar_valor_diarias
+from .services.diarias import (
+    PeriodMarker,
+    TABELA_DIARIAS,
+    calculate_periodized_diarias,
+    calcular_diarias_com_valor,
+    formatar_valor_diarias,
+)
 from .services.documentos import (
     DocumentoFormato,
     DocumentoOficioTipo,
@@ -2060,10 +2066,23 @@ def plano_trabalho_autosave(request):
         destinos = []
     plano.destinos_json = destinos
 
-    plano.diarias_quantidade = _clean(payload.get('diarias_quantidade'))
-    plano.diarias_valor_unitario = _clean(payload.get('diarias_valor_unitario'))
-    plano.diarias_valor_total = _clean(payload.get('diarias_valor_total'))
-    plano.diarias_valor_extenso = _clean(payload.get('diarias_valor_extenso'))
+    diarias_payload = payload.get('diarias') if isinstance(payload.get('diarias'), dict) else {}
+    diarias_qtd_raw = _clean(diarias_payload.get('qtd')) or _clean(payload.get('diarias_quantidade'))
+    diarias_unit_raw = _clean(diarias_payload.get('valor_unitario')) or _clean(payload.get('diarias_valor_unitario'))
+    diarias_total_raw = _clean(diarias_payload.get('total')) or _clean(payload.get('diarias_valor_total'))
+    diarias_extenso_raw = _clean(diarias_payload.get('valor_extenso')) or _clean(payload.get('diarias_valor_extenso'))
+
+    pessoas = plano.quantidade_servidores or 0
+    diarias_calc = calcular_diarias_com_valor(diarias_qtd_raw, diarias_unit_raw, pessoas)
+
+    plano.quantidade_diarias = diarias_calc['quantidade_diarias']
+    plano.valor_diarias = diarias_calc['valor_total']
+    plano.valor_diarias_extenso = diarias_extenso_raw or diarias_calc['valor_extenso']
+
+    plano.diarias_quantidade = diarias_qtd_raw
+    plano.diarias_valor_unitario = diarias_unit_raw
+    plano.diarias_valor_total = diarias_total_raw or formatar_valor_diarias(diarias_calc['valor_total'])
+    plano.diarias_valor_extenso = plano.valor_diarias_extenso
 
     plano.save()
 
@@ -2099,7 +2118,35 @@ def plano_trabalho_autosave(request):
             'success': True,
             'id': plano.pk,
             'status': plano.status,
+            'valor_total': str(plano.valor_diarias or ''),
+            'valor_extenso': plano.valor_diarias_extenso or '',
             'updated_at': timezone.localtime(plano.updated_at).isoformat(),
+        }
+    )
+
+
+@require_http_methods(['POST'])
+def plano_trabalho_calcular_diarias_api(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except (TypeError, ValueError, UnicodeDecodeError):
+        return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
+
+    if not isinstance(payload, dict):
+        return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
+
+    qtd = payload.get('qtd')
+    valor_unitario = payload.get('valor')
+    pessoas = payload.get('pessoas')
+
+    dados = calcular_diarias_com_valor(qtd, valor_unitario, pessoas)
+
+    return JsonResponse(
+        {
+            'success': True,
+            'quantidade_diarias': str(dados['quantidade_diarias']),
+            'valor_total': str(dados['valor_total']),
+            'valor_extenso': dados['valor_extenso'],
         }
     )
 
