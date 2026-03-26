@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Ofício {{ oficio.identificacao }} — Roteiro e Diárias{% endblock %}
 {% block page_title %}Ofício {{ oficio.identificacao }} — Roteiro e Diárias{% endblock %}
 {% block content %}
@@ -179,5 +180,14 @@ function removeTrecho(btn) {
   btn.closest('.trecho-row').remove();
   reindexTrechos();
 }
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/oficio_wizard.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  OficioWizard.bindDiariasCalc();
+});
 </script>
 {% endblock %}
