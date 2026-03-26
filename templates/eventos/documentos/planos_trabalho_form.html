@@ -540,7 +540,7 @@
                 <aside class="pt-diarias-output" id="pt-diarias-output-panel">
                   <div>
                     <div class="pt-diarias-total-label">Total estimado</div>
-                    <div class="pt-diarias-total-value" id="pt-live-total">R$&nbsp;0,00</div>
+                    <div class="pt-diarias-total-value" id="diarias-total">R$&nbsp;0,00</div>
                   </div>
                   <div class="pt-diarias-kpis">
                     <div class="pt-diarias-kpi">
@@ -640,7 +640,7 @@
     equipe:        { total: 0 },
     coordenadores: [],   // [{id, nome, cargo, isPrincipal}]
     roteiro:       [],
-    diarias:       { qtd: 0, unitario: 0, total: 0 },
+    diarias:       { qtd: 0, valor_unitario: 0, unitario: 0, total: 0 },
     deslocamento:  { saida: null, chegada: null },  // data/hora real de saída e chegada da sede
     meta: {
       data_criacao: '',
@@ -706,7 +706,7 @@
   const diariasErroEl       = document.getElementById('diarias-erro');
   const diariasResumoEl     = document.getElementById('diarias-resumo');
   const diariasQtdEl        = document.getElementById('diarias-qtd');
-  const liveTotal           = document.getElementById('pt-live-total');
+  const liveTotal           = document.getElementById('diarias-total');
   const liveUnit            = document.getElementById('pt-live-unit');
   const liveEfetivo         = document.getElementById('pt-live-efetivo');
   const livePeriodo         = document.getElementById('pt-live-periodo');
@@ -1015,9 +1015,14 @@
       ? equipe.total + ' servidor' + (equipe.total !== 1 ? 'es' : '')
       : '—';
     if (stsValor) {
-      const est = diarias.total || (diarias.qtd && diarias.unitario ? diarias.qtd * diarias.unitario : 0);
+      const est = diarias.total || 0;
       stsValor.textContent = est ? formatCurrency(est) : '—';
     }
+  });
+
+  subscribe(() => {
+    calcularValorTotalDiarias();
+    updateSummary();
   });
 
   // ══════════════════════════════════════════════════════════
@@ -1106,6 +1111,37 @@
     hideDiariaErro();
   }
 
+  function getQuantidadePessoas() {
+    const manual = parseInt((qtdServidores && qtdServidores.value) || '0', 10);
+    if (Number.isFinite(manual) && manual > 0) return manual;
+    if (planoState.equipe && Array.isArray(planoState.equipe)) return planoState.equipe.length;
+    return Number((planoState.equipe && planoState.equipe.total) || 0);
+  }
+
+  function updateSummary() {
+    const el = document.getElementById('summary-valor') || stsValor;
+    if (!el) return;
+    const total = Number((planoState.diarias && planoState.diarias.total) || 0);
+    el.textContent = total > 0 ? formatCurrency(total) : '—';
+  }
+
+  function updateValorTotalUI() {
+    if (!liveTotal) return;
+    const total = Number((planoState.diarias && planoState.diarias.total) || 0);
+    liveTotal.textContent = formatCurrency(total);
+  }
+
+  function calcularValorTotalDiarias() {
+    const qtd = Number((planoState.diarias && planoState.diarias.qtd) || 0);
+    const valorUnitario = Number((planoState.diarias && (planoState.diarias.valor_unitario || planoState.diarias.unitario)) || 0);
+    const pessoas = getQuantidadePessoas();
+    const total = qtd * valorUnitario * pessoas;
+    planoState.diarias.total = total;
+    updateValorTotalUI();
+    if (diariasTotal) diariasTotal.value = total > 0 ? total.toFixed(2).replace('.', ',') : '';
+    updateSummary();
+  }
+
   function syncDiariasMirrors() {
     if (diariasInicioMirror) diariasInicioMirror.value = planoState.datas.inicio ? fmtDate(planoState.datas.inicio) : '—';
     if (diariasFimMirror)    diariasFimMirror.value    = planoState.datas.fim    ? fmtDate(planoState.datas.fim)    : '—';
@@ -1158,16 +1194,18 @@
       diarias = 0.5;
     }
 
-    const prev = planoState.diarias || { unitario: 0, total: 0 };
+    const prev = planoState.diarias || { valor_unitario: 0, unitario: 0, total: 0 };
     planoState.diarias = {
       qtd: diarias,
       horas: diffHoras,
-      unitario: Number(prev.unitario || 0),
+      valor_unitario: Number(prev.valor_unitario || prev.unitario || 0),
+      unitario: Number(prev.valor_unitario || prev.unitario || 0),
       total: Number(prev.total || 0),
     };
 
     updateDiariasUI();
     computeDiarias();
+    calcularValorTotalDiarias();
     notify();
   }
 
@@ -1181,7 +1219,6 @@
 
   function computeDiarias() {
     syncDiariasMirrors();
-    const totalOficial = parseCurrency(diariasTotal ? diariasTotal.value : '');
     const unitField    = parseCurrency(diariasUnit  ? diariasUnit.value  : '');
     const qtdFromState = Number((planoState.diarias && planoState.diarias.qtd) || 0);
     const qtdFromField = (() => {
@@ -1192,20 +1229,18 @@
       return Number.isFinite(n) ? n : 0;
     })();
     const qtd = qtdFromState || qtdFromField;
-    const efetivo = parseInt((qtdServidores && qtdServidores.value) || '0', 10) || 0;
-    let unit  = unitField;
-    if (!unit && totalOficial && qtd) unit = totalOficial / qtd;
-    let total = totalOficial;
-    if (!total && unit && qtd) total = unit * qtd;
+    const efetivo = getQuantidadePessoas();
+    const unit  = unitField;
 
     const horas = Number((planoState.diarias && planoState.diarias.horas) || 0);
-    planoState.diarias = { qtd, horas, unitario: unit, total };
+    const existingTotal = Number((planoState.diarias && planoState.diarias.total) || 0);
+    planoState.diarias = { qtd, horas, valor_unitario: unit, unitario: unit, total: existingTotal };
 
-    if (liveTotal)   liveTotal.textContent   = formatCurrency(total);
     if (diariasQtdEl) diariasQtdEl.textContent = formatDiariasQtdValue(qtd);
     if (liveUnit)    liveUnit.textContent    = formatCurrency(unit);
     if (liveEfetivo) liveEfetivo.textContent = efetivo + ' servidor(es)';
     if (livePeriodo && !horas) livePeriodo.textContent = '—';
+    calcularValorTotalDiarias();
     notify();
   }
 
@@ -1331,6 +1366,7 @@
     planoState.equipe.total = total;
     syncMetaState();
     computeDiarias();
+    calcularValorTotalDiarias();
     notify();
   }
   function reindexEfetivoRows() {
@@ -1650,6 +1686,19 @@
     el.addEventListener('input',  () => { computeDiarias(); });
     el.addEventListener('change', () => { computeDiarias(); syncMetaState(); triggerAutosave(); });
   });
+  if (diariasUnit) {
+    diariasUnit.addEventListener('blur', function () {
+      const unit = parseCurrency(this.value);
+      const horas = Number((planoState.diarias && planoState.diarias.horas) || 0);
+      const qtd = Number((planoState.diarias && planoState.diarias.qtd) || 0);
+      const total = Number((planoState.diarias && planoState.diarias.total) || 0);
+      planoState.diarias = { qtd, horas, valor_unitario: unit, unitario: unit, total };
+      calcularValorTotalDiarias();
+      syncMetaState();
+      triggerAutosave();
+      notify();
+    });
+  }
 
   document.querySelectorAll('input[name="atividades_codigos"]').forEach((cb) => {
     cb.addEventListener('change', () => { syncMetaState(); triggerAutosave(); if (currentStep === 5) renderReview(); });
