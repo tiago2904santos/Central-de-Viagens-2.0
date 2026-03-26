@@ -2140,15 +2140,47 @@ def plano_trabalho_calcular_diarias_api(request):
     if not isinstance(payload, dict):
         return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
 
+    def _safe_int(value):
+        try:
+            parsed = int(value)
+            return parsed if parsed > 0 else 0
+        except (TypeError, ValueError):
+            return 0
+
     qtd = payload.get('qtd')
     valor_unitario = payload.get('valor')
-    pessoas = payload.get('pessoas')
+    pessoas = _safe_int(payload.get('pessoas')) or 1
+
+    saida_data = str(payload.get('saida_data') or '').strip()
+    saida_hora = str(payload.get('saida_hora') or '').strip()
+    chegada_data = str(payload.get('chegada_data') or '').strip()
+    chegada_hora = str(payload.get('chegada_hora') or '').strip()
+
+    if saida_data and saida_hora and chegada_data and chegada_hora:
+        try:
+            saida_dt = datetime.fromisoformat(f'{saida_data}T{saida_hora}')
+            chegada_dt = datetime.fromisoformat(f'{chegada_data}T{chegada_hora}')
+            diff_horas = (chegada_dt - saida_dt).total_seconds() / 3600.0
+            if diff_horas <= 0:
+                return JsonResponse({'success': False, 'error': 'Data de chegada deve ser maior que saída.'}, status=400)
+            qtd_calc = 0.0
+            if diff_horas >= 24:
+                qtd_calc = float(int(diff_horas // 24))
+                resto = diff_horas % 24
+                if resto >= 12:
+                    qtd_calc += 0.5
+            elif diff_horas >= 12:
+                qtd_calc = 0.5
+            qtd = qtd_calc
+        except (TypeError, ValueError):
+            return JsonResponse({'success': False, 'error': 'Período de deslocamento inválido.'}, status=400)
 
     dados = calcular_diarias_com_valor(qtd, valor_unitario, pessoas)
 
     return JsonResponse(
         {
             'success': True,
+            'qtd_diarias': str(dados['quantidade_diarias']),
             'quantidade_diarias': str(dados['quantidade_diarias']),
             'valor_total': str(dados['valor_total']),
             'valor_extenso': dados['valor_extenso'],
