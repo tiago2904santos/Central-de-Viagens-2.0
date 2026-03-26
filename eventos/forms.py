@@ -455,19 +455,9 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
 
     def _get_next_pt_number_preview(self):
         ano_atual = timezone.now().year
-        config = ConfiguracaoSistema.objects.order_by('pk').first()
-        if config:
-            ultimo = getattr(config, 'pt_ultimo_numero', 0) or 0
-            ano_cfg = getattr(config, 'pt_ano', 0) or 0
-            proximo = (ultimo + 1) if ano_cfg == ano_atual else 1
-            return f'{proximo:02d}/{ano_atual}'
-        ultimo = (
-            PlanoTrabalho.objects.filter(ano=ano_atual)
-            .order_by('-numero')
-            .values_list('numero', flat=True)
-            .first()
-        ) or 0
-        return f'{int(ultimo) + 1:02d}/{ano_atual}'
+        with transaction.atomic():
+            proximo = PlanoTrabalho.get_next_available_numero(ano_atual)
+        return f'{proximo:02d}/{ano_atual}'
 
     def _build_markers_for_diarias(self, cleaned_data):
         roteiro = cleaned_data.get('roteiro')
@@ -719,25 +709,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             return
         ano_atual = timezone.now().year
         with transaction.atomic():
-            config = ConfiguracaoSistema.objects.select_for_update().order_by('pk').first()
-            if config:
-                ultimo = getattr(config, 'pt_ultimo_numero', 0) or 0
-                ano_cfg = getattr(config, 'pt_ano', 0) or 0
-                proximo = (ultimo + 1) if ano_cfg == ano_atual else 1
-                instance.numero = proximo
-                instance.ano = ano_atual
-                config.pt_ultimo_numero = proximo
-                config.pt_ano = ano_atual
-                config.save(update_fields=['pt_ultimo_numero', 'pt_ano', 'updated_at'])
-                return
-
-            ultimo_plano = (
-                PlanoTrabalho.objects.filter(ano=ano_atual)
-                .order_by('-numero')
-                .values_list('numero', flat=True)
-                .first()
-            ) or 0
-            instance.numero = int(ultimo_plano) + 1
+            instance.numero = PlanoTrabalho.get_next_available_numero(ano_atual)
             instance.ano = ano_atual
 
     def save(self, commit=True):

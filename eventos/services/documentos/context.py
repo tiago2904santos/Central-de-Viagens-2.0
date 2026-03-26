@@ -541,13 +541,8 @@ def _build_quantidade_servidores_texto(plano, evento):
 def _get_proximo_numero_plano_trabalho():
     """Retorna o próximo número do PT no formato 'N/AAAA' (ex: 1/2026), sem persistir."""
     from django.utils import timezone
-    config = _get_configuracao_sistema()
-    if not config:
-        return ''
     ano_atual = timezone.now().year
-    ultimo = getattr(config, 'pt_ultimo_numero', 0) or 0
-    ano_pt = getattr(config, 'pt_ano', 0) or 0
-    proximo = ultimo + 1 if ano_pt == ano_atual else 1
+    proximo = PlanoTrabalho.get_next_available_numero(ano_atual)
     return f'{proximo}/{ano_atual}'
 
 

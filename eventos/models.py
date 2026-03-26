@@ -337,6 +337,22 @@ class PlanoTrabalho(models.Model):
             return f'{int(self.numero):02d}/{int(self.ano)}'
         return EMPTY_MASK_DISPLAY
 
+    @classmethod
+    def get_next_available_numero(cls, ano):
+        numeros_usados = list(
+            cls.objects.select_for_update()
+            .filter(ano=int(ano))
+            .exclude(numero__isnull=True)
+            .order_by('numero')
+            .values_list('numero', flat=True)
+        )
+        proximo = 1
+        for numero in numeros_usados:
+            if numero != proximo:
+                break
+            proximo += 1
+        return proximo
+
     def get_oficios_relacionados(self):
         oficios = list(self.oficios.all())
         if not oficios and self.oficio_id:

@@ -8,7 +8,6 @@ from django import forms
 from django.contrib import messages
 from django.forms import inlineformset_factory
 from django.core.paginator import Paginator
-from django.db import transaction
 from django.db.models import Count, Prefetch, Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -17,7 +16,7 @@ from django.urls.exceptions import NoReverseMatch
 from django.utils import timezone
 from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods
-from cadastros.models import Cargo, ConfiguracaoSistema, Estado
+from cadastros.models import Cargo, Estado
 
 from .forms import (
     JustificativaForm,
@@ -1989,29 +1988,9 @@ def _assign_plano_auto_number(plano):
     if plano.numero and plano.ano:
         return
     ano_atual = timezone.now().year
-    with transaction.atomic():
-        config = ConfiguracaoSistema.objects.select_for_update().order_by('pk').first()
-        if config:
-            ultimo = getattr(config, 'pt_ultimo_numero', 0) or 0
-            ano_cfg = getattr(config, 'pt_ano', 0) or 0
-            proximo = (ultimo + 1) if ano_cfg == ano_atual else 1
-            plano.numero = proximo
-            plano.ano = ano_atual
-            config.pt_ultimo_numero = proximo
-            config.pt_ano = ano_atual
-            config.save(update_fields=['pt_ultimo_numero', 'pt_ano', 'updated_at'])
-            plano.save(update_fields=['numero', 'ano', 'updated_at'])
-            return
-
-        ultimo_plano = (
-            PlanoTrabalho.objects.filter(ano=ano_atual)
-            .order_by('-numero')
-            .values_list('numero', flat=True)
-            .first()
-        ) or 0
-        plano.numero = int(ultimo_plano) + 1
-        plano.ano = ano_atual
-        plano.save(update_fields=['numero', 'ano', 'updated_at'])
+    plano.numero = PlanoTrabalho.get_next_available_numero(ano_atual)
+    plano.ano = ano_atual
+    plano.save(update_fields=['numero', 'ano', 'updated_at'])
 
 
 @require_http_methods(['POST'])

@@ -732,7 +732,6 @@
   const dataChegadaSede     = document.getElementById('data_chegada_sede');
   const horaChegadaSede     = document.getElementById('hora_chegada_sede');
   const autosaveUrl         = '{% url "eventos:documentos-planos-trabalho-autosave" %}';
-  const resumeDraftUrl      = '{% url "eventos:documentos-planos-trabalho-ultimo-rascunho" %}';
   const buscarUrl           = coordWrapper ? coordWrapper.getAttribute('data-search-url') : '';
   let   coordDebounce       = null;
   let autosaveTimeout       = null;
@@ -920,23 +919,6 @@
       saveDraft();
     }, 1500);
   }
-  async function checkRecentDraft() {
-    if (planoState.id) return;
-    try {
-      const response = await fetch(resumeDraftUrl, {
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'Accept': 'application/json',
-        },
-      });
-      if (!response.ok) return;
-      const data = await response.json();
-      if (!data || !data.has_draft || !data.edit_url) return;
-      const proceed = window.confirm('Deseja continuar de onde parou?');
-      if (proceed) window.location.href = data.edit_url;
-    } catch (_) {}
-  }
-
   // ── Blocking step error ──────────────────────────────────
   function showStepError(message) {
     let el = document.getElementById('pt-step-error');
@@ -1709,7 +1691,6 @@
   showStep(0);
   setAutosaveStatus('idle');
   setInterval(refreshSavedElapsedStatus, 1000);
-  checkRecentDraft();
 
 })();
 </script>
