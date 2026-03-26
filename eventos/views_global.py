@@ -2151,10 +2151,10 @@ def plano_trabalho_calcular_diarias_api(request):
     valor_unitario = payload.get('valor')
     pessoas = _safe_int(payload.get('pessoas')) or 1
 
-    saida_data = str(payload.get('saida_data') or '').strip()
-    saida_hora = str(payload.get('saida_hora') or '').strip()
-    chegada_data = str(payload.get('chegada_data') or '').strip()
-    chegada_hora = str(payload.get('chegada_hora') or '').strip()
+    saida_data = str(payload.get('saida_data') or payload.get('data_saida') or '').strip()
+    saida_hora = str(payload.get('saida_hora') or payload.get('hora_saida') or '').strip()
+    chegada_data = str(payload.get('chegada_data') or payload.get('data_retorno') or '').strip()
+    chegada_hora = str(payload.get('chegada_hora') or payload.get('hora_retorno') or '').strip()
 
     if saida_data and saida_hora and chegada_data and chegada_hora:
         try:

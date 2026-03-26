@@ -109,26 +109,36 @@
     .pt-summary-item:last-child { border-bottom:0; }
   }
 
-  /* ── Diárias calculator ── */
-  .pt-diarias-shell { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:1.1rem; align-items:start; }
-  @media(max-width:860px){ .pt-diarias-shell{ grid-template-columns:1fr; } }
-  .pt-diarias-output {
-    border:1px solid #cfe0f0; border-radius:14px;
-    background:linear-gradient(150deg,#f8fbff 0%,#edf5fd 100%);
-    box-shadow:0 8px 24px rgba(37,99,154,.1);
-    padding:1.2rem; display:flex; flex-direction:column; gap:.9rem;
+  /* ── Diárias (layout isolado) ── */
+  .diarias-card { border-radius: 14px; padding: 16px; border: 1px solid #e5e7eb; background: #fff; }
+  .diarias-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
   }
-  .pt-diarias-total-label { color:#5c7491; font-size:.68rem; letter-spacing:.09em; font-weight:800; text-transform:uppercase; }
-  .pt-diarias-total-value { color:#143a63; font-size:2rem; line-height:1.04; font-weight:900; letter-spacing:-.01em; }
-  .pt-diarias-suggestion {
-    display:none; align-items:center; gap:.5rem; flex-wrap:wrap;
-    background:#eef7ff; border:1px solid #bcd4ef; border-radius:8px;
-    padding:.4rem .7rem; font-size:.82rem; color:#1a4f7a;
+  .diarias-header h4 { margin: 0; font-size: 1rem; font-weight: 800; color: #0f172a; }
+  .diarias-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
-  .pt-diarias-suggestion.is-visible { display:flex; }
-  .pt-diarias-kpis { display:grid; gap:.45rem; }
-  .pt-diarias-kpi { border:1px solid #d8e6f4; border-radius:10px; background:rgba(255,255,255,.85); padding:.55rem .65rem; }
-  .pt-diarias-kpi strong { color:#153f67; font-size:.93rem; font-weight:820; display:block; }
+  .diarias-grid label { display: block; margin-bottom: 6px; font-size: .82rem; font-weight: 700; color: #334155; }
+  .diarias-grid .duo-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi {
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #edf2f7;
+  }
+  .kpi span { display: block; color: #64748b; font-size: .76rem; font-weight: 700; margin-bottom: 4px; }
+  .kpi strong { color: #0f172a; font-size: 1rem; font-weight: 800; }
+  .kpi.full { grid-column: span 2; }
+  @media(max-width:860px){
+    .diarias-grid { grid-template-columns: 1fr; }
+    .kpi.full { grid-column: span 1; }
+  }
 
   /* ── Coordinator principal badge ── */
   .pt-coord-badge-principal {
@@ -629,88 +639,49 @@
             <section class="oficio-stage-section">
               <div class="oficio-stage-section-head">
                 <div>
-                  <h3 class="oficio-stage-section-title">Roteiro de deslocamento</h3>
-                </div>
-              </div>
-              <div class="row g-3">
-                <div class="col-md-3">
-                  <label class="form-label" for="data_saida_sede">Saída da sede (data)</label>
-                  <input type="date" id="data_saida_sede" name="data_saida_sede" class="form-control form-control-sm">
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label" for="hora_saida_sede">Saída da sede (hora)</label>
-                  <input type="time" id="hora_saida_sede" name="hora_saida_sede" class="form-control form-control-sm">
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label" for="data_chegada_sede">Chegada na sede (data)</label>
-                  <input type="date" id="data_chegada_sede" name="data_chegada_sede" class="form-control form-control-sm">
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label" for="hora_chegada_sede">Chegada na sede (hora)</label>
-                  <input type="time" id="hora_chegada_sede" name="hora_chegada_sede" class="form-control form-control-sm">
-                </div>
-              </div>
-            </section>
-
-            <section class="oficio-stage-section">
-              <div class="oficio-stage-section-head">
-                <div>
                   <h3 class="oficio-stage-section-title">Calculadora de diárias</h3>
                 </div>
               </div>
-              <div class="pt-diarias-shell">
-                <div class="row g-3">
-                  <div class="col-12">
-                    <label class="form-label" for="{{ form.diarias_quantidade.id_for_label }}">Qtd. de diárias</label>
-                    {{ form.diarias_quantidade }}
-                    <div class="mt-2 d-flex gap-2 flex-wrap">
-                      <button type="button" id="btn-calcular-diarias" class="btn btn-outline-primary btn-sm">Calcular diárias</button>
+              <div class="oficio-card diarias-card">
+                <div class="diarias-header">
+                  <h4>Diárias</h4>
+                  <button type="button" id="btn-calcular" class="btn btn-primary btn-sm">Calcular</button>
+                </div>
+                <div class="diarias-grid">
+                  <div>
+                    <label>Saída da sede</label>
+                    <div class="duo-inputs">
+                      <input type="date" id="saida_data" class="form-control form-control-sm">
+                      <input type="time" id="saida_hora" class="form-control form-control-sm">
                     </div>
-                    <div id="diarias-erro" class="alert alert-danger py-2 px-3 mt-2 mb-0" role="alert" style="display:none;"></div>
-                    <div id="pt-diarias-suggestion" class="pt-diarias-suggestion mt-2" role="status" aria-live="polite" style="display:none;"></div>
-                    <div class="form-text mt-1" id="diarias-resumo">—</div>
                   </div>
-                  <div class="col-6">
-                    <label class="form-label" for="{{ form.diarias_valor_unitario.id_for_label }}">Valor / diária</label>
-                    {{ form.diarias_valor_unitario }}
+                  <div>
+                    <label>Retorno à sede</label>
+                    <div class="duo-inputs">
+                      <input type="date" id="chegada_data" class="form-control form-control-sm">
+                      <input type="time" id="chegada_hora" class="form-control form-control-sm">
+                    </div>
                   </div>
-                  <div class="col-6">
-                    <label class="form-label" for="{{ form.diarias_valor_total.id_for_label }}">Valor total oficial</label>
-                    {{ form.diarias_valor_total }}
+                  <div class="kpi">
+                    <span>Qtd. diárias</span>
+                    <strong id="qtd-diarias">0</strong>
                   </div>
-                  <div class="col-12">
-                    <label class="form-label" for="{{ form.diarias_valor_extenso.id_for_label }}">Valor por extenso</label>
-                    {{ form.diarias_valor_extenso }}
+                  <div class="kpi">
+                    <span>Valor total</span>
+                    <strong id="valor-total">R$ 0,00</strong>
+                  </div>
+                  <div class="kpi full">
+                    <span>Valor por extenso</span>
+                    <strong id="valor-extenso">—</strong>
                   </div>
                 </div>
-                <aside class="pt-diarias-output" id="pt-diarias-output-panel">
-                  <div>
-                    <div class="pt-diarias-total-label">Total estimado</div>
-                    <div class="pt-diarias-total-value" id="diarias-total">R$&nbsp;0,00</div>
-                  </div>
-                  <div class="pt-diarias-kpis">
-                    <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Diárias</div>
-                      <strong id="diarias-qtd">0</strong>
-                    </div>
-                    <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Valor / dia</div>
-                      <strong id="pt-live-unit">R$&nbsp;0,00</strong>
-                    </div>
-                    <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Efetivo</div>
-                      <strong id="pt-live-efetivo">0</strong>
-                    </div>
-                    <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Duração real</div>
-                      <strong id="pt-live-periodo">—</strong>
-                    </div>
-                    <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Valor por extenso</div>
-                      <strong id="diarias-extenso">—</strong>
-                    </div>
-                  </div>
-                </aside>
+                <div id="diarias-erro" class="alert alert-danger py-2 px-3 mt-2 mb-0" role="alert" style="display:none;"></div>
+                <div class="d-none">
+                  {{ form.diarias_quantidade }}
+                  {{ form.diarias_valor_unitario }}
+                  {{ form.diarias_valor_total }}
+                  {{ form.diarias_valor_extenso }}
+                </div>
               </div>
             </section>
           </div>
@@ -746,6 +717,8 @@
 
 {% block extra_js %}
 <script src="{% static 'js/oficio_wizard.js' %}"></script>
+<script src="{% static 'js/diarias-engine.js' %}"></script>
+<script src="{% static 'js/plano-diarias-adapter.js' %}"></script>
 <script>
 (function () {
   'use strict';
@@ -845,13 +818,13 @@
   const diariasQtd          = document.getElementById('{{ form.diarias_quantidade.id_for_label }}');
   const diariasUnit         = document.getElementById('{{ form.diarias_valor_unitario.id_for_label }}');
   const diariasTotal        = document.getElementById('{{ form.diarias_valor_total.id_for_label }}');
-  const btnCalcularDiarias  = document.getElementById('btn-calcular-diarias');
+  const btnCalcularDiarias  = document.getElementById('btn-calcular');
   const diariasErroEl       = document.getElementById('diarias-erro');
   const diariasResumoEl     = document.getElementById('diarias-resumo');
-  const diariasQtdEl        = document.getElementById('diarias-qtd');
-  const diariasExtensoEl    = document.getElementById('diarias-extenso');
+  const diariasQtdEl        = document.getElementById('qtd-diarias');
+  const diariasExtensoEl    = document.getElementById('valor-extenso');
   const diariasExtensoInput = document.getElementById('{{ form.diarias_valor_extenso.id_for_label }}');
-  const liveTotal           = document.getElementById('diarias-total');
+  const liveTotal           = document.getElementById('valor-total');
   const liveUnit            = document.getElementById('pt-live-unit');
   const liveEfetivo         = document.getElementById('pt-live-efetivo');
   const livePeriodo         = document.getElementById('pt-live-periodo');
@@ -875,10 +848,10 @@
   const coordSearchState    = document.getElementById('coord-searching-state');
   const autosaveStatusEl    = document.getElementById('autosave-status');
   const saveDraftBtn        = document.getElementById('pt-save-draft');
-  const dataSaidaSede       = document.getElementById('data_saida_sede');
-  const horaSaidaSede       = document.getElementById('hora_saida_sede');
-  const dataChegadaSede     = document.getElementById('data_chegada_sede');
-  const horaChegadaSede     = document.getElementById('hora_chegada_sede');
+  const dataSaidaSede       = document.getElementById('saida_data');
+  const horaSaidaSede       = document.getElementById('saida_hora');
+  const dataChegadaSede     = document.getElementById('chegada_data');
+  const horaChegadaSede     = document.getElementById('chegada_hora');
   const vincularDocumentoInput = document.getElementById('vincular-documento');
   const vinculoContainer    = document.getElementById('vinculo-container');
   const autosaveUrl         = '{% url "eventos:documentos-planos-trabalho-autosave" %}';
@@ -890,6 +863,7 @@
   let autosaveInFlight      = false;
   let autosavePending       = false;
   let autosaveLastSavedAt   = null;
+  let diariasAdapter        = null;
 
   let atividadesCatalogo = [];
   let atividadesByCodigo = {};
@@ -1699,8 +1673,12 @@
     if (totalServidoresEl) totalServidoresEl.textContent = String(total || 0);
     planoState.equipe = equipePayload;
     syncMetaState();
-    computeDiarias();
-    calcularDiarias({ suppressErrors: true, silentNotify: true });
+    if (diariasAdapter && typeof diariasAdapter.recalculate === 'function') {
+      diariasAdapter.recalculate();
+    } else {
+      computeDiarias();
+      calcularDiarias({ suppressErrors: true, silentNotify: true });
+    }
     notify();
   }
   function reindexEfetivoRows() {
@@ -2023,19 +2001,7 @@
   if (eventoHoraInicio)  eventoHoraInicio.addEventListener('change', () => { syncMetaState(); triggerAutosave(); });
   if (eventoHoraFim)     eventoHoraFim.addEventListener('change', () => { syncMetaState(); triggerAutosave(); });
 
-  // ── Deslocamento (saída e chegada da sede) ──
-  if (dataSaidaSede)   dataSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (dataChegadaSede) dataChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (horaSaidaSede)   horaSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (horaChegadaSede) horaChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (horaSaidaSede)   horaSaidaSede.addEventListener('blur',   () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (horaChegadaSede) horaChegadaSede.addEventListener('blur', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (btnCalcularDiarias) btnCalcularDiarias.addEventListener('click', async () => {
-    onDeslocamentoChange();
-    await calcularDiarias();
-    syncMetaState();
-    triggerAutosave();
-  });
+  // ── Deslocamento (saída e chegada da sede) agora é gerido pelo adapter isolado ──
 
   // ── Remover linha equipe ──
   document.addEventListener('click', (e) => {
@@ -2108,9 +2074,35 @@
   onDeslocamentoChange();
   renderAtividadesRealtime();
   syncMetaState();
+  if (window.PlanoDiariasAdapter && typeof window.PlanoDiariasAdapter.init === 'function') {
+    window.__planoDiariasAdapterInstance = window.PlanoDiariasAdapter.init({
+      planoState,
+      getQuantidadePessoas,
+      formatCurrency,
+      apiUrl: calcularDiariasApiUrl,
+      csrfToken: getCSRFToken(),
+      notify,
+      onError: showDiariaErro,
+      afterUpdate: function () {
+        if (diariasQtd) diariasQtd.value = String((planoState.diarias && planoState.diarias.qtd) || 0);
+        if (diariasTotal) diariasTotal.value = ((planoState.diarias && planoState.diarias.total) || 0) > 0
+          ? Number(planoState.diarias.total).toFixed(2).replace('.', ',')
+          : '';
+        if (diariasExtensoInput) diariasExtensoInput.value = (planoState.diarias && planoState.diarias.valor_extenso) || '';
+        syncMetaState();
+        triggerAutosave();
+      },
+      realtime: true,
+    });
+    diariasAdapter = window.__planoDiariasAdapterInstance;
+  }
   bootstrapDestinos().then(() => {
     syncEfetivoTotal();
-    computeDiarias();
+    if (diariasAdapter && typeof diariasAdapter.updateUi === 'function') {
+      diariasAdapter.updateUi();
+    } else {
+      computeDiarias();
+    }
     updateValorExtensoUI();
     syncMetaState();
     notify();
