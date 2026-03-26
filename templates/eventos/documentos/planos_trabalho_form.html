@@ -116,7 +116,7 @@
             <span class="oficio-wizard-eyebrow">Documento operacional</span>
             <h1>{% if object %}Editar{% else %}Novo{% endif %} Plano de Trabalho</h1>
             <p class="oficio-wizard-header-support">Preencha cada etapa em ordem. Use Voltar e Avançar para navegar.</p>
-            <p class="mb-0 mt-1 small text-muted" id="autosave-status" aria-live="polite">Rascunho em edição.</p>
+            <p class="mb-0 mt-1 small text-muted" id="autosave-status" aria-live="polite">Rascunho ainda não salvo.</p>
           </div>
           <div class="oficio-wizard-header-badges">
             <div class="oficio-wizard-header-badge">
@@ -602,7 +602,6 @@
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
               <button type="button" class="btn btn-outline-secondary" id="pt-save-draft">Salvar como rascunho</button>
               <button class="btn btn-primary" type="submit">Salvar plano</button>
-              <button class="btn btn-success" type="submit" name="finalizar" value="1">Finalizar</button>
               {% if object %}
               <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">DOCX</a>
               <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">PDF</a>
@@ -728,6 +727,7 @@
   const dataChegadaSede     = document.getElementById('data_chegada_sede');
   const horaChegadaSede     = document.getElementById('hora_chegada_sede');
   const autosaveUrl         = '{% url "eventos:documentos-planos-trabalho-autosave" %}';
+  const resumeDraftUrl      = '{% url "eventos:documentos-planos-trabalho-ultimo-rascunho" %}';
   const buscarUrl           = coordWrapper ? coordWrapper.getAttribute('data-search-url') : '';
   let   coordDebounce       = null;
   let autosaveTimeout       = null;
@@ -814,12 +814,11 @@
     if (state === 'saved') {
       autosaveStatusEl.classList.remove('text-danger');
       autosaveStatusEl.classList.add('text-success');
-      const base = message || 'Rascunho salvo automaticamente';
-      autosaveStatusEl.textContent = base + ' • ' + formatElapsedLabel(autosaveLastSavedAt);
+      autosaveStatusEl.textContent = 'Salvo automaticamente • ' + formatElapsedLabel(autosaveLastSavedAt);
       return;
     }
     autosaveStatusEl.classList.remove('text-danger', 'text-success');
-    autosaveStatusEl.textContent = message || 'Rascunho em edição.';
+    autosaveStatusEl.textContent = message || 'Rascunho ainda não salvo.';
   }
   function refreshSavedElapsedStatus() {
     if (!autosaveLastSavedAt) return;
@@ -884,12 +883,6 @@
     reindexEfetivoRows();
     syncEfetivoTotal();
     const payload = buildPayloadFromState();
-    if (!payload.id) {
-      setAutosaveStatus('error', 'Rascunho sem ID de persistência. Recarregue a página.');
-      autosaveInFlight = false;
-      return;
-    }
-    payload.force_rascunho = true;
     setAutosaveStatus('saving');
     try {
       const response = await fetch(autosaveUrl, {
@@ -905,7 +898,7 @@
       const data = await response.json();
       if (data && data.id) planoState.id = data.id;
       autosaveLastSavedAt = data && data.updated_at ? new Date(data.updated_at) : new Date();
-      setAutosaveStatus('saved', 'Rascunho salvo automaticamente');
+      setAutosaveStatus('saved');
     } catch (_) {
       setAutosaveStatus('error');
     } finally {
@@ -922,6 +915,23 @@
       saveDraft();
     }, 1500);
   }
+  async function checkRecentDraft() {
+    if (planoState.id) return;
+    try {
+      const response = await fetch(resumeDraftUrl, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+        },
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!data || !data.has_draft || !data.edit_url) return;
+      const proceed = window.confirm('Deseja continuar de onde parou?');
+      if (proceed) window.location.href = data.edit_url;
+    } catch (_) {}
+  }
+
   // ── Blocking step error ──────────────────────────────────
   function showStepError(message) {
     let el = document.getElementById('pt-step-error');
@@ -1669,6 +1679,7 @@
   showStep(0);
   setAutosaveStatus('idle');
   setInterval(refreshSavedElapsedStatus, 1000);
+  checkRecentDraft();
 
 })();
 </script>
