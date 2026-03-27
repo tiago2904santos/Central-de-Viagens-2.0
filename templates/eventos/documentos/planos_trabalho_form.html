@@ -116,6 +116,7 @@
     gap: 1rem;
     align-items: start;
   }
+  .pt-diarias-shell.pt-diarias-shell--single { grid-template-columns: 1fr; }
   @media(max-width:860px){ .pt-diarias-shell{ grid-template-columns:1fr; } }
   .pt-diarias-main {
     border: 1px solid #bed4ea;
@@ -357,6 +358,195 @@
   .oficio-stage-section { margin-bottom: 24px; }
   .oficio-stage-section-head { margin-bottom: 8px; }
 
+  /* ── Step 1 visual redesign ── */
+  .pt-step[data-step-index='0'] .oficio-stage-intro {
+    margin-bottom: 1rem;
+    padding: .9rem 1rem;
+    border: 1px solid #dfe8f1;
+    border-radius: 12px;
+    background: #f7fafd;
+  }
+  .pt-step1-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .pt-step1-grid-top {
+    display: contents;
+  }
+  .pt-step1-card {
+    margin-bottom: 0;
+    padding: .95rem;
+    border: 1px solid #dde7f0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(18, 63, 101, .05);
+  }
+  .pt-step1-card .oficio-stage-section-head {
+    margin-bottom: .65rem;
+    padding-bottom: .55rem;
+    border-bottom: 1px solid #e9f0f6;
+  }
+  .pt-step1-card .oficio-stage-section-title {
+    color: #1f3f62;
+    font-size: .84rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+  .pt-step1-card .oficio-stage-section-text {
+    margin-bottom: 0;
+    font-size: .78rem;
+    color: #5a7895;
+  }
+  .pt-step1-card .form-label {
+    font-size: .77rem;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #4a647e;
+    font-weight: 700;
+    margin-bottom: .35rem;
+  }
+  .pt-step1-card .form-control,
+  .pt-step1-card .form-select {
+    border-radius: 8px;
+    border-color: #d3dee9;
+    background: #fff;
+    min-height: 37px;
+  }
+  .pt-step1-card .form-control:focus,
+  .pt-step1-card .form-select:focus {
+    border-color: #7d9fbe;
+    box-shadow: 0 0 0 .14rem rgba(58, 109, 155, .12);
+  }
+
+  /* Institucional alinhado ao padrão do sistema */
+  .pt-step1-card--institucional .oficio-expandable {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .pt-step1-card--institucional.oficio-stage-section {
+    border-color: #d7e3ef;
+    background: #fbfdff;
+  }
+  .pt-step1-card--institucional .oficio-expandable-header {
+    padding: .2rem 0 .5rem;
+    border-bottom: 1px solid #e9f0f6;
+    color: #1f3f62;
+    font-size: .82rem;
+    font-weight: 800;
+    cursor: default;
+  }
+  .pt-step1-card--institucional .oficio-expandable .toggle {
+    display: none;
+  }
+  .pt-step1-card--institucional.oficio-stage-section .oficio-expandable.closed .oficio-expandable-body { display: block; }
+  .pt-step1-card--institucional .oficio-expandable-body {
+    padding: .65rem 0 0 !important;
+  }
+  .pt-step1-card--institucional .nav-pills {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .4rem;
+    margin-bottom: .65rem !important;
+  }
+  .pt-step1-card--institucional .nav-pills .nav-link {
+    border: 1px solid #d5e1ec;
+    border-radius: 8px;
+    background: #f8fafd;
+    color: #33536f;
+    font-size: .77rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    padding: .42rem .4rem;
+  }
+  .pt-step1-card--institucional .nav-pills .nav-link.active {
+    color: #1f3f62;
+    border-color: #86a7c6;
+    background: #edf4fb;
+    box-shadow: none;
+  }
+  .pt-step1-card--institucional [data-vinculo-pane] {
+    padding-top: .1rem;
+  }
+  .pt-step1-card--institucional .form-check {
+    padding: .55rem .65rem;
+    border: 1px solid #dfe8f1;
+    border-radius: 8px;
+    background: #f7fafc;
+  }
+  .pt-step1-card--solicitante .btn.btn-outline-secondary,
+  .pt-step1-card--coordenadores .btn.btn-outline-secondary {
+    border-color: #c6d6e5;
+    color: #365976;
+    background: #f9fbfd;
+    font-weight: 700;
+  }
+  .pt-step1-card--solicitante .btn.btn-outline-secondary:hover,
+  .pt-step1-card--coordenadores .btn.btn-outline-secondary:hover {
+    border-color: #95b5ce;
+    color: #2b4f6d;
+    background: #f2f7fb;
+  }
+  .pt-solicitante-inline .form-check {
+    margin-bottom: .45rem;
+    padding: .45rem .62rem;
+    border: 1px solid #dee8f1;
+    border-radius: 8px;
+    background: #f8fbfd;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+  }
+  .pt-step1-card--coordenadores .oficio-selection-panel {
+    border-radius: 12px;
+    border-color: #d6e2ee;
+    background: #fff;
+  }
+  .pt-step1-card--coordenadores.oficio-stage-section {
+    border-color: #d7e3ef;
+    background: #fbfdff;
+  }
+  .pt-step1-card--coordenadores .pt-coord-search-state {
+    margin-top: .35rem;
+    padding: .3rem .45rem;
+    border-radius: 8px;
+    background: #f7fafd;
+    border: 1px dashed #d5e2ef;
+  }
+  .pt-step1-card--efetivo .equipe-row {
+    border-color: #dfe9f2 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    margin-bottom: .5rem !important;
+  }
+  .pt-step1-card--efetivo.oficio-stage-section {
+    border-color: #d7e3ef;
+    background: #fbfdff;
+  }
+  .pt-step1-card--efetivo .total-servidores-box {
+    margin-top: .25rem;
+    background: #f6f9fc;
+    border-color: #d7e3ef;
+  }
+  .pt-coord-duo-card {
+    border: 1px solid #e1e9f2;
+    border-radius: 10px;
+    background: #fff;
+    padding: .7rem;
+    height: 100%;
+  }
+  .pt-coord-duo-title {
+    color: #1f3f62;
+    font-size: .82rem;
+    font-weight: 800;
+    margin-bottom: .45rem;
+    letter-spacing: .01em;
+  }
+
   /* ── Step error alert ── */
   #pt-step-error{ transition:opacity .25s ease; }
 
@@ -396,7 +586,7 @@
               <span class="oficio-stepper-badge">2</span>
               <span class="oficio-stepper-copy">
                 <span class="oficio-stepper-state">Passo 2 de 4</span>
-                <span class="oficio-stepper-label">Período + destinos</span>
+                <span class="oficio-stepper-label">Período + destinos + diárias</span>
               </span>
             </button>
             <button type="button" class="oficio-stepper-link" data-step-target="2">
@@ -410,7 +600,7 @@
               <span class="oficio-stepper-badge">4</span>
               <span class="oficio-stepper-copy">
                 <span class="oficio-stepper-state">Passo 4 de 4</span>
-                <span class="oficio-stepper-label">Roteiro + diárias</span>
+                <span class="oficio-stepper-label">Resumo</span>
               </span>
             </button>
           </nav>
@@ -448,29 +638,88 @@
             <div class="oficio-stage-intro">
               <span class="oficio-stage-kicker">Passo 1 de 4</span>
               <h2 class="oficio-stage-title">Pessoas</h2>
-              <p class="oficio-stage-description">Preencha solicitante e equipe (efetivo, cargos e coordenação).</p>
+              <p class="oficio-stage-description">Preencha dados institucionais, solicitante e equipe (efetivo, cargos e coordenadores).</p>
             </div>
 
-            <section class="oficio-stage-section">
-              <div class="oficio-stage-section-head">
-                <div>
-                  <h3 class="oficio-stage-section-title">Solicitante</h3>
-                </div>
-              </div>
-              <div class="row g-3">
-                <div class="col-md-12">
-                  <label class="form-label" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
-                  {{ form.solicitante_escolha }}
-                  <div id="col-solicitante-outros" class="mt-2">{{ form.solicitante_outros }}</div>
-                  <div id="col-salvar-solicitante" class="form-check mt-2">
-                    {{ form.salvar_solicitante_outros }}
-                    <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">Salvar no gerenciador</label>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <div class="pt-step1-layout">
+              <div class="pt-step1-grid-top">
+                <section class="oficio-stage-section pt-step1-card pt-step1-card--institucional">
+                  <div class="oficio-expandable" data-open="true" id="pt-vinculo-expandable">
+                    <div class="oficio-expandable-header">
+                      <span>Dados institucionais</span>
+                      <button type="button" class="toggle" aria-label="Expandir/Recolher"></button>
+                    </div>
+                    <div class="oficio-expandable-body p-3">
+                      <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="vincular-documento">
+                        <label class="form-check-label" for="vincular-documento">Vincular a documento existente</label>
+                      </div>
 
-            <section class="oficio-stage-section">
+                      <div id="vinculo-container" class="hidden">
+                        <ul class="nav nav-pills nav-fill mb-3" id="vinculo-tabs" role="tablist">
+                          <li class="nav-item"><button type="button" class="nav-link active" data-vinculo-tab="eventos">Eventos</button></li>
+                          <li class="nav-item"><button type="button" class="nav-link" data-vinculo-tab="oficios">Ofícios</button></li>
+                          <li class="nav-item"><button type="button" class="nav-link" data-vinculo-tab="roteiros">Roteiros</button></li>
+                        </ul>
+
+                        <div class="row g-3">
+                          <div class="col-12" data-vinculo-pane="eventos">
+                            <label class="form-label" for="{{ form.evento.id_for_label }}">Evento</label>
+                            {{ form.evento }}
+                            {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
+                          </div>
+                          <div class="col-12" data-vinculo-pane="oficios">
+                            <label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício principal</label>
+                            {{ form.oficio }}
+                            {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
+                          </div>
+                          <div class="col-12" data-vinculo-pane="roteiros">
+                            <label class="form-label" for="{{ form.roteiro.id_for_label }}">Roteiro</label>
+                            {{ form.roteiro }}
+                            {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
+                          </div>
+                          <div class="col-12" data-vinculo-pane="oficios">
+                            <label class="form-label" for="{{ form.oficios_relacionados.id_for_label }}">Ofícios relacionados</label>
+                            {{ form.oficios_relacionados }}
+                            {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="oficio-stage-section pt-step1-card pt-step1-card--solicitante">
+                  <div class="oficio-stage-section-head">
+                    <div>
+                      <h3 class="oficio-stage-section-title">Solicitante</h3>
+                    </div>
+                    {% if pt_solicitantes_manager_url %}
+                    <a href="{{ pt_solicitantes_manager_url }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">Gerenciar solicitantes</a>
+                    {% endif %}
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-12">
+                      <label class="form-label" for="{{ form.solicitante_escolha.id_for_label }}">Solicitante</label>
+                      {{ form.solicitante_escolha }}
+                      <div class="row g-2 mt-1 align-items-end pt-solicitante-inline">
+                        <div class="col-lg-8" id="col-solicitante-outros">
+                          <label class="form-label mb-1" for="{{ form.solicitante_outros.id_for_label }}">Solicitante manual</label>
+                          {{ form.solicitante_outros }}
+                        </div>
+                        <div class="col-lg-4" id="col-salvar-solicitante">
+                          <div class="form-check mb-2">
+                            {{ form.salvar_solicitante_outros }}
+                            <label class="form-check-label" for="{{ form.salvar_solicitante_outros.id_for_label }}">Salvar no gerenciador</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <section class="oficio-stage-section pt-step1-card pt-step1-card--efetivo">
               <div class="oficio-stage-section-head">
                 <div>
                   <h3 class="oficio-stage-section-title">Efetivo por cargo</h3>
@@ -507,103 +756,47 @@
                 </div>
                 <div class="d-none">{{ form.quantidade_servidores }}</div>
               </div>
+              </section>
 
-              <div class="oficio-stage-section-head mt-3">
+              <section class="oficio-stage-section pt-step1-card pt-step1-card--coordenadores">
+              <div class="oficio-stage-section-head">
                 <div>
-                  <h3 class="oficio-stage-section-title">Coordenadores operacionais</h3>
-                  <p class="oficio-stage-section-text">O primeiro selecionado é o coordenador principal. Para alterar, use o botão em cada chip.</p>
+                  <h3 class="oficio-stage-section-title">Coordenadores</h3>
+                  <p class="oficio-stage-section-text">Defina a coordenação administrativa e operacional em campos equivalentes.</p>
                 </div>
                 <a href="{{ pt_coordenador_operacional_create_url }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">Cadastrar novo</a>
               </div>
-
-              <label class="form-label mb-1" for="coord-autocomplete-input">Buscar coordenador</label>
-              <div class="position-relative" id="coord-autocomplete-wrapper" data-search-url="{{ buscar_coordenadores_url }}">
-                <input type="text" id="coord-autocomplete-input" class="form-control" placeholder="Digite nome ou cargo..." autocomplete="off">
-                <div id="coord-autocomplete-results" class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none" style="z-index:20;"></div>
-              </div>
-              <div class="pt-coord-search-state" id="coord-searching-state">
-                <span class="pt-coord-spinner"></span>&nbsp;Buscando...
-              </div>
-
-              <div class="oficio-selection-panel mt-2">
-                <div class="oficio-selection-panel-head">
-                  <span class="oficio-selection-panel-title">Coordenadores selecionados</span>
-                  <span class="badge text-bg-secondary" id="coord-chip-count">0</span>
-                </div>
-                <div id="coord-chip-list" class="oficio-selection-chip-list">
-                  <span class="oficio-glance-empty" id="coord-chip-empty">Nenhum coordenador selecionado.</span>
-                </div>
-              </div>
-
-              <div class="oficio-stage-section-head mt-3">
-                <div>
-                  <h3 class="oficio-stage-section-title">Coordenação administrativa</h3>
-                </div>
-              </div>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenador administrativo <span class="badge bg-success">Principal</span></label>
-                  {{ form.coordenador_administrativo }}
-                  <div class="form-text">Origem: viajantes finalizados.</div>
-                  {% if form.coordenador_administrativo.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_administrativo.errors.0 }}</div>{% endif %}
+                  <div class="pt-coord-duo-card">
+                    <div class="pt-coord-duo-title">Coordenação administrativa</div>
+                    <label class="form-label" for="{{ form.coordenador_administrativo.id_for_label }}">Coordenador administrativo <span class="badge bg-success">Principal</span></label>
+                    {{ form.coordenador_administrativo }}
+                    <div class="form-text">Origem: viajantes finalizados.</div>
+                    {% if form.coordenador_administrativo.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_administrativo.errors.0 }}</div>{% endif %}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="pt-coord-duo-card">
+                    <div class="pt-coord-duo-title">Coordenação operacional</div>
+                    <label class="form-label" for="{{ form.coordenador_operacional.id_for_label }}">Coordenador operacional</label>
+                    {{ form.coordenador_operacional }}
+                    <div class="form-text">Selecione o coordenador operacional responsável.</div>
+                    {% if form.coordenador_operacional.errors %}<div class="invalid-feedback d-block">{{ form.coordenador_operacional.errors.0 }}</div>{% endif %}
+                  </div>
                 </div>
               </div>
-            </section>
+              </section>
+            </div>
           </div>
 
           {# ════ PASSO 2 — PERÍODO + DESTINOS ════ #}
           <div class="pt-step" data-step-index="1">
             <div class="oficio-stage-intro">
               <span class="oficio-stage-kicker">Passo 2 de 4</span>
-              <h2 class="oficio-stage-title">Período + destinos</h2>
-              <p class="oficio-stage-description">Defina o contexto do evento e os destinos da atuação.</p>
+              <h2 class="oficio-stage-title">Período + destinos + diárias</h2>
+              <p class="oficio-stage-description">Defina o contexto do evento, destinos, deslocamento e cálculo de diárias.</p>
             </div>
-
-            <section class="oficio-stage-section">
-              <div class="oficio-expandable" data-open="true" id="pt-vinculo-expandable">
-                <div class="oficio-expandable-header">
-                  <span>Dados institucionais</span>
-                  <button type="button" class="toggle" aria-label="Expandir/Recolher"></button>
-                </div>
-                <div class="oficio-expandable-body p-3">
-                  <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="vincular-documento">
-                    <label class="form-check-label" for="vincular-documento">Vincular a documento existente</label>
-                  </div>
-
-                  <div id="vinculo-container" class="hidden">
-                    <ul class="nav nav-pills nav-fill mb-3" id="vinculo-tabs" role="tablist">
-                      <li class="nav-item"><button type="button" class="nav-link active" data-vinculo-tab="eventos">Eventos</button></li>
-                      <li class="nav-item"><button type="button" class="nav-link" data-vinculo-tab="oficios">Ofícios</button></li>
-                      <li class="nav-item"><button type="button" class="nav-link" data-vinculo-tab="roteiros">Roteiros</button></li>
-                    </ul>
-
-                    <div class="row g-3">
-                      <div class="col-md-4" data-vinculo-pane="eventos">
-                        <label class="form-label" for="{{ form.evento.id_for_label }}">Evento</label>
-                        {{ form.evento }}
-                        {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
-                      </div>
-                      <div class="col-md-4" data-vinculo-pane="oficios">
-                        <label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício principal</label>
-                        {{ form.oficio }}
-                        {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
-                      </div>
-                      <div class="col-md-4" data-vinculo-pane="roteiros">
-                        <label class="form-label" for="{{ form.roteiro.id_for_label }}">Roteiro</label>
-                        {{ form.roteiro }}
-                        {% if form.roteiro.errors %}<div class="invalid-feedback d-block">{{ form.roteiro.errors.0 }}</div>{% endif %}
-                      </div>
-                      <div class="col-12" data-vinculo-pane="oficios">
-                        <label class="form-label" for="{{ form.oficios_relacionados.id_for_label }}">Ofícios relacionados</label>
-                        {{ form.oficios_relacionados }}
-                        {% if form.oficios_relacionados.errors %}<div class="invalid-feedback d-block">{{ form.oficios_relacionados.errors.0 }}</div>{% endif %}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
 
             <section class="oficio-stage-section">
               <div class="oficio-stage-section-head">
@@ -612,37 +805,28 @@
                 </div>
               </div>
               <div class="row g-3 align-items-end">
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <label class="form-label" for="{{ form.evento_data_inicio.id_for_label }}">Data do evento (início)</label>
                   {{ form.evento_data_inicio }}
                   {% if form.evento_data_inicio.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_inicio.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="col-md-3" id="col-data-fim">
+                <div class="col-md-4" id="col-data-fim">
                   <label class="form-label" for="{{ form.evento_data_fim.id_for_label }}">Data do evento (fim)</label>
                   {{ form.evento_data_fim }}
                   {% if form.evento_data_fim.errors %}<div class="invalid-feedback d-block">{{ form.evento_data_fim.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="col-md-3">
-                  <label class="form-label" for="evento_hora_inicio">Hora do evento (início)</label>
-                  <input type="time" id="evento_hora_inicio" name="evento_hora_inicio" class="form-control form-control-sm">
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label" for="evento_hora_fim">Hora do evento (fim)</label>
-                  <input type="time" id="evento_hora_fim" name="evento_hora_fim" class="form-control form-control-sm">
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <label class="form-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horário de atendimento</label>
                   {{ form.horario_atendimento_padrao }}
-                </div>
-                <div class="col-md-3" id="col-horario-manual">
-                  <label class="form-label" for="{{ form.horario_atendimento_manual.id_for_label }}">Horário manual</label>
-                  {{ form.horario_atendimento_manual }}
                 </div>
                 <div class="col-md-12">
                   <div class="form-check mb-0">
                     {{ form.evento_data_unica }}
                     <label class="form-check-label" for="{{ form.evento_data_unica.id_for_label }}">Data única</label>
                   </div>
+                </div>
+                <div class="d-none" id="col-horario-manual">
+                  {{ form.horario_atendimento_manual }}
                 </div>
               </div>
             </section>
@@ -656,6 +840,72 @@
               </div>
               <div id="destinos-container" class="d-grid gap-2"></div>
               {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block mt-1">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
+            </section>
+
+            <section class="oficio-stage-section">
+              <div class="oficio-stage-section-head">
+                <div>
+                  <h3 class="oficio-stage-section-title">Calculadora de diárias</h3>
+                </div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                  <label class="form-label" for="data_saida_sede">Saída da sede (data)</label>
+                  <input type="date" id="data_saida_sede" name="data_saida_sede" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="hora_saida_sede">Saída da sede (hora)</label>
+                  <input type="time" id="hora_saida_sede" name="hora_saida_sede" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="data_chegada_sede">Chegada na sede (data)</label>
+                  <input type="date" id="data_chegada_sede" name="data_chegada_sede" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="hora_chegada_sede">Chegada na sede (hora)</label>
+                  <input type="time" id="hora_chegada_sede" name="hora_chegada_sede" class="form-control form-control-sm">
+                </div>
+              </div>
+
+              <div class="pt-diarias-shell pt-diarias-shell--single">
+                <aside class="pt-diarias-main" id="pt-diarias-output-panel">
+                  <div class="pt-diarias-main-head">
+                    <h4 class="pt-diarias-main-title">Total oficial</h4>
+                    <span class="pt-diarias-auto-chip">Cálculo automático</span>
+                  </div>
+                  <div class="pt-diarias-total-value" id="diarias-total">R$&nbsp;0,00</div>
+                  <div class="pt-diarias-list">
+                    <div class="pt-diarias-item">
+                      <div class="form-text">Diárias</div>
+                      <strong id="diarias-qtd">0</strong>
+                    </div>
+                    <div class="pt-diarias-item">
+                      <div class="form-text">Efetivo</div>
+                      <strong id="pt-live-efetivo">0</strong>
+                    </div>
+                    <div class="pt-diarias-item">
+                      <div class="form-text">Valor por extenso</div>
+                      <strong id="diarias-extenso">Não informado</strong>
+                    </div>
+                    <div class="pt-diarias-item">
+                      <div class="form-text">Valor por servidor</div>
+                      <strong id="pt-diarias-right-unit">R$&nbsp;0,00</strong>
+                    </div>
+                    <div class="pt-diarias-item">
+                      <div class="form-text">Valor por servidor (extenso)</div>
+                      <strong id="pt-diarias-right-extenso">Não informado</strong>
+                    </div>
+                  </div>
+                  <div id="diarias-erro" class="alert alert-danger py-2 px-3 mt-2 mb-0" role="alert" style="display:none;"></div>
+                  <div id="pt-diarias-suggestion" class="pt-diarias-suggestion mt-2" role="status" aria-live="polite" style="display:none;"></div>
+                  <div class="d-none" aria-hidden="true">
+                    {{ form.diarias_quantidade }}
+                    {{ form.diarias_valor_unitario }}
+                    {{ form.diarias_valor_total }}
+                    {{ form.diarias_valor_extenso }}
+                  </div>
+                </aside>
+              </div>
             </section>
           </div>
 
@@ -721,113 +971,72 @@
             </section>
           </div>
 
-          {# ════ PASSO 4 — ROTEIRO + DIÁRIAS ════ #}
+          {# ════ PASSO 4 — RESUMO ════ #}
           <div class="pt-step" data-step-index="3">
             <div class="oficio-stage-intro">
               <span class="oficio-stage-kicker">Passo 4 de 4</span>
-              <h2 class="oficio-stage-title">Roteiro + diárias</h2>
-              <p class="oficio-stage-description">Use saída/retorno da sede para cálculo real das diárias.</p>
+              <h2 class="oficio-stage-title">Resumo</h2>
+              <p class="oficio-stage-description">Confira os principais dados antes de salvar o plano.</p>
             </div>
 
             <section class="oficio-stage-section">
               <div class="oficio-stage-section-head">
                 <div>
-                  <h3 class="oficio-stage-section-title">Roteiro de deslocamento</h3>
+                  <h3 class="oficio-stage-section-title">Resumo do plano</h3>
                 </div>
               </div>
-              <div class="row g-3">
-                <div class="col-md-3">
-                  <label class="form-label" for="data_saida_sede">Saída da sede (data)</label>
-                  <input type="date" id="data_saida_sede" name="data_saida_sede" class="form-control form-control-sm">
+              <div class="pt-summary-bar" aria-live="polite">
+                <div class="pt-summary-item">
+                  <span class="pt-summary-label">Período</span>
+                  <strong class="pt-summary-value" id="summary-periodo">—</strong>
                 </div>
-                <div class="col-md-3">
-                  <label class="form-label" for="hora_saida_sede">Saída da sede (hora)</label>
-                  <input type="time" id="hora_saida_sede" name="hora_saida_sede" class="form-control form-control-sm">
+                <div class="pt-summary-item">
+                  <span class="pt-summary-label">Equipe</span>
+                  <strong class="pt-summary-value" id="summary-equipe">—</strong>
                 </div>
-                <div class="col-md-3">
-                  <label class="form-label" for="data_chegada_sede">Chegada na sede (data)</label>
-                  <input type="date" id="data_chegada_sede" name="data_chegada_sede" class="form-control form-control-sm">
+                <div class="pt-summary-item">
+                  <span class="pt-summary-label">Diárias (qtd.)</span>
+                  <strong class="pt-summary-value" id="summary-diarias">—</strong>
                 </div>
-                <div class="col-md-3">
-                  <label class="form-label" for="hora_chegada_sede">Chegada na sede (hora)</label>
-                  <input type="time" id="hora_chegada_sede" name="hora_chegada_sede" class="form-control form-control-sm">
-                </div>
-              </div>
-            </section>
-
-            <section class="oficio-stage-section">
-              <div class="oficio-stage-section-head">
-                <div>
-                  <h3 class="oficio-stage-section-title">Calculadora de diárias</h3>
+                <div class="pt-summary-item pt-summary-valor">
+                  <span class="pt-summary-label">Valor total</span>
+                  <strong class="pt-summary-value" id="summary-valor">—</strong>
                 </div>
               </div>
-              <div class="pt-diarias-shell">
-                <aside class="pt-diarias-main" id="pt-diarias-output-panel">
-                  <div class="pt-diarias-main-head">
-                    <h4 class="pt-diarias-main-title">Total oficial</h4>
-                    <span class="pt-diarias-auto-chip">Cálculo automático</span>
-                  </div>
-                  <div class="pt-diarias-total-value" id="diarias-total">R$&nbsp;0,00</div>
-                  <div class="pt-diarias-list">
-                    <div class="pt-diarias-item">
-                      <div class="form-text">Diárias</div>
-                      <strong id="diarias-qtd">0</strong>
-                    </div>
-                    <div class="pt-diarias-item">
-                      <div class="form-text">Efetivo</div>
-                      <strong id="pt-live-efetivo">0</strong>
-                    </div>
-                    <div class="pt-diarias-item">
-                      <div class="form-text">Valor por extenso</div>
-                      <strong id="diarias-extenso">Não informado</strong>
-                    </div>
-                  </div>
-                  <div class="d-none" aria-hidden="true">
-                    {{ form.diarias_quantidade }}
-                    {{ form.diarias_valor_total }}
-                    {{ form.diarias_valor_extenso }}
-                  </div>
-                </aside>
 
-                <div class="pt-diarias-side">
-                  <div class="pt-diarias-side-card">
-                    <h4 class="pt-diarias-side-title">Datas e atendimento</h4>
-                    <div class="pt-diarias-context-list">
-                      <div class="pt-diarias-context-item">
-                        <div class="form-text">Data início</div>
-                        <strong id="pt-diarias-ctx-data-inicio">Não informado</strong>
-                      </div>
-                      <div class="pt-diarias-context-item">
-                        <div class="form-text">Data fim</div>
-                        <strong id="pt-diarias-ctx-data-fim">Não informado</strong>
-                      </div>
-                      <div class="pt-diarias-context-item">
-                        <div class="form-text">Horário do evento</div>
-                        <strong id="pt-diarias-ctx-hora-evento">Não informado</strong>
-                      </div>
-                      <div class="pt-diarias-context-item">
-                        <div class="form-text">Atendimento</div>
-                        <strong id="pt-diarias-ctx-atendimento">Não informado</strong>
-                      </div>
+              <div class="pt-review-grid mt-3">
+                <div class="oficio-selection-panel p-3">
+                  <div class="oficio-selection-panel-head mb-2">
+                    <span class="oficio-selection-panel-title">Dados de diárias</span>
+                  </div>
+                  <div class="pt-review-list">
+                    <div class="pt-review-row">
+                      <span class="pt-review-label">Diárias</span>
+                      <strong class="pt-review-value" id="summary-diarias-detalhe">—</strong>
+                    </div>
+                    <div class="pt-review-row">
+                      <span class="pt-review-label">Valor por servidor</span>
+                      <strong class="pt-review-value" id="summary-valor-servidor">—</strong>
+                    </div>
+                    <div class="pt-review-row">
+                      <span class="pt-review-label">Valor por extenso</span>
+                      <strong class="pt-review-value" id="summary-extenso">—</strong>
                     </div>
                   </div>
-
-                  <div class="pt-diarias-side-card">
-                    <h4 class="pt-diarias-side-title">Valores por servidor</h4>
-                    <div class="mb-2">
-                      <label class="form-label" for="{{ form.diarias_valor_unitario.id_for_label }}">Valor por servidor (R$)</label>
-                      {{ form.diarias_valor_unitario }}
+                </div>
+                <div class="oficio-selection-panel p-3">
+                  <div class="oficio-selection-panel-head mb-2">
+                    <span class="oficio-selection-panel-title">Contexto</span>
+                  </div>
+                  <div class="pt-review-list">
+                    <div class="pt-review-row">
+                      <span class="pt-review-label">Destinos</span>
+                      <strong class="pt-review-value" id="summary-destinos">—</strong>
                     </div>
-                    <div class="pt-diarias-context-item mb-2">
-                      <div class="form-text">Valor por servidor</div>
-                      <strong id="pt-diarias-right-unit">R$&nbsp;0,00</strong>
+                    <div class="pt-review-row">
+                      <span class="pt-review-label">Atividades</span>
+                      <strong class="pt-review-value" id="summary-atividades">—</strong>
                     </div>
-                    <div class="pt-diarias-context-item">
-                      <div class="form-text">Valor por extenso</div>
-                      <strong id="pt-diarias-right-extenso">Não informado</strong>
-                    </div>
-                    <div id="diarias-erro" class="alert alert-danger py-2 px-3 mt-2 mb-0" role="alert" style="display:none;"></div>
-                    <div id="pt-diarias-suggestion" class="pt-diarias-suggestion mt-2" role="status" aria-live="polite" style="display:none;"></div>
                   </div>
                 </div>
               </div>
@@ -893,7 +1102,7 @@
     coordenador_principal: { nome: 'Juliana Villela de Barros' },
     coordenadores: [],   // [{id, nome, cargo, isPrincipal}]
     roteiro: [],
-    diarias: { qtd: 0, valor_unitario: 0, unitario: 0, total: 0, valor_extenso: '' },
+    diarias: { qtd: 0, valor_unitario: 0, unitario: 0, total: 0, valor_extenso: '', valor_por_servidor: 0, valor_por_servidor_extenso: '' },
     deslocamento: {
       saida_data: null,
       saida_hora: null,
@@ -986,6 +1195,15 @@
   const stsPeriodo          = document.getElementById('pts-periodo');
   const stsEquipe           = document.getElementById('pts-equipe');
   const stsValor            = document.getElementById('pts-valor');
+  const summaryPeriodoEl    = document.getElementById('summary-periodo');
+  const summaryEquipeEl     = document.getElementById('summary-equipe');
+  const summaryDiariasEl    = document.getElementById('summary-diarias');
+  const summaryDiariasDetEl = document.getElementById('summary-diarias-detalhe');
+  const summaryValorEl      = document.getElementById('summary-valor');
+  const summaryValorServidorEl = document.getElementById('summary-valor-servidor');
+  const summaryExtensoEl    = document.getElementById('summary-extenso');
+  const summaryDestinosEl   = document.getElementById('summary-destinos');
+  const summaryAtividadesEl = document.getElementById('summary-atividades');
   const coordWrapper        = document.getElementById('coord-autocomplete-wrapper');
   const coordInput          = document.getElementById('coord-autocomplete-input');
   const coordResults        = document.getElementById('coord-autocomplete-results');
@@ -1309,27 +1527,53 @@
   nextBtn.addEventListener('click', () => goToStep(Math.min(currentStep + 1, TOTAL_STEPS - 1)));
 
   // ══════════════════════════════════════════════════════════
-  //  SUMMARY BAR — 3 items only
+  //  SUMMARY BAR / RESUMO
   // ══════════════════════════════════════════════════════════
   subscribe((state) => {
     const { datas, equipe, diarias } = state;
-    if (stsPeriodo) {
-      if (datas.inicio) {
-        const isUnica = dataUnica && dataUnica.checked;
-        stsPeriodo.textContent = (!isUnica && datas.fim)
-          ? fmtDate(datas.inicio) + ' \u2192 ' + fmtDate(datas.fim)
-          : fmtDate(datas.inicio);
-      } else {
-        stsPeriodo.textContent = '—';
-      }
-    }
+    const isUnica = dataUnica && dataUnica.checked;
+    const periodoLabel = datas.inicio
+      ? ((!isUnica && datas.fim) ? (fmtDate(datas.inicio) + ' \u2192 ' + fmtDate(datas.fim)) : fmtDate(datas.inicio))
+      : '—';
     const totalEquipe = getEquipeTotalValue();
-    if (stsEquipe) stsEquipe.textContent = totalEquipe > 0
+    const equipeLabel = totalEquipe > 0
       ? totalEquipe + ' servidor' + (totalEquipe !== 1 ? 'es' : '')
       : '—';
+    const est = diarias.total || 0;
+    const qtdLabel = formatDiariasQtdValue(Number((diarias && diarias.qtd) || 0));
+
+    if (stsPeriodo) {
+      stsPeriodo.textContent = periodoLabel;
+    }
+    if (stsEquipe) stsEquipe.textContent = equipeLabel;
     if (stsValor) {
-      const est = diarias.total || 0;
       stsValor.textContent = est ? formatCurrency(est) : '—';
+    }
+
+    if (summaryPeriodoEl) summaryPeriodoEl.textContent = periodoLabel;
+    if (summaryEquipeEl) summaryEquipeEl.textContent = equipeLabel;
+    if (summaryDiariasEl) summaryDiariasEl.textContent = qtdLabel;
+    if (summaryDiariasDetEl) summaryDiariasDetEl.textContent = qtdLabel;
+    if (summaryValorEl) summaryValorEl.textContent = est ? formatCurrency(est) : '—';
+    if (summaryValorServidorEl) {
+      const valorServidor = Number((diarias && diarias.valor_por_servidor) || 0);
+      summaryValorServidorEl.textContent = valorServidor > 0 ? formatCurrency(valorServidor) : '—';
+    }
+    if (summaryExtensoEl) {
+      const extenso = String((diarias && diarias.valor_extenso) || '').trim();
+      summaryExtensoEl.textContent = extenso || '—';
+    }
+    if (summaryDestinosEl) {
+      const qtdDestinos = Array.isArray(state.destinos) ? state.destinos.length : 0;
+      summaryDestinosEl.textContent = qtdDestinos > 0
+        ? qtdDestinos + ' destino' + (qtdDestinos !== 1 ? 's' : '')
+        : '—';
+    }
+    if (summaryAtividadesEl) {
+      const qtdAtividades = Array.isArray(state.atividades) ? state.atividades.length : 0;
+      summaryAtividadesEl.textContent = qtdAtividades > 0
+        ? qtdAtividades + ' atividade' + (qtdAtividades !== 1 ? 's' : '')
+        : '—';
     }
   });
 
@@ -1370,9 +1614,17 @@
     updateDiariasContextCards();
   }
   function toggleDataFim() {
-    if (!dataUnica || !colDataFim) return;
-    colDataFim.style.display = dataUnica.checked ? 'none' : '';
-    if (dataUnica.checked && dataInicio && dataFim) dataFim.value = dataInicio.value;
+    if (!dataUnica || !dataFim) return;
+    if (dataUnica.checked) {
+      if (dataInicio) dataFim.value = dataInicio.value;
+      dataFim.readOnly = true;
+      dataFim.setAttribute('aria-disabled', 'true');
+      dataFim.classList.add('bg-light');
+    } else {
+      dataFim.readOnly = false;
+      dataFim.removeAttribute('aria-disabled');
+      dataFim.classList.remove('bg-light');
+    }
   }
 
   function setupExpandablePanels() {
@@ -1468,17 +1720,21 @@
   }
 
   function updateValorServidorUI() {
-    const efetivo = Math.max(0, Number(getQuantidadePessoas() || 0));
-    const totalOficial = Math.max(0, Number((planoState.diarias && planoState.diarias.total) || 0));
-    const qtdDiarias = Math.max(0, Number((planoState.diarias && planoState.diarias.qtd) || 0));
-    const valorDiaria = parseCurrency(String((diariasUnit && diariasUnit.value) || (planoState.diarias && (planoState.diarias.valor_unitario || planoState.diarias.unitario)) || '0'));
+    const diariasState = planoState.diarias || {};
+    let valorPorServidor = Math.max(0, Number(diariasState.valor_por_servidor || 0));
+    if (!valorPorServidor) {
+      const efetivo = Math.max(0, Number(getQuantidadePessoas() || 0));
+      const totalOficial = Math.max(0, Number(diariasState.total || 0));
+      const qtdDiarias = Math.max(0, Number(diariasState.qtd || 0));
+      const valorDiaria = parseCurrency(String((diariasUnit && diariasUnit.value) || (diariasState.valor_unitario || diariasState.unitario) || '0'));
 
-    let valorPorServidor = 0;
-    if (totalOficial > 0 && efetivo > 0) {
-      valorPorServidor = totalOficial / efetivo;
-    } else if (qtdDiarias > 0 && valorDiaria > 0) {
-      valorPorServidor = qtdDiarias * valorDiaria;
+      if (totalOficial > 0 && efetivo > 0) {
+        valorPorServidor = totalOficial / efetivo;
+      } else if (qtdDiarias > 0 && valorDiaria > 0) {
+        valorPorServidor = qtdDiarias * valorDiaria;
+      }
     }
+    planoState.diarias.valor_por_servidor = valorPorServidor;
 
     if (diariasRightUnit) diariasRightUnit.textContent = formatCurrency(valorPorServidor);
   }
@@ -1523,17 +1779,19 @@
   }
 
   function updateSummary() {
-    const el = document.getElementById('summary-valor') || stsValor;
+    const el = summaryValorEl || stsValor;
     if (!el) return;
     const total = Number((planoState.diarias && planoState.diarias.total) || 0);
     el.textContent = total > 0 ? formatCurrency(total) : '—';
   }
 
   function updateValorExtensoUI() {
-    const valorExtenso = String((planoState.diarias && planoState.diarias.valor_extenso) || '').trim();
-    if (diariasExtensoEl) diariasExtensoEl.textContent = valorExtenso || 'Não informado';
-    if (diariasRightExtenso) diariasRightExtenso.textContent = valorExtenso || 'Não informado';
-    if (diariasExtensoInput) diariasExtensoInput.value = valorExtenso;
+    const valorExtensoTotal = String((planoState.diarias && planoState.diarias.valor_extenso) || '').trim();
+    const valorExtensoServidor = String((planoState.diarias && planoState.diarias.valor_por_servidor_extenso) || '').trim();
+    if (diariasExtensoEl) diariasExtensoEl.textContent = valorExtensoTotal || 'Não informado';
+    if (diariasRightExtenso) diariasRightExtenso.textContent = valorExtensoServidor || 'Não informado';
+    if (summaryExtensoEl) summaryExtensoEl.textContent = valorExtensoTotal || '—';
+    if (diariasExtensoInput) diariasExtensoInput.value = valorExtensoTotal;
   }
 
   function updateValorTotalUI() {
@@ -1574,6 +1832,12 @@
         if (typeof data.valor_extenso === 'string') {
           planoState.diarias.valor_extenso = data.valor_extenso;
         }
+        if (typeof data.valor_por_servidor_extenso === 'string') {
+          planoState.diarias.valor_por_servidor_extenso = data.valor_por_servidor_extenso;
+        }
+        if (typeof data.valor_por_servidor !== 'undefined') {
+          planoState.diarias.valor_por_servidor = parseCurrency(String(data.valor_por_servidor));
+        }
         if (data.valor_total) {
           const parsedTotal = parseCurrency(String(data.valor_total));
           if (Number.isFinite(parsedTotal)) {
@@ -1583,6 +1847,7 @@
             updateSummary();
           }
         }
+        updateValorServidorUI();
         updateValorExtensoUI();
       })
       .catch(() => {
@@ -1629,11 +1894,13 @@
     const qtd = Number(String(result.qtd_diarias || 0).replace(',', '.'));
     const total = parseCurrency(String((totais && totais.total_valor) || result.valor_total || '0'));
     const valorExtenso = String((totais && totais.valor_extenso) || result.valor_extenso || '').trim();
+    const valorPorServidor = parseCurrency(String((totais && totais.valor_por_servidor) || result.valor_por_servidor || '0'));
+    const valorPorServidorExtenso = String((totais && totais.valor_por_servidor_extenso) || result.valor_por_servidor_extenso || '').trim();
     const desloc = planoState.deslocamento || {};
     const saida = desloc.saida;
     const chegada = desloc.chegada;
     const horas = (saida && chegada && chegada > saida) ? ((chegada - saida) / (1000 * 60 * 60)) : 0;
-    const valorUnitario = parseCurrency(String((totais && totais.valor_por_servidor) || result.valor_unitario || (planoState.diarias && (planoState.diarias.valor_unitario || planoState.diarias.unitario)) || 0));
+    const valorUnitario = parseCurrency(String((totais && totais.valor_unitario_referencia) || result.valor_unitario || (planoState.diarias && (planoState.diarias.valor_unitario || planoState.diarias.unitario)) || 0));
 
     planoState.diarias = {
       qtd: Number.isFinite(qtd) ? qtd : 0,
@@ -1643,6 +1910,8 @@
       unitario: valorUnitario,
       total: Number.isFinite(total) ? total : 0,
       valor_extenso: valorExtenso,
+      valor_por_servidor: Number.isFinite(valorPorServidor) ? valorPorServidor : 0,
+      valor_por_servidor_extenso: valorPorServidorExtenso,
     };
 
     if (diariasUnit) {
@@ -1722,7 +1991,8 @@
 
   function computeDiarias(options) {
     const opts = options || {};
-    const unitField    = parseCurrency(diariasUnit  ? diariasUnit.value  : '');
+    const unitField = diariasUnit ? parseCurrency(diariasUnit.value) : NaN;
+    const unitFromState = Number((planoState.diarias && (planoState.diarias.valor_unitario || planoState.diarias.unitario)) || 0);
     const qtdFromState = Number((planoState.diarias && planoState.diarias.qtd) || 0);
     const qtdFromField = (() => {
       const raw = String((diariasQtd && diariasQtd.value) || '');
@@ -1733,12 +2003,23 @@
     })();
     const qtd = qtdFromState || qtdFromField;
     const efetivo = getQuantidadePessoas();
-    const unit  = unitField;
+    const unit = (Number.isFinite(unitField) && unitField > 0) ? unitField : unitFromState;
 
     const horas = Number((planoState.diarias && planoState.diarias.horas) || 0);
     const existingTotal = Number((planoState.diarias && planoState.diarias.total) || 0);
     const existingExtenso = String((planoState.diarias && planoState.diarias.valor_extenso) || '');
-    planoState.diarias = { qtd, horas, valor_unitario: unit, unitario: unit, total: existingTotal, valor_extenso: existingExtenso };
+    const existingServidor = Number((planoState.diarias && planoState.diarias.valor_por_servidor) || 0);
+    const existingServidorExtenso = String((planoState.diarias && planoState.diarias.valor_por_servidor_extenso) || '');
+    planoState.diarias = {
+      qtd,
+      horas,
+      valor_unitario: unit,
+      unitario: unit,
+      total: existingTotal,
+      valor_extenso: existingExtenso,
+      valor_por_servidor: existingServidor,
+      valor_por_servidor_extenso: existingServidorExtenso,
+    };
 
     if (diariasQtdEl) diariasQtdEl.textContent = formatDiariasQtdValue(qtd);
     if (liveEfetivo) liveEfetivo.textContent = efetivo + ' servidor(es)';
@@ -2210,6 +2491,8 @@
   }
   if (solicitanteSelect) solicitanteSelect.addEventListener('change', () => { toggleSolicitanteOutros(); syncMetaState(); triggerAutosave(); });
   if (horarioPadrao)     horarioPadrao.addEventListener('change', () => { toggleHorarioManual(); syncMetaState(); triggerAutosave(); });
+  const horarioManualInput = document.getElementById('{{ form.horario_atendimento_manual.id_for_label }}');
+  if (horarioManualInput) horarioManualInput.addEventListener('input', () => { updateDiariasContextCards(); syncMetaState(); triggerAutosave(); });
   if (dataUnica)         dataUnica.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
   if (dataInicio)        dataInicio.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
   if (dataFim)           dataFim.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
@@ -2248,7 +2531,18 @@
       const qtd = Number((planoState.diarias && planoState.diarias.qtd) || 0);
       const total = Number((planoState.diarias && planoState.diarias.total) || 0);
       const valorExtenso = String((planoState.diarias && planoState.diarias.valor_extenso) || '');
-      planoState.diarias = { qtd, horas, valor_unitario: unit, unitario: unit, total, valor_extenso: valorExtenso };
+      const valorPorServidor = Number((planoState.diarias && planoState.diarias.valor_por_servidor) || 0);
+      const valorPorServidorExtenso = String((planoState.diarias && planoState.diarias.valor_por_servidor_extenso) || '');
+      planoState.diarias = {
+        qtd,
+        horas,
+        valor_unitario: unit,
+        unitario: unit,
+        total,
+        valor_extenso: valorExtenso,
+        valor_por_servidor: valorPorServidor,
+        valor_por_servidor_extenso: valorPorServidorExtenso,
+      };
       await calcularDiarias({ suppressErrors: true, silentNotify: true });
       syncMetaState();
       triggerAutosave();

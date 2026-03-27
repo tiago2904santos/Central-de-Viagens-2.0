@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from cadastros.models import Cargo, Cidade, ConfiguracaoSistema, UnidadeLotacao, Viajante, Veiculo
+from cadastros.models import Cargo, Cidade, ConfiguracaoSistema, Estado, UnidadeLotacao, Viajante, Veiculo
 from eventos.services.oficio_schema import oficio_justificativa_schema_available
 from eventos.services.justificativa import get_oficio_justificativa, get_oficio_justificativa_texto
 from eventos.termos import build_termo_context, build_termo_preview_payload
@@ -220,6 +220,18 @@ class CoordenadorOperacionalForm(FormComErroInvalidMixin, forms.ModelForm):
         required=False,
         widget=forms.Select(attrs={'class': ''}),
     )
+    estado_base = forms.ModelChoiceField(
+        label='Estado',
+        queryset=Estado.objects.none(),
+        required=True,
+        widget=forms.Select(attrs={'class': ''}),
+    )
+    cidade_base = forms.ModelChoiceField(
+        label='Cidade',
+        queryset=Cidade.objects.none(),
+        required=True,
+        widget=forms.Select(attrs={'class': ''}),
+    )
 
     class Meta:
         model = CoordenadorOperacional
@@ -234,6 +246,33 @@ class CoordenadorOperacionalForm(FormComErroInvalidMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['cargo_base'].queryset = Cargo.objects.order_by('nome')
         self.fields['lotacao_base'].queryset = UnidadeLotacao.objects.order_by('nome')
+        self.fields['estado_base'].queryset = Estado.objects.filter(ativo=True).order_by('nome')
+
+        estado_selecionado = None
+        if self.is_bound:
+            raw_estado = (self.data.get('estado_base') or '').strip()
+            if raw_estado.isdigit():
+                estado_selecionado = Estado.objects.filter(pk=int(raw_estado), ativo=True).first()
+
+        if not estado_selecionado and self.instance and self.instance.pk:
+            cidade_nome = (self.instance.cidade or '').strip()
+            if '/' in cidade_nome:
+                cidade_nome = cidade_nome.split('/', 1)[0].strip()
+            if cidade_nome:
+                cidade_obj = Cidade.objects.filter(nome__iexact=cidade_nome, ativo=True).select_related('estado').order_by('nome').first()
+                if cidade_obj and cidade_obj.estado and cidade_obj.estado.ativo:
+                    estado_selecionado = cidade_obj.estado
+                    self.initial['cidade_base'] = cidade_obj.pk
+
+        if not estado_selecionado:
+            estado_selecionado = Estado.objects.filter(sigla__iexact='PR', ativo=True).first()
+
+        if estado_selecionado:
+            self.initial.setdefault('estado_base', estado_selecionado.pk)
+            self.fields['cidade_base'].queryset = Cidade.objects.filter(estado=estado_selecionado, ativo=True).order_by('nome')
+        else:
+            self.fields['cidade_base'].queryset = Cidade.objects.filter(ativo=True).none()
+
         if self.instance and self.instance.pk:
             cargo_value = (self.instance.cargo or '').strip()
             lotacao_value = (self.instance.unidade or '').strip()
@@ -245,6 +284,14 @@ class CoordenadorOperacionalForm(FormComErroInvalidMixin, forms.ModelForm):
                 lotacao_obj = UnidadeLotacao.objects.filter(nome__iexact=lotacao_value).first()
                 if lotacao_obj:
                     self.initial['lotacao_base'] = lotacao_obj.pk
+
+            cidade_value = (self.instance.cidade or '').strip()
+            if '/' in cidade_value:
+                cidade_value = cidade_value.split('/', 1)[0].strip()
+            if cidade_value and not self.initial.get('cidade_base'):
+                cidade_obj = Cidade.objects.filter(nome__iexact=cidade_value, ativo=True).order_by('nome').first()
+                if cidade_obj:
+                    self.initial['cidade_base'] = cidade_obj.pk
 
     def clean_nome(self):
         value = ' '.join((self.cleaned_data.get('nome') or '').strip().upper().split())
@@ -261,10 +308,18 @@ class CoordenadorOperacionalForm(FormComErroInvalidMixin, forms.ModelForm):
         cleaned_data = super().clean()
         cargo_obj = cleaned_data.get('cargo_base')
         lotacao_obj = cleaned_data.get('lotacao_base')
+        estado_obj = cleaned_data.get('estado_base')
+        cidade_obj = cleaned_data.get('cidade_base')
         if cargo_obj:
             cleaned_data['cargo'] = cargo_obj.nome
         if lotacao_obj:
             cleaned_data['unidade'] = lotacao_obj.nome
+
+        if estado_obj and cidade_obj and cidade_obj.estado_id != estado_obj.id:
+            self.add_error('cidade_base', 'A cidade deve pertencer ao estado selecionado.')
+        if cidade_obj:
+            uf = (estado_obj.sigla if estado_obj else (cidade_obj.estado.sigla if cidade_obj.estado_id else '')).strip()
+            cleaned_data['cidade'] = f'{cidade_obj.nome}/{uf}' if uf else cidade_obj.nome
         return cleaned_data
 
     def save(self, commit=True):
@@ -281,9 +336,41 @@ class CoordenadorOperacionalForm(FormComErroInvalidMixin, forms.ModelForm):
         instance = super().save(commit=False)
         instance.cargo = (self.cleaned_data.get('cargo') or '').strip()
         instance.unidade = (self.cleaned_data.get('unidade') or '').strip()
-        instance.cidade = ''
+        instance.cidade = (self.cleaned_data.get('cidade') or '').strip()
         if commit:
             instance.save()
+        return instance
+
+
+class SolicitantePlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
+    class Meta:
+        model = SolicitantePlanoTrabalho
+        fields = ['nome', 'ordem', 'ativo', 'is_padrao']
+        widgets = {
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 200}),
+            'ordem': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_padrao': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_nome(self):
+        value = ' '.join((self.cleaned_data.get('nome') or '').strip().split())
+        if not value:
+            raise forms.ValidationError('Informe o nome do solicitante.')
+        qs = SolicitantePlanoTrabalho.objects.filter(nome__iexact=value)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError('Já existe um solicitante com este nome.')
+        return value
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if commit:
+            with transaction.atomic():
+                if instance.is_padrao:
+                    SolicitantePlanoTrabalho.objects.exclude(pk=instance.pk).update(is_padrao=False)
+                instance.save()
         return instance
 
 

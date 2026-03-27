@@ -23,6 +23,7 @@ from core.utils.masks import format_placa, format_protocolo, normalize_placa, on
 
 from .models import (
     AtividadePlanoTrabalho,
+    CoordenadorOperacional,
     Evento,
     EventoDestino,
     EventoFinalizacao,
@@ -38,11 +39,13 @@ from .models import (
     RoteiroEvento,
     RoteiroEventoDestino,
     RoteiroEventoTrecho,
+    SolicitantePlanoTrabalho,
     TermoAutorizacao,
     TipoDemandaEvento,
 )
 from .forms import (
     AtividadePlanoTrabalhoForm,
+    CoordenadorOperacionalForm,
     EventoEtapa1Form,
     EventoFinalizacaoForm,
     ModeloJustificativaForm,
@@ -51,6 +54,7 @@ from .forms import (
     OficioStep1Form,
     OficioStep2Form,
     RoteiroEventoForm,
+    SolicitantePlanoTrabalhoForm,
     TipoDemandaEventoForm,
 )
 from .services.estimativa_local import (
@@ -1405,6 +1409,140 @@ def plano_trabalho_atividades_excluir(request, pk):
     return render(
         request,
         'eventos/plano_trabalho_atividades/excluir_confirm.html',
+        {'object': obj, 'hide_page_header': True},
+    )
+
+
+@login_required
+def plano_trabalho_coordenadores_lista(request):
+    """Lista de coordenadores operacionais do Plano de Trabalho."""
+    lista = CoordenadorOperacional.objects.all().order_by('ordem', 'nome')
+    context = {
+        'object_list': lista,
+        'hide_page_header': True,
+    }
+    return render(request, 'eventos/plano_trabalho_coordenadores/lista.html', context)
+
+
+@login_required
+def plano_trabalho_coordenadores_cadastrar(request):
+    """Cadastro de coordenador operacional com estado/cidade."""
+    form = CoordenadorOperacionalForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Coordenador cadastrado com sucesso.')
+        return redirect('eventos:coordenadores-operacionais-lista')
+    estado_parana = Estado.objects.filter(sigla__iexact='PR', ativo=True).first()
+    context = {
+        'form': form,
+        'object': None,
+        'hide_page_header': True,
+        'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
+        'estado_parana_id': estado_parana.pk if estado_parana else '',
+    }
+    return render(request, 'eventos/plano_trabalho_coordenadores/form.html', context)
+
+
+@login_required
+def plano_trabalho_coordenadores_editar(request, pk):
+    """Edição de coordenador operacional."""
+    obj = get_object_or_404(CoordenadorOperacional, pk=pk)
+    form = CoordenadorOperacionalForm(request.POST or None, instance=obj)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Coordenador atualizado com sucesso.')
+        return redirect('eventos:coordenadores-operacionais-lista')
+    estado_parana = Estado.objects.filter(sigla__iexact='PR', ativo=True).first()
+    context = {
+        'form': form,
+        'object': obj,
+        'hide_page_header': True,
+        'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
+        'estado_parana_id': estado_parana.pk if estado_parana else '',
+    }
+    return render(request, 'eventos/plano_trabalho_coordenadores/form.html', context)
+
+
+@login_required
+def plano_trabalho_coordenadores_excluir(request, pk):
+    """Exclusão de coordenador operacional (bloqueia se estiver em uso em Plano de Trabalho)."""
+    obj = get_object_or_404(CoordenadorOperacional, pk=pk)
+    if request.method == 'POST':
+        em_uso = PlanoTrabalho.objects.filter(
+            Q(coordenador_operacional=obj) | Q(coordenadores=obj)
+        ).exists()
+        if em_uso:
+            messages.error(request, 'Não é possível excluir: coordenador em uso por pelo menos um Plano de Trabalho.')
+            return redirect('eventos:coordenadores-operacionais-editar', pk=obj.pk)
+        obj.delete()
+        messages.success(request, 'Coordenador excluído com sucesso.')
+        return redirect('eventos:coordenadores-operacionais-lista')
+    return render(
+        request,
+        'eventos/plano_trabalho_coordenadores/excluir_confirm.html',
+        {'object': obj, 'hide_page_header': True},
+    )
+
+
+@login_required
+def plano_trabalho_solicitantes_lista(request):
+    """Lista de solicitantes gerenciáveis do Plano de Trabalho."""
+    lista = SolicitantePlanoTrabalho.objects.all().order_by('ordem', 'nome')
+    context = {
+        'object_list': lista,
+        'hide_page_header': True,
+    }
+    return render(request, 'eventos/plano_trabalho_solicitantes/lista.html', context)
+
+
+@login_required
+def plano_trabalho_solicitantes_cadastrar(request):
+    """Cadastro de solicitante para uso no Plano de Trabalho."""
+    form = SolicitantePlanoTrabalhoForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Solicitante cadastrado com sucesso.')
+        return redirect('eventos:plano-trabalho-solicitantes-lista')
+    context = {
+        'form': form,
+        'object': None,
+        'hide_page_header': True,
+    }
+    return render(request, 'eventos/plano_trabalho_solicitantes/form.html', context)
+
+
+@login_required
+def plano_trabalho_solicitantes_editar(request, pk):
+    """Edição de solicitante do Plano de Trabalho."""
+    obj = get_object_or_404(SolicitantePlanoTrabalho, pk=pk)
+    form = SolicitantePlanoTrabalhoForm(request.POST or None, instance=obj)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Solicitante atualizado com sucesso.')
+        return redirect('eventos:plano-trabalho-solicitantes-lista')
+    context = {
+        'form': form,
+        'object': obj,
+        'hide_page_header': True,
+    }
+    return render(request, 'eventos/plano_trabalho_solicitantes/form.html', context)
+
+
+@login_required
+def plano_trabalho_solicitantes_excluir(request, pk):
+    """Exclusão de solicitante (bloqueia se estiver em uso em Plano de Trabalho)."""
+    obj = get_object_or_404(SolicitantePlanoTrabalho, pk=pk)
+    if request.method == 'POST':
+        em_uso = PlanoTrabalho.objects.filter(solicitante=obj).exists()
+        if em_uso:
+            messages.error(request, 'Não é possível excluir: solicitante em uso por pelo menos um Plano de Trabalho.')
+            return redirect('eventos:plano-trabalho-solicitantes-editar', pk=obj.pk)
+        obj.delete()
+        messages.success(request, 'Solicitante excluído com sucesso.')
+        return redirect('eventos:plano-trabalho-solicitantes-lista')
+    return render(
+        request,
+        'eventos/plano_trabalho_solicitantes/excluir_confirm.html',
         {'object': obj, 'hide_page_header': True},
     )
 

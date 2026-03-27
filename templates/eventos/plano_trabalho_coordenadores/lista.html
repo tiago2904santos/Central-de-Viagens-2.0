@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Coordenadores Operacionais - Central de Viagens{% endblock %}
+{% block page_title %}Coordenadores Operacionais{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 system-list-page system-list-page--simple">
+  <div class="system-list-shell">
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+      <div class="system-list-header__content">
+        <div>
+          <h1 class="system-list-header__title">Gerenciador de coordenadores</h1>
+          <p class="system-list-header__subtitle">Cadastre nome completo, cargo, lotação, estado e cidade para uso no Plano de Trabalho.</p>
+        </div>
+      </div>
+      <div class="system-list-header__actions-group">
+        <a href="{% url 'eventos:coordenadores-operacionais-cadastrar' %}" class="btn btn-primary system-list-action-btn">
+          <i class="bi bi-plus-lg me-1"></i>Novo coordenador
+        </a>
+      </div>
+    </div>
+
+    <div class="system-list-table-wrap">
+      <div class="table-responsive">
+        <table class="table table-hover table-cadastro mb-0 system-list-table">
+          <thead class="table-light">
+            <tr>
+              <th>Nome completo</th>
+              <th>Cargo</th>
+              <th>Lotação</th>
+              <th>Cidade</th>
+              <th class="text-center">Status</th>
+              <th class="text-center">Ordem</th>
+              <th width="220" class="text-end">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for obj in object_list %}
+            <tr>
+              <td class="fw-semibold">{{ obj.nome }}</td>
+              <td>{{ obj.cargo|default:'-' }}</td>
+              <td>{{ obj.unidade|default:'-' }}</td>
+              <td>{{ obj.cidade|default:'-' }}</td>
+              <td class="text-center">
+                {% if obj.ativo %}
+                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Ativo</span>
+                {% else %}
+                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Inativo</span>
+                {% endif %}
+              </td>
+              <td class="text-center">{{ obj.ordem }}</td>
+              <td class="text-end">
+                <a href="{% url 'eventos:coordenadores-operacionais-editar' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                <a href="{% url 'eventos:coordenadores-operacionais-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">Nenhum coordenador cadastrado.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

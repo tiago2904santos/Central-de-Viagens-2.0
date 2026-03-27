@@ -1,0 +1,123 @@
+{% extends 'includes/forms/form_base.html' %}
+
+{% block form_title_block %}{% if object %}Editar coordenador{% else %}Novo coordenador{% endif %} - Plano de Trabalho{% endblock %}
+{% block form_page_title %}{% if object %}Editar coordenador{% else %}Novo coordenador{% endif %} - Plano de Trabalho{% endblock %}
+{% block form_header_title %}{% if object %}Editar coordenador{% else %}Novo coordenador{% endif %}{% endblock %}
+{% block form_card_title %}{% if object %}Editar coordenador{% else %}Novo coordenador{% endif %}{% endblock %}
+{% block form_header_icon %}bi-person-vcard{% endblock %}
+
+{% block form_header_subtitle %}
+<p class="text-muted mb-0">Informe nome completo, cargo, lotação opcional e a cidade vinculada ao estado selecionado.</p>
+{% endblock %}
+
+{% block form_fields %}
+<div class="row g-3">
+  <div class="col-12">
+    <label for="id_nome" class="form-label">Nome completo</label>
+    {{ form.nome }}
+    {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
+  </div>
+
+  <div class="col-md-6">
+    <label for="id_cargo_base" class="form-label">Cargo</label>
+    {{ form.cargo_base }}
+    {% if form.cargo_base.errors %}<div class="invalid-feedback d-block">{{ form.cargo_base.errors.0 }}</div>{% endif %}
+  </div>
+
+  <div class="col-md-6">
+    <label for="id_lotacao_base" class="form-label">Lotação (opcional)</label>
+    {{ form.lotacao_base }}
+    {% if form.lotacao_base.errors %}<div class="invalid-feedback d-block">{{ form.lotacao_base.errors.0 }}</div>{% endif %}
+  </div>
+
+  <div class="col-md-6">
+    <label for="id_estado_base" class="form-label">Estado</label>
+    {{ form.estado_base }}
+    {% if form.estado_base.errors %}<div class="invalid-feedback d-block">{{ form.estado_base.errors.0 }}</div>{% endif %}
+  </div>
+
+  <div class="col-md-6">
+    <label for="id_cidade_base" class="form-label">Cidade</label>
+    {{ form.cidade_base }}
+    {% if form.cidade_base.errors %}<div class="invalid-feedback d-block">{{ form.cidade_base.errors.0 }}</div>{% endif %}
+  </div>
+
+  <div class="col-md-4">
+    <label for="id_ordem" class="form-label">{{ form.ordem.label }}</label>
+    {{ form.ordem }}
+    {% if form.ordem.errors %}<div class="invalid-feedback d-block">{{ form.ordem.errors.0 }}</div>{% endif %}
+  </div>
+
+  <div class="col-md-4 d-flex align-items-end">
+    <div class="form-check mb-2">
+      {{ form.ativo }}
+      <label class="form-check-label" for="id_ativo">{{ form.ativo.label }}</label>
+    </div>
+    {% if form.ativo.errors %}<div class="invalid-feedback d-block">{{ form.ativo.errors.0 }}</div>{% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block form_actions %}
+<button type="submit" class="btn btn-primary">Salvar coordenador</button>
+<a href="{% url 'eventos:coordenadores-operacionais-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+{% if object %}
+<a href="{% url 'eventos:coordenadores-operacionais-excluir' object.pk %}" class="btn btn-outline-danger">Excluir</a>
+{% endif %}
+{% endblock %}
+
+{% block form_after %}
+<script>
+(function () {
+  const estadoEl = document.getElementById('id_estado_base');
+  const cidadeEl = document.getElementById('id_cidade_base');
+  if (!estadoEl || !cidadeEl) return;
+
+  const cidadesApiBase = '{{ api_cidades_por_estado_url|escapejs }}';
+  const defaultEstadoId = '{{ estado_parana_id }}';
+
+  async function fetchCidades(estadoId) {
+    if (!estadoId) return [];
+    const url = cidadesApiBase.replace('/0/', '/' + estadoId + '/');
+    const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    if (!response.ok) return [];
+    return response.json();
+  }
+
+  async function mountCidadeOptions(estadoId, selectedCidadeId) {
+    cidadeEl.innerHTML = '<option value="">Selecione...</option>';
+    const cidades = await fetchCidades(estadoId);
+    cidades.forEach((cidade) => {
+      const option = document.createElement('option');
+      option.value = String(cidade.id);
+      option.textContent = cidade.nome;
+      if (selectedCidadeId && String(selectedCidadeId) === String(cidade.id)) {
+        option.selected = true;
+      }
+      cidadeEl.appendChild(option);
+    });
+  }
+
+  async function ensureEstadoPadrao() {
+    const hasEstado = String(estadoEl.value || '').trim();
+    if (!hasEstado && defaultEstadoId) {
+      estadoEl.value = String(defaultEstadoId);
+    }
+  }
+
+  estadoEl.addEventListener('change', async function () {
+    const estadoId = String(estadoEl.value || '').trim();
+    await mountCidadeOptions(estadoId, '');
+  });
+
+  (async function bootstrap() {
+    await ensureEstadoPadrao();
+    const estadoId = String(estadoEl.value || '').trim();
+    const selectedCidadeId = String(cidadeEl.value || '').trim();
+    if (estadoId) {
+      await mountCidadeOptions(estadoId, selectedCidadeId);
+    }
+  })();
+})();
+</script>
+{% endblock %}

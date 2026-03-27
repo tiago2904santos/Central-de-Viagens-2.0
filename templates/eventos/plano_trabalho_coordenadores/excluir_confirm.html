@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir coordenador - Plano de Trabalho{% endblock %}
+{% block page_title %}Excluir coordenador{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="card form-card">
+    <div class="card-body">
+      <p class="mb-1">Confirma excluir o coordenador <strong>{{ object.nome }}</strong>?</p>
+      <p class="text-muted mb-4">Se ele estiver em uso em algum plano, a exclusão será bloqueada.</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Excluir</button>
+        <a href="{% url 'eventos:coordenadores-operacionais-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

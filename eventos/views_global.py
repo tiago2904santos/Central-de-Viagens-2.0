@@ -69,6 +69,7 @@ from .services.plano_trabalho_domain import (
 from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
+from utils.valor_extenso import valor_por_extenso_ptbr
 
 
 SIMULACAO_SESSION_KEY = 'global_simulacao_diarias_last'
@@ -151,6 +152,13 @@ def _extract_efetivo_rows(post_data, prefix='efetivo'):
 def _get_coordenador_operacional_create_url():
     try:
         return reverse('eventos:coordenadores-operacionais-cadastrar')
+    except NoReverseMatch:
+        return ''
+
+
+def _get_solicitantes_manager_url():
+    try:
+        return reverse('eventos:plano-trabalho-solicitantes-lista')
     except NoReverseMatch:
         return ''
 
@@ -2274,18 +2282,25 @@ def plano_trabalho_calcular_diarias_api(request):
     if not (saida_dt and chegada_dt and paradas):
         qtd_raw = _clean(payload.get('qtd')) or _clean(payload.get('diarias_quantidade'))
         valor_raw = _clean(payload.get('valor')) or _clean(payload.get('diarias_valor_unitario'))
+        qtd_norm = _normalize_decimal_autosave(qtd_raw)
+        valor_norm = _normalize_decimal_autosave(valor_raw)
+        pessoas_norm = max(1, pessoas)
         try:
             dados = calcular_diarias_com_valor(
-                _normalize_decimal_autosave(qtd_raw),
-                _normalize_decimal_autosave(valor_raw),
-                max(1, pessoas),
+                qtd_norm,
+                valor_norm,
+                pessoas_norm,
             )
+            dados_por_servidor = calcular_diarias_com_valor(qtd_norm, valor_norm, 1)
         except (ArithmeticError, ValueError, TypeError):
-            dados = calcular_diarias_com_valor(0, 0, max(1, pessoas))
+            dados = calcular_diarias_com_valor(0, 0, pessoas_norm)
+            dados_por_servidor = calcular_diarias_com_valor(0, 0, 1)
 
         qtd_label = _clean(qtd_raw) or str(dados['quantidade_diarias'])
         valor_total_label = formatar_valor_diarias(dados['valor_total']) if dados['valor_total'] else ''
-        valor_unitario_label = _clean(valor_raw)
+        valor_unitario_label = _clean(valor_raw) or formatar_valor_diarias(dados.get('valor_unitario', ''))
+        valor_por_servidor_label = formatar_valor_diarias(dados_por_servidor.get('valor_total', ''))
+        valor_por_servidor_extenso = dados_por_servidor.get('valor_extenso', '') or ''
         valor_extenso_label = dados.get('valor_extenso', '') or ''
 
         return JsonResponse(
@@ -2299,9 +2314,10 @@ def plano_trabalho_calcular_diarias_api(request):
                     'total_horas': '',
                     'total_valor': valor_total_label,
                     'valor_extenso': valor_extenso_label,
-                    'quantidade_servidores': max(1, pessoas),
+                    'quantidade_servidores': pessoas_norm,
                     'diarias_por_servidor': qtd_label,
-                    'valor_por_servidor': valor_unitario_label,
+                    'valor_por_servidor': valor_por_servidor_label,
+                    'valor_por_servidor_extenso': valor_por_servidor_extenso,
                     'valor_unitario_referencia': valor_unitario_label,
                 },
                 'qtd_diarias': qtd_label,
@@ -2309,6 +2325,8 @@ def plano_trabalho_calcular_diarias_api(request):
                 'valor_total': valor_total_label,
                 'valor_extenso': valor_extenso_label,
                 'valor_unitario': valor_unitario_label,
+                'valor_por_servidor': valor_por_servidor_label,
+                'valor_por_servidor_extenso': valor_por_servidor_extenso,
             }
         )
 
@@ -2333,6 +2351,14 @@ def plano_trabalho_calcular_diarias_api(request):
     tipo_destino = infer_tipo_destino_from_paradas(paradas)
     resultado['tipo_destino'] = tipo_destino
     totais = (resultado or {}).get('totais') or {}
+    valor_por_servidor = totais.get('valor_por_servidor', '') or ''
+    valor_por_servidor_extenso = totais.get('valor_por_servidor_extenso', '') or ''
+    if not valor_por_servidor_extenso and valor_por_servidor:
+        valor_por_servidor_extenso = valor_por_extenso_ptbr(valor_por_servidor)
+        if valor_por_servidor_extenso == '(preencher manualmente)':
+            valor_por_servidor_extenso = ''
+    if valor_por_servidor_extenso:
+        totais['valor_por_servidor_extenso'] = valor_por_servidor_extenso
 
     return JsonResponse(
         {
@@ -2346,7 +2372,9 @@ def plano_trabalho_calcular_diarias_api(request):
             'quantidade_diarias': totais.get('total_diarias', '') or '',
             'valor_total': totais.get('total_valor', '') or '',
             'valor_extenso': totais.get('valor_extenso', '') or '',
-            'valor_unitario': totais.get('valor_por_servidor', '') or '',
+            'valor_unitario': totais.get('valor_unitario_referencia', '') or '',
+            'valor_por_servidor': valor_por_servidor,
+            'valor_por_servidor_extenso': totais.get('valor_por_servidor_extenso', '') or '',
         }
     )
 
@@ -2482,6 +2510,7 @@ def plano_trabalho_novo(request):
             'plano_trabalho_atividades_catalogo': get_atividades_catalogo(),
             'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
+            'pt_solicitantes_manager_url': _get_solicitantes_manager_url(),
             'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
             'selected_coordenadores_payload': [],
             'hide_page_header': True,
@@ -2536,6 +2565,7 @@ def plano_trabalho_editar(request, pk):
             'plano_trabalho_atividades_catalogo': get_atividades_catalogo(),
             'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
+            'pt_solicitantes_manager_url': _get_solicitantes_manager_url(),
             'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
             'selected_coordenadores_payload': [
                 {'id': c.pk, 'nome': c.nome, 'cargo': c.cargo or '', 'display': f'{c.cargo} — {c.nome}' if c.cargo else c.nome}
