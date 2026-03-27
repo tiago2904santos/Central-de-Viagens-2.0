@@ -110,25 +110,135 @@
   }
 
   /* ── Diárias calculator ── */
-  .pt-diarias-shell { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:1.1rem; align-items:start; }
-  @media(max-width:860px){ .pt-diarias-shell{ grid-template-columns:1fr; } }
-  .pt-diarias-output {
-    border:1px solid #cfe0f0; border-radius:14px;
-    background:linear-gradient(150deg,#f8fbff 0%,#edf5fd 100%);
-    box-shadow:0 8px 24px rgba(37,99,154,.1);
-    padding:1.2rem; display:flex; flex-direction:column; gap:.9rem;
+  .pt-diarias-shell {
+    display: grid;
+    grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+    gap: 1rem;
+    align-items: start;
   }
-  .pt-diarias-total-label { color:#5c7491; font-size:.68rem; letter-spacing:.09em; font-weight:800; text-transform:uppercase; }
-  .pt-diarias-total-value { color:#143a63; font-size:2rem; line-height:1.04; font-weight:900; letter-spacing:-.01em; }
+  @media(max-width:860px){ .pt-diarias-shell{ grid-template-columns:1fr; } }
+  .pt-diarias-main {
+    border: 1px solid #bed4ea;
+    border-radius: 16px;
+    background: linear-gradient(168deg, #fafdff 0%, #e9f4ff 100%);
+    box-shadow: 0 12px 30px rgba(20, 79, 132, .12);
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+  }
+  .pt-diarias-main-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .7rem;
+  }
+  .pt-diarias-main-title {
+    margin: 0;
+    color: #153a60;
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .pt-diarias-auto-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .2rem .52rem;
+    border-radius: 999px;
+    border: 1px solid #c7dfcf;
+    background: #f0fbf4;
+    color: #17693f;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .pt-diarias-auto-chip::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #1d8a4f;
+    box-shadow: 0 0 0 3px rgba(29, 138, 79, .15);
+  }
+  .pt-diarias-total-label {
+    color: #557394;
+    font-size: .67rem;
+    letter-spacing: .09em;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .pt-diarias-total-value {
+    color: #143a63;
+    font-size: 2.08rem;
+    line-height: 1.04;
+    font-weight: 900;
+    letter-spacing: -.01em;
+  }
   .pt-diarias-suggestion {
     display:none; align-items:center; gap:.5rem; flex-wrap:wrap;
     background:#eef7ff; border:1px solid #bcd4ef; border-radius:8px;
     padding:.4rem .7rem; font-size:.82rem; color:#1a4f7a;
   }
   .pt-diarias-suggestion.is-visible { display:flex; }
-  .pt-diarias-kpis { display:grid; gap:.45rem; }
-  .pt-diarias-kpi { border:1px solid #d8e6f4; border-radius:10px; background:rgba(255,255,255,.85); padding:.55rem .65rem; }
-  .pt-diarias-kpi strong { color:#153f67; font-size:.93rem; font-weight:820; display:block; }
+  .pt-diarias-list {
+    display: grid;
+    gap: .55rem;
+  }
+  .pt-diarias-item {
+    border: 1px solid #d6e5f4;
+    border-radius: 11px;
+    background: rgba(255,255,255,.92);
+    padding: .56rem .66rem;
+  }
+  .pt-diarias-item .form-text { margin-bottom: 0; }
+  .pt-diarias-item strong {
+    color: #153f67;
+    font-size: .93rem;
+    font-weight: 820;
+    display: block;
+  }
+  .pt-diarias-side {
+    display: grid;
+    gap: .75rem;
+  }
+  .pt-diarias-side-card {
+    border: 1px solid #d8e4f2;
+    border-radius: 14px;
+    background: linear-gradient(164deg, #ffffff 0%, #f7fbff 100%);
+    box-shadow: 0 10px 24px rgba(21, 76, 125, .08);
+    padding: .9rem;
+  }
+  .pt-diarias-side-title {
+    margin: 0 0 .6rem;
+    color: #154066;
+    font-size: .75rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .pt-diarias-context-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+  }
+  @media(max-width:720px){ .pt-diarias-context-list{ grid-template-columns:1fr; } }
+  .pt-diarias-context-item {
+    border: 1px solid #dce8f5;
+    border-radius: 10px;
+    background: #fff;
+    padding: .48rem .56rem;
+  }
+  .pt-diarias-context-item .form-text { margin-bottom: 0; }
+  .pt-diarias-context-item strong {
+    color: #1a456c;
+    font-size: .86rem;
+    font-weight: 760;
+    display: block;
+  }
 
   /* ── Coordinator principal badge ── */
   .pt-coord-badge-principal {
@@ -361,13 +471,6 @@
             </section>
 
             <section class="oficio-stage-section">
-              <div class="oficio-stage-section-head">
-                <div>
-                  <h3 class="oficio-stage-section-title">Equipe</h3>
-                  <p class="oficio-stage-section-text">Efetivo e coordenação operacional do plano.</p>
-                </div>
-              </div>
-
               <div class="oficio-stage-section-head">
                 <div>
                   <h3 class="oficio-stage-section-title">Efetivo por cargo</h3>
@@ -659,58 +762,74 @@
                 </div>
               </div>
               <div class="pt-diarias-shell">
-                <div class="row g-3">
-                  <div class="col-12">
-                    <label class="form-label" for="{{ form.diarias_quantidade.id_for_label }}">Qtd. de diárias</label>
+                <aside class="pt-diarias-main" id="pt-diarias-output-panel">
+                  <div class="pt-diarias-main-head">
+                    <h4 class="pt-diarias-main-title">Total oficial</h4>
+                    <span class="pt-diarias-auto-chip">Cálculo automático</span>
+                  </div>
+                  <div class="pt-diarias-total-value" id="diarias-total">R$&nbsp;0,00</div>
+                  <div class="pt-diarias-list">
+                    <div class="pt-diarias-item">
+                      <div class="form-text">Diárias</div>
+                      <strong id="diarias-qtd">0</strong>
+                    </div>
+                    <div class="pt-diarias-item">
+                      <div class="form-text">Efetivo</div>
+                      <strong id="pt-live-efetivo">0</strong>
+                    </div>
+                    <div class="pt-diarias-item">
+                      <div class="form-text">Valor por extenso</div>
+                      <strong id="diarias-extenso">Não informado</strong>
+                    </div>
+                  </div>
+                  <div class="d-none" aria-hidden="true">
                     {{ form.diarias_quantidade }}
-                    <div class="mt-2 d-flex gap-2 flex-wrap">
-                      <button type="button" id="btn-calcular-diarias" class="btn btn-outline-primary btn-sm">Calcular diárias</button>
+                    {{ form.diarias_valor_total }}
+                    {{ form.diarias_valor_extenso }}
+                  </div>
+                </aside>
+
+                <div class="pt-diarias-side">
+                  <div class="pt-diarias-side-card">
+                    <h4 class="pt-diarias-side-title">Datas e atendimento</h4>
+                    <div class="pt-diarias-context-list">
+                      <div class="pt-diarias-context-item">
+                        <div class="form-text">Data início</div>
+                        <strong id="pt-diarias-ctx-data-inicio">Não informado</strong>
+                      </div>
+                      <div class="pt-diarias-context-item">
+                        <div class="form-text">Data fim</div>
+                        <strong id="pt-diarias-ctx-data-fim">Não informado</strong>
+                      </div>
+                      <div class="pt-diarias-context-item">
+                        <div class="form-text">Horário do evento</div>
+                        <strong id="pt-diarias-ctx-hora-evento">Não informado</strong>
+                      </div>
+                      <div class="pt-diarias-context-item">
+                        <div class="form-text">Atendimento</div>
+                        <strong id="pt-diarias-ctx-atendimento">Não informado</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="pt-diarias-side-card">
+                    <h4 class="pt-diarias-side-title">Valores por servidor</h4>
+                    <div class="mb-2">
+                      <label class="form-label" for="{{ form.diarias_valor_unitario.id_for_label }}">Valor por servidor (R$)</label>
+                      {{ form.diarias_valor_unitario }}
+                    </div>
+                    <div class="pt-diarias-context-item mb-2">
+                      <div class="form-text">Valor por servidor</div>
+                      <strong id="pt-diarias-right-unit">R$&nbsp;0,00</strong>
+                    </div>
+                    <div class="pt-diarias-context-item">
+                      <div class="form-text">Valor por extenso</div>
+                      <strong id="pt-diarias-right-extenso">Não informado</strong>
                     </div>
                     <div id="diarias-erro" class="alert alert-danger py-2 px-3 mt-2 mb-0" role="alert" style="display:none;"></div>
                     <div id="pt-diarias-suggestion" class="pt-diarias-suggestion mt-2" role="status" aria-live="polite" style="display:none;"></div>
-                    <div class="form-text mt-1" id="diarias-resumo">—</div>
-                  </div>
-                  <div class="col-6">
-                    <label class="form-label" for="{{ form.diarias_valor_unitario.id_for_label }}">Valor / diária</label>
-                    {{ form.diarias_valor_unitario }}
-                  </div>
-                  <div class="col-6">
-                    <label class="form-label" for="{{ form.diarias_valor_total.id_for_label }}">Valor total oficial</label>
-                    {{ form.diarias_valor_total }}
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label" for="{{ form.diarias_valor_extenso.id_for_label }}">Valor por extenso</label>
-                    {{ form.diarias_valor_extenso }}
                   </div>
                 </div>
-                <aside class="pt-diarias-output" id="pt-diarias-output-panel">
-                  <div>
-                    <div class="pt-diarias-total-label">Total estimado</div>
-                    <div class="pt-diarias-total-value" id="diarias-total">R$&nbsp;0,00</div>
-                  </div>
-                  <div class="pt-diarias-kpis">
-                    <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Diárias</div>
-                      <strong id="diarias-qtd">0</strong>
-                    </div>
-                    <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Valor / dia</div>
-                      <strong id="pt-live-unit">R$&nbsp;0,00</strong>
-                    </div>
-                    <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Efetivo</div>
-                      <strong id="pt-live-efetivo">0</strong>
-                    </div>
-                    <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Duração real</div>
-                      <strong id="pt-live-periodo">—</strong>
-                    </div>
-                    <div class="pt-diarias-kpi">
-                      <div class="form-text mb-0">Valor por extenso</div>
-                      <strong id="diarias-extenso">—</strong>
-                    </div>
-                  </div>
-                </aside>
               </div>
             </section>
           </div>
@@ -845,16 +964,18 @@
   const diariasQtd          = document.getElementById('{{ form.diarias_quantidade.id_for_label }}');
   const diariasUnit         = document.getElementById('{{ form.diarias_valor_unitario.id_for_label }}');
   const diariasTotal        = document.getElementById('{{ form.diarias_valor_total.id_for_label }}');
-  const btnCalcularDiarias  = document.getElementById('btn-calcular-diarias');
   const diariasErroEl       = document.getElementById('diarias-erro');
-  const diariasResumoEl     = document.getElementById('diarias-resumo');
   const diariasQtdEl        = document.getElementById('diarias-qtd');
   const diariasExtensoEl    = document.getElementById('diarias-extenso');
   const diariasExtensoInput = document.getElementById('{{ form.diarias_valor_extenso.id_for_label }}');
   const liveTotal           = document.getElementById('diarias-total');
-  const liveUnit            = document.getElementById('pt-live-unit');
   const liveEfetivo         = document.getElementById('pt-live-efetivo');
-  const livePeriodo         = document.getElementById('pt-live-periodo');
+  const diariasCtxDataInicio = document.getElementById('pt-diarias-ctx-data-inicio');
+  const diariasCtxDataFim = document.getElementById('pt-diarias-ctx-data-fim');
+  const diariasCtxHoraEvento = document.getElementById('pt-diarias-ctx-hora-evento');
+  const diariasCtxAtendimento = document.getElementById('pt-diarias-ctx-atendimento');
+  const diariasRightUnit = document.getElementById('pt-diarias-right-unit');
+  const diariasRightExtenso = document.getElementById('pt-diarias-right-extenso');
   const eventoHoraInicio    = document.getElementById('evento_hora_inicio');
   const eventoHoraFim       = document.getElementById('evento_hora_fim');
   const metasInput          = document.getElementById('{{ form.metas_formatadas.id_for_label }}');
@@ -923,7 +1044,20 @@
   function parseCurrency(val) {
     const raw = String(val || '').trim();
     if (!raw) return 0;
-    const n = parseFloat(raw.replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, ''));
+    const cleaned = raw.replace(/[^0-9,.-]/g, '');
+    let normalized = cleaned;
+
+    if (cleaned.includes(',')) {
+      normalized = cleaned.replace(/\./g, '').replace(',', '.');
+    } else {
+      const parts = cleaned.split('.');
+      if (parts.length > 2) {
+        const decimal = parts.pop();
+        normalized = parts.join('') + '.' + decimal;
+      }
+    }
+
+    const n = parseFloat(normalized);
     return Number.isFinite(n) ? n : 0;
   }
   function formatCurrency(val) {
@@ -931,15 +1065,16 @@
     catch (_) { return 'R$ ' + (val || 0).toFixed(2); }
   }
   function fmtDate(iso) {
-    if (!iso) return '—';
+    if (!iso) return 'Não informado';
     const parts = iso.split('-');
-    if (parts.length < 3) return iso;
+    if (parts.length < 3) return iso || 'Não informado';
     return parts[2] + '/' + parts[1] + '/' + parts[0];
   }
   function selectedText(sel) {
-    if (!sel || sel.selectedIndex < 0) return '—';
+    if (!sel || sel.selectedIndex < 0) return 'Não informado';
     const opt = sel.options[sel.selectedIndex];
-    return opt ? String(opt.textContent || '').trim() : '—';
+    const txt = opt ? String(opt.textContent || '').trim() : '';
+    return txt || 'Não informado';
   }
   function parseIntOrNull(val) {
     const raw = String(val || '').trim();
@@ -1087,7 +1222,7 @@
     syncMetaState();
     collectDestinos();
     reindexEfetivoRows();
-    syncEfetivoTotal();
+    syncEfetivoTotal({ skipRecalculateDiarias: true, silentNotify: true });
     const payload = buildPayloadFromState();
     setAutosaveStatus('saving');
     try {
@@ -1232,6 +1367,7 @@
   function toggleHorarioManual() {
     if (!horarioPadrao || !horarioManualWrap) return;
     horarioManualWrap.style.display = horarioPadrao.value === '__OUTROS__' ? '' : 'none';
+    updateDiariasContextCards();
   }
   function toggleDataFim() {
     if (!dataUnica || !colDataFim) return;
@@ -1299,7 +1435,52 @@
   function onDatasChange() {
     toggleDataFim();
     parseDateRange();
+    updateDiariasContextCards();
     notify();
+  }
+
+  function formatTimeLabel(value) {
+    const raw = String(value || '').trim();
+    return raw || 'Não informado';
+  }
+
+  function updateDiariasContextCards() {
+    if (diariasCtxDataInicio) diariasCtxDataInicio.textContent = fmtDate((dataInicio && dataInicio.value) || '');
+    const fim = (dataUnica && dataUnica.checked)
+      ? ((dataInicio && dataInicio.value) || '')
+      : ((dataFim && dataFim.value) || '');
+    if (diariasCtxDataFim) diariasCtxDataFim.textContent = fmtDate(fim);
+
+    const horaInicio = formatTimeLabel(eventoHoraInicio ? eventoHoraInicio.value : '');
+    const horaFim = formatTimeLabel(eventoHoraFim ? eventoHoraFim.value : '');
+    const horarioEvento = (horaInicio === 'Não informado' && horaFim === 'Não informado') ? 'Não informado' : (horaInicio + ' - ' + horaFim);
+    if (diariasCtxHoraEvento) diariasCtxHoraEvento.textContent = horarioEvento;
+
+    let atendimento = 'Não informado';
+    if (horarioPadrao) {
+      if (horarioPadrao.value === '__OUTROS__') {
+        atendimento = String((document.getElementById('{{ form.horario_atendimento_manual.id_for_label }}') || {}).value || '').trim() || 'Manual';
+      } else {
+        atendimento = selectedText(horarioPadrao) || 'Não informado';
+      }
+    }
+    if (diariasCtxAtendimento) diariasCtxAtendimento.textContent = atendimento;
+  }
+
+  function updateValorServidorUI() {
+    const efetivo = Math.max(0, Number(getQuantidadePessoas() || 0));
+    const totalOficial = Math.max(0, Number((planoState.diarias && planoState.diarias.total) || 0));
+    const qtdDiarias = Math.max(0, Number((planoState.diarias && planoState.diarias.qtd) || 0));
+    const valorDiaria = parseCurrency(String((diariasUnit && diariasUnit.value) || (planoState.diarias && (planoState.diarias.valor_unitario || planoState.diarias.unitario)) || '0'));
+
+    let valorPorServidor = 0;
+    if (totalOficial > 0 && efetivo > 0) {
+      valorPorServidor = totalOficial / efetivo;
+    } else if (qtdDiarias > 0 && valorDiaria > 0) {
+      valorPorServidor = qtdDiarias * valorDiaria;
+    }
+
+    if (diariasRightUnit) diariasRightUnit.textContent = formatCurrency(valorPorServidor);
   }
 
   // ══════════════════════════════════════════════════════════
@@ -1318,24 +1499,20 @@
   }
 
   function formatDiariasQtdValue(qtd) {
+    if (typeof qtd === 'string' && qtd.trim()) return qtd.trim();
     if (!Number.isFinite(qtd)) return '0';
     return Number.isInteger(qtd) ? String(qtd) : String(qtd).replace('.', ',');
   }
 
   function updateDiariasUI() {
     const qtd = Number((planoState.diarias && planoState.diarias.qtd) || 0);
+    const qtdLabelState = String((planoState.diarias && planoState.diarias.qtd_label) || '').trim();
     const horas = Number((planoState.diarias && planoState.diarias.horas) || 0);
-    const qtdLabel = formatDiariasQtdValue(qtd);
+    const qtdLabel = qtdLabelState || formatDiariasQtdValue(qtd);
 
     if (diariasQtdEl) diariasQtdEl.textContent = qtdLabel;
     if (diariasQtd) diariasQtd.value = qtdLabel;
 
-    const dias = horas > 0 ? Math.floor(horas / 24) : 0;
-    const horasRest = horas > 0 ? Math.floor(horas % 24) : 0;
-    const resumo = horas > 0 ? (dias + ' dias e ' + horasRest + ' horas') : '—';
-
-    if (diariasResumoEl) diariasResumoEl.textContent = resumo;
-    if (livePeriodo) livePeriodo.textContent = resumo;
     hideDiariaErro();
   }
 
@@ -1354,7 +1531,8 @@
 
   function updateValorExtensoUI() {
     const valorExtenso = String((planoState.diarias && planoState.diarias.valor_extenso) || '').trim();
-    if (diariasExtensoEl) diariasExtensoEl.textContent = valorExtenso || '—';
+    if (diariasExtensoEl) diariasExtensoEl.textContent = valorExtenso || 'Não informado';
+    if (diariasRightExtenso) diariasRightExtenso.textContent = valorExtenso || 'Não informado';
     if (diariasExtensoInput) diariasExtensoInput.value = valorExtenso;
   }
 
@@ -1419,6 +1597,7 @@
       saida_hora: desloc.saida_hora || null,
       chegada_data: desloc.chegada_data || null,
       chegada_hora: desloc.chegada_hora || null,
+      destinos_payload: Array.isArray(planoState.roteiro) ? planoState.roteiro : [],
       pessoas: getQuantidadePessoas(),
       valor: Number((planoState.diarias && (planoState.diarias.valor_unitario || planoState.diarias.unitario)) || 0),
     };
@@ -1441,21 +1620,24 @@
   }
 
   function applyDiariasResult(result) {
-    if (!result || result.success === false) {
+    if (!result || result.success === false || result.ok === false) {
       showDiariaErro((result && result.error) || 'Não foi possível calcular as diárias.');
       return;
     }
+    const totais = (result && result.totais && typeof result.totais === 'object') ? result.totais : null;
+    const qtdLabel = String((totais && totais.total_diarias) || result.qtd_diarias || '').trim();
     const qtd = Number(String(result.qtd_diarias || 0).replace(',', '.'));
-    const total = parseCurrency(String(result.valor_total || '0'));
-    const valorExtenso = String(result.valor_extenso || '').trim();
+    const total = parseCurrency(String((totais && totais.total_valor) || result.valor_total || '0'));
+    const valorExtenso = String((totais && totais.valor_extenso) || result.valor_extenso || '').trim();
     const desloc = planoState.deslocamento || {};
     const saida = desloc.saida;
     const chegada = desloc.chegada;
     const horas = (saida && chegada && chegada > saida) ? ((chegada - saida) / (1000 * 60 * 60)) : 0;
-    const valorUnitario = Number((planoState.diarias && (planoState.diarias.valor_unitario || planoState.diarias.unitario)) || 0);
+    const valorUnitario = parseCurrency(String((totais && totais.valor_por_servidor) || result.valor_unitario || (planoState.diarias && (planoState.diarias.valor_unitario || planoState.diarias.unitario)) || 0));
 
     planoState.diarias = {
       qtd: Number.isFinite(qtd) ? qtd : 0,
+      qtd_label: qtdLabel,
       horas: Number.isFinite(horas) ? horas : 0,
       valor_unitario: valorUnitario,
       unitario: valorUnitario,
@@ -1463,11 +1645,15 @@
       valor_extenso: valorExtenso,
     };
 
+    if (diariasUnit) {
+      diariasUnit.value = valorUnitario > 0 ? valorUnitario.toFixed(2).replace('.', ',') : '';
+    }
     if (diariasTotal) {
       diariasTotal.value = planoState.diarias.total > 0
         ? planoState.diarias.total.toFixed(2).replace('.', ',')
         : '';
     }
+    updateValorServidorUI();
     updateDiariasUI();
     updateValorTotalUI();
     updateValorExtensoUI();
@@ -1496,6 +1682,7 @@
 
   async function calcularDiarias(options) {
     const opts = options || {};
+    collectDestinos();
     const deslocamento = planoState.deslocamento || { saida: null, chegada: null };
     const saida = deslocamento.saida;
     const chegada = deslocamento.chegada;
@@ -1554,10 +1741,10 @@
     planoState.diarias = { qtd, horas, valor_unitario: unit, unitario: unit, total: existingTotal, valor_extenso: existingExtenso };
 
     if (diariasQtdEl) diariasQtdEl.textContent = formatDiariasQtdValue(qtd);
-    if (liveUnit)    liveUnit.textContent    = formatCurrency(unit);
     if (liveEfetivo) liveEfetivo.textContent = efetivo + ' servidor(es)';
-    if (livePeriodo && !horas) livePeriodo.textContent = '—';
-    calcularValorTotalDiarias({ callApi: opts.callApi !== false, qtd });
+    updateValorServidorUI();
+    // Total local não precisa chamar a API; cálculo oficial é feito em calcularDiarias().
+    calcularValorTotalDiarias({ callApi: false, qtd });
     if (!opts.silentNotify) notify();
   }
 
@@ -1661,6 +1848,7 @@
       await mountCidadeOptions(row.querySelector('.destino-cidade'), ev.target.value, '');
     }
     collectDestinos();
+    calcularDiarias({ suppressErrors: true, silentNotify: true });
   });
   destinosContainer.addEventListener('click', (ev) => {
     const btn = ev.target.closest('.btn-rem-destino');
@@ -1668,16 +1856,19 @@
     if (destinosContainer.querySelectorAll('.pt-dest-row').length <= 1) return;
     btn.closest('.pt-dest-row').remove();
     collectDestinos();
+    calcularDiarias({ suppressErrors: true, silentNotify: true });
   });
   document.getElementById('btn-add-destino').addEventListener('click', async () => {
     await addDestinoRow({ estado_id: '', cidade_id: '' });
     collectDestinos();
+    calcularDiarias({ suppressErrors: true, silentNotify: true });
   });
 
   // ══════════════════════════════════════════════════════════
   //  EFETIVO
   // ══════════════════════════════════════════════════════════
-  function syncEfetivoTotal() {
+  function syncEfetivoTotal(options) {
+    const opts = options || {};
     if (!qtdServidores) return;
     let total = 0;
     const equipePayload = [];
@@ -1699,9 +1890,11 @@
     if (totalServidoresEl) totalServidoresEl.textContent = String(total || 0);
     planoState.equipe = equipePayload;
     syncMetaState();
-    computeDiarias();
-    calcularDiarias({ suppressErrors: true, silentNotify: true });
-    notify();
+    if (!opts.skipRecalculateDiarias) {
+      computeDiarias();
+      calcularDiarias({ suppressErrors: true, silentNotify: true });
+    }
+    if (!opts.silentNotify) notify();
   }
   function reindexEfetivoRows() {
     Array.from(efetivoRows.querySelectorAll('[data-ef-row]')).forEach((row, idx) => {
@@ -2020,8 +2213,8 @@
   if (dataUnica)         dataUnica.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
   if (dataInicio)        dataInicio.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
   if (dataFim)           dataFim.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
-  if (eventoHoraInicio)  eventoHoraInicio.addEventListener('change', () => { syncMetaState(); triggerAutosave(); });
-  if (eventoHoraFim)     eventoHoraFim.addEventListener('change', () => { syncMetaState(); triggerAutosave(); });
+  if (eventoHoraInicio)  eventoHoraInicio.addEventListener('change', () => { updateDiariasContextCards(); syncMetaState(); triggerAutosave(); });
+  if (eventoHoraFim)     eventoHoraFim.addEventListener('change', () => { updateDiariasContextCards(); syncMetaState(); triggerAutosave(); });
 
   // ── Deslocamento (saída e chegada da sede) ──
   if (dataSaidaSede)   dataSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
@@ -2030,13 +2223,6 @@
   if (horaChegadaSede) horaChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
   if (horaSaidaSede)   horaSaidaSede.addEventListener('blur',   () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
   if (horaChegadaSede) horaChegadaSede.addEventListener('blur', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (btnCalcularDiarias) btnCalcularDiarias.addEventListener('click', async () => {
-    onDeslocamentoChange();
-    await calcularDiarias();
-    syncMetaState();
-    triggerAutosave();
-  });
-
   // ── Remover linha equipe ──
   document.addEventListener('click', (e) => {
     if (e.target.closest('.btn-remove-row')) {
@@ -2105,6 +2291,7 @@
   toggleDataFim();
   applyDefaultCoordenadorAdministrativo();
   parseDateRange();
+  updateDiariasContextCards();
   onDeslocamentoChange();
   renderAtividadesRealtime();
   syncMetaState();

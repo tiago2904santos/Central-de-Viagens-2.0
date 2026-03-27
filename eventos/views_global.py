@@ -44,6 +44,7 @@ from .services.diarias import (
     calculate_periodized_diarias,
     calcular_diarias_com_valor,
     formatar_valor_diarias,
+    infer_tipo_destino_from_paradas,
 )
 from .services.documentos import (
     DocumentoFormato,
@@ -1995,6 +1996,47 @@ def _normalize_horario_autosave(padrao, manual):
     return horario
 
 
+def _normalize_decimal_autosave(value):
+    raw = _clean(value)
+    if not raw:
+        return ''
+    raw = raw.replace(' ', '')
+    if ',' in raw:
+        raw = raw.replace('.', '').replace(',', '.')
+    return raw
+
+
+def _parse_autosave_request_payload(request):
+    if request.content_type and 'application/json' in request.content_type:
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except (TypeError, ValueError, UnicodeDecodeError):
+            return None
+        return payload if isinstance(payload, dict) else None
+
+    payload = request.POST.dict()
+    for key in ('oficios_relacionados_ids', 'coordenadores_ids', 'atividades_codigos', 'oficios_relacionados'):
+        values = request.POST.getlist(key)
+        if len(values) > 1:
+            payload[key] = values
+    return payload
+
+
+def _parse_autosave_list(value):
+    if isinstance(value, list):
+        return value
+    raw = _clean(value)
+    if not raw:
+        return []
+    if raw.startswith('['):
+        try:
+            parsed = json.loads(raw)
+        except (TypeError, ValueError, UnicodeDecodeError):
+            parsed = []
+        return parsed if isinstance(parsed, list) else []
+    return [item.strip() for item in raw.split(',') if item.strip()]
+
+
 def _assign_plano_auto_number(plano):
     if plano.numero and plano.ano:
         return
@@ -2006,12 +2048,8 @@ def _assign_plano_auto_number(plano):
 
 @require_http_methods(['POST'])
 def plano_trabalho_autosave(request):
-    try:
-        payload = json.loads(request.body.decode('utf-8') or '{}')
-    except (TypeError, ValueError, UnicodeDecodeError):
-        return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
-
-    if not isinstance(payload, dict):
+    payload = _parse_autosave_request_payload(request)
+    if payload is None:
         return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
 
     plano_id = _autosave_int(payload.get('id'))
@@ -2021,102 +2059,138 @@ def plano_trabalho_autosave(request):
     if not plano:
         return JsonResponse({'success': False, 'error': 'Plano não encontrado.'}, status=404)
 
+    payload_keys = set(payload.keys())
+
+    def _has(*keys):
+        return any(key in payload_keys for key in keys)
+
     if _autosave_bool(payload.get('force_rascunho')):
         plano.status = PlanoTrabalho.STATUS_RASCUNHO
     if not plano.numero or not plano.ano:
         _assign_plano_auto_number(plano)
-    plano.data_criacao = _autosave_date(payload.get('data_criacao')) or plano.data_criacao or timezone.localdate()
-    plano.evento_id = _autosave_int(payload.get('evento_id'))
-    plano.oficio_id = _autosave_int(payload.get('oficio_id'))
-    plano.roteiro_id = _autosave_int(payload.get('roteiro_id'))
-    plano.coordenador_administrativo_id = _autosave_int(payload.get('coordenador_administrativo_id'))
+    if _has('data_criacao'):
+        plano.data_criacao = _autosave_date(payload.get('data_criacao')) or plano.data_criacao or timezone.localdate()
+    elif not plano.data_criacao:
+        plano.data_criacao = timezone.localdate()
+
+    if _has('evento_id'):
+        plano.evento_id = _autosave_int(payload.get('evento_id'))
+    if _has('oficio_id'):
+        plano.oficio_id = _autosave_int(payload.get('oficio_id'))
+    if _has('roteiro_id'):
+        plano.roteiro_id = _autosave_int(payload.get('roteiro_id'))
+    if _has('coordenador_administrativo_id'):
+        plano.coordenador_administrativo_id = _autosave_int(payload.get('coordenador_administrativo_id'))
 
     solicitante_escolha = _clean(payload.get('solicitante_escolha'))
     solicitante_outros = _clean(payload.get('solicitante_outros'))
-    if solicitante_escolha and solicitante_escolha.isdigit():
-        plano.solicitante_id = int(solicitante_escolha)
-        plano.solicitante_outros = ''
-    elif solicitante_escolha == PlanoTrabalhoForm.OUTROS_CHOICE:
-        plano.solicitante_id = None
-        plano.solicitante_outros = solicitante_outros
-    else:
-        plano.solicitante_id = None
-        plano.solicitante_outros = solicitante_outros
+    if _has('solicitante_escolha', 'solicitante_outros'):
+        if solicitante_escolha and solicitante_escolha.isdigit():
+            plano.solicitante_id = int(solicitante_escolha)
+            plano.solicitante_outros = ''
+        elif solicitante_escolha == PlanoTrabalhoForm.OUTROS_CHOICE:
+            plano.solicitante_id = None
+            plano.solicitante_outros = solicitante_outros
+        else:
+            plano.solicitante_id = None
+            plano.solicitante_outros = solicitante_outros
 
-    plano.horario_atendimento = _normalize_horario_autosave(
-        payload.get('horario_atendimento_padrao'),
-        payload.get('horario_atendimento_manual'),
-    )
-    plano.evento_data_unica = _autosave_bool(payload.get('evento_data_unica'))
-    plano.evento_data_inicio = _autosave_date(payload.get('evento_data_inicio'))
-    plano.evento_data_fim = _autosave_date(payload.get('evento_data_fim'))
+    if _has('horario_atendimento_padrao', 'horario_atendimento_manual'):
+        plano.horario_atendimento = _normalize_horario_autosave(
+            payload.get('horario_atendimento_padrao'),
+            payload.get('horario_atendimento_manual'),
+        )
+    if _has('evento_data_unica'):
+        plano.evento_data_unica = _autosave_bool(payload.get('evento_data_unica'))
+    if _has('evento_data_inicio'):
+        plano.evento_data_inicio = _autosave_date(payload.get('evento_data_inicio'))
+    if _has('evento_data_fim'):
+        plano.evento_data_fim = _autosave_date(payload.get('evento_data_fim'))
     if plano.evento_data_unica and plano.evento_data_inicio:
         plano.evento_data_fim = plano.evento_data_inicio
 
-    qtd_servidores = _autosave_int(payload.get('quantidade_servidores'))
-    plano.quantidade_servidores = qtd_servidores if qtd_servidores and qtd_servidores > 0 else None
+    if _has('quantidade_servidores'):
+        qtd_servidores = _autosave_int(payload.get('quantidade_servidores'))
+        plano.quantidade_servidores = qtd_servidores if qtd_servidores and qtd_servidores > 0 else None
 
-    atividades = payload.get('atividades_codigos')
-    if isinstance(atividades, str):
-        atividades = [item.strip() for item in atividades.split(',') if item.strip()]
-    if not isinstance(atividades, list):
-        atividades = []
-    atividades = [str(item).strip().upper() for item in atividades if str(item).strip()]
-    plano.atividades_codigos = ','.join(dict.fromkeys(atividades))
-    plano.metas_formatadas = build_metas_formatada(plano.atividades_codigos)
-    plano.recursos_texto = build_recursos_necessarios_formatado(plano.atividades_codigos)
+    if _has('atividades_codigos'):
+        atividades = _parse_autosave_list(payload.get('atividades_codigos'))
+        atividades = [str(item).strip().upper() for item in atividades if str(item).strip()]
+        plano.atividades_codigos = ','.join(dict.fromkeys(atividades))
+        plano.metas_formatadas = build_metas_formatada(plano.atividades_codigos)
+        plano.recursos_texto = build_recursos_necessarios_formatado(plano.atividades_codigos)
 
-    destinos = payload.get('destinos_payload')
-    if not isinstance(destinos, list):
-        destinos = []
-    plano.destinos_json = destinos
+    if _has('destinos_payload'):
+        destinos = payload.get('destinos_payload')
+        if not isinstance(destinos, list):
+            try:
+                destinos = json.loads(destinos or '[]') if destinos else []
+            except (TypeError, ValueError, UnicodeDecodeError):
+                destinos = []
+        if not isinstance(destinos, list):
+            destinos = []
+        plano.destinos_json = destinos
 
-    diarias_payload = payload.get('diarias') if isinstance(payload.get('diarias'), dict) else {}
-    diarias_qtd_raw = _clean(diarias_payload.get('qtd')) or _clean(payload.get('diarias_quantidade'))
-    diarias_unit_raw = _clean(diarias_payload.get('valor_unitario')) or _clean(payload.get('diarias_valor_unitario'))
-    diarias_total_raw = _clean(diarias_payload.get('total')) or _clean(payload.get('diarias_valor_total'))
-    diarias_extenso_raw = _clean(diarias_payload.get('valor_extenso')) or _clean(payload.get('diarias_valor_extenso'))
+    if _has('diarias', 'diarias_quantidade', 'qtd_diarias', 'diarias_valor_unitario', 'diarias_valor_total', 'valor_total_diarias', 'diarias_valor_extenso'):
+        diarias_payload = payload.get('diarias') if isinstance(payload.get('diarias'), dict) else {}
+        diarias_qtd_raw = (
+            _clean(diarias_payload.get('qtd'))
+            or _clean(payload.get('diarias_quantidade'))
+            or _clean(payload.get('qtd_diarias'))
+        )
+        diarias_unit_raw = _clean(diarias_payload.get('valor_unitario')) or _clean(payload.get('diarias_valor_unitario'))
+        diarias_total_raw = (
+            _clean(diarias_payload.get('total'))
+            or _clean(payload.get('diarias_valor_total'))
+            or _clean(payload.get('valor_total_diarias'))
+        )
+        diarias_extenso_raw = _clean(diarias_payload.get('valor_extenso')) or _clean(payload.get('diarias_valor_extenso'))
 
-    pessoas = plano.quantidade_servidores or 0
-    diarias_calc = calcular_diarias_com_valor(diarias_qtd_raw, diarias_unit_raw, pessoas)
+        pessoas = plano.quantidade_servidores or 0
+        try:
+            diarias_calc = calcular_diarias_com_valor(
+                _normalize_decimal_autosave(diarias_qtd_raw),
+                _normalize_decimal_autosave(diarias_unit_raw),
+                pessoas,
+            )
+        except (ArithmeticError, ValueError, TypeError):
+            diarias_calc = calcular_diarias_com_valor(0, 0, pessoas)
 
-    plano.quantidade_diarias = diarias_calc['quantidade_diarias']
-    plano.valor_diarias = diarias_calc['valor_total']
-    plano.valor_diarias_extenso = diarias_extenso_raw or diarias_calc['valor_extenso']
+        plano.quantidade_diarias = diarias_calc['quantidade_diarias']
+        plano.valor_diarias = diarias_calc['valor_total']
+        plano.valor_diarias_extenso = diarias_extenso_raw or diarias_calc['valor_extenso']
 
-    plano.diarias_quantidade = diarias_qtd_raw
-    plano.diarias_valor_unitario = diarias_unit_raw
-    plano.diarias_valor_total = diarias_total_raw or formatar_valor_diarias(diarias_calc['valor_total'])
-    plano.diarias_valor_extenso = plano.valor_diarias_extenso
+        plano.diarias_quantidade = diarias_qtd_raw
+        plano.diarias_valor_unitario = diarias_unit_raw
+        plano.diarias_valor_total = diarias_total_raw or formatar_valor_diarias(diarias_calc['valor_total'])
+        plano.diarias_valor_extenso = plano.valor_diarias_extenso
 
     plano.save()
 
-    oficios_relacionados_ids = payload.get('oficios_relacionados_ids')
-    if not isinstance(oficios_relacionados_ids, list):
-        oficios_relacionados_ids = []
-    parsed_oficios_ids = []
-    for item in oficios_relacionados_ids:
-        parsed = _autosave_int(item)
-        if parsed:
-            parsed_oficios_ids.append(parsed)
-    if plano.oficio_id and plano.oficio_id not in parsed_oficios_ids:
-        parsed_oficios_ids.append(plano.oficio_id)
-    plano.oficios.set(Oficio.objects.filter(pk__in=parsed_oficios_ids))
+    if _has('oficios_relacionados_ids', 'oficios_relacionados', 'oficio_id'):
+        oficios_relacionados_ids = _parse_autosave_list(
+            payload.get('oficios_relacionados_ids') or payload.get('oficios_relacionados')
+        )
+        parsed_oficios_ids = []
+        for item in oficios_relacionados_ids:
+            parsed = _autosave_int(item)
+            if parsed:
+                parsed_oficios_ids.append(parsed)
+        if plano.oficio_id and plano.oficio_id not in parsed_oficios_ids:
+            parsed_oficios_ids.append(plano.oficio_id)
+        plano.oficios.set(Oficio.objects.filter(pk__in=parsed_oficios_ids))
 
-    coordenadores_ids = payload.get('coordenadores_ids')
-    if isinstance(coordenadores_ids, str):
-        coordenadores_ids = [item.strip() for item in coordenadores_ids.split(',') if item.strip()]
-    if not isinstance(coordenadores_ids, list):
-        coordenadores_ids = []
-    parsed_coord_ids = []
-    for item in coordenadores_ids:
-        parsed = _autosave_int(item)
-        if parsed:
-            parsed_coord_ids.append(parsed)
-    plano.coordenadores.set(plano.coordenadores.model.objects.filter(pk__in=parsed_coord_ids, ativo=True))
-    if parsed_coord_ids:
-        plano.coordenador_operacional_id = parsed_coord_ids[0]
-        plano.save(update_fields=['coordenador_operacional', 'updated_at'])
+    if _has('coordenadores_ids'):
+        coordenadores_ids = _parse_autosave_list(payload.get('coordenadores_ids'))
+        parsed_coord_ids = []
+        for item in coordenadores_ids:
+            parsed = _autosave_int(item)
+            if parsed:
+                parsed_coord_ids.append(parsed)
+        plano.coordenadores.set(plano.coordenadores.model.objects.filter(pk__in=parsed_coord_ids, ativo=True))
+        if parsed_coord_ids:
+            plano.coordenador_operacional_id = parsed_coord_ids[0]
+            plano.save(update_fields=['coordenador_operacional', 'updated_at'])
 
     return JsonResponse(
         {
@@ -2132,58 +2206,147 @@ def plano_trabalho_autosave(request):
 
 @require_http_methods(['POST'])
 def plano_trabalho_calcular_diarias_api(request):
-    try:
-        payload = json.loads(request.body.decode('utf-8') or '{}')
-    except (TypeError, ValueError, UnicodeDecodeError):
-        return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
+    if request.content_type and 'application/json' in request.content_type:
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except (TypeError, ValueError, UnicodeDecodeError):
+            return JsonResponse({'ok': False, 'success': False, 'error': 'Payload inválido.'}, status=400)
+    else:
+        payload = request.POST.dict()
 
     if not isinstance(payload, dict):
-        return JsonResponse({'success': False, 'error': 'Payload inválido.'}, status=400)
+        return JsonResponse({'ok': False, 'success': False, 'error': 'Payload inválido.'}, status=400)
 
-    def _safe_int(value):
+    def _safe_int(value, default=0):
         try:
-            parsed = int(value)
-            return parsed if parsed > 0 else 0
+            parsed = int(str(value or '').strip())
+            return parsed if parsed > 0 else default
         except (TypeError, ValueError):
-            return 0
+            return default
 
-    qtd = payload.get('qtd')
-    valor_unitario = payload.get('valor')
-    pessoas = _safe_int(payload.get('pessoas')) or 1
-
-    saida_data = str(payload.get('saida_data') or '').strip()
-    saida_hora = str(payload.get('saida_hora') or '').strip()
-    chegada_data = str(payload.get('chegada_data') or '').strip()
-    chegada_hora = str(payload.get('chegada_hora') or '').strip()
-
-    if saida_data and saida_hora and chegada_data and chegada_hora:
+    def _to_dt(data_value, hora_value):
+        data_str = str(data_value or '').strip()
+        hora_str = str(hora_value or '').strip()
+        if not data_str or not hora_str:
+            return None
         try:
-            saida_dt = datetime.fromisoformat(f'{saida_data}T{saida_hora}')
-            chegada_dt = datetime.fromisoformat(f'{chegada_data}T{chegada_hora}')
-            diff_horas = (chegada_dt - saida_dt).total_seconds() / 3600.0
-            if diff_horas <= 0:
-                return JsonResponse({'success': False, 'error': 'Data de chegada deve ser maior que saída.'}, status=400)
-            qtd_calc = 0.0
-            if diff_horas >= 24:
-                qtd_calc = float(int(diff_horas // 24))
-                resto = diff_horas % 24
-                if resto >= 12:
-                    qtd_calc += 0.5
-            elif diff_horas >= 12:
-                qtd_calc = 0.5
-            qtd = qtd_calc
+            return datetime.fromisoformat(f'{data_str}T{hora_str}')
         except (TypeError, ValueError):
-            return JsonResponse({'success': False, 'error': 'Período de deslocamento inválido.'}, status=400)
+            return None
 
-    dados = calcular_diarias_com_valor(qtd, valor_unitario, pessoas)
+    def _extract_destinos(raw_destinos):
+        destinos = raw_destinos
+        if isinstance(destinos, str):
+            try:
+                destinos = json.loads(destinos or '[]') if destinos else []
+            except (TypeError, ValueError, UnicodeDecodeError):
+                destinos = []
+        if not isinstance(destinos, list):
+            destinos = []
+
+        paradas = []
+        for item in destinos:
+            if not isinstance(item, dict):
+                continue
+            cidade = str(item.get('cidade_nome') or item.get('cidade') or item.get('nome') or item.get('destino') or '').strip()
+            uf = str(item.get('estado_sigla') or item.get('uf') or item.get('estado') or '').strip().upper()
+            if cidade:
+                paradas.append((cidade, uf))
+        return paradas
+
+    pessoas = _safe_int(payload.get('pessoas'), default=1)
+    saida_dt = _to_dt(payload.get('saida_data'), payload.get('saida_hora'))
+    chegada_dt = _to_dt(payload.get('chegada_data'), payload.get('chegada_hora'))
+    if saida_dt and chegada_dt and chegada_dt <= saida_dt:
+        return JsonResponse(
+            {'ok': False, 'success': False, 'error': 'Data de chegada deve ser maior que saída.'},
+        )
+
+    paradas = _extract_destinos(payload.get('destinos_payload'))
+    if not paradas:
+        cidade_fallback = str(payload.get('destino_cidade') or payload.get('cidade') or '').strip()
+        uf_fallback = str(payload.get('destino_uf') or payload.get('uf') or '').strip().upper()
+        if cidade_fallback:
+            paradas = [(cidade_fallback, uf_fallback)]
+
+    # Fallback compatível: quando o frontend envia payload parcial (qtd/valor/pessoas),
+    # mantém o comportamento legado sem gerar 400 em chamadas intermediárias.
+    if not (saida_dt and chegada_dt and paradas):
+        qtd_raw = _clean(payload.get('qtd')) or _clean(payload.get('diarias_quantidade'))
+        valor_raw = _clean(payload.get('valor')) or _clean(payload.get('diarias_valor_unitario'))
+        try:
+            dados = calcular_diarias_com_valor(
+                _normalize_decimal_autosave(qtd_raw),
+                _normalize_decimal_autosave(valor_raw),
+                max(1, pessoas),
+            )
+        except (ArithmeticError, ValueError, TypeError):
+            dados = calcular_diarias_com_valor(0, 0, max(1, pessoas))
+
+        qtd_label = _clean(qtd_raw) or str(dados['quantidade_diarias'])
+        valor_total_label = formatar_valor_diarias(dados['valor_total']) if dados['valor_total'] else ''
+        valor_unitario_label = _clean(valor_raw)
+        valor_extenso_label = dados.get('valor_extenso', '') or ''
+
+        return JsonResponse(
+            {
+                'ok': True,
+                'success': True,
+                'tipo_destino': '',
+                'periodos': [],
+                'totais': {
+                    'total_diarias': qtd_label,
+                    'total_horas': '',
+                    'total_valor': valor_total_label,
+                    'valor_extenso': valor_extenso_label,
+                    'quantidade_servidores': max(1, pessoas),
+                    'diarias_por_servidor': qtd_label,
+                    'valor_por_servidor': valor_unitario_label,
+                    'valor_unitario_referencia': valor_unitario_label,
+                },
+                'qtd_diarias': qtd_label,
+                'quantidade_diarias': qtd_label,
+                'valor_total': valor_total_label,
+                'valor_extenso': valor_extenso_label,
+                'valor_unitario': valor_unitario_label,
+            }
+        )
+
+    destino_cidade, destino_uf = paradas[0]
+    markers = [
+        PeriodMarker(
+            saida=saida_dt,
+            destino_cidade=destino_cidade,
+            destino_uf=destino_uf,
+        )
+    ]
+
+    try:
+        resultado = calculate_periodized_diarias(
+            markers,
+            chegada_dt,
+            quantidade_servidores=max(1, pessoas),
+        )
+    except ValueError as exc:
+        return JsonResponse({'ok': False, 'success': False, 'error': str(exc)})
+
+    tipo_destino = infer_tipo_destino_from_paradas(paradas)
+    resultado['tipo_destino'] = tipo_destino
+    totais = (resultado or {}).get('totais') or {}
 
     return JsonResponse(
         {
+            'ok': True,
             'success': True,
-            'qtd_diarias': str(dados['quantidade_diarias']),
-            'quantidade_diarias': str(dados['quantidade_diarias']),
-            'valor_total': str(dados['valor_total']),
-            'valor_extenso': dados['valor_extenso'],
+            'tipo_destino': tipo_destino,
+            'periodos': resultado.get('periodos', []),
+            'totais': totais,
+            # Compatibilidade com consumidores legados do PT
+            'qtd_diarias': totais.get('total_diarias', '') or '',
+            'quantidade_diarias': totais.get('total_diarias', '') or '',
+            'valor_total': totais.get('total_valor', '') or '',
+            'valor_extenso': totais.get('valor_extenso', '') or '',
+            'valor_unitario': totais.get('valor_por_servidor', '') or '',
         }
     )
 
