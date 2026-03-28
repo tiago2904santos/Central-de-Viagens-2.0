@@ -456,6 +456,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         widget=forms.SelectMultiple(attrs={'class': '', 'size': 6}),
     )
     destinos_payload = forms.CharField(required=False, widget=forms.HiddenInput())
+    roteiro_json = forms.CharField(required=False, widget=forms.HiddenInput())
     coordenadores_ids = forms.CharField(required=False, widget=forms.HiddenInput())
 
     class Meta:
@@ -597,6 +598,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
                 related_ids = [self.instance.oficio_id]
             self.initial['oficios_relacionados'] = related_ids
             self.initial['destinos_payload'] = json.dumps(self.instance.destinos_json or [])
+            self.initial['roteiro_json'] = json.dumps(self.instance.destinos_json or [])
 
             # Pre-populate coordenadores_ids from existing M2M
             coord_ids = list(self.instance.coordenadores.values_list('pk', flat=True))
@@ -782,8 +784,10 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
                 cleaned_data['coordenador_administrativo'] = coord_cfg
 
         destinos = []
+        destinos_raw = (cleaned_data.get('destinos_payload') or '').strip()
+        roteiro_raw = (cleaned_data.get('roteiro_json') or '').strip()
         try:
-            destinos = self._parse_destinos_payload((cleaned_data.get('destinos_payload') or '').strip())
+            destinos = self._parse_destinos_payload(destinos_raw or roteiro_raw)
         except forms.ValidationError as exc:
             self.add_error('destinos_payload', exc)
 

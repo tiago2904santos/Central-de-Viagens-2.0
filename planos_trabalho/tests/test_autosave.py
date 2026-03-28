@@ -1,9 +1,10 @@
 import json
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from eventos.models import Evento, PlanoTrabalho
 
@@ -147,6 +148,99 @@ class PlanoTrabalhoAutosaveTestCase(TestCase):
         self.assertEqual(self.plano.atividades_codigos, original_atividades)
         self.assertEqual(self.plano.diarias_valor_total, original_diarias_total)
 
+    def test_autosave_dirty_fields_preserva_datas_nao_alteradas(self):
+        response = self._post_json(
+            {
+                'id': self.plano.pk,
+                '_dirty_fields': ['destinos_payload'],
+                'evento_data_inicio': '',
+                'evento_data_fim': '',
+                'destinos_payload': [
+                    {'cidade': 'Guarapuava', 'estado': 'PR'},
+                ],
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('success'))
+
+        self.plano.refresh_from_db()
+        self.assertEqual(self.plano.evento_data_inicio, date(2026, 3, 10))
+        self.assertEqual(self.plano.evento_data_fim, date(2026, 3, 12))
+        self.assertEqual(self.plano.destinos_json[0]['cidade'], 'Guarapuava')
+
+    def test_autosave_dirty_fields_permite_limpar_data_quando_explicito(self):
+        response = self._post_json(
+            {
+                'id': self.plano.pk,
+                '_dirty_fields': ['evento_data_fim'],
+                'evento_data_fim': '',
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('success'))
+
+        self.plano.refresh_from_db()
+        self.assertEqual(self.plano.evento_data_inicio, date(2026, 3, 10))
+        self.assertIsNone(self.plano.evento_data_fim)
+
+    def test_autosave_persiste_roteiro_e_diarias_no_mesmo_payload(self):
+        response = self._post_json(
+            {
+                'id': self.plano.pk,
+                '_dirty_fields': [
+                    'destinos_payload',
+                    'quantidade_servidores',
+                    'diarias',
+                    'diarias_quantidade',
+                    'diarias_valor_unitario',
+                    'diarias_valor_total',
+                    'diarias_valor_extenso',
+                ],
+                'quantidade_servidores': '2',
+                'destinos_payload': [
+                    {'cidade_nome': 'Foz do Iguacu', 'estado_sigla': 'PR'},
+                    {'cidade_nome': 'Cascavel', 'estado_sigla': 'PR'},
+                ],
+                'diarias_quantidade': '3.5',
+                'diarias_valor_unitario': '150,00',
+                'diarias_valor_total': '1.050,00',
+                'diarias_valor_extenso': 'mil e cinquenta reais',
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('success'))
+
+        self.plano.refresh_from_db()
+        self.assertEqual(self.plano.quantidade_servidores, 2)
+        self.assertEqual(len(self.plano.destinos_json), 2)
+        self.assertEqual(self.plano.destinos_json[0]['cidade_nome'], 'Foz do Iguacu')
+        self.assertEqual(self.plano.diarias_quantidade, '3.5')
+        self.assertEqual(self.plano.diarias_valor_unitario, '150,00')
+        self.assertEqual(self.plano.diarias_valor_total, '1.050,00')
+        self.assertEqual(self.plano.diarias_valor_extenso, 'mil e cinquenta reais')
+
+    def test_autosave_aceita_roteiro_json_como_alias_de_destinos_payload(self):
+        response = self._post_json(
+            {
+                'id': self.plano.pk,
+                '_dirty_fields': ['roteiro_json'],
+                'roteiro_json': [
+                    {'cidade_nome': 'Paranavai', 'estado_sigla': 'PR'},
+                    {'cidade_nome': 'Umuarama', 'estado_sigla': 'PR'},
+                ],
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('success'))
+
+        self.plano.refresh_from_db()
+        self.assertEqual(len(self.plano.destinos_json), 2)
+        self.assertEqual(self.plano.destinos_json[0]['cidade_nome'], 'Paranavai')
+
     def test_autosave_invalid_payload_safe(self):
         response = self.client.post(
             self.url,
@@ -173,3 +267,26 @@ class PlanoTrabalhoAutosaveTestCase(TestCase):
         self.client.logout()
         response = self.client.post(self.url, data={'id': str(self.plano.pk)})
         self.assertEqual(response.status_code, 302)
+
+    def test_autosave_concurrency_rejects_stale_expected_updated_at(self):
+        stale_updated_at = self.plano.updated_at.isoformat()
+        PlanoTrabalho.objects.filter(pk=self.plano.pk).update(updated_at=timezone.now() + timedelta(seconds=5))
+
+        response = self._post_json(
+            {
+                'id': self.plano.pk,
+                'expected_updated_at': stale_updated_at,
+                '_dirty_fields': ['destinos_payload'],
+                'destinos_payload': [
+                    {'cidade': 'Toledo', 'estado': 'PR'},
+                ],
+            }
+        )
+
+        self.assertEqual(response.status_code, 409)
+        body = response.json()
+        self.assertFalse(body.get('success'))
+        self.assertEqual(body.get('code'), 'stale_write')
+
+        self.plano.refresh_from_db()
+        self.assertNotEqual(self.plano.destinos_json[0].get('cidade'), 'Toledo')

@@ -485,6 +485,30 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         self.assertIn('CIN', form.initial.get('atividades_codigos', []))
         self.assertIn('NOC', form.initial.get('atividades_codigos', []))
 
+    def test_roteiro_manual_reidrata_hidden_fields_na_edicao(self):
+        pt = PlanoTrabalho.objects.create(
+            numero=13,
+            ano=2026,
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+            destinos_json=[
+                {'estado_id': self.estado.pk, 'estado_sigla': 'PR', 'cidade_id': self.cidade.pk, 'cidade_nome': 'Curitiba'},
+            ],
+            recursos_texto='Roteiro salvo',
+        )
+
+        response = self.client.get(
+            reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': pt.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        payload = '[{"estado_id": %s, "estado_sigla": "PR", "cidade_id": %s, "cidade_nome": "Curitiba"}]' % (
+            self.estado.pk,
+            self.cidade.pk,
+        )
+        self.assertEqual(form.initial.get('destinos_payload'), payload)
+        self.assertEqual(form.initial.get('roteiro_json'), payload)
+        self.assertContains(response, 'name="roteiro_json"')
+
     def test_horario_manual_quando_escolhido_outros(self):
         payload = {
             'data_criacao': '2026-05-01',

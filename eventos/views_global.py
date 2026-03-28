@@ -8,6 +8,7 @@ from django import forms
 from django.contrib import messages
 from django.forms import inlineformset_factory
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Count, Prefetch, Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1991,6 +1992,22 @@ def _autosave_date(value):
         return None
 
 
+def _autosave_datetime(value):
+    raw = _clean(value)
+    if not raw:
+        return None
+    normalized = raw
+    if normalized.endswith('Z'):
+        normalized = normalized[:-1] + '+00:00'
+    try:
+        dt = datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    return dt
+
+
 def _normalize_horario_autosave(padrao, manual):
     horario = _clean(padrao)
     if horario == PlanoTrabalhoForm.HORARIO_OUTROS:
@@ -2063,142 +2080,169 @@ def plano_trabalho_autosave(request):
     plano_id = _autosave_int(payload.get('id'))
     if not plano_id:
         return JsonResponse({'success': False, 'error': 'ID do plano é obrigatório.'}, status=400)
-    plano = PlanoTrabalho.objects.filter(pk=plano_id).first()
-    if not plano:
-        return JsonResponse({'success': False, 'error': 'Plano não encontrado.'}, status=404)
 
     payload_keys = set(payload.keys())
+    expected_updated_at = _autosave_datetime(payload.get('expected_updated_at')) if 'expected_updated_at' in payload_keys else None
+    if 'expected_updated_at' in payload_keys and payload.get('expected_updated_at') and expected_updated_at is None:
+        return JsonResponse({'success': False, 'error': 'expected_updated_at inválido.'}, status=400)
+
+    dirty_fields = {
+        str(item).strip()
+        for item in _parse_autosave_list(payload.get('_dirty_fields'))
+        if str(item).strip()
+    }
 
     def _has(*keys):
+        # Compatibilidade: clientes antigos (sem _dirty_fields) seguem por presença no payload.
+        if dirty_fields:
+            return any(key in dirty_fields for key in keys)
         return any(key in payload_keys for key in keys)
 
-    if _autosave_bool(payload.get('force_rascunho')):
-        plano.status = PlanoTrabalho.STATUS_RASCUNHO
-    if not plano.numero or not plano.ano:
-        _assign_plano_auto_number(plano)
-    if _has('data_criacao'):
-        plano.data_criacao = _autosave_date(payload.get('data_criacao')) or plano.data_criacao or timezone.localdate()
-    elif not plano.data_criacao:
-        plano.data_criacao = timezone.localdate()
+    with transaction.atomic():
+        plano = PlanoTrabalho.objects.select_for_update().filter(pk=plano_id).first()
+        if not plano:
+            return JsonResponse({'success': False, 'error': 'Plano não encontrado.'}, status=404)
 
-    if _has('evento_id'):
-        plano.evento_id = _autosave_int(payload.get('evento_id'))
-    if _has('oficio_id'):
-        plano.oficio_id = _autosave_int(payload.get('oficio_id'))
-    if _has('roteiro_id'):
-        plano.roteiro_id = _autosave_int(payload.get('roteiro_id'))
-    if _has('coordenador_administrativo_id'):
-        plano.coordenador_administrativo_id = _autosave_int(payload.get('coordenador_administrativo_id'))
-
-    solicitante_escolha = _clean(payload.get('solicitante_escolha'))
-    solicitante_outros = _clean(payload.get('solicitante_outros'))
-    if _has('solicitante_escolha', 'solicitante_outros'):
-        if solicitante_escolha and solicitante_escolha.isdigit():
-            plano.solicitante_id = int(solicitante_escolha)
-            plano.solicitante_outros = ''
-        elif solicitante_escolha == PlanoTrabalhoForm.OUTROS_CHOICE:
-            plano.solicitante_id = None
-            plano.solicitante_outros = solicitante_outros
-        else:
-            plano.solicitante_id = None
-            plano.solicitante_outros = solicitante_outros
-
-    if _has('horario_atendimento_padrao', 'horario_atendimento_manual'):
-        plano.horario_atendimento = _normalize_horario_autosave(
-            payload.get('horario_atendimento_padrao'),
-            payload.get('horario_atendimento_manual'),
-        )
-    if _has('evento_data_unica'):
-        plano.evento_data_unica = _autosave_bool(payload.get('evento_data_unica'))
-    if _has('evento_data_inicio'):
-        plano.evento_data_inicio = _autosave_date(payload.get('evento_data_inicio'))
-    if _has('evento_data_fim'):
-        plano.evento_data_fim = _autosave_date(payload.get('evento_data_fim'))
-    if plano.evento_data_unica and plano.evento_data_inicio:
-        plano.evento_data_fim = plano.evento_data_inicio
-
-    if _has('quantidade_servidores'):
-        qtd_servidores = _autosave_int(payload.get('quantidade_servidores'))
-        plano.quantidade_servidores = qtd_servidores if qtd_servidores and qtd_servidores > 0 else None
-
-    if _has('atividades_codigos'):
-        atividades = _parse_autosave_list(payload.get('atividades_codigos'))
-        atividades = [str(item).strip().upper() for item in atividades if str(item).strip()]
-        plano.atividades_codigos = ','.join(dict.fromkeys(atividades))
-        plano.metas_formatadas = build_metas_formatada(plano.atividades_codigos)
-        plano.recursos_texto = build_recursos_necessarios_formatado(plano.atividades_codigos)
-
-    if _has('destinos_payload'):
-        destinos = payload.get('destinos_payload')
-        if not isinstance(destinos, list):
-            try:
-                destinos = json.loads(destinos or '[]') if destinos else []
-            except (TypeError, ValueError, UnicodeDecodeError):
-                destinos = []
-        if not isinstance(destinos, list):
-            destinos = []
-        plano.destinos_json = destinos
-
-    if _has('diarias', 'diarias_quantidade', 'qtd_diarias', 'diarias_valor_unitario', 'diarias_valor_total', 'valor_total_diarias', 'diarias_valor_extenso'):
-        diarias_payload = payload.get('diarias') if isinstance(payload.get('diarias'), dict) else {}
-        diarias_qtd_raw = (
-            _clean(diarias_payload.get('qtd'))
-            or _clean(payload.get('diarias_quantidade'))
-            or _clean(payload.get('qtd_diarias'))
-        )
-        diarias_unit_raw = _clean(diarias_payload.get('valor_unitario')) or _clean(payload.get('diarias_valor_unitario'))
-        diarias_total_raw = (
-            _clean(diarias_payload.get('total'))
-            or _clean(payload.get('diarias_valor_total'))
-            or _clean(payload.get('valor_total_diarias'))
-        )
-        diarias_extenso_raw = _clean(diarias_payload.get('valor_extenso')) or _clean(payload.get('diarias_valor_extenso'))
-
-        pessoas = plano.quantidade_servidores or 0
-        try:
-            diarias_calc = calcular_diarias_com_valor(
-                _normalize_decimal_autosave(diarias_qtd_raw),
-                _normalize_decimal_autosave(diarias_unit_raw),
-                pessoas,
+        if expected_updated_at and plano.updated_at and plano.updated_at != expected_updated_at:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'Conflito de atualização. O plano foi alterado em outra aba/sessão.',
+                    'code': 'stale_write',
+                    'updated_at': timezone.localtime(plano.updated_at).isoformat(),
+                },
+                status=409,
             )
-        except (ArithmeticError, ValueError, TypeError):
-            diarias_calc = calcular_diarias_com_valor(0, 0, pessoas)
 
-        plano.quantidade_diarias = diarias_calc['quantidade_diarias']
-        plano.valor_diarias = diarias_calc['valor_total']
-        plano.valor_diarias_extenso = diarias_extenso_raw or diarias_calc['valor_extenso']
+        if _autosave_bool(payload.get('force_rascunho')):
+            plano.status = PlanoTrabalho.STATUS_RASCUNHO
+        if not plano.numero or not plano.ano:
+            _assign_plano_auto_number(plano)
+        if _has('data_criacao'):
+            plano.data_criacao = _autosave_date(payload.get('data_criacao')) or plano.data_criacao or timezone.localdate()
+        elif not plano.data_criacao:
+            plano.data_criacao = timezone.localdate()
 
-        plano.diarias_quantidade = diarias_qtd_raw
-        plano.diarias_valor_unitario = diarias_unit_raw
-        plano.diarias_valor_total = diarias_total_raw or formatar_valor_diarias(diarias_calc['valor_total'])
-        plano.diarias_valor_extenso = plano.valor_diarias_extenso
+        if _has('evento_id'):
+            plano.evento_id = _autosave_int(payload.get('evento_id'))
+        if _has('oficio_id'):
+            plano.oficio_id = _autosave_int(payload.get('oficio_id'))
+        if _has('roteiro_id'):
+            plano.roteiro_id = _autosave_int(payload.get('roteiro_id'))
+        if _has('coordenador_administrativo_id'):
+            plano.coordenador_administrativo_id = _autosave_int(payload.get('coordenador_administrativo_id'))
 
-    plano.save()
+        solicitante_escolha = _clean(payload.get('solicitante_escolha'))
+        solicitante_outros = _clean(payload.get('solicitante_outros'))
+        if _has('solicitante_escolha', 'solicitante_outros'):
+            if solicitante_escolha and solicitante_escolha.isdigit():
+                plano.solicitante_id = int(solicitante_escolha)
+                plano.solicitante_outros = ''
+            elif solicitante_escolha == PlanoTrabalhoForm.OUTROS_CHOICE:
+                plano.solicitante_id = None
+                plano.solicitante_outros = solicitante_outros
+            else:
+                plano.solicitante_id = None
+                plano.solicitante_outros = solicitante_outros
 
-    if _has('oficios_relacionados_ids', 'oficios_relacionados', 'oficio_id'):
-        oficios_relacionados_ids = _parse_autosave_list(
-            payload.get('oficios_relacionados_ids') or payload.get('oficios_relacionados')
-        )
-        parsed_oficios_ids = []
-        for item in oficios_relacionados_ids:
-            parsed = _autosave_int(item)
-            if parsed:
-                parsed_oficios_ids.append(parsed)
-        if plano.oficio_id and plano.oficio_id not in parsed_oficios_ids:
-            parsed_oficios_ids.append(plano.oficio_id)
-        plano.oficios.set(Oficio.objects.filter(pk__in=parsed_oficios_ids))
+        if _has('horario_atendimento_padrao', 'horario_atendimento_manual'):
+            plano.horario_atendimento = _normalize_horario_autosave(
+                payload.get('horario_atendimento_padrao'),
+                payload.get('horario_atendimento_manual'),
+            )
+        if _has('evento_data_unica'):
+            plano.evento_data_unica = _autosave_bool(payload.get('evento_data_unica'))
+        if _has('evento_data_inicio'):
+            plano.evento_data_inicio = _autosave_date(payload.get('evento_data_inicio'))
+        if _has('evento_data_fim'):
+            plano.evento_data_fim = _autosave_date(payload.get('evento_data_fim'))
+        if plano.evento_data_unica and plano.evento_data_inicio:
+            plano.evento_data_fim = plano.evento_data_inicio
 
-    if _has('coordenadores_ids'):
-        coordenadores_ids = _parse_autosave_list(payload.get('coordenadores_ids'))
-        parsed_coord_ids = []
-        for item in coordenadores_ids:
-            parsed = _autosave_int(item)
-            if parsed:
-                parsed_coord_ids.append(parsed)
-        plano.coordenadores.set(plano.coordenadores.model.objects.filter(pk__in=parsed_coord_ids, ativo=True))
-        if parsed_coord_ids:
-            plano.coordenador_operacional_id = parsed_coord_ids[0]
-            plano.save(update_fields=['coordenador_operacional', 'updated_at'])
+        if _has('quantidade_servidores'):
+            qtd_servidores = _autosave_int(payload.get('quantidade_servidores'))
+            plano.quantidade_servidores = qtd_servidores if qtd_servidores and qtd_servidores > 0 else None
+
+        if _has('atividades_codigos'):
+            atividades = _parse_autosave_list(payload.get('atividades_codigos'))
+            atividades = [str(item).strip().upper() for item in atividades if str(item).strip()]
+            plano.atividades_codigos = ','.join(dict.fromkeys(atividades))
+            plano.metas_formatadas = build_metas_formatada(plano.atividades_codigos)
+            plano.recursos_texto = build_recursos_necessarios_formatado(plano.atividades_codigos)
+
+        if _has('destinos_payload', 'roteiro_json'):
+            destinos = payload.get('destinos_payload')
+            if destinos is None:
+                destinos = payload.get('roteiro_json')
+            if not isinstance(destinos, list):
+                try:
+                    destinos = json.loads(destinos or '[]') if destinos else []
+                except (TypeError, ValueError, UnicodeDecodeError):
+                    destinos = []
+            if not isinstance(destinos, list):
+                destinos = []
+            plano.destinos_json = destinos
+
+        if _has('diarias', 'diarias_quantidade', 'qtd_diarias', 'diarias_valor_unitario', 'diarias_valor_total', 'valor_total_diarias', 'diarias_valor_extenso'):
+            diarias_payload = payload.get('diarias') if isinstance(payload.get('diarias'), dict) else {}
+            diarias_qtd_raw = (
+                _clean(diarias_payload.get('qtd'))
+                or _clean(payload.get('diarias_quantidade'))
+                or _clean(payload.get('qtd_diarias'))
+            )
+            diarias_unit_raw = _clean(diarias_payload.get('valor_unitario')) or _clean(payload.get('diarias_valor_unitario'))
+            diarias_total_raw = (
+                _clean(diarias_payload.get('total'))
+                or _clean(payload.get('diarias_valor_total'))
+                or _clean(payload.get('valor_total_diarias'))
+            )
+            diarias_extenso_raw = _clean(diarias_payload.get('valor_extenso')) or _clean(payload.get('diarias_valor_extenso'))
+
+            pessoas = plano.quantidade_servidores or 0
+            try:
+                diarias_calc = calcular_diarias_com_valor(
+                    _normalize_decimal_autosave(diarias_qtd_raw),
+                    _normalize_decimal_autosave(diarias_unit_raw),
+                    pessoas,
+                )
+            except (ArithmeticError, ValueError, TypeError):
+                diarias_calc = calcular_diarias_com_valor(0, 0, pessoas)
+
+            plano.quantidade_diarias = diarias_calc['quantidade_diarias']
+            plano.valor_diarias = diarias_calc['valor_total']
+            plano.valor_diarias_extenso = diarias_extenso_raw or diarias_calc['valor_extenso']
+
+            plano.diarias_quantidade = diarias_qtd_raw
+            plano.diarias_valor_unitario = diarias_unit_raw
+            plano.diarias_valor_total = diarias_total_raw or formatar_valor_diarias(diarias_calc['valor_total'])
+            plano.diarias_valor_extenso = plano.valor_diarias_extenso
+
+        plano.save()
+
+        if _has('oficios_relacionados_ids', 'oficios_relacionados', 'oficio_id'):
+            oficios_relacionados_ids = _parse_autosave_list(
+                payload.get('oficios_relacionados_ids') or payload.get('oficios_relacionados')
+            )
+            parsed_oficios_ids = []
+            for item in oficios_relacionados_ids:
+                parsed = _autosave_int(item)
+                if parsed:
+                    parsed_oficios_ids.append(parsed)
+            if plano.oficio_id and plano.oficio_id not in parsed_oficios_ids:
+                parsed_oficios_ids.append(plano.oficio_id)
+            plano.oficios.set(Oficio.objects.filter(pk__in=parsed_oficios_ids))
+
+        if _has('coordenadores_ids'):
+            coordenadores_ids = _parse_autosave_list(payload.get('coordenadores_ids'))
+            parsed_coord_ids = []
+            for item in coordenadores_ids:
+                parsed = _autosave_int(item)
+                if parsed:
+                    parsed_coord_ids.append(parsed)
+            plano.coordenadores.set(plano.coordenadores.model.objects.filter(pk__in=parsed_coord_ids, ativo=True))
+            if parsed_coord_ids:
+                plano.coordenador_operacional_id = parsed_coord_ids[0]
+                plano.save(update_fields=['coordenador_operacional', 'updated_at'])
 
     return JsonResponse(
         {

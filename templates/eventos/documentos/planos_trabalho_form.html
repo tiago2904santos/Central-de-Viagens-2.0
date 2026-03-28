@@ -815,7 +815,9 @@
           <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
           <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
           <input type="hidden" name="data_criacao" value="{{ form.data_criacao.value|default:data_geracao_preview|date:'Y-m-d' }}">
+          {{ form.destinos_json }}
           {{ form.destinos_payload }}
+          {{ form.roteiro_json }}
           {{ form.coordenadores_ids }}
 
           {# ════ PASSO 1 — PESSOAS ════ #}
@@ -1056,7 +1058,10 @@
                 <aside class="pt-diarias-main" id="pt-diarias-output-panel">
                   <div class="pt-diarias-main-head">
                     <h4 class="pt-diarias-main-title">Total oficial</h4>
-                    <span class="pt-diarias-auto-chip">Cálculo automático</span>
+                      <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <span class="pt-diarias-auto-chip">Cálculo manual</span>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btn-calcular-diarias">Calcular diárias</button>
+                      </div>
                   </div>
                   <div class="pt-diarias-total-value" id="diarias-total">R$&nbsp;0,00</div>
                   <div class="pt-diarias-list">
@@ -1372,7 +1377,9 @@
   const colDataFim          = document.getElementById('col-data-fim');
   const coordAdmSelect      = document.getElementById('{{ form.coordenador_administrativo.id_for_label }}');
   const destinosContainer   = document.getElementById('destinos-container');
+  const destinosJsonInput   = document.getElementById('{{ form.destinos_json.id_for_label }}');
   const destinosPayload     = document.getElementById('{{ form.destinos_payload.id_for_label }}');
+  const roteiroJsonInput    = document.getElementById('{{ form.roteiro_json.id_for_label }}');
   const cidadesApiBase      = '{{ api_cidades_por_estado_url|escapejs }}';
   const totalFormsInput     = document.getElementById('id_efetivo-TOTAL_FORMS');
   const efetivoRows         = document.getElementById('efetivo-rows');
@@ -1393,6 +1400,7 @@
   const diariasCtxAtendimento = document.getElementById('pt-diarias-ctx-atendimento');
   const diariasRightUnit = document.getElementById('pt-diarias-right-unit');
   const diariasRightExtenso = document.getElementById('pt-diarias-right-extenso');
+  const calcularDiariasBtn  = document.getElementById('btn-calcular-diarias');
   const eventoHoraInicio    = document.getElementById('evento_hora_inicio');
   const eventoHoraFim       = document.getElementById('evento_hora_fim');
   const metasInput          = document.getElementById('{{ form.metas_formatadas.id_for_label }}');
@@ -1443,6 +1451,7 @@
   let autosavePending       = false;
   let autosaveLastSavedAt   = null;
   let autosaveExpectedUpdatedAt = '{{ object.updated_at|date:"c"|default:"" }}' || null;
+  let calcularDiariasInFlight = false;
   const ptDirtyFields       = new Set();
 
   if (autosaveExpectedUpdatedAt) {
@@ -1674,6 +1683,7 @@
       evento_hora_inicio: (eventoHoraInicio && eventoHoraInicio.value) || '',
       evento_hora_fim: (eventoHoraFim && eventoHoraFim.value) || '',
       destinos_payload: planoState.roteiro,
+      roteiro_json: planoState.roteiro,
       coordenadores_ids: planoState.coordenadores.map((item) => item.id),
       coordenador_administrativo_id: planoState.meta.coordenador_administrativo_id,
       quantidade_servidores: getEquipeTotalValue() || null,
@@ -2035,13 +2045,53 @@
   function updateDiariasUI() {
     const qtd = Number((planoState.diarias && planoState.diarias.qtd) || 0);
     const qtdLabelState = String((planoState.diarias && planoState.diarias.qtd_label) || '').trim();
-    const horas = Number((planoState.diarias && planoState.diarias.horas) || 0);
     const qtdLabel = qtdLabelState || formatDiariasQtdValue(qtd);
 
     if (diariasQtdEl) diariasQtdEl.textContent = qtdLabel;
     if (diariasQtd) diariasQtd.value = qtdLabel;
+    if (liveEfetivo) {
+      const pessoas = getQuantidadePessoas();
+      liveEfetivo.textContent = pessoas > 0 ? (pessoas + ' servidor' + (pessoas !== 1 ? 'es' : '')) : '0';
+    }
 
     hideDiariaErro();
+  }
+
+  function hydrateDiariasStateFromInputs() {
+    const qtdRaw = String((diariasQtd && diariasQtd.value) || '').trim();
+    const unitRaw = String((diariasUnit && diariasUnit.value) || '').trim();
+    const totalRaw = String((diariasTotal && diariasTotal.value) || '').trim();
+    const extensoRaw = String((diariasExtensoInput && diariasExtensoInput.value) || '').trim();
+    const qtdParsed = (() => {
+      const parsed = parseFloat(qtdRaw.replace(',', '.'));
+      return Number.isFinite(parsed) ? parsed : 0;
+    })();
+    const unitParsed = parseCurrency(unitRaw);
+    const totalParsed = parseCurrency(totalRaw);
+
+    planoState.diarias = {
+      qtd: qtdParsed,
+      qtd_label: qtdRaw,
+      horas: Number((planoState.diarias && planoState.diarias.horas) || 0),
+      valor_unitario: unitParsed,
+      unitario: unitParsed,
+      total: totalParsed,
+      valor_extenso: extensoRaw,
+      valor_por_servidor: Number((planoState.diarias && planoState.diarias.valor_por_servidor) || 0),
+      valor_por_servidor_extenso: String((planoState.diarias && planoState.diarias.valor_por_servidor_extenso) || '').trim(),
+    };
+
+    updateValorServidorUI();
+    updateDiariasUI();
+    updateValorTotalUI();
+    updateValorExtensoUI();
+    updateSummary();
+  }
+
+  function setCalcularDiariasButtonState(isLoading) {
+    if (!calcularDiariasBtn) return;
+    calcularDiariasBtn.disabled = !!isLoading;
+    calcularDiariasBtn.textContent = isLoading ? 'Calculando...' : 'Calcular diárias';
   }
 
   function getQuantidadePessoas() {
@@ -2249,17 +2299,48 @@
     }
   }
 
+  async function calcularDiariasESalvar() {
+    if (calcularDiariasInFlight) return;
+    calcularDiariasInFlight = true;
+    setCalcularDiariasButtonState(true);
+    hideDiariaErro();
+    collectDestinos();
+    reindexEfetivoRows();
+    syncEfetivoTotal({ silentNotify: true });
+    updateDeslocamento();
+
+    try {
+      await calcularDiarias();
+      markDirty(
+        'destinos_payload',
+        'quantidade_servidores',
+        'diarias',
+        'diarias_quantidade',
+        'diarias_valor_unitario',
+        'diarias_valor_total',
+        'diarias_valor_extenso'
+      );
+      syncMetaState();
+      notify();
+
+      if (!planoState.id) {
+        setAutosaveStatus('error', 'Salve o plano como rascunho primeiro para persistir as diárias.');
+        return;
+      }
+
+      await saveDraft();
+    } finally {
+      calcularDiariasInFlight = false;
+      setCalcularDiariasButtonState(false);
+    }
+  }
+
   function onDeslocamentoChange() {
     updateDeslocamento();
-    const desloc = planoState.deslocamento || {};
-    if (desloc.saida && desloc.chegada) {
-      calcularDiarias({ suppressErrors: true });
-    } else {
-      updateDiariasUI();
-      updateValorTotalUI();
-      updateValorExtensoUI();
-      updateSummary();
-    }
+    updateDiariasUI();
+    updateValorTotalUI();
+    updateValorExtensoUI();
+    updateSummary();
   }
 
   function computeDiarias(options) {
@@ -2384,14 +2465,18 @@
     });
     planoState.roteiro = payload;
     planoState.destinos = payload;
+    const serialized = JSON.stringify(payload);
     markDirty('destinos_payload');
-    if (destinosPayload) destinosPayload.value = JSON.stringify(payload);
+    if (destinosJsonInput) destinosJsonInput.value = serialized;
+    if (destinosPayload) destinosPayload.value = serialized;
+    if (roteiroJsonInput) roteiroJsonInput.value = serialized;
     syncMetaState();
     notify();
   }
   async function bootstrapDestinos() {
     let initial = [];
-    try { initial = JSON.parse((destinosPayload && destinosPayload.value) || '[]'); } catch (_) {}
+    const raw = (roteiroJsonInput && roteiroJsonInput.value) || (destinosPayload && destinosPayload.value) || (destinosJsonInput && destinosJsonInput.value) || '[]';
+    try { initial = JSON.parse(raw); } catch (_) {}
     if (!Array.isArray(initial) || !initial.length) initial = [{ estado_id: '', cidade_id: '' }];
     for (const item of initial) await addDestinoRow(item || {});
     collectDestinos();
@@ -2403,7 +2488,6 @@
       await mountCidadeOptions(row.querySelector('.destino-cidade'), ev.target.value, '');
     }
     collectDestinos();
-    calcularDiarias({ suppressErrors: true, silentNotify: true });
   });
   destinosContainer.addEventListener('click', (ev) => {
     const btn = ev.target.closest('.btn-rem-destino');
@@ -2411,12 +2495,10 @@
     if (destinosContainer.querySelectorAll('.pt-dest-row').length <= 1) return;
     btn.closest('.pt-dest-row').remove();
     collectDestinos();
-    calcularDiarias({ suppressErrors: true, silentNotify: true });
   });
   document.getElementById('btn-add-destino').addEventListener('click', async () => {
     await addDestinoRow({ estado_id: '', cidade_id: '' });
     collectDestinos();
-    calcularDiarias({ suppressErrors: true, silentNotify: true });
   });
 
   // ══════════════════════════════════════════════════════════
@@ -2446,10 +2528,7 @@
     if (totalServidoresEl) totalServidoresEl.textContent = String(total || 0);
     planoState.equipe = equipePayload;
     syncMetaState();
-    if (!opts.skipRecalculateDiarias) {
-      computeDiarias();
-      calcularDiarias({ suppressErrors: true, silentNotify: true });
-    }
+    updateDiariasUI();
     if (!opts.silentNotify) notify();
   }
   function reindexEfetivoRows() {
@@ -2817,12 +2896,12 @@
   if (eventoHoraFim)     eventoHoraFim.addEventListener('change', () => { updateDiariasContextCards(); markDirty('horario_atendimento_manual'); syncMetaState(); triggerAutosave(); });
 
   // ── Deslocamento (saída e chegada da sede) ──
-  if (dataSaidaSede)   dataSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
-  if (dataChegadaSede) dataChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
-  if (horaSaidaSede)   horaSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
-  if (horaChegadaSede) horaChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
-  if (horaSaidaSede)   horaSaidaSede.addEventListener('blur',   () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
-  if (horaChegadaSede) horaChegadaSede.addEventListener('blur', () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
+  if (dataSaidaSede)   dataSaidaSede.addEventListener('change', onDeslocamentoChange);
+  if (dataChegadaSede) dataChegadaSede.addEventListener('change', onDeslocamentoChange);
+  if (horaSaidaSede)   horaSaidaSede.addEventListener('change', onDeslocamentoChange);
+  if (horaChegadaSede) horaChegadaSede.addEventListener('change', onDeslocamentoChange);
+  if (horaSaidaSede)   horaSaidaSede.addEventListener('blur', onDeslocamentoChange);
+  if (horaChegadaSede) horaChegadaSede.addEventListener('blur', onDeslocamentoChange);
   // ── Remover linha equipe ──
   document.addEventListener('click', (e) => {
     if (e.target.closest('.btn-remove-row')) {
@@ -2837,37 +2916,7 @@
   if (btnLimparAtividades) btnLimparAtividades.addEventListener('click', limparAtividades);
   if (atividadeSearchInput) atividadeSearchInput.addEventListener('input', filterAtividadesVisiveis);
 
-  [diariasQtd, diariasUnit, diariasTotal].forEach((el) => {
-    if (!el) return;
-    el.addEventListener('input',  () => { computeDiarias(); });
-    el.addEventListener('change', () => { computeDiarias(); markDirty('diarias_quantidade', 'diarias_valor_unitario', 'diarias_valor_total', 'diarias_valor_extenso'); syncMetaState(); triggerAutosave(); });
-  });
-  if (diariasUnit) {
-    diariasUnit.addEventListener('blur', async function () {
-      const unit = parseCurrency(this.value);
-      const horas = Number((planoState.diarias && planoState.diarias.horas) || 0);
-      const qtd = Number((planoState.diarias && planoState.diarias.qtd) || 0);
-      const total = Number((planoState.diarias && planoState.diarias.total) || 0);
-      const valorExtenso = String((planoState.diarias && planoState.diarias.valor_extenso) || '');
-      const valorPorServidor = Number((planoState.diarias && planoState.diarias.valor_por_servidor) || 0);
-      const valorPorServidorExtenso = String((planoState.diarias && planoState.diarias.valor_por_servidor_extenso) || '');
-      planoState.diarias = {
-        qtd,
-        horas,
-        valor_unitario: unit,
-        unitario: unit,
-        total,
-        valor_extenso: valorExtenso,
-        valor_por_servidor: valorPorServidor,
-        valor_por_servidor_extenso: valorPorServidorExtenso,
-      };
-      await calcularDiarias({ suppressErrors: true, silentNotify: true });
-      markDirty('diarias', 'diarias_quantidade', 'diarias_valor_unitario', 'diarias_valor_total', 'diarias_valor_extenso');
-      syncMetaState();
-      triggerAutosave();
-      notify();
-    });
-  }
+  if (calcularDiariasBtn) calcularDiariasBtn.addEventListener('click', calcularDiariasESalvar);
 
   document.querySelectorAll('input[name="atividades_codigos"]').forEach((cb) => {
     cb.addEventListener('change', () => {
@@ -2908,13 +2957,13 @@
   parseDateRange();
   updateDiariasContextCards();
   onDeslocamentoChange();
+  hydrateDiariasStateFromInputs();
   ordenarAtividadesAlfabeticamente();
   filterAtividadesVisiveis();
   renderAtividadesRealtime();
   syncMetaState();
   bootstrapDestinos().then(() => {
     syncEfetivoTotal();
-    computeDiarias();
     updateValorExtensoUI();
     syncMetaState();
     notify();
