@@ -486,7 +486,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'data_criacao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'evento': forms.Select(attrs={'class': ''}),
             'oficio': forms.Select(attrs={'class': ''}),
-            'roteiro': forms.Select(attrs={'class': ''}),
+            'roteiro': forms.Select(attrs={'class': '', 'id': 'id_roteiro_vinculo'}),
             'solicitante_outros': forms.TextInput(attrs={'class': 'form-control'}),
             'coordenador_operacional': forms.Select(attrs={'class': ''}),
             'coordenador_administrativo': forms.Select(attrs={'class': ''}),
@@ -961,6 +961,7 @@ class PlanoTrabalhoStep2Form(FormComErroInvalidMixin, forms.ModelForm):
     class Meta:
         model = PlanoTrabalho
         fields = [
+            'roteiro',
             'evento_data_unica',
             'evento_data_inicio',
             'evento_data_fim',

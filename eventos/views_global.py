@@ -2040,7 +2040,7 @@ def _parse_autosave_request_payload(request):
         return payload if isinstance(payload, dict) else None
 
     payload = request.POST.dict()
-    for key in ('oficios_relacionados_ids', 'coordenadores_ids', 'atividades_codigos', 'oficios_relacionados'):
+    for key in ('oficios_relacionados_ids', 'coordenadores_ids', 'atividades_codigos', 'oficios_relacionados', 'roteiro'):
         values = request.POST.getlist(key)
         if len(values) > 1:
             payload[key] = values
@@ -2060,6 +2060,36 @@ def _parse_autosave_list(value):
             parsed = []
         return parsed if isinstance(parsed, list) else []
     return [item.strip() for item in raw.split(',') if item.strip()]
+
+
+def _split_roteiro_values(values):
+    roteiro_id = ''
+    roteiro_payload = ''
+    for value in values or []:
+        raw = _clean(value)
+        if not raw:
+            continue
+        if raw.startswith('[') or raw.startswith('{'):
+            roteiro_payload = raw
+            continue
+        if raw.isdigit():
+            roteiro_id = raw
+    return roteiro_id, roteiro_payload
+
+
+def _normalize_plano_trabalho_post_data(post_data):
+    if post_data is None:
+        return None
+
+    data = post_data.copy()
+    roteiro_values = post_data.getlist('roteiro')
+    roteiro_id, roteiro_payload = _split_roteiro_values(roteiro_values)
+    if roteiro_values:
+        data.setlist('roteiro', [roteiro_id])
+    if roteiro_payload:
+        data['roteiro_json'] = roteiro_payload
+        data['destinos_payload'] = roteiro_payload
+    return data
 
 
 def _assign_plano_auto_number(plano):
@@ -2170,10 +2200,13 @@ def plano_trabalho_autosave(request):
             plano.metas_formatadas = build_metas_formatada(plano.atividades_codigos)
             plano.recursos_texto = build_recursos_necessarios_formatado(plano.atividades_codigos)
 
-        if _has('destinos_payload', 'roteiro_json'):
+        roteiro_payload_present = any(key in payload_keys for key in ('roteiro', 'roteiro_json', 'destinos_payload'))
+        if roteiro_payload_present or _has('destinos_payload', 'roteiro_json', 'roteiro'):
             destinos = payload.get('destinos_payload')
             if destinos is None:
                 destinos = payload.get('roteiro_json')
+            if destinos is None:
+                destinos = payload.get('roteiro')
             if not isinstance(destinos, list):
                 try:
                     destinos = json.loads(destinos or '[]') if destinos else []
@@ -2515,7 +2548,8 @@ def plano_trabalho_novo(request):
         initial['oficio'] = preselected_oficio.pk
         initial['oficios_relacionados'] = [preselected_oficio.pk]
 
-    form = PlanoTrabalhoForm(request.POST or None, initial=initial)
+    bound_data = _normalize_plano_trabalho_post_data(request.POST) if request.method == 'POST' else None
+    form = PlanoTrabalhoForm(bound_data or None, initial=initial)
     formset, has_efetivo_payload, default_cargo = _build_plano_trabalho_efetivo_formset(request)
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
@@ -2567,7 +2601,8 @@ def plano_trabalho_editar(request, pk):
     obj = get_object_or_404(PlanoTrabalho.objects.select_related('evento', 'oficio', 'roteiro').prefetch_related('oficios'), pk=pk)
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-planos-trabalho'))
     context_source = _get_context_source(request)
-    form = PlanoTrabalhoForm(request.POST or None, instance=obj)
+    bound_data = _normalize_plano_trabalho_post_data(request.POST) if request.method == 'POST' else None
+    form = PlanoTrabalhoForm(bound_data or None, instance=obj)
     formset, has_efetivo_payload, default_cargo = _build_plano_trabalho_efetivo_formset(request, instance=obj)
     if request.method == 'POST' and form.is_valid():
         obj = form.save()

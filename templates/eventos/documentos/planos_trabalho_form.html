@@ -815,6 +815,7 @@
           <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
           <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
           <input type="hidden" name="data_criacao" value="{{ form.data_criacao.value|default:data_geracao_preview|date:'Y-m-d' }}">
+          <input type="hidden" name="roteiro" id="id_roteiro" value="{{ form.roteiro_json.value|default_if_none:'' }}">
           {{ form.destinos_json }}
           {{ form.destinos_payload }}
           {{ form.roteiro_json }}
@@ -1377,6 +1378,7 @@
   const colDataFim          = document.getElementById('col-data-fim');
   const coordAdmSelect      = document.getElementById('{{ form.coordenador_administrativo.id_for_label }}');
   const destinosContainer   = document.getElementById('destinos-container');
+  const roteiroInput        = document.getElementById('id_roteiro');
   const destinosJsonInput   = document.getElementById('{{ form.destinos_json.id_for_label }}');
   const destinosPayload     = document.getElementById('{{ form.destinos_payload.id_for_label }}');
   const roteiroJsonInput    = document.getElementById('{{ form.roteiro_json.id_for_label }}');
@@ -1682,6 +1684,7 @@
       evento_data_fim: planoState.evento.data_fim || '',
       evento_hora_inicio: (eventoHoraInicio && eventoHoraInicio.value) || '',
       evento_hora_fim: (eventoHoraFim && eventoHoraFim.value) || '',
+      roteiro: planoState.roteiro,
       destinos_payload: planoState.roteiro,
       roteiro_json: planoState.roteiro,
       coordenadores_ids: planoState.coordenadores.map((item) => item.id),
@@ -1707,7 +1710,8 @@
     }
     autosaveInFlight = true;
     syncMetaState();
-    collectDestinos();
+    collectDestinos({ skipDirty: true });
+    syncRoteiroToForm({ skipDirty: true });
     reindexEfetivoRows();
     syncEfetivoTotal({ skipRecalculateDiarias: true, silentNotify: true });
     const dirtySnapshot = Array.from(ptDirtyFields);
@@ -2451,7 +2455,18 @@
     if (estadoSel.value) await mountCidadeOptions(cidadeSel, estadoSel.value, dest.cidade_id || '');
     refreshPickers(row);
   }
-  function collectDestinos() {
+  function syncRoteiroToForm(options) {
+    const opts = options || {};
+    const serialized = JSON.stringify(Array.isArray(planoState.roteiro) ? planoState.roteiro : []);
+    if (roteiroInput) roteiroInput.value = serialized;
+    if (destinosJsonInput) destinosJsonInput.value = serialized;
+    if (destinosPayload) destinosPayload.value = serialized;
+    if (roteiroJsonInput) roteiroJsonInput.value = serialized;
+    if (!opts.skipDirty) markDirty('roteiro', 'destinos_payload', 'roteiro_json');
+  }
+
+  function collectDestinos(options) {
+    const opts = options || {};
     const rows = Array.from(destinosContainer.querySelectorAll('.pt-dest-row'));
     const payload = [];
     rows.forEach((row) => {
@@ -2465,21 +2480,17 @@
     });
     planoState.roteiro = payload;
     planoState.destinos = payload;
-    const serialized = JSON.stringify(payload);
-    markDirty('destinos_payload');
-    if (destinosJsonInput) destinosJsonInput.value = serialized;
-    if (destinosPayload) destinosPayload.value = serialized;
-    if (roteiroJsonInput) roteiroJsonInput.value = serialized;
+    syncRoteiroToForm({ skipDirty: !!opts.skipDirty });
     syncMetaState();
     notify();
   }
   async function bootstrapDestinos() {
     let initial = [];
-    const raw = (roteiroJsonInput && roteiroJsonInput.value) || (destinosPayload && destinosPayload.value) || (destinosJsonInput && destinosJsonInput.value) || '[]';
+    const raw = (roteiroInput && roteiroInput.value) || (roteiroJsonInput && roteiroJsonInput.value) || (destinosPayload && destinosPayload.value) || (destinosJsonInput && destinosJsonInput.value) || '[]';
     try { initial = JSON.parse(raw); } catch (_) {}
     if (!Array.isArray(initial) || !initial.length) initial = [{ estado_id: '', cidade_id: '' }];
     for (const item of initial) await addDestinoRow(item || {});
-    collectDestinos();
+    collectDestinos({ skipDirty: true });
   }
   destinosContainer.addEventListener('change', async (ev) => {
     const row = ev.target.closest('.pt-dest-row');
@@ -2939,7 +2950,8 @@
     });
   }
   form.addEventListener('submit', () => {
-    collectDestinos();
+    collectDestinos({ skipDirty: true });
+    syncRoteiroToForm({ skipDirty: true });
     reindexEfetivoRows();
     syncEfetivoTotal();
   });

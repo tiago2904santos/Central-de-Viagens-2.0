@@ -241,6 +241,24 @@ class PlanoTrabalhoAutosaveTestCase(TestCase):
         self.assertEqual(len(self.plano.destinos_json), 2)
         self.assertEqual(self.plano.destinos_json[0]['cidade_nome'], 'Paranavai')
 
+    def test_autosave_persiste_roteiro_quando_presente_no_payload_sem_dirty_fields(self):
+        response = self._post_json(
+            {
+                'id': self.plano.pk,
+                'roteiro': [
+                    {'cidade_nome': 'Apucarana', 'estado_sigla': 'PR'},
+                    {'cidade_nome': 'Arapongas', 'estado_sigla': 'PR'},
+                ],
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('success'))
+
+        self.plano.refresh_from_db()
+        self.assertEqual(len(self.plano.destinos_json), 2)
+        self.assertEqual(self.plano.destinos_json[0]['cidade_nome'], 'Apucarana')
+
     def test_autosave_invalid_payload_safe(self):
         response = self.client.post(
             self.url,

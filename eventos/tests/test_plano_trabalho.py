@@ -9,6 +9,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from cadastros.models import Cargo, Cidade, ConfiguracaoSistema, Estado, Viajante
+from eventos.forms import PlanoTrabalhoStep2Form
 from eventos.models import (
     CoordenadorOperacional,
     EfetivoPlanoTrabalho,
@@ -485,6 +486,9 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         self.assertIn('CIN', form.initial.get('atividades_codigos', []))
         self.assertIn('NOC', form.initial.get('atividades_codigos', []))
 
+    def test_step2_form_expoe_campo_roteiro(self):
+        self.assertIn('roteiro', PlanoTrabalhoStep2Form.base_fields)
+
     def test_roteiro_manual_reidrata_hidden_fields_na_edicao(self):
         pt = PlanoTrabalho.objects.create(
             numero=13,
@@ -507,7 +511,47 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         )
         self.assertEqual(form.initial.get('destinos_payload'), payload)
         self.assertEqual(form.initial.get('roteiro_json'), payload)
-        self.assertContains(response, 'name="roteiro_json"')
+        self.assertContains(response, 'name="roteiro"')
+        self.assertContains(response, 'id="id_roteiro"')
+
+    def test_formulario_persiste_roteiro_calculado_enviado_no_hidden_roteiro(self):
+        payload = {
+            'data_criacao': '2026-05-01',
+            'status': PlanoTrabalho.STATUS_RASCUNHO,
+            'evento': self.evento.pk,
+            'oficio': self.oficio.pk,
+            'roteiro': [
+                '[{"estado_id": %s, "estado_sigla": "PR", "cidade_id": %s, "cidade_nome": "Curitiba"}]' % (
+                    self.estado.pk,
+                    self.cidade.pk,
+                ),
+                '',
+            ],
+            'destinos_payload': '[]',
+            'recursos_texto': 'Persistir roteiro calculado',
+            'horario_atendimento_padrao': '08:00-17:00',
+            'solicitante_escolha': '',
+            'return_to': reverse('eventos:documentos-planos-trabalho'),
+        }
+        payload.update(self._base_formset_payload())
+
+        response = self.client.post(
+            reverse('eventos:documentos-planos-trabalho-novo'),
+            data=payload,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        pt = PlanoTrabalho.objects.order_by('-pk').first()
+        self.assertIsNotNone(pt)
+        self.assertEqual(len(pt.destinos_json), 1)
+        self.assertEqual(pt.destinos_json[0]['cidade_nome'], 'Curitiba')
+
+        response_edicao = self.client.get(
+            reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': pt.pk})
+        )
+        self.assertEqual(response_edicao.status_code, 200)
+        self.assertContains(response_edicao, 'Curitiba')
+        self.assertContains(response_edicao, 'id="id_roteiro"')
 
     def test_horario_manual_quando_escolhido_outros(self):
         payload = {
