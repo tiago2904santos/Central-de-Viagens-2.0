@@ -392,6 +392,9 @@ def _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times
 def _parse_trechos_times_post(request, num_trechos):
     """
     Extrai do POST trecho_N_saida_dt, trecho_N_chegada_dt, trecho_N_distancia_km, trecho_N_duracao_estimada_min.
+    Tenta primeiro o campo hidden combinado (trecho_N_saida_dt). Se vazio, usa os campos
+    visíveis individuais (trecho_N_saida_date + trecho_N_saida_time) como fallback, garantindo
+    que as datas sejam sempre salvas mesmo quando o JS não sincronizou o campo oculto.
     Retorna lista de dicts: saida_dt, chegada_dt, distancia_km (Decimal ou None), duracao_estimada_min (int ou None).
     """
     from datetime import datetime
@@ -400,6 +403,17 @@ def _parse_trechos_times_post(request, num_trechos):
     for i in range(num_trechos):
         s = request.POST.get(f'trecho_{i}_saida_dt', '').strip()
         c = request.POST.get(f'trecho_{i}_chegada_dt', '').strip()
+        # Fallback: campos visíveis individuais, enviados sempre pelo browser independente do JS
+        if not s:
+            s_date = request.POST.get(f'trecho_{i}_saida_date', '').strip()
+            s_time = request.POST.get(f'trecho_{i}_saida_time', '').strip()
+            if s_date:
+                s = s_date + 'T' + (s_time if s_time else '00:00')
+        if not c:
+            c_date = request.POST.get(f'trecho_{i}_chegada_date', '').strip()
+            c_time = request.POST.get(f'trecho_{i}_chegada_time', '').strip()
+            if c_date:
+                c = c_date + 'T' + (c_time if c_time else '00:00')
         dist_km = request.POST.get(f'trecho_{i}_distancia_km', '').strip()
         dur_min = request.POST.get(f'trecho_{i}_duracao_estimada_min', '').strip()
         tempo_cru = request.POST.get(f'trecho_{i}_tempo_cru_estimado_min', '').strip()
@@ -419,6 +433,8 @@ def _parse_trechos_times_post(request, num_trechos):
                     dt = datetime.strptime(val[:10] + ' 00:00', '%Y-%m-%d %H:%M')
                 except ValueError:
                     pass
+            if dt is not None and timezone.is_naive(dt):
+                dt = timezone.make_aware(dt)
             if name == 'saida':
                 saida_dt = dt
             else:

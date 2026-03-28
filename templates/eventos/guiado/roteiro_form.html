@@ -275,8 +275,8 @@
             var st = card.querySelector('input[name="trecho_' + ord + '_saida_time"]');
             var cd = card.querySelector('input[name="trecho_' + ord + '_chegada_date"]');
             var ct = card.querySelector('input[name="trecho_' + ord + '_chegada_time"]');
-            var saidaDt = (sd && sd.value && st && st.value) ? (sd.value + 'T' + st.value) : '';
-            var chegadaDt = (cd && cd.value && ct && ct.value) ? (cd.value + 'T' + ct.value) : '';
+            var saidaDt = (sd && sd.value) ? (sd.value + 'T' + (st && st.value ? st.value : '00:00')) : '';
+            var chegadaDt = (cd && cd.value) ? (cd.value + 'T' + (ct && ct.value ? ct.value : '00:00')) : '';
             var id = card.getAttribute('data-trecho-id');
             var distEl = card.querySelector('.trecho-distancia-km');
             var tempoCru = card.getAttribute('data-tempo-cru-min');
@@ -406,8 +406,8 @@
             var ct = card.querySelector('input[name="trecho_' + ord + '_chegada_time"]');
             var hidS = card.querySelector('input[name="trecho_' + ord + '_saida_dt"]');
             var hidC = card.querySelector('input[name="trecho_' + ord + '_chegada_dt"]');
-            if (hidS && sd && st) hidS.value = (sd.value && st.value) ? (sd.value + 'T' + st.value) : '';
-            if (hidC && cd && ct) hidC.value = (cd.value && ct.value) ? (cd.value + 'T' + ct.value) : '';
+            if (hidS && sd) hidS.value = sd.value ? (sd.value + 'T' + (st && st.value ? st.value : '00:00')) : '';
+            if (hidC && cd) hidC.value = cd.value ? (cd.value + 'T' + (ct && ct.value ? ct.value : '00:00')) : '';
         }
         function getTempoTotalMin(card) {
             var total = card.getAttribute('data-tempo-total-min');
@@ -561,8 +561,8 @@
             var ct = card.querySelector('input[name="trecho_' + ord + '_chegada_time"]');
             var hidS = card.querySelector('input[name="trecho_' + ord + '_saida_dt"]');
             var hidC = card.querySelector('input[name="trecho_' + ord + '_chegada_dt"]');
-            if (hidS && sd && st) hidS.value = (sd.value && st.value) ? (sd.value + 'T' + st.value) : '';
-            if (hidC && cd && ct) hidC.value = (cd.value && ct.value) ? (cd.value + 'T' + ct.value) : '';
+            if (hidS && sd) hidS.value = sd.value ? (sd.value + 'T' + (st && st.value ? st.value : '00:00')) : '';
+            if (hidC && cd) hidC.value = cd.value ? (cd.value + 'T' + (ct && ct.value ? ct.value : '00:00')) : '';
         });
     }
     var formRoteiro = document.getElementById('form-roteiro');

@@ -264,35 +264,113 @@
   .pt-chip-anim { animation:pt-chip-in .15s ease both; }
 
   /* ── Activity grid + realtime experience ── */
+  .pt-step[data-step-index='2'] .oficio-stage-intro {
+    margin-bottom: 1rem;
+    padding: .95rem 1rem;
+    border: 1px solid #dbe8f5;
+    border-radius: 14px;
+    background:
+      radial-gradient(circle at 8% 18%, rgba(75, 148, 214, .12) 0%, rgba(75, 148, 214, 0) 30%),
+      linear-gradient(145deg, #f7fbff 0%, #eef6ff 100%);
+  }
+  .pt-step3-card {
+    border-color: #d7e5f3;
+    border-radius: 14px;
+    background: linear-gradient(155deg, #ffffff 0%, #f9fcff 100%);
+    box-shadow: 0 10px 24px rgba(21, 76, 125, .08);
+  }
   .pt-activity-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; }
   @media(max-width:900px){ .pt-activity-grid{ grid-template-columns:1fr; } }
   .pt-activity-item {
+    position: relative;
     border:1px solid #d8e5f2;
     border-radius:14px;
-    padding:.75rem .8rem;
+    padding:.78rem .86rem;
     background:linear-gradient(160deg,#ffffff 0%,#f7fbff 100%);
     cursor:pointer;
     transition:border-color .18s, box-shadow .18s, transform .18s, background .18s;
   }
   .pt-activity-item:hover {
-    border-color:#9abfe0;
-    box-shadow:0 10px 22px rgba(26,94,153,.1);
+    border-color:#8cb5db;
+    box-shadow:0 12px 24px rgba(26,94,153,.12);
     transform:translateY(-1px);
   }
   .pt-activity-item:has(.form-check-input:checked){
-    border-color:#3276b4;
-    background:linear-gradient(160deg,#eef7ff 0%,#ffffff 100%);
-    box-shadow:0 10px 24px rgba(21,88,147,.14);
+    border-color:#2f6fa9;
+    background:linear-gradient(160deg,#eaf5ff 0%,#ffffff 100%);
+    box-shadow:0 12px 26px rgba(21,88,147,.16);
   }
+  .pt-activity-item:has(.form-check-input:checked)::after {
+    content: 'Selecionada';
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    border-radius: 999px;
+    border: 1px solid #b9d9f5;
+    background: #ecf6ff;
+    color: #1b5689;
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    padding: .1rem .45rem;
+  }
+  .pt-activity-item.is-hidden { display: none; }
   .pt-activity-item .form-check{ margin:0; pointer-events:none; }
-  .pt-activity-item .form-check-label{ color:#183a5a; font-size:.88rem; font-weight:700; pointer-events:none; line-height:1.35; }
+  .pt-activity-item .form-check-input { margin-top: .16rem; }
+  .pt-activity-item .form-check-label{
+    display: block;
+    color:#183a5a;
+    font-size:.88rem;
+    font-weight:700;
+    pointer-events:none;
+    line-height:1.38;
+    padding-right: 82px;
+  }
 
-  .pt-activity-tools { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+  .pt-activity-tools {
+    display:flex;
+    gap:.65rem;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:.72rem;
+  }
+  .pt-activity-tools-main { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+  .pt-activity-search-wrap { min-width: 240px; flex: 1 1 260px; max-width: 340px; }
+  .pt-activity-search {
+    border:1px solid #cdddf0;
+    border-radius:10px;
+    background:#fff;
+    color:#183e62;
+    font-size:.86rem;
+    padding:.4rem .64rem;
+  }
+  .pt-activity-search:focus {
+    border-color:#6f9dc8;
+    box-shadow:0 0 0 .15rem rgba(91, 146, 194, .22);
+    outline:0;
+  }
   .pt-activity-counter {
     display:inline-flex; align-items:center; justify-content:center;
-    min-width:132px; padding:.26rem .6rem; border-radius:999px;
+    min-width:152px; padding:.28rem .66rem; border-radius:999px;
     border:1px solid #bdd4ea; background:#f0f7ff; color:#245885;
     font-size:.74rem; font-weight:800; letter-spacing:.02em;
+    transition:all .18s ease;
+  }
+  .pt-activity-counter.is-active {
+    border-color:#90c5a7;
+    background:#eaf8f0;
+    color:#1f7442;
+  }
+  .pt-activity-filter-empty {
+    margin: 0;
+    border:1px dashed #bfd5e9;
+    border-radius:10px;
+    background:#f8fbff;
+    color:#5d7a98;
+    font-size:.82rem;
+    padding:.62rem .74rem;
   }
 
   .pt-activity-live {
@@ -301,6 +379,36 @@
     background:linear-gradient(155deg,#f8fcff 0%,#edf6ff 100%);
     padding:1rem;
     box-shadow:0 10px 24px rgba(26,90,147,.1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .pt-activity-live::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3f8fd2 0%, #6eb5ec 100%);
+    opacity: .9;
+  }
+  .pt-activity-live--metas {
+    background: linear-gradient(150deg, #f7fcff 0%, #eaf6ff 100%);
+  }
+  .pt-activity-live--metas::before {
+    background: linear-gradient(90deg, #2f7ec0 0%, #43a3d9 100%);
+  }
+  .pt-activity-live--recursos {
+    background: linear-gradient(150deg, #f9fcff 0%, #ecf7f2 100%);
+  }
+  .pt-activity-live--recursos::before {
+    background: linear-gradient(90deg, #2a8a66 0%, #49af84 100%);
+  }
+  .pt-activity-live-head {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:.5rem;
+    margin-top: .15rem;
   }
   .pt-activity-live-title {
     margin:0;
@@ -310,10 +418,29 @@
     letter-spacing:.04em;
     text-transform:uppercase;
   }
+  .pt-activity-live-count {
+    display:inline-flex;
+    min-width:34px;
+    height: 24px;
+    justify-content:center;
+    align-items:center;
+    border-radius:999px;
+    border:1px solid #aacce8;
+    background:#ffffff;
+    color:#1e5888;
+    font-size:.76rem;
+    font-weight:800;
+    padding:.08rem .5rem;
+  }
+  .pt-activity-live--recursos .pt-activity-live-count {
+    border-color: #b8decf;
+    color: #206f53;
+  }
   .pt-activity-live-subtitle {
-    margin:.25rem 0 .7rem;
+    margin:.3rem 0 .7rem;
     color:#4f6f90;
     font-size:.82rem;
+    min-height: 2.2em;
   }
   .pt-activity-live-list {
     list-style:none;
@@ -321,25 +448,83 @@
     padding:0;
     display:grid;
     gap:.5rem;
-    max-height:220px;
+    max-height:280px;
     overflow:auto;
+    padding-right: .2rem;
+    scrollbar-width: thin;
+    scrollbar-color: #9dc0de #ecf5ff;
   }
-  .pt-activity-live-list li {
+  .pt-activity-live-list::-webkit-scrollbar {
+    width: 8px;
+  }
+  .pt-activity-live-list::-webkit-scrollbar-track {
+    background: #ecf5ff;
+    border-radius: 999px;
+  }
+  .pt-activity-live-list::-webkit-scrollbar-thumb {
+    background: #9dc0de;
+    border-radius: 999px;
+  }
+  .pt-activity-live-list li.pt-live-entry {
     border:1px solid #d9e8f6;
     border-radius:10px;
     background:#fff;
-    padding:.52rem .62rem;
+    padding:.5rem .56rem;
     color:#1b456b;
     font-size:.82rem;
     line-height:1.35;
+    display:flex;
+    gap:.56rem;
+    align-items:flex-start;
+    transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  }
+  .pt-activity-live-list li.pt-live-entry:hover {
+    transform: translateY(-1px);
+    border-color: #bad7ee;
+    box-shadow: 0 8px 18px rgba(26, 90, 147, .09);
+  }
+  .pt-live-entry-index {
+    flex: 0 0 auto;
+    min-width: 28px;
+    height: 24px;
+    border-radius: 8px;
+    border: 1px solid #bcd7ed;
+    background: linear-gradient(145deg, #edf6ff 0%, #dbeeff 100%);
+    color: #1e5f93;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .69rem;
+    font-weight: 900;
+    letter-spacing: .03em;
+  }
+  .pt-activity-live--recursos .pt-live-entry-index {
+    border-color: #bfe2d3;
+    background: linear-gradient(145deg, #edf9f3 0%, #dff3e8 100%);
+    color: #206f53;
+  }
+  .pt-live-entry-text {
+    display: block;
+    color: #1b456b;
+    font-size: .83rem;
+    font-weight: 650;
+    line-height: 1.38;
   }
   .pt-activity-live-empty {
     border:1px dashed #b8cee3;
-    border-radius:10px;
+    border-radius:12px;
     background:#fafdff;
     color:#5d7a98;
     font-size:.82rem;
-    padding:.6rem .7rem;
+    padding:.72rem .78rem;
+    display: grid;
+    gap: .2rem;
+  }
+  .pt-activity-live-empty strong {
+    color: #2f577c;
+    font-size: .79rem;
+    letter-spacing: .02em;
+    text-transform: uppercase;
   }
 
   /* ── Review ── */
@@ -914,19 +1099,31 @@
             <div class="oficio-stage-intro">
               <span class="oficio-stage-kicker">Passo 3 de 4</span>
               <h2 class="oficio-stage-title">Atividades</h2>
-              <p class="oficio-stage-description">Marque as atividades previstas para este plano.</p>
+              <p class="oficio-stage-description">Selecione as atividades previstas e acompanhe metas e recursos sendo montados automaticamente.</p>
             </div>
 
-            <section class="oficio-stage-section">
+            <section class="oficio-stage-section pt-step3-card">
               <div class="oficio-stage-section-head">
                 <div>
                   <h3 class="oficio-stage-section-title">Atividades previstas</h3>
                 </div>
-                <div class="pt-activity-tools">
-                  <span class="pt-activity-counter" id="pt-activity-counter">0 selecionada(s)</span>
+              </div>
+              <div class="pt-activity-tools">
+                <div class="pt-activity-tools-main">
+                  <span class="pt-activity-counter" id="pt-activity-counter">0 selecionadas</span>
                   <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-selecionar-todas-atividades">Selecionar todos</button>
                   <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-limpar-atividades">Limpar seleção</button>
                   <a href="{% url 'eventos:plano-trabalho-atividades-lista' %}" class="btn btn-outline-primary btn-sm">Gerenciar atividades</a>
+                </div>
+                <div class="pt-activity-search-wrap">
+                  <label class="visually-hidden" for="pt-atividade-search">Buscar atividade</label>
+                  <input
+                    type="search"
+                    id="pt-atividade-search"
+                    class="form-control pt-activity-search"
+                    placeholder="Buscar atividade por nome"
+                    autocomplete="off"
+                  >
                 </div>
               </div>
               <div class="pt-activity-grid">
@@ -939,9 +1136,10 @@
                 </label>
                 {% endfor %}
               </div>
+              <p class="pt-activity-filter-empty d-none" id="pt-activity-filter-empty">Nenhuma atividade encontrada para a busca informada.</p>
             </section>
 
-            <section class="oficio-stage-section">
+            <section class="oficio-stage-section pt-step3-card">
               <div class="oficio-stage-section-head">
                 <div>
                   <h3 class="oficio-stage-section-title">Metas e recursos</h3>
@@ -950,22 +1148,32 @@
               </div>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <div class="pt-activity-live mb-3">
-                    <h4 class="pt-activity-live-title">Metas em tempo real</h4>
+                  <div class="pt-activity-live pt-activity-live--metas mb-3">
+                    <div class="pt-activity-live-head">
+                      <h4 class="pt-activity-live-title">Metas</h4>
+                      <span class="pt-activity-live-count" id="pt-live-metas-count">0</span>
+                    </div>
                     <p class="pt-activity-live-subtitle">Cada meta aparece conforme a atividade é marcada.</p>
                     <ul class="pt-activity-live-list" id="pt-live-metas-list"></ul>
                   </div>
-                  <label class="form-label" for="{{ form.metas_formatadas.id_for_label }}">Metas</label>
-                  {{ form.metas_formatadas }}
+                  <div class="d-none" aria-hidden="true">
+                    <label class="form-label" for="{{ form.metas_formatadas.id_for_label }}">Metas</label>
+                    {{ form.metas_formatadas }}
+                  </div>
                 </div>
                 <div class="col-md-6">
-                  <div class="pt-activity-live mb-3">
-                    <h4 class="pt-activity-live-title">Recursos em tempo real</h4>
+                  <div class="pt-activity-live pt-activity-live--recursos mb-3">
+                    <div class="pt-activity-live-head">
+                      <h4 class="pt-activity-live-title">Recursos</h4>
+                      <span class="pt-activity-live-count" id="pt-live-recursos-count">0</span>
+                    </div>
                     <p class="pt-activity-live-subtitle">Recursos necessários por atividade selecionada.</p>
                     <ul class="pt-activity-live-list" id="pt-live-recursos-list"></ul>
                   </div>
-                  <label class="form-label" for="{{ form.recursos_texto.id_for_label }}">Recursos</label>
-                  {{ form.recursos_texto }}
+                  <div class="d-none" aria-hidden="true">
+                    <label class="form-label" for="{{ form.recursos_texto.id_for_label }}">Recursos</label>
+                    {{ form.recursos_texto }}
+                  </div>
                 </div>
               </div>
             </section>
@@ -1190,8 +1398,13 @@
   const metasInput          = document.getElementById('{{ form.metas_formatadas.id_for_label }}');
   const recursosInput       = document.getElementById('{{ form.recursos_texto.id_for_label }}');
   const atividadesCounterEl = document.getElementById('pt-activity-counter');
+  const atividadeGridEl     = document.querySelector('.pt-step[data-step-index="2"] .pt-activity-grid');
+  const atividadeSearchInput = document.getElementById('pt-atividade-search');
+  const atividadeFilterEmpty = document.getElementById('pt-activity-filter-empty');
   const liveMetasList       = document.getElementById('pt-live-metas-list');
   const liveRecursosList    = document.getElementById('pt-live-recursos-list');
+  const liveMetasCount      = document.getElementById('pt-live-metas-count');
+  const liveRecursosCount   = document.getElementById('pt-live-recursos-count');
   const stsPeriodo          = document.getElementById('pts-periodo');
   const stsEquipe           = document.getElementById('pts-equipe');
   const stsValor            = document.getElementById('pts-valor');
@@ -2382,6 +2595,34 @@
       .filter((item) => !!item);
   }
 
+  function filterAtividadesVisiveis() {
+    const termo = String(atividadeSearchInput && atividadeSearchInput.value ? atividadeSearchInput.value : '').trim().toLowerCase();
+    const cards = Array.from(document.querySelectorAll('.pt-activity-item'));
+    let visiveis = 0;
+
+    cards.forEach((card) => {
+      const texto = String(card.textContent || '').trim().toLowerCase();
+      const match = !termo || texto.includes(termo);
+      card.classList.toggle('is-hidden', !match);
+      if (match) visiveis += 1;
+    });
+
+    if (atividadeFilterEmpty) {
+      atividadeFilterEmpty.classList.toggle('d-none', visiveis > 0);
+    }
+  }
+
+  function ordenarAtividadesAlfabeticamente() {
+    if (!atividadeGridEl) return;
+    const cards = Array.from(atividadeGridEl.querySelectorAll('.pt-activity-item'));
+    cards.sort((a, b) => {
+      const aTxt = String(a.textContent || '').trim();
+      const bTxt = String(b.textContent || '').trim();
+      return aTxt.localeCompare(bTxt, 'pt-BR', { sensitivity: 'base' });
+    });
+    cards.forEach((card) => atividadeGridEl.appendChild(card));
+  }
+
   function renderAtividadesRealtime() {
     const itens = selectedAtividadesCatalogo();
     const metas = itens.map((item) => String(item.meta || '').trim()).filter((v) => v);
@@ -2417,22 +2658,32 @@
     }
 
     if (atividadesCounterEl) {
-      atividadesCounterEl.textContent = itens.length + ' selecionada(s)';
+      atividadesCounterEl.textContent = itens.length === 1 ? '1 selecionada' : (itens.length + ' selecionadas');
+      atividadesCounterEl.classList.toggle('is-active', itens.length > 0);
     }
+    if (liveMetasCount) liveMetasCount.textContent = String(metas.length);
+    if (liveRecursosCount) liveRecursosCount.textContent = String(recursos.length);
+
+    const renderListaRica = (lista, tipo) => {
+      if (!lista.length) {
+        if (tipo === 'metas') {
+          return '<li class="pt-activity-live-empty"><strong>Sem metas geradas</strong><span>Selecione pelo menos uma atividade para preencher as metas automaticamente.</span></li>';
+        }
+        return '<li class="pt-activity-live-empty"><strong>Sem recursos gerados</strong><span>Selecione pelo menos uma atividade para visualizar os recursos necessários.</span></li>';
+      }
+      return lista.map((texto, idx) => (
+        '<li class="pt-live-entry">' +
+          '<span class="pt-live-entry-index">' + String(idx + 1).padStart(2, '0') + '</span>' +
+          '<span class="pt-live-entry-text">' + escapeHtml(texto) + '</span>' +
+        '</li>'
+      )).join('');
+    };
 
     if (liveMetasList) {
-      if (!metas.length) {
-        liveMetasList.innerHTML = '<li class="pt-activity-live-empty">Selecione uma atividade para visualizar as metas.</li>';
-      } else {
-        liveMetasList.innerHTML = metas.map((meta) => '<li>' + escapeHtml(meta) + '</li>').join('');
-      }
+      liveMetasList.innerHTML = renderListaRica(metas, 'metas');
     }
     if (liveRecursosList) {
-      if (!recursos.length) {
-        liveRecursosList.innerHTML = '<li class="pt-activity-live-empty">Selecione uma atividade para visualizar os recursos necessários.</li>';
-      } else {
-        liveRecursosList.innerHTML = recursos.map((recurso) => '<li>' + escapeHtml(recurso) + '</li>').join('');
-      }
+      liveRecursosList.innerHTML = renderListaRica(recursos, 'recursos');
     }
   }
 
@@ -2518,6 +2769,7 @@
   const btnLimparAtividades = document.getElementById('btn-limpar-atividades');
   if (btnSelecionarTodas) btnSelecionarTodas.addEventListener('click', selecionarTodasAtividades);
   if (btnLimparAtividades) btnLimparAtividades.addEventListener('click', limparAtividades);
+  if (atividadeSearchInput) atividadeSearchInput.addEventListener('input', filterAtividadesVisiveis);
 
   [diariasQtd, diariasUnit, diariasTotal].forEach((el) => {
     if (!el) return;
@@ -2587,6 +2839,8 @@
   parseDateRange();
   updateDiariasContextCards();
   onDeslocamentoChange();
+  ordenarAtividadesAlfabeticamente();
+  filterAtividadesVisiveis();
   renderAtividadesRealtime();
   syncMetaState();
   bootstrapDestinos().then(() => {

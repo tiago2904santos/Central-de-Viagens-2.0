@@ -191,7 +191,7 @@ def _build_plano_trabalho_efetivo_formset(request, *, instance=None):
     if request.method != 'POST':
         has_existing_rows = bool(instance and instance.pk and instance.efetivos.exists())
         if not has_existing_rows:
-            initial = [{'cargo': default_cargo.pk if default_cargo else '', 'quantidade': 1}]
+            initial = [{'cargo': default_cargo.pk if default_cargo else '', 'quantidade': 0}]
     kwargs = {
         'instance': instance,
         'prefix': 'efetivo',
