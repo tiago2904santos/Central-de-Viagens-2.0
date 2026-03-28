@@ -482,7 +482,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'recursos_texto',
         ]
         widgets = {
-            'data_criacao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'data_criacao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'evento': forms.Select(attrs={'class': ''}),
             'oficio': forms.Select(attrs={'class': ''}),
             'roteiro': forms.Select(attrs={'class': ''}),
@@ -491,8 +491,8 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'coordenador_administrativo': forms.Select(attrs={'class': ''}),
             'destinos_json': forms.HiddenInput(),
             'evento_data_unica': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'evento_data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'evento_data_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'evento_data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'evento_data_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'horario_atendimento': forms.TextInput(attrs={'class': 'form-control'}),
             'quantidade_servidores': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'metas_formatadas': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
@@ -933,6 +933,66 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             self._pending_oficios = related_oficios
             self._pending_coordenadores_ids = coordenadores_ids
         return instance
+
+
+class PlanoTrabalhoStep1Form(FormComErroInvalidMixin, forms.ModelForm):
+    """Step 1 - vínculos e responsáveis do plano de trabalho."""
+
+    class Meta:
+        model = PlanoTrabalho
+        fields = [
+            'data_criacao',
+            'evento',
+            'oficio',
+            'roteiro',
+            'coordenador_administrativo',
+            'coordenador_operacional',
+            'quantidade_servidores',
+        ]
+
+
+class PlanoTrabalhoStep2Form(FormComErroInvalidMixin, forms.ModelForm):
+    """Step 2 - período, destinos e dados de diárias."""
+
+    class Meta:
+        model = PlanoTrabalho
+        fields = [
+            'evento_data_unica',
+            'evento_data_inicio',
+            'evento_data_fim',
+            'horario_atendimento',
+            'destinos_json',
+            'diarias_quantidade',
+            'diarias_valor_unitario',
+            'diarias_valor_total',
+            'diarias_valor_extenso',
+            'quantidade_diarias',
+            'valor_diarias',
+            'valor_diarias_extenso',
+        ]
+
+
+class PlanoTrabalhoStep3Form(FormComErroInvalidMixin, forms.ModelForm):
+    """Step 3 - atividades e textos derivados."""
+
+    class Meta:
+        model = PlanoTrabalho
+        fields = [
+            'atividades_codigos',
+            'metas_formatadas',
+            'recursos_texto',
+        ]
+
+
+class PlanoTrabalhoStep4Form(FormComErroInvalidMixin, forms.ModelForm):
+    """Step 4 - consolidação final do plano."""
+
+    class Meta:
+        model = PlanoTrabalho
+        fields = [
+            'status',
+            'observacoes',
+        ]
 
 
 class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):

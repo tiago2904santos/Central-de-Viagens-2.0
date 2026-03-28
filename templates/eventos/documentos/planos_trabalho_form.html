@@ -1442,6 +1442,50 @@
   let autosaveInFlight      = false;
   let autosavePending       = false;
   let autosaveLastSavedAt   = null;
+  let autosaveExpectedUpdatedAt = '{{ object.updated_at|date:"c"|default:"" }}' || null;
+  const ptDirtyFields       = new Set();
+
+  if (autosaveExpectedUpdatedAt) {
+    const initialSavedAt = new Date(autosaveExpectedUpdatedAt);
+    if (!isNaN(initialSavedAt.getTime())) autosaveLastSavedAt = initialSavedAt;
+  }
+
+  function markDirty() {
+    Array.from(arguments).forEach((key) => {
+      const k = String(key || '').trim();
+      if (k) ptDirtyFields.add(k);
+    });
+  }
+
+  function markDirtyByFieldName(fieldName) {
+    const name = String(fieldName || '').trim();
+    if (!name) return;
+    const mapping = {
+      data_criacao: 'data_criacao',
+      evento: 'evento_id',
+      oficio: 'oficio_id',
+      oficios_relacionados: 'oficios_relacionados_ids',
+      roteiro: 'roteiro_id',
+      solicitante_escolha: 'solicitante_escolha',
+      solicitante_outros: 'solicitante_outros',
+      salvar_solicitante_outros: 'salvar_solicitante_outros',
+      horario_atendimento_padrao: 'horario_atendimento_padrao',
+      horario_atendimento_manual: 'horario_atendimento_manual',
+      evento_data_unica: 'evento_data_unica',
+      evento_data_inicio: 'evento_data_inicio',
+      evento_data_fim: 'evento_data_fim',
+      coordenador_administrativo: 'coordenador_administrativo_id',
+      quantidade_servidores: 'quantidade_servidores',
+      destinos_payload: 'destinos_payload',
+      coordenadores_ids: 'coordenadores_ids',
+      atividades_codigos: 'atividades_codigos',
+      diarias_quantidade: 'diarias_quantidade',
+      diarias_valor_unitario: 'diarias_valor_unitario',
+      diarias_valor_total: 'diarias_valor_total',
+      diarias_valor_extenso: 'diarias_valor_extenso',
+    };
+    if (mapping[name]) markDirty(mapping[name]);
+  }
 
   let atividadesCatalogo = [];
   let atividadesByCodigo = {};
@@ -1612,6 +1656,8 @@
   function buildPayloadFromState() {
     return {
       id: planoState.id,
+      expected_updated_at: autosaveExpectedUpdatedAt,
+      _dirty_fields: Array.from(ptDirtyFields),
       data_criacao: planoState.meta.data_criacao,
       evento_id: planoState.meta.evento_id,
       oficio_id: planoState.meta.oficio_id,
@@ -1623,8 +1669,8 @@
       horario_atendimento_padrao: planoState.meta.horario_atendimento_padrao,
       horario_atendimento_manual: planoState.meta.horario_atendimento_manual,
       evento_data_unica: planoState.meta.evento_data_unica,
-      evento_data_inicio: planoState.datas.inicio || '',
-      evento_data_fim: planoState.datas.fim || '',
+      evento_data_inicio: planoState.evento.data_inicio || '',
+      evento_data_fim: planoState.evento.data_fim || '',
       evento_hora_inicio: (eventoHoraInicio && eventoHoraInicio.value) || '',
       evento_hora_fim: (eventoHoraFim && eventoHoraFim.value) || '',
       destinos_payload: planoState.roteiro,
@@ -1654,6 +1700,7 @@
     collectDestinos();
     reindexEfetivoRows();
     syncEfetivoTotal({ skipRecalculateDiarias: true, silentNotify: true });
+    const dirtySnapshot = Array.from(ptDirtyFields);
     const payload = buildPayloadFromState();
     setAutosaveStatus('saving');
     try {
@@ -1666,7 +1713,17 @@
         },
         body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error('Falha de rede');
+      if (!response.ok) {
+        let errorPayload = null;
+        try {
+          errorPayload = await response.json();
+        } catch (_) {}
+        if (response.status === 409 && errorPayload && errorPayload.code === 'stale_write') {
+          if (errorPayload.updated_at) autosaveExpectedUpdatedAt = errorPayload.updated_at;
+          throw new Error('Conflito de edição detectado. Aguarde a sincronização e tente novamente.');
+        }
+        throw new Error((errorPayload && errorPayload.error) || 'Falha de rede');
+      }
       const data = await response.json();
       if (data && data.id) planoState.id = data.id;
       if (data && typeof data.valor_extenso === 'string') {
@@ -1678,10 +1735,12 @@
       }
       updateValorTotalUI();
       updateValorExtensoUI();
+      if (data && data.updated_at) autosaveExpectedUpdatedAt = data.updated_at;
       autosaveLastSavedAt = data && data.updated_at ? new Date(data.updated_at) : new Date();
+      dirtySnapshot.forEach((key) => ptDirtyFields.delete(key));
       setAutosaveStatus('saved');
-    } catch (_) {
-      setAutosaveStatus('error');
+    } catch (error) {
+      setAutosaveStatus('error', error && error.message ? error.message : undefined);
     } finally {
       autosaveInFlight = false;
       if (autosavePending) {
@@ -2135,6 +2194,7 @@
         ? planoState.diarias.total.toFixed(2).replace('.', ',')
         : '';
     }
+    markDirty('diarias', 'diarias_quantidade', 'diarias_valor_unitario', 'diarias_valor_total', 'diarias_valor_extenso');
     updateValorServidorUI();
     updateDiariasUI();
     updateValorTotalUI();
@@ -2324,6 +2384,7 @@
     });
     planoState.roteiro = payload;
     planoState.destinos = payload;
+    markDirty('destinos_payload');
     if (destinosPayload) destinosPayload.value = JSON.stringify(payload);
     syncMetaState();
     notify();
@@ -2381,6 +2442,7 @@
       }
     });
     qtdServidores.value     = total > 0 ? String(total) : '';
+    markDirty('quantidade_servidores');
     if (totalServidoresEl) totalServidoresEl.textContent = String(total || 0);
     planoState.equipe = equipePayload;
     syncMetaState();
@@ -2429,6 +2491,7 @@
   function syncCoordIds() {
     if (coordIdsInput) coordIdsInput.value = planoState.coordenadores.map((c) => c.id).join(',');
     if (coordCount)   coordCount.textContent = String(planoState.coordenadores.length);
+    markDirty('coordenadores_ids');
     syncMetaState();
   }
 
@@ -2709,6 +2772,7 @@
       cb.checked = true;
     });
     renderAtividadesRealtime();
+    markDirty('atividades_codigos');
     syncMetaState();
     triggerAutosave();
     notify();
@@ -2720,6 +2784,7 @@
       cb.checked = false;
     });
     renderAtividadesRealtime();
+    markDirty('atividades_codigos');
     syncMetaState();
     triggerAutosave();
     notify();
@@ -2733,6 +2798,7 @@
       filterByEvent(oficioSelect);
       filterByEvent(oficiosSelect);
       filterByEvent(roteiroSelect);
+      markDirty('evento_id');
       syncMetaState();
       triggerAutosave();
     });
@@ -2740,23 +2806,23 @@
     filterByEvent(oficiosSelect);
     filterByEvent(roteiroSelect);
   }
-  if (solicitanteSelect) solicitanteSelect.addEventListener('change', () => { toggleSolicitanteOutros(); syncMetaState(); triggerAutosave(); });
-  if (horarioPadrao)     horarioPadrao.addEventListener('change', () => { toggleHorarioManual(); syncMetaState(); triggerAutosave(); });
+  if (solicitanteSelect) solicitanteSelect.addEventListener('change', () => { toggleSolicitanteOutros(); markDirty('solicitante_escolha', 'solicitante_outros', 'salvar_solicitante_outros'); syncMetaState(); triggerAutosave(); });
+  if (horarioPadrao)     horarioPadrao.addEventListener('change', () => { toggleHorarioManual(); markDirty('horario_atendimento_padrao', 'horario_atendimento_manual'); syncMetaState(); triggerAutosave(); });
   const horarioManualInput = document.getElementById('{{ form.horario_atendimento_manual.id_for_label }}');
-  if (horarioManualInput) horarioManualInput.addEventListener('input', () => { updateDiariasContextCards(); syncMetaState(); triggerAutosave(); });
-  if (dataUnica)         dataUnica.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
-  if (dataInicio)        dataInicio.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
-  if (dataFim)           dataFim.addEventListener('change', () => { onDatasChange(); syncMetaState(); triggerAutosave(); });
-  if (eventoHoraInicio)  eventoHoraInicio.addEventListener('change', () => { updateDiariasContextCards(); syncMetaState(); triggerAutosave(); });
-  if (eventoHoraFim)     eventoHoraFim.addEventListener('change', () => { updateDiariasContextCards(); syncMetaState(); triggerAutosave(); });
+  if (horarioManualInput) horarioManualInput.addEventListener('input', () => { updateDiariasContextCards(); markDirty('horario_atendimento_manual'); syncMetaState(); triggerAutosave(); });
+  if (dataUnica)         dataUnica.addEventListener('change', () => { onDatasChange(); markDirty('evento_data_unica', 'evento_data_inicio', 'evento_data_fim'); syncMetaState(); triggerAutosave(); });
+  if (dataInicio)        dataInicio.addEventListener('change', () => { onDatasChange(); markDirty('evento_data_inicio', 'evento_data_fim'); syncMetaState(); triggerAutosave(); });
+  if (dataFim)           dataFim.addEventListener('change', () => { onDatasChange(); markDirty('evento_data_fim'); syncMetaState(); triggerAutosave(); });
+  if (eventoHoraInicio)  eventoHoraInicio.addEventListener('change', () => { updateDiariasContextCards(); markDirty('horario_atendimento_manual'); syncMetaState(); triggerAutosave(); });
+  if (eventoHoraFim)     eventoHoraFim.addEventListener('change', () => { updateDiariasContextCards(); markDirty('horario_atendimento_manual'); syncMetaState(); triggerAutosave(); });
 
   // ── Deslocamento (saída e chegada da sede) ──
-  if (dataSaidaSede)   dataSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (dataChegadaSede) dataChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (horaSaidaSede)   horaSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (horaChegadaSede) horaChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (horaSaidaSede)   horaSaidaSede.addEventListener('blur',   () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
-  if (horaChegadaSede) horaChegadaSede.addEventListener('blur', () => { onDeslocamentoChange(); syncMetaState(); triggerAutosave(); });
+  if (dataSaidaSede)   dataSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
+  if (dataChegadaSede) dataChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
+  if (horaSaidaSede)   horaSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
+  if (horaChegadaSede) horaChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
+  if (horaSaidaSede)   horaSaidaSede.addEventListener('blur',   () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
+  if (horaChegadaSede) horaChegadaSede.addEventListener('blur', () => { onDeslocamentoChange(); markDirty('diarias'); syncMetaState(); triggerAutosave(); });
   // ── Remover linha equipe ──
   document.addEventListener('click', (e) => {
     if (e.target.closest('.btn-remove-row')) {
@@ -2774,7 +2840,7 @@
   [diariasQtd, diariasUnit, diariasTotal].forEach((el) => {
     if (!el) return;
     el.addEventListener('input',  () => { computeDiarias(); });
-    el.addEventListener('change', () => { computeDiarias(); syncMetaState(); triggerAutosave(); });
+    el.addEventListener('change', () => { computeDiarias(); markDirty('diarias_quantidade', 'diarias_valor_unitario', 'diarias_valor_total', 'diarias_valor_extenso'); syncMetaState(); triggerAutosave(); });
   });
   if (diariasUnit) {
     diariasUnit.addEventListener('blur', async function () {
@@ -2796,6 +2862,7 @@
         valor_por_servidor_extenso: valorPorServidorExtenso,
       };
       await calcularDiarias({ suppressErrors: true, silentNotify: true });
+      markDirty('diarias', 'diarias_quantidade', 'diarias_valor_unitario', 'diarias_valor_total', 'diarias_valor_extenso');
       syncMetaState();
       triggerAutosave();
       notify();
@@ -2805,6 +2872,7 @@
   document.querySelectorAll('input[name="atividades_codigos"]').forEach((cb) => {
     cb.addEventListener('change', () => {
       renderAtividadesRealtime();
+      markDirty('atividades_codigos');
       syncMetaState();
       triggerAutosave();
     });
@@ -2812,6 +2880,7 @@
   form.addEventListener('focusout', (event) => {
     const target = event.target;
     if (!target || !target.matches('input, select, textarea')) return;
+    markDirtyByFieldName(target.name || '');
     syncMetaState();
     triggerAutosave();
   });
