@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import json
+from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, time, timedelta
 from urllib.parse import urlencode
 
@@ -430,6 +431,26 @@ OFICIO_CARD_THEME_META = {
 
 def _clean(value):
     return str(value or '').strip()
+
+
+def _parse_decimal_money(value):
+    raw = _clean(value)
+    if not raw:
+        return None
+    normalized = raw.replace('R$', '').replace('r$', '').replace(' ', '')
+    if ',' in normalized:
+        normalized = normalized.replace('.', '').replace(',', '.')
+    try:
+        return Decimal(normalized)
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+
+
+def _format_currency_brl(value):
+    parsed = _parse_decimal_money(value)
+    if parsed is None:
+        return ''
+    return f'R$ {formatar_valor_diarias(parsed)}'
 
 
 def _is_empty_display_value(value):
@@ -1790,6 +1811,18 @@ def _decorate_plano_trabalho_list_items(items):
             return parts[0][:2].upper()
         return f'{parts[0][0]}{parts[1][0]}'.upper()
 
+    def _parse_decimal_br(value):
+        raw = _clean(value)
+        if not raw:
+            return None
+        normalized = raw.replace('R$', '').replace(' ', '')
+        if ',' in normalized:
+            normalized = normalized.replace('.', '').replace(',', '.')
+        try:
+            return Decimal(normalized)
+        except (InvalidOperation, ValueError, TypeError):
+            return None
+
     for plano in items:
         related_oficios = plano.get_oficios_relacionados() if hasattr(plano, 'get_oficios_relacionados') else []
         related_event = plano.get_evento_relacionado() if hasattr(plano, 'get_evento_relacionado') else plano.evento
@@ -1815,11 +1848,30 @@ def _decorate_plano_trabalho_list_items(items):
         if diarias_display and 'di' not in diarias_display.lower():
             diarias_display = f'{diarias_display} diarias'
         diarias_display = diarias_display or 'Nao calculadas'
-        valor_plano_display = _clean(plano.diarias_valor_total)
-        if not valor_plano_display and plano.valor_diarias is not None:
-            valor_plano_display = f'R$ {plano.valor_diarias:.2f}'.replace('.', ',')
-        valor_plano_display = valor_plano_display or 'Nao calculado'
-        valor_unitario_display = _clean(plano.diarias_valor_unitario) or 'Nao calculado'
+        valor_total_textual = _clean(plano.diarias_valor_total)
+        valor_total_decimal = _parse_decimal_br(valor_total_textual)
+        if valor_total_decimal is None and plano.valor_diarias is not None:
+            try:
+                valor_total_model = Decimal(str(plano.valor_diarias))
+            except (InvalidOperation, ValueError, TypeError):
+                valor_total_model = None
+            if valor_total_model is not None and valor_total_model > 0:
+                valor_total_decimal = valor_total_model
+
+        if valor_total_decimal is not None and valor_total_decimal > 0:
+            valor_plano_display = f'R$ {formatar_valor_diarias(valor_total_decimal)}'
+        else:
+            valor_plano_display = valor_total_textual or 'Nao calculado'
+
+        valor_unitario_display = _clean(plano.diarias_valor_unitario)
+        if valor_total_decimal is not None and valor_total_decimal > 0 and (plano.quantidade_servidores or 0) > 0:
+            valor_por_servidor = valor_total_decimal / Decimal(plano.quantidade_servidores)
+            valor_unitario_display = f'R$ {formatar_valor_diarias(valor_por_servidor)}'
+        elif valor_unitario_display:
+            valor_unitario_decimal = _parse_decimal_br(valor_unitario_display)
+            if valor_unitario_decimal is not None:
+                valor_unitario_display = f'R$ {formatar_valor_diarias(valor_unitario_decimal)}'
+        valor_unitario_display = valor_unitario_display or 'Nao calculado'
         valor_extenso_display = _clean(plano.diarias_valor_extenso) or 'Nao informado'
 
         saida_sede_display = 'Nao informada'
@@ -1895,26 +1947,23 @@ def _decorate_plano_trabalho_list_items(items):
             'saida_sede': saida_sede_display,
             'chegada_sede': chegada_sede_display,
             'valor_extenso': valor_extenso_display,
-            'roteiro': roteiro_display,
             'bloco_valor_total': {
                 'titulo': 'Valor total',
                 'valor': valor_plano_display,
                 'subtitulo': diarias_display,
             },
             'bloco_valor_unitario': {
-                'titulo': 'Valor unitário',
+                'titulo': 'Valor por servidor',
                 'valor': valor_unitario_display,
                 'subtitulo': equipe_display,
             },
-            'bloco_roteiro': {
-                'titulo': 'Roteiro',
-                'valor': roteiro_display,
-                'saida': saida_sede_display,
-                'chegada': chegada_sede_display,
-            },
         }
         plano.info_rows = [
-            {'label': 'Contexto', 'value': f'{coord_operacional_display} / {coord_administrativo_display}'},
+            {
+                'label': 'Coordenadores',
+                'operacional': coord_operacional_display,
+                'administrativo': coord_administrativo_display,
+            },
         ]
         plano.oficios_items = [
             {
@@ -2173,7 +2222,7 @@ def _normalize_decimal_autosave(value):
     raw = _clean(value)
     if not raw:
         return ''
-    raw = raw.replace(' ', '')
+    raw = raw.replace('R$', '').replace('r$', '').replace(' ', '')
     if ',' in raw:
         raw = raw.replace('.', '').replace(',', '.')
     return raw
@@ -2530,9 +2579,17 @@ def plano_trabalho_calcular_diarias_api(request):
             dados_por_servidor = calcular_diarias_com_valor(0, 0, 1)
 
         qtd_label = _clean(qtd_raw) or str(dados['quantidade_diarias'])
-        valor_total_label = formatar_valor_diarias(dados['valor_total']) if dados['valor_total'] else ''
-        valor_unitario_label = _clean(valor_raw) or formatar_valor_diarias(dados.get('valor_unitario', ''))
-        valor_por_servidor_label = formatar_valor_diarias(dados_por_servidor.get('valor_total', ''))
+        valor_total_label = f'R$ {formatar_valor_diarias(dados["valor_total"])}' if dados['valor_total'] else ''
+        if _clean(valor_raw):
+            valor_unitario_normalizado = _normalize_decimal_autosave(valor_raw)
+            try:
+                valor_unitario_label = f'R$ {formatar_valor_diarias(Decimal(valor_unitario_normalizado))}' if valor_unitario_normalizado else ''
+            except (InvalidOperation, TypeError, ValueError):
+                valor_unitario_label = _clean(valor_raw)
+        else:
+            valor_unitario_base = dados.get('valor_unitario', '')
+            valor_unitario_label = f'R$ {formatar_valor_diarias(valor_unitario_base)}' if valor_unitario_base else ''
+        valor_por_servidor_label = f'R$ {formatar_valor_diarias(dados_por_servidor.get("valor_total", ""))}'
         valor_por_servidor_extenso = dados_por_servidor.get('valor_extenso', '') or ''
         valor_extenso_label = dados.get('valor_extenso', '') or ''
 
@@ -2817,6 +2874,12 @@ def plano_trabalho_editar(request, pk):
 @require_http_methods(['GET'])
 def plano_trabalho_detalhe(request, pk):
     obj = get_object_or_404(PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante', 'roteiro').prefetch_related('oficios'), pk=pk)
+    obj.diarias_valor_total_display = _format_currency_brl(obj.diarias_valor_total or obj.valor_diarias)
+    if obj.valor_diarias is not None and (obj.quantidade_servidores or 0) > 0:
+        valor_por_servidor = Decimal(obj.valor_diarias) / Decimal(obj.quantidade_servidores)
+        obj.diarias_valor_unitario_display = _format_currency_brl(valor_por_servidor)
+    else:
+        obj.diarias_valor_unitario_display = _format_currency_brl(obj.diarias_valor_unitario)
     return render(request, 'eventos/documentos/planos_trabalho_detalhe.html', {'object': obj})
 
 

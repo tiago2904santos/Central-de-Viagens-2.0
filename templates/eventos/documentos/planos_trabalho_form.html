@@ -2189,7 +2189,7 @@
     const total = qtd * valorUnitario * pessoas;
     planoState.diarias.total = total;
     updateValorTotalUI();
-    if (diariasTotal) diariasTotal.value = total > 0 ? total.toFixed(2).replace('.', ',') : '';
+    if (diariasTotal) diariasTotal.value = total > 0 ? formatCurrency(total) : '';
     updateSummary();
 
     if (opts.callApi === false) {
@@ -2222,7 +2222,7 @@
           const parsedTotal = parseCurrency(String(data.valor_total));
           if (Number.isFinite(parsedTotal)) {
             planoState.diarias.total = parsedTotal;
-            if (diariasTotal) diariasTotal.value = parsedTotal > 0 ? parsedTotal.toFixed(2).replace('.', ',') : '';
+            if (diariasTotal) diariasTotal.value = parsedTotal > 0 ? formatCurrency(parsedTotal) : '';
             updateValorTotalUI();
             updateSummary();
           }
@@ -2295,11 +2295,11 @@
     };
 
     if (diariasUnit) {
-      diariasUnit.value = valorUnitario > 0 ? valorUnitario.toFixed(2).replace('.', ',') : '';
+      diariasUnit.value = valorUnitario > 0 ? formatCurrency(valorUnitario) : '';
     }
     if (diariasTotal) {
       diariasTotal.value = planoState.diarias.total > 0
-        ? planoState.diarias.total.toFixed(2).replace('.', ',')
+        ? formatCurrency(planoState.diarias.total)
         : '';
     }
     markDirty('diarias', 'diarias_quantidade', 'diarias_valor_unitario', 'diarias_valor_total', 'diarias_valor_extenso');

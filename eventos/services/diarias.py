@@ -83,7 +83,8 @@ def locations_equivalent(
 
 def formatar_valor_diarias(valor: Decimal) -> str:
     quantizado = valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-    return f'{quantizado:.2f}'.replace('.', ',')
+    bruto = f'{quantizado:,.2f}'
+    return bruto.replace(',', '_').replace('.', ',').replace('_', '.')
 
 
 def calcular_diarias_com_valor(qtd, valor_unitario, pessoas):

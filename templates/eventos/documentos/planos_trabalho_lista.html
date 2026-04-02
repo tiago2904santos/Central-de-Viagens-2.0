@@ -73,10 +73,10 @@
 
     <section class="documento-cascade-grid" aria-label="Lista de planos de trabalho">
         {% for object in object_list %}
-        <article class="oficio-list-card {{ object.card_theme_class }}" id="plano-card-{{ object.pk }}">
+        <article class="oficio-list-card plano-trabalho-list-card {{ object.card_theme_class }}" id="plano-card-{{ object.pk }}">
             <div class="oficio-list-rich-layout">
                 <div class="oficio-list-card__header">
-                    <div class="oficio-list-chip-list oficio-list-chip-list--meta">
+                    <div class="oficio-list-chip-list oficio-list-chip-list--meta oficio-list-chip-list--pt">
                         {% for chip in object.header_chips %}
                             <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature {{ chip.css_class }}">
                                 <span class="oficio-list-chip__label">{{ chip.label }}</span>
@@ -123,34 +123,23 @@
                             <h3 class="oficio-list-core-card__title">Diárias</h3>
                             <span class="oficio-list-core-card__meta">{{ object.calculadora_block.equipe }}</span>
                         </div>
-                        <div class="diarias-blocklist" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
-                            <!-- Bloco: Valor Total -->
-                            <div class="diaria-block oficio-list-surface oficio-list-surface--feature" style="padding: 1.25rem; border-radius: 0.5rem; text-align: center;">
-                                <div style="font-size: 0.75rem; font-weight: 600; color: #7c8db0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">{{ object.calculadora_block.bloco_valor_total.titulo }}</div>
-                                <div style="font-size: 1.75rem; font-weight: 700; color: #1a202c; margin: 0.5rem 0;">{{ object.calculadora_block.bloco_valor_total.valor }}</div>
-                                <div style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">{{ object.calculadora_block.bloco_valor_total.subtitulo }}</div>
+                        <div class="diarias-blocklist">
+                            <div class="diaria-block diaria-block--total oficio-list-surface oficio-list-surface--feature">
+                                <div class="diaria-block__title">{{ object.calculadora_block.bloco_valor_total.titulo }}</div>
+                                <div class="diaria-block__value">{{ object.calculadora_block.bloco_valor_total.valor }}</div>
+                                <div class="diaria-block__meta">{{ object.calculadora_block.bloco_valor_total.subtitulo }}</div>
                             </div>
-                            <!-- Bloco: Valor Unitário -->
-                            <div class="diaria-block oficio-list-surface oficio-list-surface--soft" style="padding: 1.25rem; border-radius: 0.5rem; text-align: center;">
-                                <div style="font-size: 0.75rem; font-weight: 600; color: #7c8db0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">{{ object.calculadora_block.bloco_valor_unitario.titulo }}</div>
-                                <div style="font-size: 1.75rem; font-weight: 700; color: #1a202c; margin: 0.5rem 0;">{{ object.calculadora_block.bloco_valor_unitario.valor }}</div>
-                                <div style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">{{ object.calculadora_block.bloco_valor_unitario.subtitulo }}</div>
-                            </div>
-                            <!-- Bloco: Roteiro -->
-                            <div class="diaria-block oficio-list-surface oficio-list-surface--soft" style="padding: 1.25rem; border-radius: 0.5rem;">
-                                <div style="font-size: 0.75rem; font-weight: 600; color: #7c8db0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem;">{{ object.calculadora_block.bloco_roteiro.titulo }}</div>
-                                <div style="font-size: 1rem; font-weight: 600; color: #1a202c; margin-bottom: 0.75rem;">{{ object.calculadora_block.bloco_roteiro.valor }}</div>
-                                <div style="font-size: 0.8125rem; color: #64748b; line-height: 1.5;">
-                                    <div><strong>Saída:</strong> {{ object.calculadora_block.bloco_roteiro.saida }}</div>
-                                    <div style="margin-top: 0.5rem;"><strong>Chegada:</strong> {{ object.calculadora_block.bloco_roteiro.chegada }}</div>
-                                </div>
+                            <div class="diaria-block oficio-list-surface oficio-list-surface--soft">
+                                <div class="diaria-block__title">{{ object.calculadora_block.bloco_valor_unitario.titulo }}</div>
+                                <div class="diaria-block__value">{{ object.calculadora_block.bloco_valor_unitario.valor }}</div>
+                                <div class="diaria-block__meta">{{ object.calculadora_block.bloco_valor_unitario.subtitulo }}</div>
                             </div>
                         </div>
                     </section>
                 </div>
 
                 <div class="oficio-list-card__secondary">
-                    <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                    <section class="oficio-list-subcard plano-coordenadores-subcard oficio-list-surface oficio-list-surface--panel">
                         <div class="oficio-list-subcard__header">
                             <div>
                                 <h3 class="oficio-list-subcard__title">Contexto do plano</h3>
@@ -160,10 +149,11 @@
                         <div class="oficio-list-subcard__body">
                             <div class="oficio-list-term-list">
                                 {% for row in object.info_rows %}
-                                <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
-                                    <span class="oficio-list-term-row__name">Coordenadores</span>
+                                <div class="oficio-list-term-row plano-coordenadores-row oficio-list-surface oficio-list-surface--soft">
+                                    <span class="oficio-list-term-row__name">{{ row.label }}</span>
                                     <div class="oficio-list-term-row__actions">
-                                        <span class="oficio-list-badge is-muted">{{ row.value }}</span>
+                                        <span class="oficio-list-badge plano-coordenadores-badge is-muted">Operacional: {{ row.operacional }}</span>
+                                        <span class="oficio-list-badge plano-coordenadores-badge is-muted">Administrativo: {{ row.administrativo }}</span>
                                     </div>
                                 </div>
                                 {% endfor %}
