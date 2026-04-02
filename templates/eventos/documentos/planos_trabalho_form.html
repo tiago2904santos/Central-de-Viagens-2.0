@@ -7,7 +7,7 @@
 {% block extra_css %}
 <style>
   /* ── Step transitions ── */
-  .pt-step { display: none; }
+  .pt-step { display: none; position: relative; z-index: 30; }
   .pt-step.is-active { display: block; animation: pt-step-in 0.18s ease both; }
   @keyframes pt-step-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
 
@@ -66,6 +66,11 @@
   .oficio-stage-section { padding: 16px; }
 
   .oficio-expandable { border-radius: 12px; border: 1px solid #e5e7eb; background: #fff; overflow: hidden; }
+  /* Keep picker dropdowns above cards/footer in this form. */
+  .oficio-wizard-page .oficio-custeio-picker { position: relative; z-index: 1; }
+  .oficio-wizard-page .oficio-custeio-picker[data-open="true"] { z-index: 320; }
+  .oficio-wizard-page .oficio-custeio-picker-list { z-index: 330; }
+  .oficio-wizard-page .oficio-wizard-footer-actions { position: relative; z-index: 10; }
   .oficio-expandable-header {
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
     padding: 12px 14px; cursor: pointer; border-bottom: 1px solid #eef2f7;
@@ -611,6 +616,7 @@
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+    overflow: visible;
   }
   .pt-step1-card--institucional.oficio-stage-section {
     border-color: #d7e3ef;
@@ -1006,6 +1012,11 @@
                 <div class="col-md-4">
                   <label class="form-label" for="{{ form.horario_atendimento_padrao.id_for_label }}">Horário de atendimento</label>
                   {{ form.horario_atendimento_padrao }}
+                  {% if pt_horarios_manager_url %}
+                  <div class="mt-2">
+                    <a href="{{ pt_horarios_manager_url }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">Gerenciar horários</a>
+                  </div>
+                  {% endif %}
                 </div>
                 <div class="col-md-12">
                   <div class="form-check mb-0">
@@ -1014,7 +1025,19 @@
                   </div>
                 </div>
                 <div class="d-none" id="col-horario-manual">
-                  {{ form.horario_atendimento_manual }}
+                  <div class="row g-2 align-items-end mt-0">
+                    <div class="col-lg-8">
+                      <label class="form-label mb-1" for="{{ form.horario_atendimento_manual.id_for_label }}">Horário manual</label>
+                      {{ form.horario_atendimento_manual }}
+                      {% if form.horario_atendimento_manual.errors %}<div class="invalid-feedback d-block">{{ form.horario_atendimento_manual.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-lg-4" id="col-salvar-horario-manual">
+                      <div class="form-check mt-4">
+                        {{ form.salvar_horario_atendimento_manual }}
+                        <label class="form-check-label" for="{{ form.salvar_horario_atendimento_manual.id_for_label }}">Salvar no gerenciador</label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -1038,20 +1061,20 @@
               </div>
               <div class="row g-3 mb-3">
                 <div class="col-md-3">
-                  <label class="form-label" for="data_saida_sede">Saída da sede (data)</label>
-                  <input type="date" id="data_saida_sede" name="data_saida_sede" class="form-control form-control-sm">
+                  <label class="form-label" for="{{ form.data_saida_sede.id_for_label }}">Saída da sede (data)</label>
+                  {{ form.data_saida_sede }}
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label" for="hora_saida_sede">Saída da sede (hora)</label>
-                  <input type="time" id="hora_saida_sede" name="hora_saida_sede" class="form-control form-control-sm">
+                  <label class="form-label" for="{{ form.hora_saida_sede.id_for_label }}">Saída da sede (hora)</label>
+                  {{ form.hora_saida_sede }}
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label" for="data_chegada_sede">Chegada na sede (data)</label>
-                  <input type="date" id="data_chegada_sede" name="data_chegada_sede" class="form-control form-control-sm">
+                  <label class="form-label" for="{{ form.data_chegada_sede.id_for_label }}">Chegada na sede (data)</label>
+                  {{ form.data_chegada_sede }}
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label" for="hora_chegada_sede">Chegada na sede (hora)</label>
-                  <input type="time" id="hora_chegada_sede" name="hora_chegada_sede" class="form-control form-control-sm">
+                  <label class="form-label" for="{{ form.hora_chegada_sede.id_for_label }}">Chegada na sede (hora)</label>
+                  {{ form.hora_chegada_sede }}
                 </div>
               </div>
 
@@ -1059,10 +1082,7 @@
                 <aside class="pt-diarias-main" id="pt-diarias-output-panel">
                   <div class="pt-diarias-main-head">
                     <h4 class="pt-diarias-main-title">Total oficial</h4>
-                      <div class="d-flex gap-2 align-items-center flex-wrap">
-                        <span class="pt-diarias-auto-chip">Cálculo manual</span>
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="btn-calcular-diarias">Calcular diárias</button>
-                      </div>
+                    <span class="pt-diarias-auto-chip">Cálculo automático</span>
                   </div>
                   <div class="pt-diarias-total-value" id="diarias-total">R$&nbsp;0,00</div>
                   <div class="pt-diarias-list">
@@ -1264,14 +1284,32 @@
               <button type="button" class="btn btn-outline-primary" id="pt-next">Avançar →</button>
               <span class="badge text-bg-light text-muted" id="pt-progress-chip">1 / 4</span>
             </div>
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
-              <button type="button" class="btn btn-outline-secondary" id="pt-save-draft">Salvar como rascunho</button>
-              <button class="btn btn-primary" type="submit">Salvar plano</button>
+            <div class="oficio-summary-actions-group">
+              <a href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}" class="btn btn-outline-secondary">
+                <span>Voltar para lista</span>
+              </a>
               {% if object %}
-              <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">DOCX</a>
-              <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">PDF</a>
+              <a href="{% url 'eventos:documentos-planos-trabalho-excluir' object.pk %}" class="btn btn-doc-action btn-doc-action--danger">
+                <i class="bi bi-trash"></i>
+                <span>Excluir</span>
+              </a>
+              <a href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}" class="btn btn-doc-action btn-doc-action--secondary">
+                <i class="bi bi-filetype-docx"></i>
+                <span>DOCX</span>
+              </a>
+              <a href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}" class="btn btn-doc-action btn-doc-action--pdf">
+                <i class="bi bi-filetype-pdf"></i>
+                <span>PDF</span>
+              </a>
+              {% if object.status != 'FINALIZADO' %}
+              <button type="submit" name="finalizar" value="1" class="btn btn-doc-action btn-doc-action--primary">
+                <i class="bi bi-check2-circle"></i>
+                <span>Finalizar Plano</span>
+              </button>
               {% endif %}
-              <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Cancelar</a>
+              {% else %}
+              <button class="btn btn-primary" type="submit">Salvar plano</button>
+              {% endif %}
             </div>
           </div>
 
@@ -1336,6 +1374,7 @@
       salvar_solicitante_outros: false,
       horario_atendimento_padrao: '',
       horario_atendimento_manual: '',
+      salvar_horario_atendimento_manual: false,
       evento_data_unica: false,
       coordenador_administrativo_id: null,
       atividades_codigos: [],
@@ -1372,6 +1411,7 @@
   const salvarSolWrap       = document.getElementById('col-salvar-solicitante');
   const horarioPadrao       = document.getElementById('{{ form.horario_atendimento_padrao.id_for_label }}');
   const horarioManualWrap   = document.getElementById('col-horario-manual');
+  const salvarHorarioWrap   = document.getElementById('col-salvar-horario-manual');
   const dataUnica           = document.getElementById('{{ form.evento_data_unica.id_for_label }}');
   const dataInicio          = document.getElementById('{{ form.evento_data_inicio.id_for_label }}');
   const dataFim             = document.getElementById('{{ form.evento_data_fim.id_for_label }}');
@@ -1437,10 +1477,10 @@
   const coordSearchState    = document.getElementById('coord-searching-state');
   const autosaveStatusEl    = document.getElementById('autosave-status');
   const saveDraftBtn        = document.getElementById('pt-save-draft');
-  const dataSaidaSede       = document.getElementById('data_saida_sede');
-  const horaSaidaSede       = document.getElementById('hora_saida_sede');
-  const dataChegadaSede     = document.getElementById('data_chegada_sede');
-  const horaChegadaSede     = document.getElementById('hora_chegada_sede');
+  const dataSaidaSede       = document.getElementById('{{ form.data_saida_sede.id_for_label }}');
+  const horaSaidaSede       = document.getElementById('{{ form.hora_saida_sede.id_for_label }}');
+  const dataChegadaSede     = document.getElementById('{{ form.data_chegada_sede.id_for_label }}');
+  const horaChegadaSede     = document.getElementById('{{ form.hora_chegada_sede.id_for_label }}');
   const vincularDocumentoInput = document.getElementById('vincular-documento');
   const vinculoContainer    = document.getElementById('vinculo-container');
   const autosaveUrl         = '{% url "eventos:documentos-planos-trabalho-autosave" %}';
@@ -1448,6 +1488,7 @@
   const buscarUrl           = coordWrapper ? coordWrapper.getAttribute('data-search-url') : '';
   const estadoPadrao        = (window.CONFIG_ESTADO || 'PR').toUpperCase();
   let   coordDebounce       = null;
+  let   diariasDebounce     = null;
   let autosaveTimeout       = null;
   let autosaveInFlight      = false;
   let autosavePending       = false;
@@ -1482,9 +1523,14 @@
       salvar_solicitante_outros: 'salvar_solicitante_outros',
       horario_atendimento_padrao: 'horario_atendimento_padrao',
       horario_atendimento_manual: 'horario_atendimento_manual',
+      salvar_horario_atendimento_manual: 'salvar_horario_atendimento_manual',
       evento_data_unica: 'evento_data_unica',
       evento_data_inicio: 'evento_data_inicio',
       evento_data_fim: 'evento_data_fim',
+      data_saida_sede: 'data_saida_sede',
+      hora_saida_sede: 'hora_saida_sede',
+      data_chegada_sede: 'data_chegada_sede',
+      hora_chegada_sede: 'hora_chegada_sede',
       coordenador_administrativo: 'coordenador_administrativo_id',
       quantidade_servidores: 'quantidade_servidores',
       destinos_payload: 'destinos_payload',
@@ -1638,6 +1684,7 @@
     planoState.meta.salvar_solicitante_outros = !!((form.querySelector('[name="salvar_solicitante_outros"]') || {}).checked);
     planoState.meta.horario_atendimento_padrao = (horarioPadrao && horarioPadrao.value) || '';
     planoState.meta.horario_atendimento_manual = (form.querySelector('[name="horario_atendimento_manual"]') || {}).value || '';
+    planoState.meta.salvar_horario_atendimento_manual = !!((form.querySelector('[name="salvar_horario_atendimento_manual"]') || {}).checked);
     planoState.meta.evento_data_unica = !!(dataUnica && dataUnica.checked);
     planoState.meta.coordenador_administrativo_id = parseIntOrNull(coordAdmSelect && coordAdmSelect.value);
     planoState.meta.atividades_codigos = Array.from(document.querySelectorAll('input[name="atividades_codigos"]:checked')).map((el) => el.value);
@@ -1679,9 +1726,14 @@
       salvar_solicitante_outros: planoState.meta.salvar_solicitante_outros,
       horario_atendimento_padrao: planoState.meta.horario_atendimento_padrao,
       horario_atendimento_manual: planoState.meta.horario_atendimento_manual,
+      salvar_horario_atendimento_manual: planoState.meta.salvar_horario_atendimento_manual,
       evento_data_unica: planoState.meta.evento_data_unica,
       evento_data_inicio: planoState.evento.data_inicio || '',
       evento_data_fim: planoState.evento.data_fim || '',
+      data_saida_sede: (dataSaidaSede && dataSaidaSede.value) || '',
+      hora_saida_sede: (horaSaidaSede && horaSaidaSede.value) || '',
+      data_chegada_sede: (dataChegadaSede && dataChegadaSede.value) || '',
+      hora_chegada_sede: (horaChegadaSede && horaChegadaSede.value) || '',
       evento_hora_inicio: (eventoHoraInicio && eventoHoraInicio.value) || '',
       evento_hora_fim: (eventoHoraFim && eventoHoraFim.value) || '',
       roteiro: planoState.roteiro,
@@ -1896,7 +1948,9 @@
   }
   function toggleHorarioManual() {
     if (!horarioPadrao || !horarioManualWrap) return;
-    horarioManualWrap.style.display = horarioPadrao.value === '__OUTROS__' ? '' : 'none';
+    const show = horarioPadrao.value === '__OUTROS__';
+    horarioManualWrap.classList.toggle('d-none', !show);
+    if (salvarHorarioWrap) salvarHorarioWrap.classList.toggle('d-none', !show);
     updateDiariasContextCards();
   }
   function toggleDataFim() {
@@ -2897,9 +2951,11 @@
     filterByEvent(roteiroSelect);
   }
   if (solicitanteSelect) solicitanteSelect.addEventListener('change', () => { toggleSolicitanteOutros(); markDirty('solicitante_escolha', 'solicitante_outros', 'salvar_solicitante_outros'); syncMetaState(); triggerAutosave(); });
-  if (horarioPadrao)     horarioPadrao.addEventListener('change', () => { toggleHorarioManual(); markDirty('horario_atendimento_padrao', 'horario_atendimento_manual'); syncMetaState(); triggerAutosave(); });
+  if (horarioPadrao)     horarioPadrao.addEventListener('change', () => { toggleHorarioManual(); markDirty('horario_atendimento_padrao', 'horario_atendimento_manual', 'salvar_horario_atendimento_manual'); syncMetaState(); triggerAutosave(); });
   const horarioManualInput = document.getElementById('{{ form.horario_atendimento_manual.id_for_label }}');
   if (horarioManualInput) horarioManualInput.addEventListener('input', () => { updateDiariasContextCards(); markDirty('horario_atendimento_manual'); syncMetaState(); triggerAutosave(); });
+  const salvarHorarioInput = document.getElementById('{{ form.salvar_horario_atendimento_manual.id_for_label }}');
+  if (salvarHorarioInput) salvarHorarioInput.addEventListener('change', () => { markDirty('salvar_horario_atendimento_manual'); syncMetaState(); triggerAutosave(); });
   if (dataUnica)         dataUnica.addEventListener('change', () => { onDatasChange(); markDirty('evento_data_unica', 'evento_data_inicio', 'evento_data_fim'); syncMetaState(); triggerAutosave(); });
   if (dataInicio)        dataInicio.addEventListener('change', () => { onDatasChange(); markDirty('evento_data_inicio', 'evento_data_fim'); syncMetaState(); triggerAutosave(); });
   if (dataFim)           dataFim.addEventListener('change', () => { onDatasChange(); markDirty('evento_data_fim'); syncMetaState(); triggerAutosave(); });
@@ -2907,12 +2963,21 @@
   if (eventoHoraFim)     eventoHoraFim.addEventListener('change', () => { updateDiariasContextCards(); markDirty('horario_atendimento_manual'); syncMetaState(); triggerAutosave(); });
 
   // ── Deslocamento (saída e chegada da sede) ──
-  if (dataSaidaSede)   dataSaidaSede.addEventListener('change', onDeslocamentoChange);
-  if (dataChegadaSede) dataChegadaSede.addEventListener('change', onDeslocamentoChange);
-  if (horaSaidaSede)   horaSaidaSede.addEventListener('change', onDeslocamentoChange);
-  if (horaChegadaSede) horaChegadaSede.addEventListener('change', onDeslocamentoChange);
-  if (horaSaidaSede)   horaSaidaSede.addEventListener('blur', onDeslocamentoChange);
-  if (horaChegadaSede) horaChegadaSede.addEventListener('blur', onDeslocamentoChange);
+  function scheduleAutoCalcDiarias() {
+    clearTimeout(diariasDebounce);
+    diariasDebounce = setTimeout(() => {
+      const s = planoState.deslocamento && planoState.deslocamento.saida;
+      const c = planoState.deslocamento && planoState.deslocamento.chegada;
+      if (!s || !c || c <= s) return;
+      calcularDiariasESalvar();
+    }, 800);
+  }
+  if (dataSaidaSede)   dataSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('data_saida_sede'); syncMetaState(); triggerAutosave(); scheduleAutoCalcDiarias(); });
+  if (dataChegadaSede) dataChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('data_chegada_sede'); syncMetaState(); triggerAutosave(); scheduleAutoCalcDiarias(); });
+  if (horaSaidaSede)   horaSaidaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('hora_saida_sede'); syncMetaState(); triggerAutosave(); scheduleAutoCalcDiarias(); });
+  if (horaChegadaSede) horaChegadaSede.addEventListener('change', () => { onDeslocamentoChange(); markDirty('hora_chegada_sede'); syncMetaState(); triggerAutosave(); scheduleAutoCalcDiarias(); });
+  if (horaSaidaSede)   horaSaidaSede.addEventListener('blur', () => { onDeslocamentoChange(); markDirty('hora_saida_sede'); syncMetaState(); triggerAutosave(); scheduleAutoCalcDiarias(); });
+  if (horaChegadaSede) horaChegadaSede.addEventListener('blur', () => { onDeslocamentoChange(); markDirty('hora_chegada_sede'); syncMetaState(); triggerAutosave(); scheduleAutoCalcDiarias(); });
   // ── Remover linha equipe ──
   document.addEventListener('click', (e) => {
     if (e.target.closest('.btn-remove-row')) {

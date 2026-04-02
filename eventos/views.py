@@ -3,6 +3,7 @@ from copy import deepcopy
 from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
+import re
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from django.contrib import messages
@@ -36,6 +37,7 @@ from .models import (
     Oficio,
     OficioTrecho,
     PlanoTrabalho,
+    HorarioAtendimentoPlanoTrabalho,
     RoteiroEvento,
     RoteiroEventoDestino,
     RoteiroEventoTrecho,
@@ -48,6 +50,7 @@ from .forms import (
     CoordenadorOperacionalForm,
     EventoEtapa1Form,
     EventoFinalizacaoForm,
+    HorarioAtendimentoPlanoTrabalhoForm,
     ModeloJustificativaForm,
     ModeloMotivoViagemForm,
     OficioJustificativaForm,
@@ -67,6 +70,7 @@ from .services.diarias import (
     calculate_periodized_diarias,
     formatar_valor_diarias,
     infer_tipo_destino_from_paradas,
+    locations_equivalent,
     valor_por_extenso_ptbr,
 )
 from .services.justificativa import (
@@ -1563,6 +1567,69 @@ def plano_trabalho_solicitantes_excluir(request, pk):
     )
 
 
+@login_required
+def plano_trabalho_horarios_lista(request):
+    """Lista de horários de atendimento gerenciáveis do Plano de Trabalho."""
+    lista = HorarioAtendimentoPlanoTrabalho.objects.all().order_by('ordem', 'descricao')
+    context = {
+        'object_list': lista,
+        'hide_page_header': True,
+    }
+    return render(request, 'eventos/plano_trabalho_horarios/lista.html', context)
+
+
+@login_required
+def plano_trabalho_horarios_cadastrar(request):
+    """Cadastro de horário de atendimento para uso no Plano de Trabalho."""
+    form = HorarioAtendimentoPlanoTrabalhoForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Horário de atendimento cadastrado com sucesso.')
+        return redirect('eventos:plano-trabalho-horarios-lista')
+    context = {
+        'form': form,
+        'object': None,
+        'hide_page_header': True,
+    }
+    return render(request, 'eventos/plano_trabalho_horarios/form.html', context)
+
+
+@login_required
+def plano_trabalho_horarios_editar(request, pk):
+    """Edição de horário de atendimento do Plano de Trabalho."""
+    obj = get_object_or_404(HorarioAtendimentoPlanoTrabalho, pk=pk)
+    form = HorarioAtendimentoPlanoTrabalhoForm(request.POST or None, instance=obj)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Horário de atendimento atualizado com sucesso.')
+        return redirect('eventos:plano-trabalho-horarios-lista')
+    context = {
+        'form': form,
+        'object': obj,
+        'hide_page_header': True,
+    }
+    return render(request, 'eventos/plano_trabalho_horarios/form.html', context)
+
+
+@login_required
+def plano_trabalho_horarios_excluir(request, pk):
+    """Exclusão de horário de atendimento (bloqueia se estiver em uso em Plano de Trabalho)."""
+    obj = get_object_or_404(HorarioAtendimentoPlanoTrabalho, pk=pk)
+    if request.method == 'POST':
+        em_uso = PlanoTrabalho.objects.filter(horario_atendimento__iexact=obj.descricao).exists()
+        if em_uso:
+            messages.error(request, 'Não é possível excluir: horário em uso por pelo menos um Plano de Trabalho.')
+            return redirect('eventos:plano-trabalho-horarios-editar', pk=obj.pk)
+        obj.delete()
+        messages.success(request, 'Horário de atendimento excluído com sucesso.')
+        return redirect('eventos:plano-trabalho-horarios-lista')
+    return render(
+        request,
+        'eventos/plano_trabalho_horarios/excluir_confirm.html',
+        {'object': obj, 'hide_page_header': True},
+    )
+
+
 # ---------- Modelos de motivo (CRUD) ----------
 
 def _modelos_motivo_lista_url(volta_step1=''):
@@ -2949,6 +3016,106 @@ def _step3_local_label(cidade=None, estado=None):
     return cidade_nome or estado_sigla or ''
 
 
+def _step3_get_local_parts(cidade=None, estado=None, nome=''):
+    cidade_nome = ''
+    estado_sigla = ''
+    if cidade:
+        cidade_nome = getattr(cidade, 'nome', '') or ''
+        estado_sigla = getattr(getattr(cidade, 'estado', None), 'sigla', '') or ''
+    if estado and not estado_sigla:
+        estado_sigla = getattr(estado, 'sigla', '') or ''
+    if nome and not cidade_nome:
+        raw_nome = str(nome or '').strip()
+        if '/' in raw_nome:
+            cidade_nome, _, maybe_uf = raw_nome.partition('/')
+            if not estado_sigla:
+                estado_sigla = maybe_uf.strip().upper()
+        else:
+            cidade_nome = raw_nome
+    return cidade_nome.strip(), estado_sigla.strip().upper()
+
+
+def _step3_locations_equivalent(*, cidade_a=None, estado_a=None, nome_a='', cidade_b=None, estado_b=None, nome_b=''):
+    cidade_a_nome, estado_a_sigla = _step3_get_local_parts(cidade=cidade_a, estado=estado_a, nome=nome_a)
+    cidade_b_nome, estado_b_sigla = _step3_get_local_parts(cidade=cidade_b, estado=estado_b, nome=nome_b)
+    return locations_equivalent(cidade_a_nome, estado_a_sigla, cidade_b_nome, estado_b_sigla)
+
+
+def _build_step3_bate_volta_diario_state(data=None):
+    payload = data or {}
+    return {
+        'ativo': bool(payload.get('ativo')),
+        'data_inicio': payload.get('data_inicio') or '',
+        'data_fim': payload.get('data_fim') or '',
+        'ida_saida_hora': payload.get('ida_saida_hora') or '',
+        'ida_tempo_min': payload.get('ida_tempo_min') or '',
+        'volta_saida_hora': payload.get('volta_saida_hora') or '',
+        'volta_tempo_min': payload.get('volta_tempo_min') or '',
+    }
+
+
+def _extract_step3_posted_trechos(request):
+    pattern = re.compile(r'^trecho_(\d+)_(.+)$')
+    indexed = {}
+    for key in request.POST:
+        match = pattern.match(key)
+        if not match:
+            continue
+        idx = int(match.group(1))
+        field_name = match.group(2)
+        indexed.setdefault(idx, {})[field_name] = request.POST.get(key)
+    return [indexed[idx] for idx in sorted(indexed)]
+
+
+def _infer_step3_destinos_from_trechos(raw_trechos, sede_estado=None, sede_cidade=None):
+    destinos = []
+    seen = set()
+    for trecho in raw_trechos or []:
+        destino_estado_id = _parse_int(trecho.get('destino_estado_id'))
+        destino_cidade_id = _parse_int(trecho.get('destino_cidade_id'))
+        destino_nome = trecho.get('destino_nome') or ''
+        destino_cidade = Cidade.objects.select_related('estado').filter(pk=destino_cidade_id, ativo=True).first() if destino_cidade_id else None
+        destino_estado = Estado.objects.filter(pk=destino_estado_id or getattr(destino_cidade, 'estado_id', None), ativo=True).first() if (destino_estado_id or destino_cidade) else None
+        if _step3_locations_equivalent(
+            cidade_a=destino_cidade,
+            estado_a=destino_estado,
+            nome_a=destino_nome,
+            cidade_b=sede_cidade,
+            estado_b=sede_estado,
+        ):
+            continue
+        key = (destino_estado_id, destino_cidade_id, str(destino_nome or '').strip().upper())
+        if key in seen:
+            continue
+        seen.add(key)
+        destinos.append(
+            {
+                'estado_id': destino_estado_id,
+                'cidade_id': destino_cidade_id,
+                'estado': destino_estado,
+                'cidade': destino_cidade,
+            }
+        )
+    return destinos
+
+
+def _step3_has_intermediate_return_to_sede(state):
+    sede_cidade = Cidade.objects.select_related('estado').filter(pk=_parse_int(state.get('sede_cidade_id')), ativo=True).first()
+    sede_estado = Estado.objects.filter(pk=_parse_int(state.get('sede_estado_id')) or getattr(sede_cidade, 'estado_id', None), ativo=True).first()
+    if not sede_cidade and not sede_estado:
+        return False
+    return any(
+        _step3_locations_equivalent(
+            cidade_a=Cidade.objects.select_related('estado').filter(pk=_parse_int(trecho.get('destino_cidade_id')), ativo=True).first(),
+            estado_a=Estado.objects.filter(pk=_parse_int(trecho.get('destino_estado_id')), ativo=True).first(),
+            nome_a=trecho.get('destino_nome') or '',
+            cidade_b=sede_cidade,
+            estado_b=sede_estado,
+        )
+        for trecho in (state.get('trechos') or [])
+    )
+
+
 def _step3_format_date_time_br(data_value, hora_value):
     data_obj = data_value if hasattr(data_value, 'strftime') and not isinstance(data_value, str) else _parse_step3_date(data_value)
     hora_obj = hora_value if hasattr(hora_value, 'strftime') and not isinstance(hora_value, str) else _parse_step3_time(hora_value)
@@ -3061,6 +3228,7 @@ def _build_step3_state_from_estrutura(estrutura, destinos_atuais, sede_estado_id
         'destinos_atuais': destinos_atuais,
         'trechos': trechos,
         'retorno': retorno,
+        'bate_volta_diario': _build_step3_bate_volta_diario_state(),
         'seed_source_label': seed_source_label,
     }
 
@@ -3163,6 +3331,7 @@ def _serialize_step3_state(state):
             'tempo_adicional_min': retorno.get('tempo_adicional_min') or 0,
             'rota_fonte': retorno.get('rota_fonte') or '',
         },
+        'bate_volta_diario': _build_step3_bate_volta_diario_state(state.get('bate_volta_diario')),
         'seed_source_label': state.get('seed_source_label') or '',
     }
 
@@ -3200,6 +3369,7 @@ def _build_step3_empty_state(oficio, roteiro_modo=None, seed_source_label='', ro
             'tempo_adicional_min': 0,
             'rota_fonte': '',
         },
+        'bate_volta_diario': _build_step3_bate_volta_diario_state(),
         'seed_source_label': seed_source_label or '',
     }
 
@@ -3298,19 +3468,31 @@ def _get_oficio_step3_saved_state(oficio):
     )
     if trechos_salvos:
         destinos_atuais = []
+        destinos_seen = set()
         trechos = []
         sede_estado_id = oficio.estado_sede_id or trechos_salvos[0].origem_estado_id
         sede_cidade_id = oficio.cidade_sede_id or trechos_salvos[0].origem_cidade_id
+        sede_cidade = oficio.cidade_sede or trechos_salvos[0].origem_cidade
+        sede_estado = oficio.estado_sede or getattr(sede_cidade, 'estado', None) or trechos_salvos[0].origem_estado
         for trecho in trechos_salvos:
             destino_estado = trecho.destino_estado or getattr(trecho.destino_cidade, 'estado', None)
-            destinos_atuais.append(
-                {
-                    'estado_id': destino_estado.pk if destino_estado else trecho.destino_estado_id,
-                    'cidade_id': trecho.destino_cidade_id,
-                    'estado': destino_estado,
-                    'cidade': trecho.destino_cidade,
-                }
-            )
+            destino_estado_id = destino_estado.pk if destino_estado else trecho.destino_estado_id
+            destino_key = (destino_estado_id, trecho.destino_cidade_id)
+            if trecho.destino_cidade_id and not _step3_locations_equivalent(
+                cidade_a=trecho.destino_cidade,
+                estado_a=destino_estado,
+                cidade_b=sede_cidade,
+                estado_b=sede_estado,
+            ) and destino_key not in destinos_seen:
+                destinos_seen.add(destino_key)
+                destinos_atuais.append(
+                    {
+                        'estado_id': destino_estado_id,
+                        'cidade_id': trecho.destino_cidade_id,
+                        'estado': destino_estado,
+                        'cidade': trecho.destino_cidade,
+                    }
+                )
             trechos.append(
                 {
                     'ordem': trecho.ordem,
@@ -3335,8 +3517,6 @@ def _get_oficio_step3_saved_state(oficio):
                     'rota_fonte': trecho.rota_fonte or '',
                 }
             )
-        sede_cidade = oficio.cidade_sede or trechos_salvos[0].origem_cidade
-        sede_estado = oficio.estado_sede or getattr(sede_cidade, 'estado', None) or trechos_salvos[0].origem_estado
         ultimo_trecho = trechos_salvos[-1]
         retorno_saida = oficio.retorno_saida_cidade or _step3_local_label(ultimo_trecho.destino_cidade, ultimo_trecho.destino_estado)
         retorno_chegada = oficio.retorno_chegada_cidade or _step3_local_label(sede_cidade, sede_estado)
@@ -3367,6 +3547,19 @@ def _get_oficio_step3_saved_state(oficio):
                 'tempo_adicional_min': oficio.retorno_tempo_adicional_min or 0,
                 'rota_fonte': oficio.retorno_rota_fonte or '',
             },
+            'bate_volta_diario': _build_step3_bate_volta_diario_state(
+                {
+                    'ativo': any(
+                        _step3_locations_equivalent(
+                            cidade_a=item.destino_cidade,
+                            estado_a=item.destino_estado or getattr(item.destino_cidade, 'estado', None),
+                            cidade_b=sede_cidade,
+                            estado_b=sede_estado,
+                        )
+                        for item in trechos_salvos
+                    ),
+                }
+            ),
             'seed_source_label': '',
         }
     if oficio.roteiro_evento_id:
@@ -3465,16 +3658,53 @@ def _build_step3_state_from_post(request, oficio=None, route_state_map=None):
     roteiro_evento_id = _parse_int(request.POST.get('roteiro_evento_id'))
     sede_estado_id = _parse_int(request.POST.get('sede_estado'))
     sede_cidade_id = _parse_int(request.POST.get('sede_cidade'))
+    sede_cidade = Cidade.objects.select_related('estado').filter(pk=sede_cidade_id, ativo=True).first() if sede_cidade_id else None
+    sede_estado = Estado.objects.filter(pk=sede_estado_id or getattr(sede_cidade, 'estado_id', None), ativo=True).first() if (sede_estado_id or sede_cidade) else None
     destinos_list = _parse_destinos_post(request)
+    posted_trechos = _extract_step3_posted_trechos(request)
     has_structure = bool(
         sede_estado_id
         or sede_cidade_id
         or destinos_list
-        or any(key.startswith('trecho_') for key in request.POST)
+        or posted_trechos
     )
 
     if roteiro_modo == Oficio.ROTEIRO_MODO_EVENTO and roteiro_evento_id and roteiro_evento_id in route_state_map and not has_structure:
         state = deepcopy(route_state_map[roteiro_evento_id])
+    elif posted_trechos:
+        state = _build_step3_empty_state(
+            oficio,
+            roteiro_modo=roteiro_modo,
+            roteiro_evento_id=roteiro_evento_id,
+            roteiro_evento_label=route_state_map.get(roteiro_evento_id, {}).get('roteiro_evento_label', ''),
+        )
+        state['sede_estado_id'] = sede_estado_id
+        state['sede_cidade_id'] = sede_cidade_id
+        state['trechos'] = []
+        for idx, trecho in enumerate(posted_trechos):
+            state['trechos'].append(
+                {
+                    'ordem': idx,
+                    'origem_nome': (trecho.get('origem_nome') or '').strip(),
+                    'destino_nome': (trecho.get('destino_nome') or '').strip(),
+                    'origem_estado_id': _parse_int(trecho.get('origem_estado_id')),
+                    'origem_cidade_id': _parse_int(trecho.get('origem_cidade_id')),
+                    'destino_estado_id': _parse_int(trecho.get('destino_estado_id')),
+                    'destino_cidade_id': _parse_int(trecho.get('destino_cidade_id')),
+                    'saida_data': (trecho.get('saida_data') or '').strip(),
+                    'saida_hora': (trecho.get('saida_hora') or '').strip(),
+                    'chegada_data': (trecho.get('chegada_data') or '').strip(),
+                    'chegada_hora': (trecho.get('chegada_hora') or '').strip(),
+                    'distancia_km': (trecho.get('distancia_km') or '').strip(),
+                    'tempo_cru_estimado_min': (trecho.get('tempo_cru_estimado_min') or '').strip(),
+                    'tempo_adicional_min': (trecho.get('tempo_adicional_min') or '').strip() or 0,
+                    'duracao_estimada_min': (trecho.get('duracao_estimada_min') or '').strip(),
+                    'rota_fonte': (trecho.get('rota_fonte') or '').strip(),
+                }
+            )
+        state['destinos_atuais'] = _infer_step3_destinos_from_trechos(state['trechos'], sede_estado=sede_estado, sede_cidade=sede_cidade)
+        if not state['destinos_atuais'] and destinos_list:
+            state['destinos_atuais'] = _destinos_para_template(destinos_list)
     else:
         destinos_atuais = _destinos_para_template(destinos_list)
         estrutura = []
@@ -3529,6 +3759,17 @@ def _build_step3_state_from_post(request, oficio=None, route_state_map=None):
         duracao_retorno = (tempo_cru_retorno or 0) + tempo_adicional_retorno
     state['retorno']['tempo_adicional_min'] = tempo_adicional_retorno
     state['retorno']['duracao_estimada_min'] = duracao_retorno if duracao_retorno is not None else ''
+    state['bate_volta_diario'] = _build_step3_bate_volta_diario_state(
+        {
+            'ativo': request.POST.get('bate_volta_diario_ativo') in {'1', 'true', 'True', 'on'},
+            'data_inicio': (request.POST.get('bate_volta_data_inicio') or '').strip(),
+            'data_fim': (request.POST.get('bate_volta_data_fim') or '').strip(),
+            'ida_saida_hora': (request.POST.get('bate_volta_ida_saida_hora') or '').strip(),
+            'ida_tempo_min': (request.POST.get('bate_volta_ida_tempo_min') or '').strip(),
+            'volta_saida_hora': (request.POST.get('bate_volta_volta_saida_hora') or '').strip(),
+            'volta_tempo_min': (request.POST.get('bate_volta_volta_tempo_min') or '').strip(),
+        }
+    )
     state['seed_source_label'] = ''
     state['roteiro_modo'] = roteiro_modo
     if roteiro_modo == Oficio.ROTEIRO_MODO_EVENTO and roteiro_evento_id and roteiro_evento_id in route_state_map:
@@ -3625,7 +3866,7 @@ def _autosave_oficio_step3(oficio, state):
     validated = _validate_step3_state(state, oficio=oficio)
     if validated['ok']:
         try:
-            _, paradas, _ = _collect_step3_markers_payload(state, oficio=oficio)
+            _, paradas, _, _, _ = _collect_step3_markers_payload(state, oficio=oficio)
             tipo_destino = infer_tipo_destino_from_paradas(paradas)
             diarias_resultado = _calculate_step3_diarias_from_state(oficio, state)
         except ValueError:
@@ -3746,6 +3987,9 @@ def _validate_step3_state(state, oficio=None):
     ok_destinos, msg_destinos = _validar_destinos(destinos_list)
     if not ok_destinos:
         errors.append(msg_destinos)
+    bate_volta_diario = _build_step3_bate_volta_diario_state(state.get('bate_volta_diario'))
+    if bate_volta_diario['ativo'] and len(destinos_list) != 1:
+        errors.append('No modo bate-volta diário, informe exatamente um destino operacional.')
 
     cleaned_trechos = []
     raw_trechos = state.get('trechos', [])
@@ -3818,8 +4062,19 @@ def _validate_step3_state(state, oficio=None):
         if datetime.combine(retorno_chegada_data, retorno_chegada_hora) < datetime.combine(retorno_saida_data, retorno_saida_hora):
             errors.append('O retorno deve chegar no mesmo momento ou apÃ³s a saÃ­da.')
     ultimo_trecho = cleaned_trechos[-1] if cleaned_trechos else None
+    ultimo_trecho_retorna_sede = False
+    if ultimo_trecho and sede_cidade:
+        ultimo_destino_cidade = Cidade.objects.select_related('estado').filter(pk=ultimo_trecho.get('destino_cidade_id'), ativo=True).first()
+        ultimo_destino_estado = Estado.objects.filter(pk=ultimo_trecho.get('destino_estado_id'), ativo=True).first()
+        ultimo_trecho_retorna_sede = _step3_locations_equivalent(
+            cidade_a=ultimo_destino_cidade,
+            estado_a=ultimo_destino_estado,
+            cidade_b=sede_cidade,
+            estado_b=sede_estado,
+        )
     if (
         ultimo_trecho
+        and not ultimo_trecho_retorna_sede
         and ultimo_trecho.get('chegada_data')
         and ultimo_trecho.get('chegada_hora')
         and retorno_saida_data
@@ -3861,6 +4116,8 @@ def _collect_step3_markers_payload(state, oficio=None):
         for obj in Cidade.objects.select_related('estado').filter(pk__in=cidade_ids, ativo=True)
     }
     estados_map = {obj.pk: obj for obj in Estado.objects.filter(pk__in=estado_ids, ativo=True)}
+    sede_cidade = Cidade.objects.select_related('estado').filter(pk=_parse_int(state.get('sede_cidade_id')), ativo=True).first()
+    sede_estado = Estado.objects.filter(pk=_parse_int(state.get('sede_estado_id')) or getattr(sede_cidade, 'estado_id', None), ativo=True).first() if (state.get('sede_estado_id') or sede_cidade) else None
 
     markers = []
     paradas = []
@@ -3873,7 +4130,14 @@ def _collect_step3_markers_payload(state, oficio=None):
         estado = getattr(cidade, 'estado', None) or estados_map.get(trecho.get('destino_estado_id'))
         cidade_nome = cidade.nome if cidade else (trecho.get('destino_nome') or '').split('/', 1)[0]
         uf_sigla = estado.sigla if estado else ''
-        paradas.append((cidade_nome, uf_sigla))
+        if not _step3_locations_equivalent(
+            cidade_a=cidade,
+            estado_a=estado,
+            nome_a=cidade_nome,
+            cidade_b=sede_cidade,
+            estado_b=sede_estado,
+        ):
+            paradas.append((cidade_nome, uf_sigla))
         markers.append(
             PeriodMarker(
                 saida=datetime.combine(saida_data, saida_hora),
@@ -3888,11 +4152,12 @@ def _collect_step3_markers_payload(state, oficio=None):
     if not retorno_chegada_data or not retorno_chegada_hora:
         raise ValueError('Preencha datas e horas para calcular.')
     chegada_final = datetime.combine(retorno_chegada_data, retorno_chegada_hora)
-    return markers, paradas, chegada_final
+    sede_cidade_nome, sede_uf_sigla = _step3_get_local_parts(cidade=sede_cidade, estado=sede_estado)
+    return markers, paradas, chegada_final, sede_cidade_nome, sede_uf_sigla
 
 
 def _calculate_step3_diarias_from_state(oficio, state):
-    markers, paradas, chegada_final = _collect_step3_markers_payload(state, oficio=oficio)
+    markers, paradas, chegada_final, sede_cidade, sede_uf = _collect_step3_markers_payload(state, oficio=oficio)
     total_servidores = oficio.viajantes.count()
     if total_servidores < 1:
         raise ValueError('Selecione ao menos um viajante no Step 1 para calcular as diÃ¡rias.')
@@ -3900,6 +4165,8 @@ def _calculate_step3_diarias_from_state(oficio, state):
         markers,
         chegada_final,
         quantidade_servidores=total_servidores,
+        sede_cidade=sede_cidade,
+        sede_uf=sede_uf,
     )
     resultado['tipo_destino'] = infer_tipo_destino_from_paradas(paradas)
     return resultado
@@ -4059,7 +4326,32 @@ def _salvar_roteiro_reutilizavel_oficio(oficio, state, validated):
     return _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times)
 
 
+def _step3_can_create_reusable_route(state, validated):
+    destinos_post = [
+        (item.get('estado_id'), item.get('cidade_id'))
+        for item in state.get('destinos_atuais', [])
+        if item.get('estado_id') and item.get('cidade_id')
+    ]
+    if len(validated.get('trechos', [])) != len(destinos_post):
+        return False
+    sede_cidade = validated.get('sede_cidade')
+    sede_estado = validated.get('sede_estado')
+    for trecho in validated.get('trechos', []):
+        destino_cidade = Cidade.objects.select_related('estado').filter(pk=trecho.get('destino_cidade_id'), ativo=True).first()
+        destino_estado = Estado.objects.filter(pk=trecho.get('destino_estado_id'), ativo=True).first()
+        if _step3_locations_equivalent(
+            cidade_a=destino_cidade,
+            estado_a=destino_estado,
+            cidade_b=sede_cidade,
+            estado_b=sede_estado,
+        ):
+            return False
+    return True
+
+
 def _ensure_reusable_step3_route(oficio, state, validated):
+    if not _step3_can_create_reusable_route(state, validated):
+        return None, False
     existente = _find_existing_step3_route(oficio, state, validated)
     if existente:
         return existente, False
@@ -4080,19 +4372,19 @@ def _salvar_step3_oficio(oficio, state, validated):
     sede_cidade = validated['sede_cidade']
     retorno_state = state.get('retorno') or {}
     ultimo_trecho = trechos_data[-1] if trechos_data else None
-    retorno_saida_cidade = (
-        _step3_local_label(
+    retorno_saida_cidade = (retorno_state.get('saida_cidade') or retorno_state.get('origem_nome') or '').strip()
+    if not retorno_saida_cidade and ultimo_trecho:
+        retorno_saida_cidade = _step3_local_label(
             Cidade.objects.select_related('estado').filter(pk=ultimo_trecho.get('destino_cidade_id')).first(),
             Estado.objects.filter(pk=ultimo_trecho.get('destino_estado_id')).first(),
         )
-        if ultimo_trecho
-        else ''
-    )
-    retorno_chegada_cidade = _step3_local_label(sede_cidade, sede_estado)
+    retorno_chegada_cidade = (retorno_state.get('chegada_cidade') or retorno_state.get('destino_nome') or '').strip()
+    if not retorno_chegada_cidade:
+        retorno_chegada_cidade = _step3_local_label(sede_cidade, sede_estado)
     diarias_resultado = None
     tipo_destino = ''
     try:
-        _, paradas, _ = _collect_step3_markers_payload(state, oficio=oficio)
+        _, paradas, _, _, _ = _collect_step3_markers_payload(state, oficio=oficio)
         tipo_destino = infer_tipo_destino_from_paradas(paradas)
         diarias_resultado = _calculate_step3_diarias_from_state(oficio, state)
     except ValueError:

@@ -73,15 +73,15 @@
 
     <section class="documento-cascade-grid" aria-label="Lista de planos de trabalho">
         {% for object in object_list %}
-        <article class="oficio-list-card documento-cascade-card {{ object.card_theme_class }}" id="plano-card-{{ object.pk }}">
+        <article class="oficio-list-card {{ object.card_theme_class }}" id="plano-card-{{ object.pk }}">
             <div class="oficio-list-rich-layout">
                 <div class="oficio-list-card__header">
                     <div class="oficio-list-chip-list oficio-list-chip-list--meta">
                         {% for chip in object.header_chips %}
-                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature {{ chip.css_class }}">
-                            <span class="oficio-list-chip__label">{{ chip.label }}</span>
-                            <span class="oficio-list-chip__value">{{ chip.value }}</span>
-                        </span>
+                            <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature {{ chip.css_class }}">
+                                <span class="oficio-list-chip__label">{{ chip.label }}</span>
+                                <span class="oficio-list-chip__value">{{ chip.value }}</span>
+                            </span>
                         {% endfor %}
                     </div>
                     <div class="oficio-list-card__header-status">
@@ -91,56 +91,83 @@
                     </div>
                 </div>
 
-                <div class="documento-cascade-card__intro">
-                    <h2 class="documento-cascade-card__title">
-                        <a href="{{ object.open_url }}" class="text-decoration-none">Plano de Trabalho {{ object.numero_formatado|default:object.pk }}</a>
-                    </h2>
-                    <p class="documento-cascade-card__subtitle">{{ object.contexto_display }}</p>
-                </div>
-
-                <div class="documento-cascade-meta-grid">
-                    {% for item in object.meta_items %}
-                    <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
-                        <span class="documento-cascade-meta-item__label">{{ item.label }}</span>
-                        <strong class="documento-cascade-meta-item__value">{{ item.value }}</strong>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <div class="documento-cascade-block-grid documento-cascade-block-grid--double">
-                    <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                <div class="oficio-list-core-grid">
+                    <section class="oficio-list-core-card oficio-list-core-card--travelers oficio-list-surface oficio-list-surface--panel">
                         <div class="oficio-list-subcard__header">
                             <div>
                                 <h3 class="oficio-list-subcard__title">Ofícios vinculados</h3>
-                                <p class="oficio-list-subcard__subtitle">O plano passa a explicitar os Ofícios atendidos no próprio card.</p>
+                                <p class="oficio-list-subcard__subtitle">{{ object.oficios_block.count_label }}</p>
                             </div>
                         </div>
-                        <div class="oficio-list-subcard__body">
-                            {% if object.oficios_items %}
-                            <div class="documento-cascade-chip-list">
-                                {% for oficio in object.oficios_items %}
-                                <a href="{{ oficio.url }}" class="documento-cascade-chip oficio-list-surface oficio-list-surface--soft">
-                                    <strong>{{ oficio.label }}</strong>
-                                    {% if oficio.meta %}<span>{{ oficio.meta }}</span>{% endif %}
-                                </a>
-                                {% endfor %}
-                            </div>
+                        <div class="oficio-list-traveler-list">
+                            {% for item in object.oficios_block.items %}
+                            {% if item.url %}
+                            <a href="{{ item.url }}" class="text-decoration-none">
+                                <div class="oficio-list-traveler-pill oficio-list-surface oficio-list-surface--soft {{ item.css_class }}">
+                                    <span class="oficio-list-traveler-pill__initials">{{ item.initials }}</span>
+                                    <span class="oficio-list-traveler-pill__name">{{ item.name }}</span>
+                                </div>
+                            </a>
                             {% else %}
-                            <div class="documento-cascade-empty">Nenhum Ofício vinculado a este plano.</div>
+                            <div class="oficio-list-traveler-pill oficio-list-surface oficio-list-surface--soft {{ item.css_class }}">
+                                <span class="oficio-list-traveler-pill__initials">{{ item.initials }}</span>
+                                <span class="oficio-list-traveler-pill__name">{{ item.name }}</span>
+                            </div>
                             {% endif %}
+                            {% endfor %}
                         </div>
                     </section>
 
+                    <section class="oficio-list-core-card oficio-list-core-card--transport oficio-list-surface oficio-list-surface--panel">
+                        <div class="oficio-list-core-card__header">
+                            <h3 class="oficio-list-core-card__title">Diárias</h3>
+                            <span class="oficio-list-core-card__meta">{{ object.calculadora_block.equipe }}</span>
+                        </div>
+                        <div class="diarias-blocklist" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+                            <!-- Bloco: Valor Total -->
+                            <div class="diaria-block oficio-list-surface oficio-list-surface--feature" style="padding: 1.25rem; border-radius: 0.5rem; text-align: center;">
+                                <div style="font-size: 0.75rem; font-weight: 600; color: #7c8db0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">{{ object.calculadora_block.bloco_valor_total.titulo }}</div>
+                                <div style="font-size: 1.75rem; font-weight: 700; color: #1a202c; margin: 0.5rem 0;">{{ object.calculadora_block.bloco_valor_total.valor }}</div>
+                                <div style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">{{ object.calculadora_block.bloco_valor_total.subtitulo }}</div>
+                            </div>
+                            <!-- Bloco: Valor Unitário -->
+                            <div class="diaria-block oficio-list-surface oficio-list-surface--soft" style="padding: 1.25rem; border-radius: 0.5rem; text-align: center;">
+                                <div style="font-size: 0.75rem; font-weight: 600; color: #7c8db0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">{{ object.calculadora_block.bloco_valor_unitario.titulo }}</div>
+                                <div style="font-size: 1.75rem; font-weight: 700; color: #1a202c; margin: 0.5rem 0;">{{ object.calculadora_block.bloco_valor_unitario.valor }}</div>
+                                <div style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">{{ object.calculadora_block.bloco_valor_unitario.subtitulo }}</div>
+                            </div>
+                            <!-- Bloco: Roteiro -->
+                            <div class="diaria-block oficio-list-surface oficio-list-surface--soft" style="padding: 1.25rem; border-radius: 0.5rem;">
+                                <div style="font-size: 0.75rem; font-weight: 600; color: #7c8db0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem;">{{ object.calculadora_block.bloco_roteiro.titulo }}</div>
+                                <div style="font-size: 1rem; font-weight: 600; color: #1a202c; margin-bottom: 0.75rem;">{{ object.calculadora_block.bloco_roteiro.valor }}</div>
+                                <div style="font-size: 0.8125rem; color: #64748b; line-height: 1.5;">
+                                    <div><strong>Saída:</strong> {{ object.calculadora_block.bloco_roteiro.saida }}</div>
+                                    <div style="margin-top: 0.5rem;"><strong>Chegada:</strong> {{ object.calculadora_block.bloco_roteiro.chegada }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="oficio-list-card__secondary">
                     <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
                         <div class="oficio-list-subcard__header">
                             <div>
-                                <h3 class="oficio-list-subcard__title">Resumo do plano</h3>
-                                <p class="oficio-list-subcard__subtitle">Destino, período e contexto consolidados em um único bloco.</p>
+                                <h3 class="oficio-list-subcard__title">Contexto do plano</h3>
+                                <p class="oficio-list-subcard__subtitle">{{ object.contexto_display }} - atualizado em {{ object.updated_display }}</p>
                             </div>
                         </div>
                         <div class="oficio-list-subcard__body">
-                            <p class="oficio-list-subcard__text">{{ object.resumo_curto|truncatechars:220 }}</p>
-                            <div class="documento-cascade-inline-note">Atualizado em {{ object.updated_display }}</div>
+                            <div class="oficio-list-term-list">
+                                {% for row in object.info_rows %}
+                                <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
+                                    <span class="oficio-list-term-row__name">Coordenadores</span>
+                                    <div class="oficio-list-term-row__actions">
+                                        <span class="oficio-list-badge is-muted">{{ row.value }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </section>
                 </div>

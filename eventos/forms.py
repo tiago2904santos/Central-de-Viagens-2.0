@@ -18,6 +18,7 @@ from .models import (
     Evento,
     EventoFinalizacao,
     EventoParticipante,
+    HorarioAtendimentoPlanoTrabalho,
     Justificativa,
     ModeloJustificativa,
     ModeloMotivoViagem,
@@ -374,6 +375,47 @@ class SolicitantePlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         return instance
 
 
+class HorarioAtendimentoPlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
+    class Meta:
+        model = HorarioAtendimentoPlanoTrabalho
+        fields = ['descricao', 'ordem', 'ativo', 'is_padrao']
+        widgets = {
+            'descricao': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 120, 'placeholder': 'Ex.: 08:00 até 17:00'}),
+            'ordem': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_padrao': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_descricao(self):
+        value = ' '.join((self.cleaned_data.get('descricao') or '').strip().split())
+        if not value:
+            raise forms.ValidationError('Informe o horário de atendimento.')
+
+        normalized = value
+        if re.match(r'^\d{2}:\d{2}\s*-\s*\d{2}:\d{2}$', normalized):
+            parts = [part.strip() for part in normalized.split('-', 1)]
+            normalized = f'{parts[0]} até {parts[1]}'
+
+        if not re.match(r'^\d{2}:\d{2}\s+até\s+\d{2}:\d{2}$', normalized):
+            raise forms.ValidationError('Use o formato 00:00 até 00:00.')
+
+        qs = HorarioAtendimentoPlanoTrabalho.objects.filter(descricao__iexact=normalized)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError('Já existe um horário com esta descrição.')
+        return normalized
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if commit:
+            with transaction.atomic():
+                if instance.is_padrao:
+                    HorarioAtendimentoPlanoTrabalho.objects.exclude(pk=instance.pk).update(is_padrao=False)
+                instance.save()
+        return instance
+
+
 class AtividadePlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
     class Meta:
         model = AtividadePlanoTrabalho
@@ -449,6 +491,11 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'}),
     )
+    salvar_horario_atendimento_manual = forms.BooleanField(
+        label='Salvar este horário no gerenciador',
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+    )
     oficios_relacionados = forms.ModelMultipleChoiceField(
         label='Ofícios relacionados',
         queryset=Oficio.objects.none(),
@@ -473,6 +520,10 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'evento_data_unica',
             'evento_data_inicio',
             'evento_data_fim',
+            'data_saida_sede',
+            'hora_saida_sede',
+            'data_chegada_sede',
+            'hora_chegada_sede',
             'horario_atendimento',
             'quantidade_servidores',
             'metas_formatadas',
@@ -494,6 +545,10 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             'evento_data_unica': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'evento_data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'evento_data_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'data_saida_sede': forms.DateInput(attrs={'class': 'form-control form-control-sm', 'type': 'date'}, format='%Y-%m-%d'),
+            'hora_saida_sede': forms.TimeInput(attrs={'class': 'form-control form-control-sm', 'type': 'time'}, format='%H:%M'),
+            'data_chegada_sede': forms.DateInput(attrs={'class': 'form-control form-control-sm', 'type': 'date'}, format='%Y-%m-%d'),
+            'hora_chegada_sede': forms.TimeInput(attrs={'class': 'form-control form-control-sm', 'type': 'time'}, format='%H:%M'),
             'horario_atendimento': forms.TextInput(attrs={'class': 'form-control'}),
             'quantidade_servidores': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'metas_formatadas': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
@@ -514,6 +569,10 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['quantidade_servidores'].required = False
         self.fields['evento_data_inicio'].required = False
         self.fields['evento_data_fim'].required = False
+        self.fields['data_saida_sede'].required = False
+        self.fields['hora_saida_sede'].required = False
+        self.fields['data_chegada_sede'].required = False
+        self.fields['hora_chegada_sede'].required = False
         self.fields['evento'].queryset = Evento.objects.order_by('-data_inicio', 'titulo')
         self.fields['oficio'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
         self.fields['oficios_relacionados'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
@@ -548,14 +607,32 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
 
         horarios = [
             ('', 'Selecione...'),
-            ('08:00 até 12:00', '08:00 até 12:00'),
-            ('13:00 até 17:00', '13:00 até 17:00'),
-            ('08:00 até 17:00', '08:00 até 17:00'),
+        ]
+
+        horarios_gerenciados = list(
+            HorarioAtendimentoPlanoTrabalho.objects.filter(ativo=True)
+            .order_by('-is_padrao', 'ordem', 'descricao')
+            .values_list('descricao', flat=True)
+        )
+        for descricao in horarios_gerenciados:
+            horarios.append((descricao, descricao))
+
+        fallback_horarios = [
+            '08:00 até 12:00',
+            '13:00 até 17:00',
+            '08:00 até 17:00',
+        ]
+        for descricao in fallback_horarios:
+            if any(value == descricao for value, _label in horarios):
+                continue
+            horarios.append((descricao, descricao))
+
+        horarios.extend([
             ('08:00-12:00', '08:00-12:00 (legado)'),
             ('13:00-17:00', '13:00-17:00 (legado)'),
             ('08:00-17:00', '08:00-17:00 (legado)'),
             (self.HORARIO_OUTROS, 'Outro (informar manualmente)'),
-        ]
+        ])
         self.fields['horario_atendimento_padrao'].choices = horarios
 
         selected_event = None
@@ -620,6 +697,31 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         return f'{proximo:02d}/{ano_atual}'
 
     def _build_markers_for_diarias(self, cleaned_data):
+        destinos = list(cleaned_data.get('destinos_json') or [])
+        saida_data = cleaned_data.get('data_saida_sede')
+        saida_hora = cleaned_data.get('hora_saida_sede')
+        chegada_data = cleaned_data.get('data_chegada_sede')
+        chegada_hora = cleaned_data.get('hora_chegada_sede')
+        if saida_data and saida_hora and chegada_data and chegada_hora and destinos:
+            primeiro_destino = next(
+                (
+                    item for item in destinos
+                    if isinstance(item, dict) and str(item.get('cidade_nome') or '').strip()
+                ),
+                None,
+            )
+            if primeiro_destino:
+                saida_dt = datetime.combine(saida_data, saida_hora)
+                chegada_dt = datetime.combine(chegada_data, chegada_hora)
+                if chegada_dt > saida_dt:
+                    return [
+                        PeriodMarker(
+                            saida=saida_dt,
+                            destino_cidade=str(primeiro_destino.get('cidade_nome') or '').strip(),
+                            destino_uf=str(primeiro_destino.get('estado_sigla') or '').strip().upper(),
+                        )
+                    ], chegada_dt
+
         roteiro = cleaned_data.get('roteiro')
         if roteiro:
             trechos = list(roteiro.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk'))
@@ -892,6 +994,15 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
                 instance.solicitante_outros = ''
 
         instance.horario_atendimento = (self.cleaned_data.get('horario_atendimento') or '').strip()
+        if (
+            (self.cleaned_data.get('horario_atendimento_padrao') or '').strip() == self.HORARIO_OUTROS
+            and instance.horario_atendimento
+            and self.cleaned_data.get('salvar_horario_atendimento_manual')
+        ):
+            HorarioAtendimentoPlanoTrabalho.objects.get_or_create(
+                descricao=instance.horario_atendimento,
+                defaults={'ativo': True},
+            )
         codigos = self.cleaned_data.get('atividades_codigos', [])
         instance.atividades_codigos = ','.join(codigos) if codigos else ''
         instance.metas_formatadas = self.cleaned_data.get('metas_formatadas') or ''
@@ -906,7 +1017,9 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         instance.valor_diarias_extenso = instance.diarias_valor_extenso or ''
         instance.coordenador_municipal = ''
         instance.observacoes = ''
-        instance.status = PlanoTrabalho.STATUS_RASCUNHO
+        # Preserve the existing status when editing; only default to RASCUNHO for new records
+        if not instance.status:
+            instance.status = PlanoTrabalho.STATUS_RASCUNHO
 
         related_oficios = list(self.cleaned_data.get('oficios_relacionados') or [])
         if instance.oficio_id and instance.oficio not in related_oficios:
@@ -965,6 +1078,10 @@ class PlanoTrabalhoStep2Form(FormComErroInvalidMixin, forms.ModelForm):
             'evento_data_unica',
             'evento_data_inicio',
             'evento_data_fim',
+            'data_saida_sede',
+            'hora_saida_sede',
+            'data_chegada_sede',
+            'hora_chegada_sede',
             'horario_atendimento',
             'destinos_json',
             'diarias_quantidade',

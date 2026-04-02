@@ -202,6 +202,24 @@ class SolicitantePlanoTrabalho(models.Model):
         return self.nome
 
 
+class HorarioAtendimentoPlanoTrabalho(models.Model):
+    """Gerenciador de horários de atendimento para reutilização no Plano de Trabalho."""
+    descricao = models.CharField('Descrição', max_length=120)
+    ativo = models.BooleanField('Ativo', default=True)
+    ordem = models.PositiveIntegerField('Ordem', default=100)
+    is_padrao = models.BooleanField('Padrão', default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['ordem', 'descricao']
+        verbose_name = 'Horário de atendimento (Plano de Trabalho)'
+        verbose_name_plural = 'Horários de atendimento (Plano de Trabalho)'
+
+    def __str__(self):
+        return self.descricao
+
+
 class CoordenadorOperacional(models.Model):
     """Banco de coordenadores operacionais para o Plano de Trabalho."""
     nome = models.CharField('Nome', max_length=200)
@@ -338,6 +356,10 @@ class PlanoTrabalho(models.Model):
     evento_data_unica = models.BooleanField('Evento em um único dia', default=False)
     evento_data_inicio = models.DateField('Data inicial do evento', null=True, blank=True)
     evento_data_fim = models.DateField('Data final do evento', null=True, blank=True)
+    data_saida_sede = models.DateField('Saída da sede (data)', null=True, blank=True)
+    hora_saida_sede = models.TimeField('Saída da sede (hora)', null=True, blank=True)
+    data_chegada_sede = models.DateField('Chegada na sede (data)', null=True, blank=True)
+    hora_chegada_sede = models.TimeField('Chegada na sede (hora)', null=True, blank=True)
     horario_atendimento = models.CharField('Horário de atendimento', max_length=120, blank=True, default='')
     quantidade_servidores = models.PositiveIntegerField('Quantidade de servidores', null=True, blank=True)
     atividades_codigos = models.CharField('Atividades (códigos)', max_length=500, blank=True, default='')

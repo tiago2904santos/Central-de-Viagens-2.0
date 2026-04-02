@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from .context import build_justificativa_document_context
+from .context import build_justificativa_document_context, format_document_display, format_document_header_display
 from .renderer import get_document_template_path, render_docx_template_bytes
 from .types import DocumentoOficioTipo
 
@@ -35,15 +35,15 @@ def build_justificativa_template_context(oficio):
     assinatura = _get_primary_signature(context)
     unidade = context['institucional']['unidade'] or context['institucional']['orgao'] or context['institucional']['sigla_orgao']
     return {
-        'sede': context['roteiro']['sede'],
+        'sede': format_document_display(context['roteiro']['sede']),
         'data_extenso': _format_data_extenso(timezone.localdate()),
         'justificativa': context['conteudo']['justificativa_texto'],
-        'assinante_justificativa': assinatura.get('nome', ''),
-        'cargo_assinante_justificativa': assinatura.get('cargo', ''),
-        'divisao': context['institucional']['divisao'],
-        'unidade': unidade,
-        'unidade_rodape': unidade,
-        'endereco': context['institucional']['endereco'],
+        'assinante_justificativa': format_document_display(assinatura.get('nome', '')),
+        'cargo_assinante_justificativa': format_document_display(assinatura.get('cargo', '')),
+        'divisao': format_document_header_display(context['institucional']['divisao']),
+        'unidade': format_document_header_display(unidade),
+        'unidade_rodape': format_document_display(unidade),
+        'endereco': format_document_display(context['institucional']['endereco']),
         'email': context['institucional']['email'],
         'telefone': context['institucional'].get('telefone', ''),
     }

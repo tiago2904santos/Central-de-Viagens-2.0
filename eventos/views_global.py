@@ -164,6 +164,13 @@ def _get_solicitantes_manager_url():
         return ''
 
 
+def _get_horarios_manager_url():
+    try:
+        return reverse('eventos:plano-trabalho-horarios-lista')
+    except NoReverseMatch:
+        return ''
+
+
 @require_http_methods(['GET'])
 def plano_trabalho_coordenadores_api(request):
     """API de busca de coordenadores operacionais para o Plano de Trabalho."""
@@ -201,6 +208,11 @@ def _build_plano_trabalho_efetivo_formset(request, *, instance=None):
     if instance is None:
         kwargs['queryset'] = EfetivoPlanoTrabalhoDocumento.objects.none()
     formset = PlanoTrabalhoEfetivoFormSet(request.POST if has_payload else None, **kwargs)
+    # When there are already saved rows, suppress the automatic blank extra row so
+    # the user only sees what was persisted; new rows are added via the JS "+" button.
+    has_existing_rows = bool(instance and instance.pk and instance.efetivos.exists())
+    if has_existing_rows:
+        formset.extra = 0
     return formset, has_payload, default_cargo
 
 
@@ -219,6 +231,33 @@ def _save_efetivo_rows(plano, rows):
 
 
 def _build_plano_diarias_markers(plano):
+    destinos = list(plano.destinos_json or [])
+    if (
+        plano.data_saida_sede
+        and plano.hora_saida_sede
+        and plano.data_chegada_sede
+        and plano.hora_chegada_sede
+        and destinos
+    ):
+        primeiro_destino = next(
+            (
+                item for item in destinos
+                if isinstance(item, dict) and str(item.get('cidade_nome') or '').strip()
+            ),
+            None,
+        )
+        if primeiro_destino:
+            saida_dt = datetime.combine(plano.data_saida_sede, plano.hora_saida_sede)
+            chegada_dt = datetime.combine(plano.data_chegada_sede, plano.hora_chegada_sede)
+            if chegada_dt > saida_dt:
+                return [
+                    PeriodMarker(
+                        saida=saida_dt,
+                        destino_cidade=str(primeiro_destino.get('cidade_nome') or '').strip(),
+                        destino_uf=str(primeiro_destino.get('estado_sigla') or '').strip().upper(),
+                    )
+                ], chegada_dt
+
     if plano.roteiro_id:
         trechos = list(plano.roteiro.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk'))
         markers = []
@@ -1742,12 +1781,66 @@ def _resolve_plano_trabalho_periodo(plano, related_event):
 
 def _decorate_plano_trabalho_list_items(items):
     atividades_catalogo = get_atividades_catalogo()
+
+    def _build_initials(value):
+        parts = [chunk for chunk in str(value or '').strip().split() if chunk]
+        if not parts:
+            return 'PT'
+        if len(parts) == 1:
+            return parts[0][:2].upper()
+        return f'{parts[0][0]}{parts[1][0]}'.upper()
+
     for plano in items:
         related_oficios = plano.get_oficios_relacionados() if hasattr(plano, 'get_oficios_relacionados') else []
         related_event = plano.get_evento_relacionado() if hasattr(plano, 'get_evento_relacionado') else plano.evento
         status_meta = _build_plano_trabalho_status_meta(plano)
         destino_display = plano.destinos_formatados_display or 'Destino a definir'
         periodo_display = _resolve_plano_trabalho_periodo(plano, related_event)
+        solicitante_display = (
+            _clean(getattr(plano.solicitante, 'nome', ''))
+            or _clean(plano.solicitante_outros)
+            or 'Nao informado'
+        )
+        equipe_display = (
+            f'{plano.quantidade_servidores} servidor(es)'
+            if plano.quantidade_servidores
+            else 'Nao informada'
+        )
+        coord_operacional_display = _clean(getattr(plano.coordenador_operacional, 'nome', '')) or 'Nao informado'
+        coord_administrativo_display = _clean(getattr(plano.coordenador_administrativo, 'nome', '')) or 'Nao informado'
+        roteiro_display = 'Manual' if (plano.destinos_json and not plano.roteiro_id) else (
+            f'#{plano.roteiro_id}' if plano.roteiro_id else 'Nao vinculado'
+        )
+        diarias_display = _clean(plano.diarias_quantidade)
+        if diarias_display and 'di' not in diarias_display.lower():
+            diarias_display = f'{diarias_display} diarias'
+        diarias_display = diarias_display or 'Nao calculadas'
+        valor_plano_display = _clean(plano.diarias_valor_total)
+        if not valor_plano_display and plano.valor_diarias is not None:
+            valor_plano_display = f'R$ {plano.valor_diarias:.2f}'.replace('.', ',')
+        valor_plano_display = valor_plano_display or 'Nao calculado'
+        valor_unitario_display = _clean(plano.diarias_valor_unitario) or 'Nao calculado'
+        valor_extenso_display = _clean(plano.diarias_valor_extenso) or 'Nao informado'
+
+        saida_sede_display = 'Nao informada'
+        if plano.data_saida_sede and plano.hora_saida_sede:
+            saida_sede_display = f'{plano.data_saida_sede:%d/%m/%Y} {plano.hora_saida_sede:%H:%M}'
+        elif plano.data_saida_sede:
+            saida_sede_display = f'{plano.data_saida_sede:%d/%m/%Y}'
+
+        chegada_sede_display = 'Nao informada'
+        if plano.data_chegada_sede and plano.hora_chegada_sede:
+            chegada_sede_display = f'{plano.data_chegada_sede:%d/%m/%Y} {plano.hora_chegada_sede:%H:%M}'
+        elif plano.data_chegada_sede:
+            chegada_sede_display = f'{plano.data_chegada_sede:%d/%m/%Y}'
+
+        oficios_count = len(related_oficios)
+        if oficios_count == 1:
+            oficios_count_label = '1 oficio vinculado'
+        elif oficios_count > 1:
+            oficios_count_label = f'{oficios_count} oficios vinculados'
+        else:
+            oficios_count_label = 'Aguardando vinculo documental'
         atividades_labels = [
             item['nome']
             for item in atividades_catalogo
@@ -1772,21 +1865,66 @@ def _decorate_plano_trabalho_list_items(items):
             {'label': 'PLANO', 'value': f'PT {plano.numero_formatado or f"#{plano.pk}"}', 'css_class': 'is-key'},
             {'label': 'DESTINO', 'value': destino_display, 'css_class': ''},
             {'label': 'PERIODO', 'value': periodo_display, 'css_class': 'is-date'},
+            {'label': 'SOLICITANTE', 'value': f'{solicitante_display} ({status_meta["label"]})', 'css_class': ''},
         ]
-        plano.meta_items = [
-            {'label': 'Status', 'value': status_meta['label']},
-            {'label': 'Contexto', 'value': plano.contexto_display},
-            {'label': 'Solicitante', 'value': _clean(getattr(plano.solicitante, 'nome', '')) or _clean(plano.solicitante_outros) or 'Nao informado'},
-            {'label': 'Roteiro', 'value': f'#{plano.roteiro_id}' if plano.roteiro_id else 'Nao vinculado'},
+        plano.oficios_block = {
+            'count_label': oficios_count_label,
+            'items': [
+                {
+                    'initials': _build_initials(oficio.numero_formatado or f'#{oficio.pk}'),
+                    'name': f'Oficio {oficio.numero_formatado or f"#{oficio.pk}"} - {oficio.get_status_display()}',
+                    'css_class': '',
+                    'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+                }
+                for oficio in related_oficios
+            ]
+            or [
+                {
+                    'initials': 'PT',
+                    'name': 'Nenhum oficio vinculado a este plano',
+                    'css_class': 'is-empty',
+                    'url': '',
+                }
+            ],
+        }
+        plano.calculadora_block = {
+            'valor_total': valor_plano_display,
+            'diarias': diarias_display,
+            'equipe': equipe_display,
+            'valor_unitario': valor_unitario_display,
+            'saida_sede': saida_sede_display,
+            'chegada_sede': chegada_sede_display,
+            'valor_extenso': valor_extenso_display,
+            'roteiro': roteiro_display,
+            'bloco_valor_total': {
+                'titulo': 'Valor total',
+                'valor': valor_plano_display,
+                'subtitulo': diarias_display,
+            },
+            'bloco_valor_unitario': {
+                'titulo': 'Valor unitário',
+                'valor': valor_unitario_display,
+                'subtitulo': equipe_display,
+            },
+            'bloco_roteiro': {
+                'titulo': 'Roteiro',
+                'valor': roteiro_display,
+                'saida': saida_sede_display,
+                'chegada': chegada_sede_display,
+            },
+        }
+        plano.info_rows = [
+            {'label': 'Contexto', 'value': f'{coord_operacional_display} / {coord_administrativo_display}'},
         ]
         plano.oficios_items = [
             {
                 'label': f'Oficio {oficio.numero_formatado or f"#{oficio.pk}"}',
                 'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
-                'meta': (oficio.evento.titulo or '').strip() if oficio.evento_id and oficio.evento else '',
+                'meta': oficio.get_status_display(),
             }
             for oficio in related_oficios
         ]
+        plano.oficios_count_label = oficios_count_label
         plano.open_url = reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': plano.pk})
         plano.edit_url = reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk})
         plano.download_docx_url = reverse(
@@ -2008,6 +2146,16 @@ def _autosave_datetime(value):
     return dt
 
 
+def _autosave_time(value):
+    raw = _clean(value)
+    if not raw:
+        return None
+    try:
+        return time.fromisoformat(raw)
+    except ValueError:
+        return None
+
+
 def _normalize_horario_autosave(padrao, manual):
     horario = _clean(padrao)
     if horario == PlanoTrabalhoForm.HORARIO_OUTROS:
@@ -2188,6 +2336,14 @@ def plano_trabalho_autosave(request):
             plano.evento_data_fim = _autosave_date(payload.get('evento_data_fim'))
         if plano.evento_data_unica and plano.evento_data_inicio:
             plano.evento_data_fim = plano.evento_data_inicio
+        if _has('data_saida_sede'):
+            plano.data_saida_sede = _autosave_date(payload.get('data_saida_sede'))
+        if _has('hora_saida_sede'):
+            plano.hora_saida_sede = _autosave_time(payload.get('hora_saida_sede'))
+        if _has('data_chegada_sede'):
+            plano.data_chegada_sede = _autosave_date(payload.get('data_chegada_sede'))
+        if _has('hora_chegada_sede'):
+            plano.hora_chegada_sede = _autosave_time(payload.get('hora_chegada_sede'))
 
         if _has('quantidade_servidores'):
             qtd_servidores = _autosave_int(payload.get('quantidade_servidores'))
@@ -2589,6 +2745,7 @@ def plano_trabalho_novo(request):
             'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
             'pt_solicitantes_manager_url': _get_solicitantes_manager_url(),
+            'pt_horarios_manager_url': _get_horarios_manager_url(),
             'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
             'selected_coordenadores_payload': [],
             'hide_page_header': True,
@@ -2645,6 +2802,7 @@ def plano_trabalho_editar(request, pk):
             'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
             'pt_solicitantes_manager_url': _get_solicitantes_manager_url(),
+            'pt_horarios_manager_url': _get_horarios_manager_url(),
             'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
             'selected_coordenadores_payload': [
                 {'id': c.pk, 'nome': c.nome, 'cargo': c.cargo or '', 'display': f'{c.cargo} — {c.nome}' if c.cargo else c.nome}

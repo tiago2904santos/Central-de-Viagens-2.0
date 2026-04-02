@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Horários do Plano de Trabalho - Central de Viagens{% endblock %}
+{% block page_title %}Horários do Plano de Trabalho{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 system-list-page system-list-page--simple">
+  <div class="system-list-shell">
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+      <div class="system-list-header__content">
+        <div>
+          <h1 class="system-list-header__title">Gerenciador de horários</h1>
+          <p class="system-list-header__subtitle">Cadastre e organize os horários de atendimento usados no Plano de Trabalho.</p>
+        </div>
+      </div>
+      <div class="system-list-header__actions-group">
+        <a href="{% url 'eventos:plano-trabalho-horarios-cadastrar' %}" class="btn btn-primary system-list-action-btn">
+          <i class="bi bi-plus-lg me-1"></i>Novo horário
+        </a>
+      </div>
+    </div>
+
+    <div class="system-list-table-wrap">
+      <div class="table-responsive">
+        <table class="table table-hover table-cadastro mb-0 system-list-table">
+          <thead class="table-light">
+            <tr>
+              <th>Horário</th>
+              <th class="text-center">Status</th>
+              <th class="text-center">Padrão</th>
+              <th class="text-center">Ordem</th>
+              <th width="220" class="text-end">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for obj in object_list %}
+            <tr>
+              <td class="fw-semibold">{{ obj.descricao }}</td>
+              <td class="text-center">
+                {% if obj.ativo %}
+                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Ativo</span>
+                {% else %}
+                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Inativo</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if obj.is_padrao %}
+                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">Sim</span>
+                {% else %}
+                <span class="text-muted">Não</span>
+                {% endif %}
+              </td>
+              <td class="text-center">{{ obj.ordem }}</td>
+              <td class="text-end">
+                <a href="{% url 'eventos:plano-trabalho-horarios-editar' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                <a href="{% url 'eventos:plano-trabalho-horarios-excluir' obj.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">Nenhum horário cadastrado.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

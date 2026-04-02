@@ -69,6 +69,18 @@ def _normalize_city_name(value: str | None) -> str:
     return ''.join(ch for ch in raw if not unicodedata.combining(ch))
 
 
+def locations_equivalent(
+    cidade_a: str | None,
+    uf_a: str | None,
+    cidade_b: str | None,
+    uf_b: str | None,
+) -> bool:
+    return (
+        _normalize_city_name(cidade_a) == _normalize_city_name(cidade_b)
+        and (uf_a or '').strip().upper() == (uf_b or '').strip().upper()
+    )
+
+
 def formatar_valor_diarias(valor: Decimal) -> str:
     quantizado = valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
     return f'{quantizado:.2f}'.replace('.', ',')
@@ -118,6 +130,10 @@ def count_pernoites(saida: datetime, chegada: datetime) -> int:
     if chegada.date() <= saida.date():
         return 0
     return (chegada.date() - saida.date()).days
+
+
+def _count_period_pernoites(periodos: list[dict]) -> int:
+    return sum(int(item.get('_pernoites_periodo', 0) or 0) for item in periodos)
 
 
 def _segment_breakdown(start: datetime, end: datetime) -> tuple[int, int, Decimal, Decimal]:
@@ -174,6 +190,8 @@ def build_periods(
     chegada_final_sede: datetime,
     *,
     quantidade_servidores: int = 1,
+    sede_cidade: str | None = None,
+    sede_uf: str | None = None,
 ) -> list[dict]:
     if not markers or not chegada_final_sede:
         raise ValueError('Preencha datas e horas para calcular.')
@@ -187,6 +205,14 @@ def build_periods(
         end = sorted_markers[idx + 1].saida if idx + 1 < len(sorted_markers) else chegada_final_sede
         if end <= start:
             raise ValueError('Preencha datas e horas para calcular.')
+
+        if sede_cidade and sede_uf and locations_equivalent(
+            marker.destino_cidade,
+            marker.destino_uf,
+            sede_cidade,
+            sede_uf,
+        ):
+            continue
 
         tipo = classify(marker.destino_cidade, marker.destino_uf)
         dias_inteiros, parcial, horas_adicionais, total_horas = _segment_breakdown(start, end)
@@ -216,32 +242,18 @@ def build_periods(
                 'subtotal_decimal': subtotal,
                 'percentual_adicional': parcial,
                 'total_horas_periodo': float(total_horas),
+                '_period_start': start,
+                '_period_end': end,
+                '_pernoites_periodo': count_pernoites(start, end),
             }
         )
 
     # Regra de pernoites: diárias integrais mínimas = noites fora da sede
-    saida_inicial = sorted_markers[0].saida
-    total_pernoites = count_pernoites(saida_inicial, chegada_final_sede)
+    total_pernoites = _count_period_pernoites(periodos)
     total_full = sum(int(p.get('n_diarias', 0) or 0) for p in periodos)
     if total_pernoites > 0 and total_full < total_pernoites:
-        # Redistribuir: pelo menos total_pernoites diárias de 100%
-        # Cada pernoite é atribuída ao período em que cai o fim daquele dia
-        pernoite_dates = [
-            saida_inicial.date() + timedelta(days=k)
-            for k in range(total_pernoites)
-        ]
-        for idx, p in enumerate(periodos):
-            period_start = sorted_markers[idx].saida
-            period_end = (
-                sorted_markers[idx + 1].saida
-                if idx + 1 < len(sorted_markers)
-                else chegada_final_sede
-            )
-            n_in_period = 0
-            for d in pernoite_dates:
-                end_of_day = datetime.combine(d, time(23, 59, 59))
-                if period_start <= end_of_day < period_end:
-                    n_in_period += 1
+        for p in periodos:
+            n_in_period = int(p.get('_pernoites_periodo', 0) or 0)
             p['n_diarias'] = n_in_period
             p['percentual_adicional'] = 0
             tabela = TABELA_DIARIAS.get(p['tipo'], TABELA_DIARIAS['INTERIOR'])
@@ -251,6 +263,11 @@ def build_periods(
             p['subtotal'] = formatar_valor_diarias(subtotal_novo)
             p['subtotal_decimal'] = subtotal_novo
 
+    for p in periodos:
+        p.pop('_period_start', None)
+        p.pop('_period_end', None)
+        p.pop('_pernoites_periodo', None)
+
     return periodos
 
 
@@ -259,11 +276,15 @@ def calculate_periodized_diarias(
     chegada_final_sede: datetime,
     *,
     quantidade_servidores: int = 1,
+    sede_cidade: str | None = None,
+    sede_uf: str | None = None,
 ) -> dict:
     periodos = build_periods(
         markers,
         chegada_final_sede,
         quantidade_servidores=quantidade_servidores,
+        sede_cidade=sede_cidade,
+        sede_uf=sede_uf,
     )
     total_valor_decimal = sum(
         (item['subtotal_decimal'] for item in periodos),

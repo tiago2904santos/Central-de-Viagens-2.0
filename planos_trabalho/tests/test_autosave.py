@@ -1,5 +1,5 @@
 import json
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -258,6 +258,32 @@ class PlanoTrabalhoAutosaveTestCase(TestCase):
         self.plano.refresh_from_db()
         self.assertEqual(len(self.plano.destinos_json), 2)
         self.assertEqual(self.plano.destinos_json[0]['cidade_nome'], 'Apucarana')
+
+    def test_autosave_persiste_campos_de_deslocamento_da_calculadora(self):
+        response = self._post_json(
+            {
+                'id': self.plano.pk,
+                '_dirty_fields': [
+                    'data_saida_sede',
+                    'hora_saida_sede',
+                    'data_chegada_sede',
+                    'hora_chegada_sede',
+                ],
+                'data_saida_sede': '2026-03-20',
+                'hora_saida_sede': '06:30',
+                'data_chegada_sede': '2026-03-22',
+                'hora_chegada_sede': '21:15',
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('success'))
+
+        self.plano.refresh_from_db()
+        self.assertEqual(self.plano.data_saida_sede, date(2026, 3, 20))
+        self.assertEqual(self.plano.hora_saida_sede, time(6, 30))
+        self.assertEqual(self.plano.data_chegada_sede, date(2026, 3, 22))
+        self.assertEqual(self.plano.hora_chegada_sede, time(21, 15))
 
     def test_autosave_invalid_payload_safe(self):
         response = self.client.post(

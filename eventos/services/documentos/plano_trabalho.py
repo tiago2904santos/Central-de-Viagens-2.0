@@ -7,10 +7,13 @@ from utils.valor_extenso import valor_por_extenso_ptbr
 from .context import (
     _build_coordenacao_formatada,
     _build_endereco_configuracao,
+    _build_sede_configuracao,
     _format_data_extenso,
     _get_configuracao_sistema,
     _text_or_empty,
     build_plano_trabalho_document_context,
+    format_document_display,
+    format_document_header_display,
     get_assinaturas_documento,
 )
 from .renderer import (
@@ -204,8 +207,8 @@ def _render_from_context(document, context):
     add_section_heading(document, '8. CONSIDERAÇÕES FINAIS')
     add_label_value(document, 'Data (extenso)', context.get('data_extenso', ''))
     add_label_value(document, 'Divisão', context['institucional'].get('divisao', ''))
-    add_label_value(document, 'Unidade', context['institucional'].get('unidade', ''))
-    add_label_value(document, 'Unidade (rodapé)', context['institucional'].get('unidade_rodape', ''))
+    add_label_value(document, 'Unidade', format_document_header_display(context['institucional'].get('unidade', '')))
+    add_label_value(document, 'Unidade (rodapé)', format_document_display(context['institucional'].get('unidade_rodape', '')))
     add_label_value(document, 'Endereço', context['institucional'].get('endereco', ''))
     add_label_value(document, 'Telefone', context['institucional'].get('telefone', ''))
     add_label_value(document, 'Email', context['institucional'].get('email', ''))
@@ -253,25 +256,25 @@ def render_plano_trabalho_docx(oficio):
 
     recursos_formatado = _clean_recursos_texto((plano.recursos_texto if plano else '') or context.get('recursos_formatado', ''))
     assinaturas = context.get('assinaturas') or []
-    nome_chefia = context['institucional'].get('nome_chefia', '') or _text_or_empty(getattr(config, 'nome_chefia', '') if config else '')
-    cargo_chefia = context['institucional'].get('cargo_chefia', '') or _text_or_empty(getattr(config, 'cargo_chefia', '') if config else '')
-    sede = context['institucional'].get('sede', '') or _text_or_empty(getattr(config, 'sede', '') if config else '')
+    nome_chefia = context['institucional'].get('nome_chefia', '') or format_document_display(getattr(config, 'nome_chefia', '') if config else '')
+    cargo_chefia = context['institucional'].get('cargo_chefia', '') or format_document_display(getattr(config, 'cargo_chefia', '') if config else '')
+    sede = context['institucional'].get('sede', '') or _build_sede_configuracao(config)
     if not nome_chefia and assinaturas:
-        nome_chefia = _text_or_empty(assinaturas[0].get('nome'))
+        nome_chefia = format_document_display(assinaturas[0].get('nome'))
     if not cargo_chefia and assinaturas:
-        cargo_chefia = _text_or_empty(assinaturas[0].get('cargo'))
+        cargo_chefia = format_document_display(assinaturas[0].get('cargo'))
     if not sede:
         sede = context['institucional'].get('unidade', '')
 
     mapping = {
         'numero_plano_trabalho': context.get('numero_plano_trabalho', ''),
-        'destino': context.get('destino', ''),
-        'solicitante': context.get('solicitante', ''),
+        'destino': format_document_display(context.get('destino', '')),
+        'solicitante': format_document_display(context.get('solicitante', '')),
         'objetivo': '',
         'metas_formatada': context.get('metas_formatada', ''),
         'atividades_formatada': context.get('atividades_formatada', ''),
         'dias_evento_extenso': dias_evento_extenso,
-        'locais_formatado': context.get('locais_formatado', ''),
+        'locais_formatado': format_document_display(context.get('locais_formatado', '')),
         'horario_atendimento': context.get('horario_atendimento', ''),
         'quantidade_de_servidores': quantidade_servidores,
         'unidade_movel': context.get('unidade_movel', ''),
@@ -284,9 +287,9 @@ def render_plano_trabalho_docx(oficio):
         'coordenacao_formatada': context.get('coordenacao_formatada', ''),
         'coordenação formatada': context.get('coordenacao_formatada', ''),
         'data_extenso': context.get('data_extenso', ''),
-        'divisao': context['institucional'].get('divisao', ''),
-        'unidade': context['institucional'].get('unidade', ''),
-        'unidade_rodape': context['institucional'].get('unidade_rodape', ''),
+        'divisao': format_document_header_display(context['institucional'].get('divisao', '')),
+        'unidade': format_document_header_display(context['institucional'].get('unidade', '')),
+        'unidade_rodape': format_document_display(context['institucional'].get('unidade_rodape', '')),
         'endereco': context['institucional'].get('endereco', ''),
         'telefone': context['institucional'].get('telefone', ''),
         'email': context['institucional'].get('email', ''),
@@ -302,9 +305,9 @@ def render_plano_trabalho_model_docx(plano_trabalho):
     """Renderização DOCX a partir da entidade PlanoTrabalho, sem exigir Ofício/Evento."""
     solicitante_texto = ''
     if plano_trabalho.solicitante_id and plano_trabalho.solicitante:
-        solicitante_texto = plano_trabalho.solicitante.nome
+        solicitante_texto = format_document_display(plano_trabalho.solicitante.nome)
     elif plano_trabalho.solicitante_outros:
-        solicitante_texto = plano_trabalho.solicitante_outros
+        solicitante_texto = format_document_display(plano_trabalho.solicitante_outros)
 
     atividades_fmt = build_atividades_formatada(plano_trabalho.atividades_codigos)
     metas_exibir = plano_trabalho.metas_formatadas or build_metas_formatada(plano_trabalho.atividades_codigos)
@@ -384,24 +387,24 @@ def render_plano_trabalho_model_docx(plano_trabalho):
             'objetivo': objetivo_texto,
         },
         'institucional': {
-            'divisao': _text_or_empty(config.divisao if config else ''),
-            'unidade': _text_or_empty(config.unidade if config else ''),
-            'unidade_rodape': _text_or_empty(config.unidade if config else ''),
+            'divisao': format_document_header_display(config.divisao if config else ''),
+            'unidade': format_document_header_display(config.unidade if config else ''),
+            'unidade_rodape': format_document_display(config.unidade if config else ''),
             'endereco': _build_endereco_configuracao(config),
             'telefone': _text_or_empty(getattr(config, 'telefone_formatado', '') if config else ''),
             'email': _text_or_empty(config.email if config else ''),
-            'sede': _text_or_empty(getattr(config, 'sede', '') if config else ''),
-            'nome_chefia': _text_or_empty(getattr(config, 'nome_chefia', '') if config else ''),
-            'cargo_chefia': _text_or_empty(getattr(config, 'cargo_chefia', '') if config else ''),
+            'sede': _build_sede_configuracao(config),
+            'nome_chefia': format_document_display(getattr(config, 'nome_chefia', '') if config else ''),
+            'cargo_chefia': format_document_display(getattr(config, 'cargo_chefia', '') if config else ''),
         },
         'numero_plano_trabalho': plano_trabalho.numero_formatado,
-        'destino': plano_trabalho.destinos_formatados_display,
+        'destino': format_document_display(plano_trabalho.destinos_formatados_display),
         'solicitante': solicitante_texto,
         'objetivo': objetivo_texto,
         'metas_formatada': metas_exibir,
         'atividades_formatada': atividades_fmt,
         'dias_evento_extenso': dias_evento_extenso,
-        'locais_formatado': plano_trabalho.destinos_formatados_display,
+        'locais_formatado': format_document_display(plano_trabalho.destinos_formatados_display),
         'horario_atendimento': plano_trabalho.horario_atendimento,
         'quantidade_de_servidores': efetivo_texto,
         'unidade_movel': get_unidade_movel_text(plano_trabalho.atividades_codigos),
@@ -419,19 +422,19 @@ def render_plano_trabalho_model_docx(plano_trabalho):
     cargo_chefia = context['institucional'].get('cargo_chefia', '')
     sede = context['institucional'].get('sede', '') or context['institucional'].get('unidade', '')
     if not nome_chefia and context['assinaturas']:
-        nome_chefia = _text_or_empty(context['assinaturas'][0].get('nome'))
+        nome_chefia = format_document_display(context['assinaturas'][0].get('nome'))
     if not cargo_chefia and context['assinaturas']:
-        cargo_chefia = _text_or_empty(context['assinaturas'][0].get('cargo'))
+        cargo_chefia = format_document_display(context['assinaturas'][0].get('cargo'))
 
     mapping = {
         'numero_plano_trabalho': context.get('numero_plano_trabalho', ''),
-        'destino': context.get('destino', ''),
-        'solicitante': context.get('solicitante', ''),
+        'destino': format_document_display(context.get('destino', '')),
+        'solicitante': format_document_display(context.get('solicitante', '')),
         'objetivo': '',
         'metas_formatada': context.get('metas_formatada', ''),
         'atividades_formatada': context.get('atividades_formatada', ''),
         'dias_evento_extenso': context.get('dias_evento_extenso', ''),
-        'locais_formatado': context.get('locais_formatado', ''),
+        'locais_formatado': format_document_display(context.get('locais_formatado', '')),
         'horario_atendimento': context.get('horario_atendimento', ''),
         'quantidade_de_servidores': context.get('quantidade_de_servidores', ''),
         'unidade_movel': context.get('unidade_movel', ''),
@@ -444,15 +447,15 @@ def render_plano_trabalho_model_docx(plano_trabalho):
         'coordenacao_formatada': context.get('coordenacao_formatada', ''),
         'coordenação formatada': context.get('coordenacao_formatada', ''),
         'data_extenso': context.get('data_extenso', ''),
-        'divisao': context['institucional'].get('divisao', ''),
-        'unidade': context['institucional'].get('unidade', ''),
-        'unidade_rodape': context['institucional'].get('unidade_rodape', ''),
-        'endereco': context['institucional'].get('endereco', ''),
+        'divisao': format_document_header_display(context['institucional'].get('divisao', '')),
+        'unidade': format_document_header_display(context['institucional'].get('unidade', '')),
+        'unidade_rodape': format_document_display(context['institucional'].get('unidade_rodape', '')),
+        'endereco': format_document_display(context['institucional'].get('endereco', '')),
         'telefone': context['institucional'].get('telefone', ''),
         'email': context['institucional'].get('email', ''),
-        'sede': sede,
-        'nome_chefia': nome_chefia,
-        'cargo_chefia': cargo_chefia,
+        'sede': format_document_display(sede),
+        'nome_chefia': format_document_display(nome_chefia),
+        'cargo_chefia': format_document_display(cargo_chefia),
     }
     template_path = get_document_template_path(DocumentoOficioTipo.PLANO_TRABALHO)
     return render_docx_template_bytes(template_path, mapping, post_processor=_post_process_plano_doc)

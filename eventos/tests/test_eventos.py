@@ -55,6 +55,8 @@ from eventos.services.documentos import (
     reset_document_backend_capabilities_cache,
     validate_oficio_for_document_generation,
 )
+from eventos.services.documentos.context import format_document_display
+from eventos.services.documentos.oficio import build_oficio_template_context
 
 try:
     from docx import Document as DocxDocument
@@ -85,6 +87,13 @@ class PtBrEncodingTest(TestCase):
         self.assertEqual(
             dict(Oficio.CUSTEIO_CHOICES)[Oficio.CUSTEIO_UNIDADE],
             'UNIDADE - DPC (diárias e combustível custeados pela DPC).',
+        )
+
+    def test_format_document_display_corrige_nome_e_conectores_em_pt_br(self):
+        raw = 'JOÃO Mario DE GOES, Assessor DE Comunicação Social - PCPR'
+        self.assertEqual(
+            format_document_display(raw),
+            'João Mario de Goes, Assessor de Comunicação Social - PCPR',
         )
         self.assertEqual(
             dict(Oficio.CUSTEIO_CHOICES)[Oficio.CUSTEIO_ONUS_LIMITADOS],
@@ -3747,10 +3756,8 @@ class OficioStep1AcceptanceTest(TestCase):
             data[f'destino_cidade_{idx}'] = str(cidade.pk)
         trechos = trechos or []
         for idx, trecho in enumerate(trechos):
-            data[f'trecho_{idx}_saida_data'] = trecho.get('saida_data', '')
-            data[f'trecho_{idx}_saida_hora'] = trecho.get('saida_hora', '')
-            data[f'trecho_{idx}_chegada_data'] = trecho.get('chegada_data', '')
-            data[f'trecho_{idx}_chegada_hora'] = trecho.get('chegada_hora', '')
+            for key, value in trecho.items():
+                data[f'trecho_{idx}_{key}'] = value
         retorno = retorno or {}
         data.update(
             {
@@ -4857,6 +4864,201 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(response.context['retorno_state']['saida_data'], '2026-04-02')
         self.assertEqual(response.context['retorno_state']['chegada_hora'], '18:00')
 
+    def test_step3_reabre_bate_volta_diario_com_trechos_explicitos_e_destino_unico(self):
+        oficio = self._criar_oficio(ano=2026)
+        cidade_destino = Cidade.objects.create(nome='Colombo Loop', estado=self.estado, codigo_ibge='4105806')
+        self._salvar_steps_1_e_2(oficio)
+
+        response_post = self.client.post(
+            reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
+            data=self._payload_step3(
+                [cidade_destino],
+                trechos=[
+                    {
+                        'origem_nome': f'{self.cidade.nome}/{self.estado.sigla}',
+                        'destino_nome': f'{cidade_destino.nome}/{self.estado.sigla}',
+                        'origem_estado_id': str(self.estado.pk),
+                        'origem_cidade_id': str(self.cidade.pk),
+                        'destino_estado_id': str(self.estado.pk),
+                        'destino_cidade_id': str(cidade_destino.pk),
+                        'saida_data': '2026-04-23',
+                        'saida_hora': '08:00',
+                        'chegada_data': '2026-04-23',
+                        'chegada_hora': '08:40',
+                        'tempo_cru_estimado_min': '40',
+                        'tempo_adicional_min': '0',
+                        'duracao_estimada_min': '40',
+                    },
+                    {
+                        'origem_nome': f'{cidade_destino.nome}/{self.estado.sigla}',
+                        'destino_nome': f'{self.cidade.nome}/{self.estado.sigla}',
+                        'origem_estado_id': str(self.estado.pk),
+                        'origem_cidade_id': str(cidade_destino.pk),
+                        'destino_estado_id': str(self.estado.pk),
+                        'destino_cidade_id': str(self.cidade.pk),
+                        'saida_data': '2026-04-23',
+                        'saida_hora': '17:30',
+                        'chegada_data': '2026-04-23',
+                        'chegada_hora': '18:10',
+                        'tempo_cru_estimado_min': '40',
+                        'tempo_adicional_min': '0',
+                        'duracao_estimada_min': '40',
+                    },
+                    {
+                        'origem_nome': f'{self.cidade.nome}/{self.estado.sigla}',
+                        'destino_nome': f'{cidade_destino.nome}/{self.estado.sigla}',
+                        'origem_estado_id': str(self.estado.pk),
+                        'origem_cidade_id': str(self.cidade.pk),
+                        'destino_estado_id': str(self.estado.pk),
+                        'destino_cidade_id': str(cidade_destino.pk),
+                        'saida_data': '2026-04-24',
+                        'saida_hora': '08:00',
+                        'chegada_data': '2026-04-24',
+                        'chegada_hora': '08:40',
+                        'tempo_cru_estimado_min': '40',
+                        'tempo_adicional_min': '0',
+                        'duracao_estimada_min': '40',
+                    },
+                    {
+                        'origem_nome': f'{cidade_destino.nome}/{self.estado.sigla}',
+                        'destino_nome': f'{self.cidade.nome}/{self.estado.sigla}',
+                        'origem_estado_id': str(self.estado.pk),
+                        'origem_cidade_id': str(cidade_destino.pk),
+                        'destino_estado_id': str(self.estado.pk),
+                        'destino_cidade_id': str(self.cidade.pk),
+                        'saida_data': '2026-04-24',
+                        'saida_hora': '17:30',
+                        'chegada_data': '2026-04-24',
+                        'chegada_hora': '18:10',
+                        'tempo_cru_estimado_min': '40',
+                        'tempo_adicional_min': '0',
+                        'duracao_estimada_min': '40',
+                    },
+                ],
+                retorno={
+                    'saida_data': '2026-04-24',
+                    'saida_hora': '17:30',
+                    'chegada_data': '2026-04-24',
+                    'chegada_hora': '18:10',
+                    'saida_cidade': f'{cidade_destino.nome}/{self.estado.sigla}',
+                    'chegada_cidade': f'{self.cidade.nome}/{self.estado.sigla}',
+                },
+                bate_volta_diario_ativo='1',
+                bate_volta_data_inicio='2026-04-23',
+                bate_volta_data_fim='2026-04-24',
+                bate_volta_ida_saida_hora='08:00',
+                bate_volta_ida_tempo_min='40',
+                bate_volta_volta_saida_hora='17:30',
+                bate_volta_volta_tempo_min='40',
+            ),
+        )
+
+        self.assertEqual(response_post.status_code, 302)
+
+        response = self.client.get(reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['trechos_state']), 4)
+        self.assertEqual(len(response.context['destinos_atuais']), 1)
+        self.assertEqual(response.context['destinos_atuais'][0]['cidade_id'], cidade_destino.pk)
+        self.assertTrue(response.context['step3_state_json']['bate_volta_diario']['ativo'])
+
+    def test_step3_calculadora_diarias_classifica_por_destino_operacional_ignorando_retorno_para_sede(self):
+        oficio = self._criar_oficio(ano=2026)
+        cidade_destino = Cidade.objects.create(nome='Colombo Classificacao', estado=self.estado, codigo_ibge='4105807')
+        oficio.viajantes.add(self.viajante_final)
+        self._salvar_steps_1_e_2(oficio)
+
+        response = self.client.post(
+            reverse('eventos:oficio-step3-calcular-diarias', kwargs={'pk': oficio.pk}),
+            data=self._payload_step3(
+                [cidade_destino],
+                trechos=[
+                    {
+                        'origem_nome': f'{self.cidade.nome}/{self.estado.sigla}',
+                        'destino_nome': f'{cidade_destino.nome}/{self.estado.sigla}',
+                        'origem_estado_id': str(self.estado.pk),
+                        'origem_cidade_id': str(self.cidade.pk),
+                        'destino_estado_id': str(self.estado.pk),
+                        'destino_cidade_id': str(cidade_destino.pk),
+                        'saida_data': '2026-04-23',
+                        'saida_hora': '08:00',
+                        'chegada_data': '2026-04-23',
+                        'chegada_hora': '08:40',
+                        'tempo_cru_estimado_min': '40',
+                        'tempo_adicional_min': '0',
+                        'duracao_estimada_min': '40',
+                    },
+                    {
+                        'origem_nome': f'{cidade_destino.nome}/{self.estado.sigla}',
+                        'destino_nome': f'{self.cidade.nome}/{self.estado.sigla}',
+                        'origem_estado_id': str(self.estado.pk),
+                        'origem_cidade_id': str(cidade_destino.pk),
+                        'destino_estado_id': str(self.estado.pk),
+                        'destino_cidade_id': str(self.cidade.pk),
+                        'saida_data': '2026-04-23',
+                        'saida_hora': '17:30',
+                        'chegada_data': '2026-04-23',
+                        'chegada_hora': '18:10',
+                        'tempo_cru_estimado_min': '40',
+                        'tempo_adicional_min': '0',
+                        'duracao_estimada_min': '40',
+                    },
+                    {
+                        'origem_nome': f'{self.cidade.nome}/{self.estado.sigla}',
+                        'destino_nome': f'{cidade_destino.nome}/{self.estado.sigla}',
+                        'origem_estado_id': str(self.estado.pk),
+                        'origem_cidade_id': str(self.cidade.pk),
+                        'destino_estado_id': str(self.estado.pk),
+                        'destino_cidade_id': str(cidade_destino.pk),
+                        'saida_data': '2026-04-24',
+                        'saida_hora': '08:00',
+                        'chegada_data': '2026-04-24',
+                        'chegada_hora': '08:40',
+                        'tempo_cru_estimado_min': '40',
+                        'tempo_adicional_min': '0',
+                        'duracao_estimada_min': '40',
+                    },
+                    {
+                        'origem_nome': f'{cidade_destino.nome}/{self.estado.sigla}',
+                        'destino_nome': f'{self.cidade.nome}/{self.estado.sigla}',
+                        'origem_estado_id': str(self.estado.pk),
+                        'origem_cidade_id': str(cidade_destino.pk),
+                        'destino_estado_id': str(self.estado.pk),
+                        'destino_cidade_id': str(self.cidade.pk),
+                        'saida_data': '2026-04-24',
+                        'saida_hora': '17:30',
+                        'chegada_data': '2026-04-24',
+                        'chegada_hora': '18:10',
+                        'tempo_cru_estimado_min': '40',
+                        'tempo_adicional_min': '0',
+                        'duracao_estimada_min': '40',
+                    },
+                ],
+                retorno={
+                    'saida_data': '2026-04-24',
+                    'saida_hora': '17:30',
+                    'chegada_data': '2026-04-24',
+                    'chegada_hora': '18:10',
+                    'saida_cidade': f'{cidade_destino.nome}/{self.estado.sigla}',
+                    'chegada_cidade': f'{self.cidade.nome}/{self.estado.sigla}',
+                },
+                bate_volta_diario_ativo='1',
+                bate_volta_data_inicio='2026-04-23',
+                bate_volta_data_fim='2026-04-24',
+                bate_volta_ida_saida_hora='08:00',
+                bate_volta_ida_tempo_min='40',
+                bate_volta_volta_saida_hora='17:30',
+                bate_volta_volta_tempo_min='40',
+            ),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload['ok'])
+        self.assertEqual(payload['tipo_destino'], Oficio.TIPO_DESTINO_INTERIOR)
+        self.assertEqual(payload['totais']['total_diarias'], '2 x 30%')
+
     def test_step3_calcular_diarias_salva_roteiro_sem_duplicar(self):
         ConfiguracaoSistema.objects.create(cidade_sede_padrao=self.cidade, prazo_justificativa_dias=10)
         oficio = self._criar_oficio(ano=2026)
@@ -5644,12 +5846,20 @@ class OficioJustificativaTest(TestCase):
             'roteiro_modo': Oficio.ROTEIRO_MODO_PROPRIO,
             'sede_estado': str(self.estado.pk),
             'sede_cidade': str(self.cidade.pk),
+            'trecho_0_origem_estado_id': str(self.estado.pk),
+            'trecho_0_origem_cidade_id': str(self.cidade.pk),
+            'trecho_0_destino_estado_id': str(destino.estado_id),
+            'trecho_0_destino_cidade_id': str(destino.pk),
+            'trecho_0_origem_nome': f'{self.cidade.nome}/{self.estado.sigla}',
+            'trecho_0_destino_nome': f'{destino.nome}/{self.estado.sigla}',
             'destino_estado_0': str(destino.estado_id),
             'destino_cidade_0': str(destino.pk),
             'trecho_0_saida_data': data_saida.strftime('%Y-%m-%d'),
             'trecho_0_saida_hora': '08:00',
             'trecho_0_chegada_data': data_saida.strftime('%Y-%m-%d'),
             'trecho_0_chegada_hora': '12:00',
+            'retorno_saida_cidade': f'{destino.nome}/{self.estado.sigla}',
+            'retorno_chegada_cidade': f'{self.cidade.nome}/{self.estado.sigla}',
             'retorno_saida_data': data_retorno.strftime('%Y-%m-%d'),
             'retorno_saida_hora': '09:00',
             'retorno_chegada_data': data_retorno.strftime('%Y-%m-%d'),
@@ -6171,12 +6381,20 @@ class OficioDocumentosTest(TestCase):
             'roteiro_modo': Oficio.ROTEIRO_MODO_PROPRIO,
             'sede_estado': str(self.estado.pk),
             'sede_cidade': str(self.cidade.pk),
+            'trecho_0_origem_estado_id': str(self.estado.pk),
+            'trecho_0_origem_cidade_id': str(self.cidade.pk),
+            'trecho_0_destino_estado_id': str(destino.estado_id),
+            'trecho_0_destino_cidade_id': str(destino.pk),
+            'trecho_0_origem_nome': f'{self.cidade.nome}/{self.estado.sigla}',
+            'trecho_0_destino_nome': f'{destino.nome}/{self.estado.sigla}',
             'destino_estado_0': str(destino.estado_id),
             'destino_cidade_0': str(destino.pk),
             'trecho_0_saida_data': data_saida.strftime('%Y-%m-%d'),
             'trecho_0_saida_hora': '08:00',
             'trecho_0_chegada_data': data_saida.strftime('%Y-%m-%d'),
             'trecho_0_chegada_hora': '12:00',
+            'retorno_saida_cidade': f'{destino.nome}/{self.estado.sigla}',
+            'retorno_chegada_cidade': f'{self.cidade.nome}/{self.estado.sigla}',
             'retorno_saida_data': data_retorno.strftime('%Y-%m-%d'),
             'retorno_saida_hora': '09:00',
             'retorno_chegada_data': data_retorno.strftime('%Y-%m-%d'),
@@ -6202,7 +6420,16 @@ class OficioDocumentosTest(TestCase):
             reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
             data=self._payload_step3(destino, data_saida, data_retorno),
         )
-        self.assertEqual(response_step3.status_code, 302)
+        if response_step3.status_code != 302:
+            errors = []
+            try:
+                errors = list(response_step3.context.get('validation_errors') or [])
+            except Exception:
+                errors = []
+            self.fail(
+                f'Step 3 deveria redirecionar (302), mas retornou {response_step3.status_code}. '
+                f'Erros: {errors}'
+            )
         oficio.refresh_from_db()
         return destino
 
@@ -6233,6 +6460,93 @@ class OficioDocumentosTest(TestCase):
         self.assertEqual(context['roteiro']['destinos'], [f'{destino.nome}/{self.estado.sigla}'])
         self.assertEqual(context['institucional']['sigla_orgao'], 'PCPR')
         self.assertEqual(len(context['assinaturas']), 1)
+
+    def test_contexto_documental_do_oficio_exclui_sede_dos_destinos_mesmo_com_retorno_em_trechos(self):
+        self._criar_configuracao()
+        oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
+        destino = Cidade.objects.create(nome='Colombo Documento', estado=self.estado, codigo_ibge='4105808')
+        oficio.estado_sede = self.estado
+        oficio.cidade_sede = self.cidade
+        oficio.retorno_saida_cidade = f'{destino.nome}/{self.estado.sigla}'
+        oficio.retorno_chegada_cidade = f'{self.cidade.nome}/{self.estado.sigla}'
+        oficio.retorno_saida_data = date(2026, 10, 10)
+        oficio.retorno_saida_hora = datetime.strptime('17:30', '%H:%M').time()
+        oficio.retorno_chegada_data = date(2026, 10, 10)
+        oficio.retorno_chegada_hora = datetime.strptime('18:10', '%H:%M').time()
+        oficio.save()
+        OficioTrecho.objects.create(
+            oficio=oficio,
+            ordem=0,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade,
+            destino_estado=self.estado,
+            destino_cidade=destino,
+            saida_data=date(2026, 10, 10),
+            saida_hora=datetime.strptime('08:00', '%H:%M').time(),
+            chegada_data=date(2026, 10, 10),
+            chegada_hora=datetime.strptime('08:40', '%H:%M').time(),
+        )
+        OficioTrecho.objects.create(
+            oficio=oficio,
+            ordem=1,
+            origem_estado=self.estado,
+            origem_cidade=destino,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade,
+            saida_data=date(2026, 10, 10),
+            saida_hora=datetime.strptime('17:30', '%H:%M').time(),
+            chegada_data=date(2026, 10, 10),
+            chegada_hora=datetime.strptime('18:10', '%H:%M').time(),
+        )
+
+        context = build_oficio_document_context(oficio)
+
+        self.assertEqual(context['roteiro']['destinos'], [f'{destino.nome}/{self.estado.sigla}'])
+
+    def test_template_oficio_nao_duplica_ultimo_retorno_quando_origem_explicita_vem_vazia(self):
+        self._criar_configuracao()
+        oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
+        destino = Cidade.objects.create(nome='Maringa Documento', estado=self.estado, codigo_ibge='4115200')
+
+        oficio.estado_sede = self.estado
+        oficio.cidade_sede = self.cidade
+        oficio.retorno_saida_cidade = ''
+        oficio.retorno_chegada_cidade = f'{self.cidade.nome}/{self.estado.sigla}'
+        oficio.retorno_saida_data = date(2026, 10, 10)
+        oficio.retorno_saida_hora = datetime.strptime('17:30', '%H:%M').time()
+        oficio.retorno_chegada_data = date(2026, 10, 10)
+        oficio.retorno_chegada_hora = datetime.strptime('18:10', '%H:%M').time()
+        oficio.save()
+
+        OficioTrecho.objects.create(
+            oficio=oficio,
+            ordem=0,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade,
+            destino_estado=self.estado,
+            destino_cidade=destino,
+            saida_data=date(2026, 10, 10),
+            saida_hora=datetime.strptime('08:00', '%H:%M').time(),
+            chegada_data=date(2026, 10, 10),
+            chegada_hora=datetime.strptime('08:40', '%H:%M').time(),
+        )
+        OficioTrecho.objects.create(
+            oficio=oficio,
+            ordem=1,
+            origem_estado=self.estado,
+            origem_cidade=destino,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade,
+            saida_data=date(2026, 10, 10),
+            saida_hora=datetime.strptime('17:30', '%H:%M').time(),
+            chegada_data=date(2026, 10, 10),
+            chegada_hora=datetime.strptime('18:10', '%H:%M').time(),
+        )
+
+        mapping = build_oficio_template_context(oficio)
+
+        self.assertEqual(mapping['col_volta_saida'], f'Saída {destino.nome}/{self.estado.sigla}: 10/10/2026 17:30')
+        self.assertEqual(mapping['col_volta_chegada'], f'Chegada {self.cidade.nome}/{self.estado.sigla}: 10/10/2026 18:10')
 
     def test_contexto_documental_da_justificativa(self):
         self._criar_configuracao()
@@ -6283,6 +6597,28 @@ class OficioDocumentosTest(TestCase):
         self.assertEqual(context['ordem_servico']['finalidade'], 'Motivo documental')
         self.assertIn(destino.nome, context['ordem_servico']['destinos_texto'])
         self.assertEqual(context['ordem_servico']['participantes_texto'], self.viajante.nome)
+
+    def test_mapping_oficio_formata_placeholders_humanos_em_title_case(self):
+        config = self._criar_configuracao()
+        ConfiguracaoSistema.objects.filter(pk=config.pk).update(unidade='ASSESSORIA DE COMUNICAÇÃO SOCIAL')
+        oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
+        self._salvar_oficio_finalizavel(oficio, date(2026, 10, 10), date(2026, 10, 11))
+        oficio.refresh_from_db()
+
+        mapping = build_oficio_template_context(oficio)
+
+        self.assertEqual(mapping['nome_chefia'], 'Autoridade Assinante')
+        self.assertEqual(mapping['cargo_chefia'], 'Analista Documental')
+        self.assertEqual(mapping['divisao'], 'DIRETORIA DE POLÍCIA DO INTERIOR')
+        self.assertEqual(mapping['unidade'], 'Assessoria de Comunicação Social')
+        self.assertEqual(mapping['unidade_cabecalho'], 'ASSESSORIA DE COMUNICAÇÃO SOCIAL')
+        self.assertEqual(mapping['unidade_rodape'], 'Assessoria de Comunicação Social')
+        self.assertEqual(mapping['assunto_oficio'], '(Autorização)')
+        self.assertEqual(mapping['viatura'], 'Viatura Documental')
+        self.assertEqual(mapping['combustivel'], 'Gasolina')
+        self.assertIn('Viajante Documental', mapping['col_servidor'])
+        self.assertIn('Analista Documental', mapping['col_cargo'])
+        self.assertEqual(mapping['placa'], mapping['placa'].upper())
 
     def test_validacao_documental_do_oficio_apto(self):
         self._criar_configuracao()
@@ -6853,6 +7189,49 @@ class OficioDocumentosTest(TestCase):
         self.assertFalse(pdf_status['available'])
         self.assertIn('Microsoft Word / COM', pdf_status['message'])
 
+    def test_check_word_com_falha_quando_documents_nao_esta_acessivel(self):
+        from eventos.services.documentos.backends import _check_word_com_availability
+
+        class BrokenWordApplication:
+            DisplayAlerts = 1
+
+            def __init__(self):
+                self.visible = True
+                self.quit_called = False
+
+            @property
+            def Visible(self):
+                return self.visible
+
+            @Visible.setter
+            def Visible(self, value):
+                self.visible = value
+
+            def Quit(self):
+                self.quit_called = True
+
+        broken_word = BrokenWordApplication()
+        win32_client_stub = MagicMock()
+        win32_client_stub.DispatchEx.return_value = broken_word
+        real_import_module = importlib.import_module
+
+        def import_module_side_effect(module_name):
+            if module_name == 'win32com.client':
+                return win32_client_stub
+            return real_import_module(module_name)
+
+        with patch(
+            'eventos.services.documentos.backends.importlib.import_module',
+            side_effect=import_module_side_effect,
+        ):
+            _check_word_com_availability.cache_clear()
+            status = _check_word_com_availability()
+            _check_word_com_availability.cache_clear()
+
+        self.assertFalse(status['available'])
+        self.assertIn('Microsoft Word / COM', status['reason'])
+        self.assertTrue(broken_word.quit_called)
+
     def test_download_docx_continua_funcionando_mesmo_quando_pdf_esta_indisponivel(self):
         self._criar_configuracao()
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
@@ -7060,7 +7439,7 @@ class OficioGeracaoDocumentoCorrecoesTest(TestCase):
         resultado = _get_destino_cabecalho_oficio(oficio)
 
         self.assertEqual(resultado, DESTINO_DENTRO_PARANA)
-        self.assertEqual(resultado, 'GABINETE DO DELEGADO GERAL ADJUNTO')
+        self.assertEqual(resultado, 'Gabinete do Delegado Geral Adjunto')
 
     def test_multiplos_destinos_com_um_fora_do_pr_resulta_em_sesp(self):
         from eventos.services.documentos.oficio import _get_destino_cabecalho_oficio, DESTINO_FORA_PARANA

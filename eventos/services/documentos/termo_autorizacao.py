@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from cadastros.models import ConfiguracaoSistema
 from eventos.services.justificativa import get_primeira_saida_oficio
 
-from .context import build_termo_autorizacao_document_context
+from .context import build_termo_autorizacao_document_context, format_document_display, format_document_header_display
 from .renderer import (
     get_termo_autorizacao_template_path,
     iter_all_paragraphs,
@@ -67,7 +67,7 @@ def _normalize_destinos_texto(destinos_qs):
             label = destino.estado.sigla
         else:
             label = ''
-        label = (label or '').strip()
+        label = format_document_display((label or '').strip())
         if label and label not in seen:
             seen.add(label)
             destinos.append(label)
@@ -76,8 +76,8 @@ def _normalize_destinos_texto(destinos_qs):
 
 def _extract_viatura_data(*, placa='', modelo='', combustivel=''):
     placa_val = (placa or '').strip()
-    modelo_val = (modelo or '').strip()
-    combustivel_val = (combustivel or '').strip()
+    modelo_val = format_document_display(modelo)
+    combustivel_val = format_document_display(combustivel)
     has_viatura = bool(placa_val or modelo_val or combustivel_val)
     viatura = modelo_val or placa_val
     return {
@@ -152,13 +152,13 @@ def _build_viajante_mapping(viajante, modalidade):
         telefone = ''
         lotacao = ''
     else:
-        viajante_nome = (getattr(viajante, 'nome', '') or '').strip()
+        viajante_nome = format_document_display(getattr(viajante, 'nome', '') or '')
         rg = (getattr(viajante, 'rg_formatado', '') or getattr(viajante, 'rg', '') or '').strip()
         cpf = (getattr(viajante, 'cpf_formatado', '') or getattr(viajante, 'cpf', '') or '').strip()
         telefone = (getattr(viajante, 'telefone_formatado', '') or getattr(viajante, 'telefone', '') or '').strip()
-        lotacao = (
+        lotacao = format_document_display(
             getattr(getattr(viajante, 'unidade_lotacao', None), 'nome', '') or ''
-        ).strip()
+        )
     if modalidade == TERMO_MODALIDADE_SEMIPREENCHIDO:
         return {
             'nome_servidor': '',
@@ -197,8 +197,8 @@ def _build_termo_placeholder_mapping(
         'viatura': viatura_data.get('viatura') or '',
         'combustivel': viatura_data.get('combustivel') or '',
         'placa': viatura_data.get('placa') or '',
-        'unidade': unidade,
-        'unidade_rodape': unidade,
+        'unidade': format_document_header_display(unidade),
+        'unidade_rodape': format_document_display(unidade),
         'divisao': (institucional or {}).get('divisao') or '',
         'email': (institucional or {}).get('email') or '',
         'endereco': (institucional or {}).get('endereco') or '',
@@ -234,11 +234,11 @@ def _build_institucional_context():
         endereco_partes.append(f'CEP {cep}')
     endereco = ', '.join(part for part in endereco_partes if part)
     return {
-        'orgao': (getattr(config, 'nome_orgao', '') or '').strip(),
+        'orgao': format_document_header_display(getattr(config, 'nome_orgao', '') or ''),
         'sigla_orgao': (getattr(config, 'sigla_orgao', '') or '').strip(),
-        'divisao': (getattr(config, 'divisao', '') or '').strip(),
-        'unidade': (getattr(config, 'unidade', '') or '').strip(),
-        'endereco': endereco,
+        'divisao': format_document_header_display(getattr(config, 'divisao', '') or ''),
+        'unidade': format_document_header_display(getattr(config, 'unidade', '') or ''),
+        'endereco': format_document_display(endereco),
         'telefone': (getattr(config, 'telefone_formatado', '') or getattr(config, 'telefone', '') or '').strip(),
         'email': (getattr(config, 'email', '') or '').strip(),
     }

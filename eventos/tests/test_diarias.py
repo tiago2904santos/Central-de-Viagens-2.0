@@ -134,3 +134,22 @@ class BuildPeriodsPernoitesTests(TestCase):
         self.assertEqual(len(periodos), 1)
         self.assertEqual(periodos[0]['n_diarias'], 3)
         self.assertEqual(periodos[0]['percentual_adicional'], 0)
+
+    def test_bate_volta_diario_ignora_periodos_em_sede(self):
+        markers = [
+            PeriodMarker(saida=datetime(2026, 4, 23, 8, 0), destino_cidade='Colombo', destino_uf='PR'),
+            PeriodMarker(saida=datetime(2026, 4, 23, 17, 30), destino_cidade='Curitiba', destino_uf='PR'),
+            PeriodMarker(saida=datetime(2026, 4, 24, 8, 0), destino_cidade='Colombo', destino_uf='PR'),
+        ]
+        resultado = calculate_periodized_diarias(
+            markers,
+            datetime(2026, 4, 24, 18, 10),
+            quantidade_servidores=1,
+            sede_cidade='Curitiba',
+            sede_uf='PR',
+        )
+
+        self.assertEqual(resultado['totais']['total_diarias'], '2 x 30%')
+        self.assertEqual(resultado['totais']['total_valor'], '174,34')
+        self.assertEqual(len(resultado['periodos']), 2)
+        self.assertTrue(all(periodo['tipo'] == 'INTERIOR' for periodo in resultado['periodos']))

@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from django.db import models
 
 from cadastros.models import AssinaturaConfiguracao, ConfiguracaoSistema
@@ -13,6 +14,7 @@ from eventos.models import (
 from eventos.services.diarias import (
     PeriodMarker,
     calculate_periodized_diarias,
+    locations_equivalent,
     valor_por_extenso_ptbr,
 )
 from eventos.services.justificativa import (
@@ -34,6 +36,18 @@ from .types import DocumentoOficioTipo
 
 EMPTY_DISPLAY = '—'
 
+_PT_BR_TITLE_LOWER_WORDS = {
+    'a', 'as', 'ao', 'aos', 'da', 'das', 'de', 'do', 'dos', 'e', 'em', 'na',
+    'nas', 'no', 'nos', 'o', 'os', 'para', 'por',
+}
+_ROMAN_NUMERALS = {'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'}
+_KNOWN_DISPLAY_ACRONYMS = {
+    'BO', 'CPF', 'CNPJ', 'DPC', 'PCPR', 'PR', 'RG', 'SEI', 'UFPR',
+}
+_ASCII_UF_RE = re.compile(r'^[A-Z]{2}$')
+_ASCII_ALNUM_RE = re.compile(r'^[A-Z0-9]{2,10}$')
+_DISPLAY_TOKEN_SPLIT_RE = re.compile(r"(\s+|/|-|,|;|:|\(|\)|'|’)")
+
 
 def _text_or_empty(value):
     return str(value or '').strip()
@@ -42,6 +56,61 @@ def _text_or_empty(value):
 def _display(value):
     text = _text_or_empty(value)
     return text or EMPTY_DISPLAY
+
+
+def _format_document_display_token(token, is_first_word):
+    stripped = str(token or '').strip()
+    if not stripped:
+        return token
+    if '@' in stripped or '://' in stripped:
+        return stripped
+    if not any(char.isalpha() for char in stripped):
+        return stripped
+    if any(char.isdigit() for char in stripped):
+        return stripped.upper()
+
+    alpha_only = ''.join(char for char in stripped if char.isalpha())
+    if alpha_only.upper() in _ROMAN_NUMERALS:
+        return stripped.upper()
+    lowered = stripped.lower()
+    if stripped in _KNOWN_DISPLAY_ACRONYMS:
+        return stripped
+    if _ASCII_UF_RE.fullmatch(stripped) and lowered not in _PT_BR_TITLE_LOWER_WORDS:
+        return stripped
+    if _ASCII_ALNUM_RE.fullmatch(stripped) and any(char.isdigit() for char in stripped):
+        return stripped
+
+    if not is_first_word and lowered in _PT_BR_TITLE_LOWER_WORDS:
+        return lowered
+    return stripped[:1].upper() + stripped[1:].lower()
+
+
+def format_document_display(value):
+    text = _text_or_empty(value)
+    if not text:
+        return ''
+
+    formatted_lines = []
+    for line in text.split('\n'):
+        parts = _DISPLAY_TOKEN_SPLIT_RE.split(line)
+        formatted_parts = []
+        is_first_word = True
+        for part in parts:
+            if not part:
+                continue
+            if _DISPLAY_TOKEN_SPLIT_RE.fullmatch(part):
+                formatted_parts.append(part)
+                continue
+            formatted_parts.append(_format_document_display_token(part, is_first_word))
+            if any(char.isalpha() for char in part):
+                is_first_word = False
+        formatted_lines.append(''.join(formatted_parts))
+    return '\n'.join(formatted_lines)
+
+
+def format_document_header_display(value):
+    text = _text_or_empty(value)
+    return text.upper() if text else ''
 
 
 def _format_date_br(value):
@@ -88,12 +157,12 @@ def _build_endereco_configuracao(config):
     if not config:
         return ''
     partes = [
-        _text_or_empty(config.logradouro),
+        format_document_display(config.logradouro),
         _text_or_empty(config.numero),
-        _text_or_empty(config.bairro),
+        format_document_display(config.bairro),
     ]
     cidade_uf = ' / '.join(
-        [part for part in [_text_or_empty(config.cidade_endereco), _text_or_empty(config.uf)] if part]
+        [part for part in [format_document_display(config.cidade_endereco), _text_or_empty(config.uf).upper()] if part]
     )
     if cidade_uf:
         partes.append(cidade_uf)
@@ -101,6 +170,19 @@ def _build_endereco_configuracao(config):
     if cep:
         partes.append(f'CEP {cep}')
     return ', '.join([parte for parte in partes if parte])
+
+
+def _build_sede_configuracao(config):
+    """Sede institucional para documentos: município do endereço configurado."""
+    if not config:
+        return ''
+    cidade = format_document_display(getattr(config, 'cidade_endereco', ''))
+    uf = _text_or_empty(getattr(config, 'uf', '')).upper()
+    if cidade and uf:
+        return f'{cidade}/{uf}'
+    if cidade:
+        return cidade
+    return format_document_display(getattr(config, 'sede', ''))
 
 
 def _format_motorista_oficio(oficio):
@@ -128,6 +210,8 @@ def _build_trechos_context(oficio):
     trechos = []
     destinos = []
     destinos_seen = set()
+    sede_cidade = oficio.cidade_sede
+    sede_estado = oficio.estado_sede or getattr(sede_cidade, 'estado', None)
     queryset = oficio.trechos.select_related(
         'origem_estado',
         'origem_cidade',
@@ -158,7 +242,20 @@ def _build_trechos_context(oficio):
                 'duracao_estimada_min': trecho.duracao_estimada_min or '',
             }
         )
-        if destino and destino not in destinos_seen:
+        destino_cidade_nome = trecho.destino_cidade.nome if trecho.destino_cidade_id else destino.split('/', 1)[0]
+        destino_estado_sigla = (
+            trecho.destino_estado.sigla
+            if trecho.destino_estado_id
+            else (destino.split('/', 1)[1] if '/' in destino else '')
+        )
+        sede_cidade_nome = sede_cidade.nome if sede_cidade else ''
+        sede_estado_sigla = sede_estado.sigla if sede_estado else ''
+        if destino and not locations_equivalent(
+            destino_cidade_nome,
+            destino_estado_sigla,
+            sede_cidade_nome,
+            sede_estado_sigla,
+        ) and destino not in destinos_seen:
             destinos_seen.add(destino)
             destinos.append(destino)
     return trechos, destinos
@@ -374,7 +471,7 @@ def _build_common_context(oficio):
             'divisao': _text_or_empty(config.divisao if config else ''),
             'unidade': _text_or_empty(config.unidade if config else ''),
             'unidade_rodape': _text_or_empty(config.unidade if config else ''),
-            'sede': _text_or_empty(getattr(config, 'sede', '') if config else ''),
+            'sede': _build_sede_configuracao(config),
             'nome_chefia': _text_or_empty(getattr(config, 'nome_chefia', '') if config else ''),
             'cargo_chefia': _text_or_empty(getattr(config, 'cargo_chefia', '') if config else ''),
             'endereco': _build_endereco_configuracao(config),
@@ -569,9 +666,9 @@ def _build_coordenacao_formatada(plano):
     partes = []
     if plano and plano.coordenador_operacional_id:
         co = plano.coordenador_operacional
-        cargo = _text_or_empty(co.cargo) or 'Delegado(a)'
+        cargo = format_document_display(co.cargo) or 'Delegado(a)'
         partes.append(
-            f'Fica designado como Coordenador Operacional do Evento o {cargo} {co.nome}, '
+            f'Fica designado como Coordenador Operacional do Evento o {cargo} {format_document_display(co.nome)}, '
             'a quem competirá a supervisão geral das atividades desenvolvidas, coordenação das equipes '
             'policiais, articulação institucional no âmbito local e deliberação sobre questões operacionais '
             'durante a execução da ação.'
@@ -581,9 +678,9 @@ def _build_coordenacao_formatada(plano):
     if not coord_adm and config and getattr(config, 'coordenador_adm_plano_trabalho_id', None):
         coord_adm = config.coordenador_adm_plano_trabalho
     if coord_adm:
-        cargo_adm = _text_or_empty(coord_adm.cargo.nome if getattr(coord_adm, 'cargo', None) else '') or 'Servidor(a)'
+        cargo_adm = format_document_display(coord_adm.cargo.nome if getattr(coord_adm, 'cargo', None) else '') or 'Servidor(a)'
         partes.append(
-            f'Fica designada como Coordenadora Administrativa do Plano a {cargo_adm} {coord_adm.nome}, '
+            f'Fica designada como Coordenadora Administrativa do Plano a {cargo_adm} {format_document_display(coord_adm.nome)}, '
             'a qual ficará responsável pelo acompanhamento da execução administrativa do presente Plano de '
             'Trabalho, organização das escalas de servidores, controle de materiais e equipamentos, '
             'consolidação de dados estatísticos, elaboração de relatório final e demais providências necessárias '

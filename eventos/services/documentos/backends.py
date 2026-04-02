@@ -61,6 +61,12 @@ def _check_word_com_availability():
             word.Visible = False
             if hasattr(word, 'DisplayAlerts'):
                 word.DisplayAlerts = 0
+            documents = getattr(word, 'Documents', None)
+            if documents is None:
+                raise RuntimeError('Word.Application.Documents não está acessível via COM.')
+            # Valida que a automação COM consegue abrir/fechar um documento em branco.
+            probe_doc = documents.Add()
+            probe_doc.Close(False)
         finally:
             word.Quit()
     except Exception as exc:

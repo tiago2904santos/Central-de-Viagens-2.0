@@ -19,6 +19,7 @@ from eventos.models import (
     TermoAutorizacao,
 )
 from eventos.services.documentos.renderer import get_termo_autorizacao_template_path
+from eventos.services.documentos.termo_autorizacao import build_termo_autorizacao_template_context
 
 
 User = get_user_model()
@@ -256,6 +257,21 @@ class TermoAutorizacaoModuleTest(TestCase):
                 sorted(termo.oficios.values_list('pk', flat=True)),
                 sorted([self.oficio_a.pk, self.oficio_b.pk]),
             )
+
+    def test_template_context_formata_nome_lotacao_e_viatura_em_title_case(self):
+        mapping, _viatura_data = build_termo_autorizacao_template_context(
+            self.oficio_a,
+            viajante=self.viajante_a,
+        )
+
+        self.assertEqual(mapping['nome_servidor'], 'Servidor A')
+        self.assertEqual(mapping['lotacao'], 'Unidade Termos')
+        self.assertEqual(mapping['viatura'], 'Spin')
+        self.assertEqual(mapping['combustivel'], 'Gasolina')
+        self.assertEqual(mapping['divisao'], 'DIRETORIA DE POLÍCIA DO INTERIOR')
+        self.assertEqual(mapping['unidade'], 'DEPARTAMENTO DE POLÍCIA CIVIL')
+        self.assertEqual(mapping['unidade_rodape'], 'Departamento de Polícia Civil')
+        self.assertEqual(mapping['placa'], mapping['placa'].upper())
 
     def test_novo_termo_inferido_sem_viatura_gera_um_por_servidor(self):
         response = self.client.post(

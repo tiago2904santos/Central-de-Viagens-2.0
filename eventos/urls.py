@@ -62,6 +62,10 @@ urlpatterns = [
     path('plano-trabalho-solicitantes/cadastrar/', login_required(views.plano_trabalho_solicitantes_cadastrar), name='plano-trabalho-solicitantes-cadastrar'),
     path('plano-trabalho-solicitantes/<int:pk>/editar/', login_required(views.plano_trabalho_solicitantes_editar), name='plano-trabalho-solicitantes-editar'),
     path('plano-trabalho-solicitantes/<int:pk>/excluir/', login_required(views.plano_trabalho_solicitantes_excluir), name='plano-trabalho-solicitantes-excluir'),
+    path('plano-trabalho-horarios/', login_required(views.plano_trabalho_horarios_lista), name='plano-trabalho-horarios-lista'),
+    path('plano-trabalho-horarios/cadastrar/', login_required(views.plano_trabalho_horarios_cadastrar), name='plano-trabalho-horarios-cadastrar'),
+    path('plano-trabalho-horarios/<int:pk>/editar/', login_required(views.plano_trabalho_horarios_editar), name='plano-trabalho-horarios-editar'),
+    path('plano-trabalho-horarios/<int:pk>/excluir/', login_required(views.plano_trabalho_horarios_excluir), name='plano-trabalho-horarios-excluir'),
     # Modelos de motivo (ofício step 1)
     path('modelos-motivo/', login_required(views.modelos_motivo_lista), name='modelos-motivo-lista'),
     path('modelos-motivo/cadastrar/', login_required(views.modelos_motivo_cadastrar), name='modelos-motivo-cadastrar'),

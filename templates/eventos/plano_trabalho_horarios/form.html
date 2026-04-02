@@ -1,0 +1,48 @@
+{% extends 'includes/forms/form_base.html' %}
+
+{% block form_title_block %}{% if object %}Editar horário{% else %}Novo horário{% endif %} - Plano de Trabalho{% endblock %}
+{% block form_page_title %}{% if object %}Editar horário{% else %}Novo horário{% endif %} - Plano de Trabalho{% endblock %}
+{% block form_header_title %}{% if object %}Editar horário{% else %}Novo horário{% endif %}{% endblock %}
+{% block form_card_title %}{% if object %}Editar horário{% else %}Novo horário{% endif %}{% endblock %}
+{% block form_header_icon %}bi-clock{% endblock %}
+
+{% block form_header_subtitle %}
+<p class="text-muted mb-0">Horários ativos aparecem no seletor de horário de atendimento da etapa 2 do Plano de Trabalho.</p>
+{% endblock %}
+
+{% block form_fields %}
+<div class="row g-3">
+  <div class="col-12">
+    <label for="id_descricao" class="form-label">{{ form.descricao.label }}</label>
+    {{ form.descricao }}
+    {% if form.descricao.errors %}<div class="invalid-feedback d-block">{{ form.descricao.errors.0 }}</div>{% endif %}
+  </div>
+  <div class="col-md-4">
+    <label for="id_ordem" class="form-label">{{ form.ordem.label }}</label>
+    {{ form.ordem }}
+    {% if form.ordem.errors %}<div class="invalid-feedback d-block">{{ form.ordem.errors.0 }}</div>{% endif %}
+  </div>
+  <div class="col-md-4 d-flex align-items-end">
+    <div class="form-check mb-2">
+      {{ form.ativo }}
+      <label class="form-check-label" for="id_ativo">{{ form.ativo.label }}</label>
+    </div>
+    {% if form.ativo.errors %}<div class="invalid-feedback d-block">{{ form.ativo.errors.0 }}</div>{% endif %}
+  </div>
+  <div class="col-md-4 d-flex align-items-end">
+    <div class="form-check mb-2">
+      {{ form.is_padrao }}
+      <label class="form-check-label" for="id_is_padrao">{{ form.is_padrao.label }}</label>
+    </div>
+    {% if form.is_padrao.errors %}<div class="invalid-feedback d-block">{{ form.is_padrao.errors.0 }}</div>{% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block form_actions %}
+<button type="submit" class="btn btn-primary">Salvar horário</button>
+<a href="{% url 'eventos:plano-trabalho-horarios-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+{% if object %}
+<a href="{% url 'eventos:plano-trabalho-horarios-excluir' object.pk %}" class="btn btn-outline-danger">Excluir</a>
+{% endif %}
+{% endblock %}

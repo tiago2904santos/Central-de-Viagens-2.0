@@ -1,6 +1,6 @@
 from eventos.services.justificativa import get_primeira_saida_oficio
 
-from .context import build_ordem_servico_document_context
+from .context import build_ordem_servico_document_context, format_document_display, format_document_header_display
 from .renderer import (
     add_label_value,
     add_multiline_value,
@@ -71,20 +71,20 @@ def build_ordem_servico_template_context(oficio):
     assinatura = _get_primary_signature(context)
     unidade = context['institucional']['unidade'] or context['institucional']['orgao'] or context['institucional']['sigla_orgao']
     return {
-        'cargo_chefia': assinatura.get('cargo', ''),
+        'cargo_chefia': format_document_display(assinatura.get('cargo', '')),
         'data_extenso': _format_data_extenso(oficio),
-        'destino': context['ordem_servico']['destinos_texto'],
-        'divisao': context['institucional']['divisao'] or unidade,
+        'destino': format_document_display(context['ordem_servico']['destinos_texto']),
+        'divisao': format_document_header_display(context['institucional']['divisao'] or unidade),
         'equipe_deslocamento': _build_equipe_deslocamento(context),
         'motivo': context['ordem_servico']['finalidade'].rstrip('.'),
-        'nome_chefia': assinatura.get('nome', ''),
+        'nome_chefia': format_document_display(assinatura.get('nome', '')),
         'ordem_de_servico': _build_ordem_numero(oficio, context),
-        'sede': context['roteiro']['sede'],
-        'unidade': unidade,
+        'sede': format_document_display(context['roteiro']['sede']),
+        'unidade': format_document_header_display(unidade),
         'email': context['institucional']['email'],
-        'endereco': context['institucional']['endereco'],
+        'endereco': format_document_display(context['institucional']['endereco']),
         'telefone': context['institucional'].get('telefone', ''),
-        'unidade_rodape': unidade,
+        'unidade_rodape': format_document_display(unidade),
     }
 
 

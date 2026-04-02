@@ -140,6 +140,15 @@ class PlanoTrabalhoContextTest(TestCase):
         self.assertIn('João Silva', ctx['coordenacao_formatada'])
         self.assertIn('Delegado', ctx['coordenacao_formatada'])
 
+    def test_contexto_usa_municipio_do_endereco_como_sede(self):
+        ConfiguracaoSistema.objects.create(
+            cidade_endereco='Curitiba',
+            uf='PR',
+            sede='SEDE LEGADA',
+        )
+        ctx = build_plano_trabalho_document_context(self.oficio)
+        self.assertEqual(ctx['institucional']['sede'], 'Curitiba/PR')
+
     def test_numero_armazenado_usado_no_contexto(self):
         """O número salvo no PT deve aparecer no contexto, não um número gerado."""
         PlanoTrabalho.objects.create(
@@ -211,6 +220,58 @@ class PlanoTrabalhoModelDocxTest(TestCase):
         result = render_plano_trabalho_model_docx(pt)
         self.assertIsInstance(result, bytes)
         self.assertGreater(len(result), 100)
+
+    @patch('eventos.services.documentos.plano_trabalho.render_docx_template_bytes', return_value=b'docx')
+    def test_model_docx_usa_municipio_do_endereco_como_sede(self, mock_render):
+        ConfiguracaoSistema.objects.create(
+            cidade_endereco='Curitiba',
+            uf='PR',
+            sede='SEDE LEGADA',
+        )
+        pt = PlanoTrabalho.objects.create(
+            evento=self.evento,
+            numero=30,
+            ano=2026,
+            recursos_texto='Objetivo',
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+        )
+
+        render_plano_trabalho_model_docx(pt)
+
+        mapping = mock_render.call_args.args[1]
+        self.assertEqual(mapping['sede'], 'Curitiba/PR')
+
+    @patch('eventos.services.documentos.plano_trabalho.render_docx_template_bytes', return_value=b'docx')
+    def test_model_docx_formata_rodape_e_chefia_em_title_case(self, mock_render):
+        ConfiguracaoSistema.objects.create(
+            cidade_endereco='CURITIBA',
+            uf='PR',
+            unidade='ASSESSORIA DE COMUNICAÇÃO SOCIAL',
+            nome_chefia='MARIA DAS DORES',
+            cargo_chefia='DELEGADA OPERACIONAL',
+            logradouro='RUA DAS FLORES',
+            numero='123',
+            bairro='CENTRO',
+            telefone='4133334444',
+            email='documentos@pc.pr.gov.br',
+        )
+        pt = PlanoTrabalho.objects.create(
+            evento=self.evento,
+            numero=31,
+            ano=2026,
+            recursos_texto='Objetivo',
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+        )
+
+        render_plano_trabalho_model_docx(pt)
+
+        mapping = mock_render.call_args.args[1]
+        self.assertEqual(mapping['divisao'], 'DIRETORIA DE POLÍCIA DO INTERIOR')
+        self.assertEqual(mapping['unidade'], 'ASSESSORIA DE COMUNICAÇÃO SOCIAL')
+        self.assertEqual(mapping['unidade_rodape'], 'Assessoria de Comunicação Social')
+        self.assertEqual(mapping['nome_chefia'], 'Maria das Dores')
+        self.assertEqual(mapping['cargo_chefia'], 'Delegada Operacional')
+        self.assertEqual(mapping['endereco'], 'Rua das Flores, 123, Centro, Curitiba / PR')
 
     def test_model_docx_atividades_usa_formato_legivel(self):
         """Atividades devem aparecer formatadas, não como string bruta 'CIN,BO'."""
@@ -513,6 +574,93 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
         self.assertEqual(form.initial.get('roteiro_json'), payload)
         self.assertContains(response, 'name="roteiro"')
         self.assertContains(response, 'id="id_roteiro"')
+
+    def test_campos_da_calculadora_reaparecem_na_edicao(self):
+        pt = PlanoTrabalho.objects.create(
+            numero=14,
+            ano=2026,
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+            data_saida_sede=date(2026, 5, 1),
+            hora_saida_sede=time(6, 30),
+            data_chegada_sede=date(2026, 5, 3),
+            hora_chegada_sede=time(22, 15),
+            recursos_texto='Calculadora persistida',
+        )
+
+        response = self.client.get(
+            reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': pt.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="data_saida_sede"')
+        self.assertContains(response, 'value="2026-05-01"')
+        self.assertContains(response, 'name="hora_saida_sede"')
+        self.assertContains(response, 'value="06:30"')
+        self.assertContains(response, 'name="data_chegada_sede"')
+        self.assertContains(response, 'value="2026-05-03"')
+        self.assertContains(response, 'name="hora_chegada_sede"')
+        self.assertContains(response, 'value="22:15"')
+
+    def test_formulario_persiste_diarias_calculadas_da_calculadora_manual(self):
+        destinos_payload = '[{"estado_id": %s, "estado_sigla": "PR", "cidade_id": %s, "cidade_nome": "Curitiba"}]' % (
+            self.estado.pk,
+            self.cidade.pk,
+        )
+        resultado = calculate_periodized_diarias(
+            [
+                PeriodMarker(
+                    saida=datetime(2026, 5, 1, 6, 30),
+                    destino_cidade='Curitiba',
+                    destino_uf='PR',
+                )
+            ],
+            datetime(2026, 5, 3, 22, 15),
+            quantidade_servidores=5,
+        )
+        totais = resultado['totais']
+        payload = {
+            'data_criacao': '2026-05-01',
+            'status': PlanoTrabalho.STATUS_RASCUNHO,
+            'evento': self.evento.pk,
+            'oficio': self.oficio.pk,
+            'destinos_payload': destinos_payload,
+            'roteiro_json': destinos_payload,
+            'data_saida_sede': '2026-05-01',
+            'hora_saida_sede': '06:30',
+            'data_chegada_sede': '2026-05-03',
+            'hora_chegada_sede': '22:15',
+            'quantidade_servidores': '5',
+            'diarias_quantidade': totais['total_diarias'],
+            'diarias_valor_total': totais['total_valor'],
+            'diarias_valor_unitario': totais['valor_por_servidor'],
+            'diarias_valor_extenso': totais['valor_extenso'],
+            'recursos_texto': 'Persistir diárias calculadas',
+            'horario_atendimento_padrao': '08:00-17:00',
+            'solicitante_escolha': '',
+            'return_to': reverse('eventos:documentos-planos-trabalho'),
+        }
+        payload.update(self._base_formset_payload())
+
+        response = self.client.post(
+            reverse('eventos:documentos-planos-trabalho-novo'),
+            data=payload,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        pt = PlanoTrabalho.objects.order_by('-pk').first()
+        self.assertIsNotNone(pt)
+        self.assertEqual(pt.diarias_quantidade, totais['total_diarias'])
+        self.assertEqual(pt.diarias_valor_total, totais['total_valor'])
+        self.assertEqual(pt.diarias_valor_unitario, totais['valor_por_servidor'])
+        self.assertEqual(pt.diarias_valor_extenso, totais['valor_extenso'])
+
+        response_edicao = self.client.get(
+            reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': pt.pk})
+        )
+        self.assertEqual(response_edicao.status_code, 200)
+        self.assertContains(response_edicao, f'value="{totais["total_diarias"]}"')
+        self.assertContains(response_edicao, f'value="{totais["total_valor"]}"')
+        self.assertContains(response_edicao, f'value="{totais["valor_por_servidor"]}"')
+        self.assertContains(response_edicao, totais['valor_extenso'])
 
     def test_formulario_persiste_roteiro_calculado_enviado_no_hidden_roteiro(self):
         payload = {

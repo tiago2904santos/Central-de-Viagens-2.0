@@ -1,4 +1,4 @@
-from .context import build_oficio_document_context
+from .context import build_oficio_document_context, format_document_display, format_document_header_display
 from .renderer import get_document_template_path, render_docx_template_bytes
 from .types import DocumentoOficioTipo
 
@@ -7,7 +7,7 @@ ASSUNTO_AUTORIZACAO = 'Solicitação de autorização e concessão de diárias.'
 ASSUNTO_CONVALIDACAO = 'Solicitação de convalidação e concessão de diárias.'
 
 DESTINO_FORA_PARANA = 'SESP'
-DESTINO_DENTRO_PARANA = 'GABINETE DO DELEGADO GERAL ADJUNTO'
+DESTINO_DENTRO_PARANA = 'Gabinete do Delegado Geral Adjunto'
 
 
 def _get_primary_signature(context):
@@ -19,7 +19,7 @@ def _join_non_empty(parts, separator=' | '):
 
 
 def _build_motorista_formatado(oficio, context):
-    motorista_nome = context['motorista']['nome']
+    motorista_nome = format_document_display(context['motorista']['nome'])
     if not motorista_nome:
         return ''
     if context['motorista']['carona']:
@@ -92,39 +92,73 @@ def _build_col_solicitacao(context):
     return ''
 
 
-def _build_roteiro_ida_cols(context):
+def _is_sede_route(trecho, sede):
+    return bool(sede and trecho.get('destino') and trecho.get('destino') == sede)
+
+
+def _normalize_route_value(value):
+    return str(value or '').strip().lower()
+
+
+def _route_items_equivalent(left, right):
+    keys = ('origem', 'destino', 'saida_data', 'saida_hora', 'chegada_data', 'chegada_hora')
+    return all(_normalize_route_value(left.get(key)) == _normalize_route_value(right.get(key)) for key in keys)
+
+
+def _build_route_columns(items):
     saida_lines = []
     chegada_lines = []
-    for trecho in context['roteiro']['trechos']:
-        origem = trecho['origem'] or '—'
-        destino = trecho['destino'] or '—'
-        saida_lines.append(f"Saída {origem}: {trecho['saida_data']} {trecho['saida_hora']}".strip())
-        chegada_lines.append(f"Chegada {destino}: {trecho['chegada_data']} {trecho['chegada_hora']}".strip())
-        if trecho != context['roteiro']['trechos'][-1]:
+    for idx, trecho in enumerate(items):
+        origem = format_document_display(trecho.get('origem') or '—')
+        destino = format_document_display(trecho.get('destino') or '—')
+        saida_lines.append(f"Saída {origem}: {trecho.get('saida_data', '')} {trecho.get('saida_hora', '')}".strip())
+        chegada_lines.append(f"Chegada {destino}: {trecho.get('chegada_data', '')} {trecho.get('chegada_hora', '')}".strip())
+        if idx < len(items) - 1:
             saida_lines.append('')
             chegada_lines.append('')
     return '\n'.join(saida_lines), '\n'.join(chegada_lines)
 
 
-def _build_retorno_cols(context):
+def _build_retorno_items(context):
+    sede = context['roteiro'].get('sede') or ''
+    retorno_items = [
+        trecho
+        for trecho in context['roteiro']['trechos']
+        if _is_sede_route(trecho, sede)
+    ]
     retorno = context['roteiro']['retorno']
-    saida = _join_non_empty(
-        [
-            f"Saída {retorno['origem']}:" if retorno['origem'] else '',
-            retorno['saida_data'],
-            retorno['saida_hora'],
-        ],
-        separator=' ',
-    )
-    chegada = _join_non_empty(
-        [
-            f"Chegada {retorno['destino']}:" if retorno['destino'] else '',
-            retorno['chegada_data'],
-            retorno['chegada_hora'],
-        ],
-        separator=' ',
-    )
-    return saida, chegada
+    retorno_explicit = {
+        'origem': retorno.get('origem') or '',
+        'destino': retorno.get('destino') or '',
+        'saida_data': retorno.get('saida_data') or '',
+        'saida_hora': retorno.get('saida_hora') or '',
+        'chegada_data': retorno.get('chegada_data') or '',
+        'chegada_hora': retorno.get('chegada_hora') or '',
+    }
+    if any(retorno_explicit.values()):
+        if retorno_items:
+            # Step 3 can persist retorno dates/hours without city labels; inherit them from
+            # the last retorno trecho before deduplicating to avoid duplicate trailing rows.
+            retorno_explicit['origem'] = retorno_explicit['origem'] or retorno_items[-1].get('origem') or ''
+            retorno_explicit['destino'] = retorno_explicit['destino'] or retorno_items[-1].get('destino') or ''
+        duplicated = bool(retorno_items and _route_items_equivalent(retorno_items[-1], retorno_explicit))
+        if not duplicated:
+            retorno_items.append(retorno_explicit)
+    return retorno_items
+
+
+def _build_roteiro_ida_cols(context):
+    sede = context['roteiro'].get('sede') or ''
+    ida_items = [
+        trecho
+        for trecho in context['roteiro']['trechos']
+        if not _is_sede_route(trecho, sede)
+    ]
+    return _build_route_columns(ida_items)
+
+
+def _build_retorno_cols(context):
+    return _build_route_columns(_build_retorno_items(context))
 
 
 def build_oficio_template_context(oficio):
@@ -137,38 +171,39 @@ def build_oficio_template_context(oficio):
         'oficio': context['identificacao']['numero_formatado'],
         'data_do_oficio': context['identificacao']['data_criacao_br'],
         'protocolo': context['identificacao']['protocolo_formatado'],
-        'nome_chefia': assinatura.get('nome', ''),
-        'cargo_chefia': assinatura.get('cargo', ''),
-        'unidade': unidade,
-        'orgao_destino': _get_destino_cabecalho_oficio(oficio),
+        'nome_chefia': format_document_display(assinatura.get('nome', '')),
+        'cargo_chefia': format_document_display(assinatura.get('cargo', '')),
+        'unidade': format_document_display(unidade),
+        'unidade_cabecalho': format_document_header_display(unidade),
+        'orgao_destino': format_document_display(_get_destino_cabecalho_oficio(oficio)),
         'placa': context['veiculo']['placa_formatada'],
-        'viatura': context['veiculo']['modelo'] or context['veiculo']['descricao'],
-        'combustivel': context['veiculo']['combustivel'],
-        'tipo_viatura': context['veiculo']['tipo_viatura'],
+        'viatura': format_document_display(context['veiculo']['modelo'] or context['veiculo']['descricao']),
+        'combustivel': format_document_display(context['veiculo']['combustivel']),
+        'tipo_viatura': format_document_display(context['veiculo']['tipo_viatura']),
         'motorista_formatado': _build_motorista_formatado(oficio, context),
         'custo': _build_custeio_text(oficio, context),
         'diarias_x': context['diarias']['quantidade'],
         'diaria': context['diarias']['valor'],
         'valor_extenso': context['diarias']['valor_extenso'],
-        'destinos_bloco': context['roteiro']['destinos_texto'],
-        'col_servidor': _build_column_lines([viajante['nome'] for viajante in context['viajantes']], blank_lines=2),
+        'destinos_bloco': format_document_display(context['roteiro']['destinos_texto']),
+        'col_servidor': _build_column_lines([format_document_display(viajante['nome']) for viajante in context['viajantes']], blank_lines=2),
         'col_rgcpf': _build_col_rgcpf(context),
-        'col_cargo': _build_column_lines([viajante['cargo'] for viajante in context['viajantes']], blank_lines=2),
+        'col_cargo': _build_column_lines([format_document_display(viajante['cargo']) for viajante in context['viajantes']], blank_lines=2),
         'col_ida_saida': ida_saida,
         'col_ida_chegada': ida_chegada,
         'col_volta_saida': volta_saida,
         'col_volta_chegada': volta_chegada,
         'col_solicitacao': _build_col_solicitacao(context),
         'assunto_linha': _get_assunto_for_oficio(oficio),
-        'assunto_oficio': '(CONVALIDAÇÃO)' if getattr(oficio, 'assunto_tipo', '') == 'CONVALIDACAO' else '(AUTORIZAÇÃO)',
+        'assunto_oficio': '(Convalidação)' if getattr(oficio, 'assunto_tipo', '') == 'CONVALIDACAO' else '(Autorização)',
         'assunto_termo': 'convalidação' if getattr(oficio, 'assunto_tipo', '') == 'CONVALIDACAO' else 'autorização',
         'armamento': context['veiculo']['porte_transporte_armas'],
         'motivo': context['conteudo']['motivo'],
-        'divisao': context['institucional']['divisao'],
+        'divisao': format_document_header_display(context['institucional']['divisao']),
         'email': context['institucional']['email'],
-        'endereco': context['institucional']['endereco'],
+        'endereco': format_document_display(context['institucional']['endereco']),
         'telefone': context['institucional'].get('telefone', ''),
-        'unidade_rodape': unidade,
+        'unidade_rodape': format_document_display(unidade),
     }
 
 

@@ -1,4 +1,6 @@
 from io import BytesIO
+import importlib
+import os
 from pathlib import Path
 import re
 from tempfile import TemporaryDirectory
@@ -343,37 +345,60 @@ def render_docx_template_bytes(template_path, mapping, post_processor=None):
     return document_to_bytes(document)
 
 
-def convert_docx_bytes_to_pdf_bytes(docx_bytes):
-    import sys
-    docx2pdf_module = _load_pdf_backend()
-    _pythoncom = None
-    if sys.platform == 'win32':
-        try:
-            import pythoncom
-            _pythoncom = pythoncom
-            pythoncom.CoInitialize()
-        except Exception:
-            _pythoncom = None
+def _convert_via_word_com(docx_path, pdf_path):
+    pythoncom = importlib.import_module('pythoncom')
+    win32_client = importlib.import_module('win32com.client')
+    word = None
+    opened_doc = None
+    pythoncom.CoInitialize()
     try:
-        with TemporaryDirectory() as tmp_dir:
-            base_dir = Path(tmp_dir)
-            docx_path = base_dir / 'documento.docx'
-            pdf_path = base_dir / 'documento.pdf'
-            docx_path.write_bytes(docx_bytes)
+        word = win32_client.gencache.EnsureDispatch('Word.Application')
+        word.Visible = False
+        if hasattr(word, 'DisplayAlerts'):
+            word.DisplayAlerts = 0
+        opened_doc = word.Documents.Open(str(docx_path))
+        try:
             try:
-                docx2pdf_module.convert(str(docx_path), str(pdf_path))
-            except Exception as exc:
-                raise DocumentRendererUnavailable(
-                    f'Falha na conversão DOCX para PDF neste ambiente Windows: {exc}'
-                ) from exc
-            if not pdf_path.exists() or pdf_path.stat().st_size == 0:
-                raise DocumentRendererUnavailable(
-                    'A conversão DOCX para PDF não gerou um arquivo PDF válido.'
-                )
-            return pdf_path.read_bytes()
+                opened_doc.SaveAs(str(pdf_path), FileFormat=17)
+            except Exception:
+                opened_doc.SaveAs2(str(pdf_path), FileFormat=17)
+        finally:
+            opened_doc.Close(False)
     finally:
-        if _pythoncom is not None:
-            _pythoncom.CoUninitialize()
+        if word is not None:
+            try:
+                word.Quit()
+            except Exception:
+                pass
+        pythoncom.CoUninitialize()
+
+
+def convert_docx_bytes_to_pdf_bytes(docx_bytes):
+    docx2pdf_module = _load_pdf_backend()
+    with TemporaryDirectory() as tmp_dir:
+        base_dir = Path(tmp_dir)
+        docx_path = base_dir / 'documento.docx'
+        pdf_path = base_dir / 'documento.pdf'
+        docx_path.write_bytes(docx_bytes)
+        try:
+            docx2pdf_module.convert(str(docx_path), str(pdf_path))
+        except Exception as docx2pdf_exc:
+            if os.name != 'nt':
+                raise DocumentRendererUnavailable(
+                    f'Falha na conversão DOCX para PDF neste ambiente Windows: {docx2pdf_exc}'
+                ) from docx2pdf_exc
+            try:
+                _convert_via_word_com(docx_path, pdf_path)
+            except Exception as com_exc:
+                raise DocumentRendererUnavailable(
+                    'Falha na conversão DOCX para PDF neste ambiente Windows: '
+                    f'{docx2pdf_exc} | fallback COM: {com_exc}'
+                ) from com_exc
+        if not pdf_path.exists() or pdf_path.stat().st_size == 0:
+            raise DocumentRendererUnavailable(
+                'A conversão DOCX para PDF não gerou um arquivo PDF válido.'
+            )
+        return pdf_path.read_bytes()
 
 
 def _render_document_docx_bytes(oficio, tipo_documento):

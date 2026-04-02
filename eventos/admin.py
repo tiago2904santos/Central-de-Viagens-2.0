@@ -11,6 +11,7 @@ from .models import (
     Oficio,
     PlanoTrabalho,
     EfetivoPlanoTrabalhoDocumento,
+    HorarioAtendimentoPlanoTrabalho,
     SolicitantePlanoTrabalho,
     TermoAutorizacao,
 )
@@ -30,6 +31,14 @@ class SolicitantePlanoTrabalhoAdmin(admin.ModelAdmin):
     list_filter = ('ativo', 'is_padrao')
     search_fields = ('nome',)
     ordering = ('ordem', 'nome')
+
+
+@admin.register(HorarioAtendimentoPlanoTrabalho)
+class HorarioAtendimentoPlanoTrabalhoAdmin(admin.ModelAdmin):
+    list_display = ('descricao', 'ativo', 'ordem', 'is_padrao', 'updated_at')
+    list_filter = ('ativo', 'is_padrao')
+    search_fields = ('descricao',)
+    ordering = ('ordem', 'descricao')
 
 
 @admin.register(CoordenadorOperacional)

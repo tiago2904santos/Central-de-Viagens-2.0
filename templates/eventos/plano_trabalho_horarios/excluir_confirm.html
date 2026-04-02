@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir horário - Plano de Trabalho{% endblock %}
+{% block page_title %}Excluir horário{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="card form-card">
+    <div class="card-body">
+      <p class="mb-1">Confirma excluir o horário <strong>{{ object.descricao }}</strong>?</p>
+      <p class="text-muted mb-4">Se ele estiver em uso em algum plano, a exclusão será bloqueada.</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Excluir</button>
+        <a href="{% url 'eventos:plano-trabalho-horarios-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

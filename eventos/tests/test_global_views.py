@@ -966,6 +966,8 @@ class GlobalViewsTest(TestCase):
         plano = PlanoTrabalho.objects.create(
             objetivo='Plano multi-oficios do evento',
             status=PlanoTrabalho.STATUS_FINALIZADO,
+            quantidade_servidores=3,
+            diarias_quantidade='2,5',
         )
         plano.oficios.add(self.oficio_pt, oficio_extra)
 
@@ -980,6 +982,9 @@ class GlobalViewsTest(TestCase):
         self.assertIn(oficio_extra.numero_formatado, content)
         self.assertIn('Ofícios vinculados', content)
         self.assertIn('Plano de Trabalho', content)
+        self.assertIn('Equipe', content)
+        self.assertIn('Diarias', content)
+        self.assertIn('2 oficios vinculados', content)
 
     def test_lista_de_eventos_exibe_cascata_documental_com_pt_vinculado_por_oficios(self):
         oficio_extra = Oficio.objects.create(
