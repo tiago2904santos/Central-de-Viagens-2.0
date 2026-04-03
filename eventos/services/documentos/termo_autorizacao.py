@@ -91,10 +91,21 @@ def _extract_viatura_data(*, placa='', modelo='', combustivel=''):
 def _build_viatura_data_from_oficio(oficio):
     if oficio is None:
         return _extract_viatura_data()
+    veiculo = getattr(oficio, 'veiculo', None)
+    modelo = getattr(oficio, 'modelo', '')
+    combustivel = getattr(oficio, 'combustivel', '')
+    placa = getattr(oficio, 'placa_formatada', '')
+
+    if veiculo is not None:
+        modelo = modelo or getattr(veiculo, 'modelo', '')
+        if not combustivel:
+            combustivel = getattr(getattr(veiculo, 'combustivel', None), 'nome', '') or ''
+        placa = placa or getattr(veiculo, 'placa_formatada', '')
+
     return _extract_viatura_data(
-        placa=getattr(oficio, 'placa_formatada', ''),
-        modelo=getattr(oficio, 'modelo', ''),
-        combustivel=getattr(oficio, 'combustivel', ''),
+        placa=placa,
+        modelo=modelo,
+        combustivel=combustivel,
     )
 
 
@@ -156,7 +167,7 @@ def _build_viajante_mapping(viajante, modalidade):
         rg = (getattr(viajante, 'rg_formatado', '') or getattr(viajante, 'rg', '') or '').strip()
         cpf = (getattr(viajante, 'cpf_formatado', '') or getattr(viajante, 'cpf', '') or '').strip()
         telefone = (getattr(viajante, 'telefone_formatado', '') or getattr(viajante, 'telefone', '') or '').strip()
-        lotacao = format_document_display(
+        lotacao = format_document_header_display(
             getattr(getattr(viajante, 'unidade_lotacao', None), 'nome', '') or ''
         )
     if modalidade == TERMO_MODALIDADE_SEMIPREENCHIDO:
@@ -406,8 +417,9 @@ def _build_saved_termo_viajante_snapshot(termo):
     ):
         return None
     unidade = None
-    if getattr(termo, 'servidor_lotacao', ''):
-        unidade = SimpleNamespace(nome=getattr(termo, 'servidor_lotacao', ''))
+    lotacao_snapshot = format_document_header_display(getattr(termo, 'servidor_lotacao', ''))
+    if lotacao_snapshot:
+        unidade = SimpleNamespace(nome=lotacao_snapshot)
     return SimpleNamespace(
         nome=getattr(termo, 'servidor_nome', ''),
         rg=getattr(termo, 'servidor_rg', ''),

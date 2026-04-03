@@ -11,9 +11,6 @@
 
 {% block list_header_actions %}
 <a href="{{ eventos_url }}" class="btn btn-outline-secondary system-list-action-btn">Eventos</a>
-{% if novo_roteiro_url %}
-<a href="{{ novo_roteiro_url }}" class="btn btn-primary system-list-action-btn"><i class="bi bi-plus-lg me-1"></i>Novo roteiro neste evento</a>
-{% endif %}
 {% endblock %}
 
 {% block list_mode_badge %}
@@ -76,9 +73,6 @@
         <a href="{% url 'eventos:roteiros-global' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
     </div>
 </form>
-{% if selected_event %}
-<div class="small text-muted mt-2">O botao de novo roteiro usa o evento atualmente filtrado.</div>
-{% endif %}
 {% endblock %}
 
 {% block page_result_content %}

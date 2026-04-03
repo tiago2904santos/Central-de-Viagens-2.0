@@ -4,8 +4,11 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
+from cadastros.models import AssinaturaConfiguracao, Cargo, Cidade, ConfiguracaoSistema, Estado, Viajante
 from eventos.models import Evento, Oficio, OrdemServico, PlanoTrabalho
+from eventos.services.documentos.ordem_servico import build_ordem_servico_model_template_context
 
 
 User = get_user_model()
@@ -185,3 +188,188 @@ class PtOsDesacopladoTest(TestCase):
 
         legacy_name = 'Evento' + 'Fundamentacao'
         self.assertFalse(hasattr(eventos_models, legacy_name))
+
+    def test_criar_os_salva_campos_documentais_e_numero_automatico(self):
+        cargo = Cargo.objects.create(nome='Agente de Polícia Civil')
+        estado = Estado.objects.create(nome='Paraná', sigla='PR')
+        cidade = Cidade.objects.create(nome='Curitiba', estado=estado)
+        viajante = Viajante.objects.create(
+            nome='MARIA SILVA',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=cargo,
+            cpf='12345678901',
+            telefone='41999998888',
+        )
+        modelo = self._novo_modelo_motivo('OS compartilhada')
+
+        response = self.client.post(
+            reverse('eventos:documentos-ordens-servico-novo'),
+            data={
+                'data_criacao': '2026-03-10',
+                'status': OrdemServico.STATUS_RASCUNHO,
+                'data_deslocamento': '2026-03-12',
+                'modelo_motivo': modelo.pk,
+                'motivo_texto': 'Apoio operacional em ação integrada.',
+                'viajantes': [str(viajante.pk)],
+                'destinos_payload': (
+                    '[{"estado_id": %d, "estado_sigla": "PR", "cidade_id": %d, "cidade_nome": "Curitiba"}]'
+                    % (estado.pk, cidade.pk)
+                ),
+                'return_to': reverse('eventos:documentos-ordens-servico'),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        ordem = OrdemServico.objects.get(motivo_texto='Apoio operacional em ação integrada.')
+        self.assertEqual(ordem.numero_formatado, '01/2026')
+        self.assertEqual(ordem.finalidade, 'Apoio operacional em ação integrada.')
+        self.assertEqual(ordem.data_deslocamento, date(2026, 3, 12))
+        self.assertEqual(ordem.modelo_motivo, modelo)
+        self.assertEqual(ordem.viajantes.count(), 1)
+        self.assertEqual(ordem.viajantes.first(), viajante)
+        self.assertEqual(ordem.destinos_json[0]['cidade_nome'], 'Curitiba')
+        self.assertEqual(ordem.status, OrdemServico.STATUS_FINALIZADO)
+        self.assertEqual(ordem.data_criacao, timezone.localdate())
+
+    def test_criar_os_incompleta_fica_rascunho_com_data_automatica(self):
+        response = self.client.post(
+            reverse('eventos:documentos-ordens-servico-novo'),
+            data={
+                'data_criacao': '2000-01-01',
+                'status': OrdemServico.STATUS_FINALIZADO,
+                'motivo_texto': 'Teste de rascunho automático',
+                'destinos_payload': '[]',
+                'return_to': reverse('eventos:documentos-ordens-servico'),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        ordem = OrdemServico.objects.get(motivo_texto='Teste de rascunho automático')
+        self.assertEqual(ordem.status, OrdemServico.STATUS_RASCUNHO)
+        self.assertEqual(ordem.data_criacao, timezone.localdate())
+
+    def test_editar_os_preserva_viajantes_e_data_quando_campos_ausentes_no_post(self):
+        cargo = Cargo.objects.create(nome='Agente de Polícia Civil')
+        viajante = Viajante.objects.create(
+            nome='MARIA SILVA',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=cargo,
+            cpf='12345678901',
+            telefone='41999998888',
+        )
+        ordem = OrdemServico.objects.create(
+            data_criacao=date(2026, 3, 10),
+            data_deslocamento=date(2026, 3, 12),
+            status=OrdemServico.STATUS_RASCUNHO,
+            motivo_texto='Motivo inicial',
+        )
+        ordem.viajantes.set([viajante])
+
+        response = self.client.post(
+            reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}),
+            data={
+                'data_criacao': '2026-03-10',
+                'status': OrdemServico.STATUS_FINALIZADO,
+                'motivo_texto': 'Motivo atualizado',
+                'destinos_payload': '[]',
+                # Simula formulário sem os campos data_deslocamento/viajantes no payload.
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        ordem.refresh_from_db()
+        self.assertEqual(ordem.data_deslocamento, date(2026, 3, 12))
+        self.assertEqual(ordem.viajantes.count(), 1)
+        self.assertEqual(ordem.viajantes.first(), viajante)
+        self.assertEqual(ordem.motivo_texto, 'Motivo atualizado')
+
+    def test_contexto_template_os_usa_configuracao_e_equipe_agrupada(self):
+        config = ConfiguracaoSistema.get_singleton()
+        config.divisao = 'Diretoria de Operações'
+        config.unidade = 'Unidade Especial'
+        config.sigla_orgao = 'UE'
+        config.cidade_endereco = 'Curitiba'
+        config.email = 'os@pcpr.pr.gov.br'
+        config.telefone = '4133334444'
+        config.logradouro = 'Rua XV de Novembro'
+        config.numero = '100'
+        config.save()
+
+        cargo_chefia = Cargo.objects.create(nome='Delegado Chefe')
+        chefia = Viajante.objects.create(
+            nome='JOAO PEREIRA',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=cargo_chefia,
+            cpf='11122233344',
+            telefone='41911112222',
+        )
+        AssinaturaConfiguracao.objects.create(
+            configuracao=config,
+            tipo=AssinaturaConfiguracao.TIPO_ORDEM_SERVICO,
+            ordem=1,
+            viajante=chefia,
+            ativo=True,
+        )
+
+        cargo_agente = Cargo.objects.create(nome='Agente')
+        cargo_motorista = Cargo.objects.create(nome='Motorista')
+        v1 = Viajante.objects.create(nome='ANA SOUZA', status=Viajante.STATUS_FINALIZADO, cargo=cargo_agente)
+        v2 = Viajante.objects.create(nome='BRUNO LIMA', status=Viajante.STATUS_FINALIZADO, cargo=cargo_agente)
+        v3 = Viajante.objects.create(nome='CARLOS REIS', status=Viajante.STATUS_FINALIZADO, cargo=cargo_motorista)
+
+        ordem = OrdemServico.objects.create(
+            data_criacao=date(2026, 4, 3),
+            data_deslocamento=date(2026, 4, 3),
+            motivo_texto='Cumprimento de missão institucional.',
+            status=OrdemServico.STATUS_RASCUNHO,
+        )
+        ordem.viajantes.set([v1, v2, v3])
+        ordem.destinos_json = [
+            {'estado_id': None, 'estado_sigla': 'PR', 'cidade_id': 1, 'cidade_nome': 'Curitiba'},
+            {'estado_id': None, 'estado_sigla': 'PR', 'cidade_id': 2, 'cidade_nome': 'Londrina'},
+        ]
+        ordem.save(update_fields=['destinos_json'])
+
+        context = build_ordem_servico_model_template_context(ordem)
+
+        self.assertEqual(context['divisao'], 'DIRETORIA DE OPERAÇÕES')
+        self.assertEqual(context['unidade'], 'UNIDADE ESPECIAL')
+        self.assertEqual(context['unidade_abreviado'], 'UE')
+        self.assertEqual(context['nome_chefia'], 'Joao Pereira')
+        self.assertEqual(context['cargo_chefia'], 'Delegado Chefe')
+        self.assertEqual(context['destino'], 'Curitiba/PR, Londrina/PR')
+        self.assertEqual(context['data_extenso'], '03 de abril de 2026')
+        self.assertIn('dos(as) Agentes Ana Souza e Bruno Lima', context['equipe_deslocamento'])
+        self.assertIn('do(a) Motorista Carlos Reis', context['equipe_deslocamento'])
+
+    def test_contexto_template_os_agrupa_por_cargo_com_ordem_mista(self):
+        cargo_agente = Cargo.objects.create(nome='agente de polícia civil')
+        cargo_motorista = Cargo.objects.create(nome='motorista')
+        cargo_escrivao = Cargo.objects.create(nome='escrivão')
+
+        v1 = Viajante.objects.create(nome='SERVIDOR 4', status=Viajante.STATUS_FINALIZADO, cargo=cargo_motorista)
+        v2 = Viajante.objects.create(nome='SERVIDOR 2', status=Viajante.STATUS_FINALIZADO, cargo=cargo_agente)
+        v3 = Viajante.objects.create(nome='SERVIDOR 5', status=Viajante.STATUS_FINALIZADO, cargo=cargo_escrivao)
+        v4 = Viajante.objects.create(nome='SERVIDOR 1', status=Viajante.STATUS_FINALIZADO, cargo=cargo_agente)
+        v5 = Viajante.objects.create(nome='SERVIDOR 3', status=Viajante.STATUS_FINALIZADO, cargo=cargo_agente)
+
+        ordem = OrdemServico.objects.create(
+            data_criacao=date(2026, 4, 3),
+            data_deslocamento=date(2026, 4, 3),
+            motivo_texto='Apoio em operação integrada.',
+            status=OrdemServico.STATUS_RASCUNHO,
+        )
+        ordem.viajantes.set([v1, v2, v3, v4, v5])
+
+        context = build_ordem_servico_model_template_context(ordem)
+
+        esperado = (
+            'dos(as) Agentes de Polícia Civil Servidor 1, Servidor 2 e Servidor 3, '
+            'do(a) Escrivão Servidor 5 e do(a) Motorista Servidor 4'
+        )
+        self.assertEqual(context['equipe_deslocamento'], esperado)
+
+    def _novo_modelo_motivo(self, texto):
+        from eventos.models import ModeloMotivoViagem
+
+        return ModeloMotivoViagem.objects.create(codigo='motivo_os', nome='Motivo OS', texto=texto, ativo=True)

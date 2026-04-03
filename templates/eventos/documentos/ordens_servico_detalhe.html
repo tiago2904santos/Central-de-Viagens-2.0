@@ -1,27 +1,85 @@
 {% extends 'base.html' %}
 
-{% block title %}Ordem de serviço #{{ object.pk }} - Central de Viagens{% endblock %}
+{% block title %}Ordem de serviço {{ object.numero_formatado|default:object.pk }} - Central de Viagens{% endblock %}
 {% block page_title %}Detalhe da ordem de serviço{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <h1 class="h4 mb-0">Ordem de serviço #{{ object.pk }}</h1>
-    <div class="d-flex gap-2">
+    <div>
+      <h1 class="h4 mb-1">Ordem de serviço {{ object.numero_formatado|default:object.pk }}</h1>
+      <p class="text-muted mb-0">Resumo consolidado do cadastro documental.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
       <a class="btn btn-outline-primary" href="{% url 'eventos:documentos-ordens-servico-editar' object.pk %}">Editar</a>
       <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-download' object.pk 'docx' %}">DOCX</a>
       <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-download' object.pk 'pdf' %}">PDF</a>
       <a class="btn btn-outline-danger" href="{% url 'eventos:documentos-ordens-servico-excluir' object.pk %}">Excluir</a>
     </div>
   </div>
-  <div class="card"><div class="card-body">
-    <dl class="row mb-0">
-      <dt class="col-sm-3">Número</dt><dd class="col-sm-9">{{ object.numero_formatado|default:'—' }}</dd>
-      <dt class="col-sm-3">Status</dt><dd class="col-sm-9">{{ object.get_status_display }}</dd>
-      <dt class="col-sm-3">Evento</dt><dd class="col-sm-9">{% if object.evento %}{{ object.evento.titulo|default:'(sem título)' }}{% else %}—{% endif %}</dd>
-      <dt class="col-sm-3">Ofício</dt><dd class="col-sm-9">{% if object.oficio %}{{ object.oficio.numero_formatado|default:'—' }}{% else %}—{% endif %}</dd>
-      <dt class="col-sm-3">Finalidade</dt><dd class="col-sm-9">{{ object.finalidade|default:'—' }}</dd>
-    </dl>
-  </div></div>
+
+  <div class="row g-3">
+    <div class="col-xl-4">
+      <div class="card h-100"><div class="card-body">
+        <h2 class="h6 text-uppercase text-muted mb-3">Identificação</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Número</dt><dd class="col-sm-7">{{ object.numero_formatado|default:'—' }}</dd>
+          <dt class="col-sm-5">Status</dt><dd class="col-sm-7">{{ object.get_status_display }}</dd>
+          <dt class="col-sm-5">Criação</dt><dd class="col-sm-7">{{ object.data_criacao|date:'d/m/Y'|default:'—' }}</dd>
+          <dt class="col-sm-5">Deslocamento</dt><dd class="col-sm-7">{{ object.data_deslocamento|date:'d/m/Y'|default:'—' }}</dd>
+          <dt class="col-sm-5">Evento</dt><dd class="col-sm-7">{% if object.evento %}{{ object.evento.titulo|default:'(sem título)' }}{% else %}—{% endif %}</dd>
+          <dt class="col-sm-5">Ofício</dt><dd class="col-sm-7">{% if object.oficio %}{{ object.oficio.numero_formatado|default:'—' }}{% else %}—{% endif %}</dd>
+          <dt class="col-sm-5">Modelo de motivo</dt><dd class="col-sm-7">{% if object.modelo_motivo %}{{ object.modelo_motivo.nome }}{% else %}—{% endif %}</dd>
+        </dl>
+      </div></div>
+    </div>
+
+    <div class="col-xl-8">
+      <div class="card h-100"><div class="card-body">
+        <h2 class="h6 text-uppercase text-muted mb-3">Conteúdo principal</h2>
+        <div class="mb-3">
+          <div class="small text-muted text-uppercase fw-semibold mb-1">Motivo</div>
+          <div>{{ object.motivo_texto|default:object.finalidade|linebreaksbr }}</div>
+        </div>
+        <div class="mb-3">
+          <div class="small text-muted text-uppercase fw-semibold mb-1">Equipe</div>
+          {% with viajantes=object.get_viajantes_relacionados %}
+            {% if viajantes %}
+              <div class="d-flex flex-wrap gap-2">
+                {% for viajante in viajantes %}
+                  <span class="badge text-bg-light border">{{ viajante.nome }}{% if viajante.cargo_id %} - {{ viajante.cargo.nome }}{% endif %}</span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div>{{ object.responsaveis|default:'—'|linebreaksbr }}</div>
+            {% endif %}
+          {% endwith %}
+        </div>
+        <div>
+          <div class="small text-muted text-uppercase fw-semibold mb-1">Destinos</div>
+          {% if object.destinos_json %}
+            <div class="d-flex flex-wrap gap-2">
+              {% for destino in object.destinos_json %}
+                <span class="badge text-bg-light border">{{ destino.cidade_nome }}{% if destino.estado_sigla %}/{{ destino.estado_sigla }}{% endif %}</span>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-muted">Nenhum destino estruturado informado.</div>
+          {% endif %}
+        </div>
+      </div></div>
+    </div>
+
+    {% if object.designacoes or object.determinacoes or object.observacoes %}
+    <div class="col-12">
+      <div class="card"><div class="card-body">
+        <h2 class="h6 text-uppercase text-muted mb-3">Complementos</h2>
+        {% if object.designacoes %}<div class="mb-3"><div class="small text-muted text-uppercase fw-semibold mb-1">Designações</div><div>{{ object.designacoes|linebreaksbr }}</div></div>{% endif %}
+        {% if object.determinacoes %}<div class="mb-3"><div class="small text-muted text-uppercase fw-semibold mb-1">Determinações</div><div>{{ object.determinacoes|linebreaksbr }}</div></div>{% endif %}
+        {% if object.observacoes %}<div><div class="small text-muted text-uppercase fw-semibold mb-1">Observações</div><div>{{ object.observacoes|linebreaksbr }}</div></div>{% endif %}
+      </div></div>
+    </div>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

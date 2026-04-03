@@ -16,8 +16,9 @@
         <div class="system-list-header__actions-group">
             {% if volta_justificativa %}
             <a href="{% url 'eventos:oficio-justificativa' volta_justificativa %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" class="btn btn-outline-secondary system-list-action-btn">Voltar para justificativa</a>
+            {% else %}
+            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'eventos:documentos-justificativas' %}{% endif %}" class="btn btn-outline-secondary system-list-action-btn">Voltar</a>
             {% endif %}
-            <a href="{% url 'eventos:modelos-justificativa-cadastrar' %}{% if volta_justificativa or next_url %}?{% if volta_justificativa %}volta_justificativa={{ volta_justificativa|urlencode }}{% endif %}{% if volta_justificativa and next_url %}&{% endif %}{% if next_url %}next={{ next_url|urlencode }}{% endif %}{% endif %}" class="btn btn-primary system-list-action-btn"><i class="bi bi-plus-lg me-1"></i>Cadastrar modelo</a>
         </div>
     </div>
     <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
@@ -54,6 +55,16 @@
                 </tbody>
             </table>
         </div>
+    </div>
+    <div class="system-list-fab-group">
+        <a href="#" class="system-list-fab system-list-fab--scroll-up" data-scroll-top aria-label="Subir lista">
+            <i class="bi bi-arrow-up"></i>
+            <span class="visually-hidden">Subir lista</span>
+        </a>
+        <a href="{% url 'eventos:modelos-justificativa-cadastrar' %}{% if volta_justificativa or next_url %}?{% if volta_justificativa %}volta_justificativa={{ volta_justificativa|urlencode }}{% endif %}{% if volta_justificativa and next_url %}&{% endif %}{% if next_url %}next={{ next_url|urlencode }}{% endif %}{% endif %}" class="system-list-fab">
+            <i class="bi bi-plus-lg"></i>
+            <span>Cadastrar modelo</span>
+        </a>
     </div>
     </div>
 </div>

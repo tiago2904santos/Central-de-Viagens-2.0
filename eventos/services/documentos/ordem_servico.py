@@ -1,12 +1,13 @@
 from eventos.services.justificativa import get_primeira_saida_oficio
+from django.utils import timezone
 
-from .context import build_ordem_servico_document_context, format_document_display, format_document_header_display
+from .context import (
+    build_ordem_servico_document_context,
+    format_document_display,
+    format_document_header_display,
+    get_assinaturas_documento,
+)
 from .renderer import (
-    add_label_value,
-    add_multiline_value,
-    add_section_heading,
-    create_base_document,
-    document_to_bytes,
     get_document_template_path,
     render_docx_template_bytes,
 )
@@ -31,6 +32,12 @@ MESES_PTBR = {
 
 def _get_primary_signature(context):
     return (context.get('assinaturas') or [{}])[0]
+
+
+def _format_data_single_extenso(value):
+    if not value:
+        return ''
+    return f'{value.day:02d} de {MESES_PTBR.get(value.month, value.month)} de {value.year}'
 
 
 def _format_data_extenso(oficio):
@@ -66,6 +73,186 @@ def _build_equipe_deslocamento(context):
     return f"dos servidores {', '.join(nomes)}"
 
 
+def _join_pt_br(parts):
+    cleaned = [str(part or '').strip() for part in parts if str(part or '').strip()]
+    if not cleaned:
+        return ''
+    if len(cleaned) == 1:
+        return cleaned[0]
+    if len(cleaned) == 2:
+        return f'{cleaned[0]} e {cleaned[1]}'
+    return f"{', '.join(cleaned[:-1])} e {cleaned[-1]}"
+
+
+def _pluralize_pt_br_token(token):
+    raw = str(token or '').strip()
+    if not raw:
+        return raw
+
+    lower = raw.lower()
+    irregular = {
+        'escrivão': 'escrivães',
+        'alemão': 'alemães',
+    }
+    if lower in irregular:
+        plural = irregular[lower]
+    elif lower.endswith('ão'):
+        plural = lower[:-2] + 'ões'
+    elif lower.endswith(('r', 'z', 's')):
+        plural = lower + 'es'
+    elif lower.endswith('m'):
+        plural = lower[:-1] + 'ns'
+    elif lower.endswith('al'):
+        plural = lower[:-2] + 'ais'
+    elif lower.endswith('el'):
+        plural = lower[:-2] + 'eis'
+    elif lower.endswith('ol'):
+        plural = lower[:-2] + 'ois'
+    elif lower.endswith('ul'):
+        plural = lower[:-2] + 'uis'
+    elif lower.endswith('il'):
+        plural = lower[:-2] + 'is'
+    else:
+        plural = lower + 's'
+
+    if raw[:1].isupper():
+        return plural[:1].upper() + plural[1:]
+    return plural
+
+
+def _pluralize_cargo_pt_br(cargo_label, quantidade):
+    cargo = str(cargo_label or '').strip()
+    if quantidade <= 1 or not cargo:
+        return cargo
+    partes = cargo.split(' ')
+    if not partes:
+        return cargo
+    partes[0] = _pluralize_pt_br_token(partes[0])
+    return ' '.join(partes)
+
+
+def _build_equipe_deslocamento_ordem(ordem_servico):
+    viajantes = list(ordem_servico.get_viajantes_relacionados())
+    if not viajantes and ordem_servico.responsaveis:
+        return format_document_display(ordem_servico.responsaveis)
+    if not viajantes:
+        return 'dos servidores designados'
+
+    # Agrupa por cargo com ordenação estável para gerar texto documental previsível.
+    groups = {}
+    for viajante in sorted(
+        viajantes,
+        key=lambda item: (
+            format_document_display(getattr(getattr(item, 'cargo', None), 'nome', '') or 'servidor').casefold(),
+            format_document_display(getattr(item, 'nome', '')).casefold(),
+        ),
+    ):
+        cargo_raw = getattr(getattr(viajante, 'cargo', None), 'nome', '') or 'servidor'
+        cargo = format_document_display(cargo_raw)
+        groups.setdefault(cargo, []).append(format_document_display(viajante.nome))
+
+    descricoes = []
+    for cargo, nomes in groups.items():
+        prefixo = 'do(a)' if len(nomes) == 1 else 'dos(as)'
+        cargo_formatado = _pluralize_cargo_pt_br(cargo, len(nomes))
+        descricoes.append(f"{prefixo} {cargo_formatado} {_join_pt_br(nomes)}")
+    return _join_pt_br(descricoes)
+
+
+def _build_destino_ordem(ordem_servico, context=None):
+    destinos = []
+    for item in ordem_servico.destinos_json or []:
+        if not isinstance(item, dict):
+            continue
+        cidade = format_document_display(item.get('cidade_nome', ''))
+        uf = str(item.get('estado_sigla') or '').strip().upper()
+        if cidade and uf:
+            destinos.append(f'{cidade}/{uf}')
+        elif cidade:
+            destinos.append(cidade)
+    if destinos:
+        return ', '.join(destinos)
+    if context:
+        return format_document_display(context['ordem_servico']['destinos_texto'])
+    return ''
+
+
+def _build_unidade_abreviado(config, unidade):
+    sigla = str(getattr(config, 'sigla_orgao', '') or '').strip().upper()
+    if sigla:
+        return sigla
+    unidade_text = str(unidade or '').strip()
+    if not unidade_text:
+        return ''
+    return ''.join(part[0] for part in unidade_text.split() if part).upper()
+
+
+def build_ordem_servico_model_template_context(ordem_servico):
+    oficio = ordem_servico.oficio if ordem_servico.oficio_id else None
+    context = build_ordem_servico_document_context(oficio) if oficio else None
+    config = None
+    assinatura = {}
+    if context:
+        assinatura = _get_primary_signature(context)
+        config = context.get('configuracao')
+    if not config:
+        from cadastros.models import ConfiguracaoSistema
+        config = ConfiguracaoSistema.get_singleton()
+    if not assinatura:
+        assinatura = _get_primary_signature({'assinaturas': get_assinaturas_documento(DocumentoOficioTipo.ORDEM_SERVICO.value)})
+
+    unidade = (getattr(config, 'unidade', '') or getattr(config, 'nome_orgao', '') or '').strip()
+    divisao = (getattr(config, 'divisao', '') or unidade).strip()
+    sede_cidade = (
+        getattr(getattr(config, 'cidade_sede_padrao', None), 'nome', '')
+        or getattr(config, 'cidade_endereco', '')
+        or getattr(config, 'sede', '')
+    )
+    nome_chefia = assinatura.get('nome') or getattr(config, 'nome_chefia', '')
+    cargo_chefia = assinatura.get('cargo') or getattr(config, 'cargo_chefia', '')
+    motivo = (
+        ordem_servico.motivo_texto
+        or getattr(getattr(ordem_servico, 'modelo_motivo', None), 'texto', '')
+        or ordem_servico.finalidade
+        or ''
+    ).strip()
+    data_deslocamento = ordem_servico.data_deslocamento
+    if not data_deslocamento and oficio:
+        primeira_saida = get_primeira_saida_oficio(oficio)
+        data_deslocamento = primeira_saida.date() if primeira_saida else None
+
+    endereco = ''
+    if context:
+        endereco = context['institucional'].get('endereco', '')
+    if not endereco:
+        endereco_parts = [
+            getattr(config, 'logradouro', ''),
+            getattr(config, 'numero', ''),
+            getattr(config, 'bairro', ''),
+        ]
+        endereco = ', '.join(str(part).strip() for part in endereco_parts if str(part).strip())
+
+    return {
+        'cargo_chefia': format_document_display(cargo_chefia),
+        'data_extenso': _format_data_single_extenso(data_deslocamento),
+        'data_atual_extenso': _format_data_single_extenso(ordem_servico.data_criacao or timezone.localdate()),
+        'destino': _build_destino_ordem(ordem_servico, context),
+        'divisao': format_document_header_display(divisao),
+        'divisao_capitalize': format_document_display(divisao),
+        'equipe_deslocamento': _build_equipe_deslocamento_ordem(ordem_servico),
+        'motivo': format_document_display(motivo),
+        'nome_chefia': format_document_display(nome_chefia),
+        'ordem_de_servico': ordem_servico.numero_formatado,
+        'sede': format_document_display(sede_cidade),
+        'unidade': format_document_header_display(unidade),
+        'unidade_abreviado': _build_unidade_abreviado(config, unidade),
+        'email': getattr(config, 'email', '') or '',
+        'endereco': format_document_display(endereco),
+        'telefone': getattr(config, 'telefone', '') or '',
+        'unidade_rodape': format_document_header_display(unidade),
+    }
+
+
 def build_ordem_servico_template_context(oficio):
     context = build_ordem_servico_document_context(oficio)
     assinatura = _get_primary_signature(context)
@@ -95,26 +282,7 @@ def render_ordem_servico_docx(oficio):
 
 
 def render_ordem_servico_model_docx(ordem_servico):
-    """Renderização DOCX a partir da entidade OrdemServico, sem exigir Ofício/Evento."""
-    titulo = f"ORDEM DE SERVIÇO {ordem_servico.numero_formatado or f'#{ordem_servico.pk}'}"
-    subtitulo = (
-        (ordem_servico.evento.titulo or '').strip()
-        if ordem_servico.evento_id and ordem_servico.evento
-        else 'Ordem de serviço independente'
-    )
-    document = create_base_document(titulo, subtitulo)
-
-    add_section_heading(document, 'Identificação')
-    add_label_value(document, 'Número', ordem_servico.numero_formatado)
-    add_label_value(document, 'Data de criação', ordem_servico.data_criacao.strftime('%d/%m/%Y') if ordem_servico.data_criacao else '')
-    add_label_value(document, 'Status', ordem_servico.get_status_display())
-    add_label_value(document, 'Evento', (ordem_servico.evento.titulo if ordem_servico.evento_id and ordem_servico.evento else ''))
-    add_label_value(document, 'Ofício', (ordem_servico.oficio.numero_formatado if ordem_servico.oficio_id and ordem_servico.oficio else ''))
-
-    add_multiline_value(document, 'Finalidade', ordem_servico.finalidade)
-    add_multiline_value(document, 'Responsáveis', ordem_servico.responsaveis)
-    add_multiline_value(document, 'Designações', ordem_servico.designacoes)
-    add_multiline_value(document, 'Determinações', ordem_servico.determinacoes)
-    add_multiline_value(document, 'Observações', ordem_servico.observacoes)
-
-    return document_to_bytes(document)
+    """Renderização DOCX a partir da entidade OrdemServico, usando o modelo institucional."""
+    template_path = get_document_template_path(DocumentoOficioTipo.ORDEM_SERVICO)
+    mapping = build_ordem_servico_model_template_context(ordem_servico)
+    return render_docx_template_bytes(template_path, mapping)

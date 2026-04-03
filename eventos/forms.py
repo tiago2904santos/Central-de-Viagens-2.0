@@ -1118,43 +1118,280 @@ class PlanoTrabalhoStep4Form(FormComErroInvalidMixin, forms.ModelForm):
 
 
 class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
+    destinos_payload = forms.CharField(required=False, widget=forms.HiddenInput())
+
     class Meta:
         model = OrdemServico
         fields = [
-            'numero',
-            'ano',
-            'data_criacao',
-            'status',
             'evento',
             'oficio',
-            'finalidade',
-            'responsaveis',
+            'data_deslocamento',
+            'modelo_motivo',
+            'motivo_texto',
+            'viajantes',
             'designacoes',
             'determinacoes',
             'observacoes',
         ]
         widgets = {
-            'numero': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'ano': forms.NumberInput(attrs={'class': 'form-control', 'min': 2000}),
-            'data_criacao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'status': forms.Select(attrs={'class': ''}),
-            'evento': forms.Select(attrs={'class': ''}),
-            'oficio': forms.Select(attrs={'class': ''}),
-            'finalidade': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'responsaveis': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'designacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'determinacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'evento': forms.Select(attrs={'class': '', 'data-oficio-picker-search': 'always', 'data-oficio-picker-search-placeholder': 'Filtrar evento...'}),
+            'oficio': forms.Select(attrs={'class': '', 'data-oficio-picker-search': 'always', 'data-oficio-picker-search-placeholder': 'Filtrar ofício...'}),
+            'data_deslocamento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'modelo_motivo': forms.Select(attrs={'class': '', 'data-oficio-picker-search': 'always', 'data-oficio-picker-search-placeholder': 'Filtrar motivo...'}),
+            'motivo_texto': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Descreva o motivo operacional da ordem de serviço.'}),
+            'viajantes': forms.SelectMultiple(attrs={'class': 'form-select', 'size': 8, 'data-oficio-picker-search': 'always', 'data-oficio-picker-search-placeholder': 'Filtrar servidor...'}),
+            'designacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Complementos opcionais de designação.'}),
+            'determinacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Determinações adicionais, se houver.'}),
+            'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Observações complementares.'}),
         }
 
     def __init__(self, *args, **kwargs):
+        data = kwargs.get('data')
+        instance = kwargs.get('instance')
+        self._original_data_deslocamento = instance.data_deslocamento if instance and getattr(instance, 'pk', None) else None
+        self._original_viajantes_ids = list(instance.viajantes.values_list('pk', flat=True)) if instance and getattr(instance, 'pk', None) else []
+        if data is not None and instance and getattr(instance, 'pk', None):
+            patched_data = data.copy()
+            if 'viajantes' not in patched_data:
+                existing_ids = [str(pk) for pk in instance.viajantes.values_list('pk', flat=True)]
+                if hasattr(patched_data, 'appendlist'):
+                    for viajante_id in existing_ids:
+                        patched_data.appendlist('viajantes', viajante_id)
+                else:
+                    patched_data['viajantes'] = existing_ids
+            if 'data_deslocamento' not in patched_data and instance.data_deslocamento:
+                patched_data['data_deslocamento'] = instance.data_deslocamento.isoformat()
+            kwargs['data'] = patched_data
+
         super().__init__(*args, **kwargs)
         self.fields['evento'].required = False
         self.fields['oficio'].required = False
-        self.fields['numero'].required = False
-        self.fields['ano'].required = False
+        self.fields['data_deslocamento'].required = False
+        self.fields['modelo_motivo'].required = False
+        self.fields['viajantes'].required = False
         self.fields['evento'].queryset = Evento.objects.order_by('-data_inicio', 'titulo')
         self.fields['oficio'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
+        self.fields['modelo_motivo'].queryset = ModeloMotivoViagem.objects.filter(ativo=True).order_by('nome')
+        self.fields['viajantes'].queryset = Viajante.objects.select_related('cargo').filter(status=Viajante.STATUS_FINALIZADO).order_by('nome')
+        self.proximo_numero_preview = self._get_next_number_preview()
+
+        selected_event = None
+        if self.is_bound:
+            raw_event = (self.data.get('evento') or '').strip()
+            if raw_event.isdigit():
+                selected_event = Evento.objects.filter(pk=int(raw_event)).first()
+        elif self.instance and self.instance.evento_id:
+            selected_event = self.instance.evento
+        elif self.initial.get('evento'):
+            selected_event = Evento.objects.filter(pk=self.initial.get('evento')).first()
+
+        if selected_event:
+            self.fields['oficio'].queryset = Oficio.objects.filter(
+                Q(evento=selected_event) | Q(evento__isnull=True)
+            ).select_related('evento').order_by('-updated_at')
+
+        if self.instance and self.instance.pk:
+            self.initial.setdefault('viajantes', list(self.instance.viajantes.values_list('pk', flat=True)))
+            self.initial.setdefault('destinos_payload', json.dumps(self.instance.destinos_json or []))
+            if self.instance.modelo_motivo_id and not self.initial.get('modelo_motivo'):
+                self.initial['modelo_motivo'] = self.instance.modelo_motivo_id
+        else:
+            oficio_inicial = None
+            raw_oficio = None
+            if self.is_bound:
+                raw_oficio = (self.data.get('oficio') or '').strip()
+            else:
+                raw_oficio = str(self.initial.get('oficio') or '').strip()
+            if raw_oficio.isdigit():
+                oficio_inicial = Oficio.objects.filter(pk=int(raw_oficio)).prefetch_related('viajantes', 'trechos__destino_cidade', 'trechos__destino_estado').first()
+            if oficio_inicial:
+                self.initial.setdefault('viajantes', list(oficio_inicial.viajantes.values_list('pk', flat=True)))
+                self.initial.setdefault('data_deslocamento', self._infer_data_deslocamento(oficio=oficio_inicial, evento=selected_event))
+                self.initial.setdefault('destinos_payload', json.dumps(self._build_destinos_from_oficio(oficio_inicial)))
+            elif selected_event:
+                self.initial.setdefault('data_deslocamento', self._infer_data_deslocamento(evento=selected_event))
+                self.initial.setdefault('destinos_payload', json.dumps(self._build_destinos_from_evento(selected_event)))
+
+        if not self.initial.get('modelo_motivo'):
+            padrao = ModeloMotivoViagem.objects.filter(padrao=True, ativo=True).order_by('nome').first()
+            if padrao:
+                self.initial['modelo_motivo'] = padrao.pk
+                if not self.initial.get('motivo_texto'):
+                    self.initial['motivo_texto'] = padrao.texto
+
+    def _get_next_number_preview(self):
+        ano_atual = timezone.now().year
+        with transaction.atomic():
+            proximo = OrdemServico.get_next_available_numero(ano_atual)
+        return f'{proximo:02d}/{ano_atual}'
+
+    def _infer_data_deslocamento(self, *, oficio=None, evento=None):
+        if oficio:
+            primeiro_trecho = oficio.trechos.order_by('ordem', 'pk').first()
+            if primeiro_trecho and primeiro_trecho.saida_data:
+                return primeiro_trecho.saida_data
+            if oficio.evento_id and oficio.evento and oficio.evento.data_inicio:
+                return oficio.evento.data_inicio
+        if evento and evento.data_inicio:
+            return evento.data_inicio
+        return None
+
+    def _build_destinos_from_oficio(self, oficio):
+        destinos = []
+        seen = set()
+        for trecho in oficio.trechos.select_related('destino_cidade', 'destino_estado').order_by('ordem', 'pk'):
+            if not trecho.destino_cidade_id:
+                continue
+            key = trecho.destino_cidade_id
+            if key in seen:
+                continue
+            seen.add(key)
+            destinos.append(
+                {
+                    'estado_id': trecho.destino_estado_id,
+                    'estado_sigla': trecho.destino_estado.sigla if trecho.destino_estado_id else '',
+                    'cidade_id': trecho.destino_cidade_id,
+                    'cidade_nome': trecho.destino_cidade.nome,
+                }
+            )
+        return destinos
+
+    def _build_destinos_from_evento(self, evento):
+        return [
+            {
+                'estado_id': destino.estado_id,
+                'estado_sigla': destino.estado.sigla if destino.estado_id else '',
+                'cidade_id': destino.cidade_id,
+                'cidade_nome': destino.cidade.nome if destino.cidade_id else '',
+            }
+            for destino in evento.destinos.select_related('cidade', 'estado').order_by('ordem', 'pk')
+            if destino.cidade_id
+        ]
+
+    def _parse_destinos_payload(self, payload_text):
+        payload = []
+        if not payload_text:
+            return payload
+        try:
+            raw = json.loads(payload_text)
+        except (TypeError, ValueError):
+            raise forms.ValidationError('Destinos inválidos. Atualize a tela e tente novamente.')
+        if not isinstance(raw, list):
+            raise forms.ValidationError('Destinos inválidos. Atualize a tela e tente novamente.')
+
+        cidade_ids = []
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            cidade_id = item.get('cidade_id')
+            if isinstance(cidade_id, str) and cidade_id.isdigit():
+                cidade_id = int(cidade_id)
+            if isinstance(cidade_id, int) and cidade_id > 0:
+                cidade_ids.append(cidade_id)
+
+        cidades_map = {
+            cidade.pk: cidade
+            for cidade in Cidade.objects.select_related('estado').filter(pk__in=set(cidade_ids), ativo=True)
+        }
+        seen = set()
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            cidade_id = item.get('cidade_id')
+            if isinstance(cidade_id, str) and cidade_id.isdigit():
+                cidade_id = int(cidade_id)
+            if not isinstance(cidade_id, int):
+                continue
+            cidade = cidades_map.get(cidade_id)
+            if not cidade or cidade_id in seen:
+                continue
+            seen.add(cidade_id)
+            payload.append(
+                {
+                    'estado_id': cidade.estado_id,
+                    'estado_sigla': cidade.estado.sigla,
+                    'cidade_id': cidade.pk,
+                    'cidade_nome': cidade.nome,
+                }
+            )
+        return payload
+
+    def clean(self):
+        cleaned_data = super().clean()
+        evento = cleaned_data.get('evento')
+        oficio = cleaned_data.get('oficio')
+        motivo_texto = (cleaned_data.get('motivo_texto') or '').strip()
+        modelo_motivo = cleaned_data.get('modelo_motivo')
+        if not motivo_texto:
+            motivo_texto = str(self.data.get('finalidade') or '').strip()
+
+        if oficio and oficio.evento_id:
+            if evento and evento.pk != oficio.evento_id:
+                self.add_error('oficio', 'O ofício selecionado pertence a outro evento.')
+            elif not evento:
+                cleaned_data['evento'] = oficio.evento
+                evento = oficio.evento
+
+        destinos = []
+        try:
+            destinos = self._parse_destinos_payload((cleaned_data.get('destinos_payload') or '').strip())
+        except forms.ValidationError as exc:
+            self.add_error('destinos_payload', exc)
+
+        if not destinos and oficio:
+            destinos = self._build_destinos_from_oficio(oficio)
+        if not destinos and evento:
+            destinos = self._build_destinos_from_evento(evento)
+        cleaned_data['destinos_json'] = destinos
+
+        if not cleaned_data.get('data_deslocamento'):
+            cleaned_data['data_deslocamento'] = self._infer_data_deslocamento(oficio=oficio, evento=evento)
+
+        if not motivo_texto and modelo_motivo:
+            motivo_texto = (modelo_motivo.texto or '').strip()
+        cleaned_data['motivo_texto'] = motivo_texto
+        return cleaned_data
+
+    def save(self, commit=True):
+        data_deslocamento_anterior = getattr(self, '_original_data_deslocamento', None)
+        viajantes_anteriores_ids = list(getattr(self, '_original_viajantes_ids', []) or [])
+        is_create = not (self.instance and self.instance.pk)
+        instance = super().save(commit=False)
+        if is_create and not instance.data_criacao:
+            instance.data_criacao = timezone.localdate()
+        instance.motivo_texto = (self.cleaned_data.get('motivo_texto') or '').strip()
+        instance.destinos_json = self.cleaned_data.get('destinos_json') or []
+        instance.finalidade = instance.motivo_texto
+        selecionados = list(self.cleaned_data.get('viajantes') or [])
+        instance.responsaveis = '\n'.join(viajante.nome for viajante in selecionados if getattr(viajante, 'nome', ''))
+        data_deslocamento_limpa = self.cleaned_data.get('data_deslocamento')
+        if data_deslocamento_limpa:
+            instance.data_deslocamento = data_deslocamento_limpa
+        elif data_deslocamento_anterior and 'data_deslocamento' not in self.data:
+            instance.data_deslocamento = data_deslocamento_anterior
+
+        possui_data_deslocamento = bool(instance.data_deslocamento)
+        possui_motivo = bool((instance.motivo_texto or '').strip())
+        possui_destinos = bool(instance.destinos_json)
+        possui_viajantes = bool(selecionados or viajantes_anteriores_ids)
+        instance.status = (
+            OrdemServico.STATUS_FINALIZADO
+            if (possui_data_deslocamento and possui_motivo and possui_destinos and possui_viajantes)
+            else OrdemServico.STATUS_RASCUNHO
+        )
+
+        if commit:
+            instance.save()
+            self.save_m2m()
+            if instance.pk and 'viajantes' not in self.data and viajantes_anteriores_ids:
+                instance.viajantes.set(viajantes_anteriores_ids)
+                instance.responsaveis = '\n'.join(
+                    nome for nome in instance.viajantes.values_list('nome', flat=True) if str(nome or '').strip()
+                )
+                instance.save(update_fields=['responsaveis', 'updated_at'])
+        else:
+            self._save_m2m = self.save_m2m
+        return instance
 
 
 def _parse_hidden_ids(raw_value):
@@ -1175,7 +1412,7 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
         required=False,
         widget=forms.SelectMultiple(
             attrs={
-                'class': '',
+                'class': 'form-select termo-native-select',
                 'size': 6,
                 'data-preview-source': 'oficios',
             }
@@ -1183,6 +1420,11 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
     )
     viajantes_ids = forms.CharField(required=False, widget=forms.HiddenInput())
     veiculo_id = forms.CharField(required=False, widget=forms.HiddenInput())
+    data_evento_unica = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        label='Data única',
+    )
 
     class Meta:
         model = TermoAutorizacao
@@ -1194,8 +1436,8 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
             'data_evento_fim',
         ]
         widgets = {
-            'evento': forms.Select(attrs={'class': '', 'data-preview-source': 'evento'}),
-            'roteiro': forms.Select(attrs={'class': '', 'data-preview-source': 'roteiro'}),
+            'evento': forms.Select(attrs={'class': 'form-select', 'data-preview-source': 'evento'}),
+            'roteiro': forms.Select(attrs={'class': 'form-select', 'data-preview-source': 'roteiro'}),
             'destino': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Curitiba/PR, Londrina/PR...'}),
             'data_evento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'data_evento_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -1282,11 +1524,15 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
         if not self.cleaned_veiculo and self.context_data['veiculo_inferido']:
             self.cleaned_veiculo = self.context_data['veiculo_inferido']
 
+        data_unica = bool(cleaned_data.get('data_evento_unica'))
+        if data_unica and data.get('data_evento'):
+            data['data_evento_fim'] = data['data_evento']
+
         if not data.get('destino'):
             self.add_error('destino', 'Informe o destino do termo.')
         if not data.get('data_evento'):
             self.add_error('data_evento', 'Informe a data do termo.')
-        if data.get('data_evento') and data.get('data_evento_fim') and data['data_evento_fim'] < data['data_evento']:
+        if not data_unica and data.get('data_evento') and data.get('data_evento_fim') and data['data_evento_fim'] < data['data_evento']:
             self.add_error('data_evento_fim', 'A data final nao pode ser anterior a data inicial.')
 
         self.preview_payload = build_termo_preview_payload(
@@ -1339,7 +1585,12 @@ class TermoAutorizacaoEdicaoForm(FormComErroInvalidMixin, forms.ModelForm):
     oficios = forms.ModelMultipleChoiceField(
         queryset=Oficio.objects.none(),
         required=False,
-        widget=forms.SelectMultiple(attrs={'class': '', 'size': 6}),
+        widget=forms.SelectMultiple(attrs={'class': 'form-select termo-native-select', 'size': 6}),
+    )
+    data_evento_unica = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        label='Data única',
     )
 
     class Meta:
@@ -1352,8 +1603,8 @@ class TermoAutorizacaoEdicaoForm(FormComErroInvalidMixin, forms.ModelForm):
             'data_evento_fim',
         ]
         widgets = {
-            'evento': forms.Select(attrs={'class': ''}),
-            'roteiro': forms.Select(attrs={'class': ''}),
+            'evento': forms.Select(attrs={'class': 'form-select'}),
+            'roteiro': forms.Select(attrs={'class': 'form-select'}),
             'destino': forms.TextInput(attrs={'class': 'form-control'}),
             'data_evento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'data_evento_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -1378,11 +1629,14 @@ class TermoAutorizacaoEdicaoForm(FormComErroInvalidMixin, forms.ModelForm):
 
     def clean(self):
         data = super().clean()
+        data_unica = bool(data.get('data_evento_unica'))
+        if data_unica and data.get('data_evento'):
+            data['data_evento_fim'] = data['data_evento']
         if not data.get('destino'):
             self.add_error('destino', 'Informe o destino do termo.')
         if not data.get('data_evento'):
             self.add_error('data_evento', 'Informe a data do termo.')
-        if data.get('data_evento') and data.get('data_evento_fim') and data['data_evento_fim'] < data['data_evento']:
+        if not data_unica and data.get('data_evento') and data.get('data_evento_fim') and data['data_evento_fim'] < data['data_evento']:
             self.add_error('data_evento_fim', 'A data final nao pode ser anterior a data inicial.')
         return data
 
@@ -1504,6 +1758,7 @@ class JustificativaForm(FormComErroInvalidMixin, forms.ModelForm):
         preselected_oficio = kwargs.pop('preselected_oficio', None)
         super().__init__(*args, **kwargs)
         self.fields['oficio'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
+        self.fields['oficio'].required = False
         self.fields['modelo'].required = False
         self.fields['texto'].required = False
         self.fields['modelo'].queryset = ModeloJustificativa.objects.filter(ativo=True).order_by('nome')
@@ -1518,9 +1773,7 @@ class JustificativaForm(FormComErroInvalidMixin, forms.ModelForm):
 
     def clean_oficio(self):
         oficio = self.cleaned_data.get('oficio')
-        if not oficio:
-            raise forms.ValidationError('Selecione o ofício vinculado.')
-        if not self.instance.pk:
+        if oficio and not self.instance.pk:
             if Justificativa.objects.filter(oficio=oficio).exists():
                 raise forms.ValidationError(
                     f'Já existe uma justificativa para o ofício {oficio.numero_formatado}. '

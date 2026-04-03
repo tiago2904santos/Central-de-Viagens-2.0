@@ -133,7 +133,7 @@ def get_sidebar_config():
                 ),
                 _item(
                     'documentos-termos',
-                    'Termos',
+                    'Termos de Autorização',
                     'bi bi-file-check',
                     'eventos:documentos-termos',
                     order=4,
@@ -205,10 +205,10 @@ def get_sidebar_config():
             order=6,
             active_route_prefixes=['cadastros:veiculo-', 'cadastros:combustivel-'],
         ),
-        # 8. Configuracoes do sistema
+        # 8. Configurações
         _item(
             'configuracoes',
-            'Configuracoes do sistema',
+            'Configurações',
             'bi bi-gear',
             'cadastros:configuracoes',
             order=7,

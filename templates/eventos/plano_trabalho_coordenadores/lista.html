@@ -4,6 +4,7 @@
 {% block page_title %}Coordenadores Operacionais{% endblock %}
 
 {% block content %}
+{% url 'eventos:coordenadores-operacionais-cadastrar' as coordenador_novo_url %}
 <div class="container-fluid py-4 system-list-page system-list-page--simple">
   <div class="system-list-shell">
     <div class="page-header-cadastro system-list-header system-list-header--standard">
@@ -14,9 +15,6 @@
         </div>
       </div>
       <div class="system-list-header__actions-group">
-        <a href="{% url 'eventos:coordenadores-operacionais-cadastrar' %}" class="btn btn-primary system-list-action-btn">
-          <i class="bi bi-plus-lg me-1"></i>Novo coordenador
-        </a>
       </div>
     </div>
 
@@ -63,6 +61,7 @@
         </table>
       </div>
     </div>
+    {% include 'includes/list/floating_new_button.html' with url=coordenador_novo_url label='Novo coordenador' icon='bi-plus-lg' %}
   </div>
 </div>
 {% endblock %}

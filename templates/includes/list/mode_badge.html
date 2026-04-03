@@ -1,7 +1,5 @@
-<span class="system-list-mode-badge {% if mode == 'complete' %}is-complete{% else %}is-simple{% endif %}">
-    {% if mode == 'complete' %}
-    Visualizacao completa
-    {% else %}
+{% if mode != 'complete' %}
+<span class="system-list-mode-badge is-simple">
     Visualizacao simples
-    {% endif %}
 </span>
+{% endif %}

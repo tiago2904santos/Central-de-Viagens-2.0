@@ -18,7 +18,7 @@ from django.urls.exceptions import NoReverseMatch
 from django.utils import timezone
 from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods
-from cadastros.models import Cargo, Estado
+from cadastros.models import AssinaturaConfiguracao, Cargo, ConfiguracaoSistema, Estado, Viajante
 
 from .forms import (
     JustificativaForm,
@@ -387,7 +387,7 @@ OFICIO_DATE_SCOPE_CHOICES = [
     ('upcoming', 'Viagens futuras'),
     ('past', 'Viagens passadas'),
 ]
-OFICIO_ORDER_BY_DEFAULT = 'updated_at'
+OFICIO_ORDER_BY_DEFAULT = 'numero'
 OFICIO_ORDER_DIR_DEFAULT = 'desc'
 VIAGEM_STATUS_CARD_META = {
     'FUTURA': {'label': 'Vai acontecer', 'css_class': 'is-trip-future'},
@@ -946,13 +946,12 @@ def _oficio_list_display_or_default(value, fallback):
     return text
 
 
-def _oficio_list_header_chips(oficio, destinos_display, periodo_display, status_display):
+def _oficio_list_header_chips(oficio, destinos_display, periodo_display):
     return [
         _oficio_list_chip('Oficio', _oficio_list_display_or_default(oficio.numero_formatado, 'A definir'), 'is-key'),
         _oficio_list_chip('Protocolo', _oficio_list_display_or_default(oficio.protocolo_formatado, 'Nao informado')),
         _oficio_list_chip('Destino', _oficio_list_display_or_default(destinos_display, 'Nao definido')),
         _oficio_list_chip('Data do evento', _oficio_list_display_or_default(periodo_display, 'A definir'), 'is-date'),
-        _oficio_list_chip('Status', _oficio_list_display_or_default(status_display, 'Sem status')),
     ]
 
 
@@ -1287,44 +1286,24 @@ def _oficio_list_trip_status(oficio, today=None):
 def _oficio_list_theme(oficio, viagem_status, today=None):
     inicio, fim = _oficio_list_period_bounds(oficio)
     hoje = today or timezone.localdate()
-    theme_key = 'gray'
-    reason = 'Rascunho aguardando programacao.'
+    theme_key = 'red'
+    reason = 'Documento em rascunho ou pendente.'
 
-    if not inicio:
-        if oficio.status == Oficio.STATUS_FINALIZADO:
+    if oficio.status == Oficio.STATUS_FINALIZADO:
+        if not inicio:
             theme_key = 'blue'
             reason = 'Oficio finalizado sem periodo definido.'
-        meta = OFICIO_CARD_THEME_META[theme_key]
-        return {
-            'key': theme_key,
-            'label': meta['label'],
-            'css_class': meta['css_class'],
-            'status_css_class': meta['status_css_class'],
-            'reason': reason,
-        }
-
-    fim = fim or inicio
-    days_until = (inicio - hoje).days
-    if hoje > fim:
-        if oficio.status == Oficio.STATUS_FINALIZADO:
-            theme_key = 'accent'
-            reason = 'Evento concluido com oficio finalizado.'
         else:
-            theme_key = 'red'
-            reason = 'Evento ja passou e o oficio segue pendente.'
-    elif inicio <= hoje <= fim:
-        if oficio.status == Oficio.STATUS_FINALIZADO:
-            theme_key = 'orange'
-            reason = 'Evento em andamento com oficio finalizado.'
-        else:
-            theme_key = 'red'
-            reason = 'Evento em andamento e o oficio ainda exige atencao.'
-    elif days_until == 1:
-        theme_key = 'yellow'
-        reason = 'Evento acontece amanha.'
-    elif oficio.status == Oficio.STATUS_FINALIZADO:
-        theme_key = 'blue'
-        reason = 'Oficio finalizado para evento futuro.'
+            fim = fim or inicio
+            if hoje < inicio:
+                theme_key = 'blue'
+                reason = 'Finalizado para evento futuro.'
+            elif inicio <= hoje <= fim:
+                theme_key = 'orange'
+                reason = 'Finalizado com evento em andamento.'
+            else:
+                theme_key = 'accent'
+                reason = 'Finalizado com evento concluido.'
 
     meta = OFICIO_CARD_THEME_META[theme_key]
     return {
@@ -1436,9 +1415,6 @@ def _oficio_list_card(oficio):
     oficio_status = _oficio_process_status_meta(oficio)
     table_actions = _oficio_list_table_actions(oficio, oficio_downloads)
     footer_actions = _oficio_list_footer_actions(oficio, oficio_downloads)
-    status_display = oficio_status['label']
-    if viagem_status.get('relative_label'):
-        status_display = f"{status_display} - {viagem_status['relative_label']}"
     return {
         'pk': oficio.pk,
         'numero_display': _oficio_list_display_or_default(oficio.numero_formatado, 'A definir'),
@@ -1453,7 +1429,7 @@ def _oficio_list_card(oficio):
         'theme': theme,
         'header_chips': [
             chip
-            for chip in _oficio_list_header_chips(oficio, destinos_display, periodo_display, status_display)
+            for chip in _oficio_list_header_chips(oficio, destinos_display, periodo_display)
             if chip
         ],
         'corner_badges': _oficio_list_corner_badges(oficio, viagem_status),
@@ -1778,8 +1754,23 @@ def _format_periodo_curto(data_inicio, data_fim):
     return f'{data_inicio:%d/%m/%Y}'
 
 
-def _build_plano_trabalho_status_meta(plano):
+def _build_plano_trabalho_status_meta(plano, related_event=None):
     if plano.status == PlanoTrabalho.STATUS_FINALIZADO:
+        inicio = plano.evento_data_inicio or getattr(related_event, 'data_inicio', None)
+        fim = plano.evento_data_fim or getattr(related_event, 'data_fim', None) or inicio
+        hoje = timezone.localdate()
+        if not inicio or hoje < inicio:
+            return {
+                'label': plano.get_status_display(),
+                'badge_css_class': 'is-info',
+                'theme_class': 'is-tone-blue',
+            }
+        if inicio <= hoje <= fim:
+            return {
+                'label': plano.get_status_display(),
+                'badge_css_class': 'is-warning',
+                'theme_class': 'is-tone-orange',
+            }
         return {
             'label': plano.get_status_display(),
             'badge_css_class': 'is-finalizado',
@@ -1788,8 +1779,55 @@ def _build_plano_trabalho_status_meta(plano):
     return {
         'label': plano.get_status_display(),
         'badge_css_class': 'is-rascunho',
-        'theme_class': 'is-tone-gray',
+        'theme_class': 'is-tone-red',
     }
+
+
+def _resolve_temporal_theme(inicio, fim):
+    hoje = timezone.localdate()
+    if not inicio:
+        return {'badge_css_class': 'is-info', 'theme_class': 'is-tone-blue'}
+    limite = fim or inicio
+    if hoje < inicio:
+        return {'badge_css_class': 'is-info', 'theme_class': 'is-tone-blue'}
+    if inicio <= hoje <= limite:
+        return {'badge_css_class': 'is-warning', 'theme_class': 'is-tone-orange'}
+    return {'badge_css_class': 'is-finalizado', 'theme_class': 'is-tone-accent'}
+
+
+def _build_ordem_servico_status_meta(ordem):
+    label = ordem.get_status_display()
+    if ordem.status != OrdemServico.STATUS_FINALIZADO:
+        return {
+            'label': label,
+            'badge_css_class': 'is-rascunho',
+            'theme_class': 'is-tone-red',
+        }
+
+    inicio = getattr(getattr(ordem, 'evento', None), 'data_inicio', None)
+    fim = getattr(getattr(ordem, 'evento', None), 'data_fim', None)
+    if (not inicio or not fim) and ordem.oficio_id:
+        oficio_inicio, oficio_fim = _oficio_list_period_bounds(ordem.oficio)
+        inicio = inicio or oficio_inicio
+        fim = fim or oficio_fim
+
+    temporal = _resolve_temporal_theme(inicio, fim)
+    return {
+        'label': label,
+        'badge_css_class': temporal['badge_css_class'],
+        'theme_class': temporal['theme_class'],
+    }
+
+
+def _build_termo_card_theme_meta(termo):
+    css = _clean(getattr(getattr(termo, 'process_status', {}), 'get', lambda *_: '')('css_class'))
+    mapping = {
+        'is-rascunho': {'badge_css_class': 'is-rascunho', 'theme_class': 'is-tone-red'},
+        'is-finalizado-future': {'badge_css_class': 'is-info', 'theme_class': 'is-tone-blue'},
+        'is-finalizado-ongoing': {'badge_css_class': 'is-warning', 'theme_class': 'is-tone-orange'},
+        'is-finalizado': {'badge_css_class': 'is-finalizado', 'theme_class': 'is-tone-accent'},
+    }
+    return mapping.get(css, {'badge_css_class': 'is-muted', 'theme_class': 'is-tone-gray'})
 
 
 def _resolve_plano_trabalho_periodo(plano, related_event):
@@ -1826,7 +1864,7 @@ def _decorate_plano_trabalho_list_items(items):
     for plano in items:
         related_oficios = plano.get_oficios_relacionados() if hasattr(plano, 'get_oficios_relacionados') else []
         related_event = plano.get_evento_relacionado() if hasattr(plano, 'get_evento_relacionado') else plano.evento
-        status_meta = _build_plano_trabalho_status_meta(plano)
+        status_meta = _build_plano_trabalho_status_meta(plano, related_event=related_event)
         destino_display = plano.destinos_formatados_display or 'Destino a definir'
         periodo_display = _resolve_plano_trabalho_periodo(plano, related_event)
         solicitante_display = (
@@ -1917,7 +1955,7 @@ def _decorate_plano_trabalho_list_items(items):
             {'label': 'PLANO', 'value': f'PT {plano.numero_formatado or f"#{plano.pk}"}', 'css_class': 'is-key'},
             {'label': 'DESTINO', 'value': destino_display, 'css_class': ''},
             {'label': 'PERIODO', 'value': periodo_display, 'css_class': 'is-date'},
-            {'label': 'SOLICITANTE', 'value': f'{solicitante_display} ({status_meta["label"]})', 'css_class': ''},
+            {'label': 'SOLICITANTE', 'value': solicitante_display, 'css_class': ''},
         ]
         plano.oficios_block = {
             'count_label': oficios_count_label,
@@ -2693,12 +2731,13 @@ def planos_trabalho_global(request):
         queryset = queryset.filter(status=filters['status'])
 
     plano_order_map = {
+        'numero': 'numero',
         'updated_at': 'updated_at',
         'created_at': 'created_at',
         'status': 'status',
         'evento': 'evento__titulo',
     }
-    ordering = _resolve_ordering(filters, plano_order_map, 'updated_at')
+    ordering = _resolve_ordering(filters, plano_order_map, 'numero')
 
     queryset = queryset.distinct()
     page_obj = _paginate(queryset.order_by(ordering, '-created_at'), request.GET.get('page'))
@@ -2716,6 +2755,7 @@ def planos_trabalho_global(request):
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'status_choices': PlanoTrabalho.STATUS_CHOICES,
             'order_by_choices': [
+                ('numero', 'Numero'),
                 ('updated_at', 'AtualizaÃ§Ã£o'),
                 ('created_at', 'CriaÃ§Ã£o'),
                 ('status', 'Status'),
@@ -2918,9 +2958,119 @@ def plano_trabalho_download(request, pk, formato):
     return response
 
 
+def _ordem_servico_viajantes_display(ordem):
+    nomes = list(ordem.get_viajantes_relacionados())
+    if not nomes and ordem.responsaveis:
+        return ', '.join([line.strip() for line in (ordem.responsaveis or '').splitlines() if line.strip()])
+    nomes = [str(v.nome or '').strip() for v in nomes if str(v.nome or '').strip()]
+    if not nomes:
+        return 'Nao informado'
+    if len(nomes) <= 3:
+        return ', '.join(nomes)
+    return f"{', '.join(nomes[:3])} +{len(nomes) - 3}"
+
+
+def _ordem_servico_destinos_display(ordem):
+    destinos = []
+    seen = set()
+    for item in ordem.destinos_json or []:
+        if not isinstance(item, dict):
+            continue
+        cidade = _clean(item.get('cidade_nome'))
+        uf = _clean(item.get('estado_sigla')).upper()
+        if cidade and uf:
+            label = f'{cidade}/{uf}'
+        elif cidade:
+            label = cidade
+        else:
+            continue
+        if label in seen:
+            continue
+        seen.add(label)
+        destinos.append(label)
+    return ', '.join(destinos) if destinos else 'Nao informado'
+
+
+def _ordem_servico_chefia_contexto():
+    config = ConfiguracaoSistema.get_singleton()
+    assinatura = (
+        AssinaturaConfiguracao.objects.select_related('viajante', 'viajante__cargo')
+        .filter(
+            configuracao=config,
+            tipo=AssinaturaConfiguracao.TIPO_ORDEM_SERVICO,
+            ativo=True,
+        )
+        .order_by('ordem', 'pk')
+        .first()
+    )
+
+    nome = ''
+    cargo = ''
+    if assinatura and assinatura.viajante_id:
+        nome = _clean(getattr(assinatura.viajante, 'nome', ''))
+        cargo = _clean(getattr(getattr(assinatura.viajante, 'cargo', None), 'nome', ''))
+
+    if not nome:
+        nome = _clean(getattr(config, 'nome_chefia', ''))
+    if not cargo:
+        cargo = _clean(getattr(config, 'cargo_chefia', ''))
+
+    return {
+        'nome': nome or 'Nao informada',
+        'cargo': cargo or 'Cargo nao informado',
+    }
+
+
+def _ordem_servico_missing_fields(ordem):
+    missing = []
+    if not ordem.data_deslocamento:
+        missing.append('data de deslocamento')
+    if not _clean(ordem.motivo_texto or ordem.finalidade):
+        missing.append('motivo')
+    if not (ordem.destinos_json or []):
+        missing.append('destino')
+    if not ordem.get_viajantes_relacionados() and not _clean(ordem.responsaveis):
+        missing.append('equipe')
+    return missing
+
+
+def _ordem_servico_viajantes_items(ordem, limit=4):
+    viajantes = list(ordem.get_viajantes_relacionados())
+    items = []
+
+    for viajante in viajantes[:limit]:
+        nome = _clean(getattr(viajante, 'nome', ''))
+        if not nome:
+            continue
+        cargo = _clean(getattr(getattr(viajante, 'cargo', None), 'nome', ''))
+        lotacao = _clean(getattr(getattr(viajante, 'unidade_lotacao', None), 'nome', ''))
+        items.append({'nome': nome, 'cargo': cargo, 'lotacao': lotacao})
+
+    if items:
+        restante = len(viajantes) - len(items)
+        if restante > 0:
+            items.append({'nome': f'+{restante} servidor(es)', 'cargo': '', 'lotacao': ''})
+        return items
+
+    nomes = [_clean(line) for line in str(ordem.responsaveis or '').splitlines() if _clean(line)]
+    for nome in nomes[:limit]:
+        items.append({'nome': nome, 'cargo': '', 'lotacao': ''})
+    restante = len(nomes) - len(items)
+    if restante > 0:
+        items.append({'nome': f'+{restante} servidor(es)', 'cargo': '', 'lotacao': ''})
+
+    if not items:
+        return [{'nome': 'Nenhum servidor vinculado', 'cargo': '', 'lotacao': ''}]
+    return items
+
+
 def ordens_servico_global(request):
     filters = _base_documento_filters(request)
-    queryset = OrdemServico.objects.select_related('evento', 'oficio').all()
+    queryset = OrdemServico.objects.select_related('evento', 'oficio').prefetch_related(
+        Prefetch('viajantes', queryset=Viajante.objects.select_related('cargo', 'unidade_lotacao')),
+        Prefetch('oficio__viajantes', queryset=Viajante.objects.select_related('cargo', 'unidade_lotacao')),
+    ).all()
+    chefia_contexto = _ordem_servico_chefia_contexto()
     if filters['q']:
         queryset = queryset.filter(
             Q(finalidade__icontains=filters['q'])
@@ -2942,14 +3092,62 @@ def ordens_servico_global(request):
         'evento': 'evento__titulo',
         'numero': 'numero',
     }
-    ordering = _resolve_ordering(filters, ordem_order_map, 'updated_at')
+    ordering = _resolve_ordering(filters, ordem_order_map, 'numero')
 
     page_obj = _paginate(queryset.order_by(ordering, '-created_at'), request.GET.get('page'))
+    object_list = list(page_obj.object_list)
+    for ordem in object_list:
+        ordem.status_meta = _build_ordem_servico_status_meta(ordem)
+        ordem.card_theme_class = ordem.status_meta['theme_class']
+        ordem.open_url = reverse('eventos:documentos-ordens-servico-detalhe', kwargs={'pk': ordem.pk})
+        ordem.edit_url = reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk})
+        ordem.delete_url = reverse('eventos:documentos-ordens-servico-excluir', kwargs={'pk': ordem.pk})
+        ordem.download_docx_url = reverse(
+            'eventos:documentos-ordens-servico-download',
+            kwargs={'pk': ordem.pk, 'formato': DocumentoFormato.DOCX.value},
+        )
+        ordem.download_pdf_url = reverse(
+            'eventos:documentos-ordens-servico-download',
+            kwargs={'pk': ordem.pk, 'formato': DocumentoFormato.PDF.value},
+        )
+        ordem.evento_display = (
+            (ordem.evento.titulo or '').strip() if ordem.evento_id else 'Sem evento'
+        )
+        ordem.oficio_display = (
+            ordem.oficio.numero_formatado if ordem.oficio_id else 'Sem oficio'
+        )
+        ordem.data_criacao_display = ordem.data_criacao.strftime('%d/%m/%Y') if ordem.data_criacao else 'Nao informada'
+        ordem.data_deslocamento_display = ordem.data_deslocamento.strftime('%d/%m/%Y') if ordem.data_deslocamento else 'Nao informada'
+        ordem.viajantes_display = _ordem_servico_viajantes_display(ordem)
+        ordem.destinos_display = _ordem_servico_destinos_display(ordem)
+        ordem.motivo_display = _clean(ordem.motivo_texto or ordem.finalidade) or 'Nao informado'
+        ordem.missing_fields = _ordem_servico_missing_fields(ordem)
+        ordem.header_chips = [
+            {'label': 'Ordem', 'value': ordem.numero_formatado or EMPTY_DISPLAY, 'css_class': 'is-key'},
+            {'label': 'Evento', 'value': ordem.evento_display, 'css_class': ''},
+            {'label': 'Oficio', 'value': ordem.oficio_display, 'css_class': ''},
+            {'label': 'Criacao', 'value': ordem.data_criacao_display, 'css_class': 'is-date'},
+            {'label': 'Deslocamento', 'value': ordem.data_deslocamento_display, 'css_class': 'is-date'},
+        ]
+        ordem.corner_badges = [
+            {'value': ordem.status_meta['label'], 'css_class': ordem.status_meta['badge_css_class']},
+        ]
+        if ordem.missing_fields:
+            ordem.corner_badges.append({'value': f'Pendencias: {len(ordem.missing_fields)}', 'css_class': 'is-warning'})
+        ordem.viajantes_block = {
+            'count_label': f"{len(ordem.get_viajantes_relacionados()) or len([line for line in str(ordem.responsaveis or '').splitlines() if _clean(line)])} servidor(es)",
+            'items': _ordem_servico_viajantes_items(ordem),
+        }
+        ordem.contexto_block = {
+            'destinos': ordem.destinos_display,
+            'chefia_nome': chefia_contexto['nome'],
+            'chefia_cargo': chefia_contexto['cargo'],
+        }
     return render(
         request,
         'eventos/documentos/ordens_servico_lista.html',
         {
-            'object_list': list(page_obj.object_list),
+            'object_list': object_list,
             'page_obj': page_obj,
             'pagination_query': _query_without_page(request),
             'filters': filters,
@@ -2957,11 +3155,11 @@ def ordens_servico_global(request):
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'status_choices': OrdemServico.STATUS_CHOICES,
             'order_by_choices': [
+                ('numero', 'NÃºmero'),
                 ('updated_at', 'AtualizaÃ§Ã£o'),
                 ('created_at', 'CriaÃ§Ã£o'),
                 ('status', 'Status'),
                 ('evento', 'Evento'),
-                ('numero', 'NÃºmero'),
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
             'ordem_novo_url': reverse('eventos:documentos-ordens-servico-novo'),
@@ -2987,18 +3185,13 @@ def ordem_servico_novo(request):
         obj = form.save()
         messages.success(request, 'Ordem de serviÃ§o criada com sucesso.')
         return redirect(return_to or reverse('eventos:documentos-ordens-servico-detalhe', kwargs={'pk': obj.pk}))
-
-    return render(
+    return _render_ordem_servico_form(
         request,
-        'eventos/documentos/ordens_servico_form.html',
-        {
-            'form': form,
-            'object': None,
-            'return_to': return_to,
-            'context_source': context_source,
-            'preselected_event_id': preselected_event.pk if preselected_event else '',
-            'preselected_oficio_id': preselected_oficio.pk if preselected_oficio else '',
-        },
+        form=form,
+        return_to=return_to,
+        context_source=context_source,
+        preselected_event=preselected_event,
+        preselected_oficio=preselected_oficio,
     )
 
 
@@ -3012,16 +3205,54 @@ def ordem_servico_editar(request, pk):
         form.save()
         messages.success(request, 'Ordem de serviÃ§o atualizada.')
         return redirect(return_to or reverse('eventos:documentos-ordens-servico-detalhe', kwargs={'pk': obj.pk}))
+    return _render_ordem_servico_form(
+        request,
+        form=form,
+        object_instance=obj,
+        return_to=return_to,
+        context_source=context_source,
+    )
+
+
+def _render_ordem_servico_form(
+    request,
+    *,
+    form,
+    object_instance=None,
+    return_to='',
+    context_source='',
+    preselected_event=None,
+    preselected_oficio=None,
+):
+    selected_viajantes = []
+    if object_instance:
+        selected_viajantes = object_instance.get_viajantes_relacionados()
+    elif form.is_bound:
+        selected_viajantes = list(form.cleaned_data.get('viajantes') or []) if hasattr(form, 'cleaned_data') else []
+    else:
+        initial_ids = form.initial.get('viajantes') or []
+        selected_viajantes = list(Viajante.objects.select_related('cargo').filter(pk__in=initial_ids).order_by('nome'))
+
+    numero_preview = object_instance.numero_formatado if object_instance and object_instance.pk else getattr(form, 'proximo_numero_preview', '')
     return render(
         request,
         'eventos/documentos/ordens_servico_form.html',
         {
             'form': form,
-            'object': obj,
+            'object': object_instance,
             'return_to': return_to,
             'context_source': context_source,
-            'preselected_event_id': obj.evento_id or '',
-            'preselected_oficio_id': obj.oficio_id or '',
+            'preselected_event_id': preselected_event.pk if preselected_event else (object_instance.evento_id if object_instance else ''),
+            'preselected_oficio_id': preselected_oficio.pk if preselected_oficio else (object_instance.oficio_id if object_instance else ''),
+            'estados_choices': Estado.objects.filter(ativo=True).order_by('nome'),
+            'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
+            'motivos_manager_url': reverse('eventos:modelos-motivo-lista'),
+            'motivo_texto_api_base_url': reverse('eventos:modelos-motivo-texto-api', kwargs={'pk': 0}),
+            'selected_viajantes_payload': [
+                serializar_viajante_para_autocomplete(viajante) for viajante in selected_viajantes
+            ],
+            'ordem_numero_preview': numero_preview,
+            'hide_page_header': True,
         },
     )
 
@@ -3049,15 +3280,11 @@ def ordem_servico_excluir(request, pk):
 
 @require_http_methods(['GET'])
 def ordem_servico_download(request, pk, formato):
-    obj = get_object_or_404(OrdemServico.objects.select_related('oficio'), pk=pk)
+    obj = get_object_or_404(OrdemServico.objects.select_related('oficio', 'evento', 'modelo_motivo'), pk=pk)
     formato = _clean(formato).lower()
     if formato not in {DocumentoFormato.DOCX.value, DocumentoFormato.PDF.value}:
         raise Http404('Formato invÃ¡lido.')
-    docx_bytes = (
-        render_ordem_servico_docx(obj.oficio)
-        if obj.oficio_id
-        else render_ordem_servico_model_docx(obj)
-    )
+    docx_bytes = render_ordem_servico_model_docx(obj)
     payload = docx_bytes
     content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     if formato == DocumentoFormato.PDF.value:
@@ -3094,12 +3321,13 @@ def justificativas_global(request):
         queryset = queryset.filter(oficio_id=int(filters['oficio_id']))
 
     justificativa_order_map = {
+        'numero': 'pk',
         'updated_at': 'updated_at',
         'created_at': 'created_at',
         'oficio': 'oficio__numero',
         'modelo': 'modelo__nome',
     }
-    ordering = _resolve_ordering(filters, justificativa_order_map, 'updated_at')
+    ordering = _resolve_ordering(filters, justificativa_order_map, 'numero')
     queryset = queryset.order_by(ordering, '-created_at')
 
     page_obj = _paginate(queryset, request.GET.get('page'))
@@ -3108,11 +3336,19 @@ def justificativas_global(request):
         just.detail_url = reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': just.pk})
         just.edicao_url = reverse('eventos:documentos-justificativas-editar', kwargs={'pk': just.pk})
         just.excluir_url = reverse('eventos:documentos-justificativas-excluir', kwargs={'pk': just.pk})
-        just.oficio_url = reverse('eventos:oficio-step4', kwargs={'pk': just.oficio_id})
+        just.oficio_url = (
+            reverse('eventos:oficio-step4', kwargs={'pk': just.oficio_id})
+            if just.oficio_id else ''
+        )
         just.evento_url = (
             reverse('eventos:guiado-painel', kwargs={'pk': just.oficio.evento_id})
-            if just.oficio.evento_id else ''
+            if just.oficio_id and just.oficio and just.oficio.evento_id else ''
         )
+        just.card_theme_class = 'is-tone-blue'
+        has_text = bool(_clean(just.texto))
+        just.status_badge_label = 'Preenchida' if has_text else 'Pendente'
+        just.status_badge_css_class = 'is-info' if has_text else 'is-pending'
+        just.modelo_display = just.modelo.nome if just.modelo_id else 'Sem modelo'
         object_list.append(just)
 
     return render(
@@ -3125,6 +3361,7 @@ def justificativas_global(request):
             'filters': filters,
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'order_by_choices': [
+                ('numero', 'Numero'),
                 ('updated_at', 'AtualizaÃ§Ã£o'),
                 ('created_at', 'CriaÃ§Ã£o'),
                 ('oficio', 'OfÃ­cio'),
@@ -3443,6 +3680,28 @@ def _build_termo_filters(request):
 
 def _termo_status_meta(termo):
     fallback_label = getattr(termo, 'get_status_display', lambda: termo.status)() or termo.status or '-'
+    status = (termo.status or '').strip().upper()
+    if status == TermoAutorizacao.STATUS_RASCUNHO:
+        return {
+            'label': fallback_label,
+            'css_class': 'is-rascunho',
+        }
+
+    if status == TermoAutorizacao.STATUS_GERADO:
+        hoje = timezone.localdate()
+        inicio = getattr(termo, 'data_evento', None)
+        fim = getattr(termo, 'data_evento_fim', None) or inicio
+        if not inicio or hoje < inicio:
+            css_class = 'is-finalizado-future'
+        elif inicio <= hoje <= fim:
+            css_class = 'is-finalizado-ongoing'
+        else:
+            css_class = 'is-finalizado'
+        return {
+            'label': fallback_label,
+            'css_class': css_class,
+        }
+
     meta = TERMO_STATUS_CARD_META.get(termo.status, {})
     return {
         'label': meta.get('label', fallback_label),
@@ -3568,6 +3827,7 @@ def _render_termo_form(
             'buscar_viajantes_url': reverse('eventos:oficio-step1-viajantes-api'),
             'buscar_veiculos_url': reverse('eventos:oficio-step2-veiculos-busca-api'),
             'preview_url': reverse('eventos:documentos-termos-preview'),
+            'api_oficios_por_evento_url': reverse('eventos:documentos-termos-api-oficios-por-evento'),
             'selected_viajantes_payload': [
                 serializar_viajante_para_autocomplete(viajante) for viajante in selected_viajantes
             ],
@@ -3577,6 +3837,8 @@ def _render_termo_form(
             'read_only_context': read_only_context,
             'show_viajantes_selector': object_instance is None,
             'show_veiculo_selector': object_instance is None,
+            'estados_choices': Estado.objects.filter(ativo=True).order_by('nome'),
+            'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
         },
     )
 
@@ -3664,7 +3926,9 @@ def termos_global(request):
             'roteiro',
             'viajante',
             'viajante__cargo',
+            'viajante__unidade_lotacao',
             'veiculo',
+            'veiculo__combustivel',
         )
         .prefetch_related('oficios')
     )
@@ -3690,24 +3954,61 @@ def termos_global(request):
         queryset = queryset.filter(modo_geracao=filters['modo_geracao'])
 
     termo_order_map = {
+        'numero': 'pk',
         'updated_at': 'updated_at',
         'created_at': 'created_at',
         'status': 'status',
         'evento': 'evento__titulo',
         'servidor': 'servidor_nome',
     }
-    ordering = _resolve_ordering(filters, termo_order_map, 'updated_at')
+    ordering = _resolve_ordering(filters, termo_order_map, 'numero')
 
     page_obj = _paginate(queryset.order_by(ordering, '-created_at'), request.GET.get('page'))
     object_list = list(page_obj.object_list)
     for termo in object_list:
         termo.process_status = _termo_status_meta(termo)
+        termo.card_theme_meta = _build_termo_card_theme_meta(termo)
+        termo.card_theme_class = termo.card_theme_meta['theme_class']
+        termo.status_badge_css_class = termo.card_theme_meta['badge_css_class']
         termo.mode_meta = _termo_mode_meta(termo.modo_geracao)
         termo.context_display = _termo_context_display(termo)
         termo.title_display = termo.titulo_display
-        termo.servidor_resumo = termo.servidor_display or 'Sem servidor'
+        termo.servidor_nome_card = (termo.servidor_display or '').strip()
+        termo.servidor_resumo = termo.servidor_nome_card or 'Sem servidor'
+        termo.servidor_lotacao_card = (termo.servidor_lotacao or '').strip()
+        termo.servidor_cargo_card = (
+            (getattr(getattr(termo, 'viajante', None), 'cargo', None) and getattr(termo.viajante.cargo, 'nome', ''))
+            or ''
+        ).strip()
         termo.destino_resumo = termo.destino or '-'
         termo.periodo_resumo = termo.periodo_display or '-'
+        termo.oficios_resumo = termo.oficios_relacionados_display or 'Sem oficio'
+        termo.veiculo_placa_card = (termo.veiculo_placa or '').strip()
+        termo.veiculo_modelo_card = (termo.veiculo_modelo or '').strip()
+        termo.veiculo_combustivel_card = (termo.veiculo_combustivel or '').strip()
+
+        termo.has_servidor_card = bool(termo.servidor_nome_card)
+        termo.has_viatura_card = bool(
+            termo.veiculo_placa_card
+            or termo.veiculo_modelo_card
+            or termo.veiculo_combustivel_card
+            or termo.veiculo_id
+        )
+
+        has_oficio_link = bool(termo.oficio_id or (termo.oficios_resumo and termo.oficios_resumo != 'Sem oficio'))
+        if termo.evento_id and has_oficio_link:
+            termo.vinculo_badge_label = 'Evento + oficio'
+            termo.vinculo_badge_detail = f"{(termo.evento.titulo or '').strip() or f'Evento #{termo.evento_id}'} • {termo.oficios_resumo}"
+        elif termo.evento_id:
+            termo.vinculo_badge_label = 'Evento'
+            termo.vinculo_badge_detail = (termo.evento.titulo or '').strip() or f'Evento #{termo.evento_id}'
+        elif has_oficio_link:
+            termo.vinculo_badge_label = 'Oficio'
+            termo.vinculo_badge_detail = termo.oficios_resumo
+        else:
+            termo.vinculo_badge_label = ''
+            termo.vinculo_badge_detail = ''
+
         termo.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
         termo.detail_url = reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk})
         termo.edicao_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
@@ -3734,6 +4035,7 @@ def termos_global(request):
             'status_choices': TermoAutorizacao.STATUS_CHOICES,
             'modo_choices': TermoAutorizacao.MODO_CHOICES,
             'order_by_choices': [
+                ('numero', 'Numero'),
                 ('updated_at', 'AtualizaÃ§Ã£o'),
                 ('created_at', 'CriaÃ§Ã£o'),
                 ('status', 'Status'),
@@ -3747,6 +4049,20 @@ def termos_global(request):
 
 
 @require_http_methods(['GET'])
+def termo_autorizacao_oficios_por_evento(request):
+    evento_id = _clean(request.GET.get('evento_id'))
+    if not evento_id or not evento_id.isdigit():
+        return JsonResponse({'oficios': []})
+    oficios = list(
+        Oficio.objects.filter(evento_id=int(evento_id)).order_by('-updated_at')
+    )
+    result = [
+        {'id': o.pk, 'label': f'Oficio {o.numero_formatado or f"#{o.pk}"}'}
+        for o in oficios
+    ]
+    return JsonResponse({'oficios': result})
+
+
 def termo_autorizacao_preview(request):
     oficio_ids = _parse_int_list(request.GET.getlist('oficios'))
     if not oficio_ids:

@@ -21,7 +21,7 @@
                         data-list-view-toggle="rich"
                         aria-pressed="true"
                     >
-                        Visualizacao completa
+                        Completa
                     </button>
                     <button
                         type="button"
@@ -197,7 +197,7 @@
             {% endif %}
         </section>
 
-        <section class="oficio-list-grid oficios-view-pane oficios-view-pane--rich" aria-label="Visualizacao completa de oficios">
+        <section class="oficio-list-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de oficios">
             {% for oficio in object_list %}
             <article class="oficio-list-card {{ oficio.theme.css_class }}" id="oficio-card-{{ oficio.pk }}">
                 <div class="oficio-list-rich-layout">

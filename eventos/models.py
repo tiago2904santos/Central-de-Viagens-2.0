@@ -564,6 +564,23 @@ class OrdemServico(models.Model):
         related_name='ordens_servico',
         verbose_name='Ofício',
     )
+    data_deslocamento = models.DateField('Data do deslocamento', null=True, blank=True, db_index=True)
+    modelo_motivo = models.ForeignKey(
+        'ModeloMotivoViagem',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ordens_servico',
+        verbose_name='Modelo de motivo',
+    )
+    motivo_texto = models.TextField('Motivo', blank=True, default='')
+    viajantes = models.ManyToManyField(
+        'cadastros.Viajante',
+        related_name='ordens_servico',
+        blank=True,
+        verbose_name='Servidores',
+    )
+    destinos_json = models.JSONField('Destinos estruturados', blank=True, default=list)
     finalidade = models.TextField('Finalidade', blank=True, default='')
     responsaveis = models.TextField('Responsáveis', blank=True, default='')
     designacoes = models.TextField('Designações', blank=True, default='')
@@ -587,6 +604,70 @@ class OrdemServico(models.Model):
         if self.numero and self.ano:
             return f'{int(self.numero):02d}/{int(self.ano)}'
         return EMPTY_MASK_DISPLAY
+
+    @classmethod
+    def get_next_available_numero(cls, ano):
+        numeros_usados = list(
+            cls.objects.select_for_update()
+            .filter(ano=int(ano))
+            .exclude(numero__isnull=True)
+            .order_by('numero')
+            .values_list('numero', flat=True)
+        )
+        proximo = 1
+        for numero in numeros_usados:
+            if numero != proximo:
+                break
+            proximo += 1
+        return proximo
+
+    def get_evento_relacionado(self):
+        if self.evento_id:
+            return self.evento
+        if self.oficio_id and self.oficio and self.oficio.evento_id:
+            return self.oficio.evento
+        return None
+
+    def get_viajantes_relacionados(self):
+        vinculados = list(self.viajantes.select_related('cargo').order_by('nome')) if self.pk else []
+        if vinculados:
+            return vinculados
+        if self.oficio_id and self.oficio:
+            return list(self.oficio.viajantes.select_related('cargo').order_by('nome'))
+        return []
+
+    def clean(self):
+        super().clean()
+        if not self.data_criacao:
+            self.data_criacao = timezone.localdate()
+        if self.numero and not self.ano:
+            self.ano = int(self.data_criacao.year)
+        if self.evento_id and self.oficio_id and self.oficio and self.oficio.evento_id:
+            if self.oficio.evento_id != self.evento_id:
+                raise ValidationError({'oficio': 'O ofício selecionado pertence a outro evento.'})
+
+    def save(self, *args, **kwargs):
+        creating = self.pk is None
+        if not self.data_criacao:
+            self.data_criacao = timezone.localdate()
+        if self.numero and not self.ano:
+            self.ano = int(self.data_criacao.year)
+
+        if creating and not self.numero:
+            ano = int(self.ano or self.data_criacao.year)
+            self.ano = ano
+            for attempt in range(5):
+                try:
+                    with transaction.atomic():
+                        self.numero = self.get_next_available_numero(ano)
+                        super().save(*args, **kwargs)
+                    return
+                except IntegrityError:
+                    if attempt == 4:
+                        raise
+                    self.numero = None
+
+        super().save(*args, **kwargs)
 
 
 class EfetivoPlanoTrabalhoDocumento(models.Model):
@@ -1648,6 +1729,8 @@ class Justificativa(models.Model):
         Oficio,
         on_delete=models.CASCADE,
         related_name='justificativa',
+        null=True,
+        blank=True,
         verbose_name='Ofício',
     )
     modelo = models.ForeignKey(
@@ -1668,7 +1751,9 @@ class Justificativa(models.Model):
         ordering = ['-updated_at', '-created_at']
 
     def __str__(self):
-        return f'Justificativa do {self.oficio}'
+        if self.oficio_id and self.oficio:
+            return f'Justificativa do {self.oficio}'
+        return f'Justificativa #{self.pk or "nova"} sem ofício'
 
 
 class EventoDestino(models.Model):

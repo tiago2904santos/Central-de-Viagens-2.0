@@ -12,7 +12,7 @@
                     <h1 class="h4 mb-3">Excluir JT-{{ object.pk|stringformat:"04d" }}</h1>
                     <p class="text-muted">Esta ação remove permanentemente a justificativa e seus dados. O ofício vinculado não é afetado.</p>
                     <div class="border rounded p-3 mb-4 bg-light-subtle">
-                        <div><strong>Ofício:</strong> {{ object.oficio.numero_formatado }}</div>
+                        <div><strong>Ofício:</strong> {% if object.oficio %}{{ object.oficio.numero_formatado }}{% else %}Sem ofício{% endif %}</div>
                         {% if object.modelo %}<div><strong>Modelo:</strong> {{ object.modelo.nome }}</div>{% endif %}
                         {% if object.texto %}
                         <div class="mt-1"><strong>Texto:</strong> {{ object.texto|truncatechars:150 }}</div>

@@ -6,7 +6,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from cadastros.models import Cargo, Cidade, CombustivelVeiculo, Estado, UnidadeLotacao, Viajante, Veiculo
+from cadastros.models import Cargo, Cidade, CombustivelVeiculo, ConfiguracaoSistema, Estado, UnidadeLotacao, Viajante, Veiculo
 from eventos.models import (
     Evento,
     EventoDestino,
@@ -19,7 +19,10 @@ from eventos.models import (
     TermoAutorizacao,
 )
 from eventos.services.documentos.renderer import get_termo_autorizacao_template_path
-from eventos.services.documentos.termo_autorizacao import build_termo_autorizacao_template_context
+from eventos.services.documentos.termo_autorizacao import (
+    build_saved_termo_autorizacao_template_context,
+    build_termo_autorizacao_template_context,
+)
 
 
 User = get_user_model()
@@ -44,6 +47,14 @@ class TermoAutorizacaoModuleTest(TestCase):
             combustivel=self.combustivel,
             tipo=Veiculo.TIPO_DESCARACTERIZADO,
             status=Veiculo.STATUS_FINALIZADO,
+        )
+        ConfiguracaoSistema.objects.create(
+            nome_orgao='Polícia Civil do Paraná',
+            sigla_orgao='PCPR',
+            divisao='Diretoria de Polícia do Interior',
+            unidade='Departamento de Polícia Civil',
+            cidade_endereco='Curitiba',
+            uf='PR',
         )
         self.evento = Evento.objects.create(
             titulo='Evento Termos',
@@ -119,9 +130,10 @@ class TermoAutorizacaoModuleTest(TestCase):
         response = self.client.get(reverse('eventos:documentos-termos-novo'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Novo termo')
-        self.assertContains(response, 'Evento, oficios e roteiro')
-        self.assertContains(response, 'Dados essenciais')
+        self.assertContains(response, 'Novo termo de autorizacao')
+        self.assertContains(response, 'Contexto documental')
+        self.assertContains(response, 'Período e horário de atendimento')
+        self.assertContains(response, 'Servidores e viatura')
         self.assertNotContains(response, 'Escolha o modo de criacao')
         self.assertNotContains(response, 'Texto complementar')
         self.assertNotContains(response, 'Observacoes')
@@ -133,8 +145,8 @@ class TermoAutorizacaoModuleTest(TestCase):
         response = self.client.get(reverse('eventos:documentos-termos-novo-rapido'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Novo termo')
-        self.assertContains(response, 'Dados essenciais')
+        self.assertContains(response, 'Novo termo de autorizacao')
+        self.assertContains(response, 'Período e horário de atendimento')
 
     def test_preview_evento_puxa_datas_destinos_e_roteiro(self):
         response = self.client.get(
@@ -258,20 +270,37 @@ class TermoAutorizacaoModuleTest(TestCase):
                 sorted([self.oficio_a.pk, self.oficio_b.pk]),
             )
 
-    def test_template_context_formata_nome_lotacao_e_viatura_em_title_case(self):
+    def test_template_context_formata_nome_lotacao_em_caixa_alta(self):
         mapping, _viatura_data = build_termo_autorizacao_template_context(
             self.oficio_a,
             viajante=self.viajante_a,
         )
 
         self.assertEqual(mapping['nome_servidor'], 'Servidor A')
-        self.assertEqual(mapping['lotacao'], 'Unidade Termos')
+        self.assertEqual(mapping['lotacao'], 'UNIDADE TERMOS')
         self.assertEqual(mapping['viatura'], 'Spin')
         self.assertEqual(mapping['combustivel'], 'Gasolina')
-        self.assertEqual(mapping['divisao'], 'DIRETORIA DE POLÍCIA DO INTERIOR')
+        self.assertEqual(mapping['divisao'], 'Diretoria de Polícia do Interior')
         self.assertEqual(mapping['unidade'], 'DEPARTAMENTO DE POLÍCIA CIVIL')
         self.assertEqual(mapping['unidade_rodape'], 'Departamento de Polícia Civil')
         self.assertEqual(mapping['placa'], mapping['placa'].upper())
+
+    def test_template_context_de_termo_salvo_normaliza_lotacao_snapshot_em_caixa_alta(self):
+        termo = TermoAutorizacao.objects.create(
+            evento=self.evento,
+            oficio=self.oficio_a,
+            destino='Curitiba/PR',
+            data_evento=date(2026, 3, 18),
+            servidor_nome='SERVIDOR SNAPSHOT',
+            servidor_rg='1234567',
+            servidor_cpf='529.982.247-25',
+            servidor_telefone='(41) 99999-9999',
+            servidor_lotacao='UNIDADE DOCUMENTAL ESPECIAL',
+        )
+
+        mapping, _viatura_data, _template_variant = build_saved_termo_autorizacao_template_context(termo)
+
+        self.assertEqual(mapping['lotacao'], 'UNIDADE DOCUMENTAL ESPECIAL')
 
     def test_novo_termo_inferido_sem_viatura_gera_um_por_servidor(self):
         response = self.client.post(
@@ -482,13 +511,20 @@ class JustificativaModuleTest(TestCase):
         self.assertIn(response.status_code, [200, 302])
         self.assertTrue(Justificativa.objects.filter(oficio=self.oficio).exists())
 
-    def test_formulario_global_exige_oficio(self):
+    def test_formulario_global_permita_criar_sem_oficio(self):
         response = self.client.post(
             reverse('eventos:documentos-justificativas-nova'),
             {'oficio': '', 'texto': 'Sem ofício.'},
         )
+        self.assertIn(response.status_code, [200, 302])
+        just = Justificativa.objects.filter(texto='Sem ofício.').first()
+        self.assertIsNotNone(just)
+        self.assertIsNone(just.oficio_id)
+
+    def test_formulario_global_exibe_botao_gerenciador_modelos(self):
+        response = self.client.get(reverse('eventos:documentos-justificativas-nova'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(Justificativa.objects.filter(texto='Sem ofício.').exists())
+        self.assertContains(response, reverse('eventos:modelos-justificativa-lista'))
 
     def test_preselected_oficio_id_funciona(self):
         url = reverse('eventos:documentos-justificativas-nova') + f'?preselected_oficio_id={self.oficio.pk}'
@@ -529,6 +565,14 @@ class JustificativaModuleTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Detalhe test')
+
+    def test_detalhe_justificativa_sem_oficio_funciona(self):
+        just = Justificativa.objects.create(oficio=None, texto='Sem vínculo')
+        response = self.client.get(
+            reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': just.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'sem ofício vinculado')
 
     def test_excluir_justificativa_funciona(self):
         just = Justificativa.objects.create(oficio=self.oficio, texto='Para excluir')

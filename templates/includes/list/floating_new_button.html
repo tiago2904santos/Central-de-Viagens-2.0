@@ -1,4 +1,10 @@
-<a href="{{ url }}" class="system-list-fab {% if extra_class %}{{ extra_class }}{% endif %}">
-    <i class="bi {{ icon|default:'bi-plus-lg' }}"></i>
-    <span>{{ label }}</span>
-</a>
+<div class="system-list-fab-group">
+	<a href="#" class="system-list-fab system-list-fab--scroll-up" data-scroll-top aria-label="Subir lista">
+		<i class="bi bi-arrow-up"></i>
+		<span class="visually-hidden">Subir lista</span>
+	</a>
+	<a href="{{ url }}" class="system-list-fab {% if extra_class %}{{ extra_class }}{% endif %}">
+		<i class="bi {{ icon|default:'bi-plus-lg' }}"></i>
+		<span>{{ label }}</span>
+	</a>
+</div>

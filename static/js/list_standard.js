@@ -1,4 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
+    var scrollTopButtons = Array.prototype.slice.call(
+        document.querySelectorAll('[data-scroll-top]')
+    );
+
+    scrollTopButtons.forEach(function(button) {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    });
+
     var roots = Array.prototype.slice.call(
         document.querySelectorAll('[data-list-view-root], [data-oficios-view-root]')
     );

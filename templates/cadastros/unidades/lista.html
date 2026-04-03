@@ -6,9 +6,17 @@
 
 {% block content %}
 <div class="container-fluid py-4 system-list-page system-list-page--simple">
-    <div class="system-list-shell">
-    {% include 'includes/list/page_header.html' with title='Unidades de Lotacao' subtitle='Lista simples de apoio aos cadastros operacionais.' secondary_url=voltar_url secondary_label=voltar_label primary_url=nova_unidade_url primary_label='Cadastrar unidade' %}
-    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+    <div class="oficios-list-shell system-list-shell">
+    <header class="oficios-list-header">
+        <div>
+            <h1 class="mb-1">Unidades de Lotacao</h1>
+            <p class="oficios-list-header__subtitle mb-0">Lista simples de apoio aos cadastros operacionais.</p>
+        </div>
+        <div class="oficios-list-header__controls">
+            {% include 'includes/list/mode_badge.html' with mode='simple' %}
+            <a href="{{ voltar_url }}" class="btn btn-outline-secondary system-list-action-btn">{{ voltar_label }}</a>
+        </div>
+    </header>
 
     <div class="card filter-card mb-4 system-filter-card">
         <div class="card-body py-3">

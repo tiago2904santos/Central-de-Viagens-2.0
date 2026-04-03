@@ -9,8 +9,12 @@
         <div>
             <h1 class="mb-1">JT-{{ object.pk|stringformat:"04d" }}</h1>
             <p class="text-muted mb-0">
+                {% if object.oficio %}
                 Justificativa do {{ object.oficio.numero_formatado }}
                 {% if object.oficio.evento %} - {{ object.oficio.evento.titulo|default:"" }}{% endif %}
+                {% else %}
+                Justificativa sem ofício vinculado
+                {% endif %}
             </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
@@ -41,9 +45,13 @@
                     <div class="oficio-process-meta-item">
                         <span class="oficio-process-meta-label">Oficio</span>
                         <span class="oficio-process-meta-value">
+                            {% if object.oficio %}
                             <a href="{% url 'eventos:oficio-step4' object.oficio.pk %}" class="text-decoration-none">
                                 {{ object.oficio.numero_formatado }}
                             </a>
+                            {% else %}
+                            -
+                            {% endif %}
                         </span>
                     </div>
                     <div class="oficio-process-meta-item">
@@ -53,7 +61,7 @@
                     <div class="oficio-process-meta-item">
                         <span class="oficio-process-meta-label">Evento</span>
                         <span class="oficio-process-meta-value">
-                            {% if object.oficio.evento %}
+                            {% if object.oficio and object.oficio.evento %}
                             <a href="{% url 'eventos:guiado-painel' object.oficio.evento.pk %}" class="text-decoration-none">
                                 {{ object.oficio.evento.titulo|default:"(sem titulo)" }}
                             </a>
@@ -94,14 +102,16 @@
                         <a href="{% url 'eventos:documentos-justificativas-editar' object.pk %}" class="btn btn-outline-primary btn-sm">
                             Editar justificativa
                         </a>
+                        {% if object.oficio %}
                         <a href="{% url 'eventos:oficio-justificativa' object.oficio.pk %}" class="btn btn-outline-secondary btn-sm">
                             Ver no contexto do oficio
                         </a>
                         <a href="{% url 'eventos:oficio-step4' object.oficio.pk %}" class="btn btn-outline-secondary btn-sm">
                             Resumo do oficio
                         </a>
+                        {% endif %}
                     </div>
-                    {% if object.oficio.evento %}
+                    {% if object.oficio and object.oficio.evento %}
                     <hr>
                     <div class="small text-muted text-uppercase mb-2">Evento vinculado</div>
                     <div class="fw-semibold">{{ object.oficio.evento.titulo|default:"(sem titulo)" }}</div>

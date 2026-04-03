@@ -64,7 +64,7 @@ def cadastros_hub(request):
             'action': 'Abrir lista',
         },
         {
-            'label': 'Configuracoes do sistema',
+            'label': 'Configuracoes',
             'count': ConfiguracaoSistema.objects.count() or 1,
             'description': 'Parametros gerais, assinaturas ativas e dados institucionais.',
             'url': reverse('cadastros:configuracoes'),

@@ -32,6 +32,7 @@ urlpatterns = [
     path('documentos/termos/', login_required(views_global.termos_global), name='documentos-termos'),
     path('documentos/termos/novo/', login_required(views_global.termo_autorizacao_novo), name='documentos-termos-novo'),
     path('documentos/termos/preview/', login_required(views_global.termo_autorizacao_preview), name='documentos-termos-preview'),
+    path('documentos/termos/api/oficios-por-evento/', login_required(views_global.termo_autorizacao_oficios_por_evento), name='documentos-termos-api-oficios-por-evento'),
     path('documentos/termos/novo/rapido/', login_required(views_global.termo_autorizacao_novo_rapido), name='documentos-termos-novo-rapido'),
     path('documentos/termos/novo/automatico-com-viatura/', login_required(views_global.termo_autorizacao_novo_automatico_com_viatura), name='documentos-termos-novo-automatico-com-viatura'),
     path('documentos/termos/novo/automatico-sem-viatura/', login_required(views_global.termo_autorizacao_novo_automatico_sem_viatura), name='documentos-termos-novo-automatico-sem-viatura'),

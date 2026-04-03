@@ -14,11 +14,5 @@
         {% if secondary_url %}
         <a href="{{ secondary_url }}" class="btn btn-outline-secondary system-list-action-btn">{{ secondary_label }}</a>
         {% endif %}
-        {% if primary_url %}
-        <a href="{{ primary_url }}" class="btn {% if primary_variant %}btn-{{ primary_variant }}{% else %}btn-primary{% endif %} system-list-new-btn system-list-action-btn">
-            <i class="bi {{ primary_icon|default:'bi-plus-lg' }} me-1"></i>
-            {{ primary_label }}
-        </a>
-        {% endif %}
     </div>
 </div>

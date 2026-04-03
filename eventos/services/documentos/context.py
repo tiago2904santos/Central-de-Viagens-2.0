@@ -72,6 +72,8 @@ def _format_document_display_token(token, is_first_word):
     alpha_only = ''.join(char for char in stripped if char.isalpha())
     if alpha_only.upper() in _ROMAN_NUMERALS:
         return stripped.upper()
+    if len(alpha_only) == 1 and stripped.upper() == stripped:
+        return stripped.upper()
     lowered = stripped.lower()
     if stripped in _KNOWN_DISPLAY_ACRONYMS:
         return stripped

@@ -19,6 +19,8 @@
             </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
+            {% if object %}{% url 'eventos:documentos-justificativas-editar' object.pk as form_self_url %}{% else %}{% url 'eventos:documentos-justificativas-nova' as form_self_url %}{% endif %}
+            <a href="{% url 'eventos:modelos-justificativa-lista' %}?next={{ form_self_url|urlencode }}" class="btn btn-outline-primary">Gerenciar modelos de justificativa</a>
             <a href="{{ return_to|default:'/eventos/documentos/justificativas/' }}" class="btn btn-outline-secondary">Voltar</a>
         </div>
     </div>
@@ -41,16 +43,16 @@
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold" for="{{ form.oficio.id_for_label }}">
-                                Ofício <span class="text-danger">*</span>
+                                Ofício
                             </label>
                             {{ form.oficio }}
                             {% if form.oficio.errors %}
                             <div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>
                             {% endif %}
                             {% if object %}
-                            <div class="form-text">O vínculo com o ofício não pode ser alterado após a criação.</div>
+                            <div class="form-text">Vínculo opcional com o ofício.</div>
                             {% else %}
-                            <div class="form-text">Selecione o ofício ao qual esta justificativa pertence. Apenas um por ofício.</div>
+                            <div class="form-text">Opcional. Se informado, mantém apenas uma justificativa por ofício.</div>
                             {% endif %}
                         </div>
 

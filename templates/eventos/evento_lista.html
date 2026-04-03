@@ -6,8 +6,13 @@
 
 {% block content %}
 <div class="container-fluid py-4 system-list-page system-list-page--complete">
-    <div class="system-list-shell">
-        {% include 'includes/list/page_header.html' with title='Eventos' subtitle='Leitura em cascata dos documentos vinculados: Oficios, Planos de Trabalho e Ordens de Servico no mesmo card.' primary_url=evento_novo_url primary_label='Novo (fluxo guiado)' primary_icon='bi-signpost-2' primary_variant='success' %}
+    <div class="oficios-list-shell system-list-shell">
+        <header class="oficios-list-header">
+            <div>
+                <h1 class="mb-1">Eventos</h1>
+                <p class="oficios-list-header__subtitle mb-0">Leitura em cascata dos documentos vinculados: Oficios, Planos de Trabalho e Ordens de Servico no mesmo card.</p>
+            </div>
+        </header>
 
         <div class="card filter-card system-filter-card">
             <div class="card-body py-3">

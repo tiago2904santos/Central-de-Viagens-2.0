@@ -5,11 +5,23 @@
 {% block page_title %}Justificativas{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--simple">
-    <div class="system-list-shell">
+<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.justificativas.global.view-mode">
+    <div class="oficios-list-shell system-list-shell">
     {% url 'eventos:oficios-global' as oficios_url %}
-    {% include 'includes/list/page_header.html' with title='Lista global de justificativas' subtitle='Acompanhamento honesto das justificativas vinculadas aos oficios.' secondary_url=oficios_url secondary_label='Oficios' %}
-    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+    <header class="oficios-list-header">
+        <div>
+            <h1 class="mb-1">Lista global de justificativas</h1>
+            <p class="oficios-list-header__subtitle mb-0">Acompanhamento honesto das justificativas vinculadas aos oficios.</p>
+        </div>
+        <div class="oficios-list-header__controls">
+            {% include 'includes/list/mode_badge.html' with mode='complete' %}
+            <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista global de justificativas">
+                <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
+                <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+            </div>
+            <a href="{{ oficios_url }}" class="btn btn-outline-secondary system-list-action-btn">Oficios</a>
+        </div>
+    </header>
 
     <div class="card filter-card system-filter-card">
         <div class="card-body py-3">
@@ -48,7 +60,7 @@
         </div>
     </div>
 
-    <div class="system-list-table-wrap">
+    <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de justificativas">
         <div class="table-responsive">
             <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
                 <thead class="table-light">
@@ -103,7 +115,92 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
+
+    <section class="documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de justificativas globais">
+        {% for row in object_list %}
+        <article class="oficio-list-card">
+            <div class="oficio-list-rich-layout">
+                <div class="oficio-list-card__header">
+                    <div class="oficio-list-chip-list oficio-list-chip-list--meta">
+                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                            <span class="oficio-list-chip__label">Oficio</span>
+                            <span class="oficio-list-chip__value">{{ row.oficio.numero_formatado }}</span>
+                        </span>
+                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                            <span class="oficio-list-chip__label">Antecedencia</span>
+                            <span class="oficio-list-chip__value">
+                                {% if row.info.dias_antecedencia is not None %}
+                                {{ row.info.dias_antecedencia }} dia(s)
+                                {% else %}
+                                —
+                                {% endif %}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="oficio-list-card__header-status">
+                        {% if row.info.status_key == 'preenchida' %}
+                        <span class="oficio-list-badge is-success"><span>{{ row.info.status_label }}</span></span>
+                        {% elif row.info.status_key == 'pendente' %}
+                        <span class="oficio-list-badge is-warning"><span>{{ row.info.status_label }}</span></span>
+                        {% else %}
+                        <span class="oficio-list-badge is-muted"><span>{{ row.info.status_label }}</span></span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="oficio-list-card__secondary">
+                    <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                        <div class="oficio-list-subcard__header">
+                            <div>
+                                <h3 class="oficio-list-subcard__title">Contexto do oficio</h3>
+                                <p class="oficio-list-subcard__subtitle">Evento e destino operacional</p>
+                            </div>
+                        </div>
+                        <div class="oficio-list-subcard__body">
+                            <div class="oficio-list-term-list">
+                                <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
+                                    <span class="oficio-list-term-row__name">Evento</span>
+                                    <div class="oficio-list-term-row__actions">
+                                        {% if row.evento %}
+                                        <a href="{{ row.evento_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                                            <i class="bi bi-calendar-event"></i>
+                                            <span>{{ row.evento.titulo|default:'(sem titulo)' }}</span>
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted small">Sem evento</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
+                                    <span class="oficio-list-term-row__name">Destino</span>
+                                    <div class="oficio-list-term-row__actions">
+                                        <span class="text-muted small">{{ row.destinos_display }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+                    <div class="oficio-list-card__footer-actions">
+                        <a href="{{ row.justificativa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir justificativa">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                            <span>Abrir</span>
+                        </a>
+                        <a href="{{ row.oficio_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Abrir oficio no wizard">
+                            <i class="bi bi-journal-text"></i>
+                            <span>Step 4</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </article>
+        {% empty %}
+        <div class="oficios-table-panel__empty">Nenhuma justificativa encontrada.</div>
+        {% endfor %}
+    </section>
 
     {% include 'includes/pagination.html' %}
 </div>

@@ -5,10 +5,21 @@
 {% block page_title %}Termos de autorizacao{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--complete">
-    <div class="system-list-shell">
-    {% include 'includes/list/page_header.html' with title='Lista de termos' subtitle='Mesmo padrao de navegacao da lista de oficios, com cards objetivos e hierarquia clara.' primary_url=termo_novo_url primary_label='Novo termo' %}
-    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='complete' %}</div>
+<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.termos.documentos.view-mode">
+    <div class="oficios-list-shell system-list-shell">
+    <header class="oficios-list-header">
+        <div>
+            <h1 class="mb-1">Lista de termos</h1>
+            <p class="oficios-list-header__subtitle mb-0">Mesmo layout documental de planos, oficios e justificativas.</p>
+        </div>
+        <div class="oficios-list-header__controls">
+            {% include 'includes/list/mode_badge.html' with mode='complete' %}
+            <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de termos">
+                <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
+                <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+            </div>
+        </div>
+    </header>
 
     <div class="card filter-card system-filter-card">
         <div class="card-body py-3">
@@ -77,65 +88,124 @@
         </div>
     </div>
 
-    <div class="termo-list-grid">
+    <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de termos">
+        <div class="table-responsive">
+            <table class="table table-hover system-list-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Termo</th>
+                        <th>Servidor</th>
+                        <th>Destino</th>
+                        <th>Atualizado</th>
+                        <th class="text-end">Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for termo in object_list %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ termo.numero_formatado }}</div>
+                            <div class="small text-muted">{{ termo.context_display }}</div>
+                        </td>
+                        <td>{{ termo.servidor_resumo }}</td>
+                        <td>{{ termo.destino_resumo }}</td>
+                        <td>{{ termo.updated_at|date:"d/m/Y H:i" }}</td>
+                        <td class="text-end">
+                            <a href="{{ termo.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                            <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted py-5">Nenhum termo encontrado com os filtros atuais.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de termos de autorizacao">
         {% for termo in object_list %}
-        <article class="termo-list-card {{ termo.process_status.css_class }}">
-            <div class="termo-list-card__top">
-                <div>
-                    <div class="termo-list-card__title-row">
-                        <h2 class="termo-list-card__title">{{ termo.title_display }}</h2>
-                        <span class="oficio-process-status {{ termo.process_status.css_class }}">{{ termo.process_status.label }}</span>
+        <article class="oficio-list-card termo-doc-card termo-list-card is-tone-blue">
+            <div class="oficio-list-rich-layout">
+                <div class="oficio-list-card__header termo-doc-card__header">
+                    <div class="oficio-list-chip-list oficio-list-chip-list--meta termo-doc-card__chip-list">
+                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                            <span class="oficio-list-chip__label">Termo</span>
+                            <span class="oficio-list-chip__value">{{ termo.numero_formatado }}</span>
+                        </span>
+                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                            <span class="oficio-list-chip__label">Destino</span>
+                            <span class="oficio-list-chip__value">{{ termo.destino_resumo }}</span>
+                        </span>
+                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                            <span class="oficio-list-chip__label">Periodo</span>
+                            <span class="oficio-list-chip__value">{{ termo.periodo_resumo }}</span>
+                        </span>
                     </div>
-                    <div class="termo-list-card__subtitle">
-                        {% if termo.evento_url %}
-                        <a href="{{ termo.evento_url }}" class="text-decoration-none">{{ termo.context_display }}</a>
-                        {% else %}
-                        <span>{{ termo.context_display }}</span>
-                        {% endif %}
+                    {% if termo.oficios_resumo and termo.oficios_resumo != 'Sem oficio' %}
+                    <div class="oficio-list-card__header-status">
+                        <span class="termo-doc-card__vinculo-badge" title="Oficio vinculado">Oficio:{{ termo.oficios_resumo }}</span>
                     </div>
+                    {% endif %}
                 </div>
-                <div class="termo-list-card__actions termo-list-card__actions--top">
-                    <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" data-direct-download="true"><i class="bi bi-filetype-docx"></i></a>
-                    <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf" data-direct-download="true"><i class="bi bi-filetype-pdf"></i></a>
-                </div>
-            </div>
 
-            <div class="termo-list-card__meta">
-                <div class="termo-list-meta-item">
-                    <span class="termo-list-meta-item__label">Modelo</span>
-                    <span class="termo-list-meta-item__value">{{ termo.mode_meta.label }}</span>
-                </div>
-                <div class="termo-list-meta-item">
-                    <span class="termo-list-meta-item__label">Servidor</span>
-                    <span class="termo-list-meta-item__value">{{ termo.servidor_resumo }}</span>
-                </div>
-                <div class="termo-list-meta-item">
-                    <span class="termo-list-meta-item__label">Destino</span>
-                    <span class="termo-list-meta-item__value">{{ termo.destino_resumo }}</span>
-                </div>
-                <div class="termo-list-meta-item">
-                    <span class="termo-list-meta-item__label">Periodo</span>
-                    <span class="termo-list-meta-item__value">{{ termo.periodo_resumo }}</span>
-                </div>
-            </div>
+                {% if termo.has_servidor_card or termo.has_viatura_card %}
+                <div class="oficio-list-card__secondary">
+                    <section class="oficio-list-subcard termo-doc-card__context oficio-list-surface oficio-list-surface--panel">
+                        <div class="oficio-list-subcard__body">
+                            {% if termo.has_viatura_card %}
+                            <div class="oficio-list-transport-panel termo-doc-card__transport-panel">
+                                <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor">
+                                    <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Servidor</span></span>
+                                    <div class="oficio-list-transport-panel__detail-value">{{ termo.servidor_nome_card|default:'Sem servidor vinculado' }}</div>
+                                    {% if termo.servidor_cargo_card or termo.servidor_lotacao_card %}
+                                    <p class="oficio-list-transport-panel__support">
+                                        {% if termo.servidor_cargo_card %}{{ termo.servidor_cargo_card }}{% endif %}{% if termo.servidor_cargo_card and termo.servidor_lotacao_card %} • {% endif %}{% if termo.servidor_lotacao_card %}{{ termo.servidor_lotacao_card }}{% endif %}
+                                    </p>
+                                    {% endif %}
+                                </div>
 
-            <div class="termo-list-card__footer">
-                <div class="small text-muted">Atualizado em {{ termo.updated_at|date:"d/m/Y H:i" }}</div>
-                <div class="termo-list-card__actions">
-                    <a href="{{ termo.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-                    <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
-                    <a href="{{ termo.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger"><i class="bi bi-trash"></i><span>Excluir</span></a>
+                                <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--viatura">
+                                    <span class="oficio-list-transport-panel__kicker"><i class="bi bi-truck"></i><span>Viatura</span></span>
+                                    <div class="oficio-list-transport-panel__detail-value">{{ termo.veiculo_placa_card|default:'Sem placa' }}</div>
+                                    <p class="oficio-list-transport-panel__support">
+                                        {% if termo.veiculo_modelo_card %}{{ termo.veiculo_modelo_card }}{% else %}Sem modelo{% endif %}{% if termo.veiculo_combustivel_card %} • {{ termo.veiculo_combustivel_card }}{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            {% elif termo.has_servidor_card %}
+                            <div class="oficio-list-transport-panel termo-doc-card__transport-panel termo-doc-card__transport-panel--single">
+                                <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor">
+                                    <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Servidor</span></span>
+                                    <div class="oficio-list-transport-panel__detail-value">{{ termo.servidor_nome_card }}</div>
+                                    {% if termo.servidor_cargo_card or termo.servidor_lotacao_card %}
+                                    <p class="oficio-list-transport-panel__support">
+                                        {% if termo.servidor_cargo_card %}{{ termo.servidor_cargo_card }}{% endif %}{% if termo.servidor_cargo_card and termo.servidor_lotacao_card %} • {% endif %}{% if termo.servidor_lotacao_card %}{{ termo.servidor_lotacao_card }}{% endif %}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </section>
+                </div>
+                {% endif %}
+
+                <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+                    <div class="oficio-list-card__footer-actions">
+                        <a href="{{ termo.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                        <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                        <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary is-icon-only" data-direct-download="true" aria-label="Baixar DOCX"><i class="bi bi-filetype-docx"></i><span class="visually-hidden">DOCX</span></a>
+                        <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf is-icon-only" data-direct-download="true" aria-label="Baixar PDF"><i class="bi bi-filetype-pdf"></i><span class="visually-hidden">PDF</span></a>
+                        <a href="{{ termo.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger"><i class="bi bi-trash"></i><span>Excluir</span></a>
+                    </div>
                 </div>
             </div>
         </article>
         {% empty %}
-        <div class="card">
-            <div class="card-body text-center text-muted py-5">
-                Nenhum termo encontrado com os filtros atuais.
-            </div>
-        </div>
+        <div class="oficios-table-panel__empty">Nenhum termo encontrado com os filtros atuais.</div>
         {% endfor %}
-    </div>
+    </section>
 
     {% include 'includes/pagination.html' %}
 

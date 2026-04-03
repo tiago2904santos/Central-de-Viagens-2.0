@@ -6,8 +6,13 @@
 
 {% block content %}
 <div class="container-fluid py-4 system-list-page system-list-page--complete">
-    <div class="system-list-shell">
-    {% include 'includes/list/page_header.html' with title='Planos de trabalho' subtitle='Cards no mesmo idioma visual dos Oficios, com relacao documental explicita com os Oficios atendidos.' primary_url=plano_novo_url primary_label='Novo plano de trabalho' %}
+    <div class="oficios-list-shell system-list-shell">
+    <header class="oficios-list-header">
+        <div>
+            <h1 class="mb-1">Planos de trabalho</h1>
+            <p class="oficios-list-header__subtitle mb-0">Cards no mesmo idioma visual dos Oficios, com relacao documental explicita com os Oficios atendidos.</p>
+        </div>
+    </header>
 
     <div class="card filter-card system-filter-card">
         <div class="card-body py-3">

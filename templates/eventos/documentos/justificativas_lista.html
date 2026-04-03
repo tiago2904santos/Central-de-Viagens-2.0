@@ -5,10 +5,21 @@
 {% block page_title %}Justificativas{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--simple">
-    <div class="system-list-shell">
-    {% include 'includes/list/page_header.html' with title='Lista de justificativas' subtitle='Leitura rapida das justificativas documentais vinculadas aos oficios.' primary_url=justificativa_novo_url primary_label='Nova justificativa' %}
-    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.justificativas.documentos.view-mode">
+    <div class="oficios-list-shell system-list-shell">
+    <header class="oficios-list-header">
+        <div>
+            <h1 class="mb-1">Lista de justificativas</h1>
+            <p class="oficios-list-header__subtitle mb-0">Leitura rapida das justificativas documentais vinculadas aos oficios.</p>
+        </div>
+        <div class="oficios-list-header__controls">
+            {% include 'includes/list/mode_badge.html' with mode='complete' %}
+            <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de justificativas">
+                <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
+                <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+            </div>
+        </div>
+    </header>
 
     <div class="card filter-card system-filter-card">
         <div class="card-body py-3">
@@ -50,7 +61,7 @@
         </div>
     </div>
 
-    <div class="system-list-table-wrap">
+    <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de justificativas">
         <div class="table-responsive">
             <table class="table table-hover system-list-table align-middle">
                 <thead>
@@ -70,7 +81,13 @@
                             <div class="fw-semibold">JT-{{ just.pk|stringformat:"04d" }}</div>
                             <div class="small text-muted">{{ just.texto|truncatechars:90|default:'—' }}</div>
                         </td>
-                        <td><a href="{{ just.oficio_url }}" class="text-decoration-none">{{ just.oficio.numero_formatado }}</a></td>
+                        <td>
+                            {% if just.oficio_id and just.oficio_url %}
+                            <a href="{{ just.oficio_url }}" class="text-decoration-none">{{ just.oficio.numero_formatado }}</a>
+                            {% else %}
+                            <span class="text-muted">Sem ofício</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if just.evento_url %}
                             <a href="{{ just.evento_url }}" class="text-decoration-none">{{ just.oficio.evento.titulo|default:'—' }}</a>
@@ -92,7 +109,104 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
+
+    <section class="documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de justificativas">
+        {% for just in object_list %}
+        <article class="oficio-list-card justificativa-list-card {{ just.card_theme_class }}">
+            <div class="oficio-list-rich-layout">
+                <div class="oficio-list-card__header">
+                    <div class="oficio-list-chip-list oficio-list-chip-list--meta">
+                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                            <span class="oficio-list-chip__label">Justificativa</span>
+                            <span class="oficio-list-chip__value">JT-{{ just.pk|stringformat:"04d" }}</span>
+                        </span>
+                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                            <span class="oficio-list-chip__label">Atualizado</span>
+                            <span class="oficio-list-chip__value">{{ just.updated_at|date:'d/m/Y H:i' }}</span>
+                        </span>
+                    </div>
+                    <div class="oficio-list-card__header-status">
+                        <span class="oficio-list-badge {{ just.status_badge_css_class }}"><span>{{ just.status_badge_label }}</span></span>
+                        <span class="oficio-list-badge is-info"><span>{{ just.modelo_display }}</span></span>
+                    </div>
+                </div>
+
+                <div class="oficio-list-card__secondary">
+                    <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                        <div class="oficio-list-subcard__header">
+                            <div>
+                                <h3 class="oficio-list-subcard__title">Resumo textual</h3>
+                                <p class="oficio-list-subcard__subtitle">Trecho inicial do texto da justificativa</p>
+                            </div>
+                        </div>
+                        <div class="oficio-list-subcard__body">
+                            <p class="mb-0 text-muted">{{ just.texto|truncatechars:320|default:'Sem texto informado.' }}</p>
+                        </div>
+                    </section>
+
+                    <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                        <div class="oficio-list-subcard__header">
+                            <div>
+                                <h3 class="oficio-list-subcard__title">Referencias</h3>
+                                <p class="oficio-list-subcard__subtitle">Oficio e evento relacionados</p>
+                            </div>
+                        </div>
+                        <div class="oficio-list-subcard__body">
+                            <div class="oficio-list-term-list">
+                                <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
+                                    <span class="oficio-list-term-row__name">Oficio</span>
+                                    <div class="oficio-list-term-row__actions">
+                                        {% if just.oficio_id and just.oficio_url %}
+                                        <a href="{{ just.oficio_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                                            <i class="bi bi-journal-text"></i>
+                                            <span>{{ just.oficio.numero_formatado }}</span>
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted small">Sem ofício vinculado</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
+                                    <span class="oficio-list-term-row__name">Evento</span>
+                                    <div class="oficio-list-term-row__actions">
+                                        {% if just.evento_url %}
+                                        <a href="{{ just.evento_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                                            <i class="bi bi-calendar-event"></i>
+                                            <span>{{ just.oficio.evento.titulo|default:'Evento' }}</span>
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted small">Sem evento vinculado</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+                    <div class="oficio-list-card__footer-actions">
+                        <a href="{{ just.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir justificativa">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                            <span>Abrir</span>
+                        </a>
+                        <a href="{{ just.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Editar justificativa">
+                            <i class="bi bi-pencil-square"></i>
+                            <span>Editar</span>
+                        </a>
+                        <a href="{{ just.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger" aria-label="Excluir justificativa">
+                            <i class="bi bi-trash"></i>
+                            <span>Excluir</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </article>
+        {% empty %}
+        <div class="oficios-table-panel__empty">Nenhuma justificativa encontrada.</div>
+        {% endfor %}
+    </section>
 
     {% include 'includes/pagination.html' %}
 

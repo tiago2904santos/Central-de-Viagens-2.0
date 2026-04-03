@@ -4,6 +4,7 @@
 {% block page_title %}Modelos de motivo (Ofício){% endblock %}
 
 {% block content %}
+{% url 'eventos:modelos-motivo-cadastrar' as modelo_motivo_novo_url %}
 <div class="container-fluid py-4 system-list-page system-list-page--simple">
     <div class="system-list-shell">
     <div class="page-header-cadastro system-list-header system-list-header--standard">
@@ -17,7 +18,6 @@
             {% if volta_step1 %}
             <a href="{% url 'eventos:oficio-step1' volta_step1 %}" class="btn btn-outline-secondary system-list-action-btn">Voltar ao oficio</a>
             {% endif %}
-            <a href="{% url 'eventos:modelos-motivo-cadastrar' %}{% if volta_step1 %}?volta_step1={{ volta_step1 }}{% endif %}" class="btn btn-primary system-list-action-btn"><i class="bi bi-plus-lg me-1"></i>Cadastrar modelo</a>
         </div>
     </div>
     <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
@@ -55,6 +55,7 @@
             </table>
         </div>
     </div>
+    {% include 'includes/list/floating_new_button.html' with url=modelo_motivo_novo_url label='Cadastrar modelo' icon='bi-plus-lg' %}
     </div>
 </div>
 {% endblock %}

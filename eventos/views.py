@@ -543,7 +543,7 @@ def _evento_lista_tipos_display(evento):
 def _evento_lista_temporal_meta(evento):
     today = timezone.localdate()
     if evento.status == Evento.STATUS_ARQUIVADO:
-        return {'label': 'Arquivado', 'css_class': 'is-muted', 'theme_class': 'is-tone-gray'}
+        return {'label': 'Arquivado', 'css_class': 'is-rascunho', 'theme_class': 'is-tone-red'}
     if evento.data_inicio and evento.data_fim and evento.data_inicio <= today <= evento.data_fim:
         label = 'Hoje' if evento.data_inicio == today and evento.data_fim == today else 'Em andamento'
         return {'label': label, 'css_class': 'is-trip-ongoing', 'theme_class': 'is-tone-orange'}
@@ -551,7 +551,7 @@ def _evento_lista_temporal_meta(evento):
         return {'label': 'Programado', 'css_class': 'is-trip-future', 'theme_class': 'is-tone-blue'}
     if evento.data_fim and evento.data_fim < today:
         return {'label': 'Encerrado', 'css_class': 'is-trip-past', 'theme_class': 'is-tone-accent'}
-    return {'label': 'Sem periodo', 'css_class': 'is-muted', 'theme_class': 'is-tone-gray'}
+    return {'label': 'Sem periodo', 'css_class': 'is-rascunho', 'theme_class': 'is-tone-red'}
 
 
 def _evento_lista_oficio_destinos_display(oficio):
