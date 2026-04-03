@@ -799,6 +799,11 @@
 }
 
 /* ----- Formulários em card ----- */
+.form-card {
+    border: 0;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
 .form-card .card-body {
     padding: 1.5rem;
 }
@@ -841,6 +846,7 @@
     padding: 0.85rem 1.25rem;
     background: rgba(var(--cv-primary-rgb), 0.05);
     border-bottom: 1px solid rgba(var(--cv-primary-rgb), 0.1);
+    border-radius: var(--cv-card-radius) var(--cv-card-radius) 0 0;
     font-size: 0.875rem;
     font-weight: 700;
     color: var(--cv-sidebar-bg);
@@ -854,7 +860,7 @@
 .form-doc-card {
     max-width: 700px;
     border: 0;
-    box-shadow: var(--cv-shadow-md);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
 .form-doc-card--wide {
@@ -885,21 +891,6 @@
 .badge-ativo {
     font-size: 0.75rem;
 }
-
-/* ----- Configurações ----- */
-.configuracoes-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }
-.configuracoes-subtitle { margin-bottom: 0; }
-.configuracao-section-title {
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--cv-primary);
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(var(--cv-primary-rgb), 0.15);
-}
-.configuracao-section { padding-bottom: 0.5rem; }
 
 /* ----- Sidebar: itens desabilitados ----- */
 .sidebar-item-disabled { cursor: default; opacity: 0.75; color: rgba(255,255,255,0.7) !important; }

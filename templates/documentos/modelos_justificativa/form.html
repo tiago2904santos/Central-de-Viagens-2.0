@@ -7,11 +7,11 @@
     <form method="post">
       {% csrf_token %}
       <div class="mb-3">
-        <label class="form-label">Nome <span class="text-danger">*</span></label>
+        <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
         <input type="text" name="nome" class="form-control" required value="{{ modelo.nome|default:'' }}">
       </div>
       <div class="mb-3">
-        <label class="form-label">Texto da justificativa</label>
+        <label class="form-label fw-semibold">Texto da justificativa</label>
         <textarea name="texto" class="form-control" rows="6">{{ modelo.texto|default:'' }}</textarea>
       </div>
       <div class="mb-3">

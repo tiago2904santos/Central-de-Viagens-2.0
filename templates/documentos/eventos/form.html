@@ -8,20 +8,20 @@
       {% csrf_token %}
       {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
       <div class="mb-3">
-        <label class="form-label">Nome <span class="text-danger">*</span></label>
+        <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
         <input type="text" name="nome" class="form-control" required value="{{ evento.nome|default:'' }}">
       </div>
       <div class="mb-3">
-        <label class="form-label">Descrição</label>
+        <label class="form-label fw-semibold">Descrição</label>
         <textarea name="descricao" class="form-control" rows="3">{{ evento.descricao|default:'' }}</textarea>
       </div>
       <div class="row g-3 mb-3">
         <div class="col-md-6">
-          <label class="form-label">Data de início</label>
+          <label class="form-label fw-semibold">Data de início</label>
           <input type="date" name="data_inicio" class="form-control" value="{{ evento.data_inicio|date:'Y-m-d'|default:'' }}">
         </div>
         <div class="col-md-6">
-          <label class="form-label">Data de fim</label>
+          <label class="form-label fw-semibold">Data de fim</label>
           <input type="date" name="data_fim" class="form-control" value="{{ evento.data_fim|date:'Y-m-d'|default:'' }}">
         </div>
       </div>

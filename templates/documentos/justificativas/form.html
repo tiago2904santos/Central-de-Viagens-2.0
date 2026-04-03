@@ -18,11 +18,11 @@
         <div class="form-text">A justificativa pertence ao Ofício e não pode existir sem ele.</div>
       </div>
       <div class="mb-3">
-        <label class="form-label">Título / assunto</label>
+        <label class="form-label fw-semibold">Título / assunto</label>
         <input type="text" name="titulo" class="form-control" value="{{ just.titulo|default:'' }}">
       </div>
       <div class="mb-3">
-        <label class="form-label">Modelo (opcional)</label>
+        <label class="form-label fw-semibold">Modelo <span class="fw-normal text-muted">(opcional)</span></label>
         <select name="modelo_id" class="form-select" id="id_modelo_select">
           <option value="">— Nenhum —</option>
           {% for m in modelos %}
@@ -31,11 +31,11 @@
         </select>
       </div>
       <div class="mb-3">
-        <label class="form-label">Texto</label>
+        <label class="form-label fw-semibold">Texto</label>
         <textarea name="texto" class="form-control" rows="6" id="id_texto">{{ just.texto|default:'' }}</textarea>
       </div>
       <div class="mb-3">
-        <label class="form-label">Observações</label>
+        <label class="form-label fw-semibold">Observações</label>
         <textarea name="observacoes" class="form-control" rows="3">{{ just.observacoes|default:'' }}</textarea>
       </div>
       <div class="d-flex gap-2">

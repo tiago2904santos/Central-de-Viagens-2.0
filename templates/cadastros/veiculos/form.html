@@ -5,47 +5,53 @@
 
 {% block content %}
 {% include 'cadastros/_aviso_rascunho.html' %}
-<div class="card form-card">
-    <div class="card-body">
-        <form method="post" id="form-veiculo">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ next_url|default:'' }}">
+<form method="post" id="form-veiculo">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next_url|default:'' }}">
+    {% if object %}<input type="hidden" name="veiculo_id" value="{{ object.pk }}">{% endif %}
+    <input type="hidden" name="return_url" value="{{ return_url }}">
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header-form">
+            <i class="bi bi-truck"></i>
+            <span>Dados do veículo</span>
+        </div>
+        <div class="card-body pt-4">
             <div class="row g-3">
                 <div class="col-12 col-md-6">
-                    <label for="id_placa" class="form-label">{{ form.placa.label }}</label>
+                    <label for="id_placa" class="form-label fw-semibold">{{ form.placa.label }}</label>
                     <input type="text" name="placa" id="id_placa" class="form-control" maxlength="8" placeholder="ABC1234 ou ABC1D23" data-mask="placa" value="{% firstof form.initial.placa form.placa.value '' %}">
                     {% if form.placa.errors %}<div class="invalid-feedback d-block">{{ form.placa.errors.0 }}</div>{% endif %}
                 </div>
                 <div class="col-12 col-md-6">
-                    <label for="id_modelo" class="form-label">{{ form.modelo.label }}</label>
+                    <label for="id_modelo" class="form-label fw-semibold">{{ form.modelo.label }}</label>
                     {{ form.modelo }}
                     {% if form.modelo.errors %}<div class="invalid-feedback d-block">{{ form.modelo.errors.0 }}</div>{% endif %}
                 </div>
                 <div class="col-12 col-md-6">
-                    <label for="id_combustivel" class="form-label">{{ form.combustivel.label }}</label>
+                    <label for="id_combustivel" class="form-label fw-semibold">{{ form.combustivel.label }}</label>
                     {{ form.combustivel }}
                     {% if form.combustivel.errors %}<div class="invalid-feedback d-block">{{ form.combustivel.errors.0 }}</div>{% endif %}
                 </div>
                 <div class="col-12 col-md-6">
-                    <label for="id_tipo" class="form-label">{{ form.tipo.label }}</label>
+                    <label for="id_tipo" class="form-label fw-semibold">{{ form.tipo.label }}</label>
                     {{ form.tipo }}
                     {% if form.tipo.errors %}<div class="invalid-feedback d-block">{{ form.tipo.errors.0 }}</div>{% endif %}
                 </div>
             </div>
-            {% if object %}<input type="hidden" name="veiculo_id" value="{{ object.pk }}">{% endif %}
-            <input type="hidden" name="return_url" value="{{ return_url }}">
-            <div class="form-actions mt-4">
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                {% if next_url %}
-                <a href="{{ next_url }}" class="btn btn-outline-secondary">Cancelar</a>
-                {% else %}
-                <a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-                {% endif %}
-                <button type="submit" formaction="{% url 'cadastros:veiculo-rascunho-ir-combustiveis' %}" class="btn btn-link text-muted">Gerenciar Combustíveis</button>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        {% if next_url %}
+        <a href="{{ next_url }}" class="btn btn-outline-secondary">Cancelar</a>
+        {% else %}
+        <a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+        {% endif %}
+        <button type="submit" formaction="{% url 'cadastros:veiculo-rascunho-ir-combustiveis' %}" class="btn btn-link text-muted">Gerenciar Combustíveis</button>
+    </div>
+</form>
 <script>
 (function() {
     var modeloInput = document.getElementById('id_modelo');

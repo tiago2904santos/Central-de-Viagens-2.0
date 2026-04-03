@@ -9,33 +9,33 @@
       {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
       <div class="row mb-3">
         <div class="col-md-4">
-          <label class="form-label">Número</label>
+          <label class="form-label fw-semibold">Número</label>
           <input type="text" name="numero" class="form-control" value="{{ termo.numero|default:'' }}">
         </div>
         <div class="col-md-2">
-          <label class="form-label">Ano</label>
+          <label class="form-label fw-semibold">Ano</label>
           <input type="number" name="ano" class="form-control" value="{{ termo.ano|default:'' }}">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Data de criação</label>
+          <label class="form-label fw-semibold">Data de criação</label>
           <input type="date" name="data_criacao" class="form-control" value="{{ termo.data_criacao|date:'Y-m-d'|default:'' }}">
         </div>
       </div>
       <div class="mb-3">
-        <label class="form-label">Título</label>
+        <label class="form-label fw-semibold">Título</label>
         <input type="text" name="titulo" class="form-control" value="{{ termo.titulo|default:'' }}">
       </div>
       <div class="mb-3">
-        <label class="form-label">Texto do termo</label>
+        <label class="form-label fw-semibold">Texto do termo</label>
         <textarea name="texto" class="form-control" rows="6">{{ termo.texto|default:'' }}</textarea>
       </div>
       <div class="mb-3">
-        <label class="form-label">Observações</label>
+        <label class="form-label fw-semibold">Observações</label>
         <textarea name="observacoes" class="form-control" rows="3">{{ termo.observacoes|default:'' }}</textarea>
       </div>
       <div class="row mb-3">
         <div class="col-md-6">
-          <label class="form-label">Ofício vinculado (opcional)</label>
+          <label class="form-label fw-semibold">Ofício vinculado <span class="fw-normal text-muted">(opcional)</span></label>
           <select name="oficio_id" class="form-select">
             <option value="">— Nenhum —</option>
             {% for o in oficios %}
@@ -44,7 +44,7 @@
           </select>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Evento vinculado (opcional)</label>
+          <label class="form-label fw-semibold">Evento vinculado <span class="fw-normal text-muted">(opcional)</span></label>
           <select name="evento_id" class="form-select">
             <option value="">— Nenhum —</option>
             {% for e in eventos %}
@@ -55,7 +55,7 @@
       </div>
       <div class="row mb-3">
         <div class="col-md-6">
-          <label class="form-label">Roteiro vinculado (opcional)</label>
+          <label class="form-label fw-semibold">Roteiro vinculado <span class="fw-normal text-muted">(opcional)</span></label>
           <select name="roteiro_id" class="form-select">
             <option value="">— Nenhum —</option>
             {% for r in roteiros %}
@@ -64,7 +64,7 @@
           </select>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Viajante vinculado (opcional)</label>
+          <label class="form-label fw-semibold">Viajante vinculado <span class="fw-normal text-muted">(opcional)</span></label>
           <select name="viajante_id" class="form-select">
             <option value="">— Nenhum —</option>
             {% for v in viajantes %}
