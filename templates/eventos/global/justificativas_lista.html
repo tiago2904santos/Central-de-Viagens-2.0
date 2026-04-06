@@ -8,20 +8,30 @@
 <div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.justificativas.global.view-mode">
     <div class="oficios-list-shell system-list-shell">
     {% url 'eventos:oficios-global' as oficios_url %}
-    <header class="oficios-list-header">
-        <div>
-            <h1 class="mb-1">Lista global de justificativas</h1>
-            <p class="oficios-list-header__subtitle mb-0">Acompanhamento honesto das justificativas vinculadas aos oficios.</p>
-        </div>
-        <div class="oficios-list-header__controls">
-            {% include 'includes/list/mode_badge.html' with mode='complete' %}
-            <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista global de justificativas">
-                <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
-                <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+        <div class="system-list-header__content">
+            <div class="system-list-header__copy">
+                <div class="system-list-header__intro">
+                    <h1 class="system-list-header__title">Lista global de justificativas</h1>
+                    <p class="system-list-header__subtitle">Acompanhamento honesto das justificativas vinculadas aos oficios.</p>
+                </div>
+                <div class="system-list-header__meta">
+                    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
+                    <span class="system-list-header__meta-item">Visao global do acervo ligado aos oficios</span>
+                </div>
             </div>
-            <a href="{{ oficios_url }}" class="btn btn-outline-secondary system-list-action-btn">Oficios</a>
+            <div class="system-list-header__controls">
+                {% include 'includes/list/mode_badge.html' with mode='complete' %}
+                <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista global de justificativas">
+                    <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
+                    <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+                </div>
+                <div class="system-list-header__actions-group">
+                    <a href="{{ oficios_url }}" class="btn btn-outline-secondary system-list-action-btn">Oficios</a>
+                </div>
+            </div>
         </div>
-    </header>
+    </div>
 
     <div class="card filter-card system-filter-card">
         <div class="card-body py-3">

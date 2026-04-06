@@ -7,12 +7,26 @@
 {% block content %}
 <div class="container-fluid py-4 system-list-page system-list-page--complete">
     <div class="oficios-list-shell system-list-shell">
-        <header class="oficios-list-header">
-            <div>
-                <h1 class="mb-1">Eventos</h1>
-                <p class="oficios-list-header__subtitle mb-0">Leitura em cascata dos documentos vinculados: Oficios, Planos de Trabalho e Ordens de Servico no mesmo card.</p>
+        <div class="page-header-cadastro system-list-header system-list-header--standard">
+            <div class="system-list-header__content">
+                <div class="system-list-header__copy">
+                    <div class="system-list-header__intro">
+                        <h1 class="system-list-header__title">Eventos</h1>
+                        <p class="system-list-header__subtitle">Leitura em cascata dos documentos vinculados: Oficios, Planos de Trabalho e Ordens de Servico no mesmo card.</p>
+                    </div>
+                    <div class="system-list-header__meta">
+                        <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
+                        <span class="system-list-header__meta-item">Painel principal com contexto documental por evento</span>
+                    </div>
+                </div>
+                <div class="system-list-header__controls">
+                    {% include 'includes/list/mode_badge.html' with mode='complete' %}
+                    <div class="system-list-header__actions-group">
+                        <a href="{{ evento_novo_url }}" class="btn btn-primary system-list-action-btn">Novo evento</a>
+                    </div>
+                </div>
             </div>
-        </header>
+        </div>
 
         <div class="card filter-card system-filter-card">
             <div class="card-body py-3">
