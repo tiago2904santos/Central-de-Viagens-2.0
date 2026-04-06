@@ -10,13 +10,23 @@
 <p class="system-list-header__subtitle">Cadastro simples de pessoas com foco em leitura e acao.</p>
 {% endblock %}
 
+{% block list_meta %}
+<div class="system-list-header__meta">
+    <span class="system-list-header__meta-item">
+        {% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros
+    </span>
+    <span class="system-list-header__meta-item">Base de viajantes para oficios, termos e roteiros</span>
+</div>
+{% endblock %}
+
+{% block list_header_controls %}
+{% include 'includes/list/mode_badge.html' with mode='simple' %}
+{% endblock %}
+
 {% block list_header_actions %}
 <a href="{{ cargos_url }}" class="btn btn-outline-secondary system-list-action-btn">Gerenciar Cargos</a>
 <a href="{{ unidades_url }}" class="btn btn-outline-secondary system-list-action-btn">Gerenciar Unidades de Lotacao</a>
-{% endblock %}
-
-{% block list_mode_badge %}
-<div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+<a href="{{ novo_viajante_url }}" class="btn btn-primary system-list-action-btn">Novo viajante</a>
 {% endblock %}
 
 {% block list_toolbar %}

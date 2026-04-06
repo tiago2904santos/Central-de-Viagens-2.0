@@ -10,12 +10,22 @@
 <p class="system-list-header__subtitle">Lista simples para leitura rapida da frota e manutencao de cadastro.</p>
 {% endblock %}
 
-{% block list_header_actions %}
-<a href="{{ combustiveis_url }}" class="btn btn-outline-secondary system-list-action-btn">Gerenciar Combustiveis</a>
+{% block list_meta %}
+<div class="system-list-header__meta">
+    <span class="system-list-header__meta-item">
+        {% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros
+    </span>
+    <span class="system-list-header__meta-item">Frota operacional com apoio de combustiveis e tipos</span>
+</div>
 {% endblock %}
 
-{% block list_mode_badge %}
-<div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+{% block list_header_controls %}
+{% include 'includes/list/mode_badge.html' with mode='simple' %}
+{% endblock %}
+
+{% block list_header_actions %}
+<a href="{{ combustiveis_url }}" class="btn btn-outline-secondary system-list-action-btn">Gerenciar Combustiveis</a>
+<a href="{{ novo_veiculo_url }}" class="btn btn-primary system-list-action-btn">Novo veiculo</a>
 {% endblock %}
 
 {% block list_toolbar %}

@@ -9,12 +9,22 @@
   <div class="system-list-shell">
     <div class="page-header-cadastro system-list-header system-list-header--standard">
       <div class="system-list-header__content">
-        <div>
-          <h1 class="system-list-header__title">Gerenciador de solicitantes</h1>
-          <p class="system-list-header__subtitle">Cadastre e organize os solicitantes que aparecem no Plano de Trabalho.</p>
+        <div class="system-list-header__copy">
+          <div class="system-list-header__intro">
+            <h1 class="system-list-header__title">Gerenciador de solicitantes</h1>
+            <p class="system-list-header__subtitle">Cadastre e organize os solicitantes que aparecem no Plano de Trabalho.</p>
+          </div>
+          <div class="system-list-header__meta">
+            <span class="system-list-header__meta-item">{{ object_list|length }} registros</span>
+            <span class="system-list-header__meta-item">Base auxiliar de requisitantes do Plano de Trabalho</span>
+          </div>
         </div>
-      </div>
-      <div class="system-list-header__actions-group">
+        <div class="system-list-header__controls">
+          {% include 'includes/list/mode_badge.html' with mode='simple' %}
+          <div class="system-list-header__actions-group">
+            <a href="{{ solicitante_novo_url }}" class="btn btn-primary system-list-action-btn">Novo solicitante</a>
+          </div>
+        </div>
       </div>
     </div>
 

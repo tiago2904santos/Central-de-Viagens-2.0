@@ -9,12 +9,30 @@
 <p class="system-list-header__subtitle">Biblioteca operacional dos roteiros criados na etapa 2 dos eventos.</p>
 {% endblock %}
 
+{% block list_meta %}
+<div class="system-list-header__meta">
+    <span class="system-list-header__meta-item">
+        {% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros
+    </span>
+    <span class="system-list-header__meta-item">
+        {% if selected_event %}Evento filtrado: {{ selected_event.titulo|default:"(sem titulo)" }}{% else %}Visao global dos roteiros dos eventos{% endif %}
+    </span>
+</div>
+{% endblock %}
+
+{% block list_header_controls %}
+{% include 'includes/list/mode_badge.html' with mode='simple' %}
+{% endblock %}
+
 {% block list_header_actions %}
 <a href="{{ eventos_url }}" class="btn btn-outline-secondary system-list-action-btn">Eventos</a>
+{% if novo_roteiro_url %}
+<a href="{{ novo_roteiro_url }}" class="btn btn-outline-primary system-list-action-btn">Novo roteiro do evento</a>
+{% endif %}
+<a href="{{ novo_roteiro_avulso_url }}" class="btn btn-primary system-list-action-btn">Novo roteiro avulso</a>
 {% endblock %}
 
 {% block list_mode_badge %}
-<div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
 {% if not novo_roteiro_url %}
 <div class="alert alert-light border small py-2 px-3 mb-3">Selecione um evento no filtro para habilitar a criacao vinculada.</div>
 {% endif %}
