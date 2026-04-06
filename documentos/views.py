@@ -513,19 +513,34 @@ def justificativa_excluir(request, pk):
 @login_required
 def plano_lista(request):
     planos = PlanoTrabalho.objects.all().order_by('-criado_em')
-    return render(request, 'documentos/planos/lista.html', {'planos': planos})
+    return render(request, 'documentos/planos/lista.html', {
+        'planos': planos,
+        'planos_finalizados': planos.filter(status='FINALIZADO').count(),
+        'planos_rascunho': planos.filter(status='RASCUNHO').count(),
+    })
 
 
 @login_required
 def plano_form(request, pk=None):
     plano = get_object_or_404(PlanoTrabalho, pk=pk) if pk else None
     return_to = _next_safe(request)
+    eventos = Evento.objects.all().order_by('nome')
 
     if request.method == 'POST':
         if not plano:
             plano = PlanoTrabalho()
         plano.titulo = request.POST.get('titulo', '').strip()
         plano.conteudo = request.POST.get('conteudo', '').strip()
+        evento_id = request.POST.get('evento_id')
+        if evento_id:
+            try:
+                plano.evento_id = int(evento_id)
+            except (TypeError, ValueError):
+                plano.evento = None
+        else:
+            plano.evento = None
+        acao = request.POST.get('acao', 'rascunho')
+        plano.status = 'FINALIZADO' if acao == 'finalizar' else 'RASCUNHO'
         plano.save()
         messages.success(request, 'Plano de trabalho salvo.')
         if return_to:
@@ -533,7 +548,9 @@ def plano_form(request, pk=None):
         return redirect('documentos:planos-trabalho')
 
     return render(request, 'documentos/planos/form.html', {
-        'plano': plano, 'return_to': return_to,
+        'plano': plano,
+        'eventos': eventos,
+        'return_to': return_to,
     })
 
 
@@ -552,19 +569,34 @@ def plano_excluir(request, pk):
 @login_required
 def ordem_lista(request):
     ordens = OrdemServico.objects.all().order_by('-criado_em')
-    return render(request, 'documentos/ordens/lista.html', {'ordens': ordens})
+    return render(request, 'documentos/ordens/lista.html', {
+        'ordens': ordens,
+        'ordens_finalizadas': ordens.filter(status='FINALIZADO').count(),
+        'ordens_rascunho': ordens.filter(status='RASCUNHO').count(),
+    })
 
 
 @login_required
 def ordem_form(request, pk=None):
     ordem = get_object_or_404(OrdemServico, pk=pk) if pk else None
     return_to = _next_safe(request)
+    eventos = Evento.objects.all().order_by('nome')
 
     if request.method == 'POST':
         if not ordem:
             ordem = OrdemServico()
         ordem.titulo = request.POST.get('titulo', '').strip()
         ordem.conteudo = request.POST.get('conteudo', '').strip()
+        evento_id = request.POST.get('evento_id')
+        if evento_id:
+            try:
+                ordem.evento_id = int(evento_id)
+            except (TypeError, ValueError):
+                ordem.evento = None
+        else:
+            ordem.evento = None
+        acao = request.POST.get('acao', 'rascunho')
+        ordem.status = 'FINALIZADO' if acao == 'finalizar' else 'RASCUNHO'
         ordem.save()
         messages.success(request, 'Ordem de serviço salva.')
         if return_to:
@@ -572,7 +604,9 @@ def ordem_form(request, pk=None):
         return redirect('documentos:ordens-servico')
 
     return render(request, 'documentos/ordens/form.html', {
-        'ordem': ordem, 'return_to': return_to,
+        'ordem': ordem,
+        'eventos': eventos,
+        'return_to': return_to,
     })
 
 

@@ -3,19 +3,41 @@
 {% block page_title %}{% if plano %}Editar plano{% else %}Novo plano de trabalho{% endif %}{% endblock %}
 {% block content %}
 {% url 'documentos:planos-trabalho' as cancel_url %}
+<div class="card form-doc-card form-doc-card--wide">
 <div class="card form-doc-card">
   <div class="card-body">
     <form method="post">
       {% csrf_token %}
       {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
-      <div class="mb-3">
-        <label class="form-label">Título</label>
-        <input type="text" name="titulo" class="form-control" value="{{ plano.titulo|default:'' }}">
+      <div class="card-header-form mb-3">
+        <span><i class="bi bi-clipboard2-check me-2"></i>Contexto do plano</span>
+        {% if plano and plano.status == 'FINALIZADO' %}
+          <span class="status-badge status-badge-sm is-finalizado">Finalizado</span>
+        {% else %}
+          <span class="status-badge status-badge-sm is-rascunho">Rascunho</span>
+        {% endif %}
       </div>
-      <div class="mb-3">
-        <label class="form-label">Conteúdo</label>
-        <textarea name="conteudo" class="form-control" rows="8">{{ plano.conteudo|default:'' }}</textarea>
+      <div class="row g-3 mb-3">
+        <div class="col-md-8">
+          <label class="form-label fw-semibold">Título do plano</label>
+          <input type="text" name="titulo" class="form-control" placeholder="Ex.: Plano de atividades da missão" value="{{ plano.titulo|default:'' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Evento vinculado (opcional)</label>
+          <select name="evento_id" class="form-select">
+            <option value="">— Nenhum —</option>
+            {% for e in eventos %}
+              <option value="{{ e.pk }}" {% if plano.evento_id == e.pk %}selected{% endif %}>{{ e.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
+      <div class="mb-1">
+        <label class="form-label fw-semibold">Atividades e entregas</label>
+        <textarea name="conteudo" class="form-control" rows="10" placeholder="Descreva escopo, atividades previstas, responsáveis, prazos e resultados esperados.">{{ plano.conteudo|default:'' }}</textarea>
+      </div>
+      <div class="form-text mb-3">Use este campo para registrar objetivos, execução prevista e pontos de controle do trabalho.</div>
+      {% include 'includes/_form_actions.html' with primary_submit_label='Finalizar' primary_submit_name='acao' primary_submit_value='finalizar' secondary_submit_name='acao' secondary_submit_value='rascunho' secondary_submit_label='Salvar rascunho' cancel_url=cancel_url cancel_label='Cancelar' %}
       {% include 'includes/_form_actions.html' with primary_submit_label='Salvar' cancel_url=cancel_url cancel_label='Cancelar' %}
     </form>
   </div>

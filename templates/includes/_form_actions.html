@@ -1,5 +1,10 @@
 <div class="form-actions{% if extra_class %} {{ extra_class }}{% endif %}">
   {% if primary_submit_label %}
+    <button
+      type="submit"
+      class="btn btn-primary"
+      {% if primary_submit_name and primary_submit_value %}name="{{ primary_submit_name }}" value="{{ primary_submit_value }}"{% endif %}
+    >{{ primary_submit_label }}</button>
     <button type="submit" class="btn btn-primary">{{ primary_submit_label }}</button>
   {% endif %}
   {% if secondary_submit_name and secondary_submit_value and secondary_submit_label %}
