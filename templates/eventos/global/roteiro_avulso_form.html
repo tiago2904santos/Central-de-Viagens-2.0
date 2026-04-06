@@ -101,8 +101,12 @@
                     </div>
                 </div>
                 <div class="form-actions system-form-actions mt-4">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                    <a href="{% url 'eventos:roteiros-global' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    <div class="system-form-actions__group system-form-actions__group--secondary">
+                        <a href="{% url 'eventos:roteiros-global' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                    <div class="system-form-actions__group system-form-actions__group--primary">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
                 </div>
             </form>
         </div>

@@ -29,13 +29,19 @@
 
         <div class="page-header-cadastro system-list-header system-list-header--standard">
             <div class="system-list-header__content">
-                <div>
-                    <h1 class="system-list-header__title">{% block list_title %}Lista{% endblock %}</h1>
-                    {% block list_subtitle %}{% endblock %}
+                <div class="system-list-header__copy">
+                    <div class="system-list-header__intro">
+                        <h1 class="system-list-header__title">{% block list_title %}Lista{% endblock %}</h1>
+                        {% block list_subtitle %}{% endblock %}
+                    </div>
+                    {% block list_meta %}{% endblock %}
                 </div>
-            </div>
-            <div class="system-list-header__actions-group">
-                {% block list_header_actions %}{% endblock %}
+                <div class="system-list-header__controls">
+                    {% block list_header_controls %}{% endblock %}
+                    <div class="system-list-header__actions-group">
+                        {% block list_header_actions %}{% endblock %}
+                    </div>
+                </div>
             </div>
         </div>
 
