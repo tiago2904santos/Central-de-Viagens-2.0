@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Configurações do sistema — Central de Viagens{% endblock %}
 {% block page_title %}Configurações do sistema{% endblock %}
@@ -13,7 +14,7 @@
 
 <div class="card form-card">
     <div class="card-body">
-        <form method="post" id="form-configuracoes">
+        <form method="post" id="form-configuracoes" data-api-cep-url="{{ api_consulta_cep_url }}">
             {% csrf_token %}
             <div class="configuracao-section">
                 <h5 class="configuracao-section-title">Cabeçalho (DIVISÃO, UNIDADE, SIGLA)</h5>
@@ -118,80 +119,8 @@
     </div>
 </div>
 
-<script>
-(function() {
-    var apiCepUrl = "{{ api_consulta_cep_url }}";
-    var cepInput = document.getElementById('id_cep');
-    var cepErroAlert = document.getElementById('cep-erro-alert');
-    var divisaoInput = document.getElementById('id_divisao');
-    var unidadeInput = document.getElementById('id_unidade');
-    var siglaOrgaoInput = document.getElementById('id_sigla_orgao');
+{% endblock %}
 
-    function onlyDigits(str) {
-        return (str || '').replace(/\D/g, '');
-    }
-
-    if (divisaoInput) {
-        divisaoInput.addEventListener('input', function() {
-            this.value = this.value.toUpperCase();
-        });
-    }
-    if (unidadeInput) {
-        unidadeInput.addEventListener('input', function() {
-            this.value = this.value.toUpperCase();
-        });
-    }
-    if (siglaOrgaoInput) {
-        siglaOrgaoInput.addEventListener('input', function() {
-            this.value = this.value.toUpperCase();
-        });
-    }
-
-    if (cepInput) {
-        cepInput.addEventListener('input', function() {
-            if (cepErroAlert) cepErroAlert.classList.add('d-none');
-        });
-
-        function buscaCep() {
-            var cepDigits = onlyDigits(cepInput.value);
-            if (cepDigits.length !== 8) return;
-            if (!apiCepUrl) return;
-            var url = apiCepUrl.replace('00000000', cepDigits);
-            cepErroAlert.classList.add('d-none');
-            fetch(url)
-                .then(function(r) {
-                    if (r.status === 400 || r.status === 404) {
-                        return r.json().then(function(data) {
-                            throw new Error(data.erro || 'CEP inválido ou não encontrado.');
-                        });
-                    }
-                    if (!r.ok) throw new Error('Erro ao consultar CEP.');
-                    return r.json();
-                })
-                .then(function(data) {
-                    var logradouro = document.getElementById('id_logradouro');
-                    var bairro = document.getElementById('id_bairro');
-                    var cidadeEndereco = document.getElementById('id_cidade_endereco');
-                    var uf = document.getElementById('id_uf');
-                    if (logradouro) logradouro.value = data.logradouro || '';
-                    if (bairro) bairro.value = data.bairro || '';
-                    if (cidadeEndereco) cidadeEndereco.value = data.cidade || '';
-                    if (uf) uf.value = (data.uf || '').toUpperCase();
-                    if (cepInput && data.cep) cepInput.value = data.cep;
-                })
-                .catch(function(err) {
-                    if (cepErroAlert) {
-                        cepErroAlert.textContent = err.message || 'CEP inválido ou não encontrado.';
-                        cepErroAlert.classList.remove('d-none');
-                    }
-                });
-        }
-
-        cepInput.addEventListener('blur', buscaCep);
-        cepInput.addEventListener('input', function() {
-            if (onlyDigits(this.value).length === 8) buscaCep();
-        });
-    }
-})();
-</script>
+{% block extra_js %}
+<script src="{% static 'js/configuracoes_form.js' %}"></script>
 {% endblock %}

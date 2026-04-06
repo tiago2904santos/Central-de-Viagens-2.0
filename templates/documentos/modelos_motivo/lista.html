@@ -2,10 +2,8 @@
 {% block title %}Modelos de motivo{% endblock %}
 {% block page_title %}Modelos de motivo{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <span class="text-muted small">{{ modelos|length }} modelo(s)</span>
-  <a href="{% url 'documentos:modelo-motivo-novo' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Novo modelo</a>
-</div>
+{% url 'documentos:modelo-motivo-novo' as novo_url %}
+{% include 'includes/_list_header.html' with total_count=modelos|length total_suffix='modelo(s)' primary_url=novo_url primary_label='Novo modelo' primary_icon='bi-plus-lg' %}
 {% if modelos %}
 <div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">
@@ -33,14 +31,8 @@
 </div>
 {% else %}
 <div class="card border-0 shadow-sm">
-  <div class="empty-state">
-    <div class="empty-state-icon"><i class="bi bi-file-text"></i></div>
-    <p class="empty-state-title">Nenhum modelo de motivo</p>
-    <p class="empty-state-text">Modelos agilizam o preenchimento do motivo dos ofícios.</p>
-    <a href="{% url 'documentos:modelo-motivo-novo' %}" class="btn btn-primary">
-      <i class="bi bi-plus-lg me-1"></i> Criar primeiro modelo
-    </a>
-  </div>
+  {% url 'documentos:modelo-motivo-novo' as empty_action_url %}
+  {% include 'includes/_empty_state.html' with icon='bi-file-text' title='Nenhum modelo de motivo' text='Modelos agilizam o preenchimento do motivo dos ofícios.' action_url=empty_action_url action_label='Criar primeiro modelo' action_icon='bi-plus-lg' %}
 </div>
 {% endif %}
 {% endblock %}
