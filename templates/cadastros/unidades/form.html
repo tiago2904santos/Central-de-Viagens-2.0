@@ -4,7 +4,7 @@
 {% block page_title %}{% if is_create %}Cadastrar Unidade de Lotação{% else %}Editar Unidade de Lotação{% endif %}{% endblock %}
 
 {% block content %}
-<div class="card form-card">
+<div class="card form-card form-card--simple">
     <div class="card-body">
         <form method="post">
             {% csrf_token %}
@@ -15,10 +15,8 @@
                     {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>{% endif %}
                 </div>
             </div>
-            <div class="form-actions mt-4">
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                <a href="{% url 'cadastros:unidade-lotacao-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-            </div>
+            {% url 'cadastros:unidade-lotacao-lista' as unidade_lista_url %}
+            {% include 'includes/_form_actions.html' with primary_submit_label='Salvar' cancel_url=unidade_lista_url cancel_label='Cancelar' extra_class='mt-4' %}
         </form>
     </div>
 </div>

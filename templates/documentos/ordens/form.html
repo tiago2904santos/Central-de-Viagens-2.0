@@ -3,8 +3,7 @@
 {% block page_title %}{% if ordem %}Editar ordem{% else %}Nova ordem de serviço{% endif %}{% endblock %}
 {% block content %}
 {% url 'documentos:ordens-servico' as cancel_url %}
-<div class="card form-doc-card form-doc-card--wide">
-<div class="card form-doc-card">
+<div class="card form-doc-card form-doc-card--wide form-doc-card--context">
   <div class="card-body">
     <form method="post">
       {% csrf_token %}
@@ -38,7 +37,6 @@
       </div>
       <div class="form-text mb-3">Inclua orientações claras de execução, responsabilidades e escopo da ordem.</div>
       {% include 'includes/_form_actions.html' with primary_submit_label='Finalizar' primary_submit_name='acao' primary_submit_value='finalizar' secondary_submit_name='acao' secondary_submit_value='rascunho' secondary_submit_label='Salvar rascunho' cancel_url=cancel_url cancel_label='Cancelar' %}
-      {% include 'includes/_form_actions.html' with primary_submit_label='Salvar' cancel_url=cancel_url cancel_label='Cancelar' %}
     </form>
   </div>
 </div>

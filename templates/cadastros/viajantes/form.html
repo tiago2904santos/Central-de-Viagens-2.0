@@ -5,7 +5,7 @@
 
 {% block content %}
 {% include 'cadastros/_aviso_rascunho.html' %}
-<div class="card form-card">
+<div class="card form-card form-card--simple">
     <div class="card-body">
         <form method="post" id="form-viajante">
             {% csrf_token %}
@@ -54,14 +54,12 @@
                     {% if form.telefone.errors %}<div class="invalid-feedback d-block">{{ form.telefone.errors.0 }}</div>{% endif %}
                 </div>
             </div>
-            <div class="form-actions mt-4">
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                {% if next_url %}
-                <a href="{{ next_url }}" class="btn btn-outline-secondary">Cancelar</a>
-                {% else %}
-                <a href="{% url 'cadastros:viajante-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-                {% endif %}
-            </div>
+            {% if next_url %}
+                {% include 'includes/_form_actions.html' with primary_submit_label='Salvar' cancel_url=next_url cancel_label='Cancelar' extra_class='mt-4' %}
+            {% else %}
+                {% url 'cadastros:viajante-lista' as viajante_lista_url %}
+                {% include 'includes/_form_actions.html' with primary_submit_label='Salvar' cancel_url=viajante_lista_url cancel_label='Cancelar' extra_class='mt-4' %}
+            {% endif %}
         </form>
     </div>
 </div>

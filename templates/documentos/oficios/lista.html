@@ -3,7 +3,7 @@
 {% block page_title %}Ofícios{% endblock %}
 {% block content %}
 {% url 'documentos:oficio-novo-step1' as novo_url %}
-{% include 'includes/_list_header.html' with total_count=oficios|length total_suffix='ofício(s)' primary_url=novo_url primary_label='Novo Ofício' primary_icon='bi-plus-lg' %}
+{% include 'includes/_list_header_complete.html' with title='Ofícios' subtitle='Gestão de ofícios e andamento dos fluxos.' total_count=oficios|length total_suffix='ofício(s)' primary_url=novo_url primary_label='Novo Ofício' primary_icon='bi-plus-lg' %}
 
 {% if oficios %}
 <div class="card border-0 shadow-sm overflow-hidden">

@@ -4,7 +4,7 @@
 {% block page_title %}{% if is_create %}Cadastrar Combustível{% else %}Editar Combustível{% endif %}{% endblock %}
 
 {% block content %}
-<div class="card form-card">
+<div class="card form-card form-card--simple">
     <div class="card-body">
         <form method="post">
             {% csrf_token %}
@@ -21,10 +21,8 @@
                     </div>
                 </div>
             </div>
-            <div class="form-actions mt-4">
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                <a href="{% url 'cadastros:combustivel-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-            </div>
+            {% url 'cadastros:combustivel-lista' as combustivel_lista_url %}
+            {% include 'includes/_form_actions.html' with primary_submit_label='Salvar' cancel_url=combustivel_lista_url cancel_label='Cancelar' extra_class='mt-4' %}
         </form>
     </div>
 </div>

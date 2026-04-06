@@ -3,7 +3,7 @@
 {% block page_title %}Ordens de serviço{% endblock %}
 {% block content %}
 {% url 'documentos:ordem-nova' as novo_url %}
-{% include 'includes/_list_header.html' with total_count=ordens|length total_suffix='ordem(s)' primary_url=novo_url primary_label='Nova Ordem' primary_icon='bi-plus-lg' %}
+{% include 'includes/_list_header_complete.html' with title='Ordens de serviço' subtitle='Execução de atividades e direcionamentos operacionais.' total_count=ordens|length total_suffix='ordem(s)' primary_url=novo_url primary_label='Nova Ordem' primary_icon='bi-plus-lg' %}
 <div class="row g-3 mb-3">
   <div class="col-md-4">
     <div class="card border-0 shadow-sm h-100">

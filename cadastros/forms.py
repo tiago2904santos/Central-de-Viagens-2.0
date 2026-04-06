@@ -22,6 +22,15 @@ class FormComErroInvalidMixin:
                     self.fields[name].widget.attrs['class'] = f'{cls} is-invalid'.strip()
 
 
+SELECT_EMPTY_LABEL = '— Selecione —'
+
+
+def _select_attrs(**extra_attrs):
+    attrs = {'class': 'form-select cv-select'}
+    attrs.update(extra_attrs)
+    return attrs
+
+
 def _validar_cpf_digitos(cpf_11):
     """Valida CPF (11 dígitos) com dígitos verificadores. Retorna True se válido."""
     if len(cpf_11) != 11 or not cpf_11.isdigit():
@@ -93,12 +102,12 @@ class ViajanteForm(FormComErroInvalidMixin, forms.ModelForm):
         ]
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 160, 'data-uppercase': '1'}),
-            'cargo': forms.Select(attrs={'class': 'form-select'}),
+            'cargo': forms.Select(attrs=_select_attrs()),
             'rg': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 30, 'placeholder': 'Número do RG'}),
             'sem_rg': forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_sem_rg'}),
             'cpf': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 14, 'placeholder': '000.000.000-00', 'data-mask': 'cpf', 'inputmode': 'numeric'}),
             'telefone': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 20, 'placeholder': '(00) 00000-0000', 'data-mask': 'telefone', 'inputmode': 'numeric'}),
-            'unidade_lotacao': forms.Select(attrs={'class': 'form-select'}),
+            'unidade_lotacao': forms.Select(attrs=_select_attrs()),
         }
 
     def __init__(self, *args, **kwargs):
@@ -106,10 +115,10 @@ class ViajanteForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['sem_rg'].label = 'Não possui RG'
         self.fields['cargo'].queryset = Cargo.objects.all().order_by('nome')
         self.fields['cargo'].required = False
-        self.fields['cargo'].empty_label = '---------'
+        self.fields['cargo'].empty_label = SELECT_EMPTY_LABEL
         self.fields['unidade_lotacao'].queryset = UnidadeLotacao.objects.all().order_by('nome')
         self.fields['unidade_lotacao'].required = False
-        self.fields['unidade_lotacao'].empty_label = '---------'
+        self.fields['unidade_lotacao'].empty_label = SELECT_EMPTY_LABEL
         rascunho = kwargs.get('initial')
         if (not self.instance.pk or self.instance.cargo_id is None) and not self.data and not rascunho:
             padrao = Cargo.objects.filter(is_padrao=True).first()
@@ -230,8 +239,8 @@ class VeiculoForm(FormComErroInvalidMixin, forms.ModelForm):
         widgets = {
             'placa': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 7, 'placeholder': 'ABC1234 ou ABC1D23'}),
             'modelo': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 120, 'data-uppercase': '1'}),
-            'combustivel': forms.Select(attrs={'class': 'form-select'}),
-            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'combustivel': forms.Select(attrs=_select_attrs()),
+            'tipo': forms.Select(attrs=_select_attrs()),
         }
 
     def __init__(self, *args, **kwargs):
@@ -239,7 +248,7 @@ class VeiculoForm(FormComErroInvalidMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['combustivel'].queryset = CombustivelVeiculo.objects.all().order_by('nome')
         self.fields['combustivel'].required = False
-        self.fields['combustivel'].empty_label = '---------'
+        self.fields['combustivel'].empty_label = SELECT_EMPTY_LABEL
         if (not self.instance.pk or self.instance.combustivel_id is None) and not self.data and not rascunho:
             padrao = CombustivelVeiculo.objects.filter(is_padrao=True).first()
             if padrao:
@@ -295,30 +304,30 @@ class ConfiguracaoSistemaForm(FormComErroInvalidMixin, forms.ModelForm):
     assinatura_oficio = forms.ModelChoiceField(
         queryset=Viajante.objects.none(),
         required=False,
-        empty_label='---------',
+        empty_label=SELECT_EMPTY_LABEL,
         label='Assinatura (Ofícios)',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs=_select_attrs()),
     )
     assinatura_justificativas = forms.ModelChoiceField(
         queryset=Viajante.objects.none(),
         required=False,
-        empty_label='---------',
+        empty_label=SELECT_EMPTY_LABEL,
         label='Assinatura (Justificativas)',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs=_select_attrs()),
     )
     assinatura_planos_trabalho = forms.ModelChoiceField(
         queryset=Viajante.objects.none(),
         required=False,
-        empty_label='---------',
+        empty_label=SELECT_EMPTY_LABEL,
         label='Assinatura (Planos de Trabalho)',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs=_select_attrs()),
     )
     assinatura_ordens_servico = forms.ModelChoiceField(
         queryset=Viajante.objects.none(),
         required=False,
-        empty_label='---------',
+        empty_label=SELECT_EMPTY_LABEL,
         label='Assinatura (Ordem de Serviço)',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs=_select_attrs()),
     )
 
     class Meta:
@@ -337,7 +346,7 @@ class ConfiguracaoSistemaForm(FormComErroInvalidMixin, forms.ModelForm):
             'sede': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_sede', 'maxlength': 200, 'placeholder': 'Ex.: Curitiba/PR'}),
             'nome_chefia': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_nome_chefia', 'maxlength': 120}),
             'cargo_chefia': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_cargo_chefia', 'maxlength': 120}),
-            'coordenador_adm_plano_trabalho': forms.Select(attrs={'class': 'form-select', 'id': 'id_coordenador_adm_plano_trabalho'}),
+            'coordenador_adm_plano_trabalho': forms.Select(attrs=_select_attrs(id='id_coordenador_adm_plano_trabalho')),
             'cep': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_cep', 'maxlength': 9, 'placeholder': '00000-000', 'data-mask': 'cep', 'inputmode': 'numeric'}),
             'logradouro': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_logradouro'}),
             'bairro': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_bairro'}),
@@ -356,7 +365,7 @@ class ConfiguracaoSistemaForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['assinatura_planos_trabalho'].queryset = qs
         self.fields['assinatura_ordens_servico'].queryset = qs
         self.fields['coordenador_adm_plano_trabalho'].queryset = qs
-        self.fields['coordenador_adm_plano_trabalho'].empty_label = '---------'
+        self.fields['coordenador_adm_plano_trabalho'].empty_label = SELECT_EMPTY_LABEL
         if self.instance and self.instance.pk:
             if self.instance.cep:
                 self.initial['cep'] = format_cep(self.instance.cep)

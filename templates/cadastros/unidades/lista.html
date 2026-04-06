@@ -4,13 +4,15 @@
 {% block page_title %}Unidades de Lotação{% endblock %}
 
 {% block content %}
-<div class="page-header-cadastro">
-    <div></div>
-    <div class="d-flex gap-2">
-        {% if return_url %}<a href="{{ return_url }}" class="btn btn-outline-secondary btn-sm">Voltar</a>{% else %}<a href="{% url 'cadastros:viajante-lista' %}" class="btn btn-outline-secondary btn-sm">Voltar para viajantes</a>{% endif %}
-        <a href="{% url 'cadastros:unidade-lotacao-cadastrar' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Cadastrar</a>
-    </div>
-</div>
+{% url 'cadastros:unidade-lotacao-cadastrar' as unidade_novo_url %}
+{% if return_url %}
+    {% with retorno_label='Voltar' %}
+        {% include 'includes/_list_header.html' with title='Unidades de Lotação' subtitle='Unidades organizacionais vinculadas aos viajantes.' total_count=object_list|length total_suffix='unidade(s)' secondary_url=return_url secondary_label=retorno_label primary_url=unidade_novo_url primary_label='Cadastrar' primary_icon='bi-plus-lg' %}
+    {% endwith %}
+{% else %}
+    {% url 'cadastros:viajante-lista' as viajante_lista_url %}
+    {% include 'includes/_list_header.html' with title='Unidades de Lotação' subtitle='Unidades organizacionais vinculadas aos viajantes.' total_count=object_list|length total_suffix='unidade(s)' secondary_url=viajante_lista_url secondary_label='Voltar para viajantes' primary_url=unidade_novo_url primary_label='Cadastrar' primary_icon='bi-plus-lg' %}
+{% endif %}
 
 <div class="card filter-card mb-3">
     <div class="card-body py-3">
@@ -50,14 +52,7 @@
                 {% empty %}
                 <tr>
                     <td colspan="2">
-                        <div class="empty-state">
-                            <div class="empty-state-icon"><i class="bi bi-building"></i></div>
-                            <p class="empty-state-title">Nenhuma unidade de lotação encontrada</p>
-                            <p class="empty-state-text">Cadastre as unidades organizacionais para associar aos viajantes.</p>
-                            <a href="{% url 'cadastros:unidade-lotacao-cadastrar' %}" class="btn btn-primary btn-sm">
-                                <i class="bi bi-plus-lg me-1"></i> Cadastrar unidade
-                            </a>
-                        </div>
+                        {% include 'includes/_empty_state.html' with icon='bi-building' title='Nenhuma unidade de lotação encontrada' text='Cadastre as unidades organizacionais para associar aos viajantes.' action_url=unidade_novo_url action_label='Cadastrar unidade' action_icon='bi-plus-lg' action_small=True %}
                     </td>
                 </tr>
                 {% endfor %}

@@ -3,7 +3,7 @@
 {% block title %}{% if just %}Editar justificativa{% else %}Nova justificativa{% endif %}{% endblock %}
 {% block page_title %}{% if just %}Editar justificativa{% else %}Nova justificativa{% endif %}{% endblock %}
 {% block content %}
-<div class="card form-doc-card">
+<div class="card form-doc-card form-doc-card--context">
   <div class="card-body">
     <form method="post">
       {% csrf_token %}
@@ -39,11 +39,8 @@
         <label class="form-label">Observações</label>
         <textarea name="observacoes" class="form-control" rows="3">{{ just.observacoes|default:'' }}</textarea>
       </div>
-      <div class="d-flex gap-2">
-        <button type="submit" name="acao" value="rascunho" class="btn btn-outline-primary">Salvar rascunho</button>
-        <button type="submit" name="acao" value="finalizar" class="btn btn-primary">Finalizar</button>
-        <a href="{% url 'documentos:justificativas' %}" class="btn btn-outline-secondary">Cancelar</a>
-      </div>
+      {% url 'documentos:justificativas' as cancel_url %}
+      {% include 'includes/_form_actions.html' with primary_submit_label='Finalizar' primary_submit_name='acao' primary_submit_value='finalizar' secondary_submit_name='acao' secondary_submit_value='rascunho' secondary_submit_label='Salvar rascunho' cancel_url=cancel_url cancel_label='Cancelar' %}
     </form>
   </div>
 </div>

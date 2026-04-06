@@ -4,13 +4,15 @@
 {% block page_title %}Combustíveis{% endblock %}
 
 {% block content %}
-<div class="page-header-cadastro">
-    <div></div>
-    <div class="d-flex gap-2">
-        {% if return_url %}<a href="{{ return_url }}" class="btn btn-outline-secondary btn-sm">Voltar</a>{% else %}<a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary btn-sm">Voltar para veículos</a>{% endif %}
-        <a href="{% url 'cadastros:combustivel-cadastrar' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Cadastrar</a>
-    </div>
-</div>
+{% url 'cadastros:combustivel-cadastrar' as combustivel_novo_url %}
+{% if return_url %}
+    {% with retorno_label='Voltar' %}
+        {% include 'includes/_list_header.html' with title='Combustíveis' subtitle='Tipos de combustível disponíveis para a frota.' total_count=object_list|length total_suffix='combustível(eis)' secondary_url=return_url secondary_label=retorno_label primary_url=combustivel_novo_url primary_label='Cadastrar' primary_icon='bi-plus-lg' %}
+    {% endwith %}
+{% else %}
+    {% url 'cadastros:veiculo-lista' as veiculo_lista_url %}
+    {% include 'includes/_list_header.html' with title='Combustíveis' subtitle='Tipos de combustível disponíveis para a frota.' total_count=object_list|length total_suffix='combustível(eis)' secondary_url=veiculo_lista_url secondary_label='Voltar para veículos' primary_url=combustivel_novo_url primary_label='Cadastrar' primary_icon='bi-plus-lg' %}
+{% endif %}
 
 <div class="card filter-card mb-3">
     <div class="card-body py-3">
@@ -58,14 +60,7 @@
                 {% empty %}
                 <tr>
                     <td colspan="3">
-                        <div class="empty-state">
-                            <div class="empty-state-icon"><i class="bi bi-fuel-pump"></i></div>
-                            <p class="empty-state-title">Nenhum combustível encontrado</p>
-                            <p class="empty-state-text">Cadastre os tipos de combustível utilizados nos veículos.</p>
-                            <a href="{% url 'cadastros:combustivel-cadastrar' %}" class="btn btn-primary btn-sm">
-                                <i class="bi bi-plus-lg me-1"></i> Cadastrar combustível
-                            </a>
-                        </div>
+                        {% include 'includes/_empty_state.html' with icon='bi-fuel-pump' title='Nenhum combustível encontrado' text='Cadastre os tipos de combustível utilizados nos veículos.' action_url=combustivel_novo_url action_label='Cadastrar combustível' action_icon='bi-plus-lg' action_small=True %}
                     </td>
                 </tr>
                 {% endfor %}

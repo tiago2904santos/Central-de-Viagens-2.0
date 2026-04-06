@@ -9,7 +9,7 @@
   {% csrf_token %}
   {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
 
-  <div class="card border-0 shadow-sm mb-4">
+  <div class="card form-context-block border-0 shadow-sm mb-4">
     <div class="card-header-form">
       <i class="bi bi-signpost-2"></i>
       <span>Roteiro</span>
@@ -45,7 +45,7 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
+  <div class="card form-context-block border-0 shadow-sm mb-4">
     <div class="card-header-form">
       <i class="bi bi-calendar-range"></i>
       <span>Diárias</span>
@@ -68,7 +68,7 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
+  <div class="card form-context-block border-0 shadow-sm mb-4">
     <div class="card-header-form">
       <i class="bi bi-map"></i>
       <span>Trechos</span>
@@ -141,10 +141,8 @@
     </div>
   </div>
 
-  <div class="d-flex gap-2">
-    <a href="{% url 'documentos:oficio-step2' pk=oficio.pk %}" class="btn btn-outline-secondary"><i class="bi bi-chevron-left"></i> Anterior</a>
-    <button type="submit" class="btn btn-primary">Próximo <i class="bi bi-chevron-right"></i></button>
-  </div>
+  {% url 'documentos:oficio-step2' pk=oficio.pk as anterior_url %}
+  {% include 'includes/_form_actions.html' with leading_url=anterior_url leading_label='Anterior' leading_icon='bi-chevron-left' primary_submit_label='Próximo' primary_icon='bi-chevron-right' %}
 </form>
 
 {% endblock %}

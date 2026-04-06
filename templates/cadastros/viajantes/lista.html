@@ -5,14 +5,10 @@
 {% block page_title %}Viajantes{% endblock %}
 
 {% block content %}
-<div class="page-header-cadastro">
-    <div></div>
-    <div class="d-flex gap-2">
-        <a href="{% url 'cadastros:cargo-lista' %}" class="btn btn-outline-secondary btn-sm">Gerenciar Cargos</a>
-        <a href="{% url 'cadastros:unidade-lotacao-lista' %}" class="btn btn-outline-secondary btn-sm">Gerenciar Unidades</a>
-        <a href="{% url 'cadastros:viajante-cadastrar' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Cadastrar</a>
-    </div>
-</div>
+{% url 'cadastros:cargo-lista' as cargo_lista_url %}
+{% url 'cadastros:unidade-lotacao-lista' as unidade_lista_url %}
+{% url 'cadastros:viajante-cadastrar' as viajante_novo_url %}
+{% include 'includes/_list_header.html' with title='Viajantes' subtitle='Servidores habilitados para compor viagens e documentos.' total_count=object_list|length total_suffix='viajante(s)' secondary_url=cargo_lista_url secondary_label='Gerenciar Cargos' tertiary_url=unidade_lista_url tertiary_label='Gerenciar Unidades' primary_url=viajante_novo_url primary_label='Cadastrar' primary_icon='bi-plus-lg' %}
 
 <div class="card filter-card mb-3">
     <div class="card-body py-3">
@@ -64,14 +60,7 @@
                 {% empty %}
                 <tr>
                     <td colspan="8">
-                        <div class="empty-state">
-                            <div class="empty-state-icon"><i class="bi bi-people"></i></div>
-                            <p class="empty-state-title">Nenhum viajante encontrado</p>
-                            <p class="empty-state-text">Cadastre os servidores que realizarão as viagens.</p>
-                            <a href="{% url 'cadastros:viajante-cadastrar' %}" class="btn btn-primary btn-sm">
-                                <i class="bi bi-plus-lg me-1"></i> Cadastrar viajante
-                            </a>
-                        </div>
+                        {% include 'includes/_empty_state.html' with icon='bi-people' title='Nenhum viajante encontrado' text='Cadastre os servidores que realizarão as viagens.' action_url=viajante_novo_url action_label='Cadastrar viajante' action_icon='bi-plus-lg' action_small=True %}
                     </td>
                 </tr>
                 {% endfor %}

@@ -3,7 +3,7 @@
 {% block page_title %}Eventos{% endblock %}
 {% block content %}
 {% url 'documentos:evento-novo' as novo_url %}
-{% include 'includes/_list_header.html' with total_count=eventos|length total_suffix='evento(s)' primary_url=novo_url primary_label='Novo Evento' primary_icon='bi-plus-lg' %}
+{% include 'includes/_list_header_complete.html' with title='Eventos' subtitle='Catálogo de eventos para vínculo com documentos.' total_count=eventos|length total_suffix='evento(s)' primary_url=novo_url primary_label='Novo Evento' primary_icon='bi-plus-lg' %}
 {% if eventos %}
 <div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">

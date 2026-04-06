@@ -3,7 +3,7 @@
 {% block page_title %}Roteiros{% endblock %}
 {% block content %}
 {% url 'documentos:roteiro-novo' as novo_url %}
-{% include 'includes/_list_header.html' with total_count=roteiros|length total_suffix='roteiro(s)' primary_url=novo_url primary_label='Novo Roteiro' primary_icon='bi-plus-lg' %}
+{% include 'includes/_list_header_complete.html' with title='Roteiros' subtitle='Trechos, deslocamentos e referência de percurso.' total_count=roteiros|length total_suffix='roteiro(s)' primary_url=novo_url primary_label='Novo Roteiro' primary_icon='bi-plus-lg' %}
 {% if roteiros %}
 <div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">

@@ -1,9 +1,19 @@
-<div class="list-page-header list-page-header--simple">
+<div class="list-page-header list-page-header--complete">
   <div class="list-page-header-content">
     {% if title %}<h2 class="list-page-title">{{ title }}</h2>{% endif %}
     {% if subtitle %}<p class="list-page-subtitle">{{ subtitle }}</p>{% endif %}
-    <div class="list-page-header-meta">
-      {% if total_count is not None and total_suffix %}<span class="text-muted small">{{ total_count }} {{ total_suffix }}</span>{% elif total_text %}<span class="text-muted small">{{ total_text }}</span>{% endif %}
+    <div class="list-page-header-meta d-flex flex-wrap gap-2">
+      {% if total_count is not None and total_suffix %}
+        <span class="status-badge status-badge-sm is-info">{{ total_count }} {{ total_suffix }}</span>
+      {% elif total_text %}
+        <span class="status-badge status-badge-sm is-info">{{ total_text }}</span>
+      {% endif %}
+      {% if meta_secondary %}
+        <span class="status-badge status-badge-sm is-muted">{{ meta_secondary }}</span>
+      {% endif %}
+      {% if meta_tertiary %}
+        <span class="status-badge status-badge-sm is-muted">{{ meta_tertiary }}</span>
+      {% endif %}
     </div>
   </div>
   <div class="list-page-header-actions d-flex gap-2 flex-wrap justify-content-end">

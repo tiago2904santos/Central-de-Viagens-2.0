@@ -141,6 +141,22 @@
 }
 
 /* ----- Formulários ----- */
+.cv-select,
+.form-select {
+    min-height: 2.625rem;
+    border-color: rgba(30, 58, 95, 0.2);
+    font-size: 0.95rem;
+    line-height: 1.35;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    background-position: right 0.85rem center;
+}
+
+.cv-select:hover,
+.form-select:hover {
+    border-color: rgba(var(--cv-primary-rgb), 0.45);
+}
+
 .form-control:focus,
 .form-select:focus {
     border-color: var(--cv-primary);
@@ -348,8 +364,19 @@
 }
 
 /* ----- Formulários em card ----- */
+.form-card {
+    max-width: 760px;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--cv-shadow);
+}
+
 .form-card .card-body {
     padding: 1.5rem;
+}
+
+.form-card--simple {
+    border-radius: calc(var(--cv-card-radius) + 0.1rem);
+    background: #fff;
 }
 
 .form-actions {
@@ -402,8 +429,9 @@
 /* ----- Formulários de documentos (base compartilhada) ----- */
 .form-doc-card {
     max-width: 700px;
-    border: 0;
+    border: 1px solid rgba(var(--cv-primary-rgb), 0.12);
     box-shadow: var(--cv-shadow-md);
+    background: #fff;
 }
 
 .form-doc-card--wide {
@@ -416,6 +444,16 @@
 
 .form-doc-card .card-body {
     padding: 1.5rem;
+}
+
+.form-doc-card--context {
+    border-radius: calc(var(--cv-card-radius) + 0.15rem);
+    background: linear-gradient(180deg, rgba(var(--cv-primary-rgb), 0.02) 0%, #fff 30%);
+}
+
+.form-context-block {
+    border: 1px solid rgba(var(--cv-primary-rgb), 0.11);
+    border-radius: calc(var(--cv-card-radius) + 0.1rem);
 }
 
 /* ----- Utilitários ----- */
@@ -544,21 +582,66 @@
 .list-page-header {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.list-page-header-content {
+    min-width: 0;
+}
+
+.list-page-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.list-page-subtitle {
+    margin: 0.25rem 0 0;
+    font-size: 0.86rem;
+    color: #6b7280;
+}
+
+.list-page-header-meta {
+    margin-top: 0.35rem;
 }
 
 .list-page-header-actions {
     margin-left: auto;
 }
 
-@media (max-width: 767.98px) {
-    .list-page-header {
-        align-items: flex-start;
-    }
+.list-page-header--simple .list-page-title {
+    font-size: 1rem;
+    font-weight: 650;
+}
 
+.list-page-header--simple .list-page-subtitle {
+    font-size: 0.82rem;
+}
+
+.list-page-header--complete {
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(var(--cv-primary-rgb), 0.12);
+    border-radius: var(--cv-card-radius);
+    background: linear-gradient(180deg, rgba(var(--cv-primary-rgb), 0.04) 0%, rgba(var(--cv-primary-rgb), 0.01) 100%);
+}
+
+.list-page-header--complete .list-page-title {
+    font-size: 1.2rem;
+}
+
+.list-page-header--complete .list-page-subtitle {
+    font-size: 0.9rem;
+}
+
+.list-page-header--complete .status-badge {
+    font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
     .list-page-header-actions {
         width: 100%;
     }

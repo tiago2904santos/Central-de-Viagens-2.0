@@ -3,7 +3,7 @@
 {% block page_title %}{% if modelo %}Editar modelo de motivo{% else %}Novo modelo de motivo{% endif %}{% endblock %}
 {% block content %}
 {% url 'documentos:modelos-motivo' as cancel_url %}
-<div class="card form-doc-card">
+<div class="card form-doc-card form-doc-card--context">
   <div class="card-body">
     <form method="post">
       {% csrf_token %}

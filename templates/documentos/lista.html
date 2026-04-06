@@ -3,6 +3,7 @@
 {% block page_title %}{{ titulo }}{% endblock %}
 {% block content %}
 <div class="container py-4">
+  {% include 'includes/_list_header.html' with title=titulo subtitle='Listagem de documentos.' total_count=itens|length total_suffix='registro(s)' %}
   <div class="card"><div class="card-body">
     <ul class="mb-0">
       {% for item in itens %}<li>{{ item.titulo }}</li>{% empty %}<li>Nenhum registro.</li>{% endfor %}

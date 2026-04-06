@@ -9,7 +9,7 @@
   {% csrf_token %}
   {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
 
-  <div class="card border-0 shadow-sm mb-4">
+  <div class="card form-context-block border-0 shadow-sm mb-4">
     <div class="card-header-form">
       <i class="bi bi-hash"></i>
       <span>Identificação</span>
@@ -36,7 +36,7 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
+  <div class="card form-context-block border-0 shadow-sm mb-4">
     <div class="card-header-form">
       <i class="bi bi-chat-text"></i>
       <span>Motivo</span>
@@ -58,7 +58,7 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
+  <div class="card form-context-block border-0 shadow-sm mb-4">
     <div class="card-header-form">
       <i class="bi bi-compass"></i>
       <span>Custeio e destino</span>
@@ -94,7 +94,7 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
+  <div class="card form-context-block border-0 shadow-sm mb-4">
     <div class="card-header-form">
       <i class="bi bi-calendar-event"></i>
       <span>Evento <span class="fw-normal text-muted ms-1">(opcional)</span></span>
@@ -113,7 +113,7 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-4">
+  <div class="card form-context-block border-0 shadow-sm mb-4">
     <div class="card-header-form">
       <i class="bi bi-people"></i>
       <span>Viajantes</span>
@@ -136,10 +136,8 @@
     </div>
   </div>
 
-  <div class="d-flex gap-2">
-    <button type="submit" class="btn btn-primary">Próximo <i class="bi bi-chevron-right"></i></button>
-    <a href="{% url 'documentos:oficios' %}" class="btn btn-outline-secondary">Cancelar</a>
-  </div>
+  {% url 'documentos:oficios' as cancel_url %}
+  {% include 'includes/_form_actions.html' with primary_submit_label='Próximo' primary_icon='bi-chevron-right' cancel_url=cancel_url cancel_label='Cancelar' %}
 </form>
 
 {% endblock %}

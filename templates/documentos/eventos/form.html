@@ -3,7 +3,7 @@
 {% block page_title %}{% if evento %}Editar evento{% else %}Novo evento{% endif %}{% endblock %}
 {% block content %}
 {% url 'documentos:eventos' as cancel_url %}
-<div class="card form-doc-card">
+<div class="card form-doc-card form-doc-card--context">
   <div class="card-body">
     <form method="post">
       {% csrf_token %}

@@ -3,7 +3,7 @@
 {% block page_title %}Termos de autorização{% endblock %}
 {% block content %}
 {% url 'documentos:termo-novo' as novo_url %}
-{% include 'includes/_list_header.html' with total_count=termos|length total_suffix='termo(s)' primary_url=novo_url primary_label='Novo Termo' primary_icon='bi-plus-lg' %}
+{% include 'includes/_list_header_complete.html' with title='Termos de autorização' subtitle='Vínculo de ofício, evento, roteiro e viajante.' total_count=termos|length total_suffix='termo(s)' primary_url=novo_url primary_label='Novo Termo' primary_icon='bi-plus-lg' %}
 {% if termos %}
 <div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">

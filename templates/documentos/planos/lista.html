@@ -3,7 +3,7 @@
 {% block page_title %}Planos de trabalho{% endblock %}
 {% block content %}
 {% url 'documentos:plano-novo' as novo_url %}
-{% include 'includes/_list_header.html' with total_count=planos|length total_suffix='plano(s)' primary_url=novo_url primary_label='Novo Plano' primary_icon='bi-plus-lg' %}
+{% include 'includes/_list_header_complete.html' with title='Planos de trabalho' subtitle='Planejamento operacional e registro de entregas.' total_count=planos|length total_suffix='plano(s)' primary_url=novo_url primary_label='Novo Plano' primary_icon='bi-plus-lg' %}
 <div class="row g-3 mb-3">
   <div class="col-md-4">
     <div class="card border-0 shadow-sm h-100">

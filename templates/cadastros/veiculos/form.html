@@ -5,7 +5,7 @@
 
 {% block content %}
 {% include 'cadastros/_aviso_rascunho.html' %}
-<div class="card form-card">
+<div class="card form-card form-card--simple">
     <div class="card-body">
         <form method="post" id="form-veiculo">
             {% csrf_token %}
@@ -34,14 +34,14 @@
             </div>
             {% if object %}<input type="hidden" name="veiculo_id" value="{{ object.pk }}">{% endif %}
             <input type="hidden" name="return_url" value="{{ return_url }}">
-            <div class="form-actions mt-4">
-                <button type="submit" class="btn btn-primary">Salvar</button>
+            <div class="mt-4 d-flex gap-3 flex-wrap align-items-center">
                 {% if next_url %}
-                <a href="{{ next_url }}" class="btn btn-outline-secondary">Cancelar</a>
+                    {% include 'includes/_form_actions.html' with primary_submit_label='Salvar' cancel_url=next_url cancel_label='Cancelar' %}
                 {% else %}
-                <a href="{% url 'cadastros:veiculo-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    {% url 'cadastros:veiculo-lista' as veiculo_lista_url %}
+                    {% include 'includes/_form_actions.html' with primary_submit_label='Salvar' cancel_url=veiculo_lista_url cancel_label='Cancelar' %}
                 {% endif %}
-                <button type="submit" formaction="{% url 'cadastros:veiculo-rascunho-ir-combustiveis' %}" class="btn btn-link text-muted">Gerenciar Combustíveis</button>
+                <button type="submit" formaction="{% url 'cadastros:veiculo-rascunho-ir-combustiveis' %}" class="btn btn-link text-muted p-0">Gerenciar Combustíveis</button>
             </div>
         </form>
     </div>

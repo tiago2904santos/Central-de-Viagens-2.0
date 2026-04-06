@@ -3,7 +3,7 @@
 {% block page_title %}Justificativas{% endblock %}
 {% block content %}
 {% url 'documentos:justificativa-nova' as novo_url %}
-{% include 'includes/_list_header.html' with total_count=justificativas|length total_suffix='justificativa(s)' primary_url=novo_url primary_label='Nova Justificativa' primary_icon='bi-plus-lg' %}
+{% include 'includes/_list_header_complete.html' with title='Justificativas' subtitle='Acompanhamento das justificativas vinculadas aos ofícios.' total_count=justificativas|length total_suffix='justificativa(s)' primary_url=novo_url primary_label='Nova Justificativa' primary_icon='bi-plus-lg' %}
 {% if justificativas %}
 <div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">
