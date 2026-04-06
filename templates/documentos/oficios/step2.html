@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Ofício {{ oficio.identificacao }} — Transporte{% endblock %}
 {% block page_title %}Ofício {{ oficio.identificacao }} — Transporte{% endblock %}
 {% block content %}
@@ -16,14 +17,14 @@
     <div class="card-body pt-4">
       <div class="mb-3">
         <label class="form-label fw-semibold">Selecionar veículo cadastrado</label>
-        <select name="veiculo_id" id="id_veiculo_id" class="form-select" onchange="toggleVeiculoManual()">
+        <select name="veiculo_id" id="id_veiculo_id" class="form-select">
           <option value="">— Inserir manualmente —</option>
           {% for v in veiculos %}
           <option value="{{ v.pk }}" {% if oficio.veiculo_id == v.pk %}selected{% endif %}>{{ v.placa }} — {{ v.modelo }}</option>
           {% endfor %}
         </select>
       </div>
-      <div id="div_veiculo_manual" {% if oficio.veiculo_id %}style="display:none"{% endif %}>
+      <div id="div_veiculo_manual" class="{% if oficio.veiculo_id %}d-none{% endif %}">
         <div class="row g-3">
           <div class="col-md-3">
             <label class="form-label fw-semibold">Placa</label>
@@ -96,10 +97,8 @@
   </div>
 </form>
 
-<script>
-function toggleVeiculoManual() {
-  var val = document.getElementById('id_veiculo_id').value;
-  document.getElementById('div_veiculo_manual').style.display = val ? 'none' : '';
-}
-</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/oficios_steps.js' %}"></script>
 {% endblock %}

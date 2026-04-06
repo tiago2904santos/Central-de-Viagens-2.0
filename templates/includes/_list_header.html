@@ -1,0 +1,16 @@
+<div class="list-page-header">
+  <div class="list-page-header-meta">
+    {% if total_count is not None and total_suffix %}<span class="text-muted small">{{ total_count }} {{ total_suffix }}</span>{% elif total_text %}<span class="text-muted small">{{ total_text }}</span>{% endif %}
+  </div>
+  <div class="list-page-header-actions d-flex gap-2 flex-wrap justify-content-end">
+    {% if secondary_url and secondary_label %}
+      <a href="{{ secondary_url }}" class="btn btn-outline-secondary btn-sm">{{ secondary_label }}</a>
+    {% endif %}
+    {% if tertiary_url and tertiary_label %}
+      <a href="{{ tertiary_url }}" class="btn btn-outline-secondary btn-sm">{{ tertiary_label }}</a>
+    {% endif %}
+    {% if primary_url and primary_label %}
+      <a href="{{ primary_url }}" class="btn btn-primary btn-sm">{% if primary_icon %}<i class="bi {{ primary_icon }} me-1"></i>{% endif %}{{ primary_label }}</a>
+    {% endif %}
+  </div>
+</div>

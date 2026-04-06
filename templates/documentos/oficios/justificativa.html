@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Ofício {{ oficio.identificacao }} — Justificativa{% endblock %}
 {% block page_title %}Ofício {{ oficio.identificacao }} — Justificativa{% endblock %}
 {% block content %}
@@ -17,7 +18,7 @@
       <div class="list-group list-group-flush">
         {% for m in modelos %}
         <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2"
-          onclick="usarModelo('{{ m.pk }}', this)" data-texto="{{ m.texto }}">
+          data-modelo-id="{{ m.pk }}" data-texto="{{ m.texto }}" data-modelo-texto-target="#id_justificativa_texto" data-modelo-hidden-target="#id_modelo_id">
           <span class="fw-semibold">{{ m.nome }}</span>
           {% if m.is_padrao %}<span class="status-badge status-badge-sm is-info">Padrão</span>{% endif %}
         </button>
@@ -52,12 +53,8 @@
   </div>
 </form>
 
-<script>
-function usarModelo(id, btn) {
-  document.getElementById('id_modelo_id').value = id;
-  document.getElementById('id_justificativa_texto').value = btn.dataset.texto;
-  document.querySelectorAll('.list-group-item').forEach(function(el) { el.classList.remove('active'); });
-  btn.classList.add('active');
-}
-</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/oficios_steps.js' %}"></script>
 {% endblock %}

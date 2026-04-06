@@ -2,10 +2,8 @@
 {% block title %}Justificativas{% endblock %}
 {% block page_title %}Justificativas{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <span class="text-muted small">{{ justificativas|length }} justificativa(s)</span>
-  <a href="{% url 'documentos:justificativa-nova' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Nova Justificativa</a>
-</div>
+{% url 'documentos:justificativa-nova' as novo_url %}
+{% include 'includes/_list_header.html' with total_count=justificativas|length total_suffix='justificativa(s)' primary_url=novo_url primary_label='Nova Justificativa' primary_icon='bi-plus-lg' %}
 {% if justificativas %}
 <div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">
@@ -35,16 +33,8 @@
 </div>
 {% else %}
 <div class="card border-0 shadow-sm">
-  <div class="empty-state">
-    <div class="empty-state-icon">
-      <i class="bi bi-journal-text"></i>
-    </div>
-    <p class="empty-state-title">Nenhuma justificativa cadastrada</p>
-    <p class="empty-state-text">Justificativas fundamentam as necessidades das viagens.</p>
-    <a href="{% url 'documentos:justificativa-nova' %}" class="btn btn-primary">
-      <i class="bi bi-plus-lg me-1"></i> Criar primeira justificativa
-    </a>
-  </div>
+  {% url 'documentos:justificativa-nova' as empty_action_url %}
+  {% include 'includes/_empty_state.html' with icon='bi-journal-text' title='Nenhuma justificativa cadastrada' text='Justificativas fundamentam as necessidades das viagens.' action_url=empty_action_url action_label='Criar primeira justificativa' action_icon='bi-plus-lg' %}
 </div>
 {% endif %}
 {% endblock %}

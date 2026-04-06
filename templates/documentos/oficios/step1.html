@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{% if oficio %}Ofício {{ oficio.identificacao }}{% else %}Novo Ofício{% endif %} — Dados gerais{% endblock %}
 {% block page_title %}{% if oficio %}Ofício {{ oficio.identificacao }}{% else %}Novo Ofício{% endif %}{% endblock %}
 {% block content %}
@@ -67,14 +68,14 @@
         <div class="col-md-6">
           <label class="form-label fw-semibold d-block">Tipo de custeio</label>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="custeio_tipo" id="custeio_proprio" value="PROPRIO" {% if oficio.custeio_tipo != 'EXTERNO' %}checked{% endif %} onchange="toggleCusteio()">
+            <input class="form-check-input" type="radio" name="custeio_tipo" id="custeio_proprio" value="PROPRIO" {% if oficio.custeio_tipo != 'EXTERNO' %}checked{% endif %}>
             <label class="form-check-label" for="custeio_proprio">Próprio</label>
           </div>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="custeio_tipo" id="custeio_externo" value="EXTERNO" {% if oficio.custeio_tipo == 'EXTERNO' %}checked{% endif %} onchange="toggleCusteio()">
+            <input class="form-check-input" type="radio" name="custeio_tipo" id="custeio_externo" value="EXTERNO" {% if oficio.custeio_tipo == 'EXTERNO' %}checked{% endif %}>
             <label class="form-check-label" for="custeio_externo">Externo</label>
           </div>
-          <div id="div_instituicao" class="mt-2" {% if oficio.custeio_tipo != 'EXTERNO' %}style="display:none"{% endif %}>
+          <div id="div_instituicao" class="mt-2 {% if oficio.custeio_tipo != 'EXTERNO' %}d-none{% endif %}">
             <input type="text" name="nome_instituicao_custeio" class="form-control" placeholder="Nome da instituição custeante" value="{{ oficio.nome_instituicao_custeio|default:'' }}">
           </div>
         </div>
@@ -99,14 +100,14 @@
       <span>Evento <span class="fw-normal text-muted ms-1">(opcional)</span></span>
     </div>
     <div class="card-body pt-4">
-      <select name="evento_id" id="id_evento_id" class="form-select mb-2" onchange="toggleNovoEvento()">
+      <select name="evento_id" id="id_evento_id" class="form-select mb-2">
         <option value="">— Nenhum —</option>
         {% for ev in eventos %}
         <option value="{{ ev.pk }}" {% if oficio.evento_id == ev.pk %}selected{% endif %}>{{ ev.nome }}</option>
         {% endfor %}
         <option value="novo">+ Criar novo evento</option>
       </select>
-      <div id="div_novo_evento" style="display:none">
+      <div id="div_novo_evento" class="d-none">
         <input type="text" name="evento_nome_novo" class="form-control" placeholder="Nome do novo evento">
       </div>
     </div>
@@ -141,28 +142,8 @@
   </div>
 </form>
 
-<script>
-function toggleCusteio() {
-  var ext = document.getElementById('custeio_externo').checked;
-  document.getElementById('div_instituicao').style.display = ext ? '' : 'none';
-}
-function toggleNovoEvento() {
-  var val = document.getElementById('id_evento_id').value;
-  document.getElementById('div_novo_evento').style.display = val === 'novo' ? '' : 'none';
-}
-document.getElementById('busca_viajante').addEventListener('input', function() {
-  var q = this.value.toLowerCase();
-  document.querySelectorAll('.viajante-item').forEach(function(el) {
-    el.style.display = el.dataset.nome.includes(q) ? '' : 'none';
-  });
-});
-document.getElementById('id_modelo_motivo').addEventListener('change', function() {
-  var opt = this.options[this.selectedIndex];
-  var texto = opt.dataset.texto;
-  if (texto) {
-    var ta = document.getElementById('id_motivo');
-    if (!ta.value) ta.value = texto;
-  }
-});
-</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/oficios_steps.js' %}"></script>
 {% endblock %}
