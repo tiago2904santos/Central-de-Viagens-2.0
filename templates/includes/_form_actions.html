@@ -1,0 +1,11 @@
+<div class="form-actions{% if extra_class %} {{ extra_class }}{% endif %}">
+  {% if primary_submit_label %}
+    <button type="submit" class="btn btn-primary">{{ primary_submit_label }}</button>
+  {% endif %}
+  {% if secondary_submit_name and secondary_submit_value and secondary_submit_label %}
+    <button type="submit" name="{{ secondary_submit_name }}" value="{{ secondary_submit_value }}" class="btn btn-outline-primary">{{ secondary_submit_label }}</button>
+  {% endif %}
+  {% if cancel_url and cancel_label %}
+    <a href="{{ cancel_url }}" class="btn btn-outline-secondary">{{ cancel_label }}</a>
+  {% endif %}
+</div>

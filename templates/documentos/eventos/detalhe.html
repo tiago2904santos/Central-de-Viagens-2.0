@@ -14,12 +14,12 @@
   </div>
   <div class="card-body pt-4">
     <dl class="row mb-0">
-      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase" style="font-size:.75rem;letter-spacing:.05em">Nome</dt><dd class="col-sm-9 fw-semibold">{{ evento.nome }}</dd>
-      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase" style="font-size:.75rem;letter-spacing:.05em">Status</dt>
+      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase meta-label-dl">Nome</dt><dd class="col-sm-9 fw-semibold">{{ evento.nome }}</dd>
+      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase meta-label-dl">Status</dt>
       <dd class="col-sm-9">{% if evento.status == 'FINALIZADO' %}<span class="status-badge status-badge-sm is-finalizado">Finalizado</span>{% else %}<span class="status-badge status-badge-sm is-rascunho">Rascunho</span>{% endif %}</dd>
-      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase" style="font-size:.75rem;letter-spacing:.05em">Data início</dt><dd class="col-sm-9">{{ evento.data_inicio|date:"d/m/Y"|default:"—" }}</dd>
-      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase" style="font-size:.75rem;letter-spacing:.05em">Data fim</dt><dd class="col-sm-9">{{ evento.data_fim|date:"d/m/Y"|default:"—" }}</dd>
-      {% if evento.descricao %}<dt class="col-sm-3 text-muted small fw-semibold text-uppercase" style="font-size:.75rem;letter-spacing:.05em">Descrição</dt><dd class="col-sm-9">{{ evento.descricao }}</dd>{% endif %}
+      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase meta-label-dl">Data início</dt><dd class="col-sm-9">{{ evento.data_inicio|date:"d/m/Y"|default:"—" }}</dd>
+      <dt class="col-sm-3 text-muted small fw-semibold text-uppercase meta-label-dl">Data fim</dt><dd class="col-sm-9">{{ evento.data_fim|date:"d/m/Y"|default:"—" }}</dd>
+      {% if evento.descricao %}<dt class="col-sm-3 text-muted small fw-semibold text-uppercase meta-label-dl">Descrição</dt><dd class="col-sm-9">{{ evento.descricao }}</dd>{% endif %}
     </dl>
   </div>
 </div>

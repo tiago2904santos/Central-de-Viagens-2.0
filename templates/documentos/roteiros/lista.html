@@ -2,10 +2,8 @@
 {% block title %}Roteiros{% endblock %}
 {% block page_title %}Roteiros{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <span class="text-muted small">{{ roteiros|length }} roteiro(s)</span>
-  <a href="{% url 'documentos:roteiro-novo' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Novo Roteiro</a>
-</div>
+{% url 'documentos:roteiro-novo' as novo_url %}
+{% include 'includes/_list_header.html' with total_count=roteiros|length total_suffix='roteiro(s)' primary_url=novo_url primary_label='Novo Roteiro' primary_icon='bi-plus-lg' %}
 {% if roteiros %}
 <div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">
@@ -34,16 +32,8 @@
 </div>
 {% else %}
 <div class="card border-0 shadow-sm">
-  <div class="empty-state">
-    <div class="empty-state-icon">
-      <i class="bi bi-signpost-2"></i>
-    </div>
-    <p class="empty-state-title">Nenhum roteiro cadastrado</p>
-    <p class="empty-state-text">Roteiros definem os trajetos e itinerários das viagens.</p>
-    <a href="{% url 'documentos:roteiro-novo' %}" class="btn btn-primary">
-      <i class="bi bi-plus-lg me-1"></i> Criar primeiro roteiro
-    </a>
-  </div>
+  {% url 'documentos:roteiro-novo' as empty_action_url %}
+  {% include 'includes/_empty_state.html' with icon='bi-signpost-2' title='Nenhum roteiro cadastrado' text='Roteiros definem os trajetos e itinerários das viagens.' action_url=empty_action_url action_label='Criar primeiro roteiro' action_icon='bi-plus-lg' %}
 </div>
 {% endif %}
 {% endblock %}

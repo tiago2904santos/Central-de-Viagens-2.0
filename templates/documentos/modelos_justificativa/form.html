@@ -2,6 +2,7 @@
 {% block title %}{% if modelo %}Editar modelo de justificativa{% else %}Novo modelo de justificativa{% endif %}{% endblock %}
 {% block page_title %}{% if modelo %}Editar modelo de justificativa{% else %}Novo modelo de justificativa{% endif %}{% endblock %}
 {% block content %}
+{% url 'documentos:modelos-justificativa' as cancel_url %}
 <div class="card form-doc-card">
   <div class="card-body">
     <form method="post">
@@ -20,10 +21,7 @@
           <label class="form-check-label" for="id_padrao">Definir como padrão</label>
         </div>
       </div>
-      <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Salvar</button>
-        <a href="{% url 'documentos:modelos-justificativa' %}" class="btn btn-outline-secondary">Cancelar</a>
-      </div>
+      {% include 'includes/_form_actions.html' with primary_submit_label='Salvar' cancel_url=cancel_url cancel_label='Cancelar' %}
     </form>
   </div>
 </div>

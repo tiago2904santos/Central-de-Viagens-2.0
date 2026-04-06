@@ -1,0 +1,10 @@
+<div class="empty-state">
+  {% if icon %}<div class="empty-state-icon"><i class="bi {{ icon }}"></i></div>{% endif %}
+  <p class="empty-state-title">{{ title }}</p>
+  {% if text %}<p class="empty-state-text">{{ text }}</p>{% endif %}
+  {% if action_url and action_label %}
+    <a href="{{ action_url }}" class="btn btn-primary{% if action_small %} btn-sm{% endif %}">
+      {% if action_icon %}<i class="bi {{ action_icon }} me-1"></i>{% endif %}{{ action_label }}
+    </a>
+  {% endif %}
+</div>

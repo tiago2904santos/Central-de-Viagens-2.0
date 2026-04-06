@@ -18,20 +18,20 @@
       <div class="mb-3">
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="roteiro_opcao" value="nenhum" id="rot_nenhum"
-            {% if not oficio.roteiro_id %}checked{% endif %} onchange="toggleRoteiro()">
+            {% if not oficio.roteiro_id %}checked{% endif %}>
           <label class="form-check-label" for="rot_nenhum">Nenhum</label>
         </div>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="roteiro_opcao" value="existente" id="rot_existente"
-            {% if oficio.roteiro_id %}checked{% endif %} onchange="toggleRoteiro()">
+            {% if oficio.roteiro_id %}checked{% endif %}>
           <label class="form-check-label" for="rot_existente">Usar roteiro existente</label>
         </div>
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="roteiro_opcao" value="novo" id="rot_novo" onchange="toggleRoteiro()">
+          <input class="form-check-input" type="radio" name="roteiro_opcao" value="novo" id="rot_novo">
           <label class="form-check-label" for="rot_novo">Criar novo roteiro</label>
         </div>
       </div>
-      <div id="div_roteiro_existente" {% if not oficio.roteiro_id %}style="display:none"{% endif %}>
+      <div id="div_roteiro_existente" class="{% if not oficio.roteiro_id %}d-none{% endif %}">
         <select name="roteiro_id" class="form-select">
           <option value="">— Selecionar —</option>
           {% for r in roteiros %}
@@ -39,7 +39,7 @@
           {% endfor %}
         </select>
       </div>
-      <div id="div_roteiro_novo" style="display:none">
+      <div id="div_roteiro_novo" class="d-none">
         <input type="text" name="roteiro_nome_novo" class="form-control" placeholder="Nome do novo roteiro">
       </div>
     </div>
@@ -72,7 +72,7 @@
     <div class="card-header-form">
       <i class="bi bi-map"></i>
       <span>Trechos</span>
-      <button type="button" class="btn btn-sm btn-outline-primary ms-auto" onclick="addTrecho()">
+      <button type="button" class="btn btn-sm btn-outline-primary ms-auto" data-trecho-add="1">
         <i class="bi bi-plus-lg me-1"></i> Adicionar trecho
       </button>
     </div>
@@ -102,7 +102,7 @@
           </div>
         </div>
         <div class="col-md-1 d-flex align-items-end">
-          <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTrecho(this)">
+          <button type="button" class="btn btn-sm btn-outline-danger" data-trecho-remove="1">
             <i class="bi bi-trash"></i>
           </button>
         </div>
@@ -132,7 +132,7 @@
           </div>
         </div>
         <div class="col-md-1 d-flex align-items-end">
-          <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTrecho(this)">
+          <button type="button" class="btn btn-sm btn-outline-danger" data-trecho-remove="1">
             <i class="bi bi-trash"></i>
           </button>
         </div>
@@ -147,47 +147,10 @@
   </div>
 </form>
 
-<script>
-function toggleRoteiro() {
-  var val = document.querySelector('input[name="roteiro_opcao"]:checked').value;
-  document.getElementById('div_roteiro_existente').style.display = val === 'existente' ? '' : 'none';
-  document.getElementById('div_roteiro_novo').style.display = val === 'novo' ? '' : 'none';
-}
-function getTrechoCount() {
-  return document.querySelectorAll('#trechos_container .trecho-row').length + 1;
-}
-function addTrecho() {
-  var container = document.getElementById('trechos_container');
-  var idx = getTrechoCount();
-  var tpl = '<div class="row g-2 mb-3 trecho-row border rounded p-2">' +
-    '<div class="col-md-3"><label class="form-label small">Origem</label><input type="text" name="trecho_origem" class="form-control form-control-sm"></div>' +
-    '<div class="col-md-3"><label class="form-label small">Destino</label><input type="text" name="trecho_destino" class="form-control form-control-sm"></div>' +
-    '<div class="col-md-2"><label class="form-label small">Data saída</label><input type="date" name="trecho_data_saida" class="form-control form-control-sm"></div>' +
-    '<div class="col-md-2"><label class="form-label small">Data chegada</label><input type="date" name="trecho_data_chegada" class="form-control form-control-sm"></div>' +
-    '<div class="col-md-1 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" name="trecho_retorno" value="' + idx + '"><label class="form-check-label small">Retorno</label></div></div>' +
-    '<div class="col-md-1 d-flex align-items-end"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTrecho(this)"><i class="bi bi-trash"></i></button></div>' +
-    '</div>';
-  container.insertAdjacentHTML('beforeend', tpl);
-  reindexTrechos();
-}
-function reindexTrechos() {
-  document.querySelectorAll('#trechos_container .trecho-row').forEach(function(row, i) {
-    var cb = row.querySelector('input[name="trecho_retorno"]');
-    if (cb) cb.value = String(i + 1);
-  });
-}
-function removeTrecho(btn) {
-  btn.closest('.trecho-row').remove();
-  reindexTrechos();
-}
-</script>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/oficio_wizard.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  OficioWizard.bindDiariasCalc();
-});
-</script>
+<script src="{% static 'js/oficios_steps.js' %}"></script>
+
 {% endblock %}

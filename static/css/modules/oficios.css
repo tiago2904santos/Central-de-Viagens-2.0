@@ -1,0 +1,179 @@
+/* Módulo Ofícios */
+/* ----- Wizard de Ofício — Stepper ----- */
+.oficio-wizard-page {
+    --oficio-sticky-header-height: 0px;
+}
+
+.oficio-stepper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.oficio-stepper-link {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+    min-height: 3rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.8rem;
+    border: 1px solid rgba(var(--cv-primary-rgb), 0.18);
+    background: #fff;
+    color: #495057;
+    text-decoration: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.oficio-stepper-link:hover {
+    color: var(--cv-primary);
+    border-color: rgba(var(--cv-primary-rgb), 0.4);
+    box-shadow: 0 0.4rem 1rem rgba(var(--cv-primary-rgb), 0.08);
+    transform: translateY(-1px);
+}
+
+.oficio-stepper-link.is-active {
+    background: linear-gradient(135deg, var(--cv-primary) 0%, var(--cv-primary-hover) 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0.7rem 1.5rem rgba(var(--cv-primary-rgb), 0.2);
+}
+
+.oficio-stepper-link.is-done {
+    background: rgba(25, 135, 84, 0.08);
+    border-color: rgba(25, 135, 84, 0.2);
+    color: #157347;
+}
+
+.oficio-stepper-number {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.oficio-stepper-label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.oficio-stepper-link.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #6c757d;
+}
+
+/* ----- Wizard de Ofício — Resumo (step 4) ----- */
+.oficio-summary-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.oficio-summary-grid--two {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.oficio-summary-section {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 1rem;
+    background: #fff;
+    padding: 1.25rem;
+}
+
+.oficio-summary-section h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--cv-sidebar-bg);
+}
+
+.oficio-summary-meta {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.oficio-summary-row {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.oficio-summary-label {
+    color: #6c757d;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.oficio-summary-value {
+    color: #212529;
+}
+
+.oficio-summary-hero {
+    border: 1px solid rgba(var(--cv-primary-rgb), 0.12);
+    border-radius: 1rem;
+    background: linear-gradient(135deg, rgba(var(--cv-primary-rgb), 0.08), rgba(var(--cv-primary-rgb), 0.02));
+    padding: 1.25rem;
+}
+
+.oficio-summary-pill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.oficio-summary-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(var(--cv-primary-rgb), 0.12);
+    font-size: 0.875rem;
+}
+
+.oficio-summary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.oficio-summary-actions-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.oficio-summary-actions-note {
+    font-size: 0.84rem;
+    color: #6c757d;
+}
+
+/* ----- Confirmação de exclusão ----- */
+.confirm-delete-card {
+    max-width: 580px;
+    border: 0;
+    box-shadow: var(--cv-shadow-md);
+}
+
+.confirm-delete-card .card-body {
+    padding: 1.5rem;
+}
+
+/* ----- Media queries ----- */
+@media (max-width: 767.98px) {
+    .oficio-stepper {
+        grid-template-columns: 1fr;
+    }
+
+    .oficio-summary-grid--two {
+        grid-template-columns: 1fr;
+    }
+

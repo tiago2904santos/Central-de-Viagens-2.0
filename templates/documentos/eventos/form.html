@@ -2,6 +2,7 @@
 {% block title %}{% if evento %}Editar evento{% else %}Novo evento{% endif %}{% endblock %}
 {% block page_title %}{% if evento %}Editar evento{% else %}Novo evento{% endif %}{% endblock %}
 {% block content %}
+{% url 'documentos:eventos' as cancel_url %}
 <div class="card form-doc-card">
   <div class="card-body">
     <form method="post">
@@ -25,10 +26,7 @@
           <input type="date" name="data_fim" class="form-control" value="{{ evento.data_fim|date:'Y-m-d'|default:'' }}">
         </div>
       </div>
-      <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Salvar</button>
-        <a href="{% url 'documentos:eventos' %}" class="btn btn-outline-secondary">Cancelar</a>
-      </div>
+      {% include 'includes/_form_actions.html' with primary_submit_label='Salvar' cancel_url=cancel_url cancel_label='Cancelar' %}
     </form>
   </div>
 </div>

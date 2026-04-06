@@ -2,10 +2,8 @@
 {% block title %}Ordens de serviço{% endblock %}
 {% block page_title %}Ordens de serviço{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <span class="text-muted small">{{ ordens|length }} ordem(s)</span>
-  <a href="{% url 'documentos:ordem-nova' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Nova Ordem</a>
-</div>
+{% url 'documentos:ordem-nova' as novo_url %}
+{% include 'includes/_list_header.html' with total_count=ordens|length total_suffix='ordem(s)' primary_url=novo_url primary_label='Nova Ordem' primary_icon='bi-plus-lg' %}
 {% if ordens %}
 <div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">
@@ -33,16 +31,8 @@
 </div>
 {% else %}
 <div class="card border-0 shadow-sm">
-  <div class="empty-state">
-    <div class="empty-state-icon">
-      <i class="bi bi-card-checklist"></i>
-    </div>
-    <p class="empty-state-title">Nenhuma ordem de serviço cadastrada</p>
-    <p class="empty-state-text">Ordens de serviço formalizam as autorizações de missão.</p>
-    <a href="{% url 'documentos:ordem-nova' %}" class="btn btn-primary">
-      <i class="bi bi-plus-lg me-1"></i> Criar primeira ordem
-    </a>
-  </div>
+  {% url 'documentos:ordem-nova' as empty_action_url %}
+  {% include 'includes/_empty_state.html' with icon='bi-card-checklist' title='Nenhuma ordem de serviço cadastrada' text='Ordens de serviço formalizam as autorizações de missão.' action_url=empty_action_url action_label='Criar primeira ordem' action_icon='bi-plus-lg' %}
 </div>
 {% endif %}
 {% endblock %}

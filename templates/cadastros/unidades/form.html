@@ -22,19 +22,4 @@
         </form>
     </div>
 </div>
-<script>
-(function() {
-    var nomeInput = document.getElementById('id_nome');
-    if (!nomeInput) return;
-    function toUpper() {
-        nomeInput.value = nomeInput.value.toUpperCase();
-    }
-    nomeInput.addEventListener('input', toUpper);
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', toUpper);
-    } else {
-        toUpper();
-    }
-})();
-</script>
 {% endblock %}

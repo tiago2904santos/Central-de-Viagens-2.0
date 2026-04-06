@@ -2,12 +2,8 @@
 {% block title %}Ofícios{% endblock %}
 {% block page_title %}Ofícios{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <span class="text-muted small">{{ oficios|length }} ofício(s)</span>
-  <a href="{% url 'documentos:oficio-novo-step1' %}" class="btn btn-primary btn-sm">
-    <i class="bi bi-plus-lg me-1"></i> Novo Ofício
-  </a>
-</div>
+{% url 'documentos:oficio-novo-step1' as novo_url %}
+{% include 'includes/_list_header.html' with total_count=oficios|length total_suffix='ofício(s)' primary_url=novo_url primary_label='Novo Ofício' primary_icon='bi-plus-lg' %}
 
 {% if oficios %}
 <div class="card border-0 shadow-sm overflow-hidden">
@@ -60,16 +56,8 @@
 </div>
 {% else %}
 <div class="card border-0 shadow-sm">
-  <div class="empty-state">
-    <div class="empty-state-icon">
-      <i class="bi bi-file-earmark-text"></i>
-    </div>
-    <p class="empty-state-title">Nenhum ofício cadastrado</p>
-    <p class="empty-state-text">Crie seu primeiro ofício para começar o processo de autorização de viagem.</p>
-    <a href="{% url 'documentos:oficio-novo-step1' %}" class="btn btn-primary">
-      <i class="bi bi-plus-lg me-1"></i> Criar primeiro ofício
-    </a>
-  </div>
+  {% url 'documentos:oficio-novo-step1' as empty_action_url %}
+  {% include 'includes/_empty_state.html' with icon='bi-file-earmark-text' title='Nenhum ofício cadastrado' text='Crie seu primeiro ofício para começar o processo de autorização de viagem.' action_url=empty_action_url action_label='Criar primeiro ofício' action_icon='bi-plus-lg' %}
 </div>
 {% endif %}
 {% endblock %}
