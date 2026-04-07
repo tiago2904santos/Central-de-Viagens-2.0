@@ -48,6 +48,7 @@ from .services.diarias import (
     formatar_valor_diarias,
     infer_tipo_destino_from_paradas,
 )
+from .services.justificativa import DEFAULT_PRAZO_JUSTIFICATIVA_DIAS
 from .services.documentos import (
     DocumentoFormato,
     DocumentoOficioTipo,
@@ -642,7 +643,7 @@ def _document_card_status_meta(status_key, fallback_label='Ã¢â‚¬â€'):
     }
 
 
-def _build_oficio_document_actions(oficio, tipo_documento):
+def _build_oficio_document_actions(oficio, tipo_documento, lightweight=False):
     meta = get_document_type_meta(tipo_documento)
     actions = []
     errors = []
@@ -650,7 +651,10 @@ def _build_oficio_document_actions(oficio, tipo_documento):
     for formato in (DocumentoFormato.PDF, DocumentoFormato.DOCX):
         if not meta.supports(formato):
             continue
-        status_info = get_document_generation_status(oficio, meta.tipo, formato)
+        if lightweight:
+            status_info = {'status': 'available', 'errors': []}
+        else:
+            status_info = get_document_generation_status(oficio, meta.tipo, formato)
         statuses.append(status_info['status'])
         actions.append(
             {
@@ -667,7 +671,10 @@ def _build_oficio_document_actions(oficio, tipo_documento):
         if status_info['status'] != 'available':
             errors.extend(status_info.get('errors') or [])
 
-    if any(status == 'available' for status in statuses):
+    if lightweight:
+        status_key = 'available'
+        detail = 'Disponibilidade validada no momento do download.'
+    elif any(status == 'available' for status in statuses):
         status_key = 'available'
         detail = 'Documento pronto para download.'
     elif any(status == 'pending' for status in statuses):
@@ -1335,7 +1342,11 @@ def _oficio_list_justificativa_block(oficio, justificativa_info):
     if not justificativa_info['required'] and not justificativa_info['filled'] and not justificativa:
         return None
 
-    document = _build_oficio_document_actions(oficio, DocumentoOficioTipo.JUSTIFICATIVA)
+    document = _build_oficio_document_actions(
+        oficio,
+        DocumentoOficioTipo.JUSTIFICATIVA,
+        lightweight=True,
+    )
     status_meta = _document_card_status_meta(
         justificativa_info['status_key'],
         justificativa_info['status_label'],
@@ -1394,6 +1405,73 @@ def _oficio_list_has_terms(oficio):
     return has_terms
 
 
+def _oficio_list_prazo_justificativa_dias():
+    config_value = (
+        ConfiguracaoSistema.objects.order_by('pk')
+        .values_list('prazo_justificativa_dias', flat=True)
+        .first()
+    )
+    try:
+        prazo = int(config_value)
+    except (TypeError, ValueError):
+        return DEFAULT_PRAZO_JUSTIFICATIVA_DIAS
+    if prazo < 0:
+        return DEFAULT_PRAZO_JUSTIFICATIVA_DIAS
+    return prazo
+
+
+def _oficio_list_justificativa_info(oficio, prazo_minimo_dias):
+    primeira_saida = None
+    for trecho in oficio.trechos.all():
+        if not trecho.saida_data or not trecho.saida_hora:
+            continue
+        saida = datetime.combine(trecho.saida_data, trecho.saida_hora)
+        if primeira_saida is None or saida < primeira_saida:
+            primeira_saida = saida
+
+    if not oficio.data_criacao or not primeira_saida:
+        dias_antecedencia = None
+    else:
+        dias_antecedencia = (primeira_saida.date() - oficio.data_criacao).days
+
+    exige = dias_antecedencia is not None and dias_antecedencia < prazo_minimo_dias
+
+    try:
+        justificativa = oficio.justificativa
+    except Justificativa.DoesNotExist:
+        justificativa = None
+
+    texto = (getattr(justificativa, 'texto', '') or '').strip()
+    preenchida = bool(texto)
+
+    if dias_antecedencia is None:
+        status_key = 'indefinida'
+        status_label = 'Aguardando dados validos do Step 3'
+    elif exige and not preenchida:
+        status_key = 'pendente'
+        status_label = 'Pendente'
+    elif preenchida:
+        status_key = 'preenchida'
+        status_label = 'Preenchida'
+    else:
+        status_key = 'nao_exigida'
+        status_label = 'Nao exigida'
+
+    return {
+        'required': exige,
+        'filled': preenchida,
+        'schema_available': True,
+        'schema_message': '',
+        'prazo_minimo_dias': prazo_minimo_dias,
+        'dias_antecedencia': dias_antecedencia,
+        'primeira_saida': primeira_saida,
+        'primeira_saida_display': primeira_saida.strftime('%d/%m/%Y %H:%M') if primeira_saida else '',
+        'status_key': status_key,
+        'status_label': status_label,
+        'texto': texto,
+    }
+
+
 def _oficio_list_term_block(oficio):
     termos_map = {}
     for termo in list(oficio.termos_autorizacao.all()) + list(oficio.termos_autorizacao_relacionados.all()):
@@ -1425,8 +1503,11 @@ def _oficio_list_term_block(oficio):
     }
 
 
-def _oficio_list_precomputed_meta(oficio):
-    justificativa_info = _build_oficio_justificativa_info(oficio)
+def _oficio_list_precomputed_meta(oficio, prazo_minimo_dias=None):
+    justificativa_info = _oficio_list_justificativa_info(
+        oficio,
+        prazo_minimo_dias if prazo_minimo_dias is not None else _oficio_list_prazo_justificativa_dias(),
+    )
     viagem_status = _oficio_list_trip_status(oficio)
     destinos_display = _oficio_list_destinos_display(oficio)
     periodo_display = _oficio_list_period_display(oficio)
@@ -1508,7 +1589,7 @@ def _oficio_list_card(oficio, precomputed=None):
     justificativa_info = precomputed['justificativa_info']
     viagem_status = precomputed['viagem_status']
     theme = _oficio_list_theme(oficio, viagem_status)
-    oficio_downloads = _build_oficio_document_actions(oficio, DocumentoOficioTipo.OFICIO)
+    oficio_downloads = _build_oficio_document_actions(oficio, DocumentoOficioTipo.OFICIO, lightweight=True)
     justificativa = _oficio_list_justificativa_block(oficio, justificativa_info)
     termos = _oficio_list_term_block(oficio)
     destinos_display = precomputed['destinos_display']
@@ -1664,6 +1745,7 @@ def _sort_oficio_list_cards(cards, order_by, order_dir):
 
 def oficio_global_lista(request):
     filters = _build_oficio_list_filters(request)
+    prazo_minimo_dias = _oficio_list_prazo_justificativa_dias()
     queryset = (
         Oficio.objects.select_related(
             'evento',
@@ -1672,6 +1754,7 @@ def oficio_global_lista(request):
             'roteiro_evento',
             'veiculo',
             'motorista_viajante',
+            'justificativa',
         )
         .prefetch_related(
             Prefetch(
@@ -1683,7 +1766,7 @@ def oficio_global_lista(request):
                     'destino_cidade',
                 ),
             ),
-            'viajantes',
+            Prefetch('viajantes', queryset=Viajante.objects.only('id', 'nome')),
             'termos_autorizacao',
             'termos_autorizacao_relacionados',
         )
@@ -1702,7 +1785,7 @@ def oficio_global_lista(request):
     rows = []
     query_text = filters['q'].lower()
     for oficio in queryset.distinct().order_by('-updated_at', '-created_at'):
-        precomputed = _oficio_list_precomputed_meta(oficio)
+        precomputed = _oficio_list_precomputed_meta(oficio, prazo_minimo_dias=prazo_minimo_dias)
         row = _oficio_list_filter_row(oficio, precomputed=precomputed)
         if query_text and query_text not in row['search_blob']:
             continue
