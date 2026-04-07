@@ -2,18 +2,18 @@
 {% load static %}
 
 {#
-    Template base reutilizável para TODAS as páginas de lista do sistema
-    
+    Template base reutilizavel para TODAS as paginas de lista do sistema
+
     Estende este template para criar uma nova lista. Customize os blocos:
-    
-    - page_title_block: Título da aba (browser tab)
-    - page_title: Título da página que aparece na aba
-    - page_header_actions: Ações do cabeçalho (novo, importar, etc)
-    - page_toolbar_filters: Filtros customizados  
-    - page_toolbar_actions: Ações da toolbar (botões Filtrar/Limpar)
-    - page_result_content: Conteúdo principal (tabela, cards, etc)
-    - page_pagination: Paginação (se houver)
-    
+
+    - page_title_block: Titulo da aba (browser tab)
+    - page_title: Titulo da pagina que aparece na aba
+    - page_header_actions: Acoes do cabecalho (novo, importar, etc)
+    - page_toolbar_filters: Filtros customizados
+    - page_toolbar_actions: Acoes da toolbar (botoes Filtrar/Limpar)
+    - page_result_content: Conteudo principal (tabela, cards, etc)
+    - page_pagination: Paginacao (se houver)
+
     Exemplo:
     - estender includes/list/list_base.html
     - definir page_title_block e page_header_title
@@ -26,51 +26,49 @@
 {% block content %}
 <div class="container-fluid py-4 system-list-page {% block list_page_class %}system-list-page--standard{% endblock %}" data-list-view-root>
     <div class="system-list-shell">
-
-        <div class="page-header-cadastro system-list-header system-list-header--standard">
-            <div class="system-list-header__content">
-                <div class="system-list-header__copy">
-                    <div class="system-list-header__intro">
-                        <h1 class="system-list-header__title">{% block list_title %}Lista{% endblock %}</h1>
-                        {% block list_subtitle %}{% endblock %}
+        <section class="system-document-top">
+            <div class="page-header-cadastro system-list-header system-list-header--standard">
+                <div class="system-list-header__content">
+                    <div class="system-list-header__copy">
+                        <div class="system-list-header__intro">
+                            <h1 class="system-list-header__title">{% block list_title %}Lista{% endblock %}</h1>
+                            {% block list_subtitle %}{% endblock %}
+                        </div>
+                        {% block list_meta %}{% endblock %}
                     </div>
-                    {% block list_meta %}{% endblock %}
-                </div>
-                <div class="system-list-header__controls">
-                    {% block list_header_controls %}{% endblock %}
-                    <div class="system-list-header__actions-group">
-                        {% block list_header_actions %}{% endblock %}
+                    <div class="system-list-header__controls">
+                        {% block list_header_controls %}{% endblock %}
+                        <div class="system-list-header__actions-group">
+                            {% block list_header_actions %}{% endblock %}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {% block list_mode_badge %}{% endblock %}
+            {% block list_mode_badge %}{% endblock %}
 
-        <div class="card filter-card system-filter-card">
-            <div class="card-body py-3">
-                {% block list_toolbar %}{% endblock %}
-            </div>
-        </div>
-        
-        {# Conteúdo principal (tabela, cards, ou customizado) #}
+            <section class="system-document-filter" aria-label="{% block list_filter_aria_label %}Filtros da lista{% endblock %}">
+                <div class="system-document-filter__body">
+                    {% block list_toolbar %}{% endblock %}
+                </div>
+            </section>
+        </section>
+
         <div data-list-live-region>
-        <div class="system-list-content">
-            {% block page_result_content %}
-            <div class="alert alert-info">
-                Configure o bloco <code>page_result_content</code> no template
+            <div class="system-list-content">
+                {% block page_result_content %}
+                <div class="alert alert-info">
+                    Configure o bloco <code>page_result_content</code> no template
+                </div>
+                {% endblock %}
             </div>
+
+            {% block page_pagination %}
+            {% if page_obj %}
+            {% include 'includes/pagination.html' %}
+            {% endif %}
             {% endblock %}
         </div>
-        
-        {# Paginação #}
-        {% block page_pagination %}
-        {% if page_obj %}
-        {% include 'includes/pagination.html' %}
-        {% endif %}
-        {% endblock %}
-        </div>
-        
     </div>
 </div>
 {% endblock %}
