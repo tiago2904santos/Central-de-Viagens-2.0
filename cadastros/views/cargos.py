@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from django.core.paginator import Paginator
 from django.contrib import messages
 from django.urls import reverse
 
@@ -9,6 +10,16 @@ from ..forms import CargoForm
 
 
 RETURN_URL_KEY = 'viajante_form_return_url'
+
+
+def _paginate(queryset, page, per_page=25):
+    return Paginator(queryset, per_page).get_page(page)
+
+
+def _query_without_page(request):
+    params = request.GET.copy()
+    params.pop('page', None)
+    return params.urlencode()
 
 
 @login_required
@@ -30,11 +41,14 @@ def cargo_lista(request):
     if q:
         qs = qs.filter(nome__icontains=q)
     qs = qs.order_by(order_field, 'nome')
+    page_obj = _paginate(qs, request.GET.get('page'))
     return_url = request.session.get(RETURN_URL_KEY)
     voltar_url = return_url or reverse('cadastros:viajante-lista')
     voltar_label = 'Voltar' if return_url else 'Voltar para viajantes'
     context = {
-        'object_list': qs,
+        'object_list': page_obj.object_list,
+        'page_obj': page_obj,
+        'pagination_query': _query_without_page(request),
         'form_filter': {'q': q, 'order_by': order_by, 'order_dir': order_dir},
         'order_by_choices': [('nome', 'Nome'), ('is_padrao', 'Padrão'), ('id', 'Cadastro')],
         'order_dir_choices': [('asc', 'Crescente'), ('desc', 'Decrescente')],

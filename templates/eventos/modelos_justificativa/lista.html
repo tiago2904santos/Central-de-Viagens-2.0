@@ -8,20 +8,29 @@
     <div class="system-list-shell">
     <div class="page-header-cadastro system-list-header system-list-header--standard">
         <div class="system-list-header__content">
-            <div>
-                <h1 class="system-list-header__title">Modelos de justificativa</h1>
-                <p class="system-list-header__subtitle">Modelos reutilizaveis para padronizar preenchimento de justificativas.</p>
+            <div class="system-list-header__copy">
+                <div class="system-list-header__intro">
+                    <h1 class="system-list-header__title">Modelos de justificativa</h1>
+                    <p class="system-list-header__subtitle">Modelos reutilizaveis para padronizar preenchimento de justificativas.</p>
+                </div>
+                <div class="system-list-header__meta">
+                    <span class="system-list-header__meta-item">{{ object_list|length }} registros</span>
+                    <span class="system-list-header__meta-item">Biblioteca reutilizavel para justificativas documentais</span>
+                </div>
+            </div>
+            <div class="system-list-header__controls">
+                {% include 'includes/list/mode_badge.html' with mode='simple' %}
+                <div class="system-list-header__actions-group">
+                    {% if volta_justificativa %}
+                    <a href="{% url 'eventos:oficio-justificativa' volta_justificativa %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" class="btn btn-outline-secondary system-list-action-btn">Voltar para justificativa</a>
+                    {% else %}
+                    <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'eventos:documentos-justificativas' %}{% endif %}" class="btn btn-outline-secondary system-list-action-btn">Voltar</a>
+                    {% endif %}
+                    <a href="{% url 'eventos:modelos-justificativa-cadastrar' %}{% if volta_justificativa or next_url %}?{% if volta_justificativa %}volta_justificativa={{ volta_justificativa|urlencode }}{% endif %}{% if volta_justificativa and next_url %}&{% endif %}{% if next_url %}next={{ next_url|urlencode }}{% endif %}{% endif %}" class="btn btn-primary system-list-action-btn">Cadastrar modelo</a>
+                </div>
             </div>
         </div>
-        <div class="system-list-header__actions-group">
-            {% if volta_justificativa %}
-            <a href="{% url 'eventos:oficio-justificativa' volta_justificativa %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" class="btn btn-outline-secondary system-list-action-btn">Voltar para justificativa</a>
-            {% else %}
-            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'eventos:documentos-justificativas' %}{% endif %}" class="btn btn-outline-secondary system-list-action-btn">Voltar</a>
-            {% endif %}
-        </div>
     </div>
-    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
 
     <div class="system-list-table-wrap">
         <div class="table-responsive">

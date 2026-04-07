@@ -108,10 +108,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-actions mt-4 d-flex flex-wrap gap-2">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                    <button type="submit" name="continuar" value="1" class="btn btn-success">Salvar e continuar</button>
-                    <a href="{% url 'eventos:guiado-painel' object.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+                <div class="form-actions system-form-actions mt-4">
+                    <div class="system-form-actions__group system-form-actions__group--secondary">
+                        <a href="{% url 'eventos:guiado-painel' object.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                    <div class="system-form-actions__group system-form-actions__group--primary">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        <button type="submit" name="continuar" value="1" class="btn btn-success">Salvar e continuar</button>
+                    </div>
                 </div>
             </form>
         </div>

@@ -48,6 +48,7 @@ from .services.diarias import (
     formatar_valor_diarias,
     infer_tipo_destino_from_paradas,
 )
+from .services.justificativa import DEFAULT_PRAZO_JUSTIFICATIVA_DIAS
 from .services.documentos import (
     DocumentoFormato,
     DocumentoOficioTipo,
@@ -642,7 +643,7 @@ def _document_card_status_meta(status_key, fallback_label='Ã¢â‚¬â€'):
     }
 
 
-def _build_oficio_document_actions(oficio, tipo_documento):
+def _build_oficio_document_actions(oficio, tipo_documento, lightweight=False):
     meta = get_document_type_meta(tipo_documento)
     actions = []
     errors = []
@@ -650,7 +651,10 @@ def _build_oficio_document_actions(oficio, tipo_documento):
     for formato in (DocumentoFormato.PDF, DocumentoFormato.DOCX):
         if not meta.supports(formato):
             continue
-        status_info = get_document_generation_status(oficio, meta.tipo, formato)
+        if lightweight:
+            status_info = {'status': 'available', 'errors': []}
+        else:
+            status_info = get_document_generation_status(oficio, meta.tipo, formato)
         statuses.append(status_info['status'])
         actions.append(
             {
@@ -667,7 +671,10 @@ def _build_oficio_document_actions(oficio, tipo_documento):
         if status_info['status'] != 'available':
             errors.extend(status_info.get('errors') or [])
 
-    if any(status == 'available' for status in statuses):
+    if lightweight:
+        status_key = 'available'
+        detail = 'Disponibilidade validada no momento do download.'
+    elif any(status == 'available' for status in statuses):
         status_key = 'available'
         detail = 'Documento pronto para download.'
     elif any(status == 'pending' for status in statuses):
@@ -829,9 +836,20 @@ def _oficio_list_ordered_unique_strings(values):
 
 
 def _oficio_list_viajante_names(oficio):
-    return _oficio_list_ordered_unique_strings(
-        oficio.viajantes.order_by('pk').values_list('nome', flat=True)
-    )
+    cache_attr = '_oficio_list_viajante_names_cache'
+    cached = getattr(oficio, cache_attr, None)
+    if cached is not None:
+        return cached
+
+    prefetched = getattr(oficio, '_prefetched_objects_cache', {})
+    viajantes = prefetched.get('viajantes')
+    if viajantes is None:
+        viajantes = list(oficio.viajantes.all())
+
+    ordered = sorted(viajantes, key=lambda item: (item.pk is None, item.pk or 0))
+    names = _oficio_list_ordered_unique_strings(getattr(item, 'nome', '') for item in ordered)
+    setattr(oficio, cache_attr, names)
+    return names
 
 
 def _oficio_list_first_name(value):
@@ -1324,7 +1342,11 @@ def _oficio_list_justificativa_block(oficio, justificativa_info):
     if not justificativa_info['required'] and not justificativa_info['filled'] and not justificativa:
         return None
 
-    document = _build_oficio_document_actions(oficio, DocumentoOficioTipo.JUSTIFICATIVA)
+    document = _build_oficio_document_actions(
+        oficio,
+        DocumentoOficioTipo.JUSTIFICATIVA,
+        lightweight=True,
+    )
     status_meta = _document_card_status_meta(
         justificativa_info['status_key'],
         justificativa_info['status_label'],
@@ -1368,6 +1390,88 @@ def _oficio_list_pending_term_card(oficio, viajante):
     }
 
 
+def _oficio_list_has_terms(oficio):
+    cache_attr = '_oficio_list_has_terms_cache'
+    cached = getattr(oficio, cache_attr, None)
+    if cached is not None:
+        return cached
+
+    termos_ids = set()
+    for termo in list(oficio.termos_autorizacao.all()) + list(oficio.termos_autorizacao_relacionados.all()):
+        if termo.pk:
+            termos_ids.add(termo.pk)
+    has_terms = bool(termos_ids)
+    setattr(oficio, cache_attr, has_terms)
+    return has_terms
+
+
+def _oficio_list_prazo_justificativa_dias():
+    config_value = (
+        ConfiguracaoSistema.objects.order_by('pk')
+        .values_list('prazo_justificativa_dias', flat=True)
+        .first()
+    )
+    try:
+        prazo = int(config_value)
+    except (TypeError, ValueError):
+        return DEFAULT_PRAZO_JUSTIFICATIVA_DIAS
+    if prazo < 0:
+        return DEFAULT_PRAZO_JUSTIFICATIVA_DIAS
+    return prazo
+
+
+def _oficio_list_justificativa_info(oficio, prazo_minimo_dias):
+    primeira_saida = None
+    for trecho in oficio.trechos.all():
+        if not trecho.saida_data or not trecho.saida_hora:
+            continue
+        saida = datetime.combine(trecho.saida_data, trecho.saida_hora)
+        if primeira_saida is None or saida < primeira_saida:
+            primeira_saida = saida
+
+    if not oficio.data_criacao or not primeira_saida:
+        dias_antecedencia = None
+    else:
+        dias_antecedencia = (primeira_saida.date() - oficio.data_criacao).days
+
+    exige = dias_antecedencia is not None and dias_antecedencia < prazo_minimo_dias
+
+    try:
+        justificativa = oficio.justificativa
+    except Justificativa.DoesNotExist:
+        justificativa = None
+
+    texto = (getattr(justificativa, 'texto', '') or '').strip()
+    preenchida = bool(texto)
+
+    if dias_antecedencia is None:
+        status_key = 'indefinida'
+        status_label = 'Aguardando dados validos do Step 3'
+    elif exige and not preenchida:
+        status_key = 'pendente'
+        status_label = 'Pendente'
+    elif preenchida:
+        status_key = 'preenchida'
+        status_label = 'Preenchida'
+    else:
+        status_key = 'nao_exigida'
+        status_label = 'Nao exigida'
+
+    return {
+        'required': exige,
+        'filled': preenchida,
+        'schema_available': True,
+        'schema_message': '',
+        'prazo_minimo_dias': prazo_minimo_dias,
+        'dias_antecedencia': dias_antecedencia,
+        'primeira_saida': primeira_saida,
+        'primeira_saida_display': primeira_saida.strftime('%d/%m/%Y %H:%M') if primeira_saida else '',
+        'status_key': status_key,
+        'status_label': status_label,
+        'texto': texto,
+    }
+
+
 def _oficio_list_term_block(oficio):
     termos_map = {}
     for termo in list(oficio.termos_autorizacao.all()) + list(oficio.termos_autorizacao_relacionados.all()):
@@ -1399,19 +1503,102 @@ def _oficio_list_term_block(oficio):
     }
 
 
-def _oficio_list_card(oficio):
-    justificativa_info = _build_oficio_justificativa_info(oficio)
+def _oficio_list_precomputed_meta(oficio, prazo_minimo_dias=None):
+    justificativa_info = _oficio_list_justificativa_info(
+        oficio,
+        prazo_minimo_dias if prazo_minimo_dias is not None else _oficio_list_prazo_justificativa_dias(),
+    )
     viagem_status = _oficio_list_trip_status(oficio)
-    theme = _oficio_list_theme(oficio, viagem_status)
-    oficio_downloads = _build_oficio_document_actions(oficio, DocumentoOficioTipo.OFICIO)
-    justificativa = _oficio_list_justificativa_block(oficio, justificativa_info)
-    termos = _oficio_list_term_block(oficio)
     destinos_display = _oficio_list_destinos_display(oficio)
     periodo_display = _oficio_list_period_display(oficio)
     data_evento_inicio, data_evento_fim = _oficio_list_period_bounds(oficio)
     context_label = 'Com evento' if oficio.evento_id else 'Avulso'
     vehicle_display = _oficio_list_vehicle_display(oficio)
     driver_display = _oficio_list_driver_display(oficio)
+    has_termo = _oficio_list_has_terms(oficio)
+
+    return {
+        'justificativa_info': justificativa_info,
+        'viagem_status': viagem_status,
+        'destinos_display': destinos_display,
+        'periodo_display': periodo_display,
+        'data_evento_inicio': data_evento_inicio,
+        'data_evento_fim': data_evento_fim,
+        'context_label': context_label,
+        'vehicle_display': vehicle_display,
+        'driver_display': driver_display,
+        'has_termo': has_termo,
+    }
+
+
+def _oficio_list_filter_row(oficio, precomputed=None):
+    precomputed = precomputed or _oficio_list_precomputed_meta(oficio)
+    viagem_status = precomputed['viagem_status']
+    justificativa_info = precomputed['justificativa_info']
+    data_evento_inicio = precomputed['data_evento_inicio']
+    data_evento_fim = precomputed['data_evento_fim']
+
+    search_blob = ' '.join(
+        value
+        for value in [
+            oficio.numero_formatado,
+            oficio.protocolo_formatado or '',
+            _clean(oficio.protocolo),
+            _clean(getattr(getattr(oficio, 'evento', None), 'titulo', '')),
+            _clean(oficio.motivo),
+            precomputed['destinos_display'],
+            _oficio_list_viajantes_display(oficio),
+            precomputed['vehicle_display'],
+            precomputed['driver_display'],
+            precomputed['context_label'],
+        ]
+        if value
+    ).lower()
+
+    return {
+        'oficio': oficio,
+        'precomputed': precomputed,
+        'pk': oficio.pk,
+        'search_blob': search_blob,
+        'filter_meta': {
+            'status': oficio.status,
+            'contexto': 'EVENTO' if oficio.evento_id else 'AVULSO',
+            'viagem_status': viagem_status['key'],
+            'is_today_trip': viagem_status['key'] == 'EM_ANDAMENTO' and viagem_status.get('relative_label') == 'acontece hoje',
+            'has_justificativa': precomputed['justificativa_info']['filled'],
+            'has_termo': precomputed['has_termo'],
+            'data_inicio': data_evento_inicio,
+            'data_fim': data_evento_fim or data_evento_inicio,
+        },
+        'sort_meta': {
+            'numero': (
+                int(oficio.ano) if oficio.ano is not None else None,
+                int(oficio.numero) if oficio.numero is not None else None,
+            ),
+            'protocolo': _oficio_list_protocol_sort_value(oficio),
+            'data_criacao': oficio.data_criacao,
+            'updated_at': getattr(oficio, 'updated_at', None),
+            'data_evento': data_evento_inicio,
+            'data_evento_fim': data_evento_fim,
+        },
+    }
+
+
+def _oficio_list_card(oficio, precomputed=None):
+    precomputed = precomputed or _oficio_list_precomputed_meta(oficio)
+    justificativa_info = precomputed['justificativa_info']
+    viagem_status = precomputed['viagem_status']
+    theme = _oficio_list_theme(oficio, viagem_status)
+    oficio_downloads = _build_oficio_document_actions(oficio, DocumentoOficioTipo.OFICIO, lightweight=True)
+    justificativa = _oficio_list_justificativa_block(oficio, justificativa_info)
+    termos = _oficio_list_term_block(oficio)
+    destinos_display = precomputed['destinos_display']
+    periodo_display = precomputed['periodo_display']
+    data_evento_inicio = precomputed['data_evento_inicio']
+    data_evento_fim = precomputed['data_evento_fim']
+    context_label = precomputed['context_label']
+    vehicle_display = precomputed['vehicle_display']
+    driver_display = precomputed['driver_display']
     oficio_status = _oficio_process_status_meta(oficio)
     table_actions = _oficio_list_table_actions(oficio, oficio_downloads)
     footer_actions = _oficio_list_footer_actions(oficio, oficio_downloads)
@@ -1461,7 +1648,7 @@ def _oficio_list_card(oficio):
             'viagem_status': viagem_status['key'],
             'is_today_trip': viagem_status['key'] == 'EM_ANDAMENTO' and viagem_status.get('relative_label') == 'acontece hoje',
             'has_justificativa': justificativa_info['filled'],
-            'has_termo': bool(termos),
+            'has_termo': precomputed['has_termo'],
             'data_inicio': data_evento_inicio,
             'data_fim': data_evento_fim or data_evento_inicio,
         },
@@ -1558,6 +1745,7 @@ def _sort_oficio_list_cards(cards, order_by, order_dir):
 
 def oficio_global_lista(request):
     filters = _build_oficio_list_filters(request)
+    prazo_minimo_dias = _oficio_list_prazo_justificativa_dias()
     queryset = (
         Oficio.objects.select_related(
             'evento',
@@ -1566,6 +1754,7 @@ def oficio_global_lista(request):
             'roteiro_evento',
             'veiculo',
             'motorista_viajante',
+            'justificativa',
         )
         .prefetch_related(
             Prefetch(
@@ -1577,7 +1766,7 @@ def oficio_global_lista(request):
                     'destino_cidade',
                 ),
             ),
-            'viajantes',
+            Prefetch('viajantes', queryset=Viajante.objects.only('id', 'nome')),
             'termos_autorizacao',
             'termos_autorizacao_relacionados',
         )
@@ -1593,33 +1782,38 @@ def oficio_global_lista(request):
         elif filters['contexto'] == ['AVULSO']:
             queryset = queryset.filter(evento_id__isnull=True)
 
-    cards = []
+    rows = []
     query_text = filters['q'].lower()
     for oficio in queryset.distinct().order_by('-updated_at', '-created_at'):
-        card = _oficio_list_card(oficio)
-        if query_text and query_text not in card['search_blob']:
+        precomputed = _oficio_list_precomputed_meta(oficio, prazo_minimo_dias=prazo_minimo_dias)
+        row = _oficio_list_filter_row(oficio, precomputed=precomputed)
+        if query_text and query_text not in row['search_blob']:
             continue
         if not _matches_oficio_list_choice(
             filters['viagem_status'],
-            'HOJE' if card['filter_meta']['is_today_trip'] else card['filter_meta']['viagem_status'],
+            'HOJE' if row['filter_meta']['is_today_trip'] else row['filter_meta']['viagem_status'],
             dict(OFICIO_VIAGEM_STATUS_CHOICES).keys(),
         ):
             continue
-        if not _matches_oficio_list_presence(filters['justificativa'], card['filter_meta']['has_justificativa']):
+        if not _matches_oficio_list_presence(filters['justificativa'], row['filter_meta']['has_justificativa']):
             continue
-        if not _matches_oficio_list_presence(filters['termo'], card['filter_meta']['has_termo']):
+        if not _matches_oficio_list_presence(filters['termo'], row['filter_meta']['has_termo']):
             continue
-        if not _matches_oficio_list_date(card, filters):
+        if not _matches_oficio_list_date(row, filters):
             continue
-        cards.append(card)
+        rows.append(row)
 
-    cards = _sort_oficio_list_cards(cards, filters['order_by'], filters['order_dir'])
-    page_obj = _paginate(cards, request.GET.get('page'))
+    rows = _sort_oficio_list_cards(rows, filters['order_by'], filters['order_dir'])
+    page_obj = _paginate(rows, request.GET.get('page'))
+    object_list = [
+        _oficio_list_card(row['oficio'], precomputed=row['precomputed'])
+        for row in page_obj.object_list
+    ]
     return render(
         request,
         'eventos/global/oficios_lista.html',
         {
-            'object_list': list(page_obj.object_list),
+            'object_list': object_list,
             'page_obj': page_obj,
             'pagination_query': _query_without_page(request),
             'filters': filters,
@@ -3844,15 +4038,24 @@ def _render_termo_form(
 
 
 def documentos_hub(request):
-    oficios = list(Oficio.objects.prefetch_related('trechos').all())
+    prazo_minimo_dias = _oficio_list_prazo_justificativa_dias()
+    oficios = list(
+        Oficio.objects.select_related('justificativa')
+        .prefetch_related('trechos')
+        .only('id', 'data_criacao', 'justificativa__id', 'justificativa__texto')
+    )
     justificativas_pendentes = 0
     justificativas_preenchidas = 0
     for oficio in oficios:
-        info = _build_oficio_justificativa_info(oficio)
+        info = _oficio_list_justificativa_info(oficio, prazo_minimo_dias)
         if info['status_key'] == 'pendente':
             justificativas_pendentes += 1
         elif info['status_key'] == 'preenchida':
             justificativas_preenchidas += 1
+
+    termos_count = TermoAutorizacao.objects.count()
+    termos_pendentes = TermoAutorizacao.objects.filter(status=TermoAutorizacao.STATUS_RASCUNHO).count()
+    termos_concluidos = TermoAutorizacao.objects.filter(status=TermoAutorizacao.STATUS_GERADO).count()
 
     cards = [
         {
@@ -3875,7 +4078,7 @@ def documentos_hub(request):
         },
         {
             'label': 'Termos',
-            'count': TermoAutorizacao.objects.count(),
+            'count': termos_count,
             'description': 'Modulo documental com formulario unico, contexto consolidado e downloads por registro.',
             'url': reverse('eventos:documentos-termos'),
         },
@@ -3886,8 +4089,8 @@ def documentos_hub(request):
         {
             'cards': cards,
             'total_oficios': len(oficios),
-            'termos_pendentes': TermoAutorizacao.objects.filter(status=TermoAutorizacao.STATUS_RASCUNHO).count(),
-            'termos_concluidos': TermoAutorizacao.objects.filter(status=TermoAutorizacao.STATUS_GERADO).count(),
+            'termos_pendentes': termos_pendentes,
+            'termos_concluidos': termos_concluidos,
             'justificativas_pendentes': justificativas_pendentes,
             'justificativas_preenchidas': justificativas_preenchidas,
         },

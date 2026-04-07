@@ -9,18 +9,27 @@
     <div class="system-list-shell">
     <div class="page-header-cadastro system-list-header system-list-header--standard">
         <div class="system-list-header__content">
-            <div>
-                <h1 class="system-list-header__title">Modelos de motivo</h1>
-                <p class="system-list-header__subtitle">Biblioteca de textos para padronizar o motivo da viagem.</p>
+            <div class="system-list-header__copy">
+                <div class="system-list-header__intro">
+                    <h1 class="system-list-header__title">Modelos de motivo</h1>
+                    <p class="system-list-header__subtitle">Biblioteca de textos para padronizar o motivo da viagem.</p>
+                </div>
+                <div class="system-list-header__meta">
+                    <span class="system-list-header__meta-item">{{ object_list|length }} registros</span>
+                    <span class="system-list-header__meta-item">Biblioteca auxiliar do assistente de oficio</span>
+                </div>
+            </div>
+            <div class="system-list-header__controls">
+                {% include 'includes/list/mode_badge.html' with mode='simple' %}
+                <div class="system-list-header__actions-group">
+                    {% if volta_step1 %}
+                    <a href="{% url 'eventos:oficio-step1' volta_step1 %}" class="btn btn-outline-secondary system-list-action-btn">Voltar ao oficio</a>
+                    {% endif %}
+                    <a href="{{ modelo_motivo_novo_url }}" class="btn btn-primary system-list-action-btn">Cadastrar modelo</a>
+                </div>
             </div>
         </div>
-        <div class="system-list-header__actions-group">
-            {% if volta_step1 %}
-            <a href="{% url 'eventos:oficio-step1' volta_step1 %}" class="btn btn-outline-secondary system-list-action-btn">Voltar ao oficio</a>
-            {% endif %}
-        </div>
     </div>
-    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
 
     <div class="system-list-table-wrap">
         <div class="table-responsive">

@@ -7,19 +7,30 @@
 {% block content %}
 <div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.justificativas.documentos.view-mode">
     <div class="oficios-list-shell system-list-shell">
-    <header class="oficios-list-header">
-        <div>
-            <h1 class="mb-1">Lista de justificativas</h1>
-            <p class="oficios-list-header__subtitle mb-0">Leitura rapida das justificativas documentais vinculadas aos oficios.</p>
-        </div>
-        <div class="oficios-list-header__controls">
-            {% include 'includes/list/mode_badge.html' with mode='complete' %}
-            <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de justificativas">
-                <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
-                <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+        <div class="system-list-header__content">
+            <div class="system-list-header__copy">
+                <div class="system-list-header__intro">
+                    <h1 class="system-list-header__title">Lista de justificativas</h1>
+                    <p class="system-list-header__subtitle">Leitura rapida das justificativas documentais vinculadas aos oficios.</p>
+                </div>
+                <div class="system-list-header__meta">
+                    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
+                    <span class="system-list-header__meta-item">Acervo documental para abertura, leitura e download</span>
+                </div>
+            </div>
+            <div class="system-list-header__controls">
+                {% include 'includes/list/mode_badge.html' with mode='complete' %}
+                <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de justificativas">
+                    <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
+                    <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+                </div>
+                <div class="system-list-header__actions-group">
+                    <a href="{{ justificativa_novo_url }}" class="btn btn-primary system-list-action-btn">Nova justificativa</a>
+                </div>
             </div>
         </div>
-    </header>
+    </div>
 
     <div class="card filter-card system-filter-card">
         <div class="card-body py-3">

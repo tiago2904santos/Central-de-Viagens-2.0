@@ -9,12 +9,22 @@
   <div class="system-list-shell">
     <div class="page-header-cadastro system-list-header system-list-header--standard">
       <div class="system-list-header__content">
-        <div>
-          <h1 class="system-list-header__title">Gerenciador de coordenadores</h1>
-          <p class="system-list-header__subtitle">Cadastre nome completo, cargo, lotação, estado e cidade para uso no Plano de Trabalho.</p>
+        <div class="system-list-header__copy">
+          <div class="system-list-header__intro">
+            <h1 class="system-list-header__title">Gerenciador de coordenadores</h1>
+            <p class="system-list-header__subtitle">Cadastre nome completo, cargo, lotação, estado e cidade para uso no Plano de Trabalho.</p>
+          </div>
+          <div class="system-list-header__meta">
+            <span class="system-list-header__meta-item">{{ object_list|length }} registros</span>
+            <span class="system-list-header__meta-item">Base auxiliar dos responsáveis operacionais</span>
+          </div>
         </div>
-      </div>
-      <div class="system-list-header__actions-group">
+        <div class="system-list-header__controls">
+          {% include 'includes/list/mode_badge.html' with mode='simple' %}
+          <div class="system-list-header__actions-group">
+            <a href="{{ coordenador_novo_url }}" class="btn btn-primary system-list-action-btn">Novo coordenador</a>
+          </div>
+        </div>
       </div>
     </div>
 

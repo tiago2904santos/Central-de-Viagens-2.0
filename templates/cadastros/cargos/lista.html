@@ -7,16 +7,27 @@
 {% block content %}
 <div class="container-fluid py-4 system-list-page system-list-page--simple">
     <div class="oficios-list-shell system-list-shell">
-    <header class="oficios-list-header">
-        <div>
-            <h1 class="mb-1">Cargos</h1>
-            <p class="oficios-list-header__subtitle mb-0">Lista simples de apoio aos cadastros de viajantes.</p>
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+        <div class="system-list-header__content">
+            <div class="system-list-header__copy">
+                <div class="system-list-header__intro">
+                    <h1 class="system-list-header__title">Cargos</h1>
+                    <p class="system-list-header__subtitle">Lista simples de apoio aos cadastros de viajantes.</p>
+                </div>
+                <div class="system-list-header__meta">
+                    <span class="system-list-header__meta-item">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros</span>
+                    <span class="system-list-header__meta-item">Lista auxiliar para identificacao funcional</span>
+                </div>
+            </div>
+            <div class="system-list-header__controls">
+                {% include 'includes/list/mode_badge.html' with mode='simple' %}
+                <div class="system-list-header__actions-group">
+                    <a href="{{ voltar_url }}" class="btn btn-outline-secondary system-list-action-btn">{{ voltar_label }}</a>
+                    <a href="{{ novo_cargo_url }}" class="btn btn-primary system-list-action-btn">Novo cargo</a>
+                </div>
+            </div>
         </div>
-        <div class="oficios-list-header__controls">
-            {% include 'includes/list/mode_badge.html' with mode='simple' %}
-            <a href="{{ voltar_url }}" class="btn btn-outline-secondary system-list-action-btn">{{ voltar_label }}</a>
-        </div>
-    </header>
+    </div>
 
     <div class="card filter-card mb-4 system-filter-card">
         <div class="card-body py-3">
@@ -82,6 +93,8 @@
             </table>
         </div>
     </div>
+
+    {% include 'includes/pagination.html' %}
 
     {% include 'includes/list/floating_new_button.html' with url=novo_cargo_url label='Novo cargo' icon='bi-plus-lg' %}
     </div>

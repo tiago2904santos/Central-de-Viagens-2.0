@@ -9,12 +9,21 @@
 <p class="system-list-header__subtitle">Visao global dos participantes, status do termo e contexto operacional do evento.</p>
 {% endblock %}
 
-{% block list_header_actions %}
-<a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary system-list-action-btn">Eventos</a>
+{% block list_meta %}
+<div class="system-list-header__meta">
+    <span class="system-list-header__meta-item">
+        {% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros
+    </span>
+    <span class="system-list-header__meta-item">Acompanhamento transversal dos termos emitidos</span>
+</div>
 {% endblock %}
 
-{% block list_mode_badge %}
-<div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
+{% block list_header_controls %}
+{% include 'includes/list/mode_badge.html' with mode='simple' %}
+{% endblock %}
+
+{% block list_header_actions %}
+<a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary system-list-action-btn">Eventos</a>
 {% endblock %}
 
 {% block list_toolbar %}

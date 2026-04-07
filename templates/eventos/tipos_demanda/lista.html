@@ -9,18 +9,27 @@
     <div class="system-list-shell">
     <div class="page-header-cadastro system-list-header system-list-header--standard">
         <div class="system-list-header__content">
-            <div>
-                <h1 class="system-list-header__title">Tipos de demanda</h1>
-                <p class="system-list-header__subtitle">Base administrativa para classificacao de eventos.</p>
+            <div class="system-list-header__copy">
+                <div class="system-list-header__intro">
+                    <h1 class="system-list-header__title">Tipos de demanda</h1>
+                    <p class="system-list-header__subtitle">Base administrativa para classificacao de eventos.</p>
+                </div>
+                <div class="system-list-header__meta">
+                    <span class="system-list-header__meta-item">{{ object_list|length }} registros</span>
+                    <span class="system-list-header__meta-item">Classificacao usada no fluxo principal dos eventos</span>
+                </div>
+            </div>
+            <div class="system-list-header__controls">
+                {% include 'includes/list/mode_badge.html' with mode='simple' %}
+                <div class="system-list-header__actions-group">
+                    {% if volta_etapa1 %}
+                    <a href="{% url 'eventos:guiado-etapa-1' volta_etapa1 %}" class="btn btn-outline-secondary system-list-action-btn">Voltar para Etapa 1</a>
+                    {% endif %}
+                    <a href="{{ tipo_demanda_novo_url }}" class="btn btn-primary system-list-action-btn">Cadastrar tipo de demanda</a>
+                </div>
             </div>
         </div>
-        <div class="system-list-header__actions-group">
-            {% if volta_etapa1 %}
-            <a href="{% url 'eventos:guiado-etapa-1' volta_etapa1 %}" class="btn btn-outline-secondary system-list-action-btn">Voltar para Etapa 1</a>
-            {% endif %}
-        </div>
     </div>
-    <div class="mb-2">{% include 'includes/list/mode_badge.html' with mode='simple' %}</div>
 
     <div class="system-list-table-wrap">
         <div class="table-responsive">

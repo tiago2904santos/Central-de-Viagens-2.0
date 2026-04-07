@@ -14,18 +14,27 @@
 
 <header class="system-list-header system-list-header--standard">
     <div class="system-list-header__content">
-        <div>
-            <h1 class="system-list-header__title">{{ title }}</h1>
-            {% if subtitle %}
-            <p class="system-list-header__subtitle">{{ subtitle }}</p>
+        <div class="system-list-header__copy">
+            <div class="system-list-header__intro">
+                <h1 class="system-list-header__title">{{ title }}</h1>
+                {% if subtitle %}
+                <p class="system-list-header__subtitle">{{ subtitle }}</p>
+                {% endif %}
+            </div>
+            {% if meta_items %}
+            <div class="system-list-header__meta">
+                {% for item in meta_items %}
+                <span class="system-list-header__meta-item">{{ item }}</span>
+                {% endfor %}
+            </div>
             {% endif %}
         </div>
         <div class="system-list-header__controls">
             {% if mode_badge %}
             {% include 'includes/list/mode_badge.html' with mode=mode_badge %}
             {% endif %}
-            {% if actions %}
             <div class="system-list-header__actions-group">
+                {% if actions %}
                 {% for action in actions %}
                 <a 
                     href="{{ action.url }}"
@@ -36,8 +45,8 @@
                     {{ action.label }}
                 </a>
                 {% endfor %}
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
 </header>

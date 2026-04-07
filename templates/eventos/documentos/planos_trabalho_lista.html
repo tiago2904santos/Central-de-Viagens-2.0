@@ -7,12 +7,26 @@
 {% block content %}
 <div class="container-fluid py-4 system-list-page system-list-page--complete">
     <div class="oficios-list-shell system-list-shell">
-    <header class="oficios-list-header">
-        <div>
-            <h1 class="mb-1">Planos de trabalho</h1>
-            <p class="oficios-list-header__subtitle mb-0">Cards no mesmo idioma visual dos Oficios, com relacao documental explicita com os Oficios atendidos.</p>
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+        <div class="system-list-header__content">
+            <div class="system-list-header__copy">
+                <div class="system-list-header__intro">
+                    <h1 class="system-list-header__title">Planos de trabalho</h1>
+                    <p class="system-list-header__subtitle">Cards no mesmo idioma visual dos Oficios, com relacao documental explicita com os Oficios atendidos.</p>
+                </div>
+                <div class="system-list-header__meta">
+                    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
+                    <span class="system-list-header__meta-item">Painel documental com vinculos diretos aos oficios</span>
+                </div>
+            </div>
+            <div class="system-list-header__controls">
+                {% include 'includes/list/mode_badge.html' with mode='complete' %}
+                <div class="system-list-header__actions-group">
+                    <a href="{{ plano_novo_url }}" class="btn btn-primary system-list-action-btn">Novo plano de trabalho</a>
+                </div>
+            </div>
         </div>
-    </header>
+    </div>
 
     <div class="card filter-card system-filter-card">
         <div class="card-body py-3">
