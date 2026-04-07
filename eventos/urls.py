@@ -92,7 +92,7 @@ urlpatterns = [
     path('guiado/novo/', views.guiado_novo, name='guiado-novo'),
     path('<int:pk>/guiado/etapa-1/', login_required(views.guiado_etapa_1), name='guiado-etapa-1'),
     path('<int:pk>/guiado/painel/', login_required(views.guiado_painel), name='guiado-painel'),
-    # Etapa 3: Termos
+    # Etapa 3: Termos (função guiado_etapa_5 é o handler histórico de Termos)
     path('<int:evento_id>/guiado/etapa-3/', login_required(views.guiado_etapa_5), name='guiado-etapa-3'),
     path(
         '<int:evento_id>/guiado/etapa-3/termo/padrao/<str:formato>/',
@@ -111,7 +111,7 @@ urlpatterns = [
     ),
     # Etapa 4: PT / OS
     path('<int:evento_id>/guiado/etapa-4/', login_required(views.guiado_etapa_4), name='guiado-etapa-4'),
-    # Etapa 5: Ofícios
+    # Etapa 5: Ofícios (função guiado_etapa_3 é o handler histórico de Ofícios)
     path('<int:evento_id>/guiado/etapa-5/', login_required(views.guiado_etapa_3), name='guiado-etapa-5'),
     path('<int:evento_id>/guiado/etapa-5/criar-oficio/', login_required(views.guiado_etapa_3_criar_oficio), name='guiado-etapa-5-criar-oficio'),
     # Etapa 6: Justificativa (evento; exigida quando prazo < 10 dias)

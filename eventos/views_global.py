@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from decimal import Decimal, InvalidOperation
@@ -107,7 +107,7 @@ def _resolve_ordering(filters, allowed_fields, default_key):
 
 def _get_default_pt_cargo():
     preferred_names = [
-        'AGENTE DE POLÃCIA CIVIL',
+        'AGENTE DE POLÍCIA CIVIL',
         'AGENTE DE POLICIA CIVIL',
     ]
     for name in preferred_names:
@@ -355,7 +355,7 @@ TERMO_STATUS_CARD_META = {
 }
 
 EMPTY_DISPLAY = '-'
-EMPTY_DISPLAY_ALIASES = {'-', 'â€”', 'Ã¢â‚¬â€'}
+EMPTY_DISPLAY_ALIASES = {'-', 'â€”', 'ââ‚¬"'}
 OFICIO_CONTEXT_CHOICES = [
     ('EVENTO', 'Com evento'),
     ('AVULSO', 'Sem evento'),
@@ -607,7 +607,7 @@ def _oficio_periodo_display(oficio):
     if retorno_chegada:
         pontos.append(retorno_chegada)
     if not pontos:
-        return 'Ã¢â‚¬â€'
+        return 'ââ‚¬"'
     inicio = min(pontos)
     fim = max(pontos)
     if inicio.date() == fim.date():
@@ -627,7 +627,7 @@ def _oficio_viajantes_display(oficio):
 
 
 def _oficio_process_status_meta(oficio):
-    default_label = getattr(oficio, 'get_status_display', lambda: oficio.status)() or oficio.status or 'Ã¢â‚¬â€'
+    default_label = getattr(oficio, 'get_status_display', lambda: oficio.status)() or oficio.status or 'ââ‚¬"'
     meta = OFICIO_STATUS_CARD_META.get(oficio.status, {})
     return {
         'label': meta.get('label', default_label),
@@ -635,7 +635,7 @@ def _oficio_process_status_meta(oficio):
     }
 
 
-def _document_card_status_meta(status_key, fallback_label='Ã¢â‚¬â€'):
+def _document_card_status_meta(status_key, fallback_label='ââ‚¬"'):
     meta = DOCUMENT_STATUS_CARD_META.get(status_key, {})
     return {
         'label': meta.get('label', fallback_label),
@@ -687,7 +687,7 @@ def _build_oficio_document_actions(oficio, tipo_documento, lightweight=False):
         status_key = 'not_applicable'
         detail = 'Documento nao suportado neste fluxo.'
 
-    status_meta = _document_card_status_meta(status_key, STATUS_LABELS.get(status_key, 'Ã¢â‚¬â€'))
+    status_meta = _document_card_status_meta(status_key, STATUS_LABELS.get(status_key, 'ââ‚¬"'))
     return {
         'status_key': status_key,
         'status_label': status_meta['label'],
@@ -703,7 +703,7 @@ def _build_oficio_document_cards(oficio):
         {'label': 'Destino', 'value': oficio.destinos_display},
         {'label': 'Per\u00edodo', 'value': oficio.periodo_display},
         {'label': 'Viajantes', 'value': oficio.viajantes_display},
-        {'label': 'Protocolo', 'value': oficio.protocolo_formatado or 'Ã¢â‚¬â€'},
+        {'label': 'Protocolo', 'value': oficio.protocolo_formatado or 'ââ‚¬"'},
     ]
     cards = []
 
@@ -745,8 +745,8 @@ def _build_oficio_document_cards(oficio):
                 'summary_items': [
                     {'label': 'Destino', 'value': oficio.destinos_display},
                     {'label': 'Per\u00edodo', 'value': oficio.periodo_display},
-                    {'label': 'Primeira sa\u00edda', 'value': justificativa_info['primeira_saida_display'] or 'Ã¢â‚¬â€'},
-                    {'label': 'Protocolo', 'value': oficio.protocolo_formatado or 'Ã¢â‚¬â€'},
+                    {'label': 'Primeira sa\u00edda', 'value': justificativa_info['primeira_saida_display'] or 'ââ‚¬"'},
+                    {'label': 'Protocolo', 'value': oficio.protocolo_formatado or 'ââ‚¬"'},
                 ],
                 'edit_url': reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
                 'actions': justificativa_document['actions'],
@@ -1911,10 +1911,10 @@ def roteiro_global_lista(request):
                 (RoteiroEvento.TIPO_EVENTO, 'Vinculados a evento'),
             ],
             'order_by_choices': [
-                ('updated_at', 'AtualizaÃ§Ã£o'),
+                ('updated_at', 'Atualização'),
                 ('evento', 'Evento'),
                 ('status', 'Status'),
-                ('created_at', 'CriaÃ§Ã£o'),
+                ('created_at', 'Criação'),
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
             'novo_roteiro_url': (
@@ -2368,10 +2368,10 @@ def _build_plano_trabalho_form_ui_context(form, *, obj=None, preselected_event=N
         ],
         'glance': {
             'evento': getattr(evento, 'titulo', '') or 'Sem evento vinculado',
-            'oficios': ', '.join(oficio.numero_formatado or f'#{oficio.pk}' for oficio in related_oficios) or 'Sem ofÃ­cios vinculados',
+            'oficios': ', '.join(oficio.numero_formatado or f'#{oficio.pk}' for oficio in related_oficios) or 'Sem ofícios vinculados',
             'roteiro': (f'Roteiro #{roteiro.pk}' if roteiro else 'Sem roteiro definido'),
             'periodo': _format_periodo_curto(data_inicio, data_fim),
-            'destinos': ', '.join(destinos_labels) or 'Destinos preenchidos no formulÃ¡rio',
+            'destinos': ', '.join(destinos_labels) or 'Destinos preenchidos no formulário',
             'solicitante': solicitante_label,
             'atividades': [item['nome'] for item in selected_activities],
             'atividades_count_label': (
@@ -2950,8 +2950,8 @@ def planos_trabalho_global(request):
             'status_choices': PlanoTrabalho.STATUS_CHOICES,
             'order_by_choices': [
                 ('numero', 'Numero'),
-                ('updated_at', 'AtualizaÃ§Ã£o'),
-                ('created_at', 'CriaÃ§Ã£o'),
+                ('updated_at', 'Atualização'),
+                ('created_at', 'Criação'),
                 ('status', 'Status'),
                 ('evento', 'Evento'),
             ],
@@ -3033,7 +3033,7 @@ def plano_trabalho_novo(request):
             'pt_glance': ui_context['glance'],
             'pt_selected_activity_codes': ui_context['selected_codes'],
             'plano_trabalho_atividades_catalogo': get_atividades_catalogo(),
-            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
+            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrão',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
             'pt_solicitantes_manager_url': _get_solicitantes_manager_url(),
             'pt_horarios_manager_url': _get_horarios_manager_url(),
@@ -3090,7 +3090,7 @@ def plano_trabalho_editar(request, pk):
             'pt_glance': ui_context['glance'],
             'pt_selected_activity_codes': ui_context['selected_codes'],
             'plano_trabalho_atividades_catalogo': get_atividades_catalogo(),
-            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrÃ£o',
+            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrão',
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
             'pt_solicitantes_manager_url': _get_solicitantes_manager_url(),
             'pt_horarios_manager_url': _get_horarios_manager_url(),
@@ -3123,7 +3123,7 @@ def plano_trabalho_excluir(request, pk):
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-planos-trabalho'))
     if request.method == 'POST':
         obj.delete()
-        messages.success(request, 'Plano de trabalho excluÃ­do.')
+        messages.success(request, 'Plano de trabalho excluído.')
         return redirect(return_to)
     return render(
         request,
@@ -3137,7 +3137,7 @@ def plano_trabalho_download(request, pk, formato):
     obj = get_object_or_404(PlanoTrabalho.objects.select_related('oficio').prefetch_related('oficios'), pk=pk)
     formato = _clean(formato).lower()
     if formato not in {DocumentoFormato.DOCX.value, DocumentoFormato.PDF.value}:
-        raise Http404('Formato invÃ¡lido.')
+        raise Http404('Formato inválido.')
     related_oficios = obj.get_oficios_relacionados() if hasattr(obj, 'get_oficios_relacionados') else list(obj.oficios.all())
     oficio_ref = related_oficios[0] if len(related_oficios) == 1 else None
     docx_bytes = render_plano_trabalho_docx(oficio_ref) if oficio_ref else render_plano_trabalho_model_docx(obj)
@@ -3349,9 +3349,9 @@ def ordens_servico_global(request):
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'status_choices': OrdemServico.STATUS_CHOICES,
             'order_by_choices': [
-                ('numero', 'NÃºmero'),
-                ('updated_at', 'AtualizaÃ§Ã£o'),
-                ('created_at', 'CriaÃ§Ã£o'),
+                ('numero', 'Número'),
+                ('updated_at', 'Atualização'),
+                ('created_at', 'Criação'),
                 ('status', 'Status'),
                 ('evento', 'Evento'),
             ],
@@ -3463,7 +3463,7 @@ def ordem_servico_excluir(request, pk):
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-ordens-servico'))
     if request.method == 'POST':
         obj.delete()
-        messages.success(request, 'Ordem de serviÃ§o excluÃ­da.')
+        messages.success(request, 'Ordem de serviÃ§o excluída.')
         return redirect(return_to)
     return render(
         request,
@@ -3477,7 +3477,7 @@ def ordem_servico_download(request, pk, formato):
     obj = get_object_or_404(OrdemServico.objects.select_related('oficio', 'evento', 'modelo_motivo'), pk=pk)
     formato = _clean(formato).lower()
     if formato not in {DocumentoFormato.DOCX.value, DocumentoFormato.PDF.value}:
-        raise Http404('Formato invÃ¡lido.')
+        raise Http404('Formato inválido.')
     docx_bytes = render_ordem_servico_model_docx(obj)
     payload = docx_bytes
     content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -3556,9 +3556,9 @@ def justificativas_global(request):
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'order_by_choices': [
                 ('numero', 'Numero'),
-                ('updated_at', 'AtualizaÃ§Ã£o'),
-                ('created_at', 'CriaÃ§Ã£o'),
-                ('oficio', 'OfÃ­cio'),
+                ('updated_at', 'Atualização'),
+                ('created_at', 'Criação'),
+                ('oficio', 'Ofício'),
                 ('modelo', 'Modelo'),
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
@@ -3635,7 +3635,7 @@ def justificativa_excluir(request, pk):
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-justificativas'))
     if request.method == 'POST':
         obj.delete()
-        messages.success(request, 'Justificativa excluÃ­da com sucesso.')
+        messages.success(request, 'Justificativa excluída com sucesso.')
         return redirect(return_to)
     return render(
         request,
@@ -4239,8 +4239,8 @@ def termos_global(request):
             'modo_choices': TermoAutorizacao.MODO_CHOICES,
             'order_by_choices': [
                 ('numero', 'Numero'),
-                ('updated_at', 'AtualizaÃ§Ã£o'),
-                ('created_at', 'CriaÃ§Ã£o'),
+                ('updated_at', 'Atualização'),
+                ('created_at', 'Criação'),
                 ('status', 'Status'),
                 ('evento', 'Evento'),
                 ('servidor', 'Servidor'),

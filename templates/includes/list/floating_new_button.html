@@ -3,8 +3,18 @@
 		<i class="bi bi-arrow-up"></i>
 		<span class="visually-hidden">Subir lista</span>
 	</a>
+	{% if post_action %}
+	<form method="post" action="{{ url }}" style="display:contents;">
+		{% csrf_token %}
+		<button type="submit" class="system-list-fab {% if extra_class %}{{ extra_class }}{% endif %}">
+			<i class="bi {{ icon|default:'bi-plus-lg' }}"></i>
+			<span>{{ label }}</span>
+		</button>
+	</form>
+	{% else %}
 	<a href="{{ url }}" class="system-list-fab {% if extra_class %}{{ extra_class }}{% endif %}">
 		<i class="bi {{ icon|default:'bi-plus-lg' }}"></i>
 		<span>{{ label }}</span>
 	</a>
+	{% endif %}
 </div>

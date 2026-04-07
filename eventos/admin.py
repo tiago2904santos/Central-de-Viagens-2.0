@@ -19,10 +19,14 @@ from .models import (
 
 @admin.register(Evento)
 class EventoAdmin(admin.ModelAdmin):
-    list_display = ('titulo', 'tipo_demanda', 'status', 'data_inicio', 'data_fim', 'cidade_principal', 'updated_at')
-    list_filter = ('status', 'tipo_demanda')
+    list_display = ('titulo', 'get_tipos_demanda_display', 'status', 'data_inicio', 'data_fim', 'cidade_principal', 'updated_at')
+    list_filter = ('status', 'tipos_demanda')
     search_fields = ('titulo',)
     ordering = ('-data_inicio', '-created_at')
+
+    @admin.display(description='Tipos de demanda')
+    def get_tipos_demanda_display(self, obj):
+        return ', '.join(t.nome for t in obj.tipos_demanda.all()) or '—'
 
 
 @admin.register(SolicitantePlanoTrabalho)

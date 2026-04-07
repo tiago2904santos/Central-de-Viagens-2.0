@@ -253,9 +253,9 @@ def viajante_editar(request, pk):
     obj = get_object_or_404(Viajante, pk=pk)
     form = ViajanteForm(request.POST or None, instance=obj)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        obj = form.save(commit=False)
         obj.status = Viajante.STATUS_FINALIZADO if obj.esta_completo() else Viajante.STATUS_RASCUNHO
-        obj.save(update_fields=['status'])
+        obj.save()
         if RETURN_URL_KEY in request.session:
             del request.session[RETURN_URL_KEY]
             request.session.modified = True

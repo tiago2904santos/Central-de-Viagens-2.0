@@ -6,7 +6,7 @@ from .views import login_view, logout_view, em_breve_view
 app_name = 'core'
 
 urlpatterns = [
-    path('', login_view, name='login'),
+    path('', login_view, name='root'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     path('dashboard/', login_required(RedirectView.as_view(pattern_name='eventos:documentos-hub', permanent=False)), name='dashboard'),

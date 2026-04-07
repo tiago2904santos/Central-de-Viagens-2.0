@@ -5991,7 +5991,7 @@ class OficioJustificativaTest(TestCase):
         self.assertRedirects(response, url)
         oficio.refresh_from_db()
         self.assertTrue(oficio.gerar_termo_preenchido)
-        self.assertContains(response, 'OfÃ­cio salvo.')
+        self.assertContains(response, 'Ofício salvo.')
 
     def test_step4_salvar_oficio_manual_persiste_escolha_do_termo_sem_artefato_de_encoding(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))

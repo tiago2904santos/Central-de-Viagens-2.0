@@ -42,7 +42,7 @@ class SidebarMenuTest(TestCase):
                 'Documentos',
                 'Viajantes',
                 'Veiculos',
-                'Configuracoes',
+                'Configurações',
             ],
         )
 

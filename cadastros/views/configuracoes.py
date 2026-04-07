@@ -1,5 +1,6 @@
 import unicodedata
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.urls import reverse
@@ -31,9 +32,9 @@ def _resolve_cidade_sede_from_endereco(uf, cidade_endereco):
     except Estado.DoesNotExist:
         return None
     alvo = _normalize_for_match(cidade_nome)
-    for cidade in Cidade.objects.filter(estado=estado, ativo=True):
-        if _normalize_for_match(cidade.nome) == alvo:
-            return cidade
+    for pk, nome in Cidade.objects.filter(estado=estado, ativo=True).values_list('pk', 'nome'):
+        if _normalize_for_match(nome) == alvo:
+            return Cidade.objects.get(pk=pk)
     return None
 
 
@@ -43,37 +44,38 @@ def configuracoes_editar(request):
     form = ConfiguracaoSistemaForm(request.POST or None, instance=obj)
 
     if form.is_valid():
-        form.save()
-        obj = ConfiguracaoSistema.get_singleton()
-        uf = (form.cleaned_data.get('uf') or '').strip().upper()
-        cidade_endereco = (form.cleaned_data.get('cidade_endereco') or '').strip()
-        cidade_sede = _resolve_cidade_sede_from_endereco(uf, cidade_endereco)
-        if cidade_sede:
-            obj.cidade_sede_padrao = cidade_sede
-            obj.save(update_fields=['cidade_sede_padrao'])
-        else:
-            if uf or cidade_endereco:
-                obj.cidade_sede_padrao = None
+        with transaction.atomic():
+            form.save()
+            obj = ConfiguracaoSistema.get_singleton()
+            uf = (form.cleaned_data.get('uf') or '').strip().upper()
+            cidade_endereco = (form.cleaned_data.get('cidade_endereco') or '').strip()
+            cidade_sede = _resolve_cidade_sede_from_endereco(uf, cidade_endereco)
+            if cidade_sede:
+                obj.cidade_sede_padrao = cidade_sede
                 obj.save(update_fields=['cidade_sede_padrao'])
-                messages.warning(
-                    request,
-                    'Base geográfica não importada ou cidade não encontrada; cidade sede padrão não foi definida.',
+            else:
+                if uf or cidade_endereco:
+                    obj.cidade_sede_padrao = None
+                    obj.save(update_fields=['cidade_sede_padrao'])
+                    messages.warning(
+                        request,
+                        'Base geográfica não importada ou cidade não encontrada; cidade sede padrão não foi definida.',
+                    )
+            # Upsert assinaturas (ordem=1 por tipo)
+            mapeamento = [
+                ('assinatura_oficio', AssinaturaConfiguracao.TIPO_OFICIO),
+                ('assinatura_justificativas', AssinaturaConfiguracao.TIPO_JUSTIFICATIVA),
+                ('assinatura_planos_trabalho', AssinaturaConfiguracao.TIPO_PLANO_TRABALHO),
+                ('assinatura_ordens_servico', AssinaturaConfiguracao.TIPO_ORDEM_SERVICO),
+            ]
+            for field_name, tipo in mapeamento:
+                v = form.cleaned_data.get(field_name)
+                AssinaturaConfiguracao.objects.update_or_create(
+                    configuracao=obj,
+                    tipo=tipo,
+                    ordem=1,
+                    defaults={'viajante': v, 'ativo': bool(v)},
                 )
-        # Upsert assinaturas (ordem=1 por tipo)
-        mapeamento = [
-            ('assinatura_oficio', AssinaturaConfiguracao.TIPO_OFICIO),
-            ('assinatura_justificativas', AssinaturaConfiguracao.TIPO_JUSTIFICATIVA),
-            ('assinatura_planos_trabalho', AssinaturaConfiguracao.TIPO_PLANO_TRABALHO),
-            ('assinatura_ordens_servico', AssinaturaConfiguracao.TIPO_ORDEM_SERVICO),
-        ]
-        for field_name, tipo in mapeamento:
-            v = form.cleaned_data.get(field_name)
-            AssinaturaConfiguracao.objects.update_or_create(
-                configuracao=obj,
-                tipo=tipo,
-                ordem=1,
-                defaults={'viajante': v, 'ativo': bool(v)},
-            )
         messages.success(request, 'Configurações salvas com sucesso.')
         return redirect('cadastros:configuracoes')
 
