@@ -1,231 +1,246 @@
-{% extends 'base.html' %}
+{% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
-{% block title %}Termos de autorizacao - Central de Viagens{% endblock %}
-{% block page_title %}Termos de autorizacao{% endblock %}
+{% block page_title_block %}Termos de autorizacao{% endblock %}
+{% block page_header_title %}Termos de autorizacao{% endblock %}
+{% block list_page_class %}system-list-page--complete{% endblock %}
+{% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.termos.documentos.view-mode"{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.termos.documentos.view-mode">
-    <div class="oficios-list-shell system-list-shell">
-    <section class="system-list-top system-list-top--complete">
-    <div class="page-header-cadastro system-list-header system-list-header--standard">
-        <div class="system-list-header__content">
-            <div class="system-list-header__copy">
-                <div class="system-list-header__intro">
-                    <h1 class="system-list-header__title">Lista de termos</h1>
-                    <p class="system-list-header__subtitle">Mesmo layout documental de planos, oficios e justificativas.</p>
-                </div>
-                <div class="system-list-header__meta">
-                    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
-                    <span class="system-list-header__meta-item">Acervo documental com status e contexto do participante</span>
-                </div>
-            </div>
-            <div class="system-list-header__controls">
-                {% include 'includes/list/mode_badge.html' with mode='complete' %}
-                <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de termos">
-                    <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
-                    <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
-                </div>
-                <div class="system-list-header__actions-group">
-                    <a href="{{ termo_novo_url }}" class="btn btn-primary system-list-action-btn">Novo termo</a>
-                </div>
-            </div>
-        </div>
-    </div>
+{% block list_title %}Lista de termos{% endblock %}
+{% block list_subtitle %}<p class="system-list-header__subtitle">Acervo documental de termos com status, modelo, participante e contexto operacional reunidos em uma leitura mais coesa.</p>{% endblock %}
 
-    <div class="card filter-card system-filter-card system-document-filter">
-        <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end system-document-filter-form" data-list-autosubmit-form>
-                <div class="col-12 col-xl-3">
-                    <label class="form-label small text-muted">Busca ampla</label>
-                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Servidor, viatura, destino ou contexto" data-list-autosubmit>
-                </div>
-                <div class="col-6 col-md-3 col-xl-2">
-                    <label class="form-label small text-muted">Evento</label>
-                    <select name="evento_id" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for evento in eventos_choices %}
-                        <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-xl-2">
-                    <label class="form-label small text-muted">Oficio</label>
-                    <select name="oficio_id" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for oficio in oficios_choices %}
-                        <option value="{{ oficio.pk }}" {% if filters.oficio_id == oficio.pk|stringformat:"s" %}selected{% endif %}>{{ oficio.numero_formatado }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-xl-2">
-                    <label class="form-label small text-muted">Modelo</label>
-                    <select name="modo_geracao" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for value, label in modo_choices %}
-                        <option value="{{ value }}" {% if filters.modo_geracao == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-xl-1">
-                    <label class="form-label small text-muted">Status</label>
-                    <select name="status" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-xl-1">
-                    <label class="form-label small text-muted">Ordenar</label>
-                    <select name="order_by" data-list-autosubmit>
-                        {% for value, label in order_by_choices %}
-                        <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-xl-1">
-                    <label class="form-label small text-muted">Direção</label>
-                    <select name="order_dir" data-list-autosubmit>
-                        {% for value, label in order_dir_choices %}
-                        <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-12 col-md-auto">
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-                    <a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-                </div>
-            </form>
-        </div>
-    </div>
-    </section>
-
-    <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de termos">
-        <div class="table-responsive">
-            <table class="table table-hover system-list-table align-middle">
-                <thead>
-                    <tr>
-                        <th>Termo</th>
-                        <th>Servidor</th>
-                        <th>Destino</th>
-                        <th>Atualizado</th>
-                        <th class="text-end">Acoes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for termo in object_list %}
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">{{ termo.numero_formatado }}</div>
-                            <div class="small text-muted">{{ termo.context_display }}</div>
-                        </td>
-                        <td>{{ termo.servidor_resumo }}</td>
-                        <td>{{ termo.destino_resumo }}</td>
-                        <td>{{ termo.updated_at|date:"d/m/Y H:i" }}</td>
-                        <td class="text-end">
-                            <a href="{{ termo.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-                            <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="5" class="text-center text-muted py-5">Nenhum termo encontrado com os filtros atuais.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de termos de autorizacao">
-        {% for termo in object_list %}
-        <article class="oficio-list-card termo-doc-card termo-list-card is-tone-blue">
-            <div class="oficio-list-rich-layout">
-                <div class="oficio-list-card__header termo-doc-card__header">
-                    <div class="oficio-list-chip-list oficio-list-chip-list--meta termo-doc-card__chip-list">
-                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
-                            <span class="oficio-list-chip__label">Termo</span>
-                            <span class="oficio-list-chip__value">{{ termo.numero_formatado }}</span>
-                        </span>
-                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
-                            <span class="oficio-list-chip__label">Destino</span>
-                            <span class="oficio-list-chip__value">{{ termo.destino_resumo }}</span>
-                        </span>
-                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
-                            <span class="oficio-list-chip__label">Periodo</span>
-                            <span class="oficio-list-chip__value">{{ termo.periodo_resumo }}</span>
-                        </span>
-                    </div>
-                    {% if termo.oficios_resumo and termo.oficios_resumo != 'Sem oficio' %}
-                    <div class="oficio-list-card__header-status">
-                        <span class="termo-doc-card__vinculo-badge" title="Oficio vinculado">Oficio:{{ termo.oficios_resumo }}</span>
-                    </div>
-                    {% endif %}
-                </div>
-
-                {% if termo.has_servidor_card or termo.has_viatura_card %}
-                <div class="oficio-list-card__secondary">
-                    <section class="oficio-list-subcard termo-doc-card__context oficio-list-surface oficio-list-surface--panel">
-                        <div class="oficio-list-subcard__body">
-                            {% if termo.has_viatura_card %}
-                            <div class="oficio-list-transport-panel termo-doc-card__transport-panel">
-                                <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor">
-                                    <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Servidor</span></span>
-                                    <div class="oficio-list-transport-panel__detail-value">{{ termo.servidor_nome_card|default:'Sem servidor vinculado' }}</div>
-                                    {% if termo.servidor_cargo_card or termo.servidor_lotacao_card %}
-                                    <p class="oficio-list-transport-panel__support">
-                                        {% if termo.servidor_cargo_card %}{{ termo.servidor_cargo_card }}{% endif %}{% if termo.servidor_cargo_card and termo.servidor_lotacao_card %} • {% endif %}{% if termo.servidor_lotacao_card %}{{ termo.servidor_lotacao_card }}{% endif %}
-                                    </p>
-                                    {% endif %}
-                                </div>
-
-                                <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--viatura">
-                                    <span class="oficio-list-transport-panel__kicker"><i class="bi bi-truck"></i><span>Viatura</span></span>
-                                    <div class="oficio-list-transport-panel__detail-value">{{ termo.veiculo_placa_card|default:'Sem placa' }}</div>
-                                    <p class="oficio-list-transport-panel__support">
-                                        {% if termo.veiculo_modelo_card %}{{ termo.veiculo_modelo_card }}{% else %}Sem modelo{% endif %}{% if termo.veiculo_combustivel_card %} • {{ termo.veiculo_combustivel_card }}{% endif %}
-                                    </p>
-                                </div>
-                            </div>
-                            {% elif termo.has_servidor_card %}
-                            <div class="oficio-list-transport-panel termo-doc-card__transport-panel termo-doc-card__transport-panel--single">
-                                <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor">
-                                    <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Servidor</span></span>
-                                    <div class="oficio-list-transport-panel__detail-value">{{ termo.servidor_nome_card }}</div>
-                                    {% if termo.servidor_cargo_card or termo.servidor_lotacao_card %}
-                                    <p class="oficio-list-transport-panel__support">
-                                        {% if termo.servidor_cargo_card %}{{ termo.servidor_cargo_card }}{% endif %}{% if termo.servidor_cargo_card and termo.servidor_lotacao_card %} • {% endif %}{% if termo.servidor_lotacao_card %}{{ termo.servidor_lotacao_card }}{% endif %}
-                                    </p>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </section>
-                </div>
-                {% endif %}
-
-                <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
-                    <div class="oficio-list-card__footer-actions">
-                        <a href="{{ termo.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-                        <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
-                        <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary is-icon-only" data-direct-download="true" aria-label="Baixar DOCX"><i class="bi bi-filetype-docx"></i><span class="visually-hidden">DOCX</span></a>
-                        <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf is-icon-only" data-direct-download="true" aria-label="Baixar PDF"><i class="bi bi-filetype-pdf"></i><span class="visually-hidden">PDF</span></a>
-                        <a href="{{ termo.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger"><i class="bi bi-trash"></i><span>Excluir</span></a>
-                    </div>
-                </div>
-            </div>
-        </article>
-        {% empty %}
-        <div class="oficios-table-panel__empty">Nenhum termo encontrado com os filtros atuais.</div>
-        {% endfor %}
-    </section>
-
-    {% include 'includes/pagination.html' %}
-
-    {% include 'includes/list/floating_new_button.html' with url=termo_novo_url label='Novo termo' icon='bi-plus-lg' %}
-    </div>
+{% block list_meta %}
+<div class="system-list-header__meta">
+    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
+    <span class="system-list-header__meta-item">Biblioteca com status, destino e vinculos por participante</span>
 </div>
 {% endblock %}
+
+{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
+
+{% block list_header_aux_controls %}
+<div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de termos">
+    <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
+    <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+</div>
+{% endblock %}
+
+{% block list_header_actions %}
+<a href="{{ termo_novo_url }}" class="btn btn-primary system-list-action-btn">Novo termo</a>
+{% endblock %}
+
+{% block list_filter_title %}Filtros documentais de termos{% endblock %}
+
+{% block list_filter_description %}
+<p class="system-document-filter__description">Busca ampla, recorte por evento e oficio, escolha do modelo e ordenacao no mesmo bloco padronizado dos outros documentos.</p>
+{% endblock %}
+
+{% block list_filter_summary %}
+<div class="system-document-filter__summary-pill">{{ page_obj.paginator.count }} termo(s)</div>
+{% endblock %}
+
+{% block list_toolbar %}
+<form method="get" class="system-document-filter-form" data-list-autosubmit-form>
+    <div class="system-document-filter__grid">
+        <div class="system-document-filter__field system-document-filter__field--search">
+            <label class="form-label">Busca principal</label>
+            <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Servidor, viatura, destino ou contexto" data-list-autosubmit>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--medium">
+            <label class="form-label">Evento</label>
+            <select name="evento_id" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for evento in eventos_choices %}
+                <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--medium">
+            <label class="form-label">Oficio</label>
+            <select name="oficio_id" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for oficio in oficios_choices %}
+                <option value="{{ oficio.pk }}" {% if filters.oficio_id == oficio.pk|stringformat:"s" %}selected{% endif %}>{{ oficio.numero_formatado }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Modelo</label>
+            <select name="modo_geracao" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for value, label in modo_choices %}
+                <option value="{{ value }}" {% if filters.modo_geracao == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Status</label>
+            <select name="status" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Ordenar por</label>
+            <select name="order_by" data-list-autosubmit>
+                {% for value, label in order_by_choices %}
+                <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Direcao</label>
+            <select name="order_dir" data-list-autosubmit>
+                {% for value, label in order_dir_choices %}
+                <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="system-document-filter__footer">
+        <div class="system-document-filter__footer-meta">
+            <span class="system-document-filter__result">{{ page_obj.paginator.count }} termo(s) encontrado(s)</span>
+        </div>
+        <div class="system-document-filter__actions">
+            <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+            <a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block page_result_content %}
+<section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de termos">
+    <div class="table-responsive">
+        <table class="table table-hover system-list-table align-middle">
+            <thead>
+                <tr>
+                    <th>Termo</th>
+                    <th>Servidor</th>
+                    <th>Destino</th>
+                    <th>Atualizado</th>
+                    <th class="text-end">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for termo in object_list %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ termo.numero_formatado }}</div>
+                        <div class="small text-muted">{{ termo.context_display }}</div>
+                    </td>
+                    <td>{{ termo.servidor_resumo }}</td>
+                    <td>{{ termo.destino_resumo }}</td>
+                    <td>{{ termo.updated_at|date:"d/m/Y H:i" }}</td>
+                    <td class="text-end">
+                        <a href="{{ termo.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                        <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-5">Nenhum termo encontrado com os filtros atuais.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de termos de autorizacao">
+    {% for termo in object_list %}
+    <article class="oficio-list-card termo-doc-card termo-list-card is-tone-blue">
+        <div class="oficio-list-rich-layout">
+            <div class="oficio-list-card__header termo-doc-card__header">
+                <div class="oficio-list-chip-list oficio-list-chip-list--meta termo-doc-card__chip-list">
+                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                        <span class="oficio-list-chip__label">Termo</span>
+                        <span class="oficio-list-chip__value">{{ termo.numero_formatado }}</span>
+                    </span>
+                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                        <span class="oficio-list-chip__label">Destino</span>
+                        <span class="oficio-list-chip__value">{{ termo.destino_resumo }}</span>
+                    </span>
+                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                        <span class="oficio-list-chip__label">Periodo</span>
+                        <span class="oficio-list-chip__value">{{ termo.periodo_resumo }}</span>
+                    </span>
+                </div>
+                {% if termo.oficios_resumo and termo.oficios_resumo != 'Sem oficio' %}
+                <div class="oficio-list-card__header-status">
+                    <span class="termo-doc-card__vinculo-badge" title="Oficio vinculado">Oficio:{{ termo.oficios_resumo }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if termo.has_servidor_card or termo.has_viatura_card %}
+            <div class="oficio-list-card__secondary">
+                <section class="oficio-list-subcard termo-doc-card__context oficio-list-surface oficio-list-surface--panel">
+                    <div class="oficio-list-subcard__body">
+                        {% if termo.has_viatura_card %}
+                        <div class="oficio-list-transport-panel termo-doc-card__transport-panel">
+                            <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor">
+                                <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Servidor</span></span>
+                                <div class="oficio-list-transport-panel__detail-value">{{ termo.servidor_nome_card|default:'Sem servidor vinculado' }}</div>
+                                {% if termo.servidor_cargo_card or termo.servidor_lotacao_card %}
+                                <p class="oficio-list-transport-panel__support">
+                                    {% if termo.servidor_cargo_card %}{{ termo.servidor_cargo_card }}{% endif %}{% if termo.servidor_cargo_card and termo.servidor_lotacao_card %} - {% endif %}{% if termo.servidor_lotacao_card %}{{ termo.servidor_lotacao_card }}{% endif %}
+                                </p>
+                                {% endif %}
+                            </div>
+
+                            <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--viatura">
+                                <span class="oficio-list-transport-panel__kicker"><i class="bi bi-truck"></i><span>Viatura</span></span>
+                                <div class="oficio-list-transport-panel__detail-value">{{ termo.veiculo_placa_card|default:'Sem placa' }}</div>
+                                <p class="oficio-list-transport-panel__support">
+                                    {% if termo.veiculo_modelo_card %}{{ termo.veiculo_modelo_card }}{% else %}Sem modelo{% endif %}{% if termo.veiculo_combustivel_card %} - {{ termo.veiculo_combustivel_card }}{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% elif termo.has_servidor_card %}
+                        <div class="oficio-list-transport-panel termo-doc-card__transport-panel termo-doc-card__transport-panel--single">
+                            <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor">
+                                <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Servidor</span></span>
+                                <div class="oficio-list-transport-panel__detail-value">{{ termo.servidor_nome_card }}</div>
+                                {% if termo.servidor_cargo_card or termo.servidor_lotacao_card %}
+                                <p class="oficio-list-transport-panel__support">
+                                    {% if termo.servidor_cargo_card %}{{ termo.servidor_cargo_card }}{% endif %}{% if termo.servidor_cargo_card and termo.servidor_lotacao_card %} - {% endif %}{% if termo.servidor_lotacao_card %}{{ termo.servidor_lotacao_card }}{% endif %}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </section>
+            </div>
+            {% endif %}
+
+            <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+                <div class="oficio-list-card__footer-actions">
+                    <a href="{{ termo.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                    <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                    <a href="{{ termo.download_docx_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary is-icon-only" data-direct-download="true" aria-label="Baixar DOCX"><i class="bi bi-filetype-docx"></i><span class="visually-hidden">DOCX</span></a>
+                    <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf is-icon-only" data-direct-download="true" aria-label="Baixar PDF"><i class="bi bi-filetype-pdf"></i><span class="visually-hidden">PDF</span></a>
+                    <a href="{{ termo.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger"><i class="bi bi-trash"></i><span>Excluir</span></a>
+                </div>
+            </div>
+        </div>
+    </article>
+    {% empty %}
+    <div class="oficios-table-panel__empty">Nenhum termo encontrado com os filtros atuais.</div>
+    {% endfor %}
+</section>
+{% endblock %}
+
+{% block page_pagination %}{% include 'includes/pagination.html' %}{% endblock %}
+{% block list_floating_actions %}{% include 'includes/list/floating_new_button.html' with url=termo_novo_url label='Novo termo' icon='bi-plus-lg' %}{% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/list_standard.js' %}"></script>

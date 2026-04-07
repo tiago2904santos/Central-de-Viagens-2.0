@@ -1,154 +1,180 @@
-{% extends 'base.html' %}
+{% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
-{% block title %}Lista de oficios - Central de Viagens{% endblock %}
-{% block page_title %}Lista de oficios{% endblock %}
+{% block page_title_block %}Lista de oficios{% endblock %}
+{% block page_header_title %}Lista de oficios{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4 oficios-list-page system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.oficios.view-mode">
-    <div class="oficios-list-shell system-list-shell">
-        <section class="system-list-top system-list-top--complete">
-        <div class="page-header-cadastro system-list-header system-list-header--standard">
-            <div class="system-list-header__content">
-                <div class="system-list-header__copy">
-                    <div class="system-list-header__intro">
-                        <h1 class="system-list-header__title">Oficios salvos</h1>
-                        <p class="system-list-header__subtitle">Historico de documentos gerados.</p>
-                    </div>
-                    <div class="system-list-header__meta">
-                        <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
-                        <span class="system-list-header__meta-item">Acervo documental consolidado da operacao</span>
-                    </div>
-                </div>
-                <div class="system-list-header__controls">
-                    {% include 'includes/list/mode_badge.html' with mode='complete' %}
-                    <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de oficios">
-                        <button
-                            type="button"
-                            class="oficios-view-toggle__button is-active"
-                            data-list-view-toggle="rich"
-                            aria-pressed="true"
-                        >
-                            Completa
-                        </button>
-                        <button
-                            type="button"
-                            class="oficios-view-toggle__button"
-                            data-list-view-toggle="basic"
-                            aria-pressed="false"
-                        >
-                            Visualizacao simples
-                        </button>
-                    </div>
-                    <div class="system-list-header__actions-group">
-                        <a href="{{ oficio_novo_url }}" class="btn btn-primary system-list-action-btn">Novo oficio</a>
-                    </div>
-                </div>
-            </div>
+{% block list_page_class %}oficios-list-page system-list-page--complete{% endblock %}
+{% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.oficios.view-mode"{% endblock %}
+{% block list_title %}Oficios salvos{% endblock %}
+{% block list_subtitle %}<p class="system-list-header__subtitle">Acervo documental consolidado com leitura rapida, situacao da viagem e pendencias de termos e justificativas.</p>{% endblock %}
+{% block list_meta %}
+<div class="system-list-header__meta">
+    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
+    <span class="system-list-header__meta-item">Biblioteca operacional com contexto, protocolo e fluxo documental</span>
+</div>
+{% endblock %}
+{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
+{% block list_header_aux_controls %}
+<div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de oficios">
+    <button
+        type="button"
+        class="oficios-view-toggle__button is-active"
+        data-list-view-toggle="rich"
+        aria-pressed="true"
+    >
+        Completa
+    </button>
+    <button
+        type="button"
+        class="oficios-view-toggle__button"
+        data-list-view-toggle="basic"
+        aria-pressed="false"
+    >
+        Visualizacao simples
+    </button>
+</div>
+{% endblock %}
+{% block list_header_actions %}
+<a href="{{ oficio_novo_url }}" class="btn btn-primary system-list-action-btn">Novo oficio</a>
+{% endblock %}
+{% block list_filter_title %}Filtros documentais de oficios{% endblock %}
+{% block list_filter_description %}
+<p class="system-document-filter__description">Busca ampla, status, situacao da viagem, presenca de anexos e recorte por periodo dentro do mesmo padrao aplicado aos demais documentos.</p>
+{% endblock %}
+{% block list_filter_summary %}
+<div class="system-document-filter__summary-pill">{{ page_obj.paginator.count }} oficio(s)</div>
+{% endblock %}
+{% block list_toolbar %}
+<form method="get" class="system-document-filter-form" data-list-autosubmit-form>
+    <div class="system-document-filter__grid">
+        <div class="system-document-filter__field system-document-filter__field--search-xl">
+            <label for="oficios-search" class="form-label">Busca principal</label>
+            <input
+                id="oficios-search"
+                type="text"
+                name="q"
+                class="form-control"
+                value="{{ filters.q }}"
+                placeholder="Buscar por oficio, protocolo, destino ou servidor"
+                data-list-autosubmit
+            >
         </div>
 
-        <section class="oficios-quick-filter system-document-filter" aria-label="Filtro rapido">
-            <div class="oficios-quick-filter__label">Filtro rapido e ordenacao</div>
-            <form method="get" class="oficios-quick-filter__form system-document-filter-form" data-list-autosubmit-form>
-                <div class="oficios-filter-main-row">
-                    <input
-                        id="oficios-search"
-                        type="text"
-                        name="q"
-                        class="form-control oficios-quick-filter__input"
-                        value="{{ filters.q }}"
-                        placeholder="Buscar por oficio, protocolo, destino ou servidor"
-                        data-list-autosubmit
-                    >
+        <div class="system-document-filter__field system-document-filter__field--medium">
+            <label class="form-label">Ordenar por</label>
+            <select name="order_by" data-list-autosubmit>
+                {% for key, label in order_by_choices %}
+                <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-                    <select name="order_by" data-list-autosubmit>
-                        {% for key, label in order_by_choices %}
-                        <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>Ordenar por: {{ label }}</option>
-                        {% endfor %}
-                    </select>
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Direcao</label>
+            <select name="order_dir" data-list-autosubmit>
+                {% for key, label in order_dir_choices %}
+                <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
 
-                    <select name="order_dir" data-list-autosubmit>
-                        {% for key, label in order_dir_choices %}
-                        <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="oficios-filter-chip-group">
-                    <div class="oficios-filter-chip-group__title">Status</div>
-                    <div class="oficios-filter-chip-list">
-                        {% for key, label in status_choices %}
-                        <label class="oficios-filter-chip">
-                            <input type="checkbox" name="status" value="{{ key }}" {% if key in filters.status %}checked{% endif %} data-list-autosubmit>
-                            <span>{{ label }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="oficios-filter-chip-group">
-                    <div class="oficios-filter-chip-group__title">Situacao da viagem</div>
-                    <div class="oficios-filter-chip-list">
-                        {% for key, label in viagem_status_choices %}
-                        <label class="oficios-filter-chip">
-                            <input type="checkbox" name="viagem_status" value="{{ key }}" {% if key in filters.viagem_status %}checked{% endif %} data-list-autosubmit>
-                            <span>{{ label }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="oficios-filter-chip-group">
-                    <div class="oficios-filter-chip-group__title">Termos e justificativa</div>
-                    <div class="oficios-filter-chip-list">
-                        <label class="oficios-filter-chip">
-                            <input type="checkbox" name="termo" value="COM" {% if 'COM' in filters.termo %}checked{% endif %} data-list-autosubmit>
-                            <span>Com termos</span>
-                        </label>
-                        <label class="oficios-filter-chip">
-                            <input type="checkbox" name="termo" value="SEM" {% if 'SEM' in filters.termo %}checked{% endif %} data-list-autosubmit>
-                            <span>Sem termos</span>
-                        </label>
-                        <label class="oficios-filter-chip">
-                            <input type="checkbox" name="justificativa" value="COM" {% if 'COM' in filters.justificativa %}checked{% endif %} data-list-autosubmit>
-                            <span>Com justificativa</span>
-                        </label>
-                        <label class="oficios-filter-chip">
-                            <input type="checkbox" name="justificativa" value="SEM" {% if 'SEM' in filters.justificativa %}checked{% endif %} data-list-autosubmit>
-                            <span>Sem justificativa</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="oficios-filter-main-row oficios-filter-main-row--dates">
-                    <select name="date_scope" data-list-autosubmit>
-                        {% for key, label in date_scope_choices %}
-                        <option value="{{ key }}" {% if filters.date_scope == key %}selected{% endif %}>Periodo: {{ label }}</option>
-                        {% endfor %}
-                    </select>
-
-                    <input
-                        type="date"
-                        name="date_start"
-                        value="{% if filters.date_start %}{{ filters.date_start|date:'Y-m-d' }}{% endif %}"
-                        class="form-control oficios-date-input"
-                        data-list-autosubmit
-                    >
-
-                    <input
-                        type="date"
-                        name="date_end"
-                        value="{% if filters.date_end %}{{ filters.date_end|date:'Y-m-d' }}{% endif %}"
-                        class="form-control oficios-date-input"
-                        data-list-autosubmit
-                    >
-
-                    <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary oficios-quick-filter__button">Limpar</a>
-                </div>
-            </form>
-            <div class="oficios-quick-filter__result">{{ page_obj.paginator.count }} oficio(s) encontrado(s)</div>
+    <div class="system-document-filter__clusters">
+        <section class="system-document-filter__cluster">
+            <div class="system-document-filter__cluster-label">Status do oficio</div>
+            <div class="system-document-filter__chips">
+                {% for key, label in status_choices %}
+                <label class="system-document-filter__chip">
+                    <input type="checkbox" name="status" value="{{ key }}" {% if key in filters.status %}checked{% endif %} data-list-autosubmit>
+                    <span>{{ label }}</span>
+                </label>
+                {% endfor %}
+            </div>
         </section>
+
+        <section class="system-document-filter__cluster">
+            <div class="system-document-filter__cluster-label">Situacao da viagem</div>
+            <div class="system-document-filter__chips">
+                {% for key, label in viagem_status_choices %}
+                <label class="system-document-filter__chip">
+                    <input type="checkbox" name="viagem_status" value="{{ key }}" {% if key in filters.viagem_status %}checked{% endif %} data-list-autosubmit>
+                    <span>{{ label }}</span>
+                </label>
+                {% endfor %}
+            </div>
         </section>
+
+        <section class="system-document-filter__cluster">
+            <div class="system-document-filter__cluster-label">Termos e justificativa</div>
+            <div class="system-document-filter__chips">
+                <label class="system-document-filter__chip">
+                    <input type="checkbox" name="termo" value="COM" {% if 'COM' in filters.termo %}checked{% endif %} data-list-autosubmit>
+                    <span>Com termos</span>
+                </label>
+                <label class="system-document-filter__chip">
+                    <input type="checkbox" name="termo" value="SEM" {% if 'SEM' in filters.termo %}checked{% endif %} data-list-autosubmit>
+                    <span>Sem termos</span>
+                </label>
+                <label class="system-document-filter__chip">
+                    <input type="checkbox" name="justificativa" value="COM" {% if 'COM' in filters.justificativa %}checked{% endif %} data-list-autosubmit>
+                    <span>Com justificativa</span>
+                </label>
+                <label class="system-document-filter__chip">
+                    <input type="checkbox" name="justificativa" value="SEM" {% if 'SEM' in filters.justificativa %}checked{% endif %} data-list-autosubmit>
+                    <span>Sem justificativa</span>
+                </label>
+            </div>
+        </section>
+    </div>
+
+    <div class="system-document-filter__grid">
+        <div class="system-document-filter__field system-document-filter__field--medium">
+            <label class="form-label">Periodo</label>
+            <select name="date_scope" data-list-autosubmit>
+                {% for key, label in date_scope_choices %}
+                <option value="{{ key }}" {% if filters.date_scope == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Data inicial</label>
+            <input
+                type="date"
+                name="date_start"
+                value="{% if filters.date_start %}{{ filters.date_start|date:'Y-m-d' }}{% endif %}"
+                class="form-control"
+                data-list-autosubmit
+            >
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Data final</label>
+            <input
+                type="date"
+                name="date_end"
+                value="{% if filters.date_end %}{{ filters.date_end|date:'Y-m-d' }}{% endif %}"
+                class="form-control"
+                data-list-autosubmit
+            >
+        </div>
+    </div>
+
+    <div class="system-document-filter__footer">
+        <div class="system-document-filter__footer-meta">
+            <span class="system-document-filter__result">{{ page_obj.paginator.count }} oficio(s) encontrado(s)</span>
+            <span class="system-document-filter__footer-note">Atualizacao automatica ao ajustar os campos</span>
+        </div>
+        <div class="system-document-filter__actions">
+            <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+            <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block page_result_content %}
 
         <section class="oficios-table-panel oficios-view-pane oficios-view-pane--basic" aria-label="Tabela de oficios salvos">
             {% if object_list %}
@@ -173,7 +199,7 @@
                                 <a href="{{ oficio.wizard_url }}" class="oficios-table__link">{{ oficio.numero_display }}</a>
                             </td>
                             <td data-label="DATA">{{ oficio.data_display }}</td>
-                            <td data-label="N° PROTOCOLO">{{ oficio.protocolo_display }}</td>
+                            <td data-label="N PROTOCOLO">{{ oficio.protocolo_display }}</td>
                             <td data-label="DESTINO">{{ oficio.destino_display }}</td>
                             <td data-label="SERVIDORES">{{ oficio.servidores_display }}</td>
                             <td data-label="VEICULO">{{ oficio.veiculo_display }}</td>
@@ -393,13 +419,10 @@
             <div class="oficios-table-panel__empty">Nenhum oficio encontrado com os filtros atuais.</div>
             {% endfor %}
         </section>
-
-        {% include 'includes/pagination.html' %}
-    </div>
-
-    {% include 'includes/list/floating_new_button.html' with url=oficio_novo_url label='Novo oficio' icon='bi-plus-lg' %}
-</div>
 {% endblock %}
+
+{% block page_pagination %}{% include 'includes/pagination.html' %}{% endblock %}
+{% block list_floating_actions %}{% include 'includes/list/floating_new_button.html' with url=oficio_novo_url label='Novo oficio' icon='bi-plus-lg' %}{% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/list_standard.js' %}"></script>

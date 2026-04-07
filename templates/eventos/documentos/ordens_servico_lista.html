@@ -1,219 +1,243 @@
-{% extends 'base.html' %}
+{% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
-{% block title %}Ordens de serviço - Central de Viagens{% endblock %}
-{% block page_title %}Ordens de serviço{% endblock %}
+{% block page_title_block %}Ordens de servico{% endblock %}
+{% block page_header_title %}Ordens de servico{% endblock %}
+{% block list_page_class %}system-list-page--complete{% endblock %}
+{% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.ordens-servico.documentos.view-mode"{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.ordens-servico.documentos.view-mode">
-  <div class="oficios-list-shell system-list-shell">
-  <section class="system-list-top system-list-top--complete">
-  <div class="page-header-cadastro system-list-header system-list-header--standard">
-    <div class="system-list-header__content">
-      <div class="system-list-header__copy">
-        <div class="system-list-header__intro">
-          <h1 class="system-list-header__title">Ordens de servico</h1>
-          <p class="system-list-header__subtitle">Mesmo layout documental usado em planos, oficios e justificativas.</p>
+{% block list_title %}Ordens de servico{% endblock %}
+{% block list_subtitle %}<p class="system-list-header__subtitle">Acervo derivado dos planos com contexto operacional, servidores e motivo consolidados na mesma leitura documental.</p>{% endblock %}
+
+{% block list_meta %}
+<div class="system-list-header__meta">
+    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
+    <span class="system-list-header__meta-item">Fluxo documental conectado a planos, eventos e oficios</span>
+</div>
+{% endblock %}
+
+{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
+
+{% block list_header_aux_controls %}
+<div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de ordens de servico">
+    <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
+    <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+</div>
+{% endblock %}
+
+{% block list_header_actions %}
+<a href="{{ ordem_novo_url }}" class="btn btn-primary system-list-action-btn">Nova ordem de servico</a>
+{% endblock %}
+
+{% block list_filter_title %}Filtros documentais de ordens{% endblock %}
+
+{% block list_filter_description %}
+<p class="system-document-filter__description">Busca principal, evento, status e ordenacao com o mesmo grid e a mesma hierarquia visual adotados nas outras listas documentais.</p>
+{% endblock %}
+
+{% block list_filter_summary %}
+<div class="system-document-filter__summary-pill">{{ page_obj.paginator.count }} ordem(ns)</div>
+{% endblock %}
+
+{% block list_toolbar %}
+<form method="get" class="system-document-filter-form" data-list-autosubmit-form>
+    <div class="system-document-filter__grid">
+        <div class="system-document-filter__field system-document-filter__field--search-xl">
+            <label class="form-label">Busca principal</label>
+            <input class="form-control" type="text" name="q" placeholder="Finalidade, observacoes ou evento" value="{{ filters.q }}" data-list-autosubmit>
         </div>
-        <div class="system-list-header__meta">
-          <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
-          <span class="system-list-header__meta-item">Acervo documental derivado dos planos de trabalho</span>
+
+        <div class="system-document-filter__field system-document-filter__field--medium">
+            <label class="form-label">Evento</label>
+            <select name="evento_id" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for e in eventos_choices %}
+                <option value="{{ e.pk }}" {% if filters.evento_id == e.pk|stringformat:'s' %}selected{% endif %}>{{ e.titulo|default:'(sem titulo)' }}</option>
+                {% endfor %}
+            </select>
         </div>
-      </div>
-      <div class="system-list-header__controls">
-        {% include 'includes/list/mode_badge.html' with mode='complete' %}
-        <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de ordens de servico">
-          <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
-          <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Status</label>
+            <select name="status" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
         </div>
-        <div class="system-list-header__actions-group">
-          <a href="{{ ordem_novo_url }}" class="btn btn-primary system-list-action-btn">Nova ordem de servico</a>
+
+        <div class="system-document-filter__field system-document-filter__field--medium">
+            <label class="form-label">Ordenar por</label>
+            <select name="order_by" data-list-autosubmit>
+                {% for key, label in order_by_choices %}
+                <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
         </div>
-      </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Direcao</label>
+            <select name="order_dir" data-list-autosubmit>
+                {% for key, label in order_dir_choices %}
+                <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
-  </div>
 
-  <div class="card filter-card system-filter-card system-document-filter">
-    <div class="card-body py-3">
-      <form method="get" class="row g-2 align-items-end system-document-filter-form" data-list-autosubmit-form>
-        <div class="col-12 col-xl-4">
-          <label class="form-label small text-muted">Busca</label>
-          <input class="form-control form-control-sm" type="text" name="q" placeholder="Finalidade, observacoes ou evento" value="{{ filters.q }}" data-list-autosubmit>
+    <div class="system-document-filter__footer">
+        <div class="system-document-filter__footer-meta">
+            <span class="system-document-filter__result">{{ page_obj.paginator.count }} ordem(ns) encontrada(s)</span>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
-          <label class="form-label small text-muted">Evento</label>
-          <select name="evento_id" data-list-autosubmit>
-            <option value="">Todos</option>
-            {% for e in eventos_choices %}
-            <option value="{{ e.pk }}" {% if filters.evento_id == e.pk|stringformat:'s' %}selected{% endif %}>{{ e.titulo|default:'(sem titulo)' }}</option>
-            {% endfor %}
-          </select>
+        <div class="system-document-filter__actions">
+            <button class="btn btn-outline-primary btn-sm" type="submit">Filtrar</button>
+            <a href="{% url 'eventos:documentos-ordens-servico' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
-          <label class="form-label small text-muted">Status</label>
-          <select name="status" data-list-autosubmit>
-            <option value="">Todos</option>
-            {% for value,label in status_choices %}
-            <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-6 col-md-2 col-xl-2">
-          <label class="form-label small text-muted">Ordenar por</label>
-          <select name="order_by" data-list-autosubmit>
-            {% for key, label in order_by_choices %}
-            <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-6 col-md-2 col-xl-1">
-          <label class="form-label small text-muted">Direcao</label>
-          <select name="order_dir" data-list-autosubmit>
-            {% for key, label in order_dir_choices %}
-            <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-12 col-md-auto">
-          <button class="btn btn-outline-primary btn-sm" type="submit">Filtrar</button>
-          <a href="{% url 'eventos:documentos-ordens-servico' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-        </div>
-      </form>
     </div>
-  </div>
-  </section>
+</form>
+{% endblock %}
 
-  <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de ordens de servico">
+{% block page_result_content %}
+<section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de ordens de servico">
     <div class="table-responsive">
-      <table class="table table-sm table-hover mb-0 system-list-table align-middle">
-        <thead class="table-light"><tr><th>ID</th><th>Numero</th><th>Status</th><th>Data deslocamento</th><th>Servidores</th><th>Evento</th><th>Oficio</th><th class="text-end">Acoes</th></tr></thead>
-        <tbody>
-          {% for object in object_list %}
-          <tr>
-            <td>{{ object.pk }}</td>
-            <td>{{ object.numero_formatado|default:'—' }}</td>
-            <td>{{ object.status_meta.label }}</td>
-            <td>{{ object.data_deslocamento_display }}</td>
-            <td>{{ object.viajantes_display|truncatechars:80 }}</td>
-            <td>{{ object.evento_display }}</td>
-            <td>{{ object.oficio_display }}</td>
-            <td class="text-end">
-              <a class="btn btn-sm btn-doc-action btn-doc-action--primary" href="{{ object.open_url }}"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-              <a class="btn btn-sm btn-doc-action btn-doc-action--secondary" href="{{ object.edit_url }}"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="8" class="text-center text-muted py-4">Nenhuma ordem de servico encontrada.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+        <table class="table table-sm table-hover mb-0 system-list-table align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Numero</th>
+                    <th>Status</th>
+                    <th>Data deslocamento</th>
+                    <th>Servidores</th>
+                    <th>Evento</th>
+                    <th>Oficio</th>
+                    <th class="text-end">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for object in object_list %}
+                <tr>
+                    <td>{{ object.pk }}</td>
+                    <td>{{ object.numero_formatado|default:'-' }}</td>
+                    <td>{{ object.status_meta.label }}</td>
+                    <td>{{ object.data_deslocamento_display }}</td>
+                    <td>{{ object.viajantes_display|truncatechars:80 }}</td>
+                    <td>{{ object.evento_display }}</td>
+                    <td>{{ object.oficio_display }}</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-doc-action btn-doc-action--primary" href="{{ object.open_url }}"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                        <a class="btn btn-sm btn-doc-action btn-doc-action--secondary" href="{{ object.edit_url }}"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center text-muted py-4">Nenhuma ordem de servico encontrada.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-  </section>
+</section>
 
-  <section class="documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de ordens de servico">
+<section class="documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de ordens de servico">
     {% for object in object_list %}
     <article class="oficio-list-card {{ object.card_theme_class }}">
-      <div class="oficio-list-rich-layout">
-        <div class="oficio-list-card__header">
-          <div class="oficio-list-chip-list oficio-list-chip-list--meta">
-            {% for chip in object.header_chips %}
-            <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature {{ chip.css_class }}">
-              <span class="oficio-list-chip__label">{{ chip.label }}</span>
-              <span class="oficio-list-chip__value">{{ chip.value }}</span>
-            </span>
-            {% endfor %}
-          </div>
-          {% if object.corner_badges %}
-          <div class="oficio-list-card__header-status">
-            {% for badge in object.corner_badges %}
-            <span class="oficio-list-badge {{ badge.css_class }}"><span>{{ badge.value }}</span></span>
-            {% endfor %}
-          </div>
-          {% endif %}
-        </div>
-
-        <div class="oficio-list-core-grid">
-          <section class="oficio-list-core-card oficio-list-core-card--travelers oficio-list-surface oficio-list-surface--panel ordem-servico-servidores-row">
-            <div class="oficio-list-core-card__header">
-              <h3 class="oficio-list-core-card__title">Servidores</h3>
-              <span class="oficio-list-core-card__meta">{{ object.viajantes_block.count_label }}</span>
-            </div>
-            <div class="oficio-list-traveler-list">
-              {% for item in object.viajantes_block.items %}
-              <div class="oficio-list-traveler-pill oficio-list-surface oficio-list-surface--soft">
-                <span class="oficio-list-traveler-pill__initials">{{ item.nome|slice:':2'|upper }}</span>
-                <div class="d-flex align-items-center justify-content-between gap-2 w-100 flex-wrap">
-                  <span class="oficio-list-traveler-pill__name">{{ item.nome }}</span>
-                  <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
-                    {% if item.cargo %}
-                    <span class="oficio-list-badge is-muted"><span>{{ item.cargo }}</span></span>
-                    {% endif %}
-                    {% if item.lotacao %}
-                    <span class="oficio-list-badge is-muted"><span>{{ item.lotacao }}</span></span>
-                    {% endif %}
-                  </div>
+        <div class="oficio-list-rich-layout">
+            <div class="oficio-list-card__header">
+                <div class="oficio-list-chip-list oficio-list-chip-list--meta">
+                    {% for chip in object.header_chips %}
+                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature {{ chip.css_class }}">
+                        <span class="oficio-list-chip__label">{{ chip.label }}</span>
+                        <span class="oficio-list-chip__value">{{ chip.value }}</span>
+                    </span>
+                    {% endfor %}
                 </div>
-              </div>
-              {% endfor %}
+                {% if object.corner_badges %}
+                <div class="oficio-list-card__header-status">
+                    {% for badge in object.corner_badges %}
+                    <span class="oficio-list-badge {{ badge.css_class }}"><span>{{ badge.value }}</span></span>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
-          </section>
 
-          <section class="oficio-list-core-card oficio-list-core-card--transport oficio-list-surface oficio-list-surface--panel ordem-servico-contexto-row">
-            <div class="oficio-list-core-card__header">
-              <h3 class="oficio-list-core-card__title">Contexto operacional</h3>
-            </div>
-            <div class="oficio-list-transport-panel">
-              <div class="oficio-list-transport-panel__hero oficio-list-surface oficio-list-surface--feature">
-                <span class="oficio-list-transport-panel__kicker">Destinos</span>
-                <div class="oficio-list-transport-panel__headline">{{ object.contexto_block.destinos|truncatechars:70 }}</div>
-              </div>
-              <div class="oficio-list-transport-panel__divider"></div>
-              <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft">
-                <span class="oficio-list-transport-panel__kicker">Chefia</span>
-                <div class="oficio-list-transport-panel__detail-value">{{ object.contexto_block.chefia_nome|truncatechars:45 }}</div>
-                <p class="oficio-list-transport-panel__support">{{ object.contexto_block.chefia_cargo }}</p>
-              </div>
-            </div>
-          </section>
-        </div>
+            <div class="oficio-list-core-grid">
+                <section class="oficio-list-core-card oficio-list-core-card--travelers oficio-list-surface oficio-list-surface--panel ordem-servico-servidores-row">
+                    <div class="oficio-list-core-card__header">
+                        <h3 class="oficio-list-core-card__title">Servidores</h3>
+                        <span class="oficio-list-core-card__meta">{{ object.viajantes_block.count_label }}</span>
+                    </div>
+                    <div class="oficio-list-traveler-list">
+                        {% for item in object.viajantes_block.items %}
+                        <div class="oficio-list-traveler-pill oficio-list-surface oficio-list-surface--soft">
+                            <span class="oficio-list-traveler-pill__initials">{{ item.nome|slice:':2'|upper }}</span>
+                            <div class="d-flex align-items-center justify-content-between gap-2 w-100 flex-wrap">
+                                <span class="oficio-list-traveler-pill__name">{{ item.nome }}</span>
+                                <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
+                                    {% if item.cargo %}
+                                    <span class="oficio-list-badge is-muted"><span>{{ item.cargo }}</span></span>
+                                    {% endif %}
+                                    {% if item.lotacao %}
+                                    <span class="oficio-list-badge is-muted"><span>{{ item.lotacao }}</span></span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
 
-        <div class="oficio-list-card__secondary">
-          <section class="oficio-list-subcard oficio-list-subcard--justificativa oficio-list-surface oficio-list-surface--panel">
-            <div class="oficio-list-subcard__header">
-              <div>
-                <h3 class="oficio-list-subcard__title">Motivo</h3>
-                <p class="oficio-list-subcard__subtitle">Texto consolidado para o documento</p>
-              </div>
-              <span class="oficio-list-badge is-muted">OS</span>
+                <section class="oficio-list-core-card oficio-list-core-card--transport oficio-list-surface oficio-list-surface--panel ordem-servico-contexto-row">
+                    <div class="oficio-list-core-card__header">
+                        <h3 class="oficio-list-core-card__title">Contexto operacional</h3>
+                    </div>
+                    <div class="oficio-list-transport-panel">
+                        <div class="oficio-list-transport-panel__hero oficio-list-surface oficio-list-surface--feature">
+                            <span class="oficio-list-transport-panel__kicker">Destinos</span>
+                            <div class="oficio-list-transport-panel__headline">{{ object.contexto_block.destinos|truncatechars:70 }}</div>
+                        </div>
+                        <div class="oficio-list-transport-panel__divider"></div>
+                        <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft">
+                            <span class="oficio-list-transport-panel__kicker">Chefia</span>
+                            <div class="oficio-list-transport-panel__detail-value">{{ object.contexto_block.chefia_nome|truncatechars:45 }}</div>
+                            <p class="oficio-list-transport-panel__support">{{ object.contexto_block.chefia_cargo }}</p>
+                        </div>
+                    </div>
+                </section>
             </div>
-            <div class="oficio-list-subcard__body">
-              <p class="oficio-list-subcard__text">{{ object.motivo_display|truncatechars:320 }}</p>
-            </div>
-          </section>
-        </div>
 
-        <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
-          <div class="oficio-list-card__footer-actions">
-            <a class="btn btn-sm btn-doc-action btn-doc-action--primary" href="{{ object.open_url }}"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-            <a class="btn btn-sm btn-doc-action btn-doc-action--secondary" href="{{ object.edit_url }}"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
-            <a class="btn btn-sm btn-doc-action btn-doc-action--secondary is-icon-only" href="{{ object.download_docx_url }}" data-direct-download="true" aria-label="Baixar DOCX"><i class="bi bi-filetype-docx"></i><span class="visually-hidden">DOCX</span></a>
-            <a class="btn btn-sm btn-doc-action btn-doc-action--pdf is-icon-only" href="{{ object.download_pdf_url }}" data-direct-download="true" aria-label="Baixar PDF"><i class="bi bi-filetype-pdf"></i><span class="visually-hidden">PDF</span></a>
-            <a class="btn btn-sm btn-doc-action btn-doc-action--danger is-icon-only" href="{{ object.delete_url }}" aria-label="Excluir ordem de servico"><i class="bi bi-trash"></i><span class="visually-hidden">Excluir</span></a>
-          </div>
+            <div class="oficio-list-card__secondary">
+                <section class="oficio-list-subcard oficio-list-subcard--justificativa oficio-list-surface oficio-list-surface--panel">
+                    <div class="oficio-list-subcard__header">
+                        <div>
+                            <h3 class="oficio-list-subcard__title">Motivo</h3>
+                            <p class="oficio-list-subcard__subtitle">Texto consolidado para o documento</p>
+                        </div>
+                        <span class="oficio-list-badge is-muted">OS</span>
+                    </div>
+                    <div class="oficio-list-subcard__body">
+                        <p class="oficio-list-subcard__text">{{ object.motivo_display|truncatechars:320 }}</p>
+                    </div>
+                </section>
+            </div>
+
+            <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+                <div class="oficio-list-card__footer-actions">
+                    <a class="btn btn-sm btn-doc-action btn-doc-action--primary" href="{{ object.open_url }}"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                    <a class="btn btn-sm btn-doc-action btn-doc-action--secondary" href="{{ object.edit_url }}"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                    <a class="btn btn-sm btn-doc-action btn-doc-action--secondary is-icon-only" href="{{ object.download_docx_url }}" data-direct-download="true" aria-label="Baixar DOCX"><i class="bi bi-filetype-docx"></i><span class="visually-hidden">DOCX</span></a>
+                    <a class="btn btn-sm btn-doc-action btn-doc-action--pdf is-icon-only" href="{{ object.download_pdf_url }}" data-direct-download="true" aria-label="Baixar PDF"><i class="bi bi-filetype-pdf"></i><span class="visually-hidden">PDF</span></a>
+                    <a class="btn btn-sm btn-doc-action btn-doc-action--danger is-icon-only" href="{{ object.delete_url }}" aria-label="Excluir ordem de servico"><i class="bi bi-trash"></i><span class="visually-hidden">Excluir</span></a>
+                </div>
+            </div>
         </div>
-      </div>
     </article>
     {% empty %}
     <div class="oficios-table-panel__empty">Nenhuma ordem de servico encontrada.</div>
     {% endfor %}
-  </section>
-
-  {% include 'includes/pagination.html' %}
-
-  {% include 'includes/list/floating_new_button.html' with url=ordem_novo_url label='Nova ordem de servico' icon='bi-plus-lg' %}
-  </div>
-</div>
+</section>
 {% endblock %}
+
+{% block page_pagination %}{% include 'includes/pagination.html' %}{% endblock %}
+{% block list_floating_actions %}{% include 'includes/list/floating_new_button.html' with url=ordem_novo_url label='Nova ordem de servico' icon='bi-plus-lg' %}{% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/list_standard.js' %}"></script>

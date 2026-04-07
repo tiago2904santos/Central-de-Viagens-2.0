@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% block page_title_block %}Lista{% endblock %} - Central de Viagens{% endblock %}
+{% block page_title %}{% block page_header_title %}Lista{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 system-list-page {% block list_page_class %}system-list-page--complete{% endblock %}" {% block list_page_attributes %}{% endblock %}>
+    <div class="{% block list_shell_class %}oficios-list-shell system-list-shell{% endblock %}">
+        <section class="system-document-top">
+            <div class="page-header-cadastro system-list-header system-list-header--standard">
+                <div class="system-list-header__content">
+                    <div class="system-list-header__copy">
+                        <div class="system-list-header__intro">
+                            <h1 class="system-list-header__title">{% block list_title %}Lista{% endblock %}</h1>
+                            {% block list_subtitle %}{% endblock %}
+                        </div>
+                        {% block list_meta %}{% endblock %}
+                    </div>
+                    <div class="system-list-header__controls">
+                        {% block list_header_controls %}{% endblock %}
+                        {% block list_header_aux_controls %}{% endblock %}
+                        <div class="system-list-header__actions-group">
+                            {% block list_header_actions %}{% endblock %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% block list_top_notice %}{% endblock %}
+
+            {% block list_filter_block %}
+            <section class="system-document-filter" aria-label="{% block list_filter_aria_label %}Filtros da lista{% endblock %}">
+                <div class="system-document-filter__header">
+                    <div class="system-document-filter__heading">
+                        <span class="system-document-filter__eyebrow">{% block list_filter_eyebrow %}Padrao documental{% endblock %}</span>
+                        <h2 class="system-document-filter__title">{% block list_filter_title %}Refinar listagem{% endblock %}</h2>
+                        {% block list_filter_description %}
+                        <p class="system-document-filter__description">Busca, recortes e ordenacao no mesmo bloco visual padronizado.</p>
+                        {% endblock %}
+                    </div>
+                    <div class="system-document-filter__summary">
+                        {% block list_filter_summary %}
+                        <div class="system-document-filter__summary-pill">
+                            {% if page_obj %}
+                            {{ page_obj.paginator.count }} registros
+                            {% else %}
+                            {{ object_list|length }} registros
+                            {% endif %}
+                        </div>
+                        {% endblock %}
+                    </div>
+                </div>
+                <div class="system-document-filter__body">
+                    {% block list_toolbar %}{% endblock %}
+                </div>
+            </section>
+            {% endblock %}
+        </section>
+
+        <div class="system-list-content {% block list_content_class %}{% endblock %}">
+            {% block page_result_content %}
+            <div class="alert alert-info">
+                Configure o bloco <code>page_result_content</code> no template.
+            </div>
+            {% endblock %}
+        </div>
+
+        {% block page_pagination %}
+        {% if page_obj %}
+        {% include 'includes/pagination.html' %}
+        {% endif %}
+        {% endblock %}
+
+        {% block list_floating_actions %}{% endblock %}
+    </div>
+</div>
+{% endblock %}
