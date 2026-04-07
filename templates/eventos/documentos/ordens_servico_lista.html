@@ -138,6 +138,14 @@
           <label class="form-label small text-muted">Data final</label>
           <input type="date" class="form-control form-control-sm" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
         </div>
+        <div class="col-6 col-md-3 col-xl-2">
+          <label class="form-label small text-muted">Data inicial</label>
+          <input type="date" class="form-control form-control-sm" name="date_from" value="{{ filters.date_from }}" data-list-autosubmit>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+          <label class="form-label small text-muted">Data final</label>
+          <input type="date" class="form-control form-control-sm" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
+        </div>
         <div class="col-12 col-md-auto">
           <button class="btn btn-outline-primary btn-sm" type="submit">Filtrar</button>
           <a href="{% url 'eventos:documentos-ordens-servico' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
@@ -148,9 +156,12 @@
 {% endblock %}
 
 <<<<<<< ours
+<<<<<<< ours
 {% block page_result_content %}
 <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de ordens de servico">
 =======
+=======
+>>>>>>> theirs
   <div data-list-live-region>
   <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de ordens de servico">
 >>>>>>> theirs

@@ -3,6 +3,9 @@
 =======
 {% extends 'base.html' %}
 {% load static %}
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 {% block list_page_class %}system-list-page--simple{% endblock %}
@@ -131,6 +134,27 @@
         </div>
     </div>
 
+    <div class="card filter-card system-filter-card">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
+                {% if volta_justificativa %}<input type="hidden" name="volta_justificativa" value="{{ volta_justificativa }}">{% endif %}
+                {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+                <div class="col-12 col-md-6">
+                    <label class="form-label small text-muted">Busca</label>
+                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Nome ou texto do modelo" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted">Data inicial</label>
+                    <input type="date" name="date_from" class="form-control form-control-sm" value="{{ filters.date_from }}" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted">Data final</label>
+                    <input type="date" name="date_to" class="form-control form-control-sm" value="{{ filters.date_to }}" data-list-autosubmit>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="system-list-table-wrap">
         <div class="table-responsive">
             <table class="table table-hover table-cadastro mb-0 system-list-table">
@@ -180,6 +204,7 @@
 {% endblock %}
 
 <<<<<<< ours
+<<<<<<< ours
 {% block list_floating_actions %}
 <div class="system-list-fab-group">
     <a href="#" class="system-list-fab system-list-fab--scroll-up" data-scroll-top aria-label="Subir lista">
@@ -191,6 +216,10 @@
         <span>Cadastrar modelo</span>
     </a>
 </div>
+=======
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
+>>>>>>> theirs
 =======
 {% block extra_js %}
 <script src="{% static 'js/list_standard.js' %}"></script>
