@@ -76,7 +76,7 @@
                         <div class="small fw-semibold text-uppercase mb-2">Outros termos deste lote</div>
                         <div class="list-group list-group-flush">
                             {% for item in lote_objects %}
-                            <a href="{% url 'eventos:documentos-termos-detalhe' item.pk %}" class="list-group-item list-group-item-action px-0">
+                            <a href="{% url 'eventos:documentos-termos-editar' item.pk %}" class="list-group-item list-group-item-action px-0">
                                 {{ item.numero_formatado }} - {{ item.servidor_display|default:"Servidor" }}
                             </a>
                             {% endfor %}

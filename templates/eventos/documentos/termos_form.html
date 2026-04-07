@@ -268,7 +268,7 @@
                                 <div class="oficio-wizard-footer-actions mt-4">
                                     <a href="{{ return_to|default:'/eventos/documentos/termos/' }}" class="btn btn-outline-secondary">Cancelar</a>
                                     {% if object %}
-                                    <a href="{% url 'eventos:documentos-termos-detalhe' object.pk %}" class="btn btn-outline-secondary">Ver detalhe</a>
+                                    <a href="{% url 'eventos:documentos-termos-editar' object.pk %}" class="btn btn-outline-secondary">Ir para edicao</a>
                                     {% endif %}
                                     <button type="submit" class="btn btn-primary">{% if object %}Salvar alteracoes{% else %}Gerar termo{% endif %}</button>
                                 </div>

@@ -15,7 +15,7 @@ a .card-clickable { cursor: pointer; color: inherit; }
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h4 mb-0">Painel do evento</h1>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'eventos:detalhe' object.pk %}" class="btn btn-outline-secondary btn-sm">Ver detalhe</a>
+            <a href="{% url 'eventos:editar' object.pk %}" class="btn btn-outline-secondary btn-sm">Editar evento</a>
             <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary btn-sm">Lista de eventos</a>
             {% if object.status != 'FINALIZADO' %}
             <form method="post" action="{% url 'eventos:excluir' object.pk %}" class="d-inline" onsubmit="return confirm('Excluir este evento? Esta ação não pode ser desfeita.');">

@@ -375,7 +375,7 @@
             <div class="os-actions">
               <div class="os-actions-left">
                 <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/ordens-servico/' }}">Cancelar</a>
-                {% if object %}<a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-detalhe' object.pk %}">Ver detalhe</a>{% endif %}
+                {% if object %}<a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-editar' object.pk %}">Ir para edicao</a>{% endif %}
               </div>
               <div class="os-actions-right"><button class="btn btn-primary" type="submit">{% if object %}Salvar alterações{% else %}Salvar ordem de serviço{% endif %}</button></div>
             </div>
