@@ -1,223 +1,236 @@
-{% extends 'base.html' %}
+{% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
-{% block title %}Justificativas - Central de Viagens{% endblock %}
-{% block page_title %}Justificativas{% endblock %}
+{% block page_title_block %}Justificativas{% endblock %}
+{% block page_header_title %}Justificativas{% endblock %}
+{% block list_page_class %}system-list-page--complete{% endblock %}
+{% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.justificativas.global.view-mode"{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.justificativas.global.view-mode">
-    <div class="oficios-list-shell system-list-shell">
-    {% url 'eventos:oficios-global' as oficios_url %}
-    <section class="system-list-top system-list-top--complete">
-    <div class="page-header-cadastro system-list-header system-list-header--standard">
-        <div class="system-list-header__content">
-            <div class="system-list-header__copy">
-                <div class="system-list-header__intro">
-                    <h1 class="system-list-header__title">Lista global de justificativas</h1>
-                    <p class="system-list-header__subtitle">Acompanhamento honesto das justificativas vinculadas aos oficios.</p>
-                </div>
-                <div class="system-list-header__meta">
-                    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
-                    <span class="system-list-header__meta-item">Visao global do acervo ligado aos oficios</span>
-                </div>
-            </div>
-            <div class="system-list-header__controls">
-                {% include 'includes/list/mode_badge.html' with mode='complete' %}
-                <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista global de justificativas">
-                    <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
-                    <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
-                </div>
-                <div class="system-list-header__actions-group">
-                    <a href="{{ oficios_url }}" class="btn btn-outline-secondary system-list-action-btn">Oficios</a>
-                </div>
-            </div>
+{% block list_title %}Lista global de justificativas{% endblock %}
+{% block list_subtitle %}<p class="system-list-header__subtitle">Acompanhamento global das justificativas vinculadas aos oficios, com foco em contexto do evento, destino e antecedencia.</p>{% endblock %}
+
+{% block list_meta %}
+<div class="system-list-header__meta">
+    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
+    <span class="system-list-header__meta-item">Visao global do acervo ligado aos oficios</span>
+</div>
+{% endblock %}
+
+{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
+
+{% block list_header_aux_controls %}
+<div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista global de justificativas">
+    <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
+    <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+</div>
+{% endblock %}
+
+{% block list_header_actions %}
+{% url 'eventos:oficios-global' as oficios_url %}
+<a href="{{ oficios_url }}" class="btn btn-outline-secondary system-list-action-btn">Oficios</a>
+{% endblock %}
+
+{% block list_filter_title %}Filtros documentais de justificativas globais{% endblock %}
+
+{% block list_filter_description %}
+<p class="system-document-filter__description">Busca por evento, protocolo, texto ou destino, com recorte por ano e status dentro da mesma estrutura visual do topo documental.</p>
+{% endblock %}
+
+{% block list_filter_summary %}
+<div class="system-document-filter__summary-pill">{{ page_obj.paginator.count }} justificativa(s)</div>
+{% endblock %}
+
+{% block list_toolbar %}
+<form method="get" class="system-document-filter-form" data-list-autosubmit-form>
+    <div class="system-document-filter__grid">
+        <div class="system-document-filter__field system-document-filter__field--search-xl">
+            <label class="form-label">Busca principal</label>
+            <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Evento, protocolo, texto ou destino" data-list-autosubmit>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--wide">
+            <label class="form-label">Evento</label>
+            <select name="evento_id" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for evento in eventos_choices %}
+                <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Ano</label>
+            <input type="text" name="ano" class="form-control" value="{{ filters.ano }}" placeholder="2026" data-list-autosubmit>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Status</label>
+            <select name="status" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
         </div>
     </div>
 
-    <div class="card filter-card system-filter-card system-document-filter">
-        <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end system-document-filter-form" data-list-autosubmit-form>
-                <div class="col-12 col-lg-4">
-                    <label class="form-label small text-muted">Busca</label>
-                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, protocolo, texto ou destino" data-list-autosubmit>
-                </div>
-                <div class="col-12 col-md-4 col-lg-3">
-                    <label class="form-label small text-muted">Evento</label>
-                    <select name="evento_id" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for evento in eventos_choices %}
-                        <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-2 col-lg-1">
-                    <label class="form-label small text-muted">Ano</label>
-                    <input type="text" name="ano" class="form-control form-control-sm" value="{{ filters.ano }}" placeholder="2026" data-list-autosubmit>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <label class="form-label small text-muted">Status</label>
-                    <select name="status" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-12 col-md-auto">
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-                    <a href="{% url 'eventos:documentos-justificativas' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-                </div>
-            </form>
+    <div class="system-document-filter__footer">
+        <div class="system-document-filter__footer-meta">
+            <span class="system-document-filter__result">{{ page_obj.paginator.count }} justificativa(s) encontrada(s)</span>
+        </div>
+        <div class="system-document-filter__actions">
+            <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+            <a href="{% url 'eventos:documentos-justificativas' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
         </div>
     </div>
-    </section>
+</form>
+{% endblock %}
 
-    <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de justificativas">
-        <div class="table-responsive">
-            <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
-                <thead class="table-light">
-                    <tr>
-                        <th>Oficio</th>
-                        <th>Evento</th>
-                        <th>Destino</th>
-                        <th>Status</th>
-                        <th>Antecedencia</th>
-                        <th class="text-end" width="300">Acoes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in object_list %}
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">{{ row.oficio.numero_formatado }}</div>
-                            <div class="small text-muted">{{ row.oficio.protocolo_formatado|default:"—" }}</div>
-                        </td>
-                        <td>
-                            {% if row.evento %}
-                            <a href="{{ row.evento_url }}" class="text-decoration-none">{{ row.evento.titulo|default:"(sem titulo)" }}</a>
-                            {% else %}
-                            <span class="text-muted">Sem evento</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ row.destinos_display }}</td>
-                        <td>
-                            {% if row.info.status_key == 'preenchida' %}
-                            <span class="badge bg-success">{{ row.info.status_label }}</span>
-                            {% elif row.info.status_key == 'pendente' %}
-                            <span class="badge bg-warning text-dark">{{ row.info.status_label }}</span>
-                            {% else %}
-                            <span class="badge bg-secondary">{{ row.info.status_label }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
+{% block page_result_content %}
+<section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de justificativas">
+    <div class="table-responsive">
+        <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
+            <thead class="table-light">
+                <tr>
+                    <th>Oficio</th>
+                    <th>Evento</th>
+                    <th>Destino</th>
+                    <th>Status</th>
+                    <th>Antecedencia</th>
+                    <th class="text-end" width="300">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in object_list %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ row.oficio.numero_formatado }}</div>
+                        <div class="small text-muted">{{ row.oficio.protocolo_formatado|default:"-" }}</div>
+                    </td>
+                    <td>
+                        {% if row.evento %}
+                        <a href="{{ row.evento_url }}" class="text-decoration-none">{{ row.evento.titulo|default:"(sem titulo)" }}</a>
+                        {% else %}
+                        <span class="text-muted">Sem evento</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.destinos_display }}</td>
+                    <td>
+                        {% if row.info.status_key == 'preenchida' %}
+                        <span class="badge bg-success">{{ row.info.status_label }}</span>
+                        {% elif row.info.status_key == 'pendente' %}
+                        <span class="badge bg-warning text-dark">{{ row.info.status_label }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ row.info.status_label }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.info.dias_antecedencia is not None %}
+                        {{ row.info.dias_antecedencia }} dia(s)
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ row.justificativa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                        <a href="{{ row.oficio_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-journal-text"></i><span>Step 4</span></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-5">Nenhuma justificativa encontrada.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de justificativas globais">
+    {% for row in object_list %}
+    <article class="oficio-list-card">
+        <div class="oficio-list-rich-layout">
+            <div class="oficio-list-card__header">
+                <div class="oficio-list-chip-list oficio-list-chip-list--meta">
+                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                        <span class="oficio-list-chip__label">Oficio</span>
+                        <span class="oficio-list-chip__value">{{ row.oficio.numero_formatado }}</span>
+                    </span>
+                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                        <span class="oficio-list-chip__label">Antecedencia</span>
+                        <span class="oficio-list-chip__value">
                             {% if row.info.dias_antecedencia is not None %}
                             {{ row.info.dias_antecedencia }} dia(s)
                             {% else %}
-                            <span class="text-muted">—</span>
+                            -
                             {% endif %}
-                        </td>
-                        <td class="text-end">
-                            <a href="{{ row.justificativa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-                            <a href="{{ row.oficio_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-journal-text"></i><span>Step 4</span></a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="text-center text-muted py-5">Nenhuma justificativa encontrada.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de justificativas globais">
-        {% for row in object_list %}
-        <article class="oficio-list-card">
-            <div class="oficio-list-rich-layout">
-                <div class="oficio-list-card__header">
-                    <div class="oficio-list-chip-list oficio-list-chip-list--meta">
-                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
-                            <span class="oficio-list-chip__label">Oficio</span>
-                            <span class="oficio-list-chip__value">{{ row.oficio.numero_formatado }}</span>
                         </span>
-                        <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
-                            <span class="oficio-list-chip__label">Antecedencia</span>
-                            <span class="oficio-list-chip__value">
-                                {% if row.info.dias_antecedencia is not None %}
-                                {{ row.info.dias_antecedencia }} dia(s)
-                                {% else %}
-                                —
-                                {% endif %}
-                            </span>
-                        </span>
-                    </div>
-                    <div class="oficio-list-card__header-status">
-                        {% if row.info.status_key == 'preenchida' %}
-                        <span class="oficio-list-badge is-success"><span>{{ row.info.status_label }}</span></span>
-                        {% elif row.info.status_key == 'pendente' %}
-                        <span class="oficio-list-badge is-warning"><span>{{ row.info.status_label }}</span></span>
-                        {% else %}
-                        <span class="oficio-list-badge is-muted"><span>{{ row.info.status_label }}</span></span>
-                        {% endif %}
-                    </div>
+                    </span>
                 </div>
-
-                <div class="oficio-list-card__secondary">
-                    <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
-                        <div class="oficio-list-subcard__header">
-                            <div>
-                                <h3 class="oficio-list-subcard__title">Contexto do oficio</h3>
-                                <p class="oficio-list-subcard__subtitle">Evento e destino operacional</p>
-                            </div>
-                        </div>
-                        <div class="oficio-list-subcard__body">
-                            <div class="oficio-list-term-list">
-                                <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
-                                    <span class="oficio-list-term-row__name">Evento</span>
-                                    <div class="oficio-list-term-row__actions">
-                                        {% if row.evento %}
-                                        <a href="{{ row.evento_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                                            <i class="bi bi-calendar-event"></i>
-                                            <span>{{ row.evento.titulo|default:'(sem titulo)' }}</span>
-                                        </a>
-                                        {% else %}
-                                        <span class="text-muted small">Sem evento</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
-                                    <span class="oficio-list-term-row__name">Destino</span>
-                                    <div class="oficio-list-term-row__actions">
-                                        <span class="text-muted small">{{ row.destinos_display }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
-                    <div class="oficio-list-card__footer-actions">
-                        <a href="{{ row.justificativa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir justificativa">
-                            <i class="bi bi-box-arrow-up-right"></i>
-                            <span>Abrir</span>
-                        </a>
-                        <a href="{{ row.oficio_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Abrir oficio no wizard">
-                            <i class="bi bi-journal-text"></i>
-                            <span>Step 4</span>
-                        </a>
-                    </div>
+                <div class="oficio-list-card__header-status">
+                    {% if row.info.status_key == 'preenchida' %}
+                    <span class="oficio-list-badge is-success"><span>{{ row.info.status_label }}</span></span>
+                    {% elif row.info.status_key == 'pendente' %}
+                    <span class="oficio-list-badge is-warning"><span>{{ row.info.status_label }}</span></span>
+                    {% else %}
+                    <span class="oficio-list-badge is-muted"><span>{{ row.info.status_label }}</span></span>
+                    {% endif %}
                 </div>
             </div>
-        </article>
-        {% empty %}
-        <div class="oficios-table-panel__empty">Nenhuma justificativa encontrada.</div>
-        {% endfor %}
-    </section>
 
-    {% include 'includes/pagination.html' %}
-</div>
-</div>
+            <div class="oficio-list-card__secondary">
+                <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                    <div class="oficio-list-subcard__header">
+                        <div>
+                            <h3 class="oficio-list-subcard__title">Contexto do oficio</h3>
+                            <p class="oficio-list-subcard__subtitle">Evento e destino operacional</p>
+                        </div>
+                    </div>
+                    <div class="oficio-list-subcard__body">
+                        <div class="oficio-list-term-list">
+                            <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
+                                <span class="oficio-list-term-row__name">Evento</span>
+                                <div class="oficio-list-term-row__actions">
+                                    {% if row.evento %}
+                                    <a href="{{ row.evento_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                                        <i class="bi bi-calendar-event"></i>
+                                        <span>{{ row.evento.titulo|default:'(sem titulo)' }}</span>
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted small">Sem evento</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
+                                <span class="oficio-list-term-row__name">Destino</span>
+                                <div class="oficio-list-term-row__actions">
+                                    <span class="text-muted small">{{ row.destinos_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+                <div class="oficio-list-card__footer-actions">
+                    <a href="{{ row.justificativa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir justificativa">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Abrir</span>
+                    </a>
+                    <a href="{{ row.oficio_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Abrir oficio no wizard">
+                        <i class="bi bi-journal-text"></i>
+                        <span>Step 4</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </article>
+    {% empty %}
+    <div class="oficios-table-panel__empty">Nenhuma justificativa encontrada.</div>
+    {% endfor %}
+</section>
 {% endblock %}
+
+{% block page_pagination %}{% include 'includes/pagination.html' %}{% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/list_standard.js' %}"></script>

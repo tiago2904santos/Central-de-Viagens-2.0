@@ -1,60 +1,73 @@
-{% extends 'includes/list/list_base.html' %}
+{% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
 {% block list_page_class %}system-list-page--simple{% endblock %}
-
 {% block page_title_block %}Termos{% endblock %}
 {% block page_header_title %}Termos{% endblock %}
-{% block list_title %}Lista global de termos{% endblock %}
 
-{% block list_subtitle %}
-<p class="system-list-header__subtitle">Visao global dos participantes, status do termo e contexto operacional do evento.</p>
-{% endblock %}
+{% block list_title %}Lista global de termos{% endblock %}
+{% block list_subtitle %}<p class="system-list-header__subtitle">Visao global dos participantes, status do termo e contexto operacional do evento no mesmo topo padronizado.</p>{% endblock %}
 
 {% block list_meta %}
 <div class="system-list-header__meta">
-    <span class="system-list-header__meta-item">
-        {% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros
-    </span>
+    <span class="system-list-header__meta-item">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros</span>
     <span class="system-list-header__meta-item">Acompanhamento transversal dos termos emitidos</span>
 </div>
 {% endblock %}
 
-{% block list_header_controls %}
-{% include 'includes/list/mode_badge.html' with mode='simple' %}
-{% endblock %}
+{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='simple' %}{% endblock %}
 
 {% block list_header_actions %}
 <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary system-list-action-btn">Eventos</a>
 {% endblock %}
 
+{% block list_filter_title %}Filtros documentais de termos globais{% endblock %}
+
+{% block list_filter_description %}
+<p class="system-document-filter__description">Busca por participante ou cargo, recorte por evento e status com a mesma organizacao visual dos outros modulos documentais.</p>
+{% endblock %}
+
+{% block list_filter_summary %}
+<div class="system-document-filter__summary-pill">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} termo(s)</div>
+{% endblock %}
+
 {% block list_toolbar %}
-<form method="get" class="row g-2 align-items-end system-document-filter-form" data-list-autosubmit-form>
-    <div class="col-12 col-lg-5">
-        <label class="form-label small text-muted">Busca</label>
-        <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, participante ou cargo" data-list-autosubmit>
+<form method="get" class="system-document-filter-form" data-list-autosubmit-form>
+    <div class="system-document-filter__grid">
+        <div class="system-document-filter__field system-document-filter__field--search-xl">
+            <label class="form-label">Busca principal</label>
+            <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Evento, participante ou cargo" data-list-autosubmit>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--wide">
+            <label class="form-label">Evento</label>
+            <select name="evento_id" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for evento in eventos_choices %}
+                <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Status</label>
+            <select name="status" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
-    <div class="col-12 col-md-4 col-lg-4">
-        <label class="form-label small text-muted">Evento</label>
-        <select name="evento_id" data-list-autosubmit>
-            <option value="">Todos</option>
-            {% for evento in eventos_choices %}
-            <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-6 col-md-3 col-lg-2">
-        <label class="form-label small text-muted">Status</label>
-        <select name="status" data-list-autosubmit>
-            <option value="">Todos</option>
-            {% for value, label in status_choices %}
-            <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-6 col-md-auto">
-        <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-        <a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+
+    <div class="system-document-filter__footer">
+        <div class="system-document-filter__footer-meta">
+            <span class="system-document-filter__result">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} termo(s) encontrado(s)</span>
+        </div>
+        <div class="system-document-filter__actions">
+            <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+            <a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
     </div>
 </form>
 {% endblock %}

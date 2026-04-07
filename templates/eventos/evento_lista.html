@@ -1,192 +1,197 @@
-{% extends 'base.html' %}
+{% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
-{% block title %}Eventos — Central de Viagens{% endblock %}
-{% block page_title %}Eventos{% endblock %}
+{% block page_title_block %}Eventos{% endblock %}
+{% block page_header_title %}Eventos{% endblock %}
+{% block list_page_class %}system-list-page--complete{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--complete">
-    <div class="oficios-list-shell system-list-shell">
-        <section class="system-list-top system-list-top--complete">
-        <div class="page-header-cadastro system-list-header system-list-header--standard">
-            <div class="system-list-header__content">
-                <div class="system-list-header__copy">
-                    <div class="system-list-header__intro">
-                        <h1 class="system-list-header__title">Eventos</h1>
-                        <p class="system-list-header__subtitle">Leitura em cascata dos documentos vinculados: Oficios, Planos de Trabalho e Ordens de Servico no mesmo card.</p>
-                    </div>
-                    <div class="system-list-header__meta">
-                        <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
-                        <span class="system-list-header__meta-item">Painel principal com contexto documental por evento</span>
-                    </div>
-                </div>
-                <div class="system-list-header__controls">
-                    {% include 'includes/list/mode_badge.html' with mode='complete' %}
-                    <div class="system-list-header__actions-group">
-                        <form method="post" action="{{ evento_novo_url }}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-primary system-list-action-btn">Novo evento</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+{% block list_title %}Eventos{% endblock %}
+{% block list_subtitle %}<p class="system-list-header__subtitle">Leitura em cascata dos documentos vinculados, concentrando oficios, planos e ordens de servico no mesmo card institucional.</p>{% endblock %}
 
-        <div class="card filter-card system-filter-card system-document-filter">
-            <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end system-document-filter-form" data-list-autosubmit-form>
-                <div class="col-12 col-md-4">
-                    <label class="form-label small text-muted">Buscar por título</label>
-                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Titulo do evento" value="{{ form_filter.q }}" data-list-autosubmit>
-                </div>
-                <div class="col-6 col-md-3 col-xl-2">
-                    <label class="form-label small text-muted">Status</label>
-                    <select name="status" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for valor, label in status_choices %}
-                        <option value="{{ valor }}" {% if form_filter.status == valor %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-6 col-md-3 col-xl-3">
-                    <label class="form-label small text-muted">Tipo de demanda</label>
-                    <select name="tipo_id" data-list-autosubmit>
-                        <option value="">Todos</option>
-                        {% for t in tipos_demanda_list %}
-                        <option value="{{ t.pk }}" {% if form_filter.tipo_id == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nome }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-12 col-xl-3">
-                    <div class="system-sort-row">
-                        <div>
-                            <label class="form-label small text-muted">Ordenar por</label>
-                            <select name="order_by" data-list-autosubmit>
-                                {% for key, label in order_by_choices %}
-                                <option value="{{ key }}" {% if form_filter.order_by == key %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="form-label small text-muted">Direção</label>
-                            <select name="order_dir" data-list-autosubmit>
-                                {% for key, label in order_dir_choices %}
-                                <option value="{{ key }}" {% if form_filter.order_dir == key %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-auto">
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-                    <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-                </div>
-                </form>
-            </div>
-        </div>
-        </section>
-
-        <section class="documento-cascade-grid" aria-label="Lista de eventos">
-        {% for obj in object_list %}
-        <article class="oficio-list-card documento-cascade-card {{ obj.card_theme_class }}" id="evento-card-{{ obj.pk }}">
-            <div class="oficio-list-rich-layout">
-                <div class="oficio-list-card__header">
-                    <div class="documento-cascade-card__intro documento-cascade-card__intro--header">
-                        <div class="documento-cascade-card__title-row">
-                            <h2 class="documento-cascade-card__title">{{ obj.titulo|default:"(sem título)" }}</h2>
-                            <span class="badge status-evento status-{{ obj.status }}">{{ obj.get_status_display }}</span>
-                        </div>
-                        <p class="documento-cascade-card__subtitle">{{ obj.tipos_display }}</p>
-                    </div>
-                    <div class="oficio-list-card__header-status">
-                        <span class="oficio-list-badge {{ obj.temporal_meta.css_class }}">
-                            <span>{{ obj.temporal_meta.label }}</span>
-                        </span>
-                    </div>
-                </div>
-
-                <div class="documento-cascade-meta-grid">
-                    <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
-                        <span class="documento-cascade-meta-item__label">Destino</span>
-                        <strong class="documento-cascade-meta-item__value">{{ obj.destinos_display }}</strong>
-                    </div>
-                    <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
-                        <span class="documento-cascade-meta-item__label">Período</span>
-                        <strong class="documento-cascade-meta-item__value">{{ obj.periodo_display }}</strong>
-                    </div>
-                    <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
-                        <span class="documento-cascade-meta-item__label">Cascata documental</span>
-                        <strong class="documento-cascade-meta-item__value">{{ obj.document_counts_display }}</strong>
-                    </div>
-                </div>
-
-                <div class="documento-cascade-block-grid documento-cascade-block-grid--triple">
-                    {% for block in obj.document_blocks %}
-                    <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
-                        <div class="oficio-list-subcard__header">
-                            <div>
-                                <p class="oficio-list-subcard__subtitle">{{ block.count_label }}</p>
-                            </div>
-                        </div>
-                        <div class="oficio-list-subcard__body">
-                            {% if block.items %}
-                            <div class="documento-cascade-list">
-                                {% for item in block.items %}
-                                <div class="documento-cascade-item oficio-list-surface oficio-list-surface--soft">
-                                    <div class="documento-cascade-item__main">
-                                        <a href="{{ item.url }}" class="documento-cascade-item__title">{{ item.title }}</a>
-                                        <div class="documento-cascade-item__meta">{{ item.meta }}</div>
-                                    </div>
-                                    <div class="documento-cascade-item__actions">
-                                        {% if item.badge_label %}
-                                        <span class="documento-cascade-item__badge">{{ item.badge_label }}</span>
-                                        {% endif %}
-                                        <a href="{{ item.url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
-                                            <i class="bi bi-box-arrow-up-right"></i>
-                                            <span>Abrir</span>
-                                        </a>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                            {% else %}
-                            <div class="documento-cascade-empty">{{ block.empty_text }}</div>
-                            {% endif %}
-                        </div>
-                    </section>
-                    {% endfor %}
-                </div>
-
-                <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
-                    <div class="oficio-list-card__footer-actions">
-                        {% for action in obj.quick_actions %}
-                        <a href="{{ action.url }}" class="btn btn-sm btn-doc-action {{ action.css_class }}">
-                            <i class="bi {{ action.icon }}"></i>
-                            <span>{{ action.label }}</span>
-                        </a>
-                        {% endfor %}
-                        <form method="post" action="{{ obj.delete_url }}" class="d-inline" onsubmit="return confirm('Excluir este evento?');">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-doc-action btn-doc-action--danger">
-                                <i class="bi bi-trash"></i>
-                                <span>Excluir</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </article>
-        {% empty %}
-        <div class="oficios-table-panel__empty">Nenhum evento encontrado.</div>
-        {% endfor %}
-        </section>
-
-        {% include 'includes/pagination.html' %}
-
-        {% include 'includes/list/floating_new_button.html' with url=evento_novo_url label='Novo evento' icon='bi-plus-lg' post_action=True %}
-    </div>
+{% block list_meta %}
+<div class="system-list-header__meta">
+    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
+    <span class="system-list-header__meta-item">Painel principal com contexto documental por evento</span>
 </div>
 {% endblock %}
+
+{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
+
+{% block list_header_actions %}
+<form method="post" action="{{ evento_novo_url }}" class="d-inline">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary system-list-action-btn">Novo evento</button>
+</form>
+{% endblock %}
+
+{% block list_filter_title %}Filtros documentais de eventos{% endblock %}
+
+{% block list_filter_description %}
+<p class="system-document-filter__description">Busca por titulo, status, tipo de demanda e ordenacao dentro do mesmo topo padronizado das listas documentais.</p>
+{% endblock %}
+
+{% block list_filter_summary %}
+<div class="system-document-filter__summary-pill">{{ page_obj.paginator.count }} evento(s)</div>
+{% endblock %}
+
+{% block list_toolbar %}
+<form method="get" class="system-document-filter-form" data-list-autosubmit-form>
+    <div class="system-document-filter__grid">
+        <div class="system-document-filter__field system-document-filter__field--search-xl">
+            <label class="form-label">Busca principal</label>
+            <input type="text" name="q" class="form-control" placeholder="Titulo do evento" value="{{ form_filter.q }}" data-list-autosubmit>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Status</label>
+            <select name="status" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for valor, label in status_choices %}
+                <option value="{{ valor }}" {% if form_filter.status == valor %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--wide">
+            <label class="form-label">Tipo de demanda</label>
+            <select name="tipo_id" data-list-autosubmit>
+                <option value="">Todos</option>
+                {% for t in tipos_demanda_list %}
+                <option value="{{ t.pk }}" {% if form_filter.tipo_id == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--medium">
+            <label class="form-label">Ordenar por</label>
+            <select name="order_by" data-list-autosubmit>
+                {% for key, label in order_by_choices %}
+                <option value="{{ key }}" {% if form_filter.order_by == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="system-document-filter__field system-document-filter__field--compact">
+            <label class="form-label">Direcao</label>
+            <select name="order_dir" data-list-autosubmit>
+                {% for key, label in order_dir_choices %}
+                <option value="{{ key }}" {% if form_filter.order_dir == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="system-document-filter__footer">
+        <div class="system-document-filter__footer-meta">
+            <span class="system-document-filter__result">{{ page_obj.paginator.count }} evento(s) encontrado(s)</span>
+        </div>
+        <div class="system-document-filter__actions">
+            <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+            <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block page_result_content %}
+<section class="documento-cascade-grid" aria-label="Lista de eventos">
+    {% for obj in object_list %}
+    <article class="oficio-list-card documento-cascade-card {{ obj.card_theme_class }}" id="evento-card-{{ obj.pk }}">
+        <div class="oficio-list-rich-layout">
+            <div class="oficio-list-card__header">
+                <div class="documento-cascade-card__intro documento-cascade-card__intro--header">
+                    <div class="documento-cascade-card__title-row">
+                        <h2 class="documento-cascade-card__title">{{ obj.titulo|default:"(sem titulo)" }}</h2>
+                        <span class="badge status-evento status-{{ obj.status }}">{{ obj.get_status_display }}</span>
+                    </div>
+                    <p class="documento-cascade-card__subtitle">{{ obj.tipos_display }}</p>
+                </div>
+                <div class="oficio-list-card__header-status">
+                    <span class="oficio-list-badge {{ obj.temporal_meta.css_class }}">
+                        <span>{{ obj.temporal_meta.label }}</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="documento-cascade-meta-grid">
+                <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
+                    <span class="documento-cascade-meta-item__label">Destino</span>
+                    <strong class="documento-cascade-meta-item__value">{{ obj.destinos_display }}</strong>
+                </div>
+                <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
+                    <span class="documento-cascade-meta-item__label">Periodo</span>
+                    <strong class="documento-cascade-meta-item__value">{{ obj.periodo_display }}</strong>
+                </div>
+                <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
+                    <span class="documento-cascade-meta-item__label">Cascata documental</span>
+                    <strong class="documento-cascade-meta-item__value">{{ obj.document_counts_display }}</strong>
+                </div>
+            </div>
+
+            <div class="documento-cascade-block-grid documento-cascade-block-grid--triple">
+                {% for block in obj.document_blocks %}
+                <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                    <div class="oficio-list-subcard__header">
+                        <div>
+                            <p class="oficio-list-subcard__subtitle">{{ block.count_label }}</p>
+                        </div>
+                    </div>
+                    <div class="oficio-list-subcard__body">
+                        {% if block.items %}
+                        <div class="documento-cascade-list">
+                            {% for item in block.items %}
+                            <div class="documento-cascade-item oficio-list-surface oficio-list-surface--soft">
+                                <div class="documento-cascade-item__main">
+                                    <a href="{{ item.url }}" class="documento-cascade-item__title">{{ item.title }}</a>
+                                    <div class="documento-cascade-item__meta">{{ item.meta }}</div>
+                                </div>
+                                <div class="documento-cascade-item__actions">
+                                    {% if item.badge_label %}
+                                    <span class="documento-cascade-item__badge">{{ item.badge_label }}</span>
+                                    {% endif %}
+                                    <a href="{{ item.url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                        <span>Abrir</span>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="documento-cascade-empty">{{ block.empty_text }}</div>
+                        {% endif %}
+                    </div>
+                </section>
+                {% endfor %}
+            </div>
+
+            <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+                <div class="oficio-list-card__footer-actions">
+                    {% for action in obj.quick_actions %}
+                    <a href="{{ action.url }}" class="btn btn-sm btn-doc-action {{ action.css_class }}">
+                        <i class="bi {{ action.icon }}"></i>
+                        <span>{{ action.label }}</span>
+                    </a>
+                    {% endfor %}
+                    <form method="post" action="{{ obj.delete_url }}" class="d-inline" onsubmit="return confirm('Excluir este evento?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-doc-action btn-doc-action--danger">
+                            <i class="bi bi-trash"></i>
+                            <span>Excluir</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </article>
+    {% empty %}
+    <div class="oficios-table-panel__empty">Nenhum evento encontrado.</div>
+    {% endfor %}
+</section>
+{% endblock %}
+
+{% block page_pagination %}{% include 'includes/pagination.html' %}{% endblock %}
+{% block list_floating_actions %}{% include 'includes/list/floating_new_button.html' with url=evento_novo_url label='Novo evento' icon='bi-plus-lg' post_action=True %}{% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/list_standard.js' %}"></script>
