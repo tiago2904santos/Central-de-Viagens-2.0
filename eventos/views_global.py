@@ -1367,7 +1367,7 @@ def _oficio_list_justificativa_block(oficio, justificativa_info):
 def _oficio_list_saved_term_card(termo):
     return {
         'traveler_name': _clean(termo.servidor_display) or 'Termo geral',
-        'open_url': reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk}),
+        'open_url': reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk}),
         'download_docx_url': reverse(
             'eventos:documentos-termos-download',
             kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value},
@@ -1383,7 +1383,7 @@ def _oficio_list_saved_term_card(termo):
 def _oficio_list_pending_term_card(oficio, viajante):
     return {
         'traveler_name': _clean(getattr(viajante, 'nome', '')) or 'Termo geral',
-        'open_url': reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+        'open_url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
         'download_docx_url': '',
         'download_pdf_url': '',
         'is_saved': False,
@@ -2206,7 +2206,7 @@ def _decorate_plano_trabalho_list_items(items):
             for oficio in related_oficios
         ]
         plano.oficios_count_label = oficios_count_label
-        plano.open_url = reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': plano.pk})
+        plano.open_url = reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk})
         plano.edit_url = reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk})
         plano.download_docx_url = reverse(
             'eventos:documentos-planos-trabalho-download',
@@ -3005,7 +3005,7 @@ def plano_trabalho_novo(request):
             _save_efetivo_rows(obj, rows)
             _refresh_plano_diarias(obj)
         messages.success(request, 'Plano de trabalho criado com sucesso.')
-        return redirect(return_to or reverse('eventos:documentos-planos-trabalho-detalhe', kwargs={'pk': obj.pk}))
+        return redirect(return_to or reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': obj.pk}))
 
     ui_context = _build_plano_trabalho_form_ui_context(
         form,
@@ -3107,14 +3107,8 @@ def plano_trabalho_editar(request, pk):
 
 @require_http_methods(['GET'])
 def plano_trabalho_detalhe(request, pk):
-    obj = get_object_or_404(PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante', 'roteiro').prefetch_related('oficios'), pk=pk)
-    obj.diarias_valor_total_display = _format_currency_brl(obj.diarias_valor_total or obj.valor_diarias)
-    if obj.valor_diarias is not None and (obj.quantidade_servidores or 0) > 0:
-        valor_por_servidor = Decimal(obj.valor_diarias) / Decimal(obj.quantidade_servidores)
-        obj.diarias_valor_unitario_display = _format_currency_brl(valor_por_servidor)
-    else:
-        obj.diarias_valor_unitario_display = _format_currency_brl(obj.diarias_valor_unitario)
-    return render(request, 'eventos/documentos/planos_trabalho_detalhe.html', {'object': obj})
+    get_object_or_404(PlanoTrabalho, pk=pk)
+    return redirect('eventos:documentos-planos-trabalho-editar', pk=pk)
 
 
 @require_http_methods(['GET', 'POST'])
@@ -3293,7 +3287,7 @@ def ordens_servico_global(request):
     for ordem in object_list:
         ordem.status_meta = _build_ordem_servico_status_meta(ordem)
         ordem.card_theme_class = ordem.status_meta['theme_class']
-        ordem.open_url = reverse('eventos:documentos-ordens-servico-detalhe', kwargs={'pk': ordem.pk})
+        ordem.open_url = reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk})
         ordem.edit_url = reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk})
         ordem.delete_url = reverse('eventos:documentos-ordens-servico-excluir', kwargs={'pk': ordem.pk})
         ordem.download_docx_url = reverse(
@@ -3378,7 +3372,7 @@ def ordem_servico_novo(request):
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
         messages.success(request, 'Ordem de serviÃ§o criada com sucesso.')
-        return redirect(return_to or reverse('eventos:documentos-ordens-servico-detalhe', kwargs={'pk': obj.pk}))
+        return redirect(return_to or reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': obj.pk}))
     return _render_ordem_servico_form(
         request,
         form=form,
@@ -3398,7 +3392,7 @@ def ordem_servico_editar(request, pk):
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Ordem de serviÃ§o atualizada.')
-        return redirect(return_to or reverse('eventos:documentos-ordens-servico-detalhe', kwargs={'pk': obj.pk}))
+        return redirect(return_to or reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': obj.pk}))
     return _render_ordem_servico_form(
         request,
         form=form,
@@ -3453,8 +3447,8 @@ def _render_ordem_servico_form(
 
 @require_http_methods(['GET'])
 def ordem_servico_detalhe(request, pk):
-    obj = get_object_or_404(OrdemServico.objects.select_related('evento', 'oficio'), pk=pk)
-    return render(request, 'eventos/documentos/ordens_servico_detalhe.html', {'object': obj})
+    get_object_or_404(OrdemServico, pk=pk)
+    return redirect('eventos:documentos-ordens-servico-editar', pk=pk)
 
 
 @require_http_methods(['GET', 'POST'])
@@ -3527,7 +3521,7 @@ def justificativas_global(request):
     page_obj = _paginate(queryset, request.GET.get('page'))
     object_list = []
     for just in page_obj.object_list:
-        just.detail_url = reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': just.pk})
+        just.detail_url = reverse('eventos:documentos-justificativas-editar', kwargs={'pk': just.pk})
         just.edicao_url = reverse('eventos:documentos-justificativas-editar', kwargs={'pk': just.pk})
         just.excluir_url = reverse('eventos:documentos-justificativas-excluir', kwargs={'pk': just.pk})
         just.oficio_url = (
@@ -3579,7 +3573,7 @@ def justificativa_nova(request):
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
         messages.success(request, 'Justificativa criada com sucesso.')
-        return redirect(return_to or reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': obj.pk}))
+        return redirect(return_to or reverse('eventos:documentos-justificativas-editar', kwargs={'pk': obj.pk}))
     return render(
         request,
         'eventos/documentos/justificativas_form.html',
@@ -3594,15 +3588,8 @@ def justificativa_nova(request):
 
 @require_http_methods(['GET'])
 def justificativa_detalhe(request, pk):
-    obj = get_object_or_404(
-        Justificativa.objects.select_related('oficio', 'oficio__evento', 'modelo'),
-        pk=pk,
-    )
-    return render(
-        request,
-        'eventos/documentos/justificativas_detalhe.html',
-        {'object': obj},
-    )
+    get_object_or_404(Justificativa, pk=pk)
+    return redirect('eventos:documentos-justificativas-editar', pk=pk)
 
 
 @require_http_methods(['GET', 'POST'])
@@ -3616,7 +3603,7 @@ def justificativa_editar(request, pk):
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Justificativa atualizada com sucesso.')
-        return redirect(return_to or reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': obj.pk}))
+        return redirect(return_to or reverse('eventos:documentos-justificativas-editar', kwargs={'pk': obj.pk}))
     return render(
         request,
         'eventos/documentos/justificativas_form.html',
@@ -4213,7 +4200,7 @@ def termos_global(request):
             termo.vinculo_badge_detail = ''
 
         termo.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
-        termo.detail_url = reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk})
+        termo.detail_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
         termo.edicao_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
         termo.excluir_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
         termo.download_docx_url = reverse(
@@ -4297,7 +4284,7 @@ def termo_autorizacao_novo(request):
             f'{len(termos)} termo(s) gerado(s) com modelo {mode_meta["label"].lower()}.',
         )
         if len(termos) == 1:
-            return redirect(return_to or reverse('eventos:documentos-termos-detalhe', kwargs={'pk': primeiro_termo.pk}))
+            return redirect(return_to or reverse('eventos:documentos-termos-editar', kwargs={'pk': primeiro_termo.pk}))
         return redirect(return_to or reverse('eventos:documentos-termos'))
     return _render_termo_form(
         request,
@@ -4326,37 +4313,8 @@ def termo_autorizacao_novo_automatico_sem_viatura(request):
 
 @require_http_methods(['GET'])
 def termo_autorizacao_detalhe(request, pk):
-    obj = get_object_or_404(
-        TermoAutorizacao.objects.select_related(
-            'evento',
-            'oficio',
-            'roteiro',
-            'viajante',
-            'viajante__cargo',
-            'veiculo',
-        ).prefetch_related('oficios'),
-        pk=pk,
-    )
-    related_lote = []
-    if obj.lote_uuid:
-        related_lote = list(
-            TermoAutorizacao.objects.select_related('viajante')
-            .filter(lote_uuid=obj.lote_uuid)
-            .exclude(pk=obj.pk)
-            .order_by('created_at')[:20]
-        )
-    return render(
-        request,
-        'eventos/documentos/termos_detalhe.html',
-        {
-            'object': obj,
-            'mode_meta': _termo_mode_meta(obj.modo_geracao),
-            'process_status': _termo_status_meta(obj),
-            'context_display': _termo_context_display(obj),
-            'lote_objects': related_lote,
-            'related_oficios': list(obj.oficios.all()) or ([obj.oficio] if obj.oficio_id else []),
-        },
-    )
+    get_object_or_404(TermoAutorizacao, pk=pk)
+    return redirect('eventos:documentos-termos-editar', pk=pk)
 
 
 @require_http_methods(['GET', 'POST'])
@@ -4371,7 +4329,7 @@ def termo_autorizacao_editar(request, pk):
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Termo atualizado com sucesso.')
-        return redirect(return_to or reverse('eventos:documentos-termos-detalhe', kwargs={'pk': obj.pk}))
+        return redirect(return_to or reverse('eventos:documentos-termos-editar', kwargs={'pk': obj.pk}))
     return _render_termo_form(
         request,
         form=form,

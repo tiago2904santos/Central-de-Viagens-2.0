@@ -708,10 +708,10 @@ def _decorate_evento_list_items(eventos):
                 'icon': 'bi-pencil-square',
             },
             {
-                'label': 'Ver',
-                'url': reverse('eventos:detalhe', kwargs={'pk': evento.pk}),
+                'label': 'Editar evento',
+                'url': reverse('eventos:editar', kwargs={'pk': evento.pk}),
                 'css_class': 'btn-doc-action--secondary',
-                'icon': 'bi-eye',
+                'icon': 'bi-pencil-square',
             },
         ]
         evento.delete_url = reverse('eventos:excluir', kwargs={'pk': evento.pk})
@@ -796,11 +796,8 @@ def evento_editar(request, pk):
 
 @login_required
 def evento_detalhe(request, pk):
-    obj = get_object_or_404(
-        Evento.objects.select_related('estado_principal', 'cidade_principal', 'cidade_base').prefetch_related('tipos_demanda', 'destinos'),
-        pk=pk
-    )
-    return render(request, 'eventos/evento_detalhe.html', {'object': obj})
+    get_object_or_404(Evento, pk=pk)
+    return redirect('eventos:editar', pk=pk)
 
 
 @login_required

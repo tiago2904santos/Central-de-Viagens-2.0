@@ -216,7 +216,7 @@ class EventoDetalheTest(TestCase):
         self.assertIn('login', response.url)
 
     def test_detalhe_ok_mostra_dados_do_modelo_novo(self):
-        """Detalhe exibe título, tipos, datas, destinos, status (sem cidade_base/legado)."""
+        """Detalhe redireciona para edição do evento (Etapa 1)."""
         self.client.login(username='u', password='p')
         tipo = TipoDemandaEvento.objects.filter(ativo=True).first()
         estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
@@ -231,11 +231,8 @@ class EventoDetalheTest(TestCase):
         ev.tipos_demanda.add(tipo)
         EventoDestino.objects.create(evento=ev, estado=estado, cidade=cidade, ordem=0)
         response = self.client.get(reverse('eventos:detalhe', kwargs={'pk': ev.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'PCPR')
-        self.assertContains(response, 'Curitiba')
-        self.assertContains(response, 'Editar Etapa 1')
-        self.assertNotContains(response, 'Cidade base')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('eventos:editar', kwargs={'pk': ev.pk}))
 
 
 class EventoExcluirTest(TestCase):
@@ -1705,7 +1702,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertContains(response, 'value="2025-11-05"')
 
     def test_detalhe_evento_mostra_datas_corretas(self):
-        """Página de detalhe do evento deve exibir as datas persistidas."""
+        """Rota de detalhe redireciona para edição e mantém datas persistidas na Etapa 1."""
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 12, 1), data_fim=date(2025, 12, 10), status=Evento.STATUS_RASCUNHO)
@@ -1722,9 +1719,13 @@ class EventoEtapa1RefatoradoTest(TestCase):
         }
         self.client.post(reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}), data)
         response = self.client.get(reverse('eventos:detalhe', kwargs={'pk': ev.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '01/12/2025')
-        self.assertContains(response, '10/12/2025')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('eventos:editar', kwargs={'pk': ev.pk}))
+
+        etapa1 = self.client.get(reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}))
+        self.assertEqual(etapa1.status_code, 200)
+        self.assertContains(etapa1, 'value="2025-12-01"')
+        self.assertContains(etapa1, 'value="2025-12-10"')
 
     def test_etapa_1_nao_pode_salvar_sem_destino(self):
         """Envio sem nenhum destino válido deve rejeitar com erro."""
