@@ -38,10 +38,10 @@
                 {% for action in actions %}
                 <a 
                     href="{{ action.url }}"
-                    class="btn btn-{{ action.variant|default:'primary' }} system-list-action-btn"
+                    class="btn btn-{{ action.variant|default:'primary' }} system-list-action-btn system-list-action-btn--header"
                     {% if action.title %}title="{{ action.title }}"{% endif %}
                 >
-                    {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}
+                    {% if action.icon %}<i class="bi {{ action.icon }} me-2"></i>{% endif %}
                     {{ action.label }}
                 </a>
                 {% endfor %}

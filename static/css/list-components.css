@@ -43,8 +43,17 @@
     justify-content: space-between;
     gap: 1.5rem;
     margin-bottom: 1.75rem;
-    padding-bottom: 1.25rem;
-    border-bottom: 1px solid var(--list-header-border);
+    padding: 1.5rem 1.75rem;
+    border-radius: var(--cv-card-radius-lg);
+    border: 1px solid rgba(42, 95, 149, 0.12);
+    background: linear-gradient(
+        135deg,
+        rgba(234, 242, 251, 0.6) 0%,
+        rgba(242, 248, 254, 0.4) 100%
+    );
+    box-shadow: 
+        0 1px 3px rgba(42, 95, 149, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .system-list-header--standard {
@@ -73,11 +82,11 @@
 
 .system-list-header__title {
     margin: 0;
-    font-size: var(--cv-text-2xl);
-    font-weight: 700;
-    color: var(--list-header-text);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--cv-navy-800);
     letter-spacing: -0.02em;
-    line-height: 1.3;
+    line-height: 1.2;
 }
 
 .system-list-header__subtitle {
@@ -138,20 +147,33 @@
     justify-content: center;
 }
 
+.system-list-action-btn--header {
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
 /* ----- Toolbar de filtros padrão ----- */
 .system-list-toolbar {
-    background: var(--list-toolbar-bg);
-    border: 1px solid var(--list-toolbar-border);
-    border-radius: var(--list-card-radius);
-    padding: var(--list-toolbar-padding);
-    margin-bottom: 1.5rem;
-    box-shadow: var(--cv-shadow-sm);
-    transition: box-shadow var(--cv-transition-base), border-color var(--cv-transition-base);
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.99) 0%,
+        rgba(248, 250, 252, 0.96) 100%
+    );
+    border: 1.5px solid rgba(42, 95, 149, 0.15);
+    border-radius: var(--cv-card-radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 
+        0 4px 12px rgba(42, 95, 149, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition: box-shadow var(--cv-transition-base), border-color var(--cv-transition-base), background var(--cv-transition-base);
 }
 
 .system-list-toolbar:hover {
-    box-shadow: var(--cv-shadow-md);
-    border-color: var(--list-toolbar-border);
+    box-shadow:
+        0 6px 18px rgba(42, 95, 149, 0.11),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border-color: rgba(42, 95, 149, 0.22);
 }
 
 .system-list-toolbar__form {
@@ -178,13 +200,18 @@
     height: var(--list-input-height);
     border-radius: var(--list-input-radius);
     font-size: 0.9rem;
-    border: 1px solid rgba(15, 23, 42, 0.1);
+    border: 1.5px solid rgba(42, 95, 149, 0.2);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(248, 250, 252, 0.96));
     transition: all var(--cv-transition-base);
+    padding: 0.625rem 1rem;
 }
 
 .system-list-toolbar__search:focus {
     border-color: var(--cv-primary);
-    box-shadow: 0 0 0 3px var(--cv-focus);
+    box-shadow: 
+        0 0 0 3px var(--cv-focus),
+        inset 0 1px 2px rgba(42, 95, 149, 0.04);
+    background: rgba(255, 255, 255, 0.99);
 }
 
 .system-list-toolbar__action-buttons {
@@ -193,12 +220,14 @@
     flex-wrap: wrap;
 }
 
-.system-list-toolbar__action-buttons .btn {
+.system-list-toolbar__action-buttons .btn,
+.system-list-toolbar__action {
     height: var(--list-input-height);
-    padding: 0 1rem;
-    font-weight: 600;
+    padding: 0 1.25rem;
+    font-weight: 700;
     font-size: 0.85rem;
     border-radius: var(--list-input-radius);
+    transition: all var(--cv-transition-base);
 }
 
 .system-list-toolbar__filter-group {
@@ -209,11 +238,11 @@
 }
 
 .system-list-toolbar__filter-label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--cv-text-secondary);
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--cv-primary);
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.08em;
 }
 
 .system-list-toolbar__checkbox-list {

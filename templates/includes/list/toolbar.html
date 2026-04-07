@@ -37,6 +37,7 @@
                     value="{{ search_value }}"
                     placeholder="{{ search_placeholder|default:'Buscar...' }}"
                     {% if autosubmit|default:true %}data-list-autosubmit{% endif %}
+                    aria-label="Campo de busca"
                 >
             </div>
 
@@ -45,7 +46,7 @@
                 {% for action in actions %}
                 <button 
                     type="{{ action.type|default:'submit' }}"
-                    class="btn btn-{{ action.variant|default:'outline-primary' }} btn-sm"
+                    class="btn btn-{{ action.variant|default:'outline-primary' }} btn-sm system-list-toolbar__action"
                     {% if action.onclick %}onclick="{{ action.onclick }}"{% endif %}
                 >
                     {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}
@@ -61,9 +62,10 @@
         {% for filter in filters %}
             {% if filter.type == 'select' %}
             <div class="system-list-toolbar__filter-group">
-                <label class="form-label small">{{ filter.label }}</label>
+                <label class="form-label small system-list-toolbar__filter-label">{{ filter.label }}</label>
                 <select 
                     name="{{ filter.name }}"
+                    class="form-select form-select-sm"
                     {% if autosubmit|default:true %}data-list-autosubmit{% endif %}
                 >
                     {% for opt in filter.options %}
@@ -95,7 +97,7 @@
 
             {% elif filter.type == 'date' %}
             <div class="system-list-toolbar__filter-group">
-                <label class="form-label small">{{ filter.label }}</label>
+                <label class="form-label small system-list-toolbar__filter-label">{{ filter.label }}</label>
                 <input
                     type="date"
                     name="{{ filter.name }}"
@@ -107,7 +109,7 @@
 
             {% elif filter.type == 'text' %}
             <div class="system-list-toolbar__filter-group">
-                <label class="form-label small">{{ filter.label }}</label>
+                <label class="form-label small system-list-toolbar__filter-label">{{ filter.label }}</label>
                 <input
                     type="text"
                     name="{{ filter.name }}"

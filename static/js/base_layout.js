@@ -49,6 +49,61 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function keepOnlyOpenButtonsInActionGroups() {
+        var actionGroupSelectors = [
+            '.oficio-list-card__footer-actions',
+            '.oficio-list-subcard__actions',
+            '.oficio-list-term-row__actions',
+            '.documento-cascade-item__actions',
+            '.os-actions-left',
+            '.oficio-wizard-footer-actions',
+            '.btn-group'
+        ];
+
+        var groups = document.querySelectorAll(actionGroupSelectors.join(', '));
+        groups.forEach(function(group) {
+            var controls = Array.from(group.querySelectorAll('a.btn, button.btn'));
+            if (!controls.length) {
+                return;
+            }
+
+            var hasOpenButton = controls.some(function(control) {
+                var label = (control.textContent || '').trim().toLowerCase();
+                return label.indexOf('abrir') !== -1;
+            });
+            if (!hasOpenButton) {
+                return;
+            }
+
+            controls.forEach(function(control) {
+                var label = (control.textContent || '').trim().toLowerCase();
+                if (label.indexOf('editar') !== -1) {
+                    control.remove();
+                }
+            });
+        });
+
+        var editButtons = Array.from(document.querySelectorAll('a.btn, button.btn')).filter(function(control) {
+            var label = (control.textContent || '').trim().toLowerCase();
+            return label.indexOf('editar') !== -1;
+        });
+
+        editButtons.forEach(function(editControl) {
+            var parent = editControl.parentElement;
+            if (!parent) {
+                return;
+            }
+            var siblingControls = Array.from(parent.querySelectorAll('a.btn, button.btn'));
+            var hasOpenSibling = siblingControls.some(function(control) {
+                var label = (control.textContent || '').trim().toLowerCase();
+                return label.indexOf('abrir') !== -1;
+            });
+            if (hasOpenSibling) {
+                editControl.remove();
+            }
+        });
+    }
+
     function setSidebarOpen(isOpen) {
         if (!sidebar) {
             return;
@@ -134,4 +189,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     removeTopRightCreateButtons();
+    keepOnlyOpenButtonsInActionGroups();
 });
