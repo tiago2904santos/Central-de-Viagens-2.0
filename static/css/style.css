@@ -198,6 +198,8 @@ a:hover {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
     transition: transform var(--cv-transition-base), margin var(--cv-transition-base);
     box-shadow: inset -1px 0 0 rgba(148, 163, 184, 0.18), 12px 0 28px rgba(2, 8, 23, 0.34);
     border-right: 1px solid rgba(148, 163, 184, 0.18);
