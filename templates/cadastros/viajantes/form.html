@@ -55,7 +55,7 @@
             <label class="form-check-label" for="id_sem_rg">{{ form.sem_rg.label }}</label>
         </div>
         <label for="id_rg" class="form-label">{{ form.rg.label }}</label>
-        <input type="text" name="rg" id="id_rg" class="form-control" maxlength="30" placeholder="Ex.: 12.345.678-9" data-mask="rg" value="{% firstof form.initial.rg form.instance.rg '' %}">
+        <input type="text" name="rg" id="id_rg" class="form-control" maxlength="30" placeholder="Ex.: 12.345.678-9" data-mask="rg" value="{% firstof form.data.rg form.initial.rg form.instance.rg '' %}">
         {% if form.rg.errors %}<div class="invalid-feedback d-block">{{ form.rg.errors.0 }}</div>{% endif %}
     </div>
     <div class="col-12 col-md-6">

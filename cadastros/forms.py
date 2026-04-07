@@ -9,6 +9,7 @@ from core.utils.masks import (
     format_rg,
     format_telefone,
     only_digits,
+    _normalizar_placa,
 )
 
 
@@ -220,8 +221,6 @@ class ViajanteForm(FormComErroInvalidMixin, forms.ModelForm):
     def clean(self):
         return super().clean()
 
-
-from .utils.masks import _normalizar_placa
 
 # Regex: antiga 3 letras + 4 dígitos; mercosul 3 letras + 1 dígito + 1 letra + 2 dígitos
 PLACA_ANTIGA_RE = re.compile(r'^[A-Z]{3}[0-9]{4}$')

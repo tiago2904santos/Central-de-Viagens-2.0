@@ -127,8 +127,10 @@ MASK_FORMATTERS = {
 
 
 def apply_mask(mask_name, value):
-    """Aplica a máscara pelo nome."""
-    formatter = MASK_FORMATTERS[mask_name]
+    """Aplica a máscara pelo nome. Retorna o valor sem formatação se mask_name for inválido."""
+    formatter = MASK_FORMATTERS.get(mask_name)
+    if not formatter:
+        return str(value or '')
     return formatter(value)
 
 

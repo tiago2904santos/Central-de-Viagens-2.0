@@ -1,6 +1,6 @@
 import re
 
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q, UniqueConstraint
 
 from core.utils.masks import (
@@ -69,12 +69,13 @@ class Cargo(models.Model):
     def __str__(self):
         return self.nome
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         if self.nome:
             self.nome = ' '.join(self.nome.strip().upper().split())
         super().save(*args, **kwargs)
         if self.is_padrao:
-            Cargo.objects.exclude(pk=self.pk).update(is_padrao=False)
+            Cargo.objects.select_for_update().exclude(pk=self.pk).filter(is_padrao=True).update(is_padrao=False)
 
 
 class UnidadeLotacao(models.Model):
@@ -215,12 +216,13 @@ class CombustivelVeiculo(models.Model):
     def __str__(self):
         return self.nome
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         if self.nome:
             self.nome = ' '.join(self.nome.strip().upper().split())
         super().save(*args, **kwargs)
         if self.is_padrao:
-            CombustivelVeiculo.objects.exclude(pk=self.pk).update(is_padrao=False)
+            CombustivelVeiculo.objects.select_for_update().exclude(pk=self.pk).filter(is_padrao=True).update(is_padrao=False)
 
 
 class Veiculo(models.Model):
