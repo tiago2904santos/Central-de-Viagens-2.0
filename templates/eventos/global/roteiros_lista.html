@@ -5,20 +5,9 @@
 {% block page_header_title %}Roteiros{% endblock %}
 {% block list_title %}Lista global de roteiros{% endblock %}
 
-{% block list_subtitle %}
-<p class="system-list-header__subtitle">Biblioteca operacional dos roteiros criados na etapa 2 dos eventos.</p>
-{% endblock %}
+{% block list_subtitle %}{% endblock %}
 
-{% block list_meta %}
-<div class="system-list-header__meta">
-    <span class="system-list-header__meta-item">
-        {% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros
-    </span>
-    <span class="system-list-header__meta-item">
-        {% if selected_event %}Evento filtrado: {{ selected_event.titulo|default:"(sem titulo)" }}{% else %}Visao global dos roteiros dos eventos{% endif %}
-    </span>
-</div>
-{% endblock %}
+{% block list_meta %}{% endblock %}
 
 {% block list_header_controls %}
 {% include 'includes/list/mode_badge.html' with mode='simple' %}
@@ -39,7 +28,7 @@
 {% endblock %}
 
 {% block list_toolbar %}
-<form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
+<form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
     <div class="col-12 col-lg-4">
         <label class="form-label small text-muted">Busca</label>
         <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, sede ou destino" data-list-autosubmit>
@@ -85,6 +74,14 @@
             <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <label class="form-label small text-muted">Data inicial</label>
+        <input type="date" name="date_from" value="{{ filters.date_from }}" class="form-control form-control-sm" data-list-autosubmit>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <label class="form-label small text-muted">Data final</label>
+        <input type="date" name="date_to" value="{{ filters.date_to }}" class="form-control form-control-sm" data-list-autosubmit>
     </div>
     <div class="col-6 col-md-auto">
         <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>

@@ -1,22 +1,18 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Modelos de motivo — Eventos — Central de Viagens{% endblock %}
 {% block page_title %}Modelos de motivo (Ofício){% endblock %}
 
 {% block content %}
 {% url 'eventos:modelos-motivo-cadastrar' as modelo_motivo_novo_url %}
-<div class="container-fluid py-4 system-list-page system-list-page--simple">
+<div class="container-fluid py-4 system-list-page system-list-page--simple" data-list-view-root>
     <div class="system-list-shell">
     <div class="page-header-cadastro system-list-header system-list-header--standard">
         <div class="system-list-header__content">
             <div class="system-list-header__copy">
                 <div class="system-list-header__intro">
                     <h1 class="system-list-header__title">Modelos de motivo</h1>
-                    <p class="system-list-header__subtitle">Biblioteca de textos para padronizar o motivo da viagem.</p>
-                </div>
-                <div class="system-list-header__meta">
-                    <span class="system-list-header__meta-item">{{ object_list|length }} registros</span>
-                    <span class="system-list-header__meta-item">Biblioteca auxiliar do assistente de oficio</span>
                 </div>
             </div>
             <div class="system-list-header__controls">
@@ -28,6 +24,26 @@
                     <a href="{{ modelo_motivo_novo_url }}" class="btn btn-primary system-list-action-btn">Cadastrar modelo</a>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="card filter-card system-filter-card">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
+                {% if volta_step1 %}<input type="hidden" name="volta_step1" value="{{ volta_step1 }}">{% endif %}
+                <div class="col-12 col-md-6">
+                    <label class="form-label small text-muted">Busca</label>
+                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Nome ou texto do modelo" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted">Data inicial</label>
+                    <input type="date" name="date_from" class="form-control form-control-sm" value="{{ filters.date_from }}" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted">Data final</label>
+                    <input type="date" name="date_to" class="form-control form-control-sm" value="{{ filters.date_to }}" data-list-autosubmit>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -67,4 +83,8 @@
     {% include 'includes/list/floating_new_button.html' with url=modelo_motivo_novo_url label='Cadastrar modelo' icon='bi-plus-lg' %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}

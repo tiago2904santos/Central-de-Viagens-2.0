@@ -54,6 +54,7 @@
         </div>
         
         {# Conteúdo principal (tabela, cards, ou customizado) #}
+        <div data-list-live-region>
         <div class="system-list-content">
             {% block page_result_content %}
             <div class="alert alert-info">
@@ -68,6 +69,7 @@
         {% include 'includes/pagination.html' %}
         {% endif %}
         {% endblock %}
+        </div>
         
     </div>
 </div>

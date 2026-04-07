@@ -12,11 +12,6 @@
             <div class="system-list-header__copy">
                 <div class="system-list-header__intro">
                     <h1 class="system-list-header__title">Lista de termos</h1>
-                    <p class="system-list-header__subtitle">Mesmo layout documental de planos, oficios e justificativas.</p>
-                </div>
-                <div class="system-list-header__meta">
-                    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
-                    <span class="system-list-header__meta-item">Acervo documental com status e contexto do participante</span>
                 </div>
             </div>
             <div class="system-list-header__controls">
@@ -34,7 +29,7 @@
 
     <div class="card filter-card system-filter-card">
         <div class="card-body py-3">
-            <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
+            <form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
                 <div class="col-12 col-xl-3">
                     <label class="form-label small text-muted">Busca ampla</label>
                     <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Servidor, viatura, destino ou contexto" data-list-autosubmit>
@@ -91,6 +86,14 @@
                         {% endfor %}
                     </select>
                 </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Data inicial</label>
+                    <input type="date" class="form-control form-control-sm" name="date_from" value="{{ filters.date_from }}" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Data final</label>
+                    <input type="date" class="form-control form-control-sm" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
+                </div>
                 <div class="col-12 col-md-auto">
                     <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
                     <a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
@@ -99,6 +102,7 @@
         </div>
     </div>
 
+    <div data-list-live-region>
     <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de termos">
         <div class="table-responsive">
             <table class="table table-hover system-list-table align-middle">
@@ -219,6 +223,7 @@
     </section>
 
     {% include 'includes/pagination.html' %}
+    </div>
 
     {% include 'includes/list/floating_new_button.html' with url=termo_novo_url label='Novo termo' icon='bi-plus-lg' %}
     </div>

@@ -1223,8 +1223,9 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     border-radius: var(--list-card-radius);
     box-shadow: var(--cv-shadow-md);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(243, 250, 246, 0.75));
-    padding: 1.35rem;
+    padding: 0.9rem;
     transition: box-shadow var(--cv-transition-base), border-color var(--cv-transition-base);
+    overflow: visible;
 }
 
 .system-filter-card:hover {
@@ -1236,6 +1237,29 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 .system-filter-card .oficio-custeio-picker-trigger {
     border-radius: 0.75rem;
     min-height: var(--list-input-height);
+}
+
+.system-filter-card .card-body {
+    padding: 0.5rem !important;
+    overflow: visible;
+}
+
+.document-filter-grid {
+    row-gap: 0.55rem !important;
+}
+
+.system-list-shell,
+.system-list-content,
+.oficios-list-shell {
+    overflow: visible;
+}
+
+.oficio-custeio-picker[data-open="true"] {
+    z-index: 900;
+}
+
+.oficio-custeio-picker-list {
+    z-index: 950;
 }
 
 .system-sort-row {
@@ -8667,7 +8691,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
         align-items: stretch;
     }
 }
-
 
 
 
