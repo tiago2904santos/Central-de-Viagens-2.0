@@ -72,51 +72,79 @@ Padrão de referência: `eventos/global/oficios_lista.html`
 - Cards ou tabela com mais colunas informativas
 - Visual corporativo e denso
 
-## AÇÕES NECESSÁRIAS
+## AÇÕES REALIZADAS
 
-### 1. Adicionar classe `system-list-page--simple` aos 4 templates que faltam
-- `templates/cadastros/veiculos/lista.html`
-- `templates/cadastros/viajantes/lista.html`
-- `templates/eventos/global/roteiros_lista.html`
-- `templates/eventos/global/termos_lista.html`
+### ✅ 1. Editar lista_base.html para permitir classe dinâmica
+- Criado bloco `list_page_class` que permite override
+- Default: `system-list-page--standard`
+- Permite que templates herdem com classe correta
 
-OBSERVAÇÃO: Estes templates estão usando `list_base.html` que não injeta a classe. Precisa encapsular o conteúdo com a classe correta.
+### ✅ 2. Adicionar classe `system-list-page--simple` aos 4 templates que faltavam
+Implementação: Editado `list_base.html` + override de `list_page_class` em:
+- `templates/cadastros/veiculos/lista.html` - FEITO
+- `templates/cadastros/viajantes/lista.html` - FEITO
+- `templates/eventos/global/roteiros_lista.html` - FEITO
+- `templates/eventos/global/termos_lista.html` - FEITO
 
-### 2. Validar que todo template SIMPLES possui:
-- Classe: `system-list-page--simple`
-- Header padronizado
-- Meta com contexto
-- Filtro simples
-- Tabela ou lista simples
+### ✅ 3. Validação realizada
+- Django check: OK (System check identified no issues)
+- git diff --check: OK (sem problemas de espaçamento)
+- Estrutura de headers: Padronizados em todas as listas
+- Filtros: Apropriados para cada família
+- Herança: Todos usando padrão correto
 
-### 3. Validar que todo template COMPLETA possui:
-- Classe: `system-list-page--complete`
-- Header com contexto
-- Meta operacional
-- Filtro avançado
-- Cards ou tabela densa com contexto
+## STATUS FINAL
+
+**LISTA SIMPLES - 14 templates com classe `system-list-page--simple`:**
+1. ✅ cadastros/cargos/lista.html (REFERÊNCIA OFICIAL)
+2. ✅ cadastros/unidades/lista.html
+3. ✅ cadastros/veiculos/combustiveis_lista.html
+4. ✅ cadastros/veiculos/lista.html (PADRONIZADO)
+5. ✅ cadastros/viajantes/lista.html (PADRONIZADO)
+6. ✅ eventos/modelos_justificativa/lista.html
+7. ✅ eventos/modelos_motivo/lista.html
+8. ✅ eventos/plano_trabalho_atividades/lista.html
+9. ✅ eventos/plano_trabalho_coordenadores/lista.html
+10. ✅ eventos/plano_trabalho_horarios/lista.html
+11. ✅ eventos/plano_trabalho_solicitantes/lista.html
+12. ✅ eventos/tipos_demanda/lista.html
+13. ✅ eventos/global/roteiros_lista.html (PADRONIZADO)
+14. ✅ eventos/global/termos_lista.html (PADRONIZADO)
+
+**LISTA COMPLETA - 7 templates com classe `system-list-page--complete`:**
+1. ✅ eventos/global/oficios_lista.html (REFERÊNCIA OFICIAL)
+2. ✅ eventos/evento_lista.html
+3. ✅ eventos/documentos/planos_trabalho_lista.html
+4. ✅ eventos/documentos/ordens_servico_lista.html
+5. ✅ eventos/documentos/termos_lista.html
+6. ✅ eventos/documentos/justificativas_lista.html
+7. ✅ eventos/global/justificativas_lista.html
 
 ## REFERÊNCIAS OFICIAIS FINAIS
 
 **LISTA SIMPLES:** `templates/cadastros/cargos/lista.html`
-- Herança direta de `base.html`
-- Bloco HTML direto com classe
-- Padrão Head, Filtro, Tabela
+- Estrutura: page-header-cadastro, system-list-header--standard
+- Filtro: busca, ordenar, direção
+- Conteúdo: tabela simples com ações
+- Visual: administrativo, compacto, eficiente
 
 **LISTA COMPLETA:** `templates/eventos/global/oficios_lista.html`
-- Herança direta de `base.html`
-- Bloco HTML direto com classe
-- Padrão Head rico, Filtro avançado, Cards/Tabela contextual
+- Estrutura: page-header-cadastro, system-list-header--standard, com modo toggle
+- Filtro: múltiplos campos contextuais, chips de status
+- Conteúdo: cards cascata com contexto documental
+- Visual: corporativo, denso, informativo
 
-## SAÍDA ESPERADA APÓS TRABALHO
+## PARTICULARIDADES PRESERVADAS
 
-1. Todos os templates SIMPLES com classe `system-list-page--simple`
-2. Todos os templates COMPLETA com classe `system-list-page--complete`
-3. Headers padronizados visualmente dentro de cada família
-4. Filtros adequados para a densidade de cada família
-5. Ações e controles coerentes
-6. CSS ou estrutura visual consistente sem destruir particularidades
+- Listas simples mantêm objetividade máxima
+- Listas completas mantêm contexto documental
+- Toggles de visualização preservados (ricos/simples)
+- Badges e status contextuais mantidos
+- Vínculos documentais preservados
+- Funcionalidades específicas de cada lista intactas
 
 ---
 Criado em: 2026-04-07
+Atualizado em: 2026-04-07
 Commit de referência: ea16c08502b5cc80c60e8526535a4d9c13c17193
+Status: ✅ CONCLUÍDO
