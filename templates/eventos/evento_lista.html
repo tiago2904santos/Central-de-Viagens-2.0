@@ -7,6 +7,7 @@
 {% block content %}
 <div class="container-fluid py-4 system-list-page system-list-page--complete">
     <div class="oficios-list-shell system-list-shell">
+        <section class="system-list-top system-list-top--complete">
         <div class="page-header-cadastro system-list-header system-list-header--standard">
             <div class="system-list-header__content">
                 <div class="system-list-header__copy">
@@ -83,6 +84,7 @@
                 </form>
             </div>
         </div>
+        </section>
 
         <section class="documento-cascade-grid" aria-label="Lista de eventos">
         {% for obj in object_list %}
