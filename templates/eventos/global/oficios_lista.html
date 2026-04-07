@@ -4,7 +4,6 @@
 {% block page_title_block %}Lista de oficios{% endblock %}
 {% block page_header_title %}Lista de oficios{% endblock %}
 
-<<<<<<< ours
 {% block list_page_class %}oficios-list-page system-list-page--complete{% endblock %}
 {% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.oficios.view-mode"{% endblock %}
 {% block list_title %}Oficios salvos{% endblock %}
@@ -60,43 +59,6 @@
                 placeholder="Buscar por oficio, protocolo, destino ou servidor"
                 data-list-autosubmit
             >
-=======
-{% block content %}
-<div class="container-fluid py-4 oficios-list-page system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.oficios.view-mode">
-    <div class="oficios-list-shell system-list-shell">
-        <div class="page-header-cadastro system-list-header system-list-header--standard">
-            <div class="system-list-header__content">
-                <div class="system-list-header__copy">
-                    <div class="system-list-header__intro">
-                        <h1 class="system-list-header__title">Oficios salvos</h1>
-                    </div>
-                </div>
-                <div class="system-list-header__controls">
-                    {% include 'includes/list/mode_badge.html' with mode='complete' %}
-                    <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de oficios">
-                        <button
-                            type="button"
-                            class="oficios-view-toggle__button is-active"
-                            data-list-view-toggle="rich"
-                            aria-pressed="true"
-                        >
-                            Completa
-                        </button>
-                        <button
-                            type="button"
-                            class="oficios-view-toggle__button"
-                            data-list-view-toggle="basic"
-                            aria-pressed="false"
-                        >
-                            Visualizacao simples
-                        </button>
-                    </div>
-                    <div class="system-list-header__actions-group">
-                        <a href="{{ oficio_novo_url }}" class="btn btn-primary system-list-action-btn">Novo oficio</a>
-                    </div>
-                </div>
-            </div>
->>>>>>> theirs
         </div>
 
         <div class="system-document-filter__field system-document-filter__field--medium">
