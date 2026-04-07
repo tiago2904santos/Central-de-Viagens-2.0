@@ -5,18 +5,13 @@
 {% block page_title %}Eventos{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--complete">
+<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root>
     <div class="oficios-list-shell system-list-shell">
         <div class="page-header-cadastro system-list-header system-list-header--standard">
             <div class="system-list-header__content">
                 <div class="system-list-header__copy">
                     <div class="system-list-header__intro">
                         <h1 class="system-list-header__title">Eventos</h1>
-                        <p class="system-list-header__subtitle">Leitura em cascata dos documentos vinculados: Oficios, Planos de Trabalho e Ordens de Servico no mesmo card.</p>
-                    </div>
-                    <div class="system-list-header__meta">
-                        <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
-                        <span class="system-list-header__meta-item">Painel principal com contexto documental por evento</span>
                     </div>
                 </div>
                 <div class="system-list-header__controls">
@@ -33,7 +28,7 @@
 
         <div class="card filter-card system-filter-card">
             <div class="card-body py-3">
-                <form method="get" class="row g-2 align-items-end" data-list-autosubmit-form>
+                <form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
                 <div class="col-12 col-md-4">
                     <label class="form-label small text-muted">Buscar por título</label>
                     <input type="text" name="q" class="form-control form-control-sm" placeholder="Titulo do evento" value="{{ form_filter.q }}" data-list-autosubmit>
@@ -76,6 +71,14 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Data inicial</label>
+                    <input type="date" name="date_from" class="form-control form-control-sm" value="{{ form_filter.date_from }}" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Data final</label>
+                    <input type="date" name="date_to" class="form-control form-control-sm" value="{{ form_filter.date_to }}" data-list-autosubmit>
+                </div>
                 <div class="col-12 col-md-auto">
                     <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
                     <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
@@ -84,6 +87,7 @@
             </div>
         </div>
 
+        <div data-list-live-region>
         <section class="documento-cascade-grid" aria-label="Lista de eventos">
         {% for obj in object_list %}
         <article class="oficio-list-card documento-cascade-card {{ obj.card_theme_class }}" id="evento-card-{{ obj.pk }}">
@@ -180,6 +184,7 @@
         </section>
 
         {% include 'includes/pagination.html' %}
+        </div>
 
         {% include 'includes/list/floating_new_button.html' with url=evento_novo_url label='Novo evento' icon='bi-plus-lg' post_action=True %}
     </div>
