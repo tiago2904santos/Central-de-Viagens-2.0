@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from django.core.paginator import Paginator
 from django.contrib import messages
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -12,6 +13,16 @@ from ..forms import VeiculoForm, CombustivelVeiculoForm
 from core.utils.masks import _normalizar_placa
 
 RETURN_URL_KEY = 'veiculo_form_return_url'
+
+
+def _paginate(queryset, page, per_page=25):
+    return Paginator(queryset, per_page).get_page(page)
+
+
+def _query_without_page(request):
+    params = request.GET.copy()
+    params.pop('page', None)
+    return params.urlencode()
 
 
 def _next_url_safe(request):
@@ -67,12 +78,15 @@ def veiculo_lista(request):
             Q(combustivel__nome__icontains=q) | Q(tipo__icontains=q) | Q(status__icontains=q)
         )
     qs = qs.order_by('-status', order_field, '-updated_at')
-    object_list = list(qs)
+    page_obj = _paginate(qs, request.GET.get('page'))
+    object_list = list(page_obj.object_list)
     for obj in object_list:
         obj.placa_display = obj.placa_formatada
         obj.status_display = obj.get_status_display()
     context = {
         'object_list': object_list,
+        'page_obj': page_obj,
+        'pagination_query': _query_without_page(request),
         'form_filter': {'q': q, 'order_by': order_by, 'order_dir': order_dir},
         'order_by_choices': [
             ('updated_at', 'Atualização'),
@@ -207,11 +221,14 @@ def combustivel_lista(request):
     if q:
         qs = qs.filter(nome__icontains=q)
     qs = qs.order_by(order_field, 'nome')
+    page_obj = _paginate(qs, request.GET.get('page'))
     return_url = request.session.get(RETURN_URL_KEY)
     voltar_url = return_url or reverse('cadastros:veiculo-lista')
     voltar_label = 'Voltar' if return_url else 'Voltar para veículos'
     context = {
-        'object_list': qs,
+        'object_list': page_obj.object_list,
+        'page_obj': page_obj,
+        'pagination_query': _query_without_page(request),
         'form_filter': {'q': q, 'order_by': order_by, 'order_dir': order_dir},
         'order_by_choices': [('nome', 'Nome'), ('is_padrao', 'Padrão'), ('id', 'Cadastro')],
         'order_dir_choices': [('asc', 'Crescente'), ('desc', 'Decrescente')],

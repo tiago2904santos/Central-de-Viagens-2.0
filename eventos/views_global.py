@@ -4038,15 +4038,24 @@ def _render_termo_form(
 
 
 def documentos_hub(request):
-    oficios = list(Oficio.objects.prefetch_related('trechos').all())
+    prazo_minimo_dias = _oficio_list_prazo_justificativa_dias()
+    oficios = list(
+        Oficio.objects.select_related('justificativa')
+        .prefetch_related('trechos')
+        .only('id', 'data_criacao', 'justificativa__id', 'justificativa__texto')
+    )
     justificativas_pendentes = 0
     justificativas_preenchidas = 0
     for oficio in oficios:
-        info = _build_oficio_justificativa_info(oficio)
+        info = _oficio_list_justificativa_info(oficio, prazo_minimo_dias)
         if info['status_key'] == 'pendente':
             justificativas_pendentes += 1
         elif info['status_key'] == 'preenchida':
             justificativas_preenchidas += 1
+
+    termos_count = TermoAutorizacao.objects.count()
+    termos_pendentes = TermoAutorizacao.objects.filter(status=TermoAutorizacao.STATUS_RASCUNHO).count()
+    termos_concluidos = TermoAutorizacao.objects.filter(status=TermoAutorizacao.STATUS_GERADO).count()
 
     cards = [
         {
@@ -4069,7 +4078,7 @@ def documentos_hub(request):
         },
         {
             'label': 'Termos',
-            'count': TermoAutorizacao.objects.count(),
+            'count': termos_count,
             'description': 'Modulo documental com formulario unico, contexto consolidado e downloads por registro.',
             'url': reverse('eventos:documentos-termos'),
         },
@@ -4080,8 +4089,8 @@ def documentos_hub(request):
         {
             'cards': cards,
             'total_oficios': len(oficios),
-            'termos_pendentes': TermoAutorizacao.objects.filter(status=TermoAutorizacao.STATUS_RASCUNHO).count(),
-            'termos_concluidos': TermoAutorizacao.objects.filter(status=TermoAutorizacao.STATUS_GERADO).count(),
+            'termos_pendentes': termos_pendentes,
+            'termos_concluidos': termos_concluidos,
             'justificativas_pendentes': justificativas_pendentes,
             'justificativas_preenchidas': justificativas_preenchidas,
         },

@@ -15,7 +15,7 @@
                     <p class="system-list-header__subtitle">Lista simples para apoio ao cadastro de veiculos.</p>
                 </div>
                 <div class="system-list-header__meta">
-                    <span class="system-list-header__meta-item">{{ object_list|length }} registros</span>
+                    <span class="system-list-header__meta-item">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros</span>
                     <span class="system-list-header__meta-item">Apoio auxiliar para a manutencao da frota</span>
                 </div>
             </div>
@@ -93,6 +93,8 @@
             </table>
         </div>
     </div>
+
+    {% include 'includes/pagination.html' %}
 
     {% include 'includes/list/floating_new_button.html' with url=novo_combustivel_url label='Novo combustivel' icon='bi-plus-lg' %}
     </div>
