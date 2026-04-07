@@ -1,6 +1,7 @@
 {% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
+<<<<<<< ours
 {% block page_title_block %}Termos de autorizacao{% endblock %}
 {% block page_header_title %}Termos de autorizacao{% endblock %}
 {% block list_page_class %}system-list-page--complete{% endblock %}
@@ -45,8 +46,34 @@
         <div class="system-document-filter__field system-document-filter__field--search">
             <label class="form-label">Busca principal</label>
             <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Servidor, viatura, destino ou contexto" data-list-autosubmit>
+=======
+{% block title %}Termos de autorizacao - Central de Viagens{% endblock %}
+{% block page_title %}Termos de autorizacao{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.termos.documentos.view-mode">
+    <div class="oficios-list-shell system-list-shell">
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+        <div class="system-list-header__content">
+            <div class="system-list-header__copy">
+                <div class="system-list-header__intro">
+                    <h1 class="system-list-header__title">Lista de termos</h1>
+                </div>
+            </div>
+            <div class="system-list-header__controls">
+                {% include 'includes/list/mode_badge.html' with mode='complete' %}
+                <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de termos">
+                    <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
+                    <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
+                </div>
+                <div class="system-list-header__actions-group">
+                    <a href="{{ termo_novo_url }}" class="btn btn-primary system-list-action-btn">Novo termo</a>
+                </div>
+            </div>
+>>>>>>> theirs
         </div>
 
+<<<<<<< ours
         <div class="system-document-filter__field system-document-filter__field--medium">
             <label class="form-label">Evento</label>
             <select name="evento_id" data-list-autosubmit>
@@ -109,6 +136,116 @@
     <div class="system-document-filter__footer">
         <div class="system-document-filter__footer-meta">
             <span class="system-document-filter__result">{{ page_obj.paginator.count }} termo(s) encontrado(s)</span>
+=======
+    <div class="card filter-card system-filter-card">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
+                <div class="col-12 col-xl-3">
+                    <label class="form-label small text-muted">Busca ampla</label>
+                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Servidor, viatura, destino ou contexto" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Evento</label>
+                    <select name="evento_id" data-list-autosubmit>
+                        <option value="">Todos</option>
+                        {% for evento in eventos_choices %}
+                        <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Oficio</label>
+                    <select name="oficio_id" data-list-autosubmit>
+                        <option value="">Todos</option>
+                        {% for oficio in oficios_choices %}
+                        <option value="{{ oficio.pk }}" {% if filters.oficio_id == oficio.pk|stringformat:"s" %}selected{% endif %}>{{ oficio.numero_formatado }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Modelo</label>
+                    <select name="modo_geracao" data-list-autosubmit>
+                        <option value="">Todos</option>
+                        {% for value, label in modo_choices %}
+                        <option value="{{ value }}" {% if filters.modo_geracao == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-1">
+                    <label class="form-label small text-muted">Status</label>
+                    <select name="status" data-list-autosubmit>
+                        <option value="">Todos</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-1">
+                    <label class="form-label small text-muted">Ordenar</label>
+                    <select name="order_by" data-list-autosubmit>
+                        {% for value, label in order_by_choices %}
+                        <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-1">
+                    <label class="form-label small text-muted">Direção</label>
+                    <select name="order_dir" data-list-autosubmit>
+                        {% for value, label in order_dir_choices %}
+                        <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Data inicial</label>
+                    <input type="date" class="form-control form-control-sm" name="date_from" value="{{ filters.date_from }}" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Data final</label>
+                    <input type="date" class="form-control form-control-sm" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+                    <a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div data-list-live-region>
+    <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de termos">
+        <div class="table-responsive">
+            <table class="table table-hover system-list-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Termo</th>
+                        <th>Servidor</th>
+                        <th>Destino</th>
+                        <th>Atualizado</th>
+                        <th class="text-end">Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for termo in object_list %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ termo.numero_formatado }}</div>
+                            <div class="small text-muted">{{ termo.context_display }}</div>
+                        </td>
+                        <td>{{ termo.servidor_resumo }}</td>
+                        <td>{{ termo.destino_resumo }}</td>
+                        <td>{{ termo.updated_at|date:"d/m/Y H:i" }}</td>
+                        <td class="text-end">
+                            <a href="{{ termo.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                            <a href="{{ termo.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted py-5">Nenhum termo encontrado com os filtros atuais.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+>>>>>>> theirs
         </div>
         <div class="system-document-filter__actions">
             <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
@@ -220,7 +357,18 @@
                     </div>
                 </section>
             </div>
+<<<<<<< ours
             {% endif %}
+=======
+        </article>
+        {% empty %}
+        <div class="oficios-table-panel__empty">Nenhum termo encontrado com os filtros atuais.</div>
+        {% endfor %}
+    </section>
+
+    {% include 'includes/pagination.html' %}
+    </div>
+>>>>>>> theirs
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">

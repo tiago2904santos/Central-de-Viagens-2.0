@@ -1,6 +1,7 @@
 {% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
+<<<<<<< ours
 {% block page_title_block %}Eventos{% endblock %}
 {% block page_header_title %}Eventos{% endblock %}
 {% block list_page_class %}system-list-page--complete{% endblock %}
@@ -103,6 +104,19 @@
                     <div class="documento-cascade-card__title-row">
                         <h2 class="documento-cascade-card__title">{{ obj.titulo|default:"(sem titulo)" }}</h2>
                         <span class="badge status-evento status-{{ obj.status }}">{{ obj.get_status_display }}</span>
+=======
+{% block title %}Eventos — Central de Viagens{% endblock %}
+{% block page_title %}Eventos{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root>
+    <div class="oficios-list-shell system-list-shell">
+        <div class="page-header-cadastro system-list-header system-list-header--standard">
+            <div class="system-list-header__content">
+                <div class="system-list-header__copy">
+                    <div class="system-list-header__intro">
+                        <h1 class="system-list-header__title">Eventos</h1>
+>>>>>>> theirs
                     </div>
                     <p class="documento-cascade-card__subtitle">{{ obj.tipos_display }}</p>
                 </div>
@@ -113,10 +127,19 @@
                 </div>
             </div>
 
+<<<<<<< ours
             <div class="documento-cascade-meta-grid">
                 <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
                     <span class="documento-cascade-meta-item__label">Destino</span>
                     <strong class="documento-cascade-meta-item__value">{{ obj.destinos_display }}</strong>
+=======
+        <div class="card filter-card system-filter-card">
+            <div class="card-body py-3">
+                <form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small text-muted">Buscar por título</label>
+                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Titulo do evento" value="{{ form_filter.q }}" data-list-autosubmit>
+>>>>>>> theirs
                 </div>
                 <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
                     <span class="documento-cascade-meta-item__label">Periodo</span>
@@ -126,14 +149,63 @@
                     <span class="documento-cascade-meta-item__label">Cascata documental</span>
                     <strong class="documento-cascade-meta-item__value">{{ obj.document_counts_display }}</strong>
                 </div>
+<<<<<<< ours
+=======
+                <div class="col-12 col-xl-3">
+                    <div class="system-sort-row">
+                        <div>
+                            <label class="form-label small text-muted">Ordenar por</label>
+                            <select name="order_by" data-list-autosubmit>
+                                {% for key, label in order_by_choices %}
+                                <option value="{{ key }}" {% if form_filter.order_by == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small text-muted">Direção</label>
+                            <select name="order_dir" data-list-autosubmit>
+                                {% for key, label in order_dir_choices %}
+                                <option value="{{ key }}" {% if form_filter.order_dir == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Data inicial</label>
+                    <input type="date" name="date_from" class="form-control form-control-sm" value="{{ form_filter.date_from }}" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Data final</label>
+                    <input type="date" name="date_to" class="form-control form-control-sm" value="{{ form_filter.date_to }}" data-list-autosubmit>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+                    <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+                </div>
+                </form>
+>>>>>>> theirs
             </div>
 
+<<<<<<< ours
             <div class="documento-cascade-block-grid documento-cascade-block-grid--triple">
                 {% for block in obj.document_blocks %}
                 <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
                     <div class="oficio-list-subcard__header">
                         <div>
                             <p class="oficio-list-subcard__subtitle">{{ block.count_label }}</p>
+=======
+        <div data-list-live-region>
+        <section class="documento-cascade-grid" aria-label="Lista de eventos">
+        {% for obj in object_list %}
+        <article class="oficio-list-card documento-cascade-card {{ obj.card_theme_class }}" id="evento-card-{{ obj.pk }}">
+            <div class="oficio-list-rich-layout">
+                <div class="oficio-list-card__header">
+                    <div class="documento-cascade-card__intro documento-cascade-card__intro--header">
+                        <div class="documento-cascade-card__title-row">
+                            <h2 class="documento-cascade-card__title">{{ obj.titulo|default:"(sem título)" }}</h2>
+                            <span class="badge status-evento status-{{ obj.status }}">{{ obj.get_status_display }}</span>
+>>>>>>> theirs
                         </div>
                     </div>
                     <div class="oficio-list-subcard__body">
@@ -165,6 +237,7 @@
                 {% endfor %}
             </div>
 
+<<<<<<< ours
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">
                     {% for action in obj.quick_actions %}
@@ -188,6 +261,14 @@
     <div class="oficios-table-panel__empty">Nenhum evento encontrado.</div>
     {% endfor %}
 </section>
+=======
+        {% include 'includes/pagination.html' %}
+        </div>
+
+        {% include 'includes/list/floating_new_button.html' with url=evento_novo_url label='Novo evento' icon='bi-plus-lg' post_action=True %}
+    </div>
+</div>
+>>>>>>> theirs
 {% endblock %}
 
 {% block page_pagination %}{% include 'includes/pagination.html' %}{% endblock %}

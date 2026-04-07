@@ -1,4 +1,9 @@
+<<<<<<< ours
 {% extends 'includes/list/document_list_base.html' %}
+=======
+{% extends 'base.html' %}
+{% load static %}
+>>>>>>> theirs
 
 {% block list_page_class %}system-list-page--simple{% endblock %}
 {% block page_title_block %}Modelos de motivo{% endblock %}
@@ -21,6 +26,7 @@
 <a href="{% url 'eventos:oficio-step1' volta_step1 %}" class="btn btn-outline-secondary system-list-action-btn">Voltar ao oficio</a>
 {% endif %}
 {% url 'eventos:modelos-motivo-cadastrar' as modelo_motivo_novo_url %}
+<<<<<<< ours
 <a href="{{ modelo_motivo_novo_url }}" class="btn btn-primary system-list-action-btn">Cadastrar modelo</a>
 {% endblock %}
 
@@ -48,6 +54,16 @@
                 <span class="system-document-filter__info-label">Fluxo</span>
                 <span class="system-document-filter__info-value">{% if volta_step1 %}Retorno ao oficio{% else %}Gestao geral{% endif %}</span>
                 <p class="system-document-filter__info-text">Quando aberta pelo wizard, a tela preserva o retorno direto para o Step 1 do oficio.</p>
+=======
+<div class="container-fluid py-4 system-list-page system-list-page--simple" data-list-view-root>
+    <div class="system-list-shell">
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+        <div class="system-list-header__content">
+            <div class="system-list-header__copy">
+                <div class="system-list-header__intro">
+                    <h1 class="system-list-header__title">Modelos de motivo</h1>
+                </div>
+>>>>>>> theirs
             </div>
             <div class="system-document-filter__info-card">
                 <span class="system-document-filter__info-label">Operacao</span>
@@ -59,6 +75,7 @@
 </section>
 {% endblock %}
 
+<<<<<<< ours
 {% block page_result_content %}
 {% url 'eventos:modelos-motivo-cadastrar' as modelo_motivo_novo_url %}
 <div class="system-list-table-wrap">
@@ -92,11 +109,72 @@
                 {% endfor %}
             </tbody>
         </table>
+=======
+    <div class="card filter-card system-filter-card">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
+                {% if volta_step1 %}<input type="hidden" name="volta_step1" value="{{ volta_step1 }}">{% endif %}
+                <div class="col-12 col-md-6">
+                    <label class="form-label small text-muted">Busca</label>
+                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Nome ou texto do modelo" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted">Data inicial</label>
+                    <input type="date" name="date_from" class="form-control form-control-sm" value="{{ filters.date_from }}" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted">Data final</label>
+                    <input type="date" name="date_to" class="form-control form-control-sm" value="{{ filters.date_to }}" data-list-autosubmit>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="system-list-table-wrap">
+        <div class="table-responsive">
+            <table class="table table-hover table-cadastro mb-0 system-list-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Padrão</th>
+                        <th width="320" class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obj in object_list %}
+                    <tr>
+                        <td>{{ obj.nome }}</td>
+                        <td>{% if obj.padrao %}<span class="badge bg-primary">Padrão</span>{% else %}—{% endif %}</td>
+                        <td class="text-end">
+                            {% if not obj.padrao %}
+                            <form method="post" action="{% url 'eventos:modelos-motivo-definir-padrao' obj.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1 }}{% endif %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Definir como padrão</button>
+                            </form>
+                            {% endif %}
+                            <a href="{% url 'eventos:modelos-motivo-editar' obj.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1 }}{% endif %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <a href="{% url 'eventos:modelos-motivo-excluir' obj.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1 }}{% endif %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted py-4">Nenhum modelo de motivo cadastrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% include 'includes/list/floating_new_button.html' with url=modelo_motivo_novo_url label='Cadastrar modelo' icon='bi-plus-lg' %}
+>>>>>>> theirs
     </div>
 </div>
 {% endblock %}
 
+<<<<<<< ours
 {% block list_floating_actions %}
 {% url 'eventos:modelos-motivo-cadastrar' as modelo_motivo_novo_url %}
 {% include 'includes/list/floating_new_button.html' with url=modelo_motivo_novo_url label='Cadastrar modelo' icon='bi-plus-lg' %}
+=======
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
+>>>>>>> theirs
 {% endblock %}

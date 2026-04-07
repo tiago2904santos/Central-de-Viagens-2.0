@@ -1836,6 +1836,8 @@ def roteiro_global_lista(request):
         'status': _clean(request.GET.get('status')),
         'evento_id': _clean(request.GET.get('evento_id')),
         'tipo': _clean(request.GET.get('tipo')).upper(),
+        'date_from': _clean(request.GET.get('date_from')),
+        'date_to': _clean(request.GET.get('date_to')),
         'order_by': _clean(request.GET.get('order_by')),
         'order_dir': _clean(request.GET.get('order_dir')),
     }
@@ -1860,6 +1862,7 @@ def roteiro_global_lista(request):
         queryset = queryset.filter(tipo=RoteiroEvento.TIPO_EVENTO)
     if filters['evento_id'].isdigit():
         queryset = queryset.filter(evento_id=int(filters['evento_id']))
+    queryset = _apply_date_range_filter(queryset, field_name='updated_at', filters=filters)
 
     roteiro_order_map = {
         'updated_at': 'updated_at',
@@ -1935,9 +1938,31 @@ def _base_documento_filters(request):
         'evento_id': _clean(request.GET.get('evento_id')),
         'oficio_id': _clean(request.GET.get('oficio_id')),
         'status': _clean(request.GET.get('status')),
+        'date_from': _clean(request.GET.get('date_from')),
+        'date_to': _clean(request.GET.get('date_to')),
         'order_by': _clean(request.GET.get('order_by')),
         'order_dir': _clean(request.GET.get('order_dir')),
     }
+
+
+def _parse_iso_date(value):
+    raw = _clean(value)
+    if not raw:
+        return None
+    try:
+        return datetime.strptime(raw, '%Y-%m-%d').date()
+    except (TypeError, ValueError):
+        return None
+
+
+def _apply_date_range_filter(queryset, *, field_name, filters):
+    date_from = _parse_iso_date(filters.get('date_from'))
+    date_to = _parse_iso_date(filters.get('date_to'))
+    if date_from:
+        queryset = queryset.filter(**{f'{field_name}__date__gte': date_from})
+    if date_to:
+        queryset = queryset.filter(**{f'{field_name}__date__lte': date_to})
+    return queryset
 
 
 def _format_periodo_curto(data_inicio, data_fim):
@@ -2923,6 +2948,7 @@ def planos_trabalho_global(request):
         queryset = queryset.filter(Q(oficio_id=int(filters['oficio_id'])) | Q(oficios__id=int(filters['oficio_id'])))
     if filters['status']:
         queryset = queryset.filter(status=filters['status'])
+    queryset = _apply_date_range_filter(queryset, field_name='updated_at', filters=filters)
 
     plano_order_map = {
         'numero': 'numero',
@@ -3272,6 +3298,7 @@ def ordens_servico_global(request):
         queryset = queryset.filter(oficio_id=int(filters['oficio_id']))
     if filters['status']:
         queryset = queryset.filter(status=filters['status'])
+    queryset = _apply_date_range_filter(queryset, field_name='updated_at', filters=filters)
 
     ordem_order_map = {
         'updated_at': 'updated_at',
@@ -3488,6 +3515,8 @@ def justificativas_global(request):
     filters = {
         'q': _clean(request.GET.get('q')),
         'oficio_id': _clean(request.GET.get('oficio_id')),
+        'date_from': _clean(request.GET.get('date_from')),
+        'date_to': _clean(request.GET.get('date_to')),
         'order_by': _clean(request.GET.get('order_by')),
         'order_dir': _clean(request.GET.get('order_dir')),
     }
@@ -3507,6 +3536,7 @@ def justificativas_global(request):
         ).distinct()
     if filters['oficio_id'].isdigit():
         queryset = queryset.filter(oficio_id=int(filters['oficio_id']))
+    queryset = _apply_date_range_filter(queryset, field_name='updated_at', filters=filters)
 
     justificativa_order_map = {
         'numero': 'pk',
@@ -3854,6 +3884,8 @@ def _build_termo_filters(request):
         'oficio_id': _clean(request.GET.get('oficio_id')),
         'status': _clean(request.GET.get('status')),
         'modo_geracao': _clean(request.GET.get('modo_geracao')),
+        'date_from': _clean(request.GET.get('date_from')),
+        'date_to': _clean(request.GET.get('date_to')),
         'order_by': _clean(request.GET.get('order_by')),
         'order_dir': _clean(request.GET.get('order_dir')),
     }
@@ -4142,6 +4174,7 @@ def termos_global(request):
         queryset = queryset.filter(status=filters['status'])
     if filters['modo_geracao']:
         queryset = queryset.filter(modo_geracao=filters['modo_geracao'])
+    queryset = _apply_date_range_filter(queryset, field_name='updated_at', filters=filters)
 
     termo_order_map = {
         'numero': 'pk',
@@ -4380,4 +4413,3 @@ def termo_autorizacao_download(request, pk, formato):
         f'attachment; filename="{_build_saved_termo_filename(obj, formato)}"'
     )
     return response
-

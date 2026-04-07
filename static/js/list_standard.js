@@ -54,18 +54,79 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!form) {
             return;
         }
-
+        var liveRegion = root.querySelector('[data-list-live-region]');
+        var timerId = null;
+        var inflightController = null;
+        var lastQuery = window.location.search;
         var fields = Array.prototype.slice.call(
             form.querySelectorAll('[data-list-autosubmit], [data-oficios-autosubmit]')
         );
-        var timerId = null;
+
+        function rehydrateUi() {
+            if (window.OficioSelectPicker && typeof window.OficioSelectPicker.refresh === 'function') {
+                window.OficioSelectPicker.refresh(root);
+            }
+        }
+
+        function submitWithAjax() {
+            if (!liveRegion) {
+                form.submit();
+                return;
+            }
+            var active = document.activeElement;
+            var activeName = active && active.getAttribute ? active.getAttribute('name') : '';
+            var start = active && typeof active.selectionStart === 'number' ? active.selectionStart : null;
+            var end = active && typeof active.selectionEnd === 'number' ? active.selectionEnd : null;
+            var params = new URLSearchParams(new FormData(form));
+            var query = params.toString();
+            var nextUrl = window.location.pathname + (query ? ('?' + query) : '');
+            if (query === lastQuery.replace(/^\?/, '')) {
+                return;
+            }
+            lastQuery = query ? ('?' + query) : '';
+            if (inflightController) {
+                inflightController.abort();
+            }
+            inflightController = new AbortController();
+            fetch(nextUrl, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                signal: inflightController.signal
+            })
+                .then(function(response) { return response.text(); })
+                .then(function(html) {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+                    var nextRegion = doc.querySelector('[data-list-live-region]');
+                    if (!nextRegion) {
+                        window.location.href = nextUrl;
+                        return;
+                    }
+                    liveRegion.innerHTML = nextRegion.innerHTML;
+                    window.history.replaceState({}, '', nextUrl);
+                    rehydrateUi();
+                    if (activeName) {
+                        var nextField = form.querySelector('[name="' + CSS.escape(activeName) + '"]');
+                        if (nextField && typeof nextField.focus === 'function') {
+                            nextField.focus({ preventScroll: true });
+                            if (start !== null && end !== null && typeof nextField.setSelectionRange === 'function') {
+                                nextField.setSelectionRange(start, end);
+                            }
+                        }
+                    }
+                })
+                .catch(function(error) {
+                    if (error && error.name === 'AbortError') {
+                        return;
+                    }
+                });
+        }
 
         function submitNow() {
             if (timerId) {
                 window.clearTimeout(timerId);
                 timerId = null;
             }
-            form.submit();
+            submitWithAjax();
         }
 
         function scheduleSubmit(delay) {
@@ -80,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var type = (field.getAttribute('type') || '').toLowerCase();
             if (tagName === 'input' && (type === 'text' || type === 'search')) {
                 field.addEventListener('input', function() {
-                    scheduleSubmit(280);
+                    scheduleSubmit(420);
                 });
                 field.addEventListener('keydown', function(event) {
                     if (event.key === 'Enter') {

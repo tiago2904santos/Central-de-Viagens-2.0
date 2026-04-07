@@ -735,6 +735,8 @@ def evento_lista(request):
         ),
     ).all()
     q = request.GET.get('q', '').strip()
+    date_from = (request.GET.get('date_from') or '').strip()
+    date_to = (request.GET.get('date_to') or '').strip()
     order_by = (request.GET.get('order_by') or 'data_inicio').strip().lower()
     order_dir = (request.GET.get('order_dir') or 'desc').strip().lower()
     order_by_map = {
@@ -756,6 +758,16 @@ def evento_lista(request):
     tipo_id = request.GET.get('tipo_id', '')
     if tipo_id:
         qs = qs.filter(tipos_demanda__id=tipo_id)
+    if date_from:
+        try:
+            qs = qs.filter(updated_at__date__gte=datetime.strptime(date_from, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            qs = qs.filter(updated_at__date__lte=datetime.strptime(date_to, '%Y-%m-%d').date())
+        except ValueError:
+            pass
     object_list = list(qs.distinct().order_by(order_field, '-created_at'))
     _decorate_evento_list_items(object_list)
     context = {
@@ -764,6 +776,8 @@ def evento_lista(request):
             'q': q,
             'status': status,
             'tipo_id': tipo_id,
+            'date_from': date_from,
+            'date_to': date_to,
             'order_by': order_by,
             'order_dir': order_dir,
         },
@@ -1682,10 +1696,27 @@ def _get_safe_next_url(request, default_url=''):
 def modelos_motivo_lista(request):
     """Lista de modelos de motivo para uso no Step 1 do Ofício."""
     volta_step1 = request.GET.get('volta_step1', '')
-    lista = ModeloMotivoViagem.objects.all().order_by('nome')
+    q = (request.GET.get('q') or '').strip()
+    date_from = (request.GET.get('date_from') or '').strip()
+    date_to = (request.GET.get('date_to') or '').strip()
+    lista = ModeloMotivoViagem.objects.all()
+    if q:
+        lista = lista.filter(Q(nome__icontains=q) | Q(texto__icontains=q))
+    if date_from:
+        try:
+            lista = lista.filter(updated_at__date__gte=datetime.strptime(date_from, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            lista = lista.filter(updated_at__date__lte=datetime.strptime(date_to, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+    lista = lista.order_by('nome')
     context = {
         'object_list': lista,
         'volta_step1': volta_step1,
+        'filters': {'q': q, 'date_from': date_from, 'date_to': date_to},
         'hide_page_header': True,
     }
     return render(request, 'eventos/modelos_motivo/lista.html', context)
@@ -1787,11 +1818,28 @@ def _oficio_justificativa_url(oficio, next_url=''):
 def modelos_justificativa_lista(request):
     volta_justificativa = request.GET.get('volta_justificativa', '')
     next_url = _get_safe_next_url(request, '')
-    lista = ModeloJustificativa.objects.filter(ativo=True).order_by('nome')
+    q = (request.GET.get('q') or '').strip()
+    date_from = (request.GET.get('date_from') or '').strip()
+    date_to = (request.GET.get('date_to') or '').strip()
+    lista = ModeloJustificativa.objects.filter(ativo=True)
+    if q:
+        lista = lista.filter(Q(nome__icontains=q) | Q(texto__icontains=q))
+    if date_from:
+        try:
+            lista = lista.filter(updated_at__date__gte=datetime.strptime(date_from, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            lista = lista.filter(updated_at__date__lte=datetime.strptime(date_to, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+    lista = lista.order_by('nome')
     context = {
         'object_list': lista,
         'volta_justificativa': volta_justificativa,
         'next_url': next_url,
+        'filters': {'q': q, 'date_from': date_from, 'date_to': date_to},
     }
     return render(request, 'eventos/modelos_justificativa/lista.html', context)
 
@@ -6386,4 +6434,3 @@ def estimar_km_por_cidades(request):
         'serra_presente': out.get('serra_presente', False),
         'erro': out['erro'],
     })
-

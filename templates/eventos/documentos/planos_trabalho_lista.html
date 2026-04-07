@@ -1,6 +1,7 @@
 {% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
+<<<<<<< ours
 {% block page_title_block %}Planos de trabalho{% endblock %}
 {% block page_header_title %}Planos de trabalho{% endblock %}
 {% block list_page_class %}system-list-page--complete{% endblock %}
@@ -95,11 +96,103 @@
         <div class="system-document-filter__actions">
             <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
             <a href="{% url 'eventos:documentos-planos-trabalho' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+=======
+{% block title %}Planos de trabalho - Central de Viagens{% endblock %}
+{% block page_title %}Planos de trabalho{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root>
+    <div class="oficios-list-shell system-list-shell">
+    <div class="page-header-cadastro system-list-header system-list-header--standard">
+        <div class="system-list-header__content">
+            <div class="system-list-header__copy">
+                <div class="system-list-header__intro">
+                    <h1 class="system-list-header__title">Planos de trabalho</h1>
+                </div>
+            </div>
+            <div class="system-list-header__controls">
+                {% include 'includes/list/mode_badge.html' with mode='complete' %}
+                <div class="system-list-header__actions-group">
+                    <a href="{{ plano_novo_url }}" class="btn btn-primary system-list-action-btn">Novo plano de trabalho</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card filter-card system-filter-card">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
+                <div class="col-12 col-xl-4">
+                    <label class="form-label small text-muted">Busca ampla</label>
+                    <input class="form-control form-control-sm" type="text" name="q" placeholder="Objetivo, observacoes, evento ou Oficio" value="{{ filters.q }}" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Evento</label>
+                    <select name="evento_id" data-list-autosubmit>
+                        <option value="">Todos</option>
+                        {% for evento in eventos_choices %}
+                        <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:'s' %}selected{% endif %}>{{ evento.titulo|default:'(sem título)' }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Ofício</label>
+                    <select name="oficio_id" data-list-autosubmit>
+                        <option value="">Todos</option>
+                        {% for oficio in oficios_choices %}
+                        <option value="{{ oficio.pk }}" {% if filters.oficio_id == oficio.pk|stringformat:'s' %}selected{% endif %}>{{ oficio.numero_formatado }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Status</label>
+                    <select name="status" data-list-autosubmit>
+                        <option value="">Todos</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Data inicial</label>
+                    <input type="date" class="form-control form-control-sm" name="date_from" value="{{ filters.date_from }}" data-list-autosubmit>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small text-muted">Data final</label>
+                    <input type="date" class="form-control form-control-sm" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
+                </div>
+                <div class="col-12 col-xl-3">
+                    <div class="system-sort-row">
+                        <div>
+                            <label class="form-label small text-muted">Ordenar por</label>
+                            <select name="order_by" data-list-autosubmit>
+                                {% for key, label in order_by_choices %}
+                                <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small text-muted">Direção</label>
+                            <select name="order_dir" data-list-autosubmit>
+                                {% for key, label in order_dir_choices %}
+                                <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+                    <a href="{% url 'eventos:documentos-planos-trabalho' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+                </div>
+            </form>
+>>>>>>> theirs
         </div>
     </div>
 </form>
 {% endblock %}
 
+<<<<<<< ours
 {% block page_result_content %}
 <section class="documento-cascade-grid" aria-label="Lista de planos de trabalho">
     {% for object in object_list %}
@@ -113,6 +206,27 @@
                         <span class="oficio-list-chip__value">{{ chip.value }}</span>
                     </span>
                     {% endfor %}
+=======
+    <div data-list-live-region>
+    <section class="documento-cascade-grid" aria-label="Lista de planos de trabalho">
+        {% for object in object_list %}
+        <article class="oficio-list-card plano-trabalho-list-card {{ object.card_theme_class }}" id="plano-card-{{ object.pk }}">
+            <div class="oficio-list-rich-layout">
+                <div class="oficio-list-card__header">
+                    <div class="oficio-list-chip-list oficio-list-chip-list--meta oficio-list-chip-list--pt">
+                        {% for chip in object.header_chips %}
+                            <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature {{ chip.css_class }}">
+                                <span class="oficio-list-chip__label">{{ chip.label }}</span>
+                                <span class="oficio-list-chip__value">{{ chip.value }}</span>
+                            </span>
+                        {% endfor %}
+                    </div>
+                    <div class="oficio-list-card__header-status">
+                        <span class="oficio-list-badge {{ object.status_meta.badge_css_class }}">
+                            <span>{{ object.status_meta.label }}</span>
+                        </span>
+                    </div>
+>>>>>>> theirs
                 </div>
                 <div class="oficio-list-card__header-status">
                     <span class="oficio-list-badge {{ object.status_meta.badge_css_class }}">
@@ -192,6 +306,7 @@
                 </section>
             </div>
 
+<<<<<<< ours
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">
                     <a href="{{ object.open_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir plano de trabalho">
@@ -222,6 +337,14 @@
     <div class="oficios-table-panel__empty">Nenhum plano de trabalho encontrado com os filtros atuais.</div>
     {% endfor %}
 </section>
+=======
+    {% include 'includes/pagination.html' %}
+    </div>
+
+    {% include 'includes/list/floating_new_button.html' with url=plano_novo_url label='Novo plano de trabalho' icon='bi-plus-lg' %}
+    </div>
+</div>
+>>>>>>> theirs
 {% endblock %}
 
 {% block page_pagination %}{% include 'includes/pagination.html' %}{% endblock %}
