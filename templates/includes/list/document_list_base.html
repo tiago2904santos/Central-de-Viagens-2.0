@@ -5,7 +5,7 @@
 {% block page_title %}{% block page_header_title %}Lista{% endblock %}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 system-list-page {% block list_page_class %}system-list-page--complete{% endblock %}" {% block list_page_attributes %}{% endblock %}>
+<div class="container-fluid py-4 system-list-page {% block list_page_class %}system-list-page--complete{% endblock %}" {% block list_page_attributes %}data-list-view-root{% endblock %}>
     <div class="{% block list_shell_class %}oficios-list-shell system-list-shell{% endblock %}">
         <section class="system-document-top">
             <div class="page-header-cadastro system-list-header system-list-header--standard">
@@ -33,44 +33,63 @@
             <section class="system-document-filter" aria-label="{% block list_filter_aria_label %}Filtros da lista{% endblock %}">
                 <div class="system-document-filter__header">
                     <div class="system-document-filter__heading">
-                        <span class="system-document-filter__eyebrow">{% block list_filter_eyebrow %}Padrao documental{% endblock %}</span>
-                        <h2 class="system-document-filter__title">{% block list_filter_title %}Refinar listagem{% endblock %}</h2>
-                        {% block list_filter_description %}
-                        <p class="system-document-filter__description">Busca, recortes e ordenacao no mesmo bloco visual padronizado.</p>
-                        {% endblock %}
-                    </div>
-                    <div class="system-document-filter__summary">
-                        {% block list_filter_summary %}
-                        <div class="system-document-filter__summary-pill">
-                            {% if page_obj %}
-                            {{ page_obj.paginator.count }} registros
-                            {% else %}
-                            {{ object_list|length }} registros
-                            {% endif %}
-                        </div>
-                        {% endblock %}
+                        <h2 class="system-document-filter__title">{% block list_filter_title %}Filtros{% endblock %}</h2>
+                        {% block list_filter_description %}{% endblock %}
                     </div>
                 </div>
                 <div class="system-document-filter__body">
-                    {% block list_toolbar %}{% endblock %}
+                    {% block list_toolbar %}
+                    <form
+                        method="get"
+                        class="system-document-filter-form"
+                        data-list-autosubmit-form
+                        data-list-autosubmit-delay="{% block list_autosubmit_delay %}500{% endblock %}"
+                    >
+                        {% block list_filter_hidden_fields %}{% endblock %}
+
+                        <div class="system-document-filter__grid system-document-filter__grid--primary">
+                            {% block list_filter_primary_fields %}{% endblock %}
+                        </div>
+
+                        {% block list_filter_clusters %}{% endblock %}
+
+                        <div class="system-document-filter__grid system-document-filter__grid--secondary">
+                            {% block list_filter_secondary_fields %}{% endblock %}
+                            <div class="system-document-filter__actions system-document-filter__actions--inline">
+                                {% block list_filter_actions %}
+                                <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+                                <a href="{{ clear_filters_url|default:request.path }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+                                {% endblock %}
+                            </div>
+                        </div>
+
+                        {% block list_filter_status %}
+                        <div class="system-document-filter__status" aria-live="polite">
+                            A lista e atualizada automaticamente apos uma breve pausa na digitacao.
+                        </div>
+                        {% endblock %}
+                    </form>
+                    {% endblock %}
                 </div>
             </section>
             {% endblock %}
         </section>
 
         <div class="system-list-content {% block list_content_class %}{% endblock %}">
-            {% block page_result_content %}
-            <div class="alert alert-info">
-                Configure o bloco <code>page_result_content</code> no template.
-            </div>
-            {% endblock %}
-        </div>
+            <div data-list-live-region>
+                {% block page_result_content %}
+                <div class="alert alert-info">
+                    Configure o bloco <code>page_result_content</code> no template.
+                </div>
+                {% endblock %}
 
-        {% block page_pagination %}
-        {% if page_obj %}
-        {% include 'includes/pagination.html' %}
-        {% endif %}
-        {% endblock %}
+                {% block page_pagination %}
+                {% if page_obj %}
+                {% include 'includes/pagination.html' %}
+                {% endif %}
+                {% endblock %}
+            </div>
+        </div>
 
         {% block list_floating_actions %}{% endblock %}
     </div>

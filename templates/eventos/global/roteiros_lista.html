@@ -4,29 +4,7 @@
 {% block list_page_class %}system-list-page--simple{% endblock %}
 {% block page_title_block %}Roteiros{% endblock %}
 {% block page_header_title %}Roteiros{% endblock %}
-
-<<<<<<< ours
-<<<<<<< ours
-{% block list_title %}Lista global de roteiros{% endblock %}
-{% block list_subtitle %}<p class="system-list-header__subtitle">Biblioteca operacional dos roteiros criados na etapa 2, com foco em evento, status e uso documental.</p>{% endblock %}
-
-{% block list_meta %}
-<div class="system-list-header__meta">
-    <span class="system-list-header__meta-item">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros</span>
-    <span class="system-list-header__meta-item">{% if selected_event %}Evento filtrado: {{ selected_event.titulo|default:"(sem titulo)" }}{% else %}Visao global dos roteiros dos eventos{% endif %}</span>
-</div>
-{% endblock %}
-=======
-{% block list_subtitle %}{% endblock %}
-=======
-{% block list_subtitle %}{% endblock %}
-
-{% block list_meta %}{% endblock %}
->>>>>>> theirs
-
-{% block list_meta %}{% endblock %}
->>>>>>> theirs
-
+{% block list_title %}Roteiros{% endblock %}
 {% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='simple' %}{% endblock %}
 
 {% block list_header_actions %}
@@ -43,146 +21,70 @@
 {% endif %}
 {% endblock %}
 
-{% block list_filter_title %}Filtros documentais de roteiros{% endblock %}
+{% block list_filter_primary_fields %}
+<div class="system-document-filter__field system-document-filter__field--search-xl">
+    <label class="form-label">Busca</label>
+    <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Evento, sede ou destino" data-list-autosubmit>
+</div>
 
-{% block list_filter_description %}
-<p class="system-document-filter__description">Busca por destino, evento, status, tipo e ordenacao seguindo o mesmo padrao de composicao das demais listas documentais.</p>
+<div class="system-document-filter__field system-document-filter__field--wide">
+    <label class="form-label">Evento</label>
+    <select name="evento_id" data-list-autosubmit>
+        <option value="">Todos</option>
+        {% for evento in eventos_choices %}
+        <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--medium">
+    <label class="form-label">Status</label>
+    <select name="status" data-list-autosubmit>
+        <option value="">Todos</option>
+        {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--medium">
+    <label class="form-label">Tipo</label>
+    <select name="tipo" data-list-autosubmit>
+        {% for value, label in tipo_choices %}
+        <option value="{{ value }}" {% if filters.tipo|upper == value|upper %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
 {% endblock %}
 
-{% block list_filter_summary %}
-<div class="system-document-filter__summary-pill">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} roteiro(s)</div>
-{% endblock %}
+{% block list_filter_secondary_fields %}
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Data inicial</label>
+    <input type="date" name="date_from" value="{{ filters.date_from }}" class="form-control" data-list-autosubmit>
+</div>
 
-{% block list_toolbar %}
-<<<<<<< ours
-<<<<<<< ours
-<form method="get" class="system-document-filter-form" data-list-autosubmit-form>
-    <div class="system-document-filter__grid">
-        <div class="system-document-filter__field system-document-filter__field--search-xl">
-            <label class="form-label">Busca principal</label>
-            <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Evento, sede ou destino" data-list-autosubmit>
-        </div>
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Data final</label>
+    <input type="date" name="date_to" value="{{ filters.date_to }}" class="form-control" data-list-autosubmit>
+</div>
 
-        <div class="system-document-filter__field system-document-filter__field--wide">
-            <label class="form-label">Evento</label>
-            <select name="evento_id" data-list-autosubmit>
-                <option value="">Todos</option>
-                {% for evento in eventos_choices %}
-                <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
-                {% endfor %}
-            </select>
-        </div>
+<div class="system-document-filter__field system-document-filter__field--wide">
+    <label class="form-label">Ordenar por</label>
+    <select name="order_by" data-list-autosubmit>
+        {% for value, label in order_by_choices %}
+        <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
 
-        <div class="system-document-filter__field system-document-filter__field--compact">
-            <label class="form-label">Status</label>
-            <select name="status" data-list-autosubmit>
-                <option value="">Todos</option>
-                {% for value, label in status_choices %}
-                <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="system-document-filter__field system-document-filter__field--compact">
-            <label class="form-label">Tipo</label>
-            <select name="tipo" data-list-autosubmit>
-                {% for value, label in tipo_choices %}
-                <option value="{{ value }}" {% if filters.tipo|upper == value|upper %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="system-document-filter__field system-document-filter__field--compact">
-            <label class="form-label">Ordenar por</label>
-            <select name="order_by" data-list-autosubmit>
-                {% for value, label in order_by_choices %}
-                <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="system-document-filter__field system-document-filter__field--compact">
-            <label class="form-label">Direcao</label>
-            <select name="order_dir" data-list-autosubmit>
-                {% for value, label in order_dir_choices %}
-                <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
-
-    <div class="system-document-filter__footer">
-        <div class="system-document-filter__footer-meta">
-            <span class="system-document-filter__result">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} roteiro(s) encontrado(s)</span>
-        </div>
-        <div class="system-document-filter__actions">
-            <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-            <a href="{% url 'eventos:roteiros-global' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-        </div>
-=======
-=======
->>>>>>> theirs
-<form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
-    <div class="col-12 col-lg-4">
-        <label class="form-label small text-muted">Busca</label>
-        <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Evento, sede ou destino" data-list-autosubmit>
-    </div>
-    <div class="col-12 col-md-4 col-lg-4">
-        <label class="form-label small text-muted">Evento</label>
-        <select name="evento_id" data-list-autosubmit>
-            <option value="">Todos</option>
-            {% for evento in eventos_choices %}
-            <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-6 col-md-3 col-lg-2">
-        <label class="form-label small text-muted">Status</label>
-        <select name="status" data-list-autosubmit>
-            <option value="">Todos</option>
-            {% for value, label in status_choices %}
-            <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-6 col-md-3 col-lg-2">
-        <label class="form-label small text-muted">Tipo</label>
-        <select name="tipo" data-list-autosubmit>
-            {% for value, label in tipo_choices %}
-            <option value="{{ value }}" {% if filters.tipo|upper == value|upper %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-6 col-md-3 col-lg-2">
-        <label class="form-label small text-muted">Ordenar por</label>
-        <select name="order_by" data-list-autosubmit>
-            {% for value, label in order_by_choices %}
-            <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-6 col-md-3 col-lg-2">
-        <label class="form-label small text-muted">Direcao</label>
-        <select name="order_dir" data-list-autosubmit>
-            {% for value, label in order_dir_choices %}
-            <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-6 col-md-3 col-lg-2">
-        <label class="form-label small text-muted">Data inicial</label>
-        <input type="date" name="date_from" value="{{ filters.date_from }}" class="form-control form-control-sm" data-list-autosubmit>
-    </div>
-    <div class="col-6 col-md-3 col-lg-2">
-        <label class="form-label small text-muted">Data final</label>
-        <input type="date" name="date_to" value="{{ filters.date_to }}" class="form-control form-control-sm" data-list-autosubmit>
-    </div>
-    <div class="col-6 col-md-auto">
-        <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-        <a href="{% url 'eventos:roteiros-global' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
->>>>>>> theirs
-    </div>
-</form>
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Direcao</label>
+    <select name="order_dir" data-list-autosubmit>
+        {% for value, label in order_dir_choices %}
+        <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
 {% endblock %}
 
 {% block page_result_content %}

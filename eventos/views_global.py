@@ -1825,6 +1825,7 @@ def oficio_global_lista(request):
             'order_dir_choices': OFICIO_ORDER_DIR_CHOICES,
             'date_scope_choices': OFICIO_DATE_SCOPE_CHOICES,
             'oficio_novo_url': reverse('eventos:oficio-novo'),
+            'clear_filters_url': reverse('eventos:oficios-global'),
             'hide_page_header': True,
         },
     )
@@ -1928,6 +1929,7 @@ def roteiro_global_lista(request):
             'novo_roteiro_avulso_url': reverse('eventos:roteiro-avulso-cadastrar'),
             'eventos_url': reverse('eventos:lista'),
             'selected_event': selected_event,
+            'clear_filters_url': reverse('eventos:roteiros-global'),
         },
     )
 
@@ -2983,6 +2985,7 @@ def planos_trabalho_global(request):
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
             'plano_novo_url': reverse('eventos:documentos-planos-trabalho-novo'),
+            'clear_filters_url': reverse('eventos:documentos-planos-trabalho'),
         },
     )
 
@@ -3378,6 +3381,7 @@ def ordens_servico_global(request):
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
             'ordem_novo_url': reverse('eventos:documentos-ordens-servico-novo'),
+            'clear_filters_url': reverse('eventos:documentos-ordens-servico'),
         },
     )
 
@@ -3587,6 +3591,7 @@ def justificativas_global(request):
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
             'justificativa_novo_url': reverse('eventos:documentos-justificativas-nova'),
+            'clear_filters_url': reverse('eventos:documentos-justificativas'),
         },
     )
 
@@ -4267,6 +4272,7 @@ def termos_global(request):
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
             'termo_novo_url': reverse('eventos:documentos-termos-novo'),
+            'clear_filters_url': reverse('eventos:documentos-termos'),
         },
     )
 

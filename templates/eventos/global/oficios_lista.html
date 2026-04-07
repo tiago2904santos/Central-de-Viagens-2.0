@@ -7,13 +7,6 @@
 {% block list_page_class %}oficios-list-page system-list-page--complete{% endblock %}
 {% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.oficios.view-mode"{% endblock %}
 {% block list_title %}Oficios salvos{% endblock %}
-{% block list_subtitle %}<p class="system-list-header__subtitle">Acervo documental consolidado com leitura rapida, situacao da viagem e pendencias de termos e justificativas.</p>{% endblock %}
-{% block list_meta %}
-<div class="system-list-header__meta">
-    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
-    <span class="system-list-header__meta-item">Biblioteca operacional com contexto, protocolo e fluxo documental</span>
-</div>
-{% endblock %}
 {% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
 {% block list_header_aux_controls %}
 <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de oficios">
@@ -38,140 +31,120 @@
 {% block list_header_actions %}
 <a href="{{ oficio_novo_url }}" class="btn btn-primary system-list-action-btn">Novo oficio</a>
 {% endblock %}
-{% block list_filter_title %}Filtros documentais de oficios{% endblock %}
-{% block list_filter_description %}
-<p class="system-document-filter__description">Busca ampla, status, situacao da viagem, presenca de anexos e recorte por periodo dentro do mesmo padrao aplicado aos demais documentos.</p>
+{% block list_filter_primary_fields %}
+<div class="system-document-filter__field system-document-filter__field--search-xl">
+    <label for="oficios-search" class="form-label">Busca</label>
+    <input
+        id="oficios-search"
+        type="text"
+        name="q"
+        class="form-control"
+        value="{{ filters.q }}"
+        placeholder="Oficio, protocolo, destino ou servidor"
+        data-list-autosubmit
+    >
+</div>
 {% endblock %}
-{% block list_filter_summary %}
-<div class="system-document-filter__summary-pill">{{ page_obj.paginator.count }} oficio(s)</div>
+
+{% block list_filter_clusters %}
+<div class="system-document-filter__clusters">
+    <section class="system-document-filter__cluster">
+        <div class="system-document-filter__cluster-label">Status do oficio</div>
+        <div class="system-document-filter__chips">
+            {% for key, label in status_choices %}
+            <label class="system-document-filter__chip">
+                <input type="checkbox" name="status" value="{{ key }}" {% if key in filters.status %}checked{% endif %} data-list-autosubmit>
+                <span>{{ label }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="system-document-filter__cluster">
+        <div class="system-document-filter__cluster-label">Situacao da viagem</div>
+        <div class="system-document-filter__chips">
+            {% for key, label in viagem_status_choices %}
+            <label class="system-document-filter__chip">
+                <input type="checkbox" name="viagem_status" value="{{ key }}" {% if key in filters.viagem_status %}checked{% endif %} data-list-autosubmit>
+                <span>{{ label }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="system-document-filter__cluster">
+        <div class="system-document-filter__cluster-label">Termos e justificativa</div>
+        <div class="system-document-filter__chips">
+            <label class="system-document-filter__chip">
+                <input type="checkbox" name="termo" value="COM" {% if 'COM' in filters.termo %}checked{% endif %} data-list-autosubmit>
+                <span>Com termos</span>
+            </label>
+            <label class="system-document-filter__chip">
+                <input type="checkbox" name="termo" value="SEM" {% if 'SEM' in filters.termo %}checked{% endif %} data-list-autosubmit>
+                <span>Sem termos</span>
+            </label>
+            <label class="system-document-filter__chip">
+                <input type="checkbox" name="justificativa" value="COM" {% if 'COM' in filters.justificativa %}checked{% endif %} data-list-autosubmit>
+                <span>Com justificativa</span>
+            </label>
+            <label class="system-document-filter__chip">
+                <input type="checkbox" name="justificativa" value="SEM" {% if 'SEM' in filters.justificativa %}checked{% endif %} data-list-autosubmit>
+                <span>Sem justificativa</span>
+            </label>
+        </div>
+    </section>
+</div>
 {% endblock %}
-{% block list_toolbar %}
-<form method="get" class="system-document-filter-form" data-list-autosubmit-form>
-    <div class="system-document-filter__grid">
-        <div class="system-document-filter__field system-document-filter__field--search-xl">
-            <label for="oficios-search" class="form-label">Busca principal</label>
-            <input
-                id="oficios-search"
-                type="text"
-                name="q"
-                class="form-control"
-                value="{{ filters.q }}"
-                placeholder="Buscar por oficio, protocolo, destino ou servidor"
-                data-list-autosubmit
-            >
-        </div>
 
-        <div class="system-document-filter__field system-document-filter__field--medium">
-            <label class="form-label">Ordenar por</label>
-            <select name="order_by" data-list-autosubmit>
-                {% for key, label in order_by_choices %}
-                <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
+{% block list_filter_secondary_fields %}
+<div class="system-document-filter__field system-document-filter__field--medium">
+    <label class="form-label">Periodo</label>
+    <select name="date_scope" data-list-autosubmit>
+        {% for key, label in date_scope_choices %}
+        <option value="{{ key }}" {% if filters.date_scope == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
 
-        <div class="system-document-filter__field system-document-filter__field--compact">
-            <label class="form-label">Direcao</label>
-            <select name="order_dir" data-list-autosubmit>
-                {% for key, label in order_dir_choices %}
-                <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Data inicial</label>
+    <input
+        type="date"
+        name="date_start"
+        value="{% if filters.date_start %}{{ filters.date_start|date:'Y-m-d' }}{% endif %}"
+        class="form-control"
+        data-list-autosubmit
+    >
+</div>
 
-    <div class="system-document-filter__clusters">
-        <section class="system-document-filter__cluster">
-            <div class="system-document-filter__cluster-label">Status do oficio</div>
-            <div class="system-document-filter__chips">
-                {% for key, label in status_choices %}
-                <label class="system-document-filter__chip">
-                    <input type="checkbox" name="status" value="{{ key }}" {% if key in filters.status %}checked{% endif %} data-list-autosubmit>
-                    <span>{{ label }}</span>
-                </label>
-                {% endfor %}
-            </div>
-        </section>
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Data final</label>
+    <input
+        type="date"
+        name="date_end"
+        value="{% if filters.date_end %}{{ filters.date_end|date:'Y-m-d' }}{% endif %}"
+        class="form-control"
+        data-list-autosubmit
+    >
+</div>
 
-        <section class="system-document-filter__cluster">
-            <div class="system-document-filter__cluster-label">Situacao da viagem</div>
-            <div class="system-document-filter__chips">
-                {% for key, label in viagem_status_choices %}
-                <label class="system-document-filter__chip">
-                    <input type="checkbox" name="viagem_status" value="{{ key }}" {% if key in filters.viagem_status %}checked{% endif %} data-list-autosubmit>
-                    <span>{{ label }}</span>
-                </label>
-                {% endfor %}
-            </div>
-        </section>
+<div class="system-document-filter__field system-document-filter__field--wide">
+    <label class="form-label">Ordenar por</label>
+    <select name="order_by" data-list-autosubmit>
+        {% for key, label in order_by_choices %}
+        <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
 
-        <section class="system-document-filter__cluster">
-            <div class="system-document-filter__cluster-label">Termos e justificativa</div>
-            <div class="system-document-filter__chips">
-                <label class="system-document-filter__chip">
-                    <input type="checkbox" name="termo" value="COM" {% if 'COM' in filters.termo %}checked{% endif %} data-list-autosubmit>
-                    <span>Com termos</span>
-                </label>
-                <label class="system-document-filter__chip">
-                    <input type="checkbox" name="termo" value="SEM" {% if 'SEM' in filters.termo %}checked{% endif %} data-list-autosubmit>
-                    <span>Sem termos</span>
-                </label>
-                <label class="system-document-filter__chip">
-                    <input type="checkbox" name="justificativa" value="COM" {% if 'COM' in filters.justificativa %}checked{% endif %} data-list-autosubmit>
-                    <span>Com justificativa</span>
-                </label>
-                <label class="system-document-filter__chip">
-                    <input type="checkbox" name="justificativa" value="SEM" {% if 'SEM' in filters.justificativa %}checked{% endif %} data-list-autosubmit>
-                    <span>Sem justificativa</span>
-                </label>
-            </div>
-        </section>
-    </div>
-
-    <div class="system-document-filter__grid">
-        <div class="system-document-filter__field system-document-filter__field--medium">
-            <label class="form-label">Periodo</label>
-            <select name="date_scope" data-list-autosubmit>
-                {% for key, label in date_scope_choices %}
-                <option value="{{ key }}" {% if filters.date_scope == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="system-document-filter__field system-document-filter__field--compact">
-            <label class="form-label">Data inicial</label>
-            <input
-                type="date"
-                name="date_start"
-                value="{% if filters.date_start %}{{ filters.date_start|date:'Y-m-d' }}{% endif %}"
-                class="form-control"
-                data-list-autosubmit
-            >
-        </div>
-
-        <div class="system-document-filter__field system-document-filter__field--compact">
-            <label class="form-label">Data final</label>
-            <input
-                type="date"
-                name="date_end"
-                value="{% if filters.date_end %}{{ filters.date_end|date:'Y-m-d' }}{% endif %}"
-                class="form-control"
-                data-list-autosubmit
-            >
-        </div>
-    </div>
-
-    <div class="system-document-filter__footer">
-        <div class="system-document-filter__footer-meta">
-            <span class="system-document-filter__result">{{ page_obj.paginator.count }} oficio(s) encontrado(s)</span>
-            <span class="system-document-filter__footer-note">Atualizacao automatica ao ajustar os campos</span>
-        </div>
-        <div class="system-document-filter__actions">
-            <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-            <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-        </div>
-    </div>
-</form>
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Direcao</label>
+    <select name="order_dir" data-list-autosubmit>
+        {% for key, label in order_dir_choices %}
+        <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
 {% endblock %}
 
 {% block page_result_content %}

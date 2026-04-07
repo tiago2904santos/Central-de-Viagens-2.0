@@ -117,6 +117,7 @@
     this.trigger = null;
     this.label = null;
     this.icon = null;
+    this.portal = null;
     this.list = null;
     this.searchContainer = null;
     this.searchInput = null;
@@ -124,6 +125,8 @@
     this.activeOptionIndex = -1;
     this.observer = null;
     this.searchTerm = '';
+    this.portalAttached = false;
+    this.boundSyncPortalPosition = this.syncPortalPosition.bind(this);
 
     this.build();
     this.bind();
@@ -168,6 +171,10 @@
     list.setAttribute('role', 'listbox');
     list.hidden = true;
 
+    var portal = document.createElement('div');
+    portal.className = 'oficio-custeio-picker-portal';
+    portal.hidden = true;
+
     var searchContainer = document.createElement('div');
     searchContainer.className = 'oficio-custeio-picker-search';
     searchContainer.hidden = true;
@@ -189,7 +196,8 @@
     trigger.appendChild(label);
     trigger.appendChild(icon);
     wrapper.appendChild(trigger);
-    wrapper.appendChild(list);
+    portal.appendChild(list);
+    document.body.appendChild(portal);
 
     stripLegacySelectState(this.select);
     this.select.classList.add('d-none');
@@ -198,6 +206,7 @@
     this.trigger = trigger;
     this.label = label;
     this.icon = icon;
+    this.portal = portal;
     this.list = list;
     this.searchContainer = searchContainer;
     this.searchInput = searchInput;
@@ -543,7 +552,12 @@
     this.renderOptions();
     this.trigger.setAttribute('aria-expanded', 'true');
     this.list.hidden = false;
+    this.portal.hidden = false;
     this.wrapper.setAttribute('data-open', 'true');
+    this.portalAttached = true;
+    this.syncPortalPosition();
+    window.addEventListener('resize', this.boundSyncPortalPosition);
+    window.addEventListener('scroll', this.boundSyncPortalPosition, true);
 
     if (focusSelected) {
       this.activeOptionIndex = this.getDefaultActiveIndex();
@@ -557,12 +571,18 @@
         this.applyActiveState(true);
       }
     }
+
+    window.requestAnimationFrame(this.boundSyncPortalPosition);
   };
 
   Picker.prototype.close = function(returnFocus) {
     this.trigger.setAttribute('aria-expanded', 'false');
     this.list.hidden = true;
+    this.portal.hidden = true;
     this.wrapper.removeAttribute('data-open');
+    this.portalAttached = false;
+    window.removeEventListener('resize', this.boundSyncPortalPosition);
+    window.removeEventListener('scroll', this.boundSyncPortalPosition, true);
     if (this.searchTerm) {
       this.searchTerm = '';
       this.searchInput.value = '';
@@ -575,6 +595,37 @@
 
     if (returnFocus) {
       this.trigger.focus({ preventScroll: true });
+    }
+  };
+
+  Picker.prototype.syncPortalPosition = function() {
+    if (!this.portalAttached || this.portal.hidden) {
+      return;
+    }
+
+    var rect = this.trigger.getBoundingClientRect();
+    var gutter = 12;
+    var gap = 6;
+    var viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    var width = Math.min(Math.max(rect.width, 220), Math.max(220, viewportWidth - gutter * 2));
+    var left = Math.min(Math.max(rect.left, gutter), Math.max(gutter, viewportWidth - width - gutter));
+    var spaceBelow = Math.max(120, viewportHeight - rect.bottom - gutter - gap);
+    var spaceAbove = Math.max(120, rect.top - gutter - gap);
+    var openUpward = spaceBelow < 240 && spaceAbove > spaceBelow;
+    var maxHeight = Math.min(420, openUpward ? spaceAbove : spaceBelow);
+
+    this.portal.style.left = left + 'px';
+    this.portal.style.width = width + 'px';
+    this.portal.style.zIndex = '1400';
+    this.list.style.maxHeight = maxHeight + 'px';
+
+    if (openUpward) {
+      this.portal.style.top = 'auto';
+      this.portal.style.bottom = Math.max(gutter, viewportHeight - rect.top + gap) + 'px';
+    } else {
+      this.portal.style.bottom = 'auto';
+      this.portal.style.top = Math.min(viewportHeight - gutter, rect.bottom + gap) + 'px';
     }
   };
 
@@ -717,7 +768,11 @@
   }
 
   document.addEventListener('click', function(event) {
-    if (currentOpenPicker && !currentOpenPicker.wrapper.contains(event.target)) {
+    if (
+      currentOpenPicker &&
+      !currentOpenPicker.wrapper.contains(event.target) &&
+      !currentOpenPicker.portal.contains(event.target)
+    ) {
       currentOpenPicker.close(false);
     }
   });

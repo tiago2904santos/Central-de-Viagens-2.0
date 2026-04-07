@@ -737,6 +737,18 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     min-width: 0;
 }
 
+.oficio-custeio-picker-portal {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: min(100vw - 24px, 26rem);
+    z-index: 1400;
+}
+
+.oficio-custeio-picker-portal[hidden] {
+    display: none;
+}
+
 .oficio-custeio-picker-trigger {
     width: 100%;
     min-height: var(--cv-select-height);
@@ -800,11 +812,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .oficio-custeio-picker-list {
-    position: absolute;
-    top: calc(100% + 0.35rem);
-    left: 0;
-    right: 0;
-    z-index: 35;
+    position: static;
     display: grid;
     gap: 0.38rem;
     max-height: min(18rem, 46vh);
@@ -1274,10 +1282,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .oficio-custeio-picker[data-open="true"] {
     z-index: 900;
-}
-
-.oficio-custeio-picker-list {
-    z-index: 950;
 }
 
 .system-sort-row {

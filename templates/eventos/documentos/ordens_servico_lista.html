@@ -1,22 +1,11 @@
 {% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
-<<<<<<< ours
 {% block page_title_block %}Ordens de servico{% endblock %}
 {% block page_header_title %}Ordens de servico{% endblock %}
 {% block list_page_class %}system-list-page--complete{% endblock %}
 {% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.ordens-servico.documentos.view-mode"{% endblock %}
-
 {% block list_title %}Ordens de servico{% endblock %}
-{% block list_subtitle %}<p class="system-list-header__subtitle">Acervo derivado dos planos com contexto operacional, servidores e motivo consolidados na mesma leitura documental.</p>{% endblock %}
-
-{% block list_meta %}
-<div class="system-list-header__meta">
-    <span class="system-list-header__meta-item">{{ page_obj.paginator.count }} registros</span>
-    <span class="system-list-header__meta-item">Fluxo documental conectado a planos, eventos e oficios</span>
-</div>
-{% endblock %}
-
 {% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
 
 {% block list_header_aux_controls %}
@@ -30,141 +19,75 @@
 <a href="{{ ordem_novo_url }}" class="btn btn-primary system-list-action-btn">Nova ordem de servico</a>
 {% endblock %}
 
-{% block list_filter_title %}Filtros documentais de ordens{% endblock %}
+{% block list_filter_primary_fields %}
+<div class="system-document-filter__field system-document-filter__field--search-xl">
+    <label class="form-label">Busca</label>
+    <input class="form-control" type="text" name="q" placeholder="Finalidade, observacoes ou evento" value="{{ filters.q }}" data-list-autosubmit>
+</div>
 
-{% block list_filter_description %}
-<p class="system-document-filter__description">Busca principal, evento, status e ordenacao com o mesmo grid e a mesma hierarquia visual adotados nas outras listas documentais.</p>
+<div class="system-document-filter__field system-document-filter__field--wide">
+    <label class="form-label">Evento</label>
+    <select name="evento_id" data-list-autosubmit>
+        <option value="">Todos</option>
+        {% for e in eventos_choices %}
+        <option value="{{ e.pk }}" {% if filters.evento_id == e.pk|stringformat:'s' %}selected{% endif %}>{{ e.titulo|default:'(sem titulo)' }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--wide">
+    <label class="form-label">Oficio</label>
+    <select name="oficio_id" data-list-autosubmit>
+        <option value="">Todos</option>
+        {% for oficio in oficios_choices %}
+        <option value="{{ oficio.pk }}" {% if filters.oficio_id == oficio.pk|stringformat:'s' %}selected{% endif %}>{{ oficio.numero_formatado }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--medium">
+    <label class="form-label">Status</label>
+    <select name="status" data-list-autosubmit>
+        <option value="">Todos</option>
+        {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
 {% endblock %}
 
-{% block list_filter_summary %}
-<div class="system-document-filter__summary-pill">{{ page_obj.paginator.count }} ordem(ns)</div>
+{% block list_filter_secondary_fields %}
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Data inicial</label>
+    <input type="date" class="form-control" name="date_from" value="{{ filters.date_from }}" data-list-autosubmit>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Data final</label>
+    <input type="date" class="form-control" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--wide">
+    <label class="form-label">Ordenar por</label>
+    <select name="order_by" data-list-autosubmit>
+        {% for key, label in order_by_choices %}
+        <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Direcao</label>
+    <select name="order_dir" data-list-autosubmit>
+        {% for key, label in order_dir_choices %}
+        <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
 {% endblock %}
 
-{% block list_toolbar %}
-<form method="get" class="system-document-filter-form" data-list-autosubmit-form>
-    <div class="system-document-filter__grid">
-        <div class="system-document-filter__field system-document-filter__field--search-xl">
-            <label class="form-label">Busca principal</label>
-            <input class="form-control" type="text" name="q" placeholder="Finalidade, observacoes ou evento" value="{{ filters.q }}" data-list-autosubmit>
-        </div>
-
-        <div class="system-document-filter__field system-document-filter__field--medium">
-            <label class="form-label">Evento</label>
-            <select name="evento_id" data-list-autosubmit>
-                <option value="">Todos</option>
-                {% for e in eventos_choices %}
-                <option value="{{ e.pk }}" {% if filters.evento_id == e.pk|stringformat:'s' %}selected{% endif %}>{{ e.titulo|default:'(sem titulo)' }}</option>
-                {% endfor %}
-            </select>
-=======
-{% block title %}Ordens de serviço - Central de Viagens{% endblock %}
-{% block page_title %}Ordens de serviço{% endblock %}
-
-{% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--complete" data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.ordens-servico.documentos.view-mode">
-  <div class="oficios-list-shell system-list-shell">
-  <div class="page-header-cadastro system-list-header system-list-header--standard">
-    <div class="system-list-header__content">
-      <div class="system-list-header__copy">
-        <div class="system-list-header__intro">
-          <h1 class="system-list-header__title">Ordens de servico</h1>
-        </div>
-      </div>
-      <div class="system-list-header__controls">
-        {% include 'includes/list/mode_badge.html' with mode='complete' %}
-        <div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de ordens de servico">
-          <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
-          <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
-        </div>
-        <div class="system-list-header__actions-group">
-          <a href="{{ ordem_novo_url }}" class="btn btn-primary system-list-action-btn">Nova ordem de servico</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card filter-card system-filter-card">
-    <div class="card-body py-3">
-      <form method="get" class="row g-2 align-items-end document-filter-grid" data-list-autosubmit-form>
-        <div class="col-12 col-xl-4">
-          <label class="form-label small text-muted">Busca</label>
-          <input class="form-control form-control-sm" type="text" name="q" placeholder="Finalidade, observacoes ou evento" value="{{ filters.q }}" data-list-autosubmit>
->>>>>>> theirs
-        </div>
-
-        <div class="system-document-filter__field system-document-filter__field--compact">
-            <label class="form-label">Status</label>
-            <select name="status" data-list-autosubmit>
-                <option value="">Todos</option>
-                {% for value, label in status_choices %}
-                <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="system-document-filter__field system-document-filter__field--medium">
-            <label class="form-label">Ordenar por</label>
-            <select name="order_by" data-list-autosubmit>
-                {% for key, label in order_by_choices %}
-                <option value="{{ key }}" {% if filters.order_by == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="system-document-filter__field system-document-filter__field--compact">
-            <label class="form-label">Direcao</label>
-            <select name="order_dir" data-list-autosubmit>
-                {% for key, label in order_dir_choices %}
-                <option value="{{ key }}" {% if filters.order_dir == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
-
-    <div class="system-document-filter__footer">
-        <div class="system-document-filter__footer-meta">
-            <span class="system-document-filter__result">{{ page_obj.paginator.count }} ordem(ns) encontrada(s)</span>
-        </div>
-<<<<<<< ours
-        <div class="system-document-filter__actions">
-            <button class="btn btn-outline-primary btn-sm" type="submit">Filtrar</button>
-            <a href="{% url 'eventos:documentos-ordens-servico' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-=======
-        <div class="col-6 col-md-3 col-xl-2">
-          <label class="form-label small text-muted">Data inicial</label>
-          <input type="date" class="form-control form-control-sm" name="date_from" value="{{ filters.date_from }}" data-list-autosubmit>
-        </div>
-        <div class="col-6 col-md-3 col-xl-2">
-          <label class="form-label small text-muted">Data final</label>
-          <input type="date" class="form-control form-control-sm" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
-        </div>
-        <div class="col-6 col-md-3 col-xl-2">
-          <label class="form-label small text-muted">Data inicial</label>
-          <input type="date" class="form-control form-control-sm" name="date_from" value="{{ filters.date_from }}" data-list-autosubmit>
-        </div>
-        <div class="col-6 col-md-3 col-xl-2">
-          <label class="form-label small text-muted">Data final</label>
-          <input type="date" class="form-control form-control-sm" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
-        </div>
-        <div class="col-12 col-md-auto">
-          <button class="btn btn-outline-primary btn-sm" type="submit">Filtrar</button>
-          <a href="{% url 'eventos:documentos-ordens-servico' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
->>>>>>> theirs
-        </div>
-    </div>
-</form>
-{% endblock %}
-
-<<<<<<< ours
-<<<<<<< ours
 {% block page_result_content %}
 <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de ordens de servico">
-=======
-=======
->>>>>>> theirs
-  <div data-list-live-region>
-  <section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de ordens de servico">
->>>>>>> theirs
     <div class="table-responsive">
         <table class="table table-sm table-hover mb-0 system-list-table align-middle">
             <thead class="table-light">
@@ -298,21 +221,9 @@
     {% empty %}
     <div class="oficios-table-panel__empty">Nenhuma ordem de servico encontrada.</div>
     {% endfor %}
-<<<<<<< ours
 </section>
-=======
-  </section>
-
-  {% include 'includes/pagination.html' %}
-  </div>
-
-  {% include 'includes/list/floating_new_button.html' with url=ordem_novo_url label='Nova ordem de servico' icon='bi-plus-lg' %}
-  </div>
-</div>
->>>>>>> theirs
 {% endblock %}
 
-{% block page_pagination %}{% include 'includes/pagination.html' %}{% endblock %}
 {% block list_floating_actions %}{% include 'includes/list/floating_new_button.html' with url=ordem_novo_url label='Nova ordem de servico' icon='bi-plus-lg' %}{% endblock %}
 
 {% block extra_js %}
