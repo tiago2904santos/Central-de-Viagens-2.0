@@ -4577,6 +4577,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .documento-cascade-card {
     overflow: hidden;
+    content-visibility: auto;
+    contain-intrinsic-size: 640px;
 }
 
 .documento-cascade-card__intro {
