@@ -1829,6 +1829,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
         linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(243, 247, 252, 0.97));
     box-shadow: var(--oficios-card-shadow);
     padding: 0.88rem 0.92rem 0.92rem;
+    content-visibility: auto;
+    contain-intrinsic-size: 560px;
 }
 
 .oficio-list-card::before {
@@ -1974,6 +1976,19 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
         linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(249, 251, 253, 0.72) 100%),
         linear-gradient(135deg, rgba(var(--oficio-badge-rgb), 0.14) 0%, rgba(255, 255, 255, 0.16) 100%);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.oficios-list-page .oficio-list-surface {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 6px 14px rgba(15, 23, 42, 0.045);
+}
+
+.oficios-list-page .oficio-list-surface,
+.oficios-list-page .oficio-list-card .oficio-list-badge,
+.oficios-list-page .oficio-list-core-card__meta {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
 }
 
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
