@@ -22,7 +22,10 @@
                 <div class="system-list-header__controls">
                     {% include 'includes/list/mode_badge.html' with mode='complete' %}
                     <div class="system-list-header__actions-group">
-                        <a href="{{ evento_novo_url }}" class="btn btn-primary system-list-action-btn">Novo evento</a>
+                        <form method="post" action="{{ evento_novo_url }}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary system-list-action-btn">Novo evento</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -178,7 +181,7 @@
 
         {% include 'includes/pagination.html' %}
 
-        {% include 'includes/list/floating_new_button.html' with url=evento_novo_url label='Novo evento' icon='bi-plus-lg' %}
+        {% include 'includes/list/floating_new_button.html' with url=evento_novo_url label='Novo evento' icon='bi-plus-lg' post_action=True %}
     </div>
 </div>
 {% endblock %}

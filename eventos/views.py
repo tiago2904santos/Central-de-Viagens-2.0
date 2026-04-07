@@ -783,7 +783,7 @@ def evento_lista(request):
 
 @login_required
 def evento_cadastrar(request):
-    """Criação unificada: redireciona para o fluxo guiado (novo evento â†’ Etapa 1)."""
+    """Criação unificada: redireciona para o fluxo guiado (novo evento → Etapa 1)."""
     return redirect('eventos:guiado-novo')
 
 
@@ -831,8 +831,9 @@ def evento_excluir(request, pk):
 # ---------- Fluxo guiado ----------
 
 @login_required
+@require_http_methods(['POST'])
 def guiado_novo(request):
-    """Cria um evento em RASCUNHO e redireciona para a Etapa 1. Título e tipos preenchidos na Etapa 1."""
+    """Cria um evento em RASCUNHO e redireciona para a Etapa 1. Requer POST para evitar criação acidental."""
     from datetime import date
     hoje = date.today()
     evento = Evento.objects.create(
@@ -1269,7 +1270,23 @@ def guiado_painel(request, pk):
     """Painel do evento guiado — ordem funcional real: 1 Dados, 2 Roteiros, 3 Termos, 4 PT/OS, 5 Ofícios, 6 Justificativa, 7 Finalização."""
     obj = get_object_or_404(
         Evento.objects.select_related('estado_principal', 'cidade_principal', 'cidade_base')
-        .prefetch_related('tipos_demanda', 'destinos'),
+        .prefetch_related(
+            'tipos_demanda',
+            'destinos',
+            Prefetch(
+                'oficios',
+                queryset=Oficio.objects.select_related('justificativa').prefetch_related('viajantes'),
+            ),
+            Prefetch(
+                'roteiros',
+                queryset=RoteiroEvento.objects.select_related('origem_cidade', 'origem_estado'),
+            ),
+            Prefetch('termos_autorizacao', queryset=TermoAutorizacao.objects.only('pk', 'status', 'evento_id')),
+            Prefetch('planos_trabalho', queryset=PlanoTrabalho.objects.only('pk', 'status', 'evento_id')),
+            Prefetch('ordens_servico', queryset=OrdemServico.objects.only('pk', 'status', 'evento_id')),
+            'finalizacao',
+            Prefetch('termos_participantes', queryset=EventoTermoParticipante.objects.select_related('viajante')),
+        ),
         pk=pk
     )
     etapa1_ok = _evento_etapa1_completa(obj)
