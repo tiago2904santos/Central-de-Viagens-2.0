@@ -6,6 +6,49 @@ document.addEventListener('DOMContentLoaded', function() {
     var sidebarStorageKey = 'central-viagens.sidebar.open-group';
     var syncingGroups = false;
 
+    function removeTopRightCreateButtons() {
+        var createTerms = ['novo', 'nova', 'cadastrar', 'criar'];
+        var topRightContainers = [
+            '.system-list-header__controls',
+            '.list-page-header__actions',
+            '.card-header',
+            '.page-header',
+            '.d-flex.justify-content-end'
+        ];
+
+        var candidates = document.querySelectorAll(
+            '.system-list-header__controls .btn, ' +
+            '.list-page-header__actions .btn, ' +
+            '.card-header .btn, ' +
+            '.page-header .btn, ' +
+            '.d-flex.justify-content-end .btn'
+        );
+
+        candidates.forEach(function(button) {
+            if (button.closest('.system-list-fab-group')) {
+                return;
+            }
+            var label = (button.textContent || '').trim().toLowerCase();
+            if (!label) {
+                return;
+            }
+
+            var isCreateAction = createTerms.some(function(term) {
+                return label.indexOf(term) !== -1;
+            });
+            if (!isCreateAction) {
+                return;
+            }
+
+            var isTopRightAction = topRightContainers.some(function(selector) {
+                return Boolean(button.closest(selector));
+            });
+            if (isTopRightAction) {
+                button.remove();
+            }
+        });
+    }
+
     function setSidebarOpen(isOpen) {
         if (!sidebar) {
             return;
@@ -89,4 +132,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 500);
         }, 3000);
     });
+
+    removeTopRightCreateButtons();
 });

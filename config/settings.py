@@ -19,7 +19,7 @@ if not _env_path.exists():
     )
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-key-change-in-production')
-DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 INSTALLED_APPS = [
