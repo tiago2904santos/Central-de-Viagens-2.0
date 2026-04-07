@@ -24,7 +24,7 @@
 {% block page_title %}{% block page_header_title %}Lista{% endblock %}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 system-list-page system-list-page--standard" data-list-view-root>
+<div class="container-fluid py-4 system-list-page {% block list_page_class %}system-list-page--standard{% endblock %}" data-list-view-root>
     <div class="system-list-shell">
 
         <div class="page-header-cadastro system-list-header system-list-header--standard">
