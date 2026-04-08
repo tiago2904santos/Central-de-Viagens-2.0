@@ -14,9 +14,10 @@
 {% block list_header_actions %}
 <a href="{{ oficio_novo_url }}" class="btn btn-primary system-list-action-btn">Novo oficio</a>
 {% endblock %}
+{% block list_filter_actions_field_class %}system-document-filter__field--span-3{% endblock %}
 {% block list_filter_form_class %}system-document-filter-form--oficios{% endblock %}
 {% block list_filter_primary_fields %}
-<div class="system-document-filter__field system-document-filter__field--search-xl">
+<div class="system-document-filter__field system-document-filter__field--span-4">
     <label for="oficios-search" class="form-label">Busca</label>
     <input
         id="oficios-search"
@@ -59,7 +60,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--medium">
+<div class="system-document-filter__field system-document-filter__field--micro">
     <label class="form-label">Termos</label>
     <select name="termo" data-list-autosubmit data-oficio-picker-search="false">
         <option value="" {% if not filters.termo or filters.termo|length > 1 %}selected{% endif %}>Todos</option>
@@ -68,7 +69,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--medium">
+<div class="system-document-filter__field system-document-filter__field--micro">
     <label class="form-label">Justificativa</label>
     <select name="justificativa" data-list-autosubmit data-oficio-picker-search="false">
         <option value="" {% if not filters.justificativa or filters.justificativa|length > 1 %}selected{% endif %}>Todas</option>
@@ -110,7 +111,7 @@
     >
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--span-3">
+<div class="system-document-filter__field system-document-filter__field--span-4">
     <label class="form-label">Ordenar por</label>
     <select name="order_by" data-list-autosubmit data-oficio-picker-search="false">
         {% for key, label in order_by_choices %}
@@ -119,7 +120,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--compact">
+<div class="system-document-filter__field system-document-filter__field--micro">
     <label class="form-label">Direcao</label>
     <select name="order_dir" data-list-autosubmit data-oficio-picker-search="false">
         {% for key, label in order_dir_choices %}

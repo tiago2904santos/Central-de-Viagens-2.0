@@ -13,9 +13,10 @@
     <button type="submit" class="btn btn-primary system-list-action-btn">Novo evento</button>
 </form>
 {% endblock %}
+{% block list_filter_actions_field_class %}system-document-filter__field--span-3{% endblock %}
 
 {% block list_filter_primary_fields %}
-<div class="system-document-filter__field system-document-filter__field--search-xl">
+<div class="system-document-filter__field system-document-filter__field--span-6">
     <label class="form-label">Busca</label>
     <input type="text" name="q" class="form-control" placeholder="Titulo do evento" value="{{ filters.q }}" data-list-autosubmit>
 </div>
@@ -30,7 +31,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--wide">
+<div class="system-document-filter__field system-document-filter__field--span-4">
     <label class="form-label">Tipo</label>
     <select name="tipo_id" data-list-autosubmit>
         <option value="">Todos</option>
@@ -52,7 +53,7 @@
     <input type="date" name="date_to" class="form-control" value="{{ filters.date_to }}" data-list-autosubmit>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--wide">
+<div class="system-document-filter__field system-document-filter__field--span-4">
     <label class="form-label">Ordenar por</label>
     <select name="order_by" data-list-autosubmit>
         {% for key, label in order_by_choices %}
@@ -61,7 +62,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--compact">
+<div class="system-document-filter__field system-document-filter__field--micro">
     <label class="form-label">Direcao</label>
     <select name="order_dir" data-list-autosubmit>
         {% for key, label in order_dir_choices %}

@@ -6,14 +6,6 @@
 {% block page_header_title %}Termos{% endblock %}
 
 {% block list_title %}Lista global de termos{% endblock %}
-{% block list_subtitle %}<p class="system-list-header__subtitle">Visao global dos participantes, status do termo e contexto operacional do evento no mesmo topo padronizado.</p>{% endblock %}
-
-{% block list_meta %}
-<div class="system-list-header__meta">
-    <span class="system-list-header__meta-item">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} registros</span>
-    <span class="system-list-header__meta-item">Acompanhamento transversal dos termos emitidos</span>
-</div>
-{% endblock %}
 
 {% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='simple' %}{% endblock %}
 
@@ -21,8 +13,8 @@
 <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary system-list-action-btn">Eventos</a>
 {% endblock %}
 {% block list_filter_primary_fields %}
-<div class="system-document-filter__field system-document-filter__field--span-5">
-    <label class="form-label">Busca principal</label>
+<div class="system-document-filter__field system-document-filter__field--span-6">
+    <label class="form-label">Busca</label>
     <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Evento, participante ou cargo" data-list-autosubmit>
 </div>
 

@@ -13,17 +13,20 @@
 {% endblock %}
 
 {% block list_header_actions %}
+{% if return_to_url %}
+<a href="{{ return_to_url }}" class="btn btn-outline-secondary system-list-action-btn">Painel do evento</a>
+{% endif %}
 <a href="{{ termo_novo_url }}" class="btn btn-primary system-list-action-btn">Novo termo</a>
 {% endblock %}
-{% block list_filter_primary_grid_class %}system-document-filter__grid--cols-9{% endblock %}
+{% block list_filter_actions_field_class %}system-document-filter__field--span-3{% endblock %}
 
 {% block list_filter_primary_fields %}
-<div class="system-document-filter__field system-document-filter__field--span-3">
+<div class="system-document-filter__field system-document-filter__field--span-4">
     <label class="form-label">Busca</label>
     <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Servidor, viatura, destino ou contexto" data-list-autosubmit>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--wide">
+<div class="system-document-filter__field system-document-filter__field--span-3">
     <label class="form-label">Evento</label>
     <select name="evento_id" data-list-autosubmit>
         <option value="">Todos</option>
@@ -33,7 +36,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--wide">
+<div class="system-document-filter__field system-document-filter__field--span-3">
     <label class="form-label">Oficio</label>
     <select name="oficio_id" data-list-autosubmit>
         <option value="">Todos</option>
@@ -43,7 +46,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--medium">
+<div class="system-document-filter__field system-document-filter__field--micro">
     <label class="form-label">Modelo</label>
     <select name="modo_geracao" data-list-autosubmit>
         <option value="">Todos</option>
@@ -53,7 +56,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--medium">
+<div class="system-document-filter__field system-document-filter__field--micro">
     <label class="form-label">Status</label>
     <select name="status" data-list-autosubmit>
         <option value="">Todos</option>
@@ -75,7 +78,7 @@
     <input type="date" class="form-control" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--span-3">
+<div class="system-document-filter__field system-document-filter__field--span-4">
     <label class="form-label">Ordenar por</label>
     <select name="order_by" data-list-autosubmit>
         {% for value, label in order_by_choices %}
@@ -84,7 +87,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--compact">
+<div class="system-document-filter__field system-document-filter__field--micro">
     <label class="form-label">Direcao</label>
     <select name="order_dir" data-list-autosubmit>
         {% for value, label in order_dir_choices %}
