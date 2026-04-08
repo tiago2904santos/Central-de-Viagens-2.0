@@ -141,6 +141,43 @@ class TermoAutorizacaoModuleTest(TestCase):
         self.assertNotContains(response, 'Resumo rapido antes de gerar')
         self.assertNotContains(response, 'Quick report')
 
+    def test_lista_filtrada_por_evento_monta_url_contextual_para_novo_termo(self):
+        response = self.client.get(reverse('eventos:documentos-termos'), {'evento_id': self.evento.pk})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context['return_to_url'],
+            reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}),
+        )
+        self.assertEqual(response.context['evento_context'].pk, self.evento.pk)
+        self.assertIn(f'preselected_event_id={self.evento.pk}', response.context['termo_novo_url'])
+        self.assertIn('context_source=evento', response.context['termo_novo_url'])
+        self.assertContains(response, 'Painel do evento')
+
+    def test_novo_termo_contextualizado_por_evento_redireciona_para_painel(self):
+        panel_url = reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk})
+
+        response = self.client.post(
+            reverse('eventos:documentos-termos-novo'),
+            {
+                'return_to': panel_url,
+                'context_source': 'evento',
+                'preselected_event_id': str(self.evento.pk),
+                'preselected_oficio_id': '',
+                'evento': str(self.evento.pk),
+                'oficios': [],
+                'roteiro': '',
+                'destino': 'Curitiba/PR',
+                'data_evento': '2026-03-20',
+                'data_evento_fim': '2026-03-20',
+                'viajantes_ids': '',
+                'veiculo_id': '',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, panel_url)
+
     def test_rotas_legadas_reaproveitam_formulario_unico(self):
         response = self.client.get(reverse('eventos:documentos-termos-novo-rapido'))
 
