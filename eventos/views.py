@@ -5958,6 +5958,39 @@ def _build_roteiro_avulso_route_options():
     return options, state_map
 
 
+def _build_avulso_step3_state_from_post(request, route_state_map=None):
+    """Reuses Step 3 parser with avulso field aliases (origem_* -> sede_*)."""
+    from types import SimpleNamespace
+
+    post_data = request.POST.copy()
+    if 'sede_estado' not in post_data and 'origem_estado' in post_data:
+        post_data['sede_estado'] = post_data.get('origem_estado')
+    if 'sede_cidade' not in post_data and 'origem_cidade' in post_data:
+        post_data['sede_cidade'] = post_data.get('origem_cidade')
+
+    fake_request = SimpleNamespace(POST=post_data)
+    fake_oficio = SimpleNamespace(evento_id=None, roteiro_evento_id=None, evento=None)
+    return _build_step3_state_from_post(
+        fake_request,
+        oficio=fake_oficio,
+        route_state_map=route_state_map or {},
+    )
+
+
+def _calculate_avulso_diarias_from_state(state):
+    """Calculates roteiro avulso diarias using official service with fixed one-server rule."""
+    markers, paradas, chegada_final, sede_cidade, sede_uf = _collect_step3_markers_payload(state)
+    resultado = calculate_periodized_diarias(
+        markers,
+        chegada_final,
+        quantidade_servidores=1,
+        sede_cidade=sede_cidade,
+        sede_uf=sede_uf,
+    )
+    resultado['tipo_destino'] = infer_tipo_destino_from_paradas(paradas)
+    return resultado
+
+
 def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_list, is_avulso=False, step3_state=None, route_options=None, seed_source_label=''):
     """
     Monta contexto completo para o formulário de roteiro (guiado e avulso).
@@ -5985,6 +6018,12 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         if sede_estado_id
         else Cidade.objects.none()
     )
+    diarias_resultado = None
+    if is_avulso:
+        try:
+            diarias_resultado = _calculate_avulso_diarias_from_state(step3_state)
+        except ValueError:
+            diarias_resultado = None
     destino_estado_fixo = _get_parana_estado()
     return {
         'evento': evento,
@@ -5995,7 +6034,13 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
         'trechos': trechos_list,
         'step3_state_json': _serialize_step3_state(step3_state),
+        'step3_diarias_resultado': diarias_resultado,
         'step3_seed_source_label': step3_state.get('seed_source_label', ''),
+        'api_calcular_diarias_url': (
+            reverse('eventos:roteiro-avulso-calcular-diarias')
+            if is_avulso
+            else ''
+        ),
         'roteiro_modo': step3_state.get('roteiro_modo', 'ROTEIRO_PROPRIO'),
         'roteiro_evento_id': step3_state.get('roteiro_evento_id'),
         'roteiros_evento': route_options or [],
@@ -6020,6 +6065,7 @@ def guiado_etapa_2_cadastrar(request, evento_id):
     """Criar roteiro. Sede pré-preenchida da ConfiguracaoSistema; destinos pré-preenchidos da Etapa 1 do evento.
     Usa o mesmo template e a mesma lógica de trechos da edição; trechos já vêm renderizados no primeiro load."""
     evento = _get_evento_etapa2(evento_id)
+    from types import SimpleNamespace
     initial = {}
     config = ConfiguracaoSistema.get_singleton()
     if config and config.cidade_sede_padrao_id:
@@ -6058,6 +6104,9 @@ def guiado_etapa_2_cadastrar(request, evento_id):
         if destinos_list and (initial.get('origem_estado') or initial.get('origem_cidade')):
             roteiro_virtual = _roteiro_virtual_para_trechos(initial)
             trechos_list = _estrutura_trechos(roteiro_virtual, destinos_list)
+    route_options, _ = _build_step3_route_options(
+        SimpleNamespace(roteiro_evento_id=None, evento_id=evento.pk)
+    )
     context = _build_roteiro_form_context(
         evento=evento,
         form=form,
@@ -6065,6 +6114,7 @@ def guiado_etapa_2_cadastrar(request, evento_id):
         destinos_atuais=destinos_atuais,
         trechos_list=trechos_list,
         is_avulso=False,
+        route_options=route_options,
     )
     return render(request, 'eventos/guiado/roteiro_form.html', context)
 
@@ -6073,6 +6123,7 @@ def guiado_etapa_2_cadastrar(request, evento_id):
 def guiado_etapa_2_editar(request, evento_id, pk):
     """Editar roteiro (mostra dados salvos; trechos com horários próprios editáveis)."""
     evento = _get_evento_etapa2(evento_id)
+    from types import SimpleNamespace
     roteiro = get_object_or_404(
         RoteiroEvento.objects.prefetch_related(
             'destinos', 'destinos__estado', 'destinos__cidade',
@@ -6106,6 +6157,9 @@ def guiado_etapa_2_editar(request, evento_id, pk):
         trechos_list = _estrutura_trechos(roteiro)
     if not destinos_atuais:
         destinos_atuais = [{'estado_id': None, 'cidade_id': None, 'cidade': None, 'estado': None}]
+    route_options, _ = _build_step3_route_options(
+        SimpleNamespace(roteiro_evento_id=roteiro.pk, evento_id=evento.pk)
+    )
     context = _build_roteiro_form_context(
         evento=evento,
         form=form,
@@ -6113,6 +6167,7 @@ def guiado_etapa_2_editar(request, evento_id, pk):
         destinos_atuais=destinos_atuais,
         trechos_list=trechos_list,
         is_avulso=False,
+        route_options=route_options,
     )
     return render(request, 'eventos/guiado/roteiro_form.html', context)
 
@@ -6269,6 +6324,34 @@ def roteiro_avulso_editar(request, pk):
         route_options=route_options,
     )
     return render(request, 'eventos/global/roteiro_avulso_form.html', context)
+
+
+@login_required
+@require_http_methods(['POST'])
+def roteiro_avulso_calcular_diarias(request):
+    """Realtime diarias calculation for roteiro avulso (always one server)."""
+    from types import SimpleNamespace
+
+    route_options, route_state_map = _build_roteiro_avulso_route_options()
+    step3_state = _build_avulso_step3_state_from_post(request, route_state_map=route_state_map)
+    fake_oficio = SimpleNamespace(evento_id=None, roteiro_evento_id=None, evento=None)
+    validated = _validate_step3_state(step3_state, oficio=fake_oficio)
+    if not validated['ok']:
+        return JsonResponse(
+            {
+                'ok': False,
+                'error': 'Revise os dados do roteiro antes de calcular as diárias.',
+                'errors': validated['errors'],
+            },
+            status=400,
+        )
+    try:
+        resultado = _calculate_avulso_diarias_from_state(step3_state)
+    except ValueError as exc:
+        return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
+    payload = {'ok': True, 'quantidade_servidores_fixo': 1, 'roteiros_disponiveis': len(route_options)}
+    payload.update(resultado)
+    return JsonResponse(payload)
 
 
 @login_required

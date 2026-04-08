@@ -149,4 +149,5 @@ urlpatterns = [
     # Roteiros avulsos (sem vínculo com evento)
     path('roteiros/avulso/novo/', login_required(views.roteiro_avulso_cadastrar), name='roteiro-avulso-cadastrar'),
     path('roteiros/avulso/<int:pk>/editar/', login_required(views.roteiro_avulso_editar), name='roteiro-avulso-editar'),
+    path('roteiros/avulso/calcular-diarias/', login_required(views.roteiro_avulso_calcular_diarias), name='roteiro-avulso-calcular-diarias'),
 ]

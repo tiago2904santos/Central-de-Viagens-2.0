@@ -14,6 +14,10 @@
 
         <form method="post" id="oficio-step3-form" novalidate class="oficio-stage-form">
           {% csrf_token %}
+          <input type="hidden" name="tipo_destino" id="id_tipo_destino" value="{{ step3_diarias_resultado.tipo_destino|default:'' }}">
+          <input type="hidden" name="quantidade_diarias" id="id_quantidade_diarias" value="{{ step3_diarias_resultado.totais.total_diarias|default:'' }}">
+          <input type="hidden" name="valor_diarias" id="id_valor_diarias" value="{{ step3_diarias_resultado.totais.total_valor|default:'' }}">
+          <input type="hidden" name="valor_diarias_extenso" id="id_valor_diarias_extenso" value="{{ step3_diarias_resultado.totais.valor_extenso|default:'' }}">
 
           {% if form.non_field_errors %}
           <div class="alert alert-danger py-2">
@@ -130,22 +134,28 @@
             </div>
           </section>
 
-          {# SEÇÃO 4: RESUMO OPERACIONAL #}
+          {# SEÇÃO 4: CALCULADORA DE DIÁRIAS #}
           <section class="oficio-stage-section">
             <div class="oficio-step3-diarias">
               <div class="oficio-step3-diarias-head">
-                <div class="oficio-step3-diarias-head-copy"><span class="oficio-step3-diarias-eyebrow">Resumo do roteiro</span>
-                  <div><h3 class="oficio-step3-section-title">6. Resumo operacional</h3><p class="oficio-step3-section-text">Acompanhe a composição de trechos, km e tempo total em tempo real.</p></div>
+                <div class="oficio-step3-diarias-head-copy"><span class="oficio-step3-diarias-eyebrow">Resumo financeiro</span>
+                  <div><h3 class="oficio-step3-section-title">6. Calculadora de diárias</h3><p class="oficio-step3-section-text">Cálculo reativo com base nos trechos e retorno preenchidos no roteiro avulso.</p></div>
                 </div>
-                <div class="oficio-step3-diarias-head-action"><div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending">Aguardando preenchimento.</div></div>
+                <div class="oficio-step3-diarias-head-action">
+                  <div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending">Aguardando dados para cálculo.</div>
+                  <button type="button" id="btn-calcular-diarias-avulso" class="btn btn-primary oficio-step3-diarias-button">Recalcular agora</button>
+                </div>
               </div>
+              <div class="small text-muted mb-2">Cálculo considerando <strong>1 servidor</strong> (regra fixa do roteiro avulso).</div>
+              <div id="diarias-error" class="alert alert-danger py-2 d-none"></div>
               <div class="oficio-step3-diarias-overview mb-3">
-                <div class="oficio-step3-diarias-total-card"><span class="label">Trechos totais</span><strong id="resumo-trechos" class="oficio-step3-diarias-total-value">0</strong></div>
+                <div class="oficio-step3-diarias-total-card"><span class="label">Valor total</span><strong id="diarias-valor" class="oficio-step3-diarias-total-value">{{ step3_diarias_resultado.totais.total_valor|default:"-" }}</strong></div>
                 <div class="oficio-step3-diarias-summary">
-                  <div class="oficio-step3-diarias-summary-item"><span class="label">Distância total</span><strong id="resumo-km">-</strong></div>
-                  <div class="oficio-step3-diarias-summary-item"><span class="label">Tempo total</span><strong id="resumo-tempo">-</strong></div>
+                  <div class="oficio-step3-diarias-summary-item"><span class="label">Tipo destino</span><strong id="diarias-tipo">{{ step3_diarias_resultado.tipo_destino|default:"-" }}</strong></div>
+                  <div class="oficio-step3-diarias-summary-item"><span class="label">Quantidade de diárias</span><strong id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"-" }}</strong></div>
                 </div>
               </div>
+              <div class="mb-3"><span class="label">Valor por extenso</span><strong id="diarias-extenso" class="d-block mt-1">{{ step3_diarias_resultado.totais.valor_extenso|default:"Não informado" }}</strong></div>
               <div class="col-12">
                 <label for="id_observacoes" class="form-label">{{ form.observacoes.label }}</label>
                 {{ form.observacoes }}
@@ -173,6 +183,7 @@
 
 {{ step3_state_json|default:'{}'|json_script:"step3-state-data" }}
 {{ roteiros_evento_json|default_if_none:''|json_script:"step3-routes-data" }}
+{{ step3_diarias_resultado|default_if_none:''|json_script:"step3-diarias-data" }}
 
 <script src="{% static 'js/oficio_wizard.js' %}"></script>
 <script>
@@ -184,11 +195,18 @@
   function $(id) { return document.getElementById(id); }
   var initialState = JSON.parse($('step3-state-data').textContent || '{}');
   var routes = JSON.parse($('step3-routes-data').textContent || '[]');
+  var rawInitialDiarias = JSON.parse($('step3-diarias-data').textContent || 'null');
+  var initialDiarias = rawInitialDiarias && typeof rawInitialDiarias === 'object' ? rawInitialDiarias : null;
   var routeMap = {};
   routes.forEach(function(item) { routeMap[String(item.id)] = item; });
-  var apiCidades = '{% url "eventos:api-cidades-por-estado" 0 %}';
+  var apiCidades = '{{ api_cidades_por_estado_url|escapejs }}';
+  var apiDiarias = '{{ api_calcular_diarias_url|escapejs }}';
+  var csrf = (form.querySelector('input[name="csrfmiddlewaretoken"]') || {}).value || '';
   var destinoEstadoDefaultId = '{{ destino_estado_fixo_id|default:"" }}';
   var applyingState = false;
+  var diariasTimer = null;
+  var diariasInFlight = false;
+  var diariasNeedsRerun = false;
   function refreshSelectPickers(root) {
     if (window.OficioWizard && typeof window.OficioWizard.refreshSelectPickers === 'function') {
       window.OficioWizard.refreshSelectPickers(root || form);
@@ -395,10 +413,9 @@
     var cards = Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]'));
     var totMin = 0; var totKm = 0;
     cards.forEach(function(c) { totMin += parseInt(c.dataset.tempoTotalMin||0,10)||0; var de = c.querySelector('[name$="_distancia_km"]'); if (de && de.value) { var v = parseFloat(de.value); if (!Number.isNaN(v)) totKm += v; } });
-    if ($('resumo-trechos')) $('resumo-trechos').textContent = String(cards.length);
-    if ($('resumo-km')) $('resumo-km').textContent = cards.length ? totKm.toFixed(2).replace('.',',')+' km' : '-';
-    if ($('resumo-tempo')) $('resumo-tempo').textContent = cards.length ? hhmm(totMin) : '-';
-    var st = $('diarias-status'); if (st) { st.dataset.state = cards.length ? 'done' : 'pending'; st.textContent = cards.length ? 'Roteiro montado.' : 'Aguardando preenchimento.'; }
+    form.dataset.resumoTrechos = String(cards.length);
+    form.dataset.resumoKm = cards.length ? totKm.toFixed(2).replace('.',',')+' km' : '-';
+    form.dataset.resumoTempo = cards.length ? hhmm(totMin) : '-';
   }
   function captureCurrentState() {
     return {
@@ -428,6 +445,99 @@
         tempo_adicional_min: $('id_retorno_tempo_adicional_min').value||'0', duracao_estimada_min: $('id_retorno_duracao_estimada_min').value||'', rota_fonte: $('id_retorno_rota_fonte').value||'' }
     };
   }
+  function setDiariasStatus(state, text) {
+    var status = $('diarias-status'); if (!status) return;
+    status.dataset.state = state || 'pending';
+    status.textContent = text || 'Aguardando dados para cálculo.';
+  }
+  function setDiariasButtonLoading(isLoading) {
+    var btn = $('btn-calcular-diarias-avulso'); if (!btn) return;
+    btn.disabled = !!isLoading;
+    btn.textContent = isLoading ? 'Calculando...' : 'Recalcular agora';
+  }
+  function applyDiarias(result) {
+    var totais = result && result.totais ? result.totais : null;
+    $('diarias-error').classList.add('d-none');
+    $('diarias-tipo').textContent = result && result.tipo_destino ? result.tipo_destino : '-';
+    $('diarias-qtd').textContent = totais && totais.total_diarias ? totais.total_diarias : '-';
+    $('diarias-valor').textContent = totais && totais.total_valor ? totais.total_valor : '-';
+    $('diarias-extenso').textContent = totais && totais.valor_extenso ? totais.valor_extenso : 'Não informado';
+    $('id_tipo_destino').value = result && result.tipo_destino ? result.tipo_destino : '';
+    $('id_quantidade_diarias').value = totais && totais.total_diarias ? totais.total_diarias : '';
+    $('id_valor_diarias').value = totais && totais.total_valor ? totais.total_valor : '';
+    $('id_valor_diarias_extenso').value = totais && totais.valor_extenso ? totais.valor_extenso : '';
+  }
+  function clearDiariasAsPending() {
+    applyDiarias(null);
+    setDiariasStatus('pending', 'Aguardando dados para cálculo.');
+  }
+  function markDiariasStale() {
+    setDiariasStatus('stale', 'Cálculo desatualizado.');
+  }
+  function hasCompleteDataForDiarias(state) {
+    if (!state || !state.sede_estado_id || !state.sede_cidade_id) return false;
+    if (!Array.isArray(state.trechos) || !state.trechos.length) return false;
+    for (var i = 0; i < state.trechos.length; i++) {
+      var t = state.trechos[i] || {};
+      if (!t.origem_estado_id || !t.origem_cidade_id || !t.destino_estado_id || !t.destino_cidade_id) return false;
+      if (!t.saida_data || !t.saida_hora || !t.chegada_data || !t.chegada_hora) return false;
+    }
+    var ret = state.retorno || {};
+    return !!(ret.saida_data && ret.saida_hora && ret.chegada_data && ret.chegada_hora);
+  }
+  function scheduleRealtimeDiarias() {
+    markDiariasStale();
+    var state = captureCurrentState();
+    if (!hasCompleteDataForDiarias(state)) {
+      clearTimeout(diariasTimer);
+      clearDiariasAsPending();
+      return;
+    }
+    clearTimeout(diariasTimer);
+    diariasTimer = setTimeout(function() { calculateDiarias(); }, 700);
+  }
+  function collectDiariasFormData() {
+    var fd = new FormData(form);
+    fd.set('sede_estado', $('id_origem_estado').value || '');
+    fd.set('sede_cidade', $('id_origem_cidade').value || '');
+    return fd;
+  }
+  function calculateDiarias() {
+    if (!apiDiarias) return Promise.resolve();
+    if (diariasInFlight) { diariasNeedsRerun = true; return Promise.resolve(); }
+    diariasInFlight = true;
+    setDiariasButtonLoading(true);
+    $('diarias-error').classList.add('d-none');
+    setDiariasStatus('pending', 'Calculando diárias...');
+    return fetch(apiDiarias, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrf,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      credentials: 'same-origin',
+      body: collectDiariasFormData()
+    }).then(function(resp) { return resp.json().then(function(data) { return { ok: resp.ok, data: data }; }); })
+      .then(function(result) {
+        if (!result.ok || !result.data || !result.data.ok) {
+          var errs = (result.data && result.data.errors) || [];
+          throw new Error(errs.join('\n') || ((result.data && result.data.error) || 'Erro ao calcular as diárias.'));
+        }
+        applyDiarias(result.data);
+        setDiariasStatus('updated', 'Cálculo atualizado (1 servidor).');
+      }).catch(function(err) {
+        $('diarias-error').textContent = err.message || 'Erro ao calcular as diárias.';
+        $('diarias-error').classList.remove('d-none');
+        setDiariasStatus('error', 'Falha no cálculo.');
+      }).finally(function() {
+        diariasInFlight = false;
+        setDiariasButtonLoading(false);
+        if (diariasNeedsRerun) {
+          diariasNeedsRerun = false;
+          scheduleRealtimeDiarias();
+        }
+      });
+  }
   function applyState(state) {
     var cur = Object.assign({}, state || {}); applyingState = true;
     if (cur.roteiro_modo === 'EVENTO_EXISTENTE' && cur.roteiro_evento_id) { $('id_roteiro_modo_evento').checked=true; $('id_roteiro_modo_proprio').checked=false; $('id_roteiro_evento_id').value=String(cur.roteiro_evento_id); }
@@ -447,7 +557,7 @@
         $('id_retorno_duracao_estimada_min').value = ret.duracao_estimada_min||''; $('id_retorno_rota_fonte').value = ret.rota_fonte||'';
         if ($('id_retorno_saida_cidade') && !$('id_retorno_saida_cidade').value && ret.saida_cidade) $('id_retorno_saida_cidade').value = ret.saida_cidade;
         if ($('id_retorno_chegada_cidade') && !$('id_retorno_chegada_cidade').value && ret.chegada_cidade) $('id_retorno_chegada_cidade').value = ret.chegada_cidade;
-        recalcRetorno(false); updateResumo(); applyingState = false;
+        recalcRetorno(false); updateResumo(); applyingState = false; scheduleRealtimeDiarias();
       });
   }
   function dtBr(d,h) { if (!d&&!h) return ''; var p=d?d.split('-'):null; return (p?p[2]+'/'+p[1]+'/'+p[0]:'')+(h?' '+h:''); }
@@ -491,32 +601,32 @@
   }
   $('destinos-container').addEventListener('change', function(e) {
     if (applyingState) return; var row = e.target.closest('.destino-row'); if (!row) return;
-    if (e.target.classList.contains('destino-estado')) { var cs = row.querySelector('.destino-cidade'); loadCities(cs, e.target.value||'', null).then(function() { renderTrechos(captureCurrentState()); }); }
-    else { renderTrechos(captureCurrentState()); }
+    if (e.target.classList.contains('destino-estado')) { var cs = row.querySelector('.destino-cidade'); loadCities(cs, e.target.value||'', null).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); }); }
+    else { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); }
   });
   $('destinos-container').addEventListener('click', function(e) {
     var btn = e.target.closest('.btn-remover-destino'); if (!btn) return;
     var rows = getDestinoRows(); if (rows.length <= 1) return;
-    btn.closest('.destino-row').remove(); reindexDestinoRows(); refreshDestinoButtons(); renderTrechos(captureCurrentState());
+    btn.closest('.destino-row').remove(); reindexDestinoRows(); refreshDestinoButtons(); renderTrechos(captureCurrentState()); scheduleRealtimeDiarias();
   });
-  $('btn-adicionar-destino').addEventListener('click', function() { addDestinoRow({ estado_id: destinoEstadoDefaultId||null, cidade_id: null }).then(function() { renderTrechos(captureCurrentState()); }); });
-  $('id_origem_estado').addEventListener('change', function() { if (applyingState) return; loadCities($('id_origem_cidade'), $('id_origem_estado').value, null).then(function() { renderTrechos(captureCurrentState()); }); });
-  $('id_origem_cidade').addEventListener('change', function() { if (applyingState) return; renderTrechos(captureCurrentState()); });
+  $('btn-adicionar-destino').addEventListener('click', function() { addDestinoRow({ estado_id: destinoEstadoDefaultId||null, cidade_id: null }).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); }); });
+  $('id_origem_estado').addEventListener('change', function() { if (applyingState) return; loadCities($('id_origem_cidade'), $('id_origem_estado').value, null).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); }); });
+  $('id_origem_cidade').addEventListener('change', function() { if (applyingState) return; renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); });
   $('trechos-gerados-container').addEventListener('input', function(e) {
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';
     if (n.indexOf('_saida_')!==-1||n.indexOf('_tempo_adicional_min')!==-1||n.indexOf('_tempo_cru_estimado_min')!==-1||e.target.classList.contains('trecho-tempo-viagem-hhmm')) recalcCard(c, true);
-    updateResumo();
+    updateResumo(); scheduleRealtimeDiarias();
   });
   $('trechos-gerados-container').addEventListener('change', function(e) {
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';
     if (n.indexOf('_tempo_adicional_min')!==-1||n.indexOf('_tempo_cru_estimado_min')!==-1||e.target.classList.contains('trecho-tempo-viagem-hhmm')) recalcCard(c, true);
-    updateResumo();
+    updateResumo(); scheduleRealtimeDiarias();
   });
   ['id_retorno_saida_data','id_retorno_saida_hora','id_retorno_chegada_data','id_retorno_chegada_hora','id_retorno_tempo_viagem_hhmm','id_retorno_tempo_adicional_min'].forEach(function(id) {
-    $(id).addEventListener('input', function() { if (applyingState) return; recalcRetorno(id.indexOf('saida_')!==-1||id.indexOf('tempo_')!==-1); });
-    $(id).addEventListener('change', function() { if (applyingState) return; recalcRetorno(true); });
+    $(id).addEventListener('input', function() { if (applyingState) return; recalcRetorno(id.indexOf('saida_')!==-1||id.indexOf('tempo_')!==-1); scheduleRealtimeDiarias(); });
+    $(id).addEventListener('change', function() { if (applyingState) return; recalcRetorno(true); scheduleRealtimeDiarias(); });
   });
   if ($('id_roteiro_busca')) { $('id_roteiro_busca').addEventListener('input', function() { renderRouteList($('id_roteiro_busca').value||''); }); }
   $('roteiro-lista').addEventListener('click', function(e) {
@@ -527,14 +637,24 @@
   $('id_roteiro_modo_evento').addEventListener('change', function() {
     setModeUi();
     if ($('id_roteiro_modo_evento').checked && $('id_roteiro_evento_id').value) { var r = routeMap[String($('id_roteiro_evento_id').value)]; if (r && r.state) applyState(r.state); }
+    else { scheduleRealtimeDiarias(); }
   });
-  $('id_roteiro_modo_proprio').addEventListener('change', function() { setModeUi(); });
+  $('id_roteiro_modo_proprio').addEventListener('change', function() { setModeUi(); scheduleRealtimeDiarias(); });
   $('id_roteiro_evento_id').addEventListener('change', function() {
     routeResumo(); var r = routeMap[String($('id_roteiro_evento_id').value||'')];
     if (r && r.state && $('id_roteiro_modo_evento').checked) applyState(r.state);
+    else scheduleRealtimeDiarias();
   });
+  $('btn-calcular-diarias-avulso').addEventListener('click', function() { calculateDiarias(); });
   var obsF = $('id_observacoes'); if (obsF) obsF.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
   setModeUi();
-  applyState(initialState);
+  applyState(initialState).then(function() {
+    if (initialDiarias) {
+      applyDiarias(initialDiarias);
+      setDiariasStatus('updated', 'Cálculo carregado (1 servidor).');
+    } else {
+      scheduleRealtimeDiarias();
+    }
+  });
 })();
 </script>
