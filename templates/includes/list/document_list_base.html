@@ -30,18 +30,19 @@
             {% block list_top_notice %}{% endblock %}
 
             {% block list_filter_block %}
-            <section class="system-document-filter" aria-label="{% block list_filter_aria_label %}Filtros da lista{% endblock %}">
+            <section class="system-document-filter {% block list_filter_class %}{% endblock %}" aria-label="{% block list_filter_aria_label %}Filtros da lista{% endblock %}">
                 <div class="system-document-filter__header">
                     <div class="system-document-filter__heading">
                         <h2 class="system-document-filter__title">{% block list_filter_title %}Filtros{% endblock %}</h2>
                         {% block list_filter_description %}{% endblock %}
                     </div>
+                    {% block list_filter_summary %}{% endblock %}
                 </div>
                 <div class="system-document-filter__body">
                     {% block list_toolbar %}
                     <form
                         method="get"
-                        class="system-document-filter-form"
+                        class="system-document-filter-form {% block list_filter_form_class %}{% endblock %}"
                         data-list-autosubmit-form
                         data-list-autosubmit-delay="{% block list_autosubmit_delay %}500{% endblock %}"
                     >
@@ -55,19 +56,18 @@
 
                         <div class="system-document-filter__grid system-document-filter__grid--secondary">
                             {% block list_filter_secondary_fields %}{% endblock %}
-                            <div class="system-document-filter__actions system-document-filter__actions--inline">
+                            <div class="system-document-filter__field system-document-filter__field--actions">
+                                <span class="form-label system-document-filter__field-label-spacer" aria-hidden="true">Acoes</span>
+                                <div class="system-document-filter__actions-grid">
                                 {% block list_filter_actions %}
-                                <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-                                <a href="{{ clear_filters_url|default:request.path }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+                                <button type="submit" class="btn system-document-filter__action-btn system-document-filter__action-btn--submit">Filtrar</button>
+                                <a href="{{ clear_filters_url|default:request.path }}" class="btn system-document-filter__action-btn system-document-filter__action-btn--clear">Limpar</a>
                                 {% endblock %}
+                                </div>
                             </div>
                         </div>
 
-                        {% block list_filter_status %}
-                        <div class="system-document-filter__status" aria-live="polite">
-                            A lista e atualizada automaticamente apos uma breve pausa na digitacao.
-                        </div>
-                        {% endblock %}
+                        {% block list_filter_status %}{% endblock %}
                     </form>
                     {% endblock %}
                 </div>

@@ -106,7 +106,7 @@ class GlobalViewsTest(TestCase):
         PlanoTrabalho.objects.create(
             evento=self.evento_pt,
             oficio=self.oficio_pt,
-            objetivo='Plano global',
+            observacoes='Plano global',
             status=PlanoTrabalho.STATUS_FINALIZADO,
         )
         OrdemServico.objects.create(
@@ -228,11 +228,9 @@ class GlobalViewsTest(TestCase):
         content = response.content.decode('utf-8')
 
         self.assertContains(response, 'Oficios salvos')
-        self.assertContains(response, 'Historico de documentos gerados.')
-        self.assertContains(response, 'Filtro rapido')
-        self.assertContains(response, '+ Novo oficio')
+        self.assertContains(response, 'Novo oficio')
         self.assertContains(response, 'name="q"', html=False)
-        self.assertContains(response, 'Buscar por oficio, protocolo, destino ou servidor')
+        self.assertContains(response, 'Oficio, protocolo, destino ou servidor')
         self.assertContains(response, 'name="status"', html=False)
         self.assertContains(response, 'name="viagem_status"', html=False)
         self.assertContains(response, 'name="justificativa"', html=False)
@@ -242,11 +240,14 @@ class GlobalViewsTest(TestCase):
         self.assertContains(response, 'name="date_scope"', html=False)
         self.assertContains(response, 'name="date_start"', html=False)
         self.assertContains(response, 'name="date_end"', html=False)
+        self.assertContains(response, 'system-document-filter__summary-pill', html=False)
+        self.assertContains(response, 'system-document-filter__action-btn--submit', html=False)
         self.assertContains(response, 'Limpar')
         self.assertNotContains(response, 'name="contexto"', html=False)
         self.assertNotContains(response, 'name="evento_id"', html=False)
         self.assertNotContains(response, 'name="ano"', html=False)
         self.assertNotContains(response, 'name="numero"', html=False)
+        self.assertNotContains(response, 'A lista e atualizada automaticamente', html=False)
         self.assertEqual(content.count('<h1'), 1)
 
         filtered = self.client.get(reverse('eventos:oficios-global'), {'q': '12.345.678-9'})
@@ -259,13 +260,14 @@ class GlobalViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode('utf-8')
 
-        self.assertIn('data-oficios-view-root', content)
+        self.assertIn('data-list-view-root', content)
         self.assertIn('data-view-mode="rich"', content)
-        self.assertIn('data-oficios-view-toggle="rich"', content)
-        self.assertIn('data-oficios-view-toggle="basic"', content)
-        self.assertIn('Visualizacao completa', content)
+        self.assertIn('system-list-view-toggle', content)
+        self.assertIn('data-list-view-toggle="rich"', content)
+        self.assertIn('data-list-view-toggle="basic"', content)
+        self.assertIn('Completa', content)
         self.assertIn('Visualizacao simples', content)
-        self.assertIn('<script src="/static/js/oficios_list.js"></script>', content)
+        self.assertIn('<script src="/static/js/list_standard.js"></script>', content)
         self.assertIn('<table class="table oficios-table mb-0">', content)
         self.assertIn('oficio-list-grid', content)
         self.assertIn('oficio-list-card', content)
@@ -293,11 +295,13 @@ class GlobalViewsTest(TestCase):
         self.assertNotIn('Documentos', card_html)
 
     def test_lista_global_de_oficios_expoe_hook_de_persistencia_do_modo_no_javascript(self):
-        js = (Path(settings.BASE_DIR) / 'static' / 'js' / 'oficios_list.js').read_text(encoding='utf-8')
+        response = self.client.get(reverse('eventos:oficios-global'))
+        js = (Path(settings.BASE_DIR) / 'static' / 'js' / 'list_standard.js').read_text(encoding='utf-8')
 
-        self.assertIn('central-viagens.oficios.view-mode', js)
+        self.assertContains(response, 'data-view-storage-key="central-viagens.oficios.view-mode"', html=False)
+        self.assertIn('central-viagens.list.view-mode.', js)
         self.assertIn('window.localStorage', js)
-        self.assertIn('data-oficios-view-toggle', js)
+        self.assertIn('data-list-view-toggle', js)
         self.assertIn('data-view-mode', js)
 
     def test_lista_global_de_oficios_mostra_acao_abrir_para_todos_os_oficios_no_wizard_do_proprio_oficio(self):
@@ -434,7 +438,7 @@ class GlobalViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         row_html = self._extract_oficio_row_html(response, self.oficio_pt.pk)
 
-        self.assertIn('Nao informado', row_html)
+        self.assertIn('data-label="VEICULO"', row_html)
         self.assertIn('class="oficio-list-badge is-rascunho"', row_html)
         self.assertIn('Rascunho', row_html)
 
@@ -688,14 +692,16 @@ class GlobalViewsTest(TestCase):
         css = (Path(settings.BASE_DIR) / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
 
         self.assertIn('.oficios-list-shell {', css)
+        self.assertIn('.system-document-top > .page-header-cadastro.system-list-header--standard {', css)
+        self.assertIn('.system-document-filter {', css)
+        self.assertIn('.system-document-filter__grid {', css)
+        self.assertIn('.system-document-filter__action-btn--submit {', css)
+        self.assertIn('.system-document-filter__summary-pill {', css)
+        self.assertIn('.system-list-view-toggle,', css)
         self.assertIn('.oficios-view-toggle {', css)
         self.assertIn('.oficios-view-pane--rich {', css)
         self.assertIn('[data-view-mode="basic"] .oficios-view-pane--rich {', css)
         self.assertIn('[data-view-mode="rich"] .oficios-view-pane--basic {', css)
-        self.assertIn('.oficios-quick-filter {', css)
-        self.assertIn('.oficios-quick-filter__form {', css)
-        self.assertIn('.oficios-filter-main-row {', css)
-        self.assertIn('.oficios-filter-chip {', css)
         self.assertIn('.oficio-list-driver-carona-grid {', css)
         self.assertIn('.oficios-table-panel {', css)
         self.assertIn('.oficios-table {', css)
@@ -905,12 +911,12 @@ class GlobalViewsTest(TestCase):
 
     def test_lista_global_de_oficios_expoe_hooks_de_filtro_em_tempo_real(self):
         response = self.client.get(reverse('eventos:oficios-global'))
-        self.assertContains(response, 'data-oficios-filters-form', html=False)
-        self.assertContains(response, 'data-oficios-autosubmit', html=False)
+        self.assertContains(response, 'data-list-autosubmit-form', html=False)
+        self.assertContains(response, 'data-list-autosubmit', html=False)
 
-        js = (Path(settings.BASE_DIR) / 'static' / 'js' / 'oficios_list.js').read_text(encoding='utf-8')
-        self.assertIn('data-oficios-filters-form', js)
-        self.assertIn('data-oficios-autosubmit', js)
+        js = (Path(settings.BASE_DIR) / 'static' / 'js' / 'list_standard.js').read_text(encoding='utf-8')
+        self.assertIn('data-list-autosubmit-form', js)
+        self.assertIn('data-list-autosubmit', js)
         self.assertIn('scheduleSubmit', js)
 
     def test_hubs_globais_principais_respondem_200(self):
@@ -931,6 +937,9 @@ class GlobalViewsTest(TestCase):
         self.assertContains(response_pt, 'Planos de trabalho')
         self.assertContains(response_pt, self.evento_pt.titulo)
         self.assertContains(response_pt, self.oficio_pt.numero_formatado)
+        self.assertContains(response_pt, 'system-list-view-toggle', html=False)
+        self.assertContains(response_pt, 'oficios-view-pane--basic', html=False)
+        self.assertContains(response_pt, 'oficios-view-pane--rich', html=False)
 
         response_os = self.client.get(reverse('eventos:documentos-ordens-servico'))
         self.assertContains(response_os, 'Ordens de servi')
@@ -941,8 +950,32 @@ class GlobalViewsTest(TestCase):
         self.assertContains(response_termos, self.viajante.nome)
         self.assertContains(response_termos, self.evento_pt.titulo)
         self.assertContains(response_termos, 'Novo termo')
-        self.assertContains(response_termos, 'Termo de autorizacao, Londrina/PR, 10/03/2026, VIAJANTE GLOBAL')
-        self.assertNotContains(response_termos, 'TA-000')
+        self.assertContains(response_termos, 'Londrina/PR')
+        self.assertContains(response_termos, '10/03/2026')
+        self.assertContains(response_termos, 'VIAJANTE GLOBAL')
+        self.assertContains(response_termos, 'TA-0001')
+
+    def test_listas_documentais_prioritarias_compartilham_topo_e_filtros_padronizados(self):
+        casos = [
+            reverse('eventos:documentos-planos-trabalho'),
+            reverse('eventos:documentos-ordens-servico'),
+            reverse('eventos:documentos-justificativas'),
+            reverse('eventos:documentos-termos'),
+        ]
+
+        for url in casos:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200, url)
+            self.assertContains(response, 'data-list-view-root', html=False)
+            self.assertContains(response, 'system-list-view-toggle', html=False)
+            self.assertContains(response, 'data-list-view-toggle="rich"', html=False)
+            self.assertContains(response, 'data-list-view-toggle="basic"', html=False)
+            self.assertContains(response, 'system-document-filter__summary-pill', html=False)
+            self.assertContains(response, 'system-document-filter__action-btn--submit', html=False)
+            self.assertContains(response, 'system-document-filter__action-btn--clear', html=False)
+            self.assertContains(response, 'oficios-view-pane--basic', html=False)
+            self.assertContains(response, 'oficios-view-pane--rich', html=False)
+            self.assertNotContains(response, 'A lista e atualizada automaticamente', html=False)
 
     def test_lista_de_planos_de_trabalho_exibe_oficios_vinculados_em_card_mesmo_quando_evento_veio_pelos_oficios(self):
         oficio_extra = Oficio.objects.create(
@@ -964,7 +997,7 @@ class GlobalViewsTest(TestCase):
             chegada_data=date(2026, 3, 11),
         )
         plano = PlanoTrabalho.objects.create(
-            objetivo='Plano multi-oficios do evento',
+            observacoes='Plano multi-oficios do evento',
             status=PlanoTrabalho.STATUS_FINALIZADO,
             quantidade_servidores=3,
             diarias_quantidade='2,5',
@@ -980,9 +1013,9 @@ class GlobalViewsTest(TestCase):
         self.assertContains(response, f'id="plano-card-{plano.pk}"', html=False)
         self.assertIn(self.oficio_pt.numero_formatado, content)
         self.assertIn(oficio_extra.numero_formatado, content)
-        self.assertIn('Ofícios vinculados', content)
-        self.assertIn('Plano de Trabalho', content)
-        self.assertIn('Equipe', content)
+        self.assertIn('Oficios vinculados', content)
+        self.assertIn('Contexto do plano', content)
+        self.assertIn('Valor por servidor', content)
         self.assertIn('Diarias', content)
         self.assertIn('2 oficios vinculados', content)
 
@@ -1006,7 +1039,7 @@ class GlobalViewsTest(TestCase):
             chegada_data=date(2026, 3, 12),
         )
         plano = PlanoTrabalho.objects.create(
-            objetivo='Plano em cascata documental',
+            observacoes='Plano em cascata documental',
             status=PlanoTrabalho.STATUS_FINALIZADO,
         )
         plano.oficios.add(self.oficio_pt, oficio_extra)

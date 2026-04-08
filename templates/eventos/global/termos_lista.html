@@ -30,46 +30,38 @@
 {% block list_filter_summary %}
 <div class="system-document-filter__summary-pill">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} termo(s)</div>
 {% endblock %}
+{% block list_filter_primary_fields %}
+<div class="system-document-filter__field system-document-filter__field--search-xl">
+    <label class="form-label">Busca principal</label>
+    <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Evento, participante ou cargo" data-list-autosubmit>
+</div>
 
-{% block list_toolbar %}
-<form method="get" class="system-document-filter-form" data-list-autosubmit-form>
-    <div class="system-document-filter__grid">
-        <div class="system-document-filter__field system-document-filter__field--search-xl">
-            <label class="form-label">Busca principal</label>
-            <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Evento, participante ou cargo" data-list-autosubmit>
-        </div>
+<div class="system-document-filter__field system-document-filter__field--wide">
+    <label class="form-label">Evento</label>
+    <select name="evento_id" data-list-autosubmit>
+        <option value="">Todos</option>
+        {% for evento in eventos_choices %}
+        <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% endblock %}
 
-        <div class="system-document-filter__field system-document-filter__field--wide">
-            <label class="form-label">Evento</label>
-            <select name="evento_id" data-list-autosubmit>
-                <option value="">Todos</option>
-                {% for evento in eventos_choices %}
-                <option value="{{ evento.pk }}" {% if filters.evento_id == evento.pk|stringformat:"s" %}selected{% endif %}>{{ evento.titulo|default:"(sem titulo)" }}</option>
-                {% endfor %}
-            </select>
-        </div>
+{% block list_filter_secondary_fields %}
+<div class="system-document-filter__field system-document-filter__field--medium">
+    <label class="form-label">Status</label>
+    <select name="status" data-list-autosubmit>
+        <option value="">Todos</option>
+        {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% endblock %}
 
-        <div class="system-document-filter__field system-document-filter__field--compact">
-            <label class="form-label">Status</label>
-            <select name="status" data-list-autosubmit>
-                <option value="">Todos</option>
-                {% for value, label in status_choices %}
-                <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
-
-    <div class="system-document-filter__footer">
-        <div class="system-document-filter__footer-meta">
-            <span class="system-document-filter__result">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} termo(s) encontrado(s)</span>
-        </div>
-        <div class="system-document-filter__actions">
-            <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-            <a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
-        </div>
-    </div>
-</form>
+{% block list_filter_actions %}
+<button type="submit" class="btn system-document-filter__action-btn system-document-filter__action-btn--submit">Filtrar</button>
+<a href="{{ request.path }}" class="btn system-document-filter__action-btn system-document-filter__action-btn--clear">Limpar</a>
 {% endblock %}
 
 {% block page_result_content %}

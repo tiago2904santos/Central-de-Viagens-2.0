@@ -4,11 +4,17 @@
 {% block page_title_block %}Planos de trabalho{% endblock %}
 {% block page_header_title %}Planos de trabalho{% endblock %}
 {% block list_page_class %}system-list-page--complete{% endblock %}
+{% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.planos-trabalho.documentos.view-mode"{% endblock %}
 {% block list_title %}Planos de trabalho{% endblock %}
 {% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
+{% block list_header_aux_controls %}{% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao da lista de planos de trabalho' %}{% endblock %}
 
 {% block list_header_actions %}
 <a href="{{ plano_novo_url }}" class="btn btn-primary system-list-action-btn">Novo plano de trabalho</a>
+{% endblock %}
+
+{% block list_filter_summary %}
+<div class="system-document-filter__summary-pill">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} plano(s)</div>
 {% endblock %}
 
 {% block list_filter_primary_fields %}
@@ -79,7 +85,46 @@
 {% endblock %}
 
 {% block page_result_content %}
-<section class="documento-cascade-grid" aria-label="Lista de planos de trabalho">
+<section class="system-list-table-wrap oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simples de planos de trabalho">
+    <div class="table-responsive">
+        <table class="table table-hover system-list-table align-middle">
+            <thead>
+                <tr>
+                    <th>Plano</th>
+                    <th>Evento</th>
+                    <th>Oficios</th>
+                    <th>Destino</th>
+                    <th>Periodo</th>
+                    <th>Status</th>
+                    <th class="text-end">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for object in object_list %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">PT {{ object.numero_formatado|default:object.pk }}</div>
+                        <div class="small text-muted">{{ object.contexto_display }}</div>
+                    </td>
+                    <td>{{ object.contexto_display }}</td>
+                    <td>{{ object.oficios_count_label }}</td>
+                    <td>{{ object.destino_display }}</td>
+                    <td>{{ object.periodo_display }}</td>
+                    <td>{{ object.status_meta.label }}</td>
+                    <td class="text-end">
+                        <a href="{{ object.open_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                        <a href="{{ object.edit_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-5">Nenhum plano de trabalho encontrado com os filtros atuais.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista de planos de trabalho">
     {% for object in object_list %}
     <article class="oficio-list-card plano-trabalho-list-card {{ object.card_theme_class }}" id="plano-card-{{ object.pk }}">
         <div class="oficio-list-rich-layout">

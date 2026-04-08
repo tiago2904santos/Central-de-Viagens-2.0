@@ -9,14 +9,15 @@
 {% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
 
 {% block list_header_aux_controls %}
-<div class="oficios-view-toggle" role="group" aria-label="Alternar visualizacao da lista de justificativas">
-    <button type="button" class="oficios-view-toggle__button is-active" data-list-view-toggle="rich" aria-pressed="true">Completa</button>
-    <button type="button" class="oficios-view-toggle__button" data-list-view-toggle="basic" aria-pressed="false">Visualizacao simples</button>
-</div>
+{% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao da lista de justificativas' %}
 {% endblock %}
 
 {% block list_header_actions %}
 <a href="{{ justificativa_novo_url }}" class="btn btn-primary system-list-action-btn">Nova justificativa</a>
+{% endblock %}
+
+{% block list_filter_summary %}
+<div class="system-document-filter__summary-pill">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} justificativa(s)</div>
 {% endblock %}
 
 {% block list_filter_primary_fields %}
