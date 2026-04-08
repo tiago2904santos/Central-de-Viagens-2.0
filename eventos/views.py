@@ -442,13 +442,18 @@ def _parse_trechos_times_post(request, num_trechos):
         c = request.POST.get(f'trecho_{i}_chegada_dt', '').strip()
         # Fallback: campos visíveis individuais, enviados sempre pelo browser independente do JS
         if not s:
-            s_date = request.POST.get(f'trecho_{i}_saida_date', '').strip()
-            s_time = request.POST.get(f'trecho_{i}_saida_time', '').strip()
+            # Support both old (saida_date/saida_time) and Oficio-compatible (saida_data/saida_hora) field names
+            s_date = (request.POST.get(f'trecho_{i}_saida_data', '') or
+                      request.POST.get(f'trecho_{i}_saida_date', '')).strip()
+            s_time = (request.POST.get(f'trecho_{i}_saida_hora', '') or
+                      request.POST.get(f'trecho_{i}_saida_time', '')).strip()
             if s_date:
                 s = s_date + 'T' + (s_time if s_time else '00:00')
         if not c:
-            c_date = request.POST.get(f'trecho_{i}_chegada_date', '').strip()
-            c_time = request.POST.get(f'trecho_{i}_chegada_time', '').strip()
+            c_date = (request.POST.get(f'trecho_{i}_chegada_data', '') or
+                      request.POST.get(f'trecho_{i}_chegada_date', '')).strip()
+            c_time = (request.POST.get(f'trecho_{i}_chegada_hora', '') or
+                      request.POST.get(f'trecho_{i}_chegada_time', '')).strip()
             if c_date:
                 c = c_date + 'T' + (c_time if c_time else '00:00')
         dist_km = request.POST.get(f'trecho_{i}_distancia_km', '').strip()
@@ -518,6 +523,79 @@ def _parse_trechos_times_post(request, num_trechos):
             'rota_fonte': rota_fonte,
         })
     return result
+
+
+def _parse_retorno_from_post(request):
+    """
+    Parses retorno_* POST fields (from static retorno block) into a trechos_times
+    dict compatible with _salvar_trechos_roteiro expectations.
+    """
+    from datetime import datetime
+    from decimal import Decimal, InvalidOperation
+
+    def _parse_dt(date_val, time_val):
+        date_val = (date_val or '').strip()
+        time_val = (time_val or '').strip()
+        if not date_val:
+            return None
+        dt_str = date_val + 'T' + (time_val if time_val else '00:00')
+        try:
+            dt = datetime.strptime(dt_str[:16], '%Y-%m-%dT%H:%M')
+        except ValueError:
+            return None
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt)
+        return dt
+
+    saida_dt = _parse_dt(
+        request.POST.get('retorno_saida_data', ''),
+        request.POST.get('retorno_saida_hora', ''),
+    )
+    chegada_dt = _parse_dt(
+        request.POST.get('retorno_chegada_data', ''),
+        request.POST.get('retorno_chegada_hora', ''),
+    )
+    dist_km_raw = request.POST.get('retorno_distancia_km', '').strip()
+    distancia_km = None
+    if dist_km_raw:
+        try:
+            distancia_km = Decimal(dist_km_raw.replace(',', '.'))
+        except (InvalidOperation, ValueError):
+            pass
+    tempo_cru_raw = request.POST.get('retorno_tempo_cru_estimado_min', '').strip()
+    tempo_cru_min = None
+    if tempo_cru_raw:
+        try:
+            v = int(tempo_cru_raw)
+            if v >= 0:
+                tempo_cru_min = v
+        except (ValueError, TypeError):
+            pass
+    tempo_adic_raw = request.POST.get('retorno_tempo_adicional_min', '0').strip()
+    try:
+        tempo_adic_min = max(0, int(tempo_adic_raw))
+    except (ValueError, TypeError):
+        tempo_adic_min = 0
+    dur_min_raw = request.POST.get('retorno_duracao_estimada_min', '').strip()
+    duracao_estimada_min = None
+    if dur_min_raw:
+        try:
+            v = int(dur_min_raw)
+            if v >= 0:
+                duracao_estimada_min = v
+        except (ValueError, TypeError):
+            pass
+    if duracao_estimada_min is None and ((tempo_cru_min or 0) + tempo_adic_min) > 0:
+        duracao_estimada_min = (tempo_cru_min or 0) + tempo_adic_min
+    return {
+        'saida_dt': saida_dt,
+        'chegada_dt': chegada_dt,
+        'distancia_km': distancia_km,
+        'duracao_estimada_min': duracao_estimada_min,
+        'tempo_cru_estimado_min': tempo_cru_min,
+        'tempo_adicional_min': tempo_adic_min,
+        'rota_fonte': request.POST.get('retorno_rota_fonte', '').strip(),
+    }
 
 
 def _distinct_items_by_pk(items):
@@ -5841,71 +5919,99 @@ def _roteiro_virtual_para_trechos(initial):
     return r
 
 
-def _build_trechos_initial(trechos_list):
-    """Monta lista de dicts para trechos_json (saida_dt, chegada_dt, id, ...). Datetimes em hora local para o front."""
-    out = []
-    for t in trechos_list:
-        sd = t.get('saida_dt')
-        cd = t.get('chegada_dt')
-        if sd and hasattr(sd, 'tzinfo') and sd.tzinfo:
-            sd = timezone.localtime(sd)
-        if cd and hasattr(cd, 'tzinfo') and cd.tzinfo:
-            cd = timezone.localtime(cd)
-        d_km = t.get('distancia_km')
-        t_cru = t.get('tempo_cru_estimado_min')
-        t_adic = t.get('tempo_adicional_min', 0) or 0
-        total = (t_cru or 0) + t_adic
-        out.append({
-            'ordem': t.get('ordem'),
-            'saida_dt': sd.strftime('%Y-%m-%dT%H:%M') if sd else '',
-            'chegada_dt': cd.strftime('%Y-%m-%dT%H:%M') if cd else '',
-            'id': t.get('id'),
-            'distancia_km': str(d_km) if d_km is not None else '',
-            'tempo_cru_estimado_min': t_cru,
-            'tempo_adicional_min': t_adic,
-            'tempo_total_final_min': total if total > 0 else (t.get('duracao_estimada_min')),
-            'duracao_estimada_min': total if total > 0 else t.get('duracao_estimada_min'),
-            'duracao_estimada_hhmm': minutos_para_hhmm(total) if total > 0 else minutos_para_hhmm(t.get('duracao_estimada_min')),
-            'origem_cidade_id': t.get('origem_cidade_id'),
-            'destino_cidade_id': t.get('destino_cidade_id'),
-            'rota_fonte': t.get('rota_fonte') or '',
+def _build_roteiro_avulso_route_options():
+    """
+    Build route_options from all avulso roteiros.
+    Returns (options_list, state_map) mirroring _build_step3_route_options.
+    """
+    options = []
+    state_map = {}
+    roteiros = (
+        RoteiroEvento.objects
+        .filter(tipo=RoteiroEvento.TIPO_AVULSO)
+        .prefetch_related(
+            'destinos', 'destinos__estado', 'destinos__cidade',
+            'trechos', 'trechos__origem_estado', 'trechos__origem_cidade',
+            'trechos__destino_estado', 'trechos__destino_cidade',
+            'origem_cidade', 'origem_estado',
+        )
+        .order_by('-pk')[:50]
+    )
+    for roteiro in roteiros:
+        destinos = [
+            _step3_local_label(destino.cidade, destino.estado)
+            for destino in roteiro.destinos.select_related('cidade', 'estado').order_by('ordem', 'id')
+        ]
+        resumo = ' -> '.join(destinos[:3]) if destinos else 'Sem destinos'
+        if len(destinos) > 3:
+            resumo += ' -> ...'
+        state = _build_step3_state_from_roteiro_evento(roteiro)
+        state_map[roteiro.pk] = state
+        options.append({
+            'id': roteiro.pk,
+            'label': state.get('roteiro_evento_label') or f'Roteiro #{roteiro.pk}',
+            'resumo': resumo,
+            'status': roteiro.status,
+            'tipo_label': 'Avulso',
+            'state': _serialize_step3_state(state),
         })
-    return out
+    return options, state_map
 
 
-def _build_roteiro_frontend_state(destinos_atuais, trechos_initial):
-    """State inicial do editor de roteiro para hidratação/reconstrução consistente no frontend."""
-    destinos_state = []
-    for item in destinos_atuais or []:
-        destinos_state.append({
-            'estado_id': item.get('estado_id'),
-            'cidade_id': item.get('cidade_id'),
-        })
-    return {
-        'destinos_atuais': destinos_state,
-        'trechos': trechos_initial or [],
-    }
+def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_list, is_avulso=False, step3_state=None, route_options=None, seed_source_label=''):
+    """
+    Monta contexto completo para o formulário de roteiro (guiado e avulso).
+    Quando step3_state é fornecido, usa diretamente; caso contrário, constrói
+    a partir de trechos_list + destinos_atuais (compatibilidade com forms guiados).
+    """
+    if step3_state is None:
+        instance = obj or form.instance
+        sede_estado_id = getattr(instance, 'origem_estado_id', None)
+        sede_cidade_id = getattr(instance, 'origem_cidade_id', None)
+        step3_state = _build_step3_state_from_estrutura(
+            trechos_list,
+            [{'estado_id': d.get('estado_id'), 'cidade_id': d.get('cidade_id')} for d in (destinos_atuais or [])],
+            sede_estado_id,
+            sede_cidade_id,
+            seed_source_label,
+        )
+        step3_state['roteiro_modo'] = 'ROTEIRO_PROPRIO'
 
-
-def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_list, is_avulso=False):
-    import json
-
+    sede_estado_id = step3_state.get('sede_estado_id')
+    sede_cidade_id = step3_state.get('sede_cidade_id')
     estados_qs = Estado.objects.filter(ativo=True).order_by('nome')
-    estados_list = list(estados_qs.values('id', 'nome', 'sigla'))
-    trechos_initial = _build_trechos_initial(trechos_list)
-    frontend_state = _build_roteiro_frontend_state(destinos_atuais, trechos_initial)
+    sede_cidades_qs = (
+        Cidade.objects.filter(estado_id=sede_estado_id, ativo=True).order_by('nome')
+        if sede_estado_id
+        else Cidade.objects.none()
+    )
+    destino_estado_fixo = _get_parana_estado()
     return {
         'evento': evento,
         'object': obj,
         'form': form,
         'destinos_atuais': destinos_atuais,
         'estados': estados_qs,
-        'estados_json': json.dumps(estados_list),
         'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
         'trechos': trechos_list,
-        'trechos_json': json.dumps(trechos_initial),
-        'roteiro_step3_state_json': json.dumps(frontend_state),
+        'step3_state_json': _serialize_step3_state(step3_state),
+        'step3_seed_source_label': step3_state.get('seed_source_label', ''),
+        'roteiro_modo': step3_state.get('roteiro_modo', 'ROTEIRO_PROPRIO'),
+        'roteiro_evento_id': step3_state.get('roteiro_evento_id'),
+        'roteiros_evento': route_options or [],
+        'roteiros_evento_json': route_options or [],
+        'has_event_routes': bool(route_options),
         'is_avulso': is_avulso,
+        'retorno_state': step3_state.get('retorno', {}),
+        'sede_estado_id': sede_estado_id,
+        'sede_cidade_id': sede_cidade_id,
+        'sede_cidades_qs': sede_cidades_qs,
+        'destino_estado_fixo_id': getattr(destino_estado_fixo, 'pk', None),
+        'destino_estado_fixo_nome': (
+            f'{destino_estado_fixo.nome} ({destino_estado_fixo.sigla})'
+            if destino_estado_fixo
+            else 'Paraná (PR)'
+        ),
     }
 
 
@@ -5932,8 +6038,10 @@ def guiado_etapa_2_cadastrar(request, evento_id):
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
         if form.is_valid() and ok_destinos:
             roteiro = form.save()
-            num_trechos = len(destinos_post) + 1
+            num_trechos = len(destinos_post)
             trechos_times = _parse_trechos_times_post(request, num_trechos)
+            retorno_data = _parse_retorno_from_post(request)
+            trechos_times.append(retorno_data)
             _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times)
             return redirect('eventos:guiado-etapa-2', evento_id=evento.pk)
         if not ok_destinos:
@@ -5944,7 +6052,6 @@ def guiado_etapa_2_cadastrar(request, evento_id):
         ]
     if not destinos_atuais and request.method != 'POST':
         destinos_atuais = [{'estado_id': None, 'cidade_id': None, 'cidade': None, 'estado': None}]
-    # Mesma estrutura de trechos da edição: trechos_list + trechos_json para o JS
     trechos_list = []
     if request.method != 'POST' and destinos_atuais:
         destinos_list = [(d.get('estado_id'), d.get('cidade_id')) for d in destinos_atuais if d.get('estado_id') and d.get('cidade_id')]
@@ -5981,8 +6088,10 @@ def guiado_etapa_2_editar(request, evento_id, pk):
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
         if form.is_valid() and ok_destinos:
             form.save()
-            num_trechos = len(destinos_post) + 1
+            num_trechos = len(destinos_post)
             trechos_times = _parse_trechos_times_post(request, num_trechos)
+            retorno_data = _parse_retorno_from_post(request)
+            trechos_times.append(retorno_data)
             _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times)
             return redirect('eventos:guiado-etapa-2', evento_id=evento.pk)
         if not ok_destinos:
@@ -5990,16 +6099,6 @@ def guiado_etapa_2_editar(request, evento_id, pk):
         destinos_atuais = [{'estado_id': eid, 'cidade_id': cid, 'cidade': None, 'estado': None} for eid, cid in destinos_post]
         if destinos_post:
             trechos_list = _estrutura_trechos(roteiro, destinos_post)
-            num_t = len(trechos_list)
-            times = _parse_trechos_times_post(request, num_t)
-            for i, data in enumerate(times):
-                if i < len(trechos_list):
-                    trechos_list[i]['saida_dt'] = data.get('saida_dt')
-                    trechos_list[i]['chegada_dt'] = data.get('chegada_dt')
-                    trechos_list[i]['distancia_km'] = data.get('distancia_km')
-                    trechos_list[i]['duracao_estimada_min'] = data.get('duracao_estimada_min')
-                    trechos_list[i]['tempo_cru_estimado_min'] = data.get('tempo_cru_estimado_min')
-                    trechos_list[i]['tempo_adicional_min'] = data.get('tempo_adicional_min', 0)
         else:
             trechos_list = []
     else:
@@ -6032,11 +6131,10 @@ def guiado_etapa_2_excluir(request, evento_id, pk):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def roteiro_avulso_cadastrar(request):
-    """Cadastro de roteiro avulso (sem vínculo obrigatório com evento)."""
+    """Cadastro de roteiro avulso — espelha lógica do oficio_step3."""
     from cadastros.models import ConfiguracaoSistema
 
     initial = {}
-    # Usa o singleton de configuração do sistema, mas sem quebrar se ainda não existir cidade padrão.
     config = ConfiguracaoSistema.get_singleton()
     if getattr(config, 'cidade_sede_padrao', None):
         initial['origem_cidade'] = config.cidade_sede_padrao_id
@@ -6048,8 +6146,12 @@ def roteiro_avulso_cadastrar(request):
         form.instance.origem_cidade_id = initial.get('origem_cidade')
         form.instance.origem_estado_id = initial.get('origem_estado')
     _setup_roteiro_querysets(form, request, None)
-    destinos_atuais = [] if request.method == 'POST' else [{'estado_id': None, 'cidade_id': None, 'cidade': None, 'estado': None}]
+    route_options, route_state_map = _build_roteiro_avulso_route_options()
     if request.method == 'POST':
+        roteiro_modo = (request.POST.get('roteiro_modo') or '').strip()
+        if roteiro_modo not in {'EVENTO_EXISTENTE', 'ROTEIRO_PROPRIO'}:
+            roteiro_modo = 'ROTEIRO_PROPRIO'
+        roteiro_evento_id = _parse_int(request.POST.get('roteiro_evento_id'))
         destinos_post = _parse_destinos_post(request)
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
         if form.is_valid() and ok_destinos:
@@ -6057,8 +6159,10 @@ def roteiro_avulso_cadastrar(request):
             roteiro.evento = None
             roteiro.tipo = RoteiroEvento.TIPO_AVULSO
             roteiro.save()
-            num_trechos = len(destinos_post) + 1
+            num_trechos = len(destinos_post)
             trechos_times = _parse_trechos_times_post(request, num_trechos)
+            retorno_data = _parse_retorno_from_post(request)
+            trechos_times.append(retorno_data)
             _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times)
             return redirect('eventos:roteiros-global')
         if not ok_destinos:
@@ -6067,12 +6171,25 @@ def roteiro_avulso_cadastrar(request):
             {'estado_id': eid, 'cidade_id': cid, 'cidade': None, 'estado': None}
             for eid, cid in destinos_post
         ]
-    trechos_list = []
-    if request.method != 'POST' and destinos_atuais:
-        destinos_list = [(d.get('estado_id'), d.get('cidade_id')) for d in destinos_atuais if d.get('estado_id') and d.get('cidade_id')]
-        if destinos_list and (initial.get('origem_estado') or initial.get('origem_cidade')):
-            roteiro_virtual = _roteiro_virtual_para_trechos(initial)
-            trechos_list = _estrutura_trechos(roteiro_virtual, destinos_list)
+        trechos_list = _estrutura_trechos(form.instance, destinos_post) if destinos_post and (form.instance.origem_estado_id or form.instance.origem_cidade_id) else []
+        step3_state = _build_step3_state_from_estrutura(
+            trechos_list,
+            [{'estado_id': d['estado_id'], 'cidade_id': d['cidade_id']} for d in destinos_atuais],
+            form.instance.origem_estado_id, form.instance.origem_cidade_id, '',
+        )
+        step3_state['roteiro_modo'] = roteiro_modo
+        step3_state['roteiro_evento_id'] = roteiro_evento_id
+    else:
+        roteiro_modo = 'ROTEIRO_PROPRIO'
+        roteiro_evento_id = None
+        destinos_atuais = [{'estado_id': None, 'cidade_id': None, 'cidade': None, 'estado': None}]
+        trechos_list = []
+        step3_state = _build_step3_state_from_estrutura(
+            trechos_list,
+            [{'estado_id': None, 'cidade_id': None}],
+            initial.get('origem_estado'), initial.get('origem_cidade'), '',
+        )
+        step3_state['roteiro_modo'] = roteiro_modo
     context = _build_roteiro_form_context(
         evento=None,
         form=form,
@@ -6080,6 +6197,8 @@ def roteiro_avulso_cadastrar(request):
         destinos_atuais=destinos_atuais,
         trechos_list=trechos_list,
         is_avulso=True,
+        step3_state=step3_state,
+        route_options=route_options,
     )
     return render(request, 'eventos/global/roteiro_avulso_form.html', context)
 
@@ -6087,51 +6206,58 @@ def roteiro_avulso_cadastrar(request):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def roteiro_avulso_editar(request, pk):
-    """Edição de roteiro avulso (evento vazio)."""
+    """Edição de roteiro avulso — espelha lógica do oficio_step3."""
     roteiro = get_object_or_404(
         RoteiroEvento.objects.prefetch_related(
             'destinos', 'destinos__estado', 'destinos__cidade',
             'trechos', 'trechos__origem_estado', 'trechos__origem_cidade',
             'trechos__destino_estado', 'trechos__destino_cidade',
-        ),
+        ).select_related('origem_estado', 'origem_cidade'),
         pk=pk,
     )
     form = RoteiroEventoForm(request.POST or None, instance=roteiro)
     _setup_roteiro_querysets(form, request, roteiro)
+    route_options, route_state_map = _build_roteiro_avulso_route_options()
     if request.method == 'POST':
+        roteiro_modo = (request.POST.get('roteiro_modo') or '').strip()
+        if roteiro_modo not in {'EVENTO_EXISTENTE', 'ROTEIRO_PROPRIO'}:
+            roteiro_modo = 'ROTEIRO_PROPRIO'
+        roteiro_evento_id = _parse_int(request.POST.get('roteiro_evento_id'))
         destinos_post = _parse_destinos_post(request)
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
         if form.is_valid() and ok_destinos:
-            roteiro = form.save(commit=False)
-            roteiro.evento = roteiro.evento  # preserva, mesmo se None
-            roteiro.tipo = roteiro.tipo or RoteiroEvento.TIPO_AVULSO
-            roteiro.save()
-            num_trechos = len(destinos_post) + 1
+            roteiro_saved = form.save(commit=False)
+            roteiro_saved.evento = roteiro.evento
+            roteiro_saved.tipo = roteiro.tipo or RoteiroEvento.TIPO_AVULSO
+            roteiro_saved.save()
+            num_trechos = len(destinos_post)
             trechos_times = _parse_trechos_times_post(request, num_trechos)
-            _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times)
+            retorno_data = _parse_retorno_from_post(request)
+            trechos_times.append(retorno_data)
+            _salvar_roteiro_com_destinos_e_trechos(roteiro_saved, destinos_post, trechos_times)
             return redirect('eventos:roteiros-global')
         if not ok_destinos:
             form.add_error(None, msg_destinos)
-        destinos_atuais = [{'estado_id': eid, 'cidade_id': cid, 'cidade': None, 'estado': None} for eid, cid in destinos_post]
-        if destinos_post:
-            trechos_list = _estrutura_trechos(roteiro, destinos_post)
-            num_t = len(trechos_list)
-            times = _parse_trechos_times_post(request, num_t)
-            for i, data in enumerate(times):
-                if i < len(trechos_list):
-                    trechos_list[i]['saida_dt'] = data.get('saida_dt')
-                    trechos_list[i]['chegada_dt'] = data.get('chegada_dt')
-                    trechos_list[i]['distancia_km'] = data.get('distancia_km')
-                    trechos_list[i]['duracao_estimada_min'] = data.get('duracao_estimada_min')
-                    trechos_list[i]['tempo_cru_estimado_min'] = data.get('tempo_cru_estimado_min')
-                    trechos_list[i]['tempo_adicional_min'] = data.get('tempo_adicional_min', 0)
-        else:
-            trechos_list = []
+        destinos_atuais = [
+            {'estado_id': eid, 'cidade_id': cid, 'cidade': None, 'estado': None}
+            for eid, cid in destinos_post
+        ]
+        trechos_list = _estrutura_trechos(roteiro, destinos_post) if destinos_post else []
+        step3_state = _build_step3_state_from_estrutura(
+            trechos_list,
+            [{'estado_id': d['estado_id'], 'cidade_id': d['cidade_id']} for d in destinos_atuais],
+            roteiro.origem_estado_id, roteiro.origem_cidade_id, '',
+        )
+        step3_state['roteiro_modo'] = roteiro_modo
+        step3_state['roteiro_evento_id'] = roteiro_evento_id
     else:
         destinos_atuais = _destinos_roteiro_para_template(roteiro)
-        trechos_list = _estrutura_trechos(roteiro)
-    if not destinos_atuais:
-        destinos_atuais = [{'estado_id': None, 'cidade_id': None, 'cidade': None, 'estado': None}]
+        if not destinos_atuais:
+            destinos_atuais = [{'estado_id': None, 'cidade_id': None, 'cidade': None, 'estado': None}]
+        destinos_list = [(d.get('estado_id'), d.get('cidade_id')) for d in destinos_atuais if d.get('estado_id') and d.get('cidade_id')]
+        trechos_list = _estrutura_trechos(roteiro, destinos_list) if destinos_list else []
+        step3_state = _build_step3_state_from_roteiro_evento(roteiro)
+        step3_state['roteiro_modo'] = 'ROTEIRO_PROPRIO'
     context = _build_roteiro_form_context(
         evento=None,
         form=form,
@@ -6139,6 +6265,8 @@ def roteiro_avulso_editar(request, pk):
         destinos_atuais=destinos_atuais,
         trechos_list=trechos_list,
         is_avulso=True,
+        step3_state=step3_state,
+        route_options=route_options,
     )
     return render(request, 'eventos/global/roteiro_avulso_form.html', context)
 
