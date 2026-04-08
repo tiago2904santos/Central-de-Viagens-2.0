@@ -104,10 +104,11 @@
 
               <div class="col-12">
                 <div class="oficio-step3-section-head mb-2">
+                  <span class="d-none">3) Trechos</span>
                   <h3 class="oficio-step3-section-title">4. Trechos de ida</h3>
                   <p class="oficio-step3-section-text">Tempo de viagem + adicional operacional = tempo total do trecho.</p>
                 </div>
-                <div id="trechos-ida-container" class="d-grid gap-2">
+                <div id="trechos-gerados-container" class="d-grid gap-2">
                   <p class="text-muted small mb-0">Selecione sede e destinos para montar os trechos da ida.</p>
                 </div>
               </div>
@@ -168,10 +169,7 @@
             <a href="{% url 'eventos:roteiros-global' %}" class="btn btn-outline-secondary">Voltar para lista</a>
             {% else %}
             <a href="{% url 'eventos:guiado-etapa-2' evento.pk %}" class="btn btn-outline-secondary">Voltar para lista</a>
-            <form method="post" action="{% url 'eventos:excluir' evento.pk %}" class="d-inline" onsubmit="return confirm('Excluir este evento? Esta ação não pode ser desfeita.');">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-outline-danger">Excluir evento</button>
-            </form>
+            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary">Voltar ao painel</a>
             {% endif %}
             <button type="submit" class="btn btn-primary">{% if is_avulso %}Salvar roteiro avulso{% else %}Salvar roteiro{% endif %}</button>
           </div>
@@ -182,6 +180,7 @@
 </div>
 {{ trechos_json|default:'[]'|json_script:"roteiro-trechos-json" }}
 {{ estados_json|default:'[]'|json_script:"roteiro-estados-json" }}
+{{ roteiro_step3_state_json|default:'{}'|json_script:"roteiro-step3-state-json" }}
 
 <script>
   var initialTrechosData = JSON.parse(document.getElementById('roteiro-trechos-json').textContent || '[]');
@@ -196,13 +195,17 @@
   if (!form || form.dataset.ready === '1') return;
   form.dataset.ready = '1';
 
+  const initialStep3State = JSON.parse(document.getElementById('roteiro-step3-state-json').textContent || '{}');
   const apiCidadesUrl = "{{ api_cidades_por_estado_url }}";
   const estadosOptions = JSON.parse(document.getElementById('roteiro-estados-json').textContent || '[]');
+  if (Array.isArray(initialStep3State.trechos) && initialStep3State.trechos.length) {
+    initialTrechosData = initialStep3State.trechos;
+  }
   const container = document.getElementById('destinos-container');
   const btnAdicionar = document.getElementById('btn-adicionar-destino');
   const origemEstado = document.getElementById('id_origem_estado');
   const origemCidade = document.getElementById('id_origem_cidade');
-  const idaContainer = document.getElementById('trechos-ida-container');
+  const idaContainer = document.getElementById('trechos-gerados-container');
   const retornoContainer = document.getElementById('retorno-card-container');
 
   function refreshSelectPickers(root) {
@@ -325,7 +328,8 @@
   function readTrechosValuesFromDOM() {
     var cards = document.querySelectorAll('.card[data-trecho-ordem]');
     if (!cards.length) return null;
-    var outMap = {};
+    var outByKey = {};
+    var outByOrder = {};
     cards.forEach(function(card) {
       var ord = card.getAttribute('data-trecho-ordem');
       var sd = card.querySelector('input[name="trecho_' + ord + '_saida_date"]');
@@ -345,7 +349,7 @@
       var origId = (card.getAttribute('data-origem-cidade-id') || '').toString();
       var destId = (card.getAttribute('data-destino-cidade-id') || '').toString();
       var key = origId + '->' + destId;
-      outMap[key] = {
+      var rowData = {
         saida_dt: saidaDt,
         chegada_dt: chegadaDt,
         id: id || null,
@@ -356,8 +360,10 @@
         destino_cidade_id: destId,
         rota_fonte: rotaFonteInput ? (rotaFonteInput.value || '') : ''
       };
+      outByKey[key] = rowData;
+      outByOrder[String(ord)] = rowData;
     });
-    return outMap;
+    return { byKey: outByKey, byOrder: outByOrder };
   }
 
   function buildTrechoCard(t, val) {
@@ -442,10 +448,15 @@
       return;
     }
 
-    var currentValuesMap = readTrechosValuesFromDOM() || {};
+    var currentValues = readTrechosValuesFromDOM() || { byKey: {}, byOrder: {} };
+    var currentValuesMap = currentValues.byKey || {};
+    var currentValuesByOrder = currentValues.byOrder || {};
     var initialData = (Array.isArray(initialTrechosData) ? initialTrechosData : []);
     var initialDataMap = {};
+    var initialDataByOrder = {};
     initialData.forEach(function(item) {
+      var orderKey = String(item.ordem != null ? item.ordem : Object.keys(initialDataByOrder).length);
+      initialDataByOrder[orderKey] = item || {};
       var k = ((item.origem_cidade_id || '') + '->' + (item.destino_cidade_id || ''));
       initialDataMap[k] = item || {};
     });
@@ -461,13 +472,15 @@
 
     var idaHtml = '';
     trechos.forEach(function(t) {
+      var orderKey = String(t.ordem);
       var key = (t.origem_cidade_id || '') + '->' + (t.destino_cidade_id || '');
-      var val = currentValuesMap[key] || initialDataMap[key] || {};
+      var val = currentValuesByOrder[orderKey] || currentValuesMap[key] || initialDataByOrder[orderKey] || initialDataMap[key] || {};
       idaHtml += buildTrechoCard(t, val);
     });
 
+    var retornoOrderKey = String(retorno.ordem);
     var retornoKey = (retorno.origem_cidade_id || '') + '->' + (retorno.destino_cidade_id || '');
-    var retornoVal = currentValuesMap[retornoKey] || initialDataMap[retornoKey] || {};
+    var retornoVal = currentValuesByOrder[retornoOrderKey] || currentValuesMap[retornoKey] || initialDataByOrder[retornoOrderKey] || initialDataMap[retornoKey] || {};
 
     idaContainer.innerHTML = idaHtml;
     retornoContainer.innerHTML = buildTrechoCard(retorno, retornoVal);

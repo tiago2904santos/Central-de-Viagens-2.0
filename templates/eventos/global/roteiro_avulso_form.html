@@ -4,19 +4,5 @@
 {% block page_title %}Roteiros — {% if object %}Editar roteiro avulso{% else %}Cadastrar roteiro avulso{% endif %}{% endblock %}
 
 {% block content %}
-{% with
-  page_title_text=object|yesno:'Editar roteiro avulso,Cadastrar roteiro avulso'
-  page_description='Roteiro sem vínculo com evento'
-  back_url_name='eventos:roteiros-global'
-  back_url_arg=''
-  submit_label='Salvar roteiro avulso'
-  list_url_name='eventos:roteiros-global'
-  list_url_arg=''
-  show_delete_event=False
-  delete_event_url_name=''
-  delete_event_url_arg=''
-  is_avulso=True
-%}
-  {% include 'eventos/partials/roteiro_step3_clone_form.html' %}
-{% endwith %}
+{% include 'eventos/partials/roteiro_step3_clone_form.html' with is_avulso=True %}
 {% endblock %}

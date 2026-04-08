@@ -4,19 +4,5 @@
 {% block page_title %}Etapa 4 — {% if object %}Editar roteiro{% else %}Cadastrar roteiro{% endif %}{% endblock %}
 
 {% block content %}
-{% with
-  page_title_text=object|yesno:'Editar roteiro,Cadastrar roteiro'
-  page_description=evento.titulo
-  back_url_name='eventos:guiado-etapa-2'
-  back_url_arg=evento.pk
-  submit_label='Salvar roteiro'
-  list_url_name='eventos:guiado-etapa-2'
-  list_url_arg=evento.pk
-  show_delete_event=True
-  delete_event_url_name='eventos:excluir'
-  delete_event_url_arg=evento.pk
-  is_avulso=False
-%}
-  {% include 'eventos/partials/roteiro_step3_clone_form.html' %}
-{% endwith %}
+{% include 'eventos/partials/roteiro_step3_clone_form.html' with is_avulso=False %}
 {% endblock %}

@@ -5766,6 +5766,7 @@ def _build_trechos_initial(trechos_list):
         t_adic = t.get('tempo_adicional_min', 0) or 0
         total = (t_cru or 0) + t_adic
         out.append({
+            'ordem': t.get('ordem'),
             'saida_dt': sd.strftime('%Y-%m-%dT%H:%M') if sd else '',
             'chegada_dt': cd.strftime('%Y-%m-%dT%H:%M') if cd else '',
             'id': t.get('id'),
@@ -5780,6 +5781,42 @@ def _build_trechos_initial(trechos_list):
             'rota_fonte': t.get('rota_fonte') or '',
         })
     return out
+
+
+def _build_roteiro_frontend_state(destinos_atuais, trechos_initial):
+    """State inicial do editor de roteiro para hidratação/reconstrução consistente no frontend."""
+    destinos_state = []
+    for item in destinos_atuais or []:
+        destinos_state.append({
+            'estado_id': item.get('estado_id'),
+            'cidade_id': item.get('cidade_id'),
+        })
+    return {
+        'destinos_atuais': destinos_state,
+        'trechos': trechos_initial or [],
+    }
+
+
+def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_list, is_avulso=False):
+    import json
+
+    estados_qs = Estado.objects.filter(ativo=True).order_by('nome')
+    estados_list = list(estados_qs.values('id', 'nome', 'sigla'))
+    trechos_initial = _build_trechos_initial(trechos_list)
+    frontend_state = _build_roteiro_frontend_state(destinos_atuais, trechos_initial)
+    return {
+        'evento': evento,
+        'object': obj,
+        'form': form,
+        'destinos_atuais': destinos_atuais,
+        'estados': estados_qs,
+        'estados_json': json.dumps(estados_list),
+        'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
+        'trechos': trechos_list,
+        'trechos_json': json.dumps(trechos_initial),
+        'roteiro_step3_state_json': json.dumps(frontend_state),
+        'is_avulso': is_avulso,
+    }
 
 
 @login_required
@@ -5817,9 +5854,6 @@ def guiado_etapa_2_cadastrar(request, evento_id):
         ]
     if not destinos_atuais and request.method != 'POST':
         destinos_atuais = [{'estado_id': None, 'cidade_id': None, 'cidade': None, 'estado': None}]
-    estados_qs = Estado.objects.filter(ativo=True).order_by('nome')
-    import json
-    estados_list = list(estados_qs.values('id', 'nome', 'sigla'))
     # Mesma estrutura de trechos da edição: trechos_list + trechos_json para o JS
     trechos_list = []
     if request.method != 'POST' and destinos_atuais:
@@ -5827,18 +5861,14 @@ def guiado_etapa_2_cadastrar(request, evento_id):
         if destinos_list and (initial.get('origem_estado') or initial.get('origem_cidade')):
             roteiro_virtual = _roteiro_virtual_para_trechos(initial)
             trechos_list = _estrutura_trechos(roteiro_virtual, destinos_list)
-    trechos_initial = _build_trechos_initial(trechos_list)
-    context = {
-        'evento': evento,
-        'form': form,
-        'object': None,
-        'destinos_atuais': destinos_atuais,
-        'estados': estados_qs,
-        'estados_json': json.dumps(estados_list),
-        'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
-        'trechos': trechos_list,
-        'trechos_json': json.dumps(trechos_initial),
-    }
+    context = _build_roteiro_form_context(
+        evento=evento,
+        form=form,
+        obj=None,
+        destinos_atuais=destinos_atuais,
+        trechos_list=trechos_list,
+        is_avulso=False,
+    )
     return render(request, 'eventos/guiado/roteiro_form.html', context)
 
 
@@ -5887,21 +5917,14 @@ def guiado_etapa_2_editar(request, evento_id, pk):
         trechos_list = _estrutura_trechos(roteiro)
     if not destinos_atuais:
         destinos_atuais = [{'estado_id': None, 'cidade_id': None, 'cidade': None, 'estado': None}]
-    estados_qs = Estado.objects.filter(ativo=True).order_by('nome')
-    import json
-    estados_list = list(estados_qs.values('id', 'nome', 'sigla'))
-    trechos_initial = _build_trechos_initial(trechos_list)
-    context = {
-        'evento': evento,
-        'object': roteiro,
-        'form': form,
-        'destinos_atuais': destinos_atuais,
-        'estados': estados_qs,
-        'estados_json': json.dumps(estados_list),
-        'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
-        'trechos': trechos_list,
-        'trechos_json': json.dumps(trechos_initial),
-    }
+    context = _build_roteiro_form_context(
+        evento=evento,
+        form=form,
+        obj=roteiro,
+        destinos_atuais=destinos_atuais,
+        trechos_list=trechos_list,
+        is_avulso=False,
+    )
     return render(request, 'eventos/guiado/roteiro_form.html', context)
 
 
@@ -5954,28 +5977,20 @@ def roteiro_avulso_cadastrar(request):
             {'estado_id': eid, 'cidade_id': cid, 'cidade': None, 'estado': None}
             for eid, cid in destinos_post
         ]
-    estados_qs = Estado.objects.filter(ativo=True).order_by('nome')
-    import json
-    estados_list = list(estados_qs.values('id', 'nome', 'sigla'))
     trechos_list = []
     if request.method != 'POST' and destinos_atuais:
         destinos_list = [(d.get('estado_id'), d.get('cidade_id')) for d in destinos_atuais if d.get('estado_id') and d.get('cidade_id')]
         if destinos_list and (initial.get('origem_estado') or initial.get('origem_cidade')):
             roteiro_virtual = _roteiro_virtual_para_trechos(initial)
             trechos_list = _estrutura_trechos(roteiro_virtual, destinos_list)
-    trechos_initial = _build_trechos_initial(trechos_list)
-    context = {
-        'evento': None,
-        'form': form,
-        'object': None,
-        'destinos_atuais': destinos_atuais,
-        'estados': estados_qs,
-        'estados_json': json.dumps(estados_list),
-        'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
-        'trechos': trechos_list,
-        'trechos_json': json.dumps(trechos_initial),
-        'is_avulso': True,
-    }
+    context = _build_roteiro_form_context(
+        evento=None,
+        form=form,
+        obj=None,
+        destinos_atuais=destinos_atuais,
+        trechos_list=trechos_list,
+        is_avulso=True,
+    )
     return render(request, 'eventos/global/roteiro_avulso_form.html', context)
 
 
@@ -6027,22 +6042,14 @@ def roteiro_avulso_editar(request, pk):
         trechos_list = _estrutura_trechos(roteiro)
     if not destinos_atuais:
         destinos_atuais = [{'estado_id': None, 'cidade_id': None, 'cidade': None, 'estado': None}]
-    estados_qs = Estado.objects.filter(ativo=True).order_by('nome')
-    import json
-    estados_list = list(estados_qs.values('id', 'nome', 'sigla'))
-    trechos_initial = _build_trechos_initial(trechos_list)
-    context = {
-        'evento': None,
-        'object': roteiro,
-        'form': form,
-        'destinos_atuais': destinos_atuais,
-        'estados': estados_qs,
-        'estados_json': json.dumps(estados_list),
-        'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
-        'trechos': trechos_list,
-        'trechos_json': json.dumps(trechos_initial),
-        'is_avulso': True,
-    }
+    context = _build_roteiro_form_context(
+        evento=None,
+        form=form,
+        obj=roteiro,
+        destinos_atuais=destinos_atuais,
+        trechos_list=trechos_list,
+        is_avulso=True,
+    )
     return render(request, 'eventos/global/roteiro_avulso_form.html', context)
 
 
