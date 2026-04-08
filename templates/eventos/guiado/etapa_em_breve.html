@@ -1,17 +1,20 @@
-{% extends 'base.html' %}
+{% extends 'includes/layout/simple_page_base.html' %}
 
-{% block title %}Etapa {{ etapa_numero }} — {{ etapa_nome }} — Em breve — Central de Viagens{% endblock %}
-{% block page_title %}Fluxo guiado — Etapa {{ etapa_numero }}{% endblock %}
+{% block simple_page_title_block %}Etapa {{ etapa_numero }} - {{ etapa_nome }} - Em breve{% endblock %}
+{% block simple_page_page_title %}Fluxo guiado - Etapa {{ etapa_numero }}{% endblock %}
+{% block simple_page_variant %}detail{% endblock %}
+{% block simple_page_title %}Etapa {{ etapa_numero }} - {{ etapa_nome }}{% endblock %}
+{% block simple_page_subtitle %}
+<p class="app-page-header__subtitle">Esta etapa já está encaixada no shell global e ficará disponível quando o fluxo correspondente for entregue.</p>
+{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="card border-0 shadow-sm">
-        <div class="card-body text-center py-5">
-            <i class="bi bi-hourglass-split display-4 text-muted mb-3"></i>
-            <h4 class="text-muted">Etapa {{ etapa_numero }} — {{ etapa_nome }}</h4>
-            <p class="text-muted mb-4">Esta etapa está em construção e estará disponível em breve.</p>
-            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-primary">Voltar ao painel do evento</a>
-        </div>
+{% block simple_page_body %}
+<div class="card app-page-card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-hourglass-split display-4 text-muted mb-3"></i>
+        <h4 class="text-muted">Etapa {{ etapa_numero }} - {{ etapa_nome }}</h4>
+        <p class="text-muted mb-4">Esta etapa está em construção e estará disponível em breve.</p>
+        <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-primary">Voltar ao painel do evento</a>
     </div>
 </div>
 {% endblock %}

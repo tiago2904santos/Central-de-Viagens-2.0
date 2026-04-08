@@ -5,7 +5,8 @@
 {% block page_title %}{% if object %}Editar{% else %}Novo{% endif %} termo{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 oficio-wizard-page plano-trabalho-page termo-workspace-page">
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page plano-trabalho-page termo-workspace-page">
+    <div class="app-page-shell__inner">
     <div class="page-header-cadastro termo-workspace-header">
         <div>
             <div class="termo-workspace-kicker">Central documental</div>
@@ -41,7 +42,7 @@
                 </div>
                 {% endif %}
 
-                <div class="card oficio-stage-panel" style="margin-top:1rem;">
+                <div class="card oficio-stage-panel oficio-stage-panel--offset">
                     <div class="card-body">
                         <section class="oficio-stage-intro termo-stage-intro">
                             <div>
@@ -196,8 +197,7 @@
                                                     >
                                                     <div
                                                         id="viajantes-autocomplete-results"
-                                                        class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none"
-                                                        style="z-index: 20;"
+                                                        class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none app-page-autocomplete-menu"
                                                     ></div>
                                                 </div>
                                                 <div class="form-text">A busca mostra apenas viajantes finalizados.</div>
@@ -239,8 +239,7 @@
                                                     >
                                                     <div
                                                         id="termo-veiculo-results"
-                                                        class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none"
-                                                        style="z-index: 20;"
+                                                        class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none app-page-autocomplete-menu"
                                                     ></div>
                                                 </div>
                                                 <div class="form-text">Busca pelo cadastro de veiculos.</div>
@@ -275,6 +274,7 @@
                     </div>
                 </div>
             </form>
+    </div>
 </div>
 
 {{ selected_viajantes_payload|json_script:"termo-selected-viajantes" }}

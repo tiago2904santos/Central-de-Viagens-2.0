@@ -4,7 +4,8 @@
 {% block page_title %}Fluxo guiado — Etapa 7: Finalização{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="app-page-shell app-page-shell--detail">
+    <div class="app-page-shell__inner app-page-stack">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h1 class="h4 mb-0">Etapa 7 — Finalização</h1>
         <div class="d-flex gap-2">
@@ -18,7 +19,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card app-page-card">
         <div class="card-body py-3">
             <h2 class="h6 card-title mb-2">{{ evento.titulo|default:"(sem título)" }}</h2>
             <p class="text-muted small mb-0">
@@ -31,7 +32,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card app-page-card">
         <div class="card-header py-2">
             <h3 class="h6 mb-0">Situação das etapas</h3>
         </div>
@@ -93,7 +94,7 @@
     </div>
 
     {% if pendencias %}
-    <div class="card mb-4 border-warning">
+    <div class="card app-page-card border-warning">
         <div class="card-header py-2 bg-warning bg-opacity-25">
             <h3 class="h6 mb-0">Pendências para finalizar</h3>
         </div>
@@ -109,7 +110,7 @@
     {% endif %}
 
     {% if finalizacao.concluido %}
-    <div class="card mb-4 border-success">
+    <div class="card app-page-card border-success">
         <div class="card-body py-3">
             <p class="mb-0">
                 <span class="badge bg-success me-2">Evento finalizado</span>
@@ -127,7 +128,7 @@
     </div>
     {% endif %}
 
-    <div class="card form-card">
+    <div class="card app-page-card form-card">
         <div class="card-header py-2">
             <h3 class="h6 mb-0">Observações finais e finalização</h3>
         </div>
@@ -155,7 +156,7 @@
     {% endif %}
 
     {% if oficios %}
-    <div class="card mt-4">
+    <div class="card app-page-card">
         <div class="card-header py-2">
             <h3 class="h6 mb-0">Ofícios vinculados ao evento</h3>
         </div>
@@ -194,5 +195,6 @@
         </div>
     </div>
     {% endif %}
+    </div>
 </div>
 {% endblock %}

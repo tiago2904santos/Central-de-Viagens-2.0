@@ -747,8 +747,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid pt-0 pb-4 oficio-wizard-page" data-glance-state="closed">
-  <div class="oficio-wizard-shell">
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page" data-glance-state="closed">
+  <div class="app-page-shell__inner oficio-wizard-shell">
 
     {# ──────────────────────── STICKY HEADER ──────────────────────── #}
     <div class="oficio-wizard-header" data-oficio-sticky-header>
@@ -765,7 +765,7 @@
           </div>
         </div>
         <div class="oficio-wizard-stepper-shell">
-          <nav class="oficio-stepper" aria-label="Etapas" style="--oficio-step-count:4;">
+          <nav class="oficio-stepper oficio-stepper--4" aria-label="Etapas">
             <button type="button" class="oficio-stepper-link is-active" data-step-target="0" aria-current="step">
               <span class="oficio-stepper-badge">1</span>
               <span class="oficio-stepper-copy">
@@ -811,7 +811,7 @@
     {% endif %}
 
     {# ── Main panel ── #}
-    <div class="card oficio-stage-panel" style="margin-top:1rem;">
+    <div class="card oficio-stage-panel oficio-stage-panel--offset">
       <div class="card-body">
 
         <form method="post" novalidate id="pt-form">
@@ -1107,8 +1107,8 @@
                       <strong id="pt-diarias-right-extenso">Não informado</strong>
                     </div>
                   </div>
-                  <div id="diarias-erro" class="alert alert-danger py-2 px-3 mt-2 mb-0" role="alert" style="display:none;"></div>
-                  <div id="pt-diarias-suggestion" class="pt-diarias-suggestion mt-2" role="status" aria-live="polite" style="display:none;"></div>
+                  <div id="diarias-erro" class="alert alert-danger py-2 px-3 mt-2 mb-0 app-start-hidden" role="alert"></div>
+                  <div id="pt-diarias-suggestion" class="pt-diarias-suggestion mt-2" role="status" aria-live="polite"></div>
                   <div class="d-none" aria-hidden="true">
                     {{ form.diarias_quantidade }}
                     {{ form.diarias_valor_unitario }}
@@ -1279,7 +1279,7 @@
 
           {# ════ FOOTER ════ #}
           <div class="oficio-wizard-footer-actions">
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+            <div class="oficio-summary-actions-inline">
               <button type="button" class="btn btn-outline-secondary" id="pt-prev" disabled>← Voltar</button>
               <button type="button" class="btn btn-outline-primary" id="pt-next">Avançar →</button>
               <span class="badge text-bg-light text-muted" id="pt-progress-chip">1 / 4</span>
@@ -2772,8 +2772,8 @@
             btn.type = 'button';
             btn.className = 'list-group-item list-group-item-action py-2 px-3';
             btn.innerHTML =
-              '<strong class="d-block" style="font-size:.88rem">' + item.nome + '</strong>' +
-              (item.cargo ? '<span class="text-muted" style="font-size:.78rem">' + item.cargo + (item.unidade ? ' \u2014 ' + item.unidade : '') + '</span>' : '');
+              '<strong class="d-block pt-coord-result__title">' + item.nome + '</strong>' +
+              (item.cargo ? '<span class="text-muted pt-coord-result__meta">' + item.cargo + (item.unidade ? ' \u2014 ' + item.unidade : '') + '</span>' : '');
             btn.addEventListener('click', () => {
               addCoordenador(item.id, item);
               coordInput.value = '';

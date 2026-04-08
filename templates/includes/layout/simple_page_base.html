@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}{% block simple_page_title_block %}Pagina{% endblock %} - Central de Viagens{% endblock %}
+{% block page_title %}{% block simple_page_page_title %}{% block simple_page_title %}Pagina{% endblock %}{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="app-page-shell app-page-shell--{% block simple_page_variant %}detail{% endblock %} {% block simple_page_class %}{% endblock %}">
+    <div class="app-page-shell__inner {% block simple_page_inner_class %}{% endblock %}">
+        <div class="app-page-stack {% block simple_page_stack_class %}{% endblock %}">
+            {% block simple_page_header_block %}
+            <header class="app-page-header page-header-cadastro {% block simple_page_header_class %}{% endblock %}">
+                <div class="app-page-header__copy">
+                    <h1 class="app-page-header__title">{% block simple_page_title %}Pagina{% endblock %}</h1>
+                    {% block simple_page_subtitle %}{% endblock %}
+                </div>
+                <div class="app-page-header__actions {% block simple_page_actions_class %}{% endblock %}">
+                    {% block simple_page_actions %}{% endblock %}
+                </div>
+            </header>
+            {% endblock %}
+
+            {% block simple_page_notice %}{% endblock %}
+            {% block simple_page_body %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

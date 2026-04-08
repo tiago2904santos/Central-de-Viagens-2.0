@@ -5,8 +5,8 @@
 {% block page_title %}Dados e viajantes{% endblock %}
 
 {% block content %}
-<div class="container-fluid pt-0 pb-4 oficio-wizard-page" data-glance-state="closed">
-  <div class="oficio-wizard-shell">
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page" data-glance-state="closed">
+  <div class="app-page-shell__inner oficio-wizard-shell">
     {% include 'eventos/oficio/_wizard_header.html' %}
 
     <div class="card oficio-stage-panel">
@@ -101,7 +101,7 @@
                   {{ form.custeio_tipo }}
                   {% if form.custeio_tipo.errors %}<div class="invalid-feedback d-block">{{ form.custeio_tipo.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="col-md-6" id="nome-instituicao-wrapper"{% if not mostrar_nome_instituicao %} style="display:none;"{% endif %}>
+                <div class="col-md-6{% if not mostrar_nome_instituicao %} app-page-hidden{% endif %}" id="nome-instituicao-wrapper">
                   <label class="form-label" for="{{ form.nome_instituicao_custeio.id_for_label }}">{{ form.nome_instituicao_custeio.label }}</label>
                   {{ form.nome_instituicao_custeio }}
                   {% if form.nome_instituicao_custeio.errors %}<div class="invalid-feedback d-block">{{ form.nome_instituicao_custeio.errors.0 }}</div>{% endif %}
@@ -129,8 +129,7 @@
                 >
                 <div
                   id="viajantes-autocomplete-results"
-                  class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none"
-                  style="z-index: 20;"
+                  class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none app-page-autocomplete-menu"
                 ></div>
               </div>
               <div class="form-text">A busca mostra apenas viajantes finalizados e continua disponível após cada seleção.</div>

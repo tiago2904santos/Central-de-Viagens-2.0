@@ -1,24 +1,15 @@
-{% extends 'base.html' %}
+{% extends 'includes/layout/confirm_page_base.html' %}
 
-{% block title %}Excluir Ofício — Central de Viagens{% endblock %}
-{% block page_title %}Excluir Ofício{% endblock %}
-
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="card form-card">
-        <div class="card-body">
-            <p class="mb-3">
-                Confirma a exclusão do ofício <strong>{{ oficio.numero_formatado }}</strong>?
-            </p>
-            <p class="text-muted small">
-                O número ficará livre novamente e será reutilizado na próxima criação do mesmo ano.
-            </p>
-            <form method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Excluir</button>
-                <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Cancelar</a>
-            </form>
-        </div>
-    </div>
-</div>
+{% block confirm_page_title_block %}Excluir ofício{% endblock %}
+{% block confirm_page_page_title %}Excluir ofício{% endblock %}
+{% block confirm_page_title %}Excluir ofício{% endblock %}
+{% block confirm_page_subtitle %}
+<p class="app-page-header__subtitle">Confirma a exclusão do ofício <strong>{{ oficio.numero_formatado }}</strong>? O número ficará livre novamente e será reutilizado na próxima criação do mesmo ano.</p>
+{% endblock %}
+{% block confirm_page_body %}
+<form method="post" class="app-page-inline-actions">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Excluir</button>
+    <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Cancelar</a>
+</form>
 {% endblock %}

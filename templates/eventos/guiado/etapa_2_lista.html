@@ -5,7 +5,8 @@
 {% block page_title %}Fluxo guiado — Etapa 2: Roteiros{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="app-page-shell app-page-shell--detail">
+    <div class="app-page-shell__inner app-page-stack">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h4 mb-0">Etapa 2 — Roteiros do evento</h1>
         <div class="d-flex gap-2 flex-wrap">
@@ -20,7 +21,7 @@
     <p class="text-muted small mb-3">{{ evento.titulo }}</p>
 
     {% if roteiros %}
-    <div class="card mb-4">
+    <div class="card app-page-card">
         <div class="table-responsive">
             <table class="table table-hover table-cadastro mb-0">
                 <thead class="table-light">
@@ -63,7 +64,7 @@
         </div>
     </div>
     {% else %}
-    <div class="card mb-4">
+    <div class="card app-page-card">
         <div class="card-body text-center text-muted py-5">
             <p class="mb-0">Nenhum roteiro cadastrado ainda.</p>
             <p class="small mb-0">Cadastre pelo menos um roteiro para concluir esta etapa.</p>
@@ -79,5 +80,6 @@
 
     {% url 'eventos:guiado-etapa-2-cadastrar' evento.pk as roteiro_novo_url %}
     {% include 'includes/list/floating_new_button.html' with url=roteiro_novo_url label='Cadastrar roteiro' icon='bi-plus-lg' %}
+    </div>
 </div>
 {% endblock %}

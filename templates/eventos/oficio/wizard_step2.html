@@ -5,8 +5,8 @@
 {% block page_title %}Transporte{% endblock %}
 
 {% block content %}
-<div class="container-fluid pt-0 pb-4 oficio-wizard-page" data-glance-state="closed">
-  <div class="oficio-wizard-shell">
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page" data-glance-state="closed">
+  <div class="app-page-shell__inner oficio-wizard-shell">
     {% include 'eventos/oficio/_wizard_header.html' %}
   {% comment %}
   <div class="oficio-sticky-header">
@@ -72,8 +72,7 @@
                     {{ form.placa }}
                     <div
                       id="placa-search-results"
-                      class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none"
-                      style="z-index: 20;"
+                      class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none app-page-autocomplete-menu"
                     ></div>
                   </div>
                   {% if form.placa.errors %}<div class="invalid-feedback d-block">{{ form.placa.errors.0 }}</div>{% endif %}
@@ -151,8 +150,7 @@
                   >
                   <div
                     id="motorista-autocomplete-results"
-                    class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none"
-                    style="z-index: 20;"
+                    class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none app-page-autocomplete-menu"
                   ></div>
                 </div>
                 <div class="form-text">Busque e selecione um servidor; você pode trocar a qualquer momento.</div>

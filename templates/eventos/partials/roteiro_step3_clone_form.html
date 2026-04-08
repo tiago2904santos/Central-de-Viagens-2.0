@@ -1,7 +1,7 @@
 {% load static %}
 
-<div class="container-fluid pt-0 pb-4 oficio-wizard-page oficio-step3-page" data-glance-state="closed">
-  <div class="oficio-wizard-shell">
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page oficio-step3-page" data-glance-state="closed">
+  <div class="app-page-shell__inner oficio-wizard-shell">
     <div class="card oficio-stage-panel">
       <div class="card-body">
         <div class="oficio-stage-intro mb-3">
@@ -396,7 +396,7 @@
     html += '<div class="col-auto"><span class="text-muted">Tempo total:</span> <span class="trecho-tempo-total">' + (tempoTotal > 0 ? minutosParaHhmm(tempoTotal) : '—') + '</span></div>';
     html += '<div class="col-auto"><span class="text-muted">Fonte:</span> <span class="trecho-rota-fonte">' + (rotaFonte ? (rotaFonte === 'ESTIMATIVA_LOCAL' ? 'estimativa local' : rotaFonte) : '—') + '</span></div>';
     html += '<div class="col-auto"><button type="button" class="btn btn-outline-secondary btn-sm btn-calcular-km" data-trecho-id="' + (trechoId || '') + '" data-origem-cidade-id="' + (t.origem_cidade_id || '') + '" data-destino-cidade-id="' + (t.destino_cidade_id || '') + '">Estimar km/tempo</button></div>';
-    html += '<div class="col-12 trecho-km-erro text-danger small" style="display:none;"></div>';
+    html += '<div class="col-12 trecho-km-erro text-danger small app-start-hidden"></div>';
     html += '</div>';
     html += '<input type="hidden" name="trecho_' + t.ordem + '_saida_dt" value="' + (val.saida_dt || '') + '">';
     html += '<input type="hidden" name="trecho_' + t.ordem + '_chegada_dt" value="' + (val.chegada_dt || '') + '">';

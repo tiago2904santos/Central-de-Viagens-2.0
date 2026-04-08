@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}{% block confirm_page_title_block %}Confirmacao{% endblock %} - Central de Viagens{% endblock %}
+{% block page_title %}{% block confirm_page_page_title %}{% block confirm_page_title %}Confirmacao{% endblock %}{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="app-page-shell app-page-shell--confirm {% block confirm_page_class %}{% endblock %}">
+    <div class="app-page-shell__inner {% block confirm_page_inner_class %}{% endblock %}">
+        <div class="app-page-stack">
+            {% block confirm_page_notice %}{% endblock %}
+            <div class="card app-page-card app-page-card--spacious {% block confirm_card_class %}{% endblock %}">
+                <div class="card-body">
+                    <div class="app-page-card__section">
+                        <h1 class="app-page-header__title">{% block confirm_page_title %}Confirmacao{% endblock %}</h1>
+                        {% block confirm_page_subtitle %}{% endblock %}
+                    </div>
+
+                    {% block confirm_page_summary %}{% endblock %}
+
+                    <div class="app-page-card__section">
+                        {% block confirm_page_body %}{% endblock %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

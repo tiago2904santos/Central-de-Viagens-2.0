@@ -1,29 +1,24 @@
-{% extends 'base.html' %}
+{% extends 'includes/layout/confirm_page_base.html' %}
 
-{% block title %}Excluir termo - Central de Viagens{% endblock %}
-{% block page_title %}Excluir termo{% endblock %}
-
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-6">
-            <div class="card form-card">
-                <div class="card-body">
-                    <h1 class="h4 mb-3">Excluir {{ object.titulo_display }}</h1>
-                    <p class="text-muted">Esta acao remove o registro real do termo e os metadados de geracao associados.</p>
-                    <div class="border rounded p-3 mb-4 bg-light-subtle">
-                        <div><strong>Servidor:</strong> {{ object.servidor_display|default:"Nao informado" }}</div>
-                        <div><strong>Destino:</strong> {{ object.destino|default:"-" }}</div>
-                    </div>
-                    <form method="post" class="d-flex gap-2">
-                        {% csrf_token %}
-                        <input type="hidden" name="return_to" value="{{ return_to }}">
-                        <button type="submit" class="btn btn-danger">Excluir termo</button>
-                        <a href="{{ return_to|default:'/eventos/documentos/termos/' }}" class="btn btn-outline-secondary">Cancelar</a>
-                    </form>
-                </div>
-            </div>
-        </div>
+{% block confirm_page_title_block %}Excluir termo{% endblock %}
+{% block confirm_page_page_title %}Excluir termo{% endblock %}
+{% block confirm_page_title %}Excluir {{ object.titulo_display }}{% endblock %}
+{% block confirm_page_subtitle %}
+<p class="app-page-header__subtitle">Esta ação remove o registro real do termo e os metadados de geração associados.</p>
+{% endblock %}
+{% block confirm_page_summary %}
+<div class="app-page-card__section">
+    <div class="app-page-note">
+        <div><strong>Servidor:</strong> {{ object.servidor_display|default:"Nao informado" }}</div>
+        <div><strong>Destino:</strong> {{ object.destino|default:"-" }}</div>
     </div>
 </div>
+{% endblock %}
+{% block confirm_page_body %}
+<form method="post" class="app-page-inline-actions">
+    {% csrf_token %}
+    <input type="hidden" name="return_to" value="{{ return_to }}">
+    <button type="submit" class="btn btn-danger">Excluir termo</button>
+    <a href="{{ return_to|default:'/eventos/documentos/termos/' }}" class="btn btn-outline-secondary">Cancelar</a>
+</form>
 {% endblock %}

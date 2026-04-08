@@ -1,32 +1,25 @@
-{% extends 'base.html' %}
+{% extends 'includes/layout/confirm_page_base.html' %}
 
-{% block title %}Excluir justificativa — Central de Viagens{% endblock %}
-{% block page_title %}Excluir justificativa{% endblock %}
-
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-6">
-            <div class="card form-card">
-                <div class="card-body">
-                    <h1 class="h4 mb-3">Excluir JT-{{ object.pk|stringformat:"04d" }}</h1>
-                    <p class="text-muted">Esta ação remove permanentemente a justificativa e seus dados. O ofício vinculado não é afetado.</p>
-                    <div class="border rounded p-3 mb-4 bg-light-subtle">
-                        <div><strong>Ofício:</strong> {% if object.oficio %}{{ object.oficio.numero_formatado }}{% else %}Sem ofício{% endif %}</div>
-                        {% if object.modelo %}<div><strong>Modelo:</strong> {{ object.modelo.nome }}</div>{% endif %}
-                        {% if object.texto %}
-                        <div class="mt-1"><strong>Texto:</strong> {{ object.texto|truncatechars:150 }}</div>
-                        {% endif %}
-                    </div>
-                    <form method="post" class="d-flex gap-2">
-                        {% csrf_token %}
-                        <input type="hidden" name="return_to" value="{{ return_to }}">
-                        <button type="submit" class="btn btn-danger">Excluir justificativa</button>
-                        <a href="{{ return_to|default:'/eventos/documentos/justificativas/' }}" class="btn btn-outline-secondary">Cancelar</a>
-                    </form>
-                </div>
-            </div>
-        </div>
+{% block confirm_page_title_block %}Excluir justificativa{% endblock %}
+{% block confirm_page_page_title %}Excluir justificativa{% endblock %}
+{% block confirm_page_title %}Excluir JT-{{ object.pk|stringformat:"04d" }}{% endblock %}
+{% block confirm_page_subtitle %}
+<p class="app-page-header__subtitle">Esta ação remove permanentemente a justificativa e seus dados. O ofício vinculado não é afetado.</p>
+{% endblock %}
+{% block confirm_page_summary %}
+<div class="app-page-card__section">
+    <div class="app-page-note">
+        <div><strong>Ofício:</strong> {% if object.oficio %}{{ object.oficio.numero_formatado }}{% else %}Sem ofício{% endif %}</div>
+        {% if object.modelo %}<div><strong>Modelo:</strong> {{ object.modelo.nome }}</div>{% endif %}
+        {% if object.texto %}<div><strong>Texto:</strong> {{ object.texto|truncatechars:150 }}</div>{% endif %}
     </div>
 </div>
+{% endblock %}
+{% block confirm_page_body %}
+<form method="post" class="app-page-inline-actions">
+    {% csrf_token %}
+    <input type="hidden" name="return_to" value="{{ return_to }}">
+    <button type="submit" class="btn btn-danger">Excluir justificativa</button>
+    <a href="{{ return_to|default:'/eventos/documentos/justificativas/' }}" class="btn btn-outline-secondary">Cancelar</a>
+</form>
 {% endblock %}

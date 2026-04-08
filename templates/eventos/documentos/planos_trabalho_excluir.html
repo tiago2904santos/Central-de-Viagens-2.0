@@ -1,18 +1,16 @@
-{% extends 'base.html' %}
+{% extends 'includes/layout/confirm_page_base.html' %}
 
-{% block title %}Excluir plano de trabalho - Central de Viagens{% endblock %}
-{% block page_title %}Excluir plano de trabalho{% endblock %}
-
-{% block content %}
-<div class="container-fluid py-4">
-  <div class="card"><div class="card-body">
-    <p>Confirma excluir o plano de trabalho <strong>#{{ object.pk }}</strong>?</p>
-    <form method="post">
-      {% csrf_token %}
-      <input type="hidden" name="return_to" value="{{ return_to }}">
-      <button class="btn btn-danger" type="submit">Excluir</button>
-      <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Cancelar</a>
-    </form>
-  </div></div>
-</div>
+{% block confirm_page_title_block %}Excluir plano de trabalho{% endblock %}
+{% block confirm_page_page_title %}Excluir plano de trabalho{% endblock %}
+{% block confirm_page_title %}Excluir plano de trabalho{% endblock %}
+{% block confirm_page_subtitle %}
+<p class="app-page-header__subtitle">Confirma excluir o plano de trabalho <strong>#{{ object.pk }}</strong>?</p>
+{% endblock %}
+{% block confirm_page_body %}
+<form method="post" class="app-page-inline-actions">
+    {% csrf_token %}
+    <input type="hidden" name="return_to" value="{{ return_to }}">
+    <button class="btn btn-danger" type="submit">Excluir</button>
+    <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}">Cancelar</a>
+</form>
 {% endblock %}

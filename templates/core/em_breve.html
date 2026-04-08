@@ -1,16 +1,18 @@
-{% extends 'base.html' %}
+{% extends 'includes/layout/simple_page_base.html' %}
 
-{% block title %}Em breve — Central de Viagens{% endblock %}
-{% block page_title %}Em breve{% endblock %}
+{% block simple_page_title_block %}Em Breve{% endblock %}
+{% block simple_page_page_title %}Em breve{% endblock %}
+{% block simple_page_variant %}detail{% endblock %}
+{% block simple_page_title %}Módulo em breve{% endblock %}
+{% block simple_page_subtitle %}
+<p class="app-page-header__subtitle">Este espaço já segue o shell global do sistema e fica reservado para a próxima entrega.</p>
+{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="card border-0 shadow-sm">
-        <div class="card-body text-center py-5">
-            <i class="bi bi-tools display-4 text-muted mb-3"></i>
-            <h4 class="text-muted">Em breve</h4>
-            <p class="text-muted mb-0">Este módulo está em construção e estará disponível em breve.</p>
-        </div>
+{% block simple_page_body %}
+<div class="card app-page-card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-tools display-4 text-muted mb-3"></i>
+        <p class="text-muted mb-0">Este módulo está em construção e estará disponível em breve.</p>
     </div>
 </div>
 {% endblock %}

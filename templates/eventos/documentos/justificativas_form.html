@@ -1,92 +1,68 @@
-{% extends 'base.html' %}
+{% extends 'includes/forms/form_base.html' %}
 
-{% block title %}{% if object %}Editar justificativa{% else %}Nova justificativa{% endif %} — Central de Viagens{% endblock %}
-{% block page_title %}{% if object %}Editar justificativa{% else %}Nova justificativa{% endif %}{% endblock %}
+{% block form_title_block %}{% if object %}Editar justificativa{% else %}Nova justificativa{% endif %}{% endblock %}
+{% block form_page_title %}{% if object %}Editar justificativa{% else %}Nova justificativa{% endif %}{% endblock %}
+{% block form_header_title %}{% if object %}Editar JT-{{ object.pk|stringformat:"04d" }}{% else %}Nova justificativa{% endif %}{% endblock %}
+{% block form_header_subtitle %}
+<p class="text-muted mb-0">
+    {% if object %}
+    Atualize o texto ou modelo da justificativa. O vínculo com o ofício não pode ser alterado.
+    {% else %}
+    Preencha o ofício de origem e o texto da justificativa.
+    {% endif %}
+</p>
+{% endblock %}
+{% block form_header_actions %}
+{% if object %}{% url 'eventos:documentos-justificativas-editar' object.pk as form_self_url %}{% else %}{% url 'eventos:documentos-justificativas-nova' as form_self_url %}{% endif %}
+<a href="{% url 'eventos:modelos-justificativa-lista' %}?next={{ form_self_url|urlencode }}" class="btn btn-outline-primary">Gerenciar modelos de justificativa</a>
+<a href="{{ return_to|default:'/eventos/documentos/justificativas/' }}" class="btn btn-outline-secondary">Voltar</a>
+{% endblock %}
+{% block form_card_title %}Dados da justificativa{% endblock %}
+{% block form_card_subtitle %}
+<p class="card-header-form-subtitle">Use o mesmo shell global do sistema para manter vínculo, modelo e texto no mesmo padrão visual.</p>
+{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="page-header-cadastro">
-        <div>
-            <h1 class="mb-1">
-                {% if object %}Editar JT-{{ object.pk|stringformat:"04d" }}{% else %}Nova justificativa{% endif %}
-            </h1>
-            <p class="text-muted mb-0">
-                {% if object %}
-                Atualize o texto ou modelo da justificativa. O vínculo com o ofício não pode ser alterado.
-                {% else %}
-                Preencha o ofício de origem e o texto da justificativa.
-                {% endif %}
-            </p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-            {% if object %}{% url 'eventos:documentos-justificativas-editar' object.pk as form_self_url %}{% else %}{% url 'eventos:documentos-justificativas-nova' as form_self_url %}{% endif %}
-            <a href="{% url 'eventos:modelos-justificativa-lista' %}?next={{ form_self_url|urlencode }}" class="btn btn-outline-primary">Gerenciar modelos de justificativa</a>
-            <a href="{{ return_to|default:'/eventos/documentos/justificativas/' }}" class="btn btn-outline-secondary">Voltar</a>
-        </div>
-    </div>
+{% block form_hidden %}
+<input type="hidden" name="return_to" value="{{ return_to }}">
+{% endblock %}
 
-    <div class="row justify-content-center">
-        <div class="col-xl-8">
-            <div class="card form-card">
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="return_to" value="{{ return_to }}">
-
-                        {% if form.non_field_errors %}
-                        <div class="alert alert-danger py-2">
-                            {% for error in form.non_field_errors %}
-                            <div>{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold" for="{{ form.oficio.id_for_label }}">
-                                Ofício
-                            </label>
-                            {{ form.oficio }}
-                            {% if form.oficio.errors %}
-                            <div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>
-                            {% endif %}
-                            {% if object %}
-                            <div class="form-text">Vínculo opcional com o ofício.</div>
-                            {% else %}
-                            <div class="form-text">Opcional. Se informado, mantém apenas uma justificativa por ofício.</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold" for="{{ form.modelo.id_for_label }}">
-                                Modelo de justificativa
-                            </label>
-                            {{ form.modelo }}
-                            {% if form.modelo.errors %}
-                            <div class="invalid-feedback d-block">{{ form.modelo.errors.0 }}</div>
-                            {% endif %}
-                            <div class="form-text">Opcional. Selecionar um modelo preenche automaticamente o texto abaixo.</div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold" for="{{ form.texto.id_for_label }}">
-                                Texto da justificativa
-                            </label>
-                            {{ form.texto }}
-                            {% if form.texto.errors %}
-                            <div class="invalid-feedback d-block">{{ form.texto.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                {% if object %}Salvar alterações{% else %}Criar justificativa{% endif %}
-                            </button>
-                            <a href="{{ return_to|default:'/eventos/documentos/justificativas/' }}" class="btn btn-outline-secondary">Cancelar</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+{% block form_fields %}
+{% if form.non_field_errors %}
+<div class="alert alert-danger py-2">
+    {% for error in form.non_field_errors %}
+    <div>{{ error }}</div>
+    {% endfor %}
 </div>
+{% endif %}
+
+<div class="mb-4">
+    <label class="form-label fw-semibold" for="{{ form.oficio.id_for_label }}">Ofício</label>
+    {{ form.oficio }}
+    {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
+    {% if object %}
+    <div class="form-text">Vínculo opcional com o ofício.</div>
+    {% else %}
+    <div class="form-text">Opcional. Se informado, mantém apenas uma justificativa por ofício.</div>
+    {% endif %}
+</div>
+
+<div class="mb-4">
+    <label class="form-label fw-semibold" for="{{ form.modelo.id_for_label }}">Modelo de justificativa</label>
+    {{ form.modelo }}
+    {% if form.modelo.errors %}<div class="invalid-feedback d-block">{{ form.modelo.errors.0 }}</div>{% endif %}
+    <div class="form-text">Opcional. Selecionar um modelo preenche automaticamente o texto abaixo.</div>
+</div>
+
+<div>
+    <label class="form-label fw-semibold" for="{{ form.texto.id_for_label }}">Texto da justificativa</label>
+    {{ form.texto }}
+    {% if form.texto.errors %}<div class="invalid-feedback d-block">{{ form.texto.errors.0 }}</div>{% endif %}
+</div>
+{% endblock %}
+
+{% block form_actions %}
+<button type="submit" class="btn btn-primary">
+    {% if object %}Salvar alterações{% else %}Criar justificativa{% endif %}
+</button>
+<a href="{{ return_to|default:'/eventos/documentos/justificativas/' }}" class="btn btn-outline-secondary">Cancelar</a>
 {% endblock %}

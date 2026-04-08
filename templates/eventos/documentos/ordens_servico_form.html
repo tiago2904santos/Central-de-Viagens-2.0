@@ -240,7 +240,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 os-compose-page">
+<div class="app-page-shell app-page-shell--detail os-compose-page">
+  <div class="app-page-shell__inner">
   <form method="post" class="os-compose-shell" id="ordem-servico-form">
     {% csrf_token %}
     <input type="hidden" name="return_to" value="{{ return_to }}">
@@ -385,6 +386,7 @@
 
     </div>
   </form>
+  </div>
 </div>
 
 <template id="os-destino-row-template">

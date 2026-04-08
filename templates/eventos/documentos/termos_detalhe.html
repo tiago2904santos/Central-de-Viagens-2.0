@@ -1,101 +1,97 @@
-{% extends 'base.html' %}
+{% extends 'includes/layout/simple_page_base.html' %}
 
-{% block title %}Detalhe do termo - Central de Viagens{% endblock %}
-{% block page_title %}Detalhe do termo{% endblock %}
+{% block simple_page_title_block %}Detalhe do termo{% endblock %}
+{% block simple_page_page_title %}Detalhe do termo{% endblock %}
+{% block simple_page_variant %}detail{% endblock %}
+{% block simple_page_title %}{{ object.titulo_display }}{% endblock %}
+{% block simple_page_subtitle %}
+<p class="app-page-header__subtitle">{{ mode_meta.label }} | {{ context_display }}</p>
+{% endblock %}
+{% block simple_page_actions %}
+<a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary">Voltar</a>
+<a href="{% url 'eventos:documentos-termos-editar' object.pk %}" class="btn btn-outline-primary">Editar</a>
+<a href="{% url 'eventos:documentos-termos-download' object.pk 'docx' %}" class="btn btn-outline-secondary">DOCX</a>
+<a href="{% url 'eventos:documentos-termos-download' object.pk 'pdf' %}" class="btn btn-outline-secondary">PDF</a>
+{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="page-header-cadastro">
-        <div>
-            <h1 class="mb-1">{{ object.titulo_display }}</h1>
-            <p class="text-muted mb-0">{{ mode_meta.label }} | {{ context_display }}</p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'eventos:documentos-termos' %}" class="btn btn-outline-secondary">Voltar</a>
-            <a href="{% url 'eventos:documentos-termos-editar' object.pk %}" class="btn btn-outline-primary">Editar</a>
-            <a href="{% url 'eventos:documentos-termos-download' object.pk 'docx' %}" class="btn btn-outline-secondary">DOCX</a>
-            <a href="{% url 'eventos:documentos-termos-download' object.pk 'pdf' %}" class="btn btn-outline-secondary">PDF</a>
-        </div>
+{% block simple_page_body %}
+<div class="row g-4">
+    <div class="col-xl-8">
+        <article class="oficio-process-card {{ process_status.css_class }}">
+            <div class="oficio-process-card__header">
+                <div class="oficio-process-card__title-block">
+                    <h2 class="oficio-process-card__title">Dados do termo</h2>
+                    <div class="oficio-process-card__subtitle">{{ object.destino|default:"-" }}</div>
+                </div>
+                <span class="oficio-process-status {{ process_status.css_class }}">{{ process_status.label }}</span>
+            </div>
+
+            <div class="oficio-process-card__meta">
+                <div class="oficio-process-meta-item">
+                    <span class="oficio-process-meta-label">Modelo</span>
+                    <span class="oficio-process-meta-value">{{ mode_meta.label }}</span>
+                </div>
+                <div class="oficio-process-meta-item">
+                    <span class="oficio-process-meta-label">Servidor</span>
+                    <span class="oficio-process-meta-value">{{ object.servidor_display|default:"Nao informado" }}</span>
+                </div>
+                <div class="oficio-process-meta-item">
+                    <span class="oficio-process-meta-label">Viatura</span>
+                    <span class="oficio-process-meta-value">{{ object.viatura_display|default:"Sem viatura" }}</span>
+                </div>
+                <div class="oficio-process-meta-item">
+                    <span class="oficio-process-meta-label">Periodo</span>
+                    <span class="oficio-process-meta-value">{{ object.periodo_display|default:"-" }}</span>
+                </div>
+                <div class="oficio-process-meta-item">
+                    <span class="oficio-process-meta-label">Criado em</span>
+                    <span class="oficio-process-meta-value">{{ object.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="oficio-process-meta-item">
+                    <span class="oficio-process-meta-label">Ultima geracao</span>
+                    <span class="oficio-process-meta-value">{{ object.ultima_geracao_em|date:"d/m/Y H:i"|default:"Ainda nao gerado" }}</span>
+                </div>
+                <div class="oficio-process-meta-item">
+                    <span class="oficio-process-meta-label">Oficios</span>
+                    <span class="oficio-process-meta-value">{{ object.oficios_relacionados_display|default:"-" }}</span>
+                </div>
+            </div>
+        </article>
     </div>
 
-    <div class="row g-4">
-        <div class="col-xl-8">
-            <article class="oficio-process-card {{ process_status.css_class }}">
-                <div class="oficio-process-card__header">
-                    <div class="oficio-process-card__title-block">
-                        <h2 class="oficio-process-card__title">Dados do termo</h2>
-                        <div class="oficio-process-card__subtitle">{{ object.destino|default:"-" }}</div>
-                    </div>
-                    <span class="oficio-process-status {{ process_status.css_class }}">{{ process_status.label }}</span>
-                </div>
-
-                <div class="oficio-process-card__meta">
-                    <div class="oficio-process-meta-item">
-                        <span class="oficio-process-meta-label">Modelo</span>
-                        <span class="oficio-process-meta-value">{{ mode_meta.label }}</span>
-                    </div>
-                    <div class="oficio-process-meta-item">
-                        <span class="oficio-process-meta-label">Servidor</span>
-                        <span class="oficio-process-meta-value">{{ object.servidor_display|default:"Nao informado" }}</span>
-                    </div>
-                    <div class="oficio-process-meta-item">
-                        <span class="oficio-process-meta-label">Viatura</span>
-                        <span class="oficio-process-meta-value">{{ object.viatura_display|default:"Sem viatura" }}</span>
-                    </div>
-                    <div class="oficio-process-meta-item">
-                        <span class="oficio-process-meta-label">Periodo</span>
-                        <span class="oficio-process-meta-value">{{ object.periodo_display|default:"-" }}</span>
-                    </div>
-                    <div class="oficio-process-meta-item">
-                        <span class="oficio-process-meta-label">Criado em</span>
-                        <span class="oficio-process-meta-value">{{ object.created_at|date:"d/m/Y H:i" }}</span>
-                    </div>
-                    <div class="oficio-process-meta-item">
-                        <span class="oficio-process-meta-label">Ultima geracao</span>
-                        <span class="oficio-process-meta-value">{{ object.ultima_geracao_em|date:"d/m/Y H:i"|default:"Ainda nao gerado" }}</span>
-                    </div>
-                    <div class="oficio-process-meta-item">
-                        <span class="oficio-process-meta-label">Oficios</span>
-                        <span class="oficio-process-meta-value">{{ object.oficios_relacionados_display|default:"-" }}</span>
-                    </div>
-                </div>
-            </article>
-        </div>
-
-        <div class="col-xl-4">
-            <div class="card termo-side-card">
-                <div class="card-body">
-                    <div class="small text-muted text-uppercase mb-2">Template usado</div>
-                    <div class="fw-semibold">{{ mode_meta.template_name }}</div>
-                    {% if object.lote_uuid %}
-                    <hr>
-                    <div class="small text-muted text-uppercase mb-2">Lote de geracao</div>
-                    <div class="small">{{ object.lote_uuid }}</div>
-                    {% if lote_objects %}
-                    <div class="mt-3">
-                        <div class="small fw-semibold text-uppercase mb-2">Outros termos deste lote</div>
-                        <div class="list-group list-group-flush">
-                            {% for item in lote_objects %}
-                            <a href="{% url 'eventos:documentos-termos-editar' item.pk %}" class="list-group-item list-group-item-action px-0">
-                                {{ item.numero_formatado }} - {{ item.servidor_display|default:"Servidor" }}
-                            </a>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% endif %}
-                    {% if related_oficios %}
-                    <hr>
-                    <div class="small text-muted text-uppercase mb-2">Oficios relacionados</div>
+    <div class="col-xl-4">
+        <div class="card app-page-card termo-side-card">
+            <div class="card-body">
+                <div class="small text-muted text-uppercase mb-2">Template usado</div>
+                <div class="fw-semibold">{{ mode_meta.template_name }}</div>
+                {% if object.lote_uuid %}
+                <hr>
+                <div class="small text-muted text-uppercase mb-2">Lote de geracao</div>
+                <div class="small">{{ object.lote_uuid }}</div>
+                {% if lote_objects %}
+                <div class="mt-3">
+                    <div class="small fw-semibold text-uppercase mb-2">Outros termos deste lote</div>
                     <div class="list-group list-group-flush">
-                        {% for oficio in related_oficios %}
-                        <div class="list-group-item px-0">
-                            Oficio {{ oficio.numero_formatado|default:oficio.pk }}
-                        </div>
+                        {% for item in lote_objects %}
+                        <a href="{% url 'eventos:documentos-termos-editar' item.pk %}" class="list-group-item list-group-item-action px-0">
+                            {{ item.numero_formatado }} - {{ item.servidor_display|default:"Servidor" }}
+                        </a>
                         {% endfor %}
                     </div>
-                    {% endif %}
                 </div>
+                {% endif %}
+                {% endif %}
+                {% if related_oficios %}
+                <hr>
+                <div class="small text-muted text-uppercase mb-2">Oficios relacionados</div>
+                <div class="list-group list-group-flush">
+                    {% for oficio in related_oficios %}
+                    <div class="list-group-item px-0">
+                        Oficio {{ oficio.numero_formatado|default:oficio.pk }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
