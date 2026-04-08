@@ -1,4 +1,5 @@
 import uuid
+from pathlib import Path
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -154,6 +155,51 @@ class Evento(models.Model):
         tipos = self.tipos_demanda.filter(ativo=True, is_outros=False).order_by('ordem', 'nome')
         textos = [t.descricao_padrao.strip() for t in tipos if t.descricao_padrao and t.descricao_padrao.strip()]
         return '\n\n'.join(textos) if textos else ''
+
+
+def evento_anexo_solicitante_upload_to(instance, filename):
+    base = Path(filename or '').name.strip()
+    if not base:
+        base = f'anexo-{uuid.uuid4().hex}.pdf'
+    safe_name = slugify(Path(base).stem) or f'anexo-{uuid.uuid4().hex[:8]}'
+    ext = Path(base).suffix.lower() or '.pdf'
+    return f'eventos/{instance.evento_id}/convites/{safe_name}-{uuid.uuid4().hex[:10]}{ext}'
+
+
+class EventoAnexoSolicitante(models.Model):
+    evento = models.ForeignKey(
+        Evento,
+        on_delete=models.CASCADE,
+        related_name='anexos_solicitante',
+        verbose_name='Evento',
+    )
+    arquivo = models.FileField('Arquivo (PDF)', upload_to=evento_anexo_solicitante_upload_to)
+    nome_original = models.CharField('Nome original', max_length=255)
+    ordem = models.PositiveIntegerField('Ordem', default=0)
+    uploaded_at = models.DateTimeField('Data de upload', auto_now_add=True)
+
+    class Meta:
+        ordering = ['ordem', '-uploaded_at', 'id']
+        verbose_name = 'Anexo de convite/ofício do evento'
+        verbose_name_plural = 'Anexos de convite/ofício do evento'
+
+    def __str__(self):
+        return self.nome_original or f'Anexo {self.pk}'
+
+    def clean(self):
+        super().clean()
+        nome = (self.nome_original or '').strip().lower()
+        if self.arquivo:
+            ext = Path(self.arquivo.name or '').suffix.lower()
+            if ext != '.pdf' and not nome.endswith('.pdf'):
+                raise ValidationError({'arquivo': 'Apenas arquivos PDF são permitidos.'})
+
+    @property
+    def tamanho_bytes(self):
+        try:
+            return self.arquivo.size
+        except Exception:
+            return 0
 
 
 class EventoParticipante(models.Model):

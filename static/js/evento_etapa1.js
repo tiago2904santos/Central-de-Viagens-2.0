@@ -21,6 +21,9 @@
   var dataUnicaState = form.querySelector('[data-data-unica-state]');
   var conviteInput = document.getElementById('id_tem_convite_ou_oficio_evento');
   var conviteState = form.querySelector('[data-convite-state]');
+  var conviteUploadWrap = form.querySelector('[data-convite-upload-wrap]');
+  var conviteFilesInput = document.getElementById('id_convite_documentos');
+  var hasConviteAnexos = form.getAttribute('data-has-convite-anexos') === '1';
   var wrapDescricao = document.getElementById('wrap-descricao');
   var destinosContainer = document.getElementById('destinos-container');
   var btnAdicionarDestino = document.getElementById('btn-adicionar-destino');
@@ -76,7 +79,12 @@
     if (!conviteInput) {
       return;
     }
-    setStateLabel(conviteState, !!conviteInput.checked, 'SIM', 'NÃO');
+    var temUploadSelecionado = !!(conviteFilesInput && conviteFilesInput.files && conviteFilesInput.files.length);
+    var ativo = !!conviteInput.checked || hasConviteAnexos || temUploadSelecionado;
+    setStateLabel(conviteState, ativo, 'SIM', 'NÃO');
+    if (conviteUploadWrap) {
+      conviteUploadWrap.classList.toggle('d-none', !ativo);
+    }
   }
 
   function loadCidadesForSelect(selectCidade, estadoId, selectedCidadeId) {
@@ -221,6 +229,14 @@
   }
   if (conviteInput) {
     conviteInput.addEventListener('change', updateConvite);
+  }
+  if (conviteFilesInput) {
+    conviteFilesInput.addEventListener('change', function() {
+      if (conviteFilesInput.files && conviteFilesInput.files.length && conviteInput) {
+        conviteInput.checked = true;
+      }
+      updateConvite();
+    });
   }
 
   if (btnAdicionarDestino) {

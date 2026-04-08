@@ -91,6 +91,9 @@ urlpatterns = [
     # 7 Finalização       -> guiado-etapa-7
     path('guiado/novo/', views.guiado_novo, name='guiado-novo'),
     path('<int:pk>/guiado/etapa-1/', login_required(views.guiado_etapa_1), name='guiado-etapa-1'),
+    path('anexos-convite/<int:anexo_id>/visualizar/', login_required(views.evento_anexo_visualizar), name='evento-anexo-visualizar'),
+    path('anexos-convite/<int:anexo_id>/baixar/', login_required(views.evento_anexo_baixar), name='evento-anexo-baixar'),
+    path('anexos-convite/<int:anexo_id>/remover/', login_required(views.evento_anexo_remover), name='evento-anexo-remover'),
     path('<int:pk>/guiado/painel/', login_required(views.guiado_painel), name='guiado-painel'),
     # Etapa 3: Termos (função guiado_etapa_5 é o handler histórico de Termos)
     path('<int:evento_id>/guiado/etapa-3/', login_required(views.guiado_etapa_5), name='guiado-etapa-3'),

@@ -7,15 +7,9 @@
 {% block content %}
 <div class="container-fluid py-4 evento-etapa1-page system-form-page">
     <div class="system-form-shell evento-etapa1-shell mx-auto">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-            <h1 class="h4 mb-0">Etapa 1 — Dados do evento</h1>
-            <div class="d-flex gap-2">
-                <a href="{% url 'eventos:guiado-painel' object.pk %}" class="btn btn-outline-secondary btn-sm">Ver painel</a>
-                <form method="post" action="{% url 'eventos:excluir' object.pk %}" class="d-inline" onsubmit="return confirm('Excluir este evento? Esta ação não pode ser desfeita.');">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-danger btn-sm">Excluir evento</button>
-                </form>
-            </div>
+        <div class="evento-etapa1-header mb-3">
+            <h1 class="h4 mb-1">Etapa 1 — Dados do evento</h1>
+            <p class="text-muted mb-0">Defina contexto, período, destinos e documentos do evento.</p>
         </div>
 
         {% if form.non_field_errors %}
@@ -24,7 +18,7 @@
         </div>
         {% endif %}
 
-        <form method="post" id="form-etapa1" class="card form-card evento-etapa1-card" data-evento-etapa1 data-api-cidades-url="{{ api_cidades_por_estado_url }}" data-estado-pr-id="{{ estado_pr.id|default:'' }}" data-tipo-outros-pk="{{ tipo_outros_pk|default:'' }}" data-estados-json='{{ estados_json|escapejs }}'>
+        <form method="post" enctype="multipart/form-data" id="form-etapa1" class="card form-card evento-etapa1-card" data-evento-etapa1 data-api-cidades-url="{{ api_cidades_por_estado_url }}" data-estado-pr-id="{{ estado_pr.id|default:'' }}" data-tipo-outros-pk="{{ tipo_outros_pk|default:'' }}" data-estados-json='{{ estados_json|escapejs }}' data-has-convite-anexos="{% if anexos_convite %}1{% else %}0{% endif %}">
             {% csrf_token %}
             <div class="card-body">
                 <section class="evento-section">
@@ -138,11 +132,49 @@
                             <span class="evento-dataunica-pill__state" data-convite-state>NÃO</span>
                         </label>
                     </div>
+
+                    <div id="convite-upload-wrap" class="evento-convite-upload-wrap d-none" data-convite-upload-wrap>
+                        <div class="evento-convite-upload-head">
+                            <h4 class="evento-convite-upload-title">Documentos anexados</h4>
+                            <p class="evento-convite-upload-text">Envie um ou mais PDFs de convite/ofício solicitante. Você pode adicionar novos arquivos a qualquer momento.</p>
+                        </div>
+
+                        <div class="evento-convite-upload-input">
+                            <label for="id_convite_documentos" class="form-label">Adicionar PDFs</label>
+                            <input type="file" name="convite_documentos" id="id_convite_documentos" class="form-control" accept="application/pdf,.pdf" multiple>
+                            <small class="text-muted">Formato permitido: PDF. Selecione múltiplos arquivos no mesmo envio.</small>
+                        </div>
+
+                        <div class="evento-convite-files-list">
+                            {% for anexo in anexos_convite %}
+                            <article class="evento-convite-file-item">
+                                <div class="evento-convite-file-main">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                    <div>
+                                        <strong>{{ anexo.nome_original }}</strong>
+                                        <small>Enviado em {{ anexo.uploaded_at|date:"d/m/Y H:i" }}</small>
+                                    </div>
+                                </div>
+                                <div class="evento-convite-file-actions">
+                                    <a href="{% url 'eventos:evento-anexo-visualizar' anexo.id %}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">Visualizar</a>
+                                    <a href="{% url 'eventos:evento-anexo-baixar' anexo.id %}" class="btn btn-sm btn-outline-secondary">Baixar</a>
+                                    <form method="post" action="{% url 'eventos:evento-anexo-remover' anexo.id %}" onsubmit="return confirm('Remover este anexo?');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{% url 'eventos:guiado-etapa-1' object.pk %}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Remover</button>
+                                    </form>
+                                </div>
+                            </article>
+                            {% empty %}
+                            <div class="evento-empty-state">Nenhum documento anexado até o momento.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </section>
 
                 <div class="form-actions system-form-actions mt-4">
                     <div class="system-form-actions__group system-form-actions__group--secondary">
-                        <a href="{% url 'eventos:guiado-painel' object.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+                        <a href="{% url 'eventos:guiado-painel' object.pk %}" class="btn btn-outline-secondary">Voltar ao painel</a>
                     </div>
                     <div class="system-form-actions__group system-form-actions__group--primary">
                         <button type="submit" class="btn btn-primary">Salvar</button>

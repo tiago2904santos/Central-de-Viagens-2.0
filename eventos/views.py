@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Max, Prefetch, Q
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -26,6 +26,7 @@ from .models import (
     AtividadePlanoTrabalho,
     CoordenadorOperacional,
     Evento,
+    EventoAnexoSolicitante,
     EventoDestino,
     EventoFinalizacao,
     EventoParticipante,
@@ -200,6 +201,38 @@ def _validar_destinos(destinos):
         if not Estado.objects.filter(pk=estado_id, ativo=True).exists():
             return False, 'Estado inválido.'
     return True, None
+
+
+def _is_pdf_upload(uploaded_file):
+    nome = (getattr(uploaded_file, 'name', '') or '').strip().lower()
+    content_type = (getattr(uploaded_file, 'content_type', '') or '').strip().lower()
+    if nome.endswith('.pdf'):
+        return True
+    return content_type == 'application/pdf'
+
+
+def _validar_anexos_convite(arquivos):
+    for arquivo in arquivos:
+        if not _is_pdf_upload(arquivo):
+            return False, f'O arquivo "{arquivo.name}" não é PDF. Envie apenas PDF.'
+    return True, None
+
+
+def _salvar_anexos_convite(evento, arquivos):
+    if not arquivos:
+        return
+    ultima_ordem = (
+        evento.anexos_solicitante.aggregate(max_ordem=Max('ordem')).get('max_ordem')
+        or -1
+    )
+    for indice, arquivo in enumerate(arquivos, start=1):
+        nome_original = (getattr(arquivo, 'name', '') or '').strip()[:255] or f'anexo-{uuid.uuid4().hex[:8]}.pdf'
+        EventoAnexoSolicitante.objects.create(
+            evento=evento,
+            arquivo=arquivo,
+            nome_original=nome_original,
+            ordem=ultima_ordem + indice,
+        )
 
 
 def _estrutura_trechos(roteiro, destinos_list=None):
@@ -859,7 +892,7 @@ def guiado_novo(request):
 def guiado_etapa_1(request, pk):
     """GET+POST da Etapa 1 do fluxo guiado refatorado: tipos, datas, destinos, descrição. Título gerado automaticamente."""
     obj = get_object_or_404(
-        Evento.objects.prefetch_related('tipos_demanda', 'destinos').prefetch_related(
+        Evento.objects.prefetch_related('tipos_demanda', 'destinos', 'anexos_solicitante').prefetch_related(
             'destinos__estado',
             'destinos__cidade',
         ),
@@ -876,9 +909,11 @@ def guiado_etapa_1(request, pk):
     tipo_outros_pk = tipo_outros.pk if tipo_outros else None
 
     if request.method == 'POST':
+        arquivos_convite = [f for f in request.FILES.getlist('convite_documentos') if getattr(f, 'name', '')]
+        ok_arquivos, msg_arquivos = _validar_anexos_convite(arquivos_convite)
         destinos_post = _parse_destinos_post(request)
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
-        if form.is_valid() and ok_destinos:
+        if form.is_valid() and ok_destinos and ok_arquivos:
             # Salvar evento (tipos, data_unica, data_inicio, data_fim, descricao, tem_convite)
             ev = form.save(commit=False)
             # Garantir persistência explícita das datas (fonte: form.cleaned_data)
@@ -894,12 +929,16 @@ def guiado_etapa_1(request, pk):
             ev.data_unica = data_unica
             ev.save()
             form.save_m2m()
+            _salvar_anexos_convite(ev, arquivos_convite)
             # Destinos: remover antigos e criar novos
             obj.destinos.all().delete()
             for ordem, (estado_id, cidade_id) in enumerate(destinos_post):
                 EventoDestino.objects.create(evento=obj, estado_id=estado_id, cidade_id=cidade_id, ordem=ordem)
             if getattr(obj, '_prefetched_objects_cache', None) and 'destinos' in obj._prefetched_objects_cache:
                 del obj._prefetched_objects_cache['destinos']
+            if not ev.tem_convite_ou_oficio_evento and ev.anexos_solicitante.exists():
+                ev.tem_convite_ou_oficio_evento = True
+                ev.save(update_fields=['tem_convite_ou_oficio_evento'])
             # Descrição: só manter quando tipo OUTROS está selecionado; senão limpar (form já pode ter setado '' no clean)
             tem_outros = obj.tipos_demanda.filter(is_outros=True).exists()
             if not tem_outros:
@@ -916,6 +955,8 @@ def guiado_etapa_1(request, pk):
             return redirect('eventos:guiado-etapa-1', pk=obj.pk)
         if not ok_destinos:
             form.add_error(None, msg_destinos)
+        if not ok_arquivos:
+            form.add_error(None, msg_arquivos)
 
     import json
     estados_qs = Estado.objects.filter(ativo=True).order_by('nome')
@@ -927,6 +968,7 @@ def guiado_etapa_1(request, pk):
     context = {
         'form': form,
         'object': obj,
+        'anexos_convite': obj.anexos_solicitante.all().order_by('ordem', '-uploaded_at', 'id'),
         'destinos_atuais': destinos_atuais,
         'estado_pr': estado_pr,
         'estados': estados_qs,
@@ -936,6 +978,53 @@ def guiado_etapa_1(request, pk):
         'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
     }
     return render(request, 'eventos/guiado/etapa_1.html', context)
+
+
+@login_required
+@require_http_methods(['GET'])
+def evento_anexo_visualizar(request, anexo_id):
+    anexo = get_object_or_404(
+        EventoAnexoSolicitante.objects.select_related('evento'),
+        pk=anexo_id,
+    )
+    response = FileResponse(anexo.arquivo.open('rb'), content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{slugify(anexo.nome_original) or "documento"}.pdf"'
+    return response
+
+
+@login_required
+@require_http_methods(['GET'])
+def evento_anexo_baixar(request, anexo_id):
+    anexo = get_object_or_404(
+        EventoAnexoSolicitante.objects.select_related('evento'),
+        pk=anexo_id,
+    )
+    return FileResponse(
+        anexo.arquivo.open('rb'),
+        as_attachment=True,
+        filename=anexo.nome_original or f'anexo-evento-{anexo.pk}.pdf',
+        content_type='application/pdf',
+    )
+
+
+@login_required
+@require_http_methods(['POST'])
+def evento_anexo_remover(request, anexo_id):
+    anexo = get_object_or_404(
+        EventoAnexoSolicitante.objects.select_related('evento'),
+        pk=anexo_id,
+    )
+    evento = anexo.evento
+    arquivo = anexo.arquivo
+    anexo.delete()
+    if arquivo:
+        arquivo.delete(save=False)
+    if not evento.anexos_solicitante.exists() and evento.tem_convite_ou_oficio_evento:
+        evento.tem_convite_ou_oficio_evento = False
+        evento.save(update_fields=['tem_convite_ou_oficio_evento'])
+    messages.success(request, 'Anexo removido com sucesso.')
+    next_url = request.POST.get('next') or reverse('eventos:guiado-etapa-1', kwargs={'pk': evento.pk})
+    return redirect(next_url)
 
 
 def _evento_roteiros_ok(evento):
@@ -2163,7 +2252,7 @@ def _guiado_etapa_em_breve(request, evento_id, numero, nome):
 def guiado_etapa_4(request, evento_id):
     """PT / OS do evento (Etapa 4): apenas consumo dos cadastros reais de PT e OS."""
     evento = get_object_or_404(
-        Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
+        Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda', 'anexos_solicitante'),
         pk=evento_id,
     )
 
@@ -2188,6 +2277,7 @@ def guiado_etapa_4(request, evento_id):
         'evento': evento,
         'object': evento,
         'oficios': oficios,
+        'anexos_convite': evento.anexos_solicitante.all().order_by('ordem', '-uploaded_at', 'id'),
         'planos_trabalho': planos,
         'ordens_servico': ordens,
         'novo_plano_trabalho_url': novo_pt_url,
