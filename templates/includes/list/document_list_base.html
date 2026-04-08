@@ -48,15 +48,15 @@
                     >
                         {% block list_filter_hidden_fields %}{% endblock %}
 
-                        <div class="system-document-filter__grid system-document-filter__grid--primary">
+                        <div class="system-document-filter__grid system-document-filter__grid--primary {% block list_filter_primary_grid_class %}{% endblock %}">
                             {% block list_filter_primary_fields %}{% endblock %}
                         </div>
 
                         {% block list_filter_clusters %}{% endblock %}
 
-                        <div class="system-document-filter__grid system-document-filter__grid--secondary">
+                        <div class="system-document-filter__grid system-document-filter__grid--secondary {% block list_filter_secondary_grid_class %}{% endblock %}">
                             {% block list_filter_secondary_fields %}{% endblock %}
-                            <div class="system-document-filter__field system-document-filter__field--actions">
+                            <div class="system-document-filter__field system-document-filter__field--actions {% block list_filter_actions_field_class %}{% endblock %}">
                                 <span class="form-label system-document-filter__field-label-spacer" aria-hidden="true">Acoes</span>
                                 <div class="system-document-filter__actions-grid">
                                 {% block list_filter_actions %}

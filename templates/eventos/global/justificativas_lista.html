@@ -26,18 +26,8 @@
 {% url 'eventos:oficios-global' as oficios_url %}
 <a href="{{ oficios_url }}" class="btn btn-outline-secondary system-list-action-btn">Oficios</a>
 {% endblock %}
-
-{% block list_filter_title %}Filtros documentais de justificativas globais{% endblock %}
-
-{% block list_filter_description %}
-<p class="system-document-filter__description">Busca por evento, protocolo, texto ou destino, com recorte por ano e status dentro da mesma estrutura visual do topo documental.</p>
-{% endblock %}
-
-{% block list_filter_summary %}
-<div class="system-document-filter__summary-pill">{{ page_obj.paginator.count }} justificativa(s)</div>
-{% endblock %}
 {% block list_filter_primary_fields %}
-<div class="system-document-filter__field system-document-filter__field--search-xl">
+<div class="system-document-filter__field system-document-filter__field--span-4">
     <label class="form-label">Busca principal</label>
     <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Evento, protocolo, texto ou destino" data-list-autosubmit>
 </div>
@@ -51,9 +41,7 @@
         {% endfor %}
     </select>
 </div>
-{% endblock %}
 
-{% block list_filter_secondary_fields %}
 <div class="system-document-filter__field system-document-filter__field--compact">
     <label class="form-label">Ano</label>
     <input type="text" name="ano" class="form-control" value="{{ filters.ano }}" placeholder="2026" data-list-autosubmit>
@@ -69,6 +57,8 @@
     </select>
 </div>
 {% endblock %}
+
+{% block list_filter_secondary_grid_class %}system-document-filter__grid--actions-inline{% endblock %}
 
 {% block list_filter_actions %}
 <button type="submit" class="btn system-document-filter__action-btn system-document-filter__action-btn--submit">Filtrar</button>

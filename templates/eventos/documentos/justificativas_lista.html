@@ -16,17 +16,13 @@
 <a href="{{ justificativa_novo_url }}" class="btn btn-primary system-list-action-btn">Nova justificativa</a>
 {% endblock %}
 
-{% block list_filter_summary %}
-<div class="system-document-filter__summary-pill">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} justificativa(s)</div>
-{% endblock %}
-
 {% block list_filter_primary_fields %}
-<div class="system-document-filter__field system-document-filter__field--search-xl">
+<div class="system-document-filter__field system-document-filter__field--span-5">
     <label class="form-label">Busca</label>
     <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Texto, protocolo ou evento" data-list-autosubmit>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--wide">
+<div class="system-document-filter__field system-document-filter__field--span-3">
     <label class="form-label">Oficio</label>
     <select name="oficio_id" data-list-autosubmit>
         <option value="">Todos</option>
@@ -48,7 +44,7 @@
     <input type="date" class="form-control" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--wide">
+<div class="system-document-filter__field system-document-filter__field--span-3">
     <label class="form-label">Ordenar por</label>
     <select name="order_by" data-list-autosubmit>
         {% for key, label in order_by_choices %}
@@ -194,18 +190,7 @@
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">
-                    <a href="{{ just.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir justificativa">
-                        <i class="bi bi-box-arrow-up-right"></i>
-                        <span>Abrir</span>
-                    </a>
-                    <a href="{{ just.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Editar justificativa">
-                        <i class="bi bi-pencil-square"></i>
-                        <span>Editar</span>
-                    </a>
-                    <a href="{{ just.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger" aria-label="Excluir justificativa">
-                        <i class="bi bi-trash"></i>
-                        <span>Excluir</span>
-                    </a>
+                    {% include 'includes/list/card_actions_oficios_pattern.html' with open_url=just.detail_url open_aria='Abrir justificativa' delete_url=just.excluir_url delete_aria='Excluir justificativa' %}
                 </div>
             </div>
         </div>

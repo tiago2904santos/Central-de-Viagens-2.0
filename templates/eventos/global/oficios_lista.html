@@ -14,9 +14,6 @@
 {% block list_header_actions %}
 <a href="{{ oficio_novo_url }}" class="btn btn-primary system-list-action-btn">Novo oficio</a>
 {% endblock %}
-{% block list_filter_summary %}
-<div class="system-document-filter__summary-pill">{{ page_obj.paginator.count }} oficio(s)</div>
-{% endblock %}
 {% block list_filter_form_class %}system-document-filter-form--oficios{% endblock %}
 {% block list_filter_primary_fields %}
 <div class="system-document-filter__field system-document-filter__field--search-xl">
@@ -113,7 +110,7 @@
     >
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--wide">
+<div class="system-document-filter__field system-document-filter__field--span-3">
     <label class="form-label">Ordenar por</label>
     <select name="order_by" data-list-autosubmit data-oficio-picker-search="false">
         {% for key, label in order_by_choices %}

@@ -16,10 +16,6 @@
 <a href="{{ ordem_novo_url }}" class="btn btn-primary system-list-action-btn">Nova ordem de servico</a>
 {% endblock %}
 
-{% block list_filter_summary %}
-<div class="system-document-filter__summary-pill">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} ordem(ns)</div>
-{% endblock %}
-
 {% block list_filter_primary_fields %}
 <div class="system-document-filter__field system-document-filter__field--search-xl">
     <label class="form-label">Busca</label>
@@ -68,7 +64,7 @@
     <input type="date" class="form-control" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--wide">
+<div class="system-document-filter__field system-document-filter__field--span-3">
     <label class="form-label">Ordenar por</label>
     <select name="order_by" data-list-autosubmit>
         {% for key, label in order_by_choices %}
@@ -210,11 +206,7 @@
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">
-                    <a class="btn btn-sm btn-doc-action btn-doc-action--primary" href="{{ object.open_url }}"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-                    <a class="btn btn-sm btn-doc-action btn-doc-action--secondary" href="{{ object.edit_url }}"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
-                    <a class="btn btn-sm btn-doc-action btn-doc-action--secondary is-icon-only" href="{{ object.download_docx_url }}" data-direct-download="true" aria-label="Baixar DOCX"><i class="bi bi-filetype-docx"></i><span class="visually-hidden">DOCX</span></a>
-                    <a class="btn btn-sm btn-doc-action btn-doc-action--pdf is-icon-only" href="{{ object.download_pdf_url }}" data-direct-download="true" aria-label="Baixar PDF"><i class="bi bi-filetype-pdf"></i><span class="visually-hidden">PDF</span></a>
-                    <a class="btn btn-sm btn-doc-action btn-doc-action--danger is-icon-only" href="{{ object.delete_url }}" aria-label="Excluir ordem de servico"><i class="bi bi-trash"></i><span class="visually-hidden">Excluir</span></a>
+                    {% include 'includes/list/card_actions_oficios_pattern.html' with open_url=object.open_url open_aria='Abrir ordem de servico' docx_url=object.download_docx_url docx_aria='Baixar DOCX da ordem de servico' pdf_url=object.download_pdf_url pdf_aria='Baixar PDF da ordem de servico' delete_url=object.delete_url delete_aria='Excluir ordem de servico' %}
                 </div>
             </div>
         </div>

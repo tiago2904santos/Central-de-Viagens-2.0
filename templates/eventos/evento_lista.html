@@ -146,11 +146,17 @@
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">
+                    <a href="{% url 'eventos:guiado-painel' obj.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir fluxo guiado do evento">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Abrir</span>
+                    </a>
                     {% for action in obj.quick_actions %}
+                    {% if action.label != 'Abrir fluxo guiado' %}
                     <a href="{{ action.url }}" class="btn btn-sm btn-doc-action {{ action.css_class }}">
                         <i class="bi {{ action.icon }}"></i>
                         <span>{{ action.label }}</span>
                     </a>
+                    {% endif %}
                     {% endfor %}
                     <form method="post" action="{{ obj.delete_url }}" class="d-inline" onsubmit="return confirm('Excluir este evento?');">
                         {% csrf_token %}

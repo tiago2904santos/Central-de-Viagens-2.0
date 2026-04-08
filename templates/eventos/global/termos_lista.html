@@ -20,18 +20,8 @@
 {% block list_header_actions %}
 <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary system-list-action-btn">Eventos</a>
 {% endblock %}
-
-{% block list_filter_title %}Filtros documentais de termos globais{% endblock %}
-
-{% block list_filter_description %}
-<p class="system-document-filter__description">Busca por participante ou cargo, recorte por evento e status com a mesma organizacao visual dos outros modulos documentais.</p>
-{% endblock %}
-
-{% block list_filter_summary %}
-<div class="system-document-filter__summary-pill">{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ object_list|length }}{% endif %} termo(s)</div>
-{% endblock %}
 {% block list_filter_primary_fields %}
-<div class="system-document-filter__field system-document-filter__field--search-xl">
+<div class="system-document-filter__field system-document-filter__field--span-5">
     <label class="form-label">Busca principal</label>
     <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Evento, participante ou cargo" data-list-autosubmit>
 </div>
@@ -45,9 +35,7 @@
         {% endfor %}
     </select>
 </div>
-{% endblock %}
 
-{% block list_filter_secondary_fields %}
 <div class="system-document-filter__field system-document-filter__field--medium">
     <label class="form-label">Status</label>
     <select name="status" data-list-autosubmit>
@@ -58,6 +46,8 @@
     </select>
 </div>
 {% endblock %}
+
+{% block list_filter_secondary_grid_class %}system-document-filter__grid--actions-inline{% endblock %}
 
 {% block list_filter_actions %}
 <button type="submit" class="btn system-document-filter__action-btn system-document-filter__action-btn--submit">Filtrar</button>

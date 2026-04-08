@@ -1271,6 +1271,61 @@ def _evento_etapa6_em_andamento(evento):
         return False
 
 
+def _build_guiado_etapa_card(
+    numero,
+    nome,
+    url,
+    *,
+    ok=False,
+    em_breve=False,
+    em_andamento=False,
+    summary='',
+    description='',
+    cta_label='Abrir etapa',
+):
+    if em_breve:
+        return {
+            'numero': numero,
+            'nome': nome,
+            'ok': False,
+            'em_breve': True,
+            'em_andamento': False,
+            'url': url,
+            'summary': summary,
+            'description': description,
+            'cta_label': cta_label,
+            'status_label': 'Em breve',
+            'badge_class': 'is-muted',
+            'theme_class': 'is-tone-gray',
+        }
+    if ok:
+        status_label = 'Concluida'
+        badge_class = 'is-ready'
+        theme_class = 'is-tone-accent'
+    elif em_andamento:
+        status_label = 'Em andamento'
+        badge_class = 'is-info'
+        theme_class = 'is-tone-blue'
+    else:
+        status_label = 'Pendente'
+        badge_class = 'is-warning'
+        theme_class = 'is-tone-yellow'
+    return {
+        'numero': numero,
+        'nome': nome,
+        'ok': ok,
+        'em_breve': em_breve,
+        'em_andamento': em_andamento,
+        'url': url,
+        'summary': summary,
+        'description': description,
+        'cta_label': cta_label,
+        'status_label': status_label,
+        'badge_class': badge_class,
+        'theme_class': theme_class,
+    }
+
+
 @login_required
 def guiado_painel(request, pk):
     """Painel do evento guiado — ordem funcional real: 1 Dados, 2 Roteiros, 3 Termos, 4 PT/OS, 5 Ofícios, 6 Justificativa, 7 Finalização."""
@@ -1308,10 +1363,62 @@ def guiado_painel(request, pk):
     etapa7_ok = _evento_etapa6_ok(obj)
     etapa7_em_andamento = _evento_etapa6_em_andamento(obj)
     oficios_summary = _build_evento_oficios_summary(obj)
+    termos_urls = _build_evento_termos_urls(obj)
+    roteiros_total = len(obj.roteiros.all())
+    termos_documentais_total = len(obj.termos_autorizacao.all())
+    planos_total = len(obj.planos_trabalho.all())
+    ordens_total = len(obj.ordens_servico.all())
+    obj.destinos_display = _evento_lista_destinos_display(obj)
+    obj.periodo_display = _evento_lista_periodo_display(obj)
+    obj.tipos_display = _evento_lista_tipos_display(obj)
+    obj.temporal_meta = _evento_lista_temporal_meta(obj)
+    obj.card_theme_class = obj.temporal_meta['theme_class']
+    obj.document_counts_display = (
+        f'{oficios_summary["total"]} oficios • '
+        f'{termos_documentais_total} termos • '
+        f'{planos_total} PT • '
+        f'{ordens_total} OS'
+    )
+    resumo_cards = [
+        {'label': 'Roteiros', 'value': f'{roteiros_total} cadastrado(s)'},
+        {'label': 'Termos', 'value': f'{termos_documentais_total} registro(s) no modulo documental'},
+        {'label': 'PT / OS', 'value': f'{planos_total} PT • {ordens_total} OS'},
+        {'label': 'Oficios', 'value': oficios_summary['texto']},
+    ]
     etapas = [
-        {'numero': 1, 'nome': 'Dados do evento', 'ok': etapa1_ok, 'em_breve': False, 'em_andamento': False, 'url': reverse('eventos:guiado-etapa-1', kwargs={'pk': obj.pk})},
-        {'numero': 2, 'nome': 'Roteiros', 'ok': etapa2_ok, 'em_breve': False, 'em_andamento': etapa2_em_andamento, 'url': reverse('eventos:guiado-etapa-2', kwargs={'evento_id': obj.pk})},
-        {'numero': 3, 'nome': 'Termos', 'ok': etapa3_ok, 'em_breve': False, 'em_andamento': etapa3_em_andamento, 'url': reverse('eventos:guiado-etapa-3', kwargs={'evento_id': obj.pk})},
+        _build_guiado_etapa_card(
+            1,
+            'Dados do evento',
+            reverse('eventos:guiado-etapa-1', kwargs={'pk': obj.pk}),
+            ok=etapa1_ok,
+            summary=obj.tipos_display,
+            description='Base cadastral, periodo, destinos e tipo de demanda.',
+            cta_label='Revisar dados',
+        ),
+        _build_guiado_etapa_card(
+            2,
+            'Roteiros',
+            reverse('eventos:guiado-etapa-2', kwargs={'evento_id': obj.pk}),
+            ok=etapa2_ok,
+            em_andamento=etapa2_em_andamento,
+            summary=f'{roteiros_total} roteiro(s) vinculado(s)' if roteiros_total else 'Nenhum roteiro cadastrado.',
+            description='Planejamento operacional do deslocamento e da malha de destinos.',
+            cta_label='Abrir roteiros',
+        ),
+        _build_guiado_etapa_card(
+            3,
+            'Termos',
+            termos_urls['list_url'],
+            ok=etapa3_ok,
+            em_andamento=etapa3_em_andamento,
+            summary=(
+                f'{termos_documentais_total} termo(s) no modulo documental'
+                if termos_documentais_total
+                else 'A etapa agora usa o modulo documental real filtrado por evento.'
+            ),
+            description='Orquestracao para o modulo documental real de Termos de autorizacao.',
+            cta_label='Abrir modulo',
+        ),
         {'numero': 4, 'nome': 'Plano de Trabalho / Ordem de Serviço', 'ok': etapa4_ok, 'em_breve': False, 'em_andamento': etapa4_em_andamento, 'url': reverse('eventos:guiado-etapa-4', kwargs={'evento_id': obj.pk})},
         {'numero': 5, 'nome': 'Ofícios', 'ok': etapa5_ok, 'em_breve': False, 'em_andamento': etapa5_em_andamento, 'url': reverse('eventos:guiado-etapa-5', kwargs={'evento_id': obj.pk}), 'summary': oficios_summary['texto']},
         {'numero': 6, 'nome': 'Justificativa', 'ok': etapa6_ok, 'em_breve': False, 'em_andamento': False, 'url': reverse('eventos:guiado-etapa-6', kwargs={'evento_id': obj.pk})},
@@ -1672,6 +1779,23 @@ def _append_query_params(url, **params):
     if not filtered:
         return url
     return f'{url}?{urlencode(filtered)}'
+
+
+def _build_evento_termos_urls(evento):
+    panel_url = reverse('eventos:guiado-painel', kwargs={'pk': evento.pk})
+    return {
+        'panel_url': panel_url,
+        'list_url': _append_query_params(
+            reverse('eventos:documentos-termos'),
+            evento_id=evento.pk,
+        ),
+        'new_url': _append_query_params(
+            reverse('eventos:documentos-termos-novo'),
+            context_source='evento',
+            preselected_event_id=evento.pk,
+            return_to=panel_url,
+        ),
+    }
 
 
 DOCUMENT_LIST_ORDER_DIR_CHOICES = [
