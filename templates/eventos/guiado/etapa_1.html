@@ -7,10 +7,12 @@
 {% block content %}
 <div class="app-page-shell app-page-shell--form evento-etapa1-page system-form-page">
     <div class="app-page-shell__inner system-form-shell evento-etapa1-shell">
-        <div class="evento-etapa1-header mb-3">
-            <h1 class="h4 mb-1">Etapa 1 — Dados do evento</h1>
+        <header class="app-page-header system-form-header evento-etapa1-header">
+            <div class="app-page-header__copy">
+            <h1 class="app-page-header__title">Etapa 1 — Dados do evento</h1>
             <p class="text-muted mb-0">Defina contexto, período, destinos e documentos do evento.</p>
-        </div>
+            </div>
+        </header>
 
         {% if form.non_field_errors %}
         <div class="alert alert-danger" role="alert">
@@ -18,7 +20,7 @@
         </div>
         {% endif %}
 
-        <form method="post" enctype="multipart/form-data" id="form-etapa1" class="card form-card evento-etapa1-card" data-evento-etapa1 data-api-cidades-url="{{ api_cidades_por_estado_url }}" data-estado-pr-id="{{ estado_pr.id|default:'' }}" data-tipo-outros-pk="{{ tipo_outros_pk|default:'' }}" data-estados-json='{{ estados_json|escapejs }}' data-has-convite-anexos="{% if anexos_convite %}1{% else %}0{% endif %}">
+        <form method="post" enctype="multipart/form-data" id="form-etapa1" class="card form-card app-page-card app-page-card--spacious system-form-card evento-etapa1-card" data-evento-etapa1 data-api-cidades-url="{{ api_cidades_por_estado_url }}" data-estado-pr-id="{{ estado_pr.id|default:'' }}" data-tipo-outros-pk="{{ tipo_outros_pk|default:'' }}" data-estados-json='{{ estados_json|escapejs }}' data-has-convite-anexos="{% if anexos_convite %}1{% else %}0{% endif %}">
             {% csrf_token %}
             <div class="card-body">
                 <section class="evento-section">
@@ -172,7 +174,7 @@
                     </div>
                 </section>
 
-                <div class="form-actions system-form-actions mt-4">
+                <div class="form-actions system-form-actions">
                     <div class="system-form-actions__group system-form-actions__group--secondary">
                         <a href="{% url 'eventos:guiado-painel' object.pk %}" class="btn btn-outline-secondary">Voltar ao painel</a>
                     </div>

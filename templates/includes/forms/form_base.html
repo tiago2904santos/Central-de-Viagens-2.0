@@ -6,41 +6,45 @@
 {% block content %}
 <div class="app-page-shell app-page-shell--form system-form-page">
     <div class="app-page-shell__inner system-form-shell">
-        <header class="page-header-cadastro system-form-header">
-            <div>
-                <h1 class="mb-1">{% block form_header_title %}Formulario{% endblock %}</h1>
-                {% block form_header_subtitle %}{% endblock %}
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                {% block form_header_actions %}{% endblock %}
-            </div>
-        </header>
-
-        {% block form_page_notice %}{% endblock %}
-
-        <div class="card form-card system-form-card">
-            <div class="card-header card-header-form">
-                <div class="card-header-form-icon" aria-hidden="true">
-                    <i class="bi {% block form_header_icon %}bi-ui-checks-grid{% endblock %}"></i>
+        <div class="app-page-stack system-form-stack">
+            <header class="app-page-header page-header-cadastro system-form-header">
+                <div class="app-page-header__copy">
+                    <h1 class="app-page-header__title">{% block form_header_title %}Formulario{% endblock %}</h1>
+                    {% block form_header_subtitle %}{% endblock %}
                 </div>
-                <div class="card-header-form-content">
-                    <h2 class="card-header-form-title">{% block form_card_title %}Dados do formulario{% endblock %}</h2>
-                    {% block form_card_subtitle %}{% endblock %}
+                <div class="app-page-header__actions system-form-header__actions">
+                    {% block form_header_actions %}{% endblock %}
                 </div>
-            </div>
-            <div class="card-body">
-                {% block form_before %}{% endblock %}
-                <form method="{% block form_method %}post{% endblock %}" id="{% block form_id %}system-form{% endblock %}" {% block form_attrs %}{% endblock %}>
-                    {% csrf_token %}
-                    {% block form_hidden %}{% endblock %}
-                    {% block form_fields %}{% endblock %}
-                    <div class="form-actions system-form-actions mt-4">
-                        {% block form_actions %}
-                        <button type="submit" class="btn btn-primary">Salvar</button>
-                        {% endblock %}
+            </header>
+
+            {% block form_page_notice %}{% endblock %}
+
+            <div class="card form-card app-page-card app-page-card--spacious system-form-card">
+                <div class="card-header card-header-form">
+                    <div class="card-header-form-icon" aria-hidden="true">
+                        <i class="bi {% block form_header_icon %}bi-ui-checks-grid{% endblock %}"></i>
                     </div>
-                </form>
-                {% block form_after %}{% endblock %}
+                    <div class="card-header-form-content">
+                        <h2 class="card-header-form-title">{% block form_card_title %}Dados do formulario{% endblock %}</h2>
+                        {% block form_card_subtitle %}{% endblock %}
+                    </div>
+                </div>
+                <div class="card-body system-form-card__body">
+                    {% block form_before %}{% endblock %}
+                    <form method="{% block form_method %}post{% endblock %}" id="{% block form_id %}system-form{% endblock %}" {% block form_attrs %}{% endblock %}>
+                        {% csrf_token %}
+                        {% block form_hidden %}{% endblock %}
+                        <div class="system-form-body">
+                            {% block form_fields %}{% endblock %}
+                            <div class="form-actions system-form-actions">
+                                {% block form_actions %}
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                                {% endblock %}
+                            </div>
+                        </div>
+                    </form>
+                    {% block form_after %}{% endblock %}
+                </div>
             </div>
         </div>
     </div>

@@ -126,6 +126,34 @@
     --list-cell-padding-x: 1.25rem;
     --list-title-size: 1.5rem;
     --list-meta-size: 0.9rem;
+
+    /* Contrato global de respiro/layout */
+    --app-shell-gutter: clamp(0.95rem, 0.55rem + 1.1vw, 1.75rem);
+    --app-shell-gutter-tight: clamp(0.85rem, 0.5rem + 0.9vw, 1.35rem);
+    --app-shell-padding-block-start: clamp(1rem, 0.75rem + 0.8vw, 1.75rem);
+    --app-shell-padding-block-end: clamp(2.5rem, 2rem + 1vw, 3.75rem);
+    --app-shell-max-width: 1240px;
+    --app-shell-max-width-form: 1040px;
+    --app-shell-max-width-wide: 1360px;
+    --app-shell-max-width-document: 1360px;
+    --app-shell-max-width-dashboard: 1380px;
+    --app-shell-max-width-confirm: 760px;
+    --app-shell-max-width-wizard: 1320px;
+    --app-section-gap: clamp(1rem, 0.75rem + 0.8vw, 1.5rem);
+    --app-stack-gap: clamp(1rem, 0.7rem + 0.9vw, 1.5rem);
+    --app-card-radius: var(--cv-card-radius-lg);
+    --app-card-padding: clamp(1rem, 0.8rem + 0.8vw, 1.5rem);
+    --app-card-padding-lg: clamp(1.2rem, 0.95rem + 1vw, 1.75rem);
+    --app-page-section-gap: var(--app-section-gap);
+    --app-page-header-gap: clamp(0.85rem, 0.55rem + 0.7vw, 1.25rem);
+    --app-page-header-padding-bottom: clamp(0.85rem, 0.65rem + 0.6vw, 1.25rem);
+    --app-page-header-border: rgba(15, 23, 42, 0.08);
+    --app-page-muted: var(--cv-text-secondary);
+    --app-page-card-border: rgba(15, 23, 42, 0.08);
+    --app-page-card-radius: var(--app-card-radius);
+    --app-page-card-shadow: var(--cv-shadow-sm);
+    --app-page-card-shadow-hover: var(--cv-shadow);
+    --app-page-card-bg: var(--cv-surface-elevated);
 }
 
 html,
@@ -667,57 +695,65 @@ a:hover {
 }
 
 .app-message-shell {
+    --app-page-max-width: var(--app-shell-max-width);
     padding-block: 0.75rem 0;
+    padding-inline: var(--app-shell-gutter);
 }
 
 .app-page-shell {
-    --app-page-max-width: var(--app-shell-max);
+    --app-page-max-width: var(--app-shell-max-width);
     --app-page-background: transparent;
-    --app-page-card-padding-current: var(--app-page-card-padding);
+    --app-page-card-padding-current: var(--app-card-padding);
     width: 100%;
-    padding-block: var(--app-shell-padding-top) var(--app-shell-padding-bottom);
+    padding-inline: var(--app-shell-gutter);
+    padding-block: var(--app-shell-padding-block-start) var(--app-shell-padding-block-end);
     background: var(--app-page-background);
 }
 
 .app-page-shell--list {
-    --app-page-max-width: var(--app-shell-max-list);
+    --app-page-max-width: var(--app-shell-max-width-wide);
+    padding-bottom: max(var(--app-shell-padding-block-end), 4.75rem);
 }
 
 .app-page-shell--form {
-    --app-page-max-width: var(--app-shell-max-form);
+    --app-page-max-width: var(--app-shell-max-width-form);
 }
 
 .app-page-shell--detail {
-    --app-page-max-width: var(--app-shell-max-detail);
+    --app-page-max-width: var(--app-shell-max-width);
+}
+
+.app-page-shell--document {
+    --app-page-max-width: var(--app-shell-max-width-document);
 }
 
 .app-page-shell--confirm {
-    --app-page-max-width: var(--app-shell-max-confirm);
+    --app-page-max-width: var(--app-shell-max-width-confirm);
 }
 
 .app-page-shell--dashboard {
-    --app-page-max-width: var(--app-shell-max-dashboard);
+    --app-page-max-width: var(--app-shell-max-width-dashboard);
 }
 
 .app-page-shell--wizard {
-    --app-page-max-width: var(--app-shell-max-wizard);
+    --app-page-max-width: var(--app-shell-max-width-wizard);
     padding-top: 0;
 }
 
 .app-page-shell__inner {
     width: min(var(--app-page-max-width), 100%);
     margin: 0 auto;
-    padding-inline: var(--app-shell-gutter);
+    min-width: 0;
 }
 
 .app-page-stack {
     display: grid;
-    gap: var(--app-page-stack-gap);
+    gap: var(--app-stack-gap);
 }
 
 .app-page-section {
     display: grid;
-    gap: var(--app-page-section-gap);
+    gap: var(--app-section-gap);
 }
 
 .app-page-header {
@@ -732,6 +768,23 @@ a:hover {
 
 .app-page-header.page-header-cadastro {
     margin-bottom: 0;
+}
+
+.app-page-header > h1:not(.app-page-header__title) {
+    margin: 0;
+    font-size: clamp(1.45rem, 1.1rem + 1vw, 2rem);
+    font-weight: 800;
+    color: var(--cv-navy-900);
+    letter-spacing: var(--cv-letter-tight);
+    line-height: 1.2;
+}
+
+.app-page-header > p:not(.app-page-header__subtitle) {
+    margin: 0;
+    color: var(--app-page-muted);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    max-width: 72ch;
 }
 
 .app-page-header__copy {
@@ -797,7 +850,7 @@ a:hover {
 
 .app-page-card--spacious,
 .app-page-surface--spacious {
-    --app-page-card-padding-current: var(--app-page-card-padding-lg);
+    --app-page-card-padding-current: var(--app-card-padding-lg);
 }
 
 .app-page-card__section {
@@ -1349,9 +1402,9 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     --list-header-text: var(--cv-navy-900);
     --list-meta-size: 0.9rem;
     --list-focus-ring: var(--cv-focus);
+    --app-page-max-width: var(--app-shell-max-width-wide);
     background: var(--system-list-bg);
     border-radius: 0 0 1.35rem 1.35rem;
-    padding-bottom: 5.5rem;
     transition: background var(--cv-transition-base);
 }
 
@@ -1366,9 +1419,10 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .system-list-shell {
-    max-width: 1420px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
 }
 
 .system-list-header__actions {
@@ -1779,15 +1833,11 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 @media (max-width: 767px) {
-    .system-list-shell {
-        padding: 0 1rem;
-    }
-
     .system-document-top > .page-header-cadastro.system-list-header--standard,
     .system-document-filter__header,
     .system-document-filter__body {
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: var(--app-card-padding);
+        padding-right: var(--app-card-padding);
     }
 
     .system-document-top .system-list-header__content,
@@ -3702,8 +3752,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .oficios-list-shell {
-    max-width: 1420px;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
     display: grid;
     gap: 1rem;
 }
@@ -4751,6 +4801,23 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
 }
 
+.termo-workspace-page .app-page-shell__inner {
+    display: grid;
+    gap: var(--app-stack-gap);
+}
+
+.termo-workspace-page .termo-stage-section + .termo-stage-section {
+    margin-top: var(--app-section-gap);
+}
+
+.termo-workspace-page .oficio-selection-panel {
+    margin-top: var(--app-section-gap);
+}
+
+.termo-workspace-page .oficio-wizard-footer-actions {
+    margin-top: var(--app-section-gap);
+}
+
 .termo-stage-intro {
     margin-bottom: 1rem;
 }
@@ -5646,34 +5713,79 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     --system-form-shadow: 0 20px 36px rgba(15, 23, 42, 0.1);
     --system-form-kicker: rgba(15, 31, 53, 0.64);
     --system-form-section: linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(245, 251, 247, 0.97));
+    --app-page-max-width: var(--app-shell-max-width-form);
+    --app-page-header-gap: clamp(0.9rem, 0.6rem + 0.7vw, 1.35rem);
+    --app-page-header-padding-bottom: clamp(0.95rem, 0.75rem + 0.7vw, 1.35rem);
+    --app-page-header-border: rgba(15, 23, 42, 0.08);
+    --app-page-card-border: var(--system-form-border);
+    --app-page-card-shadow: var(--system-form-shadow);
+    --app-page-card-shadow-hover: 0 24px 40px rgba(15, 23, 42, 0.12);
+    --app-page-card-bg: var(--system-form-section);
     background: var(--system-form-bg);
     border-radius: 0 0 1.25rem 1.25rem;
-    padding-bottom: 2rem;
 }
 
 .system-form-shell {
-    width: min(1080px, 100%);
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    display: grid;
+    gap: var(--app-stack-gap);
+}
+
+.system-form-stack {
+    display: grid;
+    gap: var(--app-stack-gap);
 }
 
 .system-form-header {
-    margin-bottom: 1.4rem;
+    margin: 0;
+    align-items: flex-start;
+}
+
+.system-form-header .app-page-header__copy {
+    gap: 0.35rem;
+}
+
+.system-form-header .app-page-header__copy > h1:not(.app-page-header__title),
+.system-form-header > h1 {
+    margin: 0 !important;
+    font-size: clamp(1.45rem, 1.1rem + 1vw, 2rem);
+    font-weight: 800;
+    color: var(--cv-navy-900);
+    letter-spacing: var(--cv-letter-tight);
+    line-height: 1.2;
+}
+
+.system-form-header .app-page-header__copy > p,
+.system-form-header > p {
+    margin: 0 !important;
+}
+
+.system-form-header .app-page-header__subtitle,
+.system-form-header .text-muted {
+    max-width: 72ch;
+}
+
+.system-form-header__actions {
+    align-items: flex-start;
+}
+
+.system-form-header__actions:empty {
+    display: none;
 }
 
 .system-form-card {
-    border: 1px solid var(--system-form-border);
-    box-shadow: var(--system-form-shadow);
-    background: var(--system-form-section);
-    border-radius: var(--cv-card-radius-lg);
     overflow: hidden;
 }
 
 .card-header-form {
     display: flex;
     align-items: flex-start;
-    gap: 0.9rem;
+    gap: 1rem;
     border-bottom: 1px solid rgba(15, 23, 42, 0.08);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 249, 253, 0.95) 100%);
-    padding: 1rem 1.25rem;
+    padding: var(--app-card-padding);
 }
 
 .card-header-form-icon {
@@ -5692,11 +5804,13 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .card-header-form-content {
     min-width: 0;
+    display: grid;
+    gap: 0.25rem;
 }
 
 .card-header-form-title {
     margin: 0;
-    font-size: 1.06rem;
+    font-size: 1.08rem;
     font-weight: 700;
     color: var(--cv-navy-900);
     letter-spacing: 0.01em;
@@ -5712,10 +5826,17 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     color: var(--cv-text-secondary);
 }
 
+.system-form-card__body,
+.system-form-body {
+    display: grid;
+    gap: var(--app-section-gap);
+}
+
 .system-form-actions {
     border-top: 1px solid rgba(15, 23, 42, 0.08);
-    padding-top: 1rem;
-    margin-top: 1.3rem;
+    padding-top: var(--app-section-gap);
+    margin-top: 0;
+    align-items: center;
 }
 
 .system-form-card .form-label {
@@ -5725,7 +5846,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 /* ----- FormulÃ¡rios em card ----- */
 .form-card .card-body {
-    padding: 1.5rem;
+    padding: var(--app-card-padding-lg);
 }
 
 .form-actions {
@@ -5764,6 +5885,45 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 .configuracoes-subtitle { margin-bottom: 0; }
 .configuracao-section-title { font-size: 1rem; font-weight: 600; color: var(--cv-sidebar-bg, #1e3a5f); margin-bottom: 1rem; }
 .configuracao-section { padding-bottom: 0.5rem; }
+.configuracao-section + .configuracao-section {
+    margin-top: var(--app-section-gap);
+    padding-top: var(--app-section-gap);
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.oficio-wizard-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.oficio-title {
+    color: var(--cv-navy-900);
+    font-size: clamp(1.25rem, 1rem + 0.7vw, 1.6rem);
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.oficio-subtitle {
+    color: var(--cv-text-secondary);
+    font-size: 0.86rem;
+}
+
+.oficio-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    color: var(--cv-text-secondary);
+    font-size: 0.8rem;
+}
+
+.oficio-meta strong {
+    color: var(--cv-navy-900);
+    font-weight: 800;
+}
 
 /* ----- Sidebar: itens desabilitados ----- */
 .sidebar-item-disabled { cursor: default; opacity: 0.75; color: rgba(255,255,255,0.7) !important; }
@@ -5785,7 +5945,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     --oficio-wizard-soft: linear-gradient(180deg, rgba(247, 253, 249, 0.98) 0%, rgba(239, 247, 252, 0.96) 100%);
     --oficio-wizard-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
     --oficio-wizard-shadow-soft: 0 16px 32px rgba(15, 23, 42, 0.08);
-    padding: 1rem 0 5rem;
+    padding-inline: var(--app-shell-gutter);
+    padding-block: 1rem max(var(--app-shell-padding-block-end), 5rem);
     font-family: "Segoe UI Variable Display", "Aptos", "Segoe UI", sans-serif;
     color: var(--oficio-wizard-ink);
     background:
@@ -5795,12 +5956,13 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .oficio-wizard-page[data-glance-state="open"] {
-    padding-bottom: 6.2rem;
+    padding-bottom: max(var(--app-shell-padding-block-end), 6.2rem);
 }
 
 .oficio-wizard-shell {
-    width: min(var(--oficio-wizard-max-width), calc(100vw - 2rem));
-    margin: 0 auto;
+    width: 100%;
+    max-width: none;
+    margin: 0;
     display: grid;
     gap: 1.2rem;
 }
@@ -7186,7 +7348,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     --oficio-wizard-soft: linear-gradient(180deg, rgba(250, 252, 255, 0.98) 0%, rgba(243, 247, 252, 0.96) 100%);
     --oficio-wizard-shadow: 0 30px 60px rgba(16, 36, 63, 0.12);
     --oficio-wizard-shadow-soft: 0 16px 32px rgba(16, 36, 63, 0.08);
-    padding: 1rem 0 5rem;
+    padding-inline: var(--app-shell-gutter);
+    padding-block: 1rem max(var(--app-shell-padding-block-end), 5rem);
     font-family: "Segoe UI Variable Display", "Aptos", "Segoe UI", sans-serif;
     color: var(--oficio-wizard-ink);
     background:
@@ -7196,12 +7359,13 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .oficio-wizard-page[data-glance-state="open"] {
-    padding-bottom: 6.2rem;
+    padding-bottom: max(var(--app-shell-padding-block-end), 6.2rem);
 }
 
 .oficio-wizard-page .oficio-wizard-shell {
-    width: min(var(--oficio-wizard-max-width), calc(100vw - 2rem));
-    margin: 0 auto;
+    width: 100%;
+    max-width: none;
+    margin: 0;
     display: grid;
     gap: 1.45rem;
 }
@@ -9135,12 +9299,10 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 /* ----- Eventos: Etapa 1 (ajuste fino de fidelidade) ----- */
 .evento-etapa1-page {
     background: transparent;
-    padding-left: clamp(1rem, 2.2vw, 2.1rem);
-    padding-right: clamp(1rem, 2.2vw, 2.1rem);
 }
 
 .evento-etapa1-shell {
-    width: min(1160px, 100%);
+    width: 100%;
 }
 
 .evento-etapa1-header h1 {

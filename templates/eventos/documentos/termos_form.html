@@ -5,13 +5,13 @@
 {% block page_title %}{% if object %}Editar{% else %}Novo{% endif %} termo{% endblock %}
 
 {% block content %}
-<div class="app-page-shell app-page-shell--wizard oficio-wizard-page plano-trabalho-page termo-workspace-page">
+<div class="app-page-shell app-page-shell--document oficio-wizard-page plano-trabalho-page termo-workspace-page">
     <div class="app-page-shell__inner">
-    <div class="page-header-cadastro termo-workspace-header">
-        <div>
+    <header class="app-page-header termo-workspace-header">
+        <div class="app-page-header__copy">
             <div class="termo-workspace-kicker">Central documental</div>
-            <h1 class="mb-2">{% if object %}Editar {{ object.titulo_display }}{% else %}Novo termo de autorizacao{% endif %}</h1>
-            <p class="text-muted mb-0 termo-workspace-subtitle">
+            <h1 class="app-page-header__title">{% if object %}Editar {{ object.titulo_display }}{% else %}Novo termo de autorizacao{% endif %}</h1>
+            <p class="app-page-header__subtitle termo-workspace-subtitle">
                 {% if object %}
                 Atualize o contexto documental mantendo o termo coerente com os dados consolidados.
                 {% else %}
@@ -19,10 +19,10 @@
                 {% endif %}
             </p>
         </div>
-        <div class="termo-workspace-header__stats">
+        <div class="app-page-header__actions termo-workspace-header__stats">
             <a href="{{ return_to|default:'/eventos/documentos/termos/' }}" class="btn btn-outline-secondary">Voltar</a>
         </div>
-    </div>
+    </header>
 
     <form method="post" id="termo-form" data-preview-url="{{ preview_url }}" data-read-only-context="{% if read_only_context %}true{% else %}false{% endif %}" data-cidades-api-url="{{ api_cidades_por_estado_url }}" data-oficios-por-evento-url="{{ api_oficios_por_evento_url }}">
                 {% csrf_token %}
@@ -42,7 +42,7 @@
                 </div>
                 {% endif %}
 
-                <div class="card oficio-stage-panel oficio-stage-panel--offset">
+                <div class="card app-page-card app-page-card--spacious oficio-stage-panel oficio-stage-panel--offset termo-workspace-shell">
                     <div class="card-body">
                         <section class="oficio-stage-intro termo-stage-intro">
                             <div>
@@ -104,7 +104,7 @@
                                     </div>
                         </section>
 
-                        <section class="oficio-stage-section termo-stage-section mt-3">
+                        <section class="oficio-stage-section termo-stage-section">
                                     <div class="oficio-stage-section-head">
                                         <div>
                                             <h3 class="oficio-stage-section-title">Período e horário de atendimento</h3>
@@ -130,7 +130,7 @@
                                     </div>
                         </section>
 
-                        <section class="oficio-stage-section termo-stage-section mt-3">
+                        <section class="oficio-stage-section termo-stage-section">
                                     <div class="oficio-stage-section-head">
                                         <div>
                                             <h3 class="oficio-stage-section-title">Destinos</h3>
@@ -167,7 +167,7 @@
                                     </div>
                                 </template>
 
-                        <section class="oficio-stage-section termo-stage-section mt-3">
+                        <section class="oficio-stage-section termo-stage-section">
                                     <div class="oficio-stage-section-head">
                                         <div>
                                             <h2 class="oficio-stage-section-title">Servidores e viatura</h2>
@@ -207,7 +207,7 @@
                                                     <input type="hidden" name="_viajante_preload" value="{{ v.id }}" data-viajante-hidden="{{ v.id }}">
                                                     {% endfor %}
                                                 </div>
-                                                <div class="oficio-selection-panel mt-3">
+                                                <div class="oficio-selection-panel">
                                                     <div class="oficio-selection-panel-head">
                                                         <span class="oficio-selection-panel-title">Viajantes selecionados</span>
                                                     </div>
@@ -244,7 +244,7 @@
                                                 </div>
                                                 <div class="form-text">Busca pelo cadastro de veiculos.</div>
                                                 {% endif %}
-                                                <div class="oficio-selection-panel mt-3">
+                                                <div class="oficio-selection-panel">
                                                     <div class="oficio-selection-panel-head">
                                                         <span class="oficio-selection-panel-title">Viatura selecionada</span>
                                                     </div>
@@ -264,7 +264,7 @@
                                 </div>
                                 {% endif %}
 
-                                <div class="oficio-wizard-footer-actions mt-4">
+                                <div class="oficio-wizard-footer-actions">
                                     <a href="{{ return_to|default:'/eventos/documentos/termos/' }}" class="btn btn-outline-secondary">Cancelar</a>
                                     {% if object %}
                                     <a href="{% url 'eventos:documentos-termos-editar' object.pk %}" class="btn btn-outline-secondary">Ir para edicao</a>

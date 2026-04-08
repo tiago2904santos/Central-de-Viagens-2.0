@@ -6,9 +6,9 @@
 {% block content %}
 <div class="app-page-shell app-page-shell--detail">
     <div class="app-page-shell__inner app-page-stack">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <header class="app-page-header">
         <h1 class="h4 mb-0">Ofícios do evento (Etapa 5)</h1>
-        <div class="d-flex gap-2">
+        <div class="app-page-header__actions">
             <form method="post" action="{% url 'eventos:guiado-etapa-5-criar-oficio' evento.pk %}" class="d-inline">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-primary btn-sm" id="btnCriarOficioEvento">Criar Ofício neste Evento</button>
@@ -19,7 +19,7 @@
                 <button type="submit" class="btn btn-outline-danger btn-sm">Excluir evento</button>
             </form>
         </div>
-    </div>
+    </header>
 
     <p class="text-muted small mb-3">
         {{ evento.titulo|default:"(sem título)" }} — Ofícios vinculados a este evento. Use «Criar Ofício neste Evento» para abrir o wizard (dados, viajantes, transporte, trechos, resumo).

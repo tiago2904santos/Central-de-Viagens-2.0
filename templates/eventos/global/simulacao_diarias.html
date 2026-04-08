@@ -6,16 +6,16 @@
 {% block content %}
 <div class="app-page-shell app-page-shell--detail">
     <div class="app-page-shell__inner app-page-stack">
-    <div class="page-header-cadastro">
-        <div>
-            <h1 class="mb-1">Simulacao global de diarias</h1>
-            <p class="text-muted mb-0">Ferramenta de apoio para estimar periodos fora do fluxo do oficio.</p>
+    <header class="app-page-header">
+        <div class="app-page-header__copy">
+            <h1 class="app-page-header__title">Simulacao global de diarias</h1>
+            <p class="app-page-header__subtitle">Ferramenta de apoio para estimar periodos fora do fluxo do oficio.</p>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="app-page-header__actions">
             <a href="{% url 'eventos:roteiros-global' %}" class="btn btn-outline-secondary">Roteiros</a>
             <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary">Oficios</a>
         </div>
-    </div>
+    </header>
 
     {% if erro %}
     <div class="alert alert-danger">{{ erro }}</div>

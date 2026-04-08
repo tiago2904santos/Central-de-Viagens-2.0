@@ -22,15 +22,15 @@
     display: grid;
     gap: 1rem;
   }
-  .os-compose-shell { gap: 1.5rem; }
+  .os-compose-shell { gap: var(--app-stack-gap); }
   .os-hero {
     border: 1px solid rgba(16, 35, 59, 0.08);
-    border-radius: 28px;
+    border-radius: calc(var(--app-card-radius) + 0.55rem);
     background:
       radial-gradient(circle at top right, rgba(200, 107, 45, 0.18), transparent 28%),
       radial-gradient(circle at left center, rgba(15, 109, 103, 0.16), transparent 34%),
       linear-gradient(135deg, #0f2037 0%, #163a4d 54%, #1e5b5b 100%);
-    padding: 1.75rem;
+    padding: var(--app-card-padding-lg);
     color: #f8fbff;
     box-shadow: var(--os-shadow);
   }
@@ -75,7 +75,7 @@
   .os-auto-note,
   .os-panel,
   .os-preview-card {
-    border-radius: 18px;
+    border-radius: var(--app-card-radius);
     border: 1px solid var(--os-border);
     background: #fff;
   }
@@ -117,9 +117,9 @@
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.2rem 1.25rem 0;
+    padding: var(--app-card-padding) var(--app-card-padding) 0;
   }
-  .os-panel-body { padding: 1.2rem 1.25rem 1.25rem; }
+  .os-panel-body { padding: var(--app-card-padding); }
   .os-panel-title { margin: 0; font-size: 1rem; font-weight: 850; }
   .os-panel-text { margin: 0.28rem 0 0; color: var(--os-muted); font-size: 0.9rem; }
   .os-field { grid-column: span 12; }
@@ -163,7 +163,7 @@
   .os-auto-note,
   .os-preview-kpi,
   .os-preview-item,
-  .os-destino-row { padding: 0.9rem; }
+  .os-destino-row { padding: var(--app-card-padding); }
   .os-picker-card select[multiple] { min-height: 16rem; }
   .os-selection-panel { margin-top: 0.9rem; border-style: dashed; background: linear-gradient(180deg, #fcfdff 0%, #f4f8fc 100%); }
   .os-selection-title { font-size: 0.84rem; font-weight: 850; }
@@ -226,8 +226,8 @@
   @media (max-width: 767px) {
     .os-hero,
     .os-panel-body,
-    .os-preview-body { padding-inline: 1rem; }
-    .os-panel-head { padding-inline: 1rem; }
+    .os-preview-body { padding-inline: var(--app-card-padding); }
+    .os-panel-head { padding-inline: var(--app-card-padding); }
     .os-field--sm,
     .os-field--md,
     .os-field--lg,
@@ -240,7 +240,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="app-page-shell app-page-shell--detail os-compose-page">
+<div class="app-page-shell app-page-shell--document os-compose-page">
   <div class="app-page-shell__inner">
   <form method="post" class="os-compose-shell" id="ordem-servico-form">
     {% csrf_token %}
@@ -250,7 +250,7 @@
     <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
     {{ form.destinos_payload }}
 
-    <section class="os-hero">
+    <section class="os-hero app-page-card app-page-card--spacious">
       <div class="os-hero-grid">
         <div>
           <span class="os-eyebrow">Documento operacional institucional</span>
@@ -268,7 +268,7 @@
 
     <div class="os-layout">
       <div class="os-main">
-        <section class="os-panel">
+        <section class="os-panel app-page-card">
           <div class="os-panel-head">
             <div>
               <h2 class="os-panel-title">Contexto do documento</h2>
@@ -299,7 +299,7 @@
           </div>
         </section>
 
-        <section class="os-panel">
+        <section class="os-panel app-page-card">
           <div class="os-panel-head">
             <div>
               <h2 class="os-panel-title">Equipe de deslocamento</h2>
@@ -333,7 +333,7 @@
           </div>
         </section>
 
-        <section class="os-panel">
+        <section class="os-panel app-page-card">
           <div class="os-panel-head">
             <div>
               <h2 class="os-panel-title">Destinos</h2>
@@ -347,7 +347,7 @@
           </div>
         </section>
 
-        <section class="os-panel">
+        <section class="os-panel app-page-card">
           <div class="os-panel-head">
             <div>
               <h2 class="os-panel-title">Motivo e texto institucional</h2>
@@ -371,7 +371,7 @@
           </div>
         </section>
 
-        <section class="os-panel">
+        <section class="os-panel app-page-card">
           <div class="os-panel-body">
             <div class="os-actions">
               <div class="os-actions-left">
