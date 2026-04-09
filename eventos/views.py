@@ -2827,6 +2827,127 @@ def _guiado_v2_oficios_justificativas_em_andamento(evento):
     return _evento_oficios_em_andamento(evento) or evento.oficios.exists()
 
 
+def _guiado_v2_evento_base_preenchido(evento):
+    return bool(
+        (evento.titulo or '').strip()
+        or evento.data_inicio
+        or evento.data_fim
+        or evento.tipos_demanda.exists()
+        or evento.destinos.exists()
+    )
+
+
+def _guiado_v2_step_visual_state(evento, etapa_key):
+    if etapa_key == 'dados-evento':
+        if _evento_etapa1_completa(evento):
+            return 'completed'
+        return 'draft' if _guiado_v2_evento_base_preenchido(evento) else 'pending'
+
+    if etapa_key == 'roteiros':
+        if _evento_roteiros_ok(evento):
+            return 'completed'
+        return 'draft' if RoteiroEvento.objects.filter(evento=evento).exists() else 'pending'
+
+    if etapa_key == 'oficios':
+        if _guiado_v2_oficios_justificativas_ok(evento):
+            return 'completed'
+        return 'draft' if evento.oficios.exists() else 'pending'
+
+    if etapa_key == 'pt-os':
+        planos = PlanoTrabalho.objects.filter(evento=evento)
+        ordens = OrdemServico.objects.filter(evento=evento)
+        total = planos.count() + ordens.count()
+        if total == 0:
+            return 'pending'
+        if planos.exclude(status=PlanoTrabalho.STATUS_FINALIZADO).exists():
+            return 'draft'
+        if ordens.exclude(status=OrdemServico.STATUS_FINALIZADO).exists():
+            return 'draft'
+        return 'completed'
+
+    if etapa_key == 'termos':
+        _evento_sincronizar_participantes(evento)
+        viajante_ids = list(
+            EventoParticipante.objects.filter(evento=evento).values_list('viajante_id', flat=True)
+        )
+        if not viajante_ids:
+            return 'pending'
+        termos_status = EventoTermoParticipante.objects.filter(
+            evento=evento,
+            viajante_id__in=viajante_ids,
+        )
+        termos_documentos = TermoAutorizacao.objects.filter(evento=evento)
+        if _evento_termos_ok(evento):
+            return 'completed'
+        if termos_documentos.exists() or termos_status.exclude(status=EventoTermoParticipante.STATUS_PENDENTE).exists():
+            return 'draft'
+        return 'pending'
+
+    return 'pending'
+
+
+def _guiado_v2_step_state_label(state):
+    return {
+        'active': 'Atual',
+        'completed': 'Concluida',
+        'draft': 'Rascunho',
+        'pending': 'Vazia',
+    }.get(state, 'Vazia')
+
+
+def _build_guiado_v2_wizard_steps(evento, current_key):
+    steps = [
+        (
+            'dados-evento',
+            1,
+            'Dados do evento',
+            reverse('eventos:guiado-etapa-1', kwargs={'pk': evento.pk}),
+        ),
+        (
+            'roteiros',
+            2,
+            'Roteiros',
+            reverse('eventos:guiado-etapa-2', kwargs={'evento_id': evento.pk}),
+        ),
+        (
+            'oficios',
+            3,
+            'Oficios / Justificativas',
+            reverse('eventos:guiado-etapa-3', kwargs={'evento_id': evento.pk}),
+        ),
+        (
+            'pt-os',
+            4,
+            'PT / OS',
+            reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk}),
+        ),
+        (
+            'termos',
+            5,
+            'Termos',
+            reverse('eventos:guiado-etapa-5', kwargs={'evento_id': evento.pk}),
+        ),
+    ]
+    built = []
+    for key, number, label, url in steps:
+        is_active = key == current_key
+        base_state = _guiado_v2_step_visual_state(evento, key)
+        state = 'active' if is_active else base_state
+        built.append(
+            {
+                'key': key,
+                'number': number,
+                'label': label,
+                'state': state,
+                'state_label': _guiado_v2_step_state_label(state),
+                'active': is_active,
+                'url': url,
+                'base_state': base_state,
+            }
+        )
+    return built
+
+
 @login_required
 def guiado_painel_v2(request, pk):
     """Painel do evento guiado na ordem oficial de 5 etapas."""
@@ -2987,7 +3108,9 @@ def guiado_etapa_3_v2(request, evento_id):
         )
         .filter(evento_id=evento.pk)
     )
-    wizard_steps = [
+    wizard_steps = _build_guiado_v2_wizard_steps(evento, current_key='oficios')
+    if False:
+        wizard_steps = [
         {
             'key': 'dados-evento',
             'number': 1,
@@ -3033,7 +3156,7 @@ def guiado_etapa_3_v2(request, evento_id):
             'active': False,
             'url': reverse('eventos:guiado-etapa-5', kwargs={'evento_id': evento.pk}),
         },
-    ]
+        ]
     return views_global._render_oficio_list(
         request,
         queryset=queryset,

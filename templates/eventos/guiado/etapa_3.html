@@ -6,37 +6,33 @@
 {% block list_page_class %}oficios-list-page system-list-page--complete guiado-etapa3-page{% endblock %}
 {% block list_shell_class %}oficios-list-shell system-list-shell guiado-etapa3-shell{% endblock %}
 
-{% block list_title %}Oficios do evento{% endblock %}
-{% block list_subtitle %}
-<p class="system-list-header__subtitle guiado-etapa3-lead mb-0">
-    A listagem abaixo usa o modulo real de Oficios, mas limitada ao evento atual para manter a etapa direta, limpa e pronta para operacao.
-</p>
-{% endblock %}
+{% block list_title %}{% endblock %}
+{% block list_subtitle %}{% endblock %}
+{% block list_meta %}{% endblock %}
+{% block list_header_controls %}{% endblock %}
+{% block list_header_aux_controls %}{% endblock %}
+{% block list_header_actions %}{% endblock %}
 
 {% block list_pre_header %}
 <section class="app-page-card app-page-card--spacious guiado-etapa3-hero">
-    <div class="guiado-etapa3-hero__layout">
-        <div class="guiado-etapa3-hero__intro">
-            <span class="guiado-etapa3-hero__eyebrow">Fluxo guiado de eventos</span>
-            <h1 class="guiado-etapa3-hero__title">Etapa 3 - Oficios / Justificativas</h1>
-            <p class="guiado-etapa3-hero__text">
-                O fluxo permanece no contexto do evento, mas esta etapa ja funciona como a pagina real da lista de Oficios, com criacao,
-                acompanhamento e acoes documentais no mesmo lugar.
-            </p>
-
-            <div class="guiado-etapa3-hero__chips" aria-label="Contexto do evento">
-                <span class="guiado-etapa3-chip guiado-etapa3-chip--accent">Evento #{{ evento.pk }}</span>
-                <span class="guiado-etapa3-chip">{{ evento.titulo|default:"Evento sem titulo" }}</span>
-                <span class="guiado-etapa3-chip">
-                    {{ evento.data_inicio|date:"d/m/Y" }}{% if evento.data_fim and evento.data_fim != evento.data_inicio %} a {{ evento.data_fim|date:"d/m/Y" }}{% endif %}
-                </span>
-                <span class="guiado-etapa3-chip">Somente documentos vinculados a este evento</span>
+    <div class="guiado-etapa3-hero__topline">
+        <div class="guiado-etapa3-hero__context">
+            <span class="guiado-etapa3-hero__eyebrow">Fluxo guiado</span>
+            <div class="guiado-etapa3-hero__heading">
+                <h1 class="guiado-etapa3-hero__title">Oficios / Justificativas</h1>
+                <div class="guiado-etapa3-hero__event-meta">
+                    <span class="guiado-etapa3-hero__event-name">{{ evento.titulo|default:"Evento sem titulo" }}</span>
+                    {% if evento.data_inicio %}
+                    <span class="guiado-etapa3-hero__event-period">
+                        {{ evento.data_inicio|date:"d/m/Y" }}{% if evento.data_fim and evento.data_fim != evento.data_inicio %} a {{ evento.data_fim|date:"d/m/Y" }}{% endif %}
+                    </span>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
-        <div class="guiado-etapa3-hero__actions">
-            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar ao fluxo</a>
-            <a href="{% url 'eventos:guiado-etapa-4' evento.pk %}" class="btn btn-primary btn-sm">Etapa 4 - PT / OS</a>
+        <div class="guiado-etapa3-hero__view-toggle">
+            {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos oficios do evento' %}
         </div>
     </div>
 
@@ -44,14 +40,6 @@
         {% include 'eventos/oficio/_wizard_stepper.html' %}
     </div>
 </section>
-{% endblock %}
-
-{% block list_meta %}
-<div class="system-list-header__meta">
-    <span class="system-list-header__meta-item">Etapa operacional do fluxo</span>
-    <span class="system-list-header__meta-item">Lista completa do modulo de Oficios</span>
-    <span class="system-list-header__meta-item">Justificativas integradas ao contexto dos documentos</span>
-</div>
 {% endblock %}
 
 {% block list_filter_block %}{% endblock %}
