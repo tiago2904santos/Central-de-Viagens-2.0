@@ -3,7 +3,7 @@
 {% block page_title_block %}Etapa 3 - Oficios / Justificativas{% endblock %}
 {% block page_header_title %}Fluxo guiado - Etapa 3: Oficios / Justificativas{% endblock %}
 
-{% block list_page_class %}oficios-list-page system-list-page--complete guiado-etapa3-page{% endblock %}
+{% block list_page_class %}oficios-list-page system-list-page--complete guiado-etapa3-page guiado-paginated-page{% endblock %}
 {% block list_shell_class %}oficios-list-shell system-list-shell guiado-etapa3-shell{% endblock %}
 
 {% block list_title %}{% endblock %}
@@ -14,49 +14,7 @@
 {% block list_header_actions %}{% endblock %}
 
 {% block list_pre_header %}
-<section class="guiado-etapa3-header oficio-wizard-page" data-glance-state="closed" aria-label="Topo da etapa 3">
-    <div class="oficio-wizard-header" data-oficio-sticky-header>
-        <div class="oficio-wizard-header-card">
-            <div class="oficio-wizard-header-main">
-                <div class="oficio-wizard-header-top guiado-etapa3-header-top">
-                    <div class="oficio-wizard-header-copy">
-                        <h1>{{ evento_heading }}</h1>
-                    </div>
-
-                    <div class="guiado-etapa3-header-actions">
-                        <a href="{{ eventos_lista_url }}" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-arrow-left"></i>
-                            <span>Voltar para lista</span>
-                        </a>
-                        <div class="guiado-etapa3-header-toggle">
-                            {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos oficios do evento' %}
-                        </div>
-                    </div>
-                </div>
-
-                {% if evento_context_items or evento_document_counts %}
-                <div class="oficio-wizard-header-badges guiado-etapa3-header-badges">
-                    {% for item in evento_context_items %}
-                    <span class="oficio-wizard-header-badge guiado-etapa3-context-badge guiado-etapa3-context-badge--{{ item.kind }}">
-                        <strong>{{ item.label }}</strong>
-                    </span>
-                    {% endfor %}
-
-                    {% for item in evento_document_counts %}
-                    <span class="oficio-wizard-header-badge guiado-etapa3-count-badge guiado-etapa3-count-badge--{{ item.state }}">
-                        <strong>{{ item.value }} {{ item.label }}</strong>
-                    </span>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="oficio-wizard-stepper-shell">
-                {% include 'eventos/oficio/_wizard_stepper.html' %}
-            </div>
-        </div>
-    </div>
-</section>
+{% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa3.html' top_show_stepper=True %}
 {% endblock %}
 
 {% block list_filter_block %}{% endblock %}

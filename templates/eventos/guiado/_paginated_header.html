@@ -1,0 +1,41 @@
+<section class="system-paginated-header oficio-wizard-page" data-glance-state="closed" aria-label="Topo da pagina">
+    <div class="oficio-wizard-header" data-oficio-sticky-header>
+        <div class="oficio-wizard-header-card system-paginated-header__card">
+            <div class="oficio-wizard-header-main system-paginated-header__main">
+                <div class="oficio-wizard-header-top system-paginated-header__top">
+                    <div class="oficio-wizard-header-copy system-paginated-header__copy">
+                        <h1>{{ top_title }}</h1>
+                    </div>
+
+                    {% if header_actions_template %}
+                    <div class="system-paginated-header__actions">
+                        {% include header_actions_template %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if evento_context_items or evento_document_counts %}
+                <div class="oficio-wizard-header-badges system-paginated-header__badges">
+                    {% for item in evento_context_items %}
+                    <span class="oficio-wizard-header-badge system-paginated-context-badge system-paginated-context-badge--{{ item.kind }}">
+                        <strong>{{ item.label }}</strong>
+                    </span>
+                    {% endfor %}
+
+                    {% for item in evento_document_counts %}
+                    <span class="oficio-wizard-header-badge system-paginated-count-badge system-paginated-count-badge--{{ item.state }}">
+                        <strong>{{ item.value }} {{ item.label }}</strong>
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            {% if top_show_stepper and wizard_steps %}
+            <div class="oficio-wizard-stepper-shell system-paginated-header__stepper-shell">
+                {% include 'eventos/oficio/_wizard_stepper.html' %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>

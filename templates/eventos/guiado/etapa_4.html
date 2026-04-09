@@ -4,19 +4,9 @@
 {% block page_title %}Fluxo guiado - Etapa 4: PT / OS{% endblock %}
 
 {% block content %}
-<div class="app-page-shell app-page-shell--detail">
+<div class="app-page-shell app-page-shell--detail guiado-paginated-page guiado-etapa4-page">
     <div class="app-page-shell__inner app-page-stack">
-        <header class="app-page-header">
-            <div>
-                <h1 class="h4 mb-1">Etapa 4 - PT / OS</h1>
-                <p class="text-muted mb-0">{{ evento.titulo|default:"(sem título)" }}</p>
-            </div>
-            <div class="app-page-header__actions">
-                <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar ao painel</a>
-                <a href="{{ novo_plano_trabalho_url }}" class="btn btn-primary btn-sm">Novo Plano de Trabalho</a>
-                <a href="{{ nova_ordem_servico_url }}" class="btn btn-outline-primary btn-sm">Nova Ordem de Serviço</a>
-            </div>
-        </header>
+        {% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa4.html' top_show_stepper=True %}
 
         <section class="app-page-card">
             <p class="mb-0">Esta etapa consolida os cadastros documentais reais de Plano de Trabalho e Ordem de Serviço vinculados ao evento.</p>

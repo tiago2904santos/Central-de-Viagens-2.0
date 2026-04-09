@@ -2350,6 +2350,10 @@ def guiado_etapa_4(request, evento_id):
         f"{reverse('eventos:documentos-ordens-servico-novo')}?"
         f"context_source=evento&preselected_event_id={evento.pk}&return_to={quote(return_to)}"
     )
+    evento_heading = _guiado_v2_evento_heading(evento)
+    evento_context_items = _guiado_v2_build_evento_context_items(evento)
+    evento_document_counts = _guiado_v2_build_evento_document_counts(evento)
+    wizard_steps = _build_guiado_v2_wizard_steps(evento, current_key='pt-os')
 
     context = {
         'evento': evento,
@@ -2361,6 +2365,10 @@ def guiado_etapa_4(request, evento_id):
         'novo_plano_trabalho_url': novo_pt_url,
         'nova_ordem_servico_url': novo_os_url,
         'return_to': return_to,
+        'evento_heading': evento_heading,
+        'evento_context_items': evento_context_items,
+        'evento_document_counts': evento_document_counts,
+        'wizard_steps': wizard_steps,
     }
     return render(request, 'eventos/guiado/etapa_4.html', context)
 
@@ -2477,6 +2485,11 @@ def guiado_etapa_5(request, evento_id):
             }
         )
 
+    evento_heading = _guiado_v2_evento_heading(evento)
+    evento_context_items = _guiado_v2_build_evento_context_items(evento)
+    evento_document_counts = _guiado_v2_build_evento_document_counts(evento)
+    wizard_steps = _build_guiado_v2_wizard_steps(evento, current_key='termos')
+
     context = {
         'evento': evento,
         'object': evento,
@@ -2500,6 +2513,10 @@ def guiado_etapa_5(request, evento_id):
         'termo_padrao_pdf_url': reverse('eventos:guiado-etapa-3-termo-padrao-download', kwargs={'evento_id': evento.pk, 'formato': 'pdf'}),
         'termo_viatura_docx_url': reverse('eventos:guiado-etapa-3-termo-viatura-download', kwargs={'evento_id': evento.pk, 'formato': 'docx'}),
         'termo_viatura_pdf_url': reverse('eventos:guiado-etapa-3-termo-viatura-download', kwargs={'evento_id': evento.pk, 'formato': 'pdf'}),
+        'evento_heading': evento_heading,
+        'evento_context_items': evento_context_items,
+        'evento_document_counts': evento_document_counts,
+        'wizard_steps': wizard_steps,
     }
     return render(request, 'eventos/guiado/etapa_5.html', context)
 
@@ -7007,7 +7024,18 @@ def guiado_etapa_2_lista(request, evento_id):
             '-created_at',
         )
     )
-    context = {'evento': evento, 'roteiros': roteiros}
+    evento_heading = _guiado_v2_evento_heading(evento)
+    evento_context_items = _guiado_v2_build_evento_context_items(evento)
+    evento_document_counts = _guiado_v2_build_evento_document_counts(evento)
+    wizard_steps = _build_guiado_v2_wizard_steps(evento, current_key='roteiros')
+    context = {
+        'evento': evento,
+        'roteiros': roteiros,
+        'evento_heading': evento_heading,
+        'evento_context_items': evento_context_items,
+        'evento_document_counts': evento_document_counts,
+        'wizard_steps': wizard_steps,
+    }
     return render(request, 'eventos/guiado/etapa_2_lista.html', context)
 
 
