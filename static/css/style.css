@@ -9766,5 +9766,383 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     }
 }
 
+.guiado-etapa3-page {
+    --guiado-etapa3-accent: #1f4c7d;
+    --guiado-etapa3-accent-strong: #163857;
+    --guiado-etapa3-accent-rgb: 31, 76, 125;
+    --guiado-etapa3-soft-rgb: 231, 240, 249;
+}
+
+.guiado-etapa3-page .system-document-top,
+.guiado-etapa3-page .system-list-content {
+    display: grid;
+    gap: clamp(1rem, 0.82rem + 0.55vw, 1.35rem);
+}
+
+.guiado-etapa3-page .system-document-top {
+    margin-bottom: 0.1rem;
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(var(--guiado-etapa3-accent-rgb), 0.12);
+    border-radius: clamp(1.3rem, 1.1rem + 0.45vw, 1.65rem);
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.98), transparent 35%),
+        linear-gradient(135deg, rgba(var(--guiado-etapa3-soft-rgb), 0.88) 0%, rgba(255, 255, 255, 0.97) 44%, rgba(244, 248, 252, 0.98) 100%);
+    box-shadow: 0 18px 44px rgba(16, 36, 63, 0.09);
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero::before {
+    content: "";
+    position: absolute;
+    inset: auto -8% 44% auto;
+    width: 16rem;
+    height: 16rem;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(var(--guiado-etapa3-accent-rgb), 0.12) 0%, rgba(var(--guiado-etapa3-accent-rgb), 0) 72%);
+    pointer-events: none;
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero > * {
+    position: relative;
+    z-index: 1;
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.2rem;
+    align-items: start;
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero__intro {
+    display: grid;
+    gap: 0.8rem;
+    min-width: 0;
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    width: fit-content;
+    padding: 0.38rem 0.72rem;
+    border-radius: 999px;
+    background: rgba(var(--guiado-etapa3-accent-rgb), 0.08);
+    color: var(--guiado-etapa3-accent-strong);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero__title {
+    margin: 0;
+    color: #13283d;
+    font-size: clamp(1.45rem, 1.2rem + 0.8vw, 2rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero__text {
+    max-width: 52rem;
+    margin: 0;
+    color: #425466;
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero__chips,
+.guiado-etapa3-page .system-list-header__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.guiado-etapa3-page .guiado-etapa3-chip,
+.guiado-etapa3-page .system-list-header__meta-item {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.42rem 0.74rem;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--guiado-etapa3-accent-rgb), 0.12);
+    background: rgba(255, 255, 255, 0.88);
+    color: #334155;
+    font-size: 0.77rem;
+    font-weight: 700;
+    line-height: 1.25;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.guiado-etapa3-page .guiado-etapa3-chip--accent {
+    background: linear-gradient(135deg, rgba(26, 63, 105, 0.12) 0%, rgba(31, 76, 125, 0.16) 100%);
+    color: var(--guiado-etapa3-accent-strong);
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.65rem;
+}
+
+.guiado-etapa3-page .guiado-etapa3-hero__actions .btn {
+    min-height: 2.7rem;
+    padding-inline: 1rem;
+    border-radius: 999px;
+    font-weight: 700;
+    box-shadow: 0 12px 28px rgba(16, 36, 63, 0.08);
+}
+
+.guiado-etapa3-page .guiado-etapa3-stepper-shell {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0.2rem;
+}
+
+.guiado-etapa3-page .oficio-stepper {
+    gap: 0.72rem;
+}
+
+.guiado-etapa3-page .oficio-stepper-link {
+    min-height: 4.6rem;
+    padding: 0.86rem 0.94rem;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(var(--guiado-etapa3-accent-rgb), 0.1);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(246, 250, 252, 0.98) 100%);
+    box-shadow: 0 14px 28px rgba(16, 36, 63, 0.08);
+}
+
+.guiado-etapa3-page .oficio-stepper-link:hover {
+    border-color: rgba(var(--guiado-etapa3-accent-rgb), 0.18);
+    box-shadow: 0 16px 34px rgba(16, 36, 63, 0.1);
+}
+
+.guiado-etapa3-page .oficio-stepper-link.is-active {
+    background: linear-gradient(135deg, #163857 0%, #1f4c7d 52%, #2e689d 100%);
+    box-shadow: 0 18px 36px rgba(31, 76, 125, 0.22);
+}
+
+.guiado-etapa3-page .oficio-stepper-link.is-completed {
+    background: linear-gradient(180deg, rgba(31, 76, 125, 0.08) 0%, rgba(255, 255, 255, 0.96) 100%);
+}
+
+.guiado-etapa3-page .oficio-stepper-badge {
+    width: 2rem;
+    height: 2rem;
+    flex-basis: 2rem;
+    font-size: 0.78rem;
+}
+
+.guiado-etapa3-page .oficio-stepper-label {
+    font-size: 0.9rem;
+}
+
+.guiado-etapa3-page .oficio-stepper-state {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+}
+
+.guiado-etapa3-page .system-list-header.system-list-header--standard {
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    border-radius: 1.25rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 250, 252, 0.98) 100%);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+}
+
+.guiado-etapa3-page .system-list-header__title {
+    font-size: clamp(1.16rem, 1.06rem + 0.45vw, 1.45rem);
+    letter-spacing: -0.02em;
+}
+
+.guiado-etapa3-page .guiado-etapa3-lead {
+    max-width: 48rem;
+    color: #526171;
+    line-height: 1.6;
+}
+
+.guiado-etapa3-page .system-list-header__actions-group .system-list-action-btn,
+.guiado-etapa3-page .floating-new-button {
+    box-shadow: 0 14px 30px rgba(31, 76, 125, 0.18);
+}
+
+.guiado-etapa3-page .oficios-table-panel,
+.guiado-etapa3-page .oficios-table-panel__empty {
+    border-radius: 1.25rem;
+}
+
+.guiado-etapa3-page .oficios-table-panel {
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+}
+
+.guiado-etapa3-page .oficios-table thead th {
+    background: rgba(247, 250, 252, 0.92);
+}
+
+.guiado-etapa3-page .oficios-table__actions {
+    gap: 0.45rem;
+}
+
+.guiado-etapa3-page .oficio-list-grid {
+    gap: 1rem;
+}
+
+.guiado-etapa3-page .oficio-list-card {
+    border-radius: 1.35rem;
+    border-left-width: 8px;
+    padding: 1rem 1.04rem 1.06rem;
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.99), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(245, 249, 252, 0.98));
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.09);
+}
+
+.guiado-etapa3-page .oficio-list-card::before {
+    background:
+        radial-gradient(circle at right top, rgba(var(--oficio-card-accent-rgb), 0.14), transparent 34%),
+        linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), 0.03), rgba(255, 255, 255, 0));
+}
+
+.guiado-etapa3-page .oficio-list-rich-layout {
+    gap: 0.9rem;
+}
+
+.guiado-etapa3-page .oficio-list-card__header {
+    gap: 1rem;
+}
+
+.guiado-etapa3-page .oficio-list-core-grid,
+.guiado-etapa3-page .oficio-list-card__secondary {
+    gap: 0.84rem;
+}
+
+.guiado-etapa3-page .oficio-list-card__secondary {
+    margin-top: 0.8rem;
+}
+
+.guiado-etapa3-page .oficio-list-surface,
+.guiado-etapa3-page .oficio-list-subcard,
+.guiado-etapa3-page .oficio-list-card__footer {
+    border-radius: 1.08rem;
+}
+
+.guiado-etapa3-page .oficio-list-subcard,
+.guiado-etapa3-page .oficio-list-card__footer {
+    padding: 0.92rem 0.96rem;
+}
+
+.guiado-etapa3-page .oficio-list-subcard__title,
+.guiado-etapa3-page .oficio-list-core-card__title {
+    letter-spacing: -0.01em;
+}
+
+.guiado-etapa3-page .oficio-list-traveler-list {
+    gap: 0.48rem;
+}
+
+.guiado-etapa3-page .oficio-list-traveler-pill {
+    min-height: 2.6rem;
+    padding-inline: 0.72rem;
+}
+
+.guiado-etapa3-page .oficio-list-transport-panel__hero,
+.guiado-etapa3-page .oficio-list-transport-panel__detail {
+    padding: 0.94rem 0.96rem;
+    border-radius: 0.96rem;
+}
+
+.guiado-etapa3-page .oficio-list-subcard__actions,
+.guiado-etapa3-page .oficio-list-card__footer-actions,
+.guiado-etapa3-page .oficio-list-term-row__actions,
+.guiado-etapa3-page .oficios-table__actions {
+    gap: 0.5rem;
+}
+
+.guiado-etapa3-page .oficio-list-card__footer {
+    margin-top: 0.84rem;
+}
+
+.guiado-etapa3-page .oficio-list-card__footer-actions {
+    justify-content: flex-end;
+}
+
+.guiado-etapa3-page .btn-doc-action {
+    min-height: 2.2rem;
+    padding: 0.46rem 0.82rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+}
+
+.guiado-etapa3-page .btn-doc-action.is-icon-only {
+    padding-inline: 0.66rem;
+}
+
+.guiado-etapa3-page .btn-doc-action .bi {
+    font-size: 0.88rem;
+}
+
+.guiado-etapa3-page .oficios-table-panel__empty {
+    border: 1px dashed rgba(var(--guiado-etapa3-accent-rgb), 0.18);
+    background: linear-gradient(180deg, rgba(249, 251, 253, 0.96) 0%, rgba(243, 247, 251, 0.98) 100%);
+    color: #4b5d6d;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
+}
+
+@media (max-width: 991.98px) {
+    .guiado-etapa3-page .guiado-etapa3-hero__layout {
+        grid-template-columns: 1fr;
+    }
+
+    .guiado-etapa3-page .guiado-etapa3-hero__actions {
+        justify-content: flex-start;
+    }
+
+    .guiado-etapa3-page .oficio-stepper {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .guiado-etapa3-page .guiado-etapa3-hero__chips,
+    .guiado-etapa3-page .system-list-header__meta {
+        gap: 0.45rem;
+    }
+
+    .guiado-etapa3-page .guiado-etapa3-chip,
+    .guiado-etapa3-page .system-list-header__meta-item {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .guiado-etapa3-page .guiado-etapa3-hero__actions {
+        width: 100%;
+    }
+
+    .guiado-etapa3-page .guiado-etapa3-hero__actions .btn {
+        flex: 1 1 100%;
+        justify-content: center;
+    }
+
+    .guiado-etapa3-page .oficio-stepper {
+        grid-template-columns: 1fr;
+    }
+
+    .guiado-etapa3-page .oficio-list-card__footer-actions {
+        justify-content: stretch;
+    }
+
+    .guiado-etapa3-page .oficio-list-card__footer-actions .btn-doc-action {
+        flex: 1 1 calc(50% - 0.5rem);
+    }
+}
+
 
 
