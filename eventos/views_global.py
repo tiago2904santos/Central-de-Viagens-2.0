@@ -1743,35 +1743,48 @@ def _sort_oficio_list_cards(cards, order_by, order_dir):
     return present_cards + missing_cards
 
 
-def oficio_global_lista(request):
+def _render_oficio_list(
+    request,
+    *,
+    queryset=None,
+    template_name='eventos/global/oficios_lista.html',
+    extra_context=None,
+    oficio_novo_url='',
+    clear_filters_url='',
+    forced_contexto=None,
+):
     filters = _build_oficio_list_filters(request)
     prazo_minimo_dias = _oficio_list_prazo_justificativa_dias()
-    queryset = (
-        Oficio.objects.select_related(
-            'evento',
-            'cidade_sede',
-            'estado_sede',
-            'roteiro_evento',
-            'veiculo',
-            'motorista_viajante',
-            'justificativa',
-        )
-        .prefetch_related(
-            Prefetch(
-                'trechos',
-                queryset=OficioTrecho.objects.select_related(
-                    'origem_estado',
-                    'origem_cidade',
-                    'destino_estado',
-                    'destino_cidade',
+    if queryset is None:
+        queryset = (
+            Oficio.objects.select_related(
+                'evento',
+                'cidade_sede',
+                'estado_sede',
+                'roteiro_evento',
+                'veiculo',
+                'motorista_viajante',
+                'justificativa',
+            )
+            .prefetch_related(
+                Prefetch(
+                    'trechos',
+                    queryset=OficioTrecho.objects.select_related(
+                        'origem_estado',
+                        'origem_cidade',
+                        'destino_estado',
+                        'destino_cidade',
+                    ),
                 ),
-            ),
-            Prefetch('viajantes', queryset=Viajante.objects.only('id', 'nome')),
-            'termos_autorizacao',
-            'termos_autorizacao_relacionados',
+                Prefetch('viajantes', queryset=Viajante.objects.only('id', 'nome')),
+                'termos_autorizacao',
+                'termos_autorizacao_relacionados',
+            )
+            .all()
         )
-        .all()
-    )
+
+    if forced_contexto:
+        filters['contexto'] = [forced_contexto]
 
     if filters['status'] and set(filters['status']) != set(dict(Oficio.STATUS_CHOICES).keys()):
         queryset = queryset.filter(status__in=filters['status'])
@@ -1809,26 +1822,29 @@ def oficio_global_lista(request):
         _oficio_list_card(row['oficio'], precomputed=row['precomputed'])
         for row in page_obj.object_list
     ]
-    return render(
-        request,
-        'eventos/global/oficios_lista.html',
-        {
-            'object_list': object_list,
-            'page_obj': page_obj,
-            'pagination_query': _query_without_page(request),
-            'filters': filters,
-            'status_choices': Oficio.STATUS_CHOICES,
-            'contexto_choices': OFICIO_CONTEXT_CHOICES,
-            'viagem_status_choices': OFICIO_VIAGEM_STATUS_CHOICES,
-            'presence_choices': OFICIO_PRESENCE_CHOICES,
-            'order_by_choices': OFICIO_ORDER_BY_CHOICES,
-            'order_dir_choices': OFICIO_ORDER_DIR_CHOICES,
-            'date_scope_choices': OFICIO_DATE_SCOPE_CHOICES,
-            'oficio_novo_url': reverse('eventos:oficio-novo'),
-            'clear_filters_url': reverse('eventos:oficios-global'),
-            'hide_page_header': True,
-        },
-    )
+    context = {
+        'object_list': object_list,
+        'page_obj': page_obj,
+        'pagination_query': _query_without_page(request),
+        'filters': filters,
+        'status_choices': Oficio.STATUS_CHOICES,
+        'contexto_choices': OFICIO_CONTEXT_CHOICES,
+        'viagem_status_choices': OFICIO_VIAGEM_STATUS_CHOICES,
+        'presence_choices': OFICIO_PRESENCE_CHOICES,
+        'order_by_choices': OFICIO_ORDER_BY_CHOICES,
+        'order_dir_choices': OFICIO_ORDER_DIR_CHOICES,
+        'date_scope_choices': OFICIO_DATE_SCOPE_CHOICES,
+        'oficio_novo_url': oficio_novo_url or reverse('eventos:oficio-novo'),
+        'clear_filters_url': clear_filters_url or reverse('eventos:oficios-global'),
+        'hide_page_header': True,
+    }
+    if extra_context:
+        context.update(extra_context)
+    return render(request, template_name, context)
+
+
+def oficio_global_lista(request):
+    return _render_oficio_list(request)
 
 
 def roteiro_global_lista(request):
@@ -1844,7 +1860,7 @@ def roteiro_global_lista(request):
     }
     queryset = (
         RoteiroEvento.objects.select_related('evento', 'origem_estado', 'origem_cidade')
-        .prefetch_related('destinos__estado', 'destinos__cidade')
+        .prefetch_related('destinos__estado', 'destinos__cidade', 'oficios')
         .annotate(oficios_count=Count('oficios', distinct=True))
     )
     if filters['q']:
@@ -1879,13 +1895,55 @@ def roteiro_global_lista(request):
     )
     object_list = list(page_obj.object_list)
     for roteiro in object_list:
+        destinos = list(roteiro.destinos.all())
+        oficios = list(roteiro.oficios.all())
         roteiro.destinos_display = _roteiro_destinos_display(roteiro)
+        roteiro.sede_display = _label_local(roteiro.origem_cidade, roteiro.origem_estado)
+        roteiro.periodo_display = _format_roteiro_periodo_display(roteiro)
+        roteiro.status_meta = _build_roteiro_status_meta(roteiro)
+        roteiro.card_theme_class = roteiro.status_meta['theme_class']
+        roteiro.evento_display = roteiro.evento.titulo if roteiro.evento_id and roteiro.evento else 'Sem evento vinculado'
+        roteiro.destinos_items = [
+            {
+                'label': _label_local(destino.cidade, destino.estado),
+                'ordem': (destino.ordem or 0) + 1,
+            }
+            for destino in destinos
+        ]
+        destinos_count = len(roteiro.destinos_items)
+        if destinos_count == 1:
+            roteiro.destinos_count_label = '1 destino planejado'
+        elif destinos_count > 1:
+            roteiro.destinos_count_label = f'{destinos_count} destinos planejados'
+        else:
+            roteiro.destinos_count_label = 'Nenhum destino cadastrado'
+        roteiro.header_chips = [
+            {'label': 'Roteiro', 'value': f'RT-{roteiro.pk:04d}'},
+            {'label': 'Sede', 'value': roteiro.sede_display},
+            {'label': 'Periodo', 'value': roteiro.periodo_display},
+        ]
+        roteiro.oficios_preview = [
+            {
+                'label': oficio.numero_formatado or f'Oficio #{oficio.pk}',
+                'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            }
+            for oficio in oficios[:4]
+        ]
+        if roteiro.oficios_count == 1:
+            roteiro.oficios_count_label = '1 oficio vinculado'
+        elif roteiro.oficios_count > 1:
+            roteiro.oficios_count_label = f'{roteiro.oficios_count} oficios vinculados'
+        else:
+            roteiro.oficios_count_label = 'Aguardando vinculo documental'
+        roteiro.extra_oficios_count = max(roteiro.oficios_count - len(roteiro.oficios_preview), 0)
+        roteiro.observacoes_preview = _clean(roteiro.observacoes)
         roteiro.is_avulso = roteiro.tipo == RoteiroEvento.TIPO_AVULSO or not roteiro.evento_id
         if roteiro.is_avulso:
             roteiro.editar_url = reverse('eventos:roteiro-avulso-editar', kwargs={'pk': roteiro.pk})
             roteiro.evento_url = ''
             roteiro.etapa_url = ''
             roteiro.oficios_url = ''
+            roteiro.tipo_label = 'Avulso'
         else:
             roteiro.editar_url = reverse(
                 'eventos:guiado-etapa-2-editar',
@@ -1894,6 +1952,7 @@ def roteiro_global_lista(request):
             roteiro.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': roteiro.evento_id})
             roteiro.etapa_url = reverse('eventos:guiado-etapa-2', kwargs={'evento_id': roteiro.evento_id})
             roteiro.oficios_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': roteiro.evento_id})
+            roteiro.tipo_label = 'Vinculado a evento'
 
     selected_event = None
     if filters['evento_id'].isdigit():
@@ -2014,6 +2073,46 @@ def _resolve_temporal_theme(inicio, fim):
     if inicio <= hoje <= limite:
         return {'badge_css_class': 'is-warning', 'theme_class': 'is-tone-orange'}
     return {'badge_css_class': 'is-finalizado', 'theme_class': 'is-tone-accent'}
+
+
+def _format_roteiro_periodo_display(roteiro):
+    pontos = [
+        ponto
+        for ponto in [
+            getattr(roteiro, 'saida_dt', None),
+            getattr(roteiro, 'chegada_dt', None),
+            getattr(roteiro, 'retorno_saida_dt', None),
+            getattr(roteiro, 'retorno_chegada_dt', None),
+        ]
+        if ponto
+    ]
+    if not pontos:
+        return 'Periodo a definir'
+    inicio = min(pontos)
+    fim = max(pontos)
+    if inicio.date() == fim.date():
+        return f'{inicio:%d/%m/%Y %H:%M} - {fim:%H:%M}'
+    return f'{inicio:%d/%m/%Y %H:%M} ate {fim:%d/%m/%Y %H:%M}'
+
+
+def _build_roteiro_status_meta(roteiro):
+    label = roteiro.get_status_display() or roteiro.status or 'Status indefinido'
+    if roteiro.status != RoteiroEvento.STATUS_FINALIZADO:
+        return {
+            'label': label,
+            'badge_css_class': 'is-rascunho',
+            'theme_class': 'is-tone-red',
+        }
+
+    inicio = roteiro.saida_dt.date() if roteiro.saida_dt else None
+    fim_dt = roteiro.retorno_chegada_dt or roteiro.retorno_saida_dt or roteiro.chegada_dt or roteiro.saida_dt
+    fim = fim_dt.date() if fim_dt else inicio
+    temporal = _resolve_temporal_theme(inicio, fim)
+    return {
+        'label': label,
+        'badge_css_class': temporal['badge_css_class'],
+        'theme_class': temporal['theme_class'],
+    }
 
 
 def _build_ordem_servico_status_meta(ordem):

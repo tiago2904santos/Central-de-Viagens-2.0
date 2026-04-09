@@ -1,96 +1,40 @@
-{% extends 'base.html' %}
+{% extends 'eventos/global/oficios_lista.html' %}
 
-{% block title %}Etapa 3 - Ofícios / Justificativas - Central de Viagens{% endblock %}
-{% block page_title %}Fluxo guiado - Etapa 3: Ofícios / Justificativas{% endblock %}
+{% block page_title_block %}Etapa 3 - Ofícios / Justificativas{% endblock %}
+{% block page_header_title %}Fluxo guiado - Etapa 3: Ofícios / Justificativas{% endblock %}
+{% block list_title %}Ofícios do evento{% endblock %}
+{% block list_subtitle %}
+<p class="system-list-header__subtitle mb-0">
+    {{ evento.titulo|default:"(sem título)" }}. A etapa usa a listagem real de Ofícios, filtrada exclusivamente para este evento.
+</p>
+{% endblock %}
 
-{% block content %}
-<div class="app-page-shell app-page-shell--detail">
-    <div class="app-page-shell__inner app-page-stack">
-        <header class="app-page-header">
+{% block list_pre_header %}
+<section class="app-page-card app-page-card--spacious">
+    <div class="app-page-stack">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
             <div>
+                <p class="small text-uppercase text-muted mb-2">Fluxo guiado de eventos</p>
                 <h1 class="h4 mb-1">Etapa 3 - Ofícios / Justificativas</h1>
-                <p class="text-muted mb-0">{{ evento.titulo|default:"(sem título)" }}</p>
+                <p class="text-muted mb-0">A partir desta etapa, o fluxo usa as páginas-lista reais dos módulos, mantendo apenas o contexto do evento no topo.</p>
             </div>
-            <div class="app-page-header__actions">
-                <form method="post" action="{% url 'eventos:guiado-etapa-3-criar-oficio' evento.pk %}" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary btn-sm" id="btnCriarOficioEvento">Criar ofício</button>
-                </form>
-                <a href="{{ justificativas_url }}" class="btn btn-outline-primary btn-sm">Abrir justificativas</a>
-                <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar ao painel</a>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar ao fluxo</a>
+                <a href="{% url 'eventos:guiado-etapa-4' evento.pk %}" class="btn btn-outline-primary btn-sm">Etapa 4 - PT / OS</a>
             </div>
-        </header>
+        </div>
 
-        <section class="app-page-card">
-            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-                <div>
-                    <h2 class="h6 mb-2">Resumo da etapa</h2>
-                    <p class="mb-0">{{ oficios_summary.texto }}.</p>
-                </div>
-                <div class="text-end">
-                    <span class="badge {% if justificativas_pendentes %}bg-warning text-dark{% else %}bg-success{% endif %}">
-                        {{ justificativas_pendentes }} justificativa(s) pendente(s)
-                    </span>
-                </div>
-            </div>
-        </section>
-
-        {% if oficios %}
-        <section class="app-page-card app-page-card--spacious">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Número / Ano</th>
-                            <th>Protocolo</th>
-                            <th>Destino / Tipo</th>
-                            <th>Status</th>
-                            <th class="text-end">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for oficio in oficios %}
-                        <tr>
-                            <td><strong>{{ oficio.numero_formatado|default:"—" }}</strong></td>
-                            <td>{{ oficio.protocolo_formatado|default:"—" }}</td>
-                            <td>{{ oficio.get_tipo_destino_display|default:oficio.tipo_destino|default:"—" }}</td>
-                            <td>
-                                {% if oficio.status == 'FINALIZADO' %}
-                                <span class="badge bg-success">Finalizado</span>
-                                {% else %}
-                                <span class="badge bg-warning text-dark">Rascunho</span>
-                                {% endif %}
-                                <div class="small mt-1 {% if oficio.justificativa_info.status_key == 'pendente' %}text-danger{% elif oficio.justificativa_info.status_key == 'preenchida' %}text-success{% else %}text-muted{% endif %}">
-                                    Justificativa: {{ oficio.justificativa_info.status_label|lower }}
-                                </div>
-                            </td>
-                            <td class="text-end">
-                                <a href="{% url 'eventos:oficio-editar' oficio.pk %}" class="btn btn-outline-primary btn-sm">Editar</a>
-                                <a href="{% url 'eventos:oficio-justificativa' oficio.pk %}?next={{ justificativas_url|urlencode }}" class="btn btn-outline-secondary btn-sm">Justificativa</a>
-                                <a href="{% url 'eventos:oficio-step4' oficio.pk %}" class="btn btn-outline-primary btn-sm">Resumo</a>
-                                <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger btn-sm">Excluir</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-        {% else %}
-        <section class="app-page-card">
-            <p class="text-muted mb-3">Nenhum ofício vinculado a este evento ainda.</p>
-            <form method="post" action="{% url 'eventos:guiado-etapa-3-criar-oficio' evento.pk %}" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-primary">Criar ofício neste evento</button>
-            </form>
-        </section>
-        {% endif %}
-
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{{ justificativas_url }}" class="btn btn-outline-primary">Justificativas</a>
-            <a href="{{ ptos_url }}" class="btn btn-outline-secondary">Etapa 4 - PT / OS</a>
-            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary">Voltar ao painel</a>
+        <div class="oficio-wizard-stepper-shell">
+            {% include 'eventos/oficio/_wizard_stepper.html' %}
         </div>
     </div>
+</section>
+{% endblock %}
+
+{% block list_meta %}
+<div class="system-list-header__meta">
+    <span class="system-list-header__meta-item">Evento #{{ evento.pk }}</span>
+    <span class="system-list-header__meta-item">{{ evento.data_inicio|date:"d/m/Y" }}{% if evento.data_fim and evento.data_fim != evento.data_inicio %} a {{ evento.data_fim|date:"d/m/Y" }}{% endif %}</span>
+    <span class="system-list-header__meta-item">Somente documentos vinculados a este evento</span>
 </div>
 {% endblock %}

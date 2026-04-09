@@ -2957,26 +2957,96 @@ def guiado_painel_v2(request, pk):
 
 @login_required
 def guiado_etapa_3_v2(request, evento_id):
-    """Etapa 3 oficial: ofícios do evento com acesso às justificativas."""
+    """Etapa 3 oficial: a própria listagem de Ofícios filtrada pelo evento atual."""
+    from . import views_global
+
     evento = get_object_or_404(Evento, pk=evento_id)
-    oficios_qs = evento.oficios.prefetch_related('trechos').order_by('ano', 'numero', 'id')
-    oficios = list(oficios_qs)
-    justificativas_pendentes = 0
-    for oficio in oficios:
-        oficio.justificativa_info = _build_oficio_justificativa_info(oficio)
-        if oficio_exige_justificativa(oficio) and not oficio_tem_justificativa(oficio):
-            justificativas_pendentes += 1
-    oficios_summary = _build_evento_oficios_summary(evento)
-    context = {
-        'evento': evento,
-        'object': evento,
-        'oficios': oficios,
-        'oficios_summary': oficios_summary,
-        'justificativas_pendentes': justificativas_pendentes,
-        'justificativas_url': reverse('eventos:guiado-etapa-3-justificativas', kwargs={'evento_id': evento.pk}),
-        'ptos_url': reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk}),
-    }
-    return render(request, 'eventos/guiado/etapa_3.html', context)
+    queryset = (
+        Oficio.objects.select_related(
+            'evento',
+            'cidade_sede',
+            'estado_sede',
+            'roteiro_evento',
+            'veiculo',
+            'motorista_viajante',
+            'justificativa',
+        )
+        .prefetch_related(
+            Prefetch(
+                'trechos',
+                queryset=OficioTrecho.objects.select_related(
+                    'origem_estado',
+                    'origem_cidade',
+                    'destino_estado',
+                    'destino_cidade',
+                ),
+            ),
+            Prefetch('viajantes', queryset=Viajante.objects.only('id', 'nome')),
+            'termos_autorizacao',
+            'termos_autorizacao_relacionados',
+        )
+        .filter(evento_id=evento.pk)
+    )
+    wizard_steps = [
+        {
+            'key': 'dados-evento',
+            'number': 1,
+            'label': 'Dados do evento',
+            'state': 'completed',
+            'state_label': 'Etapa 1',
+            'active': False,
+            'url': reverse('eventos:guiado-etapa-1', kwargs={'pk': evento.pk}),
+        },
+        {
+            'key': 'roteiros',
+            'number': 2,
+            'label': 'Roteiros',
+            'state': 'completed' if _evento_roteiros_ok(evento) else 'pending',
+            'state_label': 'Etapa 2',
+            'active': False,
+            'url': reverse('eventos:guiado-etapa-2', kwargs={'evento_id': evento.pk}),
+        },
+        {
+            'key': 'oficios',
+            'number': 3,
+            'label': 'Ofícios / Justificativas',
+            'state': 'active',
+            'state_label': 'Etapa atual',
+            'active': True,
+            'url': reverse('eventos:guiado-etapa-3', kwargs={'evento_id': evento.pk}),
+        },
+        {
+            'key': 'pt-os',
+            'number': 4,
+            'label': 'PT / OS',
+            'state': 'pending',
+            'state_label': 'Etapa 4',
+            'active': False,
+            'url': reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk}),
+        },
+        {
+            'key': 'termos',
+            'number': 5,
+            'label': 'Termos',
+            'state': 'pending',
+            'state_label': 'Etapa 5',
+            'active': False,
+            'url': reverse('eventos:guiado-etapa-5', kwargs={'evento_id': evento.pk}),
+        },
+    ]
+    return views_global._render_oficio_list(
+        request,
+        queryset=queryset,
+        template_name='eventos/guiado/etapa_3.html',
+        oficio_novo_url=f"{reverse('eventos:oficio-novo')}?evento_id={evento.pk}",
+        clear_filters_url=reverse('eventos:guiado-etapa-3', kwargs={'evento_id': evento.pk}),
+        forced_contexto='EVENTO',
+        extra_context={
+            'evento': evento,
+            'object': evento,
+            'wizard_steps': wizard_steps,
+        },
+    )
 
 
 @login_required
