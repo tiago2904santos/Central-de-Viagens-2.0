@@ -14,27 +14,45 @@
 {% block list_header_actions %}{% endblock %}
 
 {% block list_pre_header %}
-<section class="app-page-card app-page-card--spacious guiado-etapa3-hero">
-    <div class="guiado-etapa3-hero__topline">
-        <div class="guiado-etapa3-hero__context">
-            <span class="guiado-etapa3-hero__eyebrow">Fluxo guiado</span>
-            <div class="guiado-etapa3-hero__heading">
-                <h1 class="guiado-etapa3-hero__title">Oficios / Justificativas</h1>
-                <div class="guiado-etapa3-hero__event-meta">
-                    <span class="guiado-etapa3-hero__event-name">{{ evento.titulo|default:"Evento sem titulo" }}</span>
-                    {% if evento.data_inicio %}
-                    <span class="guiado-etapa3-hero__event-period">
-                        {{ evento.data_inicio|date:"d/m/Y" }}{% if evento.data_fim and evento.data_fim != evento.data_inicio %} a {{ evento.data_fim|date:"d/m/Y" }}{% endif %}
-                    </span>
-                    {% endif %}
-                </div>
-            </div>
+<section class="guiado-etapa3-hero" aria-label="Topo da etapa 3">
+    <div class="guiado-etapa3-hero__topbar">
+        <div class="guiado-etapa3-hero__title-block">
+            <h1 class="guiado-etapa3-hero__title">{{ evento_heading }}</h1>
         </div>
 
-        <div class="guiado-etapa3-hero__view-toggle">
-            {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos oficios do evento' %}
+        <div class="guiado-etapa3-hero__actions">
+            <a href="{{ eventos_lista_url }}" class="btn btn-outline-secondary btn-sm guiado-etapa3-back-btn">
+                <i class="bi bi-arrow-left"></i>
+                <span>Voltar para lista</span>
+            </a>
+            <div class="guiado-etapa3-hero__view-toggle">
+                {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos oficios do evento' %}
+            </div>
         </div>
     </div>
+
+    {% if evento_context_items or evento_document_counts %}
+    <div class="guiado-etapa3-hero__meta">
+        {% if evento_context_items %}
+        <div class="guiado-etapa3-hero__chips" aria-label="Contexto do evento">
+            {% for item in evento_context_items %}
+            <span class="guiado-etapa3-chip guiado-etapa3-chip--{{ item.kind }}">{{ item.label }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if evento_document_counts %}
+        <div class="guiado-etapa3-hero__stats" aria-label="Documentos do evento">
+            {% for item in evento_document_counts %}
+            <span class="guiado-etapa3-stat guiado-etapa3-stat--{{ item.state }}">
+                <strong class="guiado-etapa3-stat__value">{{ item.value }}</strong>
+                <span class="guiado-etapa3-stat__label">{{ item.label }}</span>
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <div class="guiado-etapa3-stepper-shell">
         {% include 'eventos/oficio/_wizard_stepper.html' %}

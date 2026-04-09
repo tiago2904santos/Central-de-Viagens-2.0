@@ -2948,6 +2948,102 @@ def _build_guiado_v2_wizard_steps(evento, current_key):
     return built
 
 
+def _guiado_v2_evento_heading(evento):
+    destinos = list(evento.destinos.select_related('cidade', 'estado').order_by('ordem', 'pk'))
+    destino_base = ''
+    if destinos:
+        primeiro = destinos[0]
+        destino_base = (
+            (primeiro.cidade.nome if primeiro.cidade_id else '')
+            or (primeiro.estado.sigla if primeiro.estado_id else '')
+            or ''
+        ).strip()
+        extras = max(len(destinos) - 1, 0)
+        if extras:
+            destino_base = f'{destino_base} +{extras}'
+    if not destino_base:
+        destino_base = (
+            getattr(evento.cidade_base, 'nome', '')
+            or getattr(evento.cidade_principal, 'nome', '')
+            or f'#{evento.pk}'
+        )
+
+    periodo = _evento_lista_periodo_display(evento)
+    if periodo and periodo != 'Periodo a definir':
+        return f'Evento {destino_base} - {periodo}'
+    return f'Evento {destino_base}'
+
+
+def _guiado_v2_build_evento_context_items(evento):
+    items = []
+    tipos_display = _evento_lista_tipos_display(evento)
+    if tipos_display and tipos_display != 'Tipo a definir':
+        items.append({'label': tipos_display, 'kind': 'type'})
+
+    destinos = list(evento.destinos.all())
+    if len(destinos) > 1:
+        items.append({'label': f'{len(destinos)} destinos', 'kind': 'destinations'})
+    elif len(destinos) == 1:
+        items.append({'label': _evento_lista_destinos_display(evento), 'kind': 'location'})
+    return items
+
+
+def _guiado_v2_build_evento_document_counts(evento):
+    roteiro_qs = RoteiroEvento.objects.filter(evento=evento)
+    oficio_qs = evento.oficios.all()
+    plano_qs = PlanoTrabalho.objects.filter(
+        Q(evento_id=evento.pk) | Q(oficio__evento_id=evento.pk) | Q(oficios__evento_id=evento.pk)
+    ).distinct()
+    ordem_qs = OrdemServico.objects.filter(
+        Q(evento_id=evento.pk) | Q(oficio__evento_id=evento.pk)
+    ).distinct()
+    termo_qs = TermoAutorizacao.objects.filter(
+        Q(evento_id=evento.pk) | Q(oficio__evento_id=evento.pk) | Q(oficios__evento_id=evento.pk)
+    ).distinct()
+
+    counters = []
+
+    def append_counter(queryset, label, draft_q=None):
+        total = queryset.count()
+        if total <= 0:
+            return
+        has_draft = draft_q.exists() if draft_q is not None else False
+        counters.append(
+            {
+                'value': total,
+                'label': label,
+                'state': 'draft' if has_draft else 'completed',
+            }
+        )
+
+    append_counter(
+        roteiro_qs,
+        'Roteiros',
+        draft_q=roteiro_qs.exclude(status=RoteiroEvento.STATUS_FINALIZADO),
+    )
+    append_counter(
+        oficio_qs,
+        'Oficios',
+        draft_q=oficio_qs.exclude(status=Oficio.STATUS_FINALIZADO),
+    )
+    append_counter(
+        plano_qs,
+        'Planos de trabalho',
+        draft_q=plano_qs.exclude(status=PlanoTrabalho.STATUS_FINALIZADO),
+    )
+    append_counter(
+        ordem_qs,
+        'Ordens de servico',
+        draft_q=ordem_qs.exclude(status=OrdemServico.STATUS_FINALIZADO),
+    )
+    append_counter(
+        termo_qs,
+        'Termos de autorizacao',
+        draft_q=termo_qs.filter(status=TermoAutorizacao.STATUS_RASCUNHO),
+    )
+    return counters
+
+
 @login_required
 def guiado_painel_v2(request, pk):
     """Painel do evento guiado na ordem oficial de 5 etapas."""
@@ -3081,7 +3177,13 @@ def guiado_etapa_3_v2(request, evento_id):
     """Etapa 3 oficial: a própria listagem de Ofícios filtrada pelo evento atual."""
     from . import views_global
 
-    evento = get_object_or_404(Evento, pk=evento_id)
+    evento = get_object_or_404(
+        Evento.objects.select_related('cidade_principal', 'cidade_base', 'estado_principal').prefetch_related('destinos'),
+        pk=evento_id,
+    )
+    evento_heading = _guiado_v2_evento_heading(evento)
+    evento_context_items = _guiado_v2_build_evento_context_items(evento)
+    evento_document_counts = _guiado_v2_build_evento_document_counts(evento)
     queryset = (
         Oficio.objects.select_related(
             'evento',
@@ -3167,6 +3269,10 @@ def guiado_etapa_3_v2(request, evento_id):
         extra_context={
             'evento': evento,
             'object': evento,
+            'eventos_lista_url': reverse('eventos:lista'),
+            'evento_heading': evento_heading,
+            'evento_context_items': evento_context_items,
+            'evento_document_counts': evento_document_counts,
             'wizard_steps': wizard_steps,
         },
     )
