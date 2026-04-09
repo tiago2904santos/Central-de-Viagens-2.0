@@ -14,48 +14,47 @@
 {% block list_header_actions %}{% endblock %}
 
 {% block list_pre_header %}
-<section class="guiado-etapa3-hero" aria-label="Topo da etapa 3">
-    <div class="guiado-etapa3-hero__topbar">
-        <div class="guiado-etapa3-hero__title-block">
-            <h1 class="guiado-etapa3-hero__title">{{ evento_heading }}</h1>
-        </div>
+<section class="guiado-etapa3-header oficio-wizard-page" data-glance-state="closed" aria-label="Topo da etapa 3">
+    <div class="oficio-wizard-header" data-oficio-sticky-header>
+        <div class="oficio-wizard-header-card">
+            <div class="oficio-wizard-header-main">
+                <div class="oficio-wizard-header-top guiado-etapa3-header-top">
+                    <div class="oficio-wizard-header-copy">
+                        <h1>{{ evento_heading }}</h1>
+                    </div>
 
-        <div class="guiado-etapa3-hero__actions">
-            <a href="{{ eventos_lista_url }}" class="btn btn-outline-secondary btn-sm guiado-etapa3-back-btn">
-                <i class="bi bi-arrow-left"></i>
-                <span>Voltar para lista</span>
-            </a>
-            <div class="guiado-etapa3-hero__view-toggle">
-                {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos oficios do evento' %}
+                    <div class="guiado-etapa3-header-actions">
+                        <a href="{{ eventos_lista_url }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left"></i>
+                            <span>Voltar para lista</span>
+                        </a>
+                        <div class="guiado-etapa3-header-toggle">
+                            {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos oficios do evento' %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if evento_context_items or evento_document_counts %}
+                <div class="oficio-wizard-header-badges guiado-etapa3-header-badges">
+                    {% for item in evento_context_items %}
+                    <span class="oficio-wizard-header-badge guiado-etapa3-context-badge guiado-etapa3-context-badge--{{ item.kind }}">
+                        <strong>{{ item.label }}</strong>
+                    </span>
+                    {% endfor %}
+
+                    {% for item in evento_document_counts %}
+                    <span class="oficio-wizard-header-badge guiado-etapa3-count-badge guiado-etapa3-count-badge--{{ item.state }}">
+                        <strong>{{ item.value }} {{ item.label }}</strong>
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="oficio-wizard-stepper-shell">
+                {% include 'eventos/oficio/_wizard_stepper.html' %}
             </div>
         </div>
-    </div>
-
-    {% if evento_context_items or evento_document_counts %}
-    <div class="guiado-etapa3-hero__meta">
-        {% if evento_context_items %}
-        <div class="guiado-etapa3-hero__chips" aria-label="Contexto do evento">
-            {% for item in evento_context_items %}
-            <span class="guiado-etapa3-chip guiado-etapa3-chip--{{ item.kind }}">{{ item.label }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if evento_document_counts %}
-        <div class="guiado-etapa3-hero__stats" aria-label="Documentos do evento">
-            {% for item in evento_document_counts %}
-            <span class="guiado-etapa3-stat guiado-etapa3-stat--{{ item.state }}">
-                <strong class="guiado-etapa3-stat__value">{{ item.value }}</strong>
-                <span class="guiado-etapa3-stat__label">{{ item.label }}</span>
-            </span>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    <div class="guiado-etapa3-stepper-shell">
-        {% include 'eventos/oficio/_wizard_stepper.html' %}
     </div>
 </section>
 {% endblock %}
