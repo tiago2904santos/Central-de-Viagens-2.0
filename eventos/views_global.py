@@ -1893,7 +1893,7 @@ def roteiro_global_lista(request):
             )
             roteiro.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': roteiro.evento_id})
             roteiro.etapa_url = reverse('eventos:guiado-etapa-2', kwargs={'evento_id': roteiro.evento_id})
-            roteiro.oficios_url = reverse('eventos:guiado-etapa-5', kwargs={'evento_id': roteiro.evento_id})
+            roteiro.oficios_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': roteiro.evento_id})
 
     selected_event = None
     if filters['evento_id'].isdigit():
@@ -3703,8 +3703,8 @@ def termos_global(request):
                 oficios_relacionados.append(oficio)
         termo.oficios_relacionados = oficios_relacionados
         termo.oficios_display = ', '.join(oficio.numero_formatado for oficio in oficios_relacionados) if oficios_relacionados else 'â€”'
-        termo.termos_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': termo.evento_id})
-        termo.oficios_url = reverse('eventos:guiado-etapa-5', kwargs={'evento_id': termo.evento_id})
+        termo.termos_url = reverse('eventos:guiado-etapa-5', kwargs={'evento_id': termo.evento_id})
+        termo.oficios_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': termo.evento_id})
         termo.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': termo.evento_id})
         termo.documentos_url = (
             reverse('eventos:oficio-step4', kwargs={'pk': oficios_relacionados[0].pk})

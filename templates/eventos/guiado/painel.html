@@ -1,176 +1,83 @@
 {% extends 'base.html' %}
 
-{% block title %}Painel - {{ object.titulo }} - Central de Viagens{% endblock %}
-{% block page_title %}Fluxo guiado - Painel do evento{% endblock %}
+{% block title %}Fluxo guiado - {{ object.titulo }} - Central de Viagens{% endblock %}
+{% block page_title %}Fluxo guiado do evento{% endblock %}
 
 {% block content %}
-<div class="app-page-shell app-page-shell--list system-list-page system-list-page--complete evento-flow-page">
-    <div class="app-page-shell__inner system-list-shell">
-        <section class="system-document-top">
-            <div class="page-header-cadastro system-list-header system-list-header--standard">
-                <div class="system-list-header__content">
-                    <div class="system-list-header__copy">
-                        <div class="system-list-header__intro">
-                            <h1 class="system-list-header__title">Fluxo guiado do evento</h1>
-                            <p class="system-list-header__subtitle">Use o painel como camada de orquestracao e avance sempre para os modulos reais de cada etapa documental.</p>
-                        </div>
-                        <div class="system-list-header__meta">
-                            <span class="system-list-header__meta-item">7 etapas conectadas</span>
-                            <span class="system-list-header__meta-item">{{ object.periodo_display }}</span>
-                            <span class="system-list-header__meta-item">{{ object.temporal_meta.label }}</span>
-                        </div>
-                    </div>
-                    <div class="system-list-header__controls">
-                        <div class="system-list-header__actions-group">
-                            <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary system-list-action-btn">Lista de eventos</a>
-                            <a href="{% url 'eventos:editar' object.pk %}" class="btn btn-outline-secondary system-list-action-btn">Editar evento</a>
-                            {% if object.status != 'FINALIZADO' %}
-                            <form method="post" action="{% url 'eventos:excluir' object.pk %}" class="d-inline" onsubmit="return confirm('Excluir este evento? Esta acao nao pode ser desfeita.');">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-outline-danger system-list-action-btn">Excluir evento</button>
-                            </form>
-                            {% endif %}
-                        </div>
-                    </div>
+<div class="app-page-shell app-page-shell--wide">
+    <div class="app-page-shell__inner app-page-stack">
+        <header class="app-page-header">
+            <div>
+                <h1 class="h3 mb-1">Fluxo guiado de 5 etapas</h1>
+                <p class="text-muted mb-0">A ordem oficial agora é: Dados do evento, Roteiros, Ofícios / Justificativas, PT / OS e Termos.</p>
+            </div>
+            <div class="app-page-header__actions">
+                <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary btn-sm">Lista de eventos</a>
+                <a href="{% url 'eventos:editar' object.pk %}" class="btn btn-outline-secondary btn-sm">Editar evento</a>
+            </div>
+        </header>
+
+        <section class="app-page-card app-page-card--spacious">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <h2 class="h5 mb-1">{{ object.titulo|default:"(sem título)" }}</h2>
+                    <p class="text-muted mb-2">{{ object.periodo_display }}{% if object.destinos_display %} • {{ object.destinos_display }}{% endif %}</p>
+                    <p class="mb-0 small text-muted">{{ object.tipos_display }}</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge status-evento status-{{ object.status }}">{{ object.get_status_display }}</span>
+                    <div class="small text-muted mt-2">{{ object.document_counts_display }}</div>
                 </div>
             </div>
         </section>
 
-        <section class="documento-cascade-grid" aria-label="Resumo do evento">
-            <article class="oficio-list-card documento-cascade-card evento-flow-event-card {{ object.card_theme_class }}">
-                <div class="oficio-list-rich-layout">
-                    <div class="oficio-list-card__header">
-                        <div class="documento-cascade-card__intro documento-cascade-card__intro--header">
-                            <div class="documento-cascade-card__title-row">
-                                <h2 class="documento-cascade-card__title">{{ object.titulo|default:"(sem titulo)" }}</h2>
-                                <span class="badge status-evento status-{{ object.status }}">{{ object.get_status_display }}</span>
-                            </div>
-                            <p class="documento-cascade-card__subtitle">{{ object.tipos_display }}</p>
-                        </div>
-                        <div class="oficio-list-card__header-status">
-                            <span class="oficio-list-badge {{ object.temporal_meta.css_class }}">
-                                <span>{{ object.temporal_meta.label }}</span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="documento-cascade-meta-grid">
-                        <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
-                            <span class="documento-cascade-meta-item__label">Periodo</span>
-                            <strong class="documento-cascade-meta-item__value">{{ object.periodo_display }}</strong>
-                        </div>
-                        <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
-                            <span class="documento-cascade-meta-item__label">Destinos</span>
-                            <strong class="documento-cascade-meta-item__value">{{ object.destinos_display }}</strong>
-                        </div>
-                        <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
-                            <span class="documento-cascade-meta-item__label">Cascata documental</span>
-                            <strong class="documento-cascade-meta-item__value">{{ object.document_counts_display }}</strong>
-                        </div>
-                    </div>
-
-                    <div class="documento-cascade-chip-list">
-                        {% for card in resumo_cards %}
-                        <div class="documento-cascade-chip documento-cascade-chip--compact oficio-list-surface oficio-list-surface--soft">
-                            <strong>{{ card.value }}</strong>
-                            <span>{{ card.label }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
-                        <div class="oficio-list-card__footer-actions">
-                            <a href="{{ termos_urls.list_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
-                                <i class="bi bi-box-arrow-up-right"></i>
-                                <span>Abrir Termos</span>
-                            </a>
-                            <a href="{{ termos_urls.new_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                                <i class="bi bi-plus-lg"></i>
-                                <span>Novo termo</span>
-                            </a>
-                            <a href="{% url 'eventos:guiado-etapa-4' object.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                                <i class="bi bi-journal-text"></i>
-                                <span>PT / OS</span>
-                            </a>
-                            <a href="{% url 'eventos:guiado-etapa-5' object.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                                <i class="bi bi-envelope-paper"></i>
-                                <span>Oficios</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </article>
-        </section>
-
-        <section class="evento-flow-step-grid" aria-label="Etapas do fluxo guiado">
-            {% for e in etapas %}
-            <article class="oficio-list-card documento-cascade-card evento-flow-step-card {{ e.theme_class }}">
-                <div class="oficio-list-rich-layout">
-                    <div class="oficio-list-card__header">
-                        <div class="documento-cascade-card__intro documento-cascade-card__intro--header">
-                            <div class="evento-flow-step-card__eyebrow">Etapa {{ e.numero }}</div>
-                            <div class="documento-cascade-card__title-row">
-                                <h2 class="documento-cascade-card__title">{{ e.nome }}</h2>
-                            </div>
-                            <p class="documento-cascade-card__subtitle">{{ e.description }}</p>
-                        </div>
-                        <div class="oficio-list-card__header-status">
-                            <span class="oficio-list-badge {{ e.badge_class }}">
-                                <span>{{ e.status_label }}</span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel evento-flow-step-card__summary">
-                        <div class="oficio-list-subcard__body">
-                            <p class="evento-flow-step-card__summary-label">Panorama</p>
-                            <p class="evento-flow-step-card__summary-text">{{ e.summary|default:"Sem resumo adicional nesta etapa." }}</p>
-                        </div>
-                    </section>
-
-                    <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
-                        <div class="oficio-list-card__footer-actions">
-                            {% if e.url %}
-                            <a href="{{ e.url }}" class="btn btn-sm btn-doc-action {% if e.ok %}btn-doc-action--secondary{% else %}btn-doc-action--primary{% endif %}">
-                                <i class="bi bi-box-arrow-up-right"></i>
-                                <span>{{ e.cta_label }}</span>
-                            </a>
-                            {% else %}
-                            <span class="btn btn-sm btn-doc-action btn-doc-action--secondary disabled" aria-disabled="true">
-                                <i class="bi bi-slash-circle"></i>
-                                <span>Indisponivel</span>
-                            </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </article>
+        <section class="row g-3" aria-label="Resumo do evento">
+            {% for card in resumo_cards %}
+            <div class="col-12 col-md-6 col-xl-3">
+                <article class="app-page-card h-100">
+                    <p class="small text-uppercase text-muted mb-2">{{ card.label }}</p>
+                    <strong>{{ card.value }}</strong>
+                </article>
+            </div>
             {% endfor %}
         </section>
 
-        <section class="oficio-list-surface oficio-list-surface--panel evento-flow-actions-panel" aria-label="Acoes finais do painel">
-            <div class="evento-flow-actions-panel__copy">
-                <p class="evento-flow-step-card__eyebrow">Acoes finais</p>
-                <h2 class="documento-cascade-card__title">Atalhos de orquestracao</h2>
-                <p class="documento-cascade-card__subtitle">O painel continua como centro de navegacao, mas a etapa de Termos agora sempre abre o modulo documental real do sistema.</p>
+        <section class="row g-3" aria-label="Etapas do fluxo guiado">
+            {% for e in etapas %}
+            <div class="col-12 col-lg-6">
+                <article class="app-page-card app-page-card--spacious h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <p class="small text-uppercase text-muted mb-2">Etapa {{ e.numero }}</p>
+                            <h2 class="h5 mb-2">{{ e.nome }}</h2>
+                            <p class="text-muted mb-3">{{ e.description }}</p>
+                        </div>
+                        <span class="badge {% if e.ok %}bg-success{% elif e.em_andamento %}bg-info text-dark{% else %}bg-warning text-dark{% endif %}">
+                            {{ e.status_label }}
+                        </span>
+                    </div>
+                    <p class="mb-3"><strong>Panorama:</strong> {{ e.summary|default:"Sem resumo adicional nesta etapa." }}</p>
+                    <a href="{{ e.url }}" class="btn {% if e.ok %}btn-outline-primary{% else %}btn-primary{% endif %}">{{ e.cta_label }}</a>
+                </article>
             </div>
-            <div class="evento-flow-actions">
-                <a href="{% url 'eventos:guiado-etapa-1' object.pk %}" class="btn btn-doc-action btn-doc-action--secondary">
-                    <i class="bi bi-pencil-square"></i>
-                    <span>Dados do evento</span>
-                </a>
-                <a href="{{ termos_urls.list_url }}" class="btn btn-doc-action btn-doc-action--primary">
-                    <i class="bi bi-file-earmark-text"></i>
-                    <span>Modulo de Termos</span>
-                </a>
-                <a href="{{ termos_urls.new_url }}" class="btn btn-doc-action btn-doc-action--secondary">
-                    <i class="bi bi-plus-lg"></i>
-                    <span>Criar termo real</span>
-                </a>
-                <a href="{% url 'eventos:guiado-etapa-7' object.pk %}" class="btn btn-doc-action btn-doc-action--secondary">
-                    <i class="bi bi-check2-square"></i>
-                    <span>Finalizacao</span>
-                </a>
+            {% endfor %}
+        </section>
+
+        <section class="app-page-card">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <p class="small text-uppercase text-muted mb-2">Ação auxiliar</p>
+                    <h2 class="h5 mb-2">Finalização do evento</h2>
+                    <p class="text-muted mb-0">A finalização deixou de ser etapa principal do wizard. Ela continua disponível como checklist e encerramento depois das 5 etapas oficiais.</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge {% if finalizacao.ok %}bg-success{% elif finalizacao.em_andamento %}bg-info text-dark{% else %}bg-warning text-dark{% endif %} mb-2">
+                        {% if finalizacao.ok %}Concluída{% elif finalizacao.em_andamento %}Em andamento{% else %}Pendente{% endif %}
+                    </span>
+                    <div>
+                        <a href="{{ finalizacao.url }}" class="btn btn-outline-secondary">Abrir finalização</a>
+                    </div>
+                </div>
             </div>
         </section>
     </div>

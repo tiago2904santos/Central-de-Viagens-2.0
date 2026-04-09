@@ -16,7 +16,7 @@
         </p>
         <div class="app-page-inline-actions mt-3">
             {% if evento %}
-            <a href="{% url 'eventos:guiado-etapa-5' evento.pk %}" class="btn btn-outline-secondary">Voltar para Ofícios do evento</a>
+            <a href="{% url 'eventos:guiado-etapa-3' evento.pk %}" class="btn btn-outline-secondary">Voltar para Ofícios do evento</a>
             <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary">Painel do evento</a>
             {% else %}
             <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary">Lista de eventos</a>

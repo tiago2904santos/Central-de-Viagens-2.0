@@ -1,34 +1,42 @@
 {% extends 'base.html' %}
 
-{% block title %}Etapa 5 — Ofícios do evento — Central de Viagens{% endblock %}
-{% block page_title %}Fluxo guiado — Etapa 5: Ofícios do evento{% endblock %}
+{% block title %}Etapa 3 - Ofícios / Justificativas - Central de Viagens{% endblock %}
+{% block page_title %}Fluxo guiado - Etapa 3: Ofícios / Justificativas{% endblock %}
 
 {% block content %}
 <div class="app-page-shell app-page-shell--detail">
     <div class="app-page-shell__inner app-page-stack">
-    <header class="app-page-header">
-        <h1 class="h4 mb-0">Ofícios do evento (Etapa 5)</h1>
-        <div class="app-page-header__actions">
-            <form method="post" action="{% url 'eventos:guiado-etapa-5-criar-oficio' evento.pk %}" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-primary btn-sm" id="btnCriarOficioEvento">Criar Ofício neste Evento</button>
-            </form>
-            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar ao painel</a>
-            <form method="post" action="{% url 'eventos:excluir' evento.pk %}" class="d-inline" onsubmit="return confirm('Excluir este evento? Esta ação não pode ser desfeita.');">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-danger btn-sm">Excluir evento</button>
-            </form>
-        </div>
-    </header>
+        <header class="app-page-header">
+            <div>
+                <h1 class="h4 mb-1">Etapa 3 - Ofícios / Justificativas</h1>
+                <p class="text-muted mb-0">{{ evento.titulo|default:"(sem título)" }}</p>
+            </div>
+            <div class="app-page-header__actions">
+                <form method="post" action="{% url 'eventos:guiado-etapa-3-criar-oficio' evento.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnCriarOficioEvento">Criar ofício</button>
+                </form>
+                <a href="{{ justificativas_url }}" class="btn btn-outline-primary btn-sm">Abrir justificativas</a>
+                <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar ao painel</a>
+            </div>
+        </header>
 
-    <p class="text-muted small mb-3">
-        {{ evento.titulo|default:"(sem título)" }} — Ofícios vinculados a este evento. Use «Criar Ofício neste Evento» para abrir o wizard (dados, viajantes, transporte, trechos, resumo).
-        {% if oficios_summary %}{{ oficios_summary.texto }}.{% endif %}
-    </p>
+        <section class="app-page-card">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <h2 class="h6 mb-2">Resumo da etapa</h2>
+                    <p class="mb-0">{{ oficios_summary.texto }}.</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge {% if justificativas_pendentes %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                        {{ justificativas_pendentes }} justificativa(s) pendente(s)
+                    </span>
+                </div>
+            </div>
+        </section>
 
-    {% if oficios %}
-    <div class="card app-page-card">
-        <div class="card-body p-0">
+        {% if oficios %}
+        <section class="app-page-card app-page-card--spacious">
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
@@ -58,7 +66,7 @@
                             </td>
                             <td class="text-end">
                                 <a href="{% url 'eventos:oficio-editar' oficio.pk %}" class="btn btn-outline-primary btn-sm">Editar</a>
-                                <a href="{% url 'eventos:oficio-justificativa' oficio.pk %}" class="btn btn-outline-secondary btn-sm">Justificativa</a>
+                                <a href="{% url 'eventos:oficio-justificativa' oficio.pk %}?next={{ justificativas_url|urlencode }}" class="btn btn-outline-secondary btn-sm">Justificativa</a>
                                 <a href="{% url 'eventos:oficio-step4' oficio.pk %}" class="btn btn-outline-primary btn-sm">Resumo</a>
                                 <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger btn-sm">Excluir</a>
                             </td>
@@ -67,29 +75,22 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-    {% else %}
-    <div class="card app-page-card">
-        <div class="card-body">
+        </section>
+        {% else %}
+        <section class="app-page-card">
             <p class="text-muted mb-3">Nenhum ofício vinculado a este evento ainda.</p>
-            <form method="post" action="{% url 'eventos:guiado-etapa-5-criar-oficio' evento.pk %}" class="d-inline">
+            <form method="post" action="{% url 'eventos:guiado-etapa-3-criar-oficio' evento.pk %}" class="d-inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-primary">Criar Ofício neste Evento</button>
+                <button type="submit" class="btn btn-primary">Criar ofício neste evento</button>
             </form>
-        </div>
-    </div>
-    {% endif %}
+        </section>
+        {% endif %}
 
-    <div class="d-flex flex-wrap gap-2 mt-3">
-        <form method="post" action="{% url 'eventos:guiado-etapa-5-criar-oficio' evento.pk %}" class="d-inline">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary">Criar Ofício neste Evento</button>
-        </form>
-        <a href="{% url 'eventos:guiado-etapa-4' evento.pk %}" class="btn btn-outline-secondary">Etapa 4 — PT / OS</a>
-        <a href="{% url 'eventos:guiado-etapa-6' evento.pk %}" class="btn btn-outline-primary">Etapa 6 — Justificativa</a>
-        <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary">Voltar ao painel</a>
-    </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ justificativas_url }}" class="btn btn-outline-primary">Justificativas</a>
+            <a href="{{ ptos_url }}" class="btn btn-outline-secondary">Etapa 4 - PT / OS</a>
+            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary">Voltar ao painel</a>
+        </div>
     </div>
 </div>
 {% endblock %}

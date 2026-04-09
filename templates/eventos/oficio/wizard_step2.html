@@ -20,7 +20,7 @@
           <div class="d-flex gap-2 flex-wrap">
             <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary btn-sm">Lista de ofícios</a>
             {% if evento %}
-            <a href="{% url 'eventos:guiado-etapa-5' evento.pk %}" class="btn btn-outline-secondary btn-sm">Ofícios do evento</a>
+            <a href="{% url 'eventos:guiado-etapa-3' evento.pk %}" class="btn btn-outline-secondary btn-sm">Ofícios do evento</a>
             <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Painel do evento</a>
             {% endif %}
             <a href="{% url 'eventos:oficio-step1' oficio.pk %}" class="btn btn-outline-secondary btn-sm">Dados e viajantes</a>

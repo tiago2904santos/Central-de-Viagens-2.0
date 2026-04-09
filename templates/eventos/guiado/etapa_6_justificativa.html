@@ -1,45 +1,37 @@
 {% extends 'base.html' %}
 
-{% block title %}Etapa 6 — Justificativa — {{ evento.titulo|default:"Evento" }} — Central de Viagens{% endblock %}
-{% block page_title %}Fluxo guiado — Etapa 6: Justificativa{% endblock %}
+{% block title %}Etapa 3 - Justificativas - {{ evento.titulo|default:"Evento" }} - Central de Viagens{% endblock %}
+{% block page_title %}Fluxo guiado - Etapa 3: Justificativas{% endblock %}
 
 {% block content %}
 <div class="app-page-shell app-page-shell--detail">
     <div class="app-page-shell__inner app-page-stack">
-    <header class="app-page-header">
-        <h1 class="h4 mb-0">Etapa 6 — Justificativa</h1>
-        <div class="app-page-header__actions">
-            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar ao painel</a>
-            <a href="{% url 'eventos:guiado-etapa-7' evento.pk %}" class="btn btn-outline-primary btn-sm">Etapa 7 — Finalização</a>
-        </div>
-    </header>
+        <header class="app-page-header">
+            <div>
+                <h1 class="h4 mb-1">Etapa 3 - Justificativas</h1>
+                <p class="text-muted mb-0">{{ evento.titulo|default:"(sem título)" }}</p>
+            </div>
+            <div class="app-page-header__actions">
+                <a href="{% url 'eventos:guiado-etapa-3' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar para ofícios</a>
+                <a href="{% url 'eventos:guiado-etapa-4' evento.pk %}" class="btn btn-outline-primary btn-sm">Etapa 4 - PT / OS</a>
+            </div>
+        </header>
 
-    <div class="card app-page-card">
-        <div class="card-body py-3">
-            <h2 class="h6 card-title mb-2">{{ evento.titulo|default:"(sem título)" }}</h2>
-            <p class="text-muted small mb-0">
-                {{ evento.data_inicio|date:"d/m/Y" }}{% if evento.data_fim and evento.data_fim != evento.data_inicio %} a {{ evento.data_fim|date:"d/m/Y" }}{% endif %}
-                {% if evento.destinos.exists %} — Destinos: {% for d in evento.destinos.all %}{{ d.cidade.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+        <section class="app-page-card">
+            <p class="mb-0">
+                Quando o prazo entre a data de criação do ofício e a data de saída for inferior a <strong>{{ prazo_minimo }} dias</strong>,
+                a justificativa é obrigatória para o ofício.
             </p>
-        </div>
-    </div>
+        </section>
 
-    <div class="card app-page-card">
-        <div class="card-header py-2">
-            <h3 class="h6 mb-0">Justificativa de urgência</h3>
-        </div>
-        <div class="card-body py-3">
-            <p class="small text-muted mb-3">
-                Quando o prazo entre a data de criação do ofício e a data de saída for inferior a <strong>{{ prazo_minimo }} dias</strong>, a justificativa é exigida. Preencha a justificativa em cada ofício que exigir.
-            </p>
+        <section class="app-page-card app-page-card--spacious">
             {% if justificativa_ok %}
             <div class="alert alert-success mb-0">
-                Todos os ofícios que exigiam justificativa estão com o texto preenchido.
+                Todos os ofícios que exigiam justificativa já estão com o texto preenchido.
             </div>
-            {% else %}
-            {% if oficios_com_status %}
+            {% elif oficios_com_status %}
             <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle">
+                <table class="table table-sm table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Ofício</th>
@@ -63,7 +55,7 @@
                                 {% endif %}
                             </td>
                             <td class="text-end">
-                                <a href="{% url 'eventos:oficio-justificativa' item.oficio.pk %}?next={% url 'eventos:guiado-etapa-6' evento.pk %}" class="btn btn-outline-primary btn-sm">Preencher justificativa</a>
+                                <a href="{% url 'eventos:oficio-justificativa' item.oficio.pk %}?next={% url 'eventos:guiado-etapa-3-justificativas' evento.pk %}" class="btn btn-outline-primary btn-sm">Preencher justificativa</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -71,17 +63,15 @@
                 </table>
             </div>
             {% else %}
-            <p class="text-muted small mb-0">Não há ofícios no evento. Conclua a Etapa 5 (Ofícios) para que a justificativa seja avaliada aqui.</p>
+            <p class="text-muted mb-0">Não há ofícios no evento. Conclua a etapa 3 para que a justificativa seja avaliada aqui.</p>
             {% endif %}
-            {% endif %}
-        </div>
-    </div>
+        </section>
 
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary">Voltar ao painel</a>
-        <a href="{% url 'eventos:guiado-etapa-5' evento.pk %}" class="btn btn-outline-primary">Etapa 5 — Ofícios</a>
-        <a href="{% url 'eventos:guiado-etapa-7' evento.pk %}" class="btn btn-primary">Etapa 7 — Finalização</a>
-    </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'eventos:guiado-etapa-3' evento.pk %}" class="btn btn-outline-secondary">Voltar para ofícios</a>
+            <a href="{% url 'eventos:guiado-etapa-4' evento.pk %}" class="btn btn-primary">Etapa 4 - PT / OS</a>
+            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary">Voltar ao painel</a>
+        </div>
     </div>
 </div>
 {% endblock %}

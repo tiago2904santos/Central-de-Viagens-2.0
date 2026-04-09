@@ -2817,6 +2817,636 @@ def guiado_etapa_6(request, evento_id):
     return render(request, 'eventos/guiado/etapa_6.html', context)
 
 
+def _guiado_v2_oficios_justificativas_ok(evento):
+    return _evento_oficios_ok(evento) and _evento_justificativa_ok(evento)
+
+
+def _guiado_v2_oficios_justificativas_em_andamento(evento):
+    if _guiado_v2_oficios_justificativas_ok(evento):
+        return False
+    return _evento_oficios_em_andamento(evento) or evento.oficios.exists()
+
+
+@login_required
+def guiado_painel_v2(request, pk):
+    """Painel do evento guiado na ordem oficial de 5 etapas."""
+    obj = get_object_or_404(
+        Evento.objects.select_related('estado_principal', 'cidade_principal', 'cidade_base').prefetch_related(
+            'tipos_demanda',
+            'destinos',
+            Prefetch(
+                'oficios',
+                queryset=Oficio.objects.select_related('justificativa').prefetch_related('viajantes'),
+            ),
+            Prefetch(
+                'roteiros',
+                queryset=RoteiroEvento.objects.select_related('origem_cidade', 'origem_estado'),
+            ),
+            Prefetch('planos_trabalho', queryset=PlanoTrabalho.objects.only('pk', 'status', 'evento_id')),
+            Prefetch('ordens_servico', queryset=OrdemServico.objects.only('pk', 'status', 'evento_id')),
+            'finalizacao',
+            Prefetch('termos_participantes', queryset=EventoTermoParticipante.objects.select_related('viajante')),
+        ),
+        pk=pk,
+    )
+    etapa1_ok = _evento_etapa1_completa(obj)
+    etapa2_ok = _evento_roteiros_ok(obj)
+    etapa2_em_andamento = _evento_roteiros_em_andamento(obj)
+    etapa3_ok = _guiado_v2_oficios_justificativas_ok(obj)
+    etapa3_em_andamento = _guiado_v2_oficios_justificativas_em_andamento(obj)
+    etapa4_ok = _evento_pt_os_ok(obj)
+    etapa4_em_andamento = _evento_pt_os_em_andamento(obj)
+    etapa5_ok = _evento_termos_ok(obj)
+    etapa5_em_andamento = _evento_termos_em_andamento(obj)
+    finalizacao_ok = _evento_etapa6_ok(obj)
+    finalizacao_em_andamento = _evento_etapa6_em_andamento(obj)
+    oficios_summary = _build_evento_oficios_summary(obj)
+    roteiros_total = len(obj.roteiros.all())
+    termos_total = len(obj.termos_participantes.all())
+    planos_total = len(obj.planos_trabalho.all())
+    ordens_total = len(obj.ordens_servico.all())
+    justificativas_pendentes = sum(
+        1
+        for oficio in obj.oficios.all()
+        if oficio_exige_justificativa(oficio) and not oficio_tem_justificativa(oficio)
+    )
+    obj.destinos_display = _evento_lista_destinos_display(obj)
+    obj.periodo_display = _evento_lista_periodo_display(obj)
+    obj.tipos_display = _evento_lista_tipos_display(obj)
+    obj.temporal_meta = _evento_lista_temporal_meta(obj)
+    obj.card_theme_class = obj.temporal_meta['theme_class']
+    obj.document_counts_display = (
+        f'{oficios_summary["total"]} oficios • '
+        f'{termos_total} termos • '
+        f'{planos_total} PT • '
+        f'{ordens_total} OS'
+    )
+    resumo_cards = [
+        {'label': 'Roteiros', 'value': f'{roteiros_total} cadastrado(s)'},
+        {
+            'label': 'Ofícios / Justificativas',
+            'value': f'{oficios_summary["texto"]} • {justificativas_pendentes} justificativa(s) pendente(s)',
+        },
+        {'label': 'PT / OS', 'value': f'{planos_total} PT • {ordens_total} OS'},
+        {'label': 'Termos', 'value': f'{termos_total} participante(s) monitorado(s)'},
+    ]
+    etapas = [
+        _build_guiado_etapa_card(
+            1,
+            'Dados do evento',
+            reverse('eventos:guiado-etapa-1', kwargs={'pk': obj.pk}),
+            ok=etapa1_ok,
+            summary=obj.tipos_display,
+            description='Base cadastral, período, destinos e tipo de demanda.',
+            cta_label='Revisar dados',
+        ),
+        _build_guiado_etapa_card(
+            2,
+            'Roteiros',
+            reverse('eventos:guiado-etapa-2', kwargs={'evento_id': obj.pk}),
+            ok=etapa2_ok,
+            em_andamento=etapa2_em_andamento,
+            summary=f'{roteiros_total} roteiro(s) vinculado(s)' if roteiros_total else 'Nenhum roteiro cadastrado.',
+            description='Planejamento operacional do deslocamento e da malha de destinos.',
+            cta_label='Abrir etapa',
+        ),
+        _build_guiado_etapa_card(
+            3,
+            'Ofícios / Justificativas',
+            reverse('eventos:guiado-etapa-3', kwargs={'evento_id': obj.pk}),
+            ok=etapa3_ok,
+            em_andamento=etapa3_em_andamento,
+            summary=f'{oficios_summary["texto"]} • {justificativas_pendentes} justificativa(s) pendente(s)',
+            description='Hub do evento para ofícios vinculados e justificativas exigidas por prazo.',
+            cta_label='Abrir etapa',
+        ),
+        _build_guiado_etapa_card(
+            4,
+            'Plano de Trabalho / Ordem de Serviço',
+            reverse('eventos:guiado-etapa-4', kwargs={'evento_id': obj.pk}),
+            ok=etapa4_ok,
+            em_andamento=etapa4_em_andamento,
+            summary=f'{planos_total} PT • {ordens_total} OS',
+            description='Listas documentais do evento para PT e OS.',
+            cta_label='Abrir etapa',
+        ),
+        _build_guiado_etapa_card(
+            5,
+            'Termos',
+            reverse('eventos:guiado-etapa-5', kwargs={'evento_id': obj.pk}),
+            ok=etapa5_ok,
+            em_andamento=etapa5_em_andamento,
+            summary=f'{termos_total} participante(s) monitorado(s)',
+            description='Gestão dos termos por participante dentro do evento.',
+            cta_label='Abrir etapa',
+        ),
+    ]
+    context = {
+        'object': obj,
+        'etapas': etapas,
+        'resumo_cards': resumo_cards,
+        'oficios_summary': oficios_summary,
+        'finalizacao': {
+            'url': reverse('eventos:guiado-finalizacao', kwargs={'evento_id': obj.pk}),
+            'ok': finalizacao_ok,
+            'em_andamento': finalizacao_em_andamento,
+        },
+    }
+    return render(request, 'eventos/guiado/painel.html', context)
+
+
+@login_required
+def guiado_etapa_3_v2(request, evento_id):
+    """Etapa 3 oficial: ofícios do evento com acesso às justificativas."""
+    evento = get_object_or_404(Evento, pk=evento_id)
+    oficios_qs = evento.oficios.prefetch_related('trechos').order_by('ano', 'numero', 'id')
+    oficios = list(oficios_qs)
+    justificativas_pendentes = 0
+    for oficio in oficios:
+        oficio.justificativa_info = _build_oficio_justificativa_info(oficio)
+        if oficio_exige_justificativa(oficio) and not oficio_tem_justificativa(oficio):
+            justificativas_pendentes += 1
+    oficios_summary = _build_evento_oficios_summary(evento)
+    context = {
+        'evento': evento,
+        'object': evento,
+        'oficios': oficios,
+        'oficios_summary': oficios_summary,
+        'justificativas_pendentes': justificativas_pendentes,
+        'justificativas_url': reverse('eventos:guiado-etapa-3-justificativas', kwargs={'evento_id': evento.pk}),
+        'ptos_url': reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk}),
+    }
+    return render(request, 'eventos/guiado/etapa_3.html', context)
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def guiado_etapa_3_criar_oficio_v2(request, evento_id):
+    evento = get_object_or_404(Evento, pk=evento_id)
+    if request.method != 'POST':
+        return redirect('eventos:guiado-etapa-3', evento_id=evento.pk)
+    novo_url = f"{reverse('eventos:oficio-novo')}?evento_id={evento.pk}"
+    return redirect(novo_url)
+
+
+@login_required
+@require_http_methods(['GET'])
+def guiado_etapa_3_justificativas_v2(request, evento_id):
+    """Subetapa da etapa 3: justificativas exigidas pelos ofícios do evento."""
+    evento = get_object_or_404(
+        Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
+        pk=evento_id,
+    )
+    oficios = list(evento.oficios.order_by('ano', 'numero', 'id'))
+    prazo_minimo = get_prazo_justificativa_dias()
+    oficios_com_status = []
+    for oficio in oficios:
+        exige = oficio_exige_justificativa(oficio)
+        preenchida = oficio_tem_justificativa(oficio)
+        dias = get_dias_antecedencia_oficio(oficio)
+        oficios_com_status.append({
+            'oficio': oficio,
+            'exige_justificativa': exige,
+            'justificativa_preenchida': preenchida,
+            'dias_antecedencia': dias,
+            'ok': not exige or preenchida,
+        })
+    justificativa_ok = _evento_justificativa_ok(evento)
+    context = {
+        'evento': evento,
+        'object': evento,
+        'oficios_com_status': oficios_com_status,
+        'prazo_minimo': prazo_minimo,
+        'justificativa_ok': justificativa_ok,
+    }
+    return render(request, 'eventos/guiado/etapa_6_justificativa.html', context)
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def guiado_etapa_4_v2(request, evento_id):
+    return guiado_etapa_4(request, evento_id)
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def guiado_etapa_5_v2(request, evento_id):
+    """Etapa 5 oficial: termos por participante no nível do evento."""
+    evento = get_object_or_404(
+        Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
+        pk=evento_id,
+    )
+    evento_apenas_consulta = _evento_esta_finalizado(evento)
+    if request.method == 'POST' and evento_apenas_consulta:
+        messages.error(request, 'Evento finalizado. Não é possível alterar os termos.')
+        return redirect('eventos:guiado-painel', pk=evento.pk)
+
+    oficios = list(evento.oficios.order_by('ano', 'numero', 'id'))
+    participantes = _evento_participantes_termo(evento)
+
+    if request.method == 'POST':
+        updated = 0
+        acao_participante = (request.POST.get('acao_participante') or '').strip()
+        if ':' in acao_participante:
+            acao, viajante_id_raw = acao_participante.split(':', 1)
+            if str(viajante_id_raw).isdigit():
+                viajante_id = int(viajante_id_raw)
+                for viajante, termo, _oficios in participantes:
+                    if viajante.pk != viajante_id:
+                        continue
+                    new_status = termo.status
+                    if acao == 'dispensar':
+                        new_status = EventoTermoParticipante.STATUS_DISPENSADO
+                    elif acao == 'concluir':
+                        new_status = EventoTermoParticipante.STATUS_CONCLUIDO
+                    elif acao == 'reabrir':
+                        new_status = EventoTermoParticipante.STATUS_PENDENTE
+                    if new_status != termo.status:
+                        termo.status = new_status
+                        termo.save(update_fields=['status', 'updated_at'])
+                        updated += 1
+                    break
+        else:
+            acao_lote = _normalizar_status_termo(request.POST.get('acao_lote'))
+            if acao_lote:
+                for _viajante, termo, _oficios in participantes:
+                    if termo.status != acao_lote:
+                        termo.status = acao_lote
+                        termo.save(update_fields=['status', 'updated_at'])
+                        updated += 1
+            else:
+                for viajante, termo, _oficios in participantes:
+                    status_key = f'status_{viajante.pk}'
+                    modalidade_key = f'modalidade_{viajante.pk}'
+                    new_status = _normalizar_status_termo(request.POST.get(status_key)) or termo.status
+                    new_modalidade = _normalizar_modalidade_termo(request.POST.get(modalidade_key))
+                    update_fields = []
+                    if new_status != termo.status:
+                        termo.status = new_status
+                        update_fields.append('status')
+                    if new_modalidade != termo.modalidade:
+                        termo.modalidade = new_modalidade
+                        update_fields.append('modalidade')
+                    if update_fields:
+                        update_fields.append('updated_at')
+                        termo.save(update_fields=update_fields)
+                        updated += 1
+        if updated:
+            messages.success(request, 'Termos atualizados com sucesso.')
+        if request.POST.get('voltar_painel'):
+            return redirect('eventos:guiado-painel', pk=evento.pk)
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    total_participantes = len(participantes)
+    termos_concluidos = sum(1 for _v, t, _o in participantes if t.status == EventoTermoParticipante.STATUS_CONCLUIDO)
+    termos_dispensados = sum(1 for _v, t, _o in participantes if t.status == EventoTermoParticipante.STATUS_DISPENSADO)
+    termos_gerados = sum(1 for _v, t, _o in participantes if t.status == EventoTermoParticipante.STATUS_GERADO)
+    termos_pendentes = sum(1 for _v, t, _o in participantes if t.status == EventoTermoParticipante.STATUS_PENDENTE)
+    template_status = get_termo_autorizacao_templates_availability()
+    pdf_backend_status = get_pdf_backend_availability()
+    veiculos = list(_get_veiculos_termo_queryset())
+    viajantes_disponiveis = list(_get_viajantes_disponiveis_termo(evento))
+    participantes_rows = []
+    for viajante, termo, oficios_part in participantes:
+        participantes_rows.append({
+            'viajante': viajante,
+            'termo': termo,
+            'oficios': oficios_part,
+            'rg': getattr(viajante, 'rg_formatado', '') or '—',
+            'cpf': getattr(viajante, 'cpf_formatado', '') or '—',
+            'telefone': getattr(viajante, 'telefone_formatado', '') or '—',
+            'lotacao': (getattr(getattr(viajante, 'unidade_lotacao', None), 'nome', '') or '—'),
+            'download_docx_url': reverse(
+                'eventos:guiado-etapa-5-termo-download',
+                kwargs={'evento_id': evento.pk, 'viajante_id': viajante.pk, 'formato': 'docx'},
+            ),
+            'download_pdf_url': reverse(
+                'eventos:guiado-etapa-5-termo-download',
+                kwargs={'evento_id': evento.pk, 'viajante_id': viajante.pk, 'formato': 'pdf'},
+            ),
+        })
+
+    context = {
+        'evento': evento,
+        'object': evento,
+        'oficios': oficios,
+        'participantes': participantes_rows,
+        'status_choices': EventoTermoParticipante.STATUS_CHOICES,
+        'modalidade_choices': EventoTermoParticipante.MODALIDADE_CHOICES,
+        'total_participantes': total_participantes,
+        'termos_concluidos': termos_concluidos,
+        'termos_dispensados': termos_dispensados,
+        'termos_gerados': termos_gerados,
+        'termos_pendentes': termos_pendentes,
+        'termo_templates_available': template_status['available'],
+        'termo_template_errors': template_status['errors'],
+        'pdf_backend_available': pdf_backend_status['available'],
+        'pdf_backend_message': pdf_backend_status['message'],
+        'evento_apenas_consulta': evento_apenas_consulta,
+        'veiculos': veiculos,
+        'viajantes_disponiveis': viajantes_disponiveis,
+        'termo_padrao_docx_url': reverse('eventos:guiado-etapa-5-termo-padrao-download', kwargs={'evento_id': evento.pk, 'formato': 'docx'}),
+        'termo_padrao_pdf_url': reverse('eventos:guiado-etapa-5-termo-padrao-download', kwargs={'evento_id': evento.pk, 'formato': 'pdf'}),
+        'termo_viatura_docx_url': reverse('eventos:guiado-etapa-5-termo-viatura-download', kwargs={'evento_id': evento.pk, 'formato': 'docx'}),
+        'termo_viatura_pdf_url': reverse('eventos:guiado-etapa-5-termo-viatura-download', kwargs={'evento_id': evento.pk, 'formato': 'pdf'}),
+    }
+    return render(request, 'eventos/guiado/etapa_5.html', context)
+
+
+@login_required
+@require_http_methods(['GET'])
+def guiado_etapa_5_termo_download_v2(request, evento_id, viajante_id, formato):
+    evento = get_object_or_404(
+        Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
+        pk=evento_id,
+    )
+    formato = (formato or '').strip().lower()
+    if formato not in {'docx', 'pdf'}:
+        raise Http404('Formato de documento inválido.')
+
+    _evento_sincronizar_participantes(evento)
+    viajante, termo, oficios_relacionados = _get_termo_participante_evento(evento, viajante_id)
+    if termo.status == EventoTermoParticipante.STATUS_DISPENSADO:
+        messages.error(request, 'Participante dispensado de termo. Reabra o termo para gerar o documento.')
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    validation_errors = validate_evento_participante_termo_data(evento, viajante, termo.modalidade)
+    if validation_errors:
+        messages.error(request, validation_errors[0])
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    template_status = get_termo_autorizacao_templates_availability()
+    if not template_status['available']:
+        messages.error(request, template_status['errors'][0])
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    try:
+        docx_bytes = render_evento_participante_termo_docx(
+            evento,
+            viajante,
+            termo.modalidade,
+            oficios_relacionados,
+        )
+        payload = docx_bytes
+        content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        if formato == 'pdf':
+            payload = convert_docx_bytes_to_pdf_bytes(docx_bytes)
+            content_type = 'application/pdf'
+    except (DocumentGenerationError, DocumentRendererUnavailable) as exc:
+        messages.error(request, str(exc))
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    if not _evento_esta_finalizado(evento):
+        if termo.status not in {
+            EventoTermoParticipante.STATUS_CONCLUIDO,
+            EventoTermoParticipante.STATUS_DISPENSADO,
+        }:
+            termo.status = EventoTermoParticipante.STATUS_GERADO
+        termo.ultimo_formato_gerado = formato
+        termo.ultima_geracao_em = timezone.now()
+        termo.save(update_fields=['status', 'ultimo_formato_gerado', 'ultima_geracao_em', 'updated_at'])
+
+    filename = _build_termo_participante_filename(evento, viajante, formato)
+    response = HttpResponse(payload, content_type=content_type)
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required
+@require_http_methods(['GET'])
+def guiado_etapa_5_termo_padrao_download_v2(request, evento_id, formato):
+    evento = get_object_or_404(
+        Evento.objects.prefetch_related('destinos', 'tipos_demanda'),
+        pk=evento_id,
+    )
+    formato = (formato or '').strip().lower()
+    if formato not in {'docx', 'pdf'}:
+        raise Http404('Formato de documento inválido.')
+    validation_errors = validate_evento_participante_termo_data(
+        evento,
+        viajante=None,
+        modalidade=TERMO_MODALIDADE_SEMIPREENCHIDO,
+    )
+    if validation_errors:
+        messages.error(request, validation_errors[0])
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    template_status = get_termo_autorizacao_templates_availability()
+    if not template_status['available']:
+        messages.error(request, template_status['errors'][0])
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    try:
+        docx_bytes = render_evento_termo_padrao_branco_docx(evento)
+        payload = docx_bytes
+        content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        if formato == 'pdf':
+            payload = convert_docx_bytes_to_pdf_bytes(docx_bytes)
+            content_type = 'application/pdf'
+    except (DocumentGenerationError, DocumentRendererUnavailable) as exc:
+        messages.error(request, str(exc))
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    response = HttpResponse(payload, content_type=content_type)
+    response['Content-Disposition'] = f'attachment; filename="{_build_termo_padrao_filename(evento, formato)}"'
+    return response
+
+
+@login_required
+@require_http_methods(['POST'])
+def guiado_etapa_5_termo_viatura_lote_download_v2(request, evento_id, formato):
+    evento = get_object_or_404(
+        Evento.objects.prefetch_related('destinos', 'tipos_demanda'),
+        pk=evento_id,
+    )
+    formato = (formato or '').strip().lower()
+    if formato not in {'docx', 'pdf'}:
+        raise Http404('Formato de documento inválido.')
+
+    veiculo_id_raw = (request.POST.get('veiculo_id') or '').strip()
+    viajantes_ids_raw = request.POST.getlist('viajantes')
+    viajantes_ids = [int(v) for v in viajantes_ids_raw if str(v).isdigit()]
+    if not veiculo_id_raw.isdigit():
+        messages.error(request, 'Selecione uma viatura para gerar termos completos por viatura.')
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+    if not viajantes_ids:
+        messages.error(request, 'Selecione ao menos um servidor para gerar termos por viatura.')
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    veiculo = get_object_or_404(_get_veiculos_termo_queryset(), pk=int(veiculo_id_raw))
+    evento_apenas_consulta = _evento_esta_finalizado(evento)
+    if evento_apenas_consulta:
+        participantes_ids = set(
+            EventoParticipante.objects.filter(evento=evento).values_list('viajante_id', flat=True)
+        )
+        if not set(viajantes_ids).issubset(participantes_ids):
+            messages.error(request, 'Evento finalizado: gere apenas termos de participantes já vinculados ao evento.')
+            return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+    else:
+        _evento_sincronizar_participantes(evento, viajantes_ids=viajantes_ids)
+
+    viajantes = list(
+        Viajante.objects.filter(pk__in=viajantes_ids).select_related('cargo', 'unidade_lotacao').order_by('nome')
+    )
+    if not viajantes:
+        messages.error(request, 'Não foi possível localizar os servidores selecionados.')
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    template_status = get_termo_autorizacao_templates_availability()
+    if not template_status['available']:
+        messages.error(request, template_status['errors'][0])
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+
+    files_payload = []
+    for viajante in viajantes:
+        errors = validate_evento_participante_termo_data(evento, viajante, TERMO_MODALIDADE_COMPLETO)
+        if errors:
+            messages.error(request, errors[0])
+            return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+        termo, _ = EventoTermoParticipante.objects.get_or_create(
+            evento=evento,
+            viajante=viajante,
+            defaults={
+                'status': EventoTermoParticipante.STATUS_PENDENTE,
+                'modalidade': EventoTermoParticipante.MODALIDADE_COMPLETO,
+            },
+        )
+        termo.modalidade = EventoTermoParticipante.MODALIDADE_COMPLETO
+        if not evento_apenas_consulta:
+            termo.save(update_fields=['modalidade', 'updated_at'])
+        try:
+            docx_bytes = render_evento_participante_termo_docx(
+                evento,
+                viajante,
+                TERMO_MODALIDADE_COMPLETO,
+                list(evento.oficios.filter(viajantes=viajante).order_by('ano', 'numero', 'id')),
+                veiculo_override=veiculo,
+            )
+            payload = docx_bytes
+            if formato == 'pdf':
+                payload = convert_docx_bytes_to_pdf_bytes(docx_bytes)
+        except (DocumentGenerationError, DocumentRendererUnavailable) as exc:
+            messages.error(request, str(exc))
+            return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+        filename = _build_termo_participante_filename(evento, viajante, formato)
+        files_payload.append((filename, payload))
+        if not evento_apenas_consulta:
+            termo.status = EventoTermoParticipante.STATUS_GERADO
+            termo.ultimo_formato_gerado = formato
+            termo.ultima_geracao_em = timezone.now()
+            termo.save(update_fields=['status', 'ultimo_formato_gerado', 'ultima_geracao_em', 'updated_at'])
+
+    zip_buffer = BytesIO()
+    with ZipFile(zip_buffer, mode='w', compression=ZIP_DEFLATED) as zip_file:
+        for filename, payload in files_payload:
+            zip_file.writestr(filename, payload)
+    zip_bytes = zip_buffer.getvalue()
+    response = HttpResponse(zip_bytes, content_type='application/zip')
+    response['Content-Disposition'] = (
+        f'attachment; filename="{_build_termo_viatura_lote_filename(evento, formato)}"'
+    )
+    return response
+
+
+def _guiado_v2_pendencias_finalizacao(evento):
+    pendencias = []
+    if not _evento_etapa1_completa(evento):
+        pendencias.append('Etapa 1 (Dados do evento) não concluída.')
+    if not _evento_roteiros_ok(evento):
+        pendencias.append('Etapa 2 (Roteiros) não concluída. Cadastre ao menos um roteiro finalizado.')
+    if not _guiado_v2_oficios_justificativas_ok(evento):
+        pendencias.append('Etapa 3 (Ofícios / Justificativas) não concluída. Finalize os ofícios e preencha as justificativas obrigatórias.')
+    if not _evento_pt_os_ok(evento):
+        pendencias.append('Etapa 4 (PT / OS) não concluída. Finalize ao menos um Plano de Trabalho ou uma Ordem de Serviço.')
+    if not _evento_termos_ok(evento):
+        pendencias.append('Etapa 5 (Termos) não concluída. Defina status final para todos os participantes do evento.')
+    return pendencias
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def guiado_finalizacao_v2(request, evento_id):
+    """Finalização auxiliar após as 5 etapas oficiais."""
+    evento = get_object_or_404(
+        Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
+        pk=evento_id,
+    )
+    if request.method == 'POST' and _evento_esta_finalizado(evento):
+        messages.error(request, 'Evento já está finalizado. Não é possível alterar a finalização.')
+        return redirect('eventos:guiado-painel', pk=evento.pk)
+
+    finalizacao, _ = EventoFinalizacao.objects.get_or_create(
+        evento=evento,
+        defaults={'observacoes_finais': ''},
+    )
+    pendencias = _guiado_v2_pendencias_finalizacao(evento)
+    pode_finalizar = len(pendencias) == 0 and not finalizacao.concluido
+    etapa1_ok = _evento_etapa1_completa(evento)
+    etapa2_ok = _evento_roteiros_ok(evento)
+    etapa3_ok = _guiado_v2_oficios_justificativas_ok(evento)
+    etapa4_ok = _evento_pt_os_ok(evento)
+    etapa5_ok = _evento_termos_ok(evento)
+    oficios_count = evento.oficios.count()
+    roteiros_count = evento.roteiros.count()
+    participantes_count = EventoParticipante.objects.filter(evento=evento).count()
+    oficios = list(evento.oficios.order_by('ano', 'numero', 'id'))
+
+    if request.method == 'POST':
+        form = EventoFinalizacaoForm(request.POST, instance=finalizacao)
+        if form.is_valid():
+            form.save()
+            if request.POST.get('finalizar') and pode_finalizar:
+                finalizacao.refresh_from_db()
+                finalizacao.finalizado_em = timezone.now()
+                finalizacao.finalizado_por = request.user
+                finalizacao.save()
+                if evento.status != Evento.STATUS_FINALIZADO:
+                    evento.status = Evento.STATUS_FINALIZADO
+                    evento.save(update_fields=['status'])
+                messages.success(request, 'Evento finalizado com sucesso.')
+                return redirect('eventos:guiado-painel', pk=evento.pk)
+            messages.success(request, 'Observações finais salvas.')
+            if request.POST.get('voltar_painel'):
+                return redirect('eventos:guiado-painel', pk=evento.pk)
+            return redirect('eventos:guiado-finalizacao', evento_id=evento.pk)
+    else:
+        form = EventoFinalizacaoForm(instance=finalizacao)
+
+    context = {
+        'evento': evento,
+        'object': evento,
+        'finalizacao': finalizacao,
+        'form': form,
+        'pendencias': pendencias,
+        'pode_finalizar': pode_finalizar,
+        'etapa1_ok': etapa1_ok,
+        'etapa2_ok': etapa2_ok,
+        'etapa3_ok': etapa3_ok,
+        'etapa4_ok': etapa4_ok,
+        'etapa5_ok': etapa5_ok,
+        'oficios_count': oficios_count,
+        'roteiros_count': roteiros_count,
+        'participantes_count': participantes_count,
+        'oficios': oficios,
+    }
+    return render(request, 'eventos/guiado/etapa_6.html', context)
+
+
+@login_required
+def guiado_etapa_5_legado_redirect_v2(request, evento_id):
+    return redirect('eventos:guiado-etapa-3', evento_id=evento_id)
+
+
+@login_required
+def guiado_etapa_6_legado_redirect_v2(request, evento_id):
+    return redirect('eventos:guiado-etapa-3-justificativas', evento_id=evento_id)
+
+
+@login_required
+def guiado_etapa_7_legado_redirect_v2(request, evento_id):
+    return redirect('eventos:guiado-finalizacao', evento_id=evento_id)
+
+
 @login_required
 def oficio_editar(request, pk):
     """Redireciona para o Step 1 do wizard do ofício."""
@@ -5748,7 +6378,7 @@ def _legacy_oficio_step4(request, pk):
             oficio.save(update_fields=['status', 'updated_at'])
             messages.success(request, 'Ofício finalizado.')
         if request.POST.get('voltar_etapa3') and evento:
-            return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+            return redirect('eventos:guiado-etapa-3', evento_id=evento.pk)
         return redirect('eventos:oficio-step4', pk=oficio.pk)
     saved_state = _get_oficio_step3_saved_state(oficio)
     if saved_state:
@@ -5963,7 +6593,7 @@ def oficio_step4(request, pk):
         if termo_changed:
             _save_oficio_preserving_status(oficio, ['gerar_termo_preenchido'])
         if request.POST.get('voltar_etapa3') and evento:
-            return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
+            return redirect('eventos:guiado-etapa-3', evento_id=evento.pk)
         if request.POST.get('finalizar'):
             finalize_validation = _validate_oficio_for_finalize(oficio)
             if not finalize_validation['ok']:

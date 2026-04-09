@@ -1,139 +1,80 @@
 {% extends 'base.html' %}
 
-{% block title %}Etapa 7 — Finalização — {{ evento.titulo|default:"Evento" }} — Central de Viagens{% endblock %}
-{% block page_title %}Fluxo guiado — Etapa 7: Finalização{% endblock %}
+{% block title %}Finalização - {{ evento.titulo|default:"Evento" }} - Central de Viagens{% endblock %}
+{% block page_title %}Fluxo guiado - Finalização{% endblock %}
 
 {% block content %}
 <div class="app-page-shell app-page-shell--detail">
     <div class="app-page-shell__inner app-page-stack">
-    <header class="app-page-header">
-        <h1 class="h4 mb-0">Etapa 7 — Finalização</h1>
-        <div class="app-page-header__actions">
-            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar ao painel</a>
-            {% if evento.status != 'FINALIZADO' %}
-            <form method="post" action="{% url 'eventos:excluir' evento.pk %}" class="d-inline" onsubmit="return confirm('Excluir este evento? Esta ação não pode ser desfeita.');">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-danger btn-sm">Excluir evento</button>
-            </form>
-            {% endif %}
-        </div>
-    </header>
+        <header class="app-page-header">
+            <div>
+                <h1 class="h4 mb-1">Finalização do evento</h1>
+                <p class="text-muted mb-0">Checklist e encerramento após as 5 etapas oficiais do fluxo guiado.</p>
+            </div>
+            <div class="app-page-header__actions">
+                <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Voltar ao painel</a>
+            </div>
+        </header>
 
-    <div class="card app-page-card">
-        <div class="card-body py-3">
-            <h2 class="h6 card-title mb-2">{{ evento.titulo|default:"(sem título)" }}</h2>
-            <p class="text-muted small mb-0">
-                {% if evento.tipos_demanda.exists %}
-                Tipo(s): {% for t in evento.tipos_demanda.all %}{{ t.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}
-                {% endif %}
-                — {{ evento.data_inicio|date:"d/m/Y" }}{% if not evento.data_unica and evento.data_fim %} a {{ evento.data_fim|date:"d/m/Y" }}{% endif %}
-                {% if evento.destinos.exists %} — Destinos: {% for d in evento.destinos.all %}{{ d.cidade.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
-            </p>
-        </div>
-    </div>
-
-    <div class="card app-page-card">
-        <div class="card-header py-2">
-            <h3 class="h6 mb-0">Situação das etapas</h3>
-        </div>
-        <div class="card-body py-3">
+        <section class="app-page-card">
+            <h2 class="h6 mb-3">Situação das etapas oficiais</h2>
             <ul class="list-unstyled mb-0">
-                <li class="d-flex align-items-center mb-2">
-                    <span class="me-2">Etapa 1 (Dados do evento):</span>
-                    {% if etapa1_ok %}
-                    <span class="badge bg-success">OK</span>
-                    {% else %}
-                    <span class="badge bg-warning text-dark">Pendente</span>
-                    {% endif %}
+                <li class="d-flex align-items-center gap-2 mb-2">
+                    <span>Etapa 1 (Dados do evento)</span>
+                    <span class="badge {% if etapa1_ok %}bg-success{% else %}bg-warning text-dark{% endif %}">{% if etapa1_ok %}OK{% else %}Pendente{% endif %}</span>
                 </li>
-                <li class="d-flex align-items-center mb-2">
-                    <span class="me-2">Etapa 2 (Roteiros):</span>
-                    {% if etapa2_ok %}
-                    <span class="badge bg-success">OK</span>
-                    {% else %}
-                    <span class="badge bg-warning text-dark">Pendente</span>
-                    {% endif %}
-                    <span class="badge bg-secondary ms-2">{{ roteiros_count }} roteiro(s)</span>
+                <li class="d-flex align-items-center gap-2 mb-2">
+                    <span>Etapa 2 (Roteiros)</span>
+                    <span class="badge {% if etapa2_ok %}bg-success{% else %}bg-warning text-dark{% endif %}">{% if etapa2_ok %}OK{% else %}Pendente{% endif %}</span>
+                    <span class="badge bg-secondary">{{ roteiros_count }} roteiro(s)</span>
                 </li>
-                <li class="d-flex align-items-center mb-2">
-                    <span class="me-2">Etapa 3 (Termos):</span>
-                    {% if etapa3_ok %}
-                    <span class="badge bg-success">OK</span>
-                    {% else %}
-                    <span class="badge bg-warning text-dark">Pendente</span>
-                    {% endif %}
-                    <span class="badge bg-secondary ms-2">{{ participantes_count }} participante(s)</span>
+                <li class="d-flex align-items-center gap-2 mb-2">
+                    <span>Etapa 3 (Ofícios / Justificativas)</span>
+                    <span class="badge {% if etapa3_ok %}bg-success{% else %}bg-warning text-dark{% endif %}">{% if etapa3_ok %}OK{% else %}Pendente{% endif %}</span>
+                    <span class="badge bg-secondary">{{ oficios_count }} ofício(s)</span>
                 </li>
-                <li class="d-flex align-items-center mb-2">
-                    <span class="me-2">Etapa 4 (PT / OS):</span>
-                    {% if etapa4_ok %}
-                    <span class="badge bg-success">OK</span>
-                    {% else %}
-                    <span class="badge bg-warning text-dark">Pendente</span>
-                    {% endif %}
+                <li class="d-flex align-items-center gap-2 mb-2">
+                    <span>Etapa 4 (PT / OS)</span>
+                    <span class="badge {% if etapa4_ok %}bg-success{% else %}bg-warning text-dark{% endif %}">{% if etapa4_ok %}OK{% else %}Pendente{% endif %}</span>
                 </li>
-                <li class="d-flex align-items-center mb-2">
-                    <span class="me-2">Etapa 5 (Ofícios):</span>
-                    {% if etapa5_ok %}
-                    <span class="badge bg-success">OK</span>
-                    {% else %}
-                    <span class="badge bg-warning text-dark">Pendente</span>
-                    {% endif %}
-                    <span class="badge bg-secondary ms-2">{{ oficios_count }} ofício(s)</span>
-                </li>
-                <li class="d-flex align-items-center mb-2">
-                    <span class="me-2">Etapa 6 (Justificativa):</span>
-                    {% if etapa6_ok %}
-                    <span class="badge bg-success">OK</span>
-                    {% else %}
-                    <span class="badge bg-warning text-dark">Pendente</span>
-                    {% endif %}
+                <li class="d-flex align-items-center gap-2">
+                    <span>Etapa 5 (Termos)</span>
+                    <span class="badge {% if etapa5_ok %}bg-success{% else %}bg-warning text-dark{% endif %}">{% if etapa5_ok %}OK{% else %}Pendente{% endif %}</span>
+                    <span class="badge bg-secondary">{{ participantes_count }} participante(s)</span>
                 </li>
             </ul>
-        </div>
-    </div>
+        </section>
 
-    {% if pendencias %}
-    <div class="card app-page-card border-warning">
-        <div class="card-header py-2 bg-warning bg-opacity-25">
-            <h3 class="h6 mb-0">Pendências para finalizar</h3>
-        </div>
-        <div class="card-body py-3">
-            <p class="text-muted small mb-2">Resolva as pendências abaixo para poder marcar o evento como finalizado.</p>
+        {% if pendencias %}
+        <section class="app-page-card border-warning">
+            <h2 class="h6 mb-3">Pendências para finalizar</h2>
             <ul class="mb-0">
                 {% for p in pendencias %}
                 <li>{{ p }}</li>
                 {% endfor %}
             </ul>
-        </div>
-    </div>
-    {% endif %}
+        </section>
+        {% endif %}
 
-    {% if finalizacao.concluido %}
-    <div class="card app-page-card border-success">
-        <div class="card-body py-3">
+        {% if finalizacao.concluido %}
+        <section class="app-page-card border-success">
             <p class="mb-0">
                 <span class="badge bg-success me-2">Evento finalizado</span>
                 Finalizado em {{ finalizacao.finalizado_em|date:"d/m/Y H:i" }}{% if finalizacao.finalizado_por %} por {{ finalizacao.finalizado_por.get_full_name|default:finalizacao.finalizado_por.username }}{% endif %}.
             </p>
             {% if finalizacao.observacoes_finais %}
-            <p class="mt-2 mb-0 small text-muted">{{ finalizacao.observacoes_finais }}</p>
+            <p class="small text-muted mt-2 mb-0">{{ finalizacao.observacoes_finais }}</p>
             {% endif %}
+        </section>
+        {% else %}
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+            {% for err in form.non_field_errors %}{{ err }}{% endfor %}
         </div>
-    </div>
-    {% else %}
-    {% if form.non_field_errors %}
-    <div class="alert alert-danger" role="alert">
-        {% for err in form.non_field_errors %}{{ err }}{% endfor %}
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <div class="card app-page-card form-card">
-        <div class="card-header py-2">
-            <h3 class="h6 mb-0">Observações finais e finalização</h3>
-        </div>
-        <div class="card-body">
-            <form method="post" id="form-etapa6">
+        <section class="app-page-card app-page-card--spacious">
+            <form method="post" id="form-finalizacao">
                 {% csrf_token %}
                 <div class="mb-3">
                     <label for="id_observacoes_finais" class="form-label">Observações finais</label>
@@ -151,50 +92,8 @@
                     <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary">Cancelar</a>
                 </div>
             </form>
-        </div>
-    </div>
-    {% endif %}
-
-    {% if oficios %}
-    <div class="card app-page-card">
-        <div class="card-header py-2">
-            <h3 class="h6 mb-0">Ofícios vinculados ao evento</h3>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-sm mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Número / Ano</th>
-                            <th>Protocolo</th>
-                            <th>Status</th>
-                            <th class="text-end">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for oficio in oficios %}
-                        <tr>
-                            <td><strong>{{ oficio.numero_formatado|default:"—" }}</strong></td>
-                            <td>{{ oficio.protocolo_formatado|default:"—" }}</td>
-                            <td>
-                                {% if oficio.status == 'FINALIZADO' %}
-                                <span class="badge bg-success">Finalizado</span>
-                                {% else %}
-                                <span class="badge bg-warning text-dark">Rascunho</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end">
-                                <a href="{% url 'eventos:oficio-editar' oficio.pk %}" class="btn btn-outline-primary btn-sm">Editar</a>
-                                <a href="{% url 'eventos:oficio-step4' oficio.pk %}" class="btn btn-outline-secondary btn-sm">Resumo</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+        </section>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
