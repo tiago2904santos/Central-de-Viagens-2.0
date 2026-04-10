@@ -20,11 +20,6 @@
 {% endblock %}
 {% block list_filter_actions_field_class %}system-document-filter__field--span-3{% endblock %}
 
-{% block list_top_notice %}
-{% if not novo_roteiro_url %}
-<div class="system-document-top__notice">Selecione um evento no filtro para habilitar a criacao vinculada ao evento sem sair desta tela.</div>
-{% endif %}
-{% endblock %}
 
 {% block list_filter_primary_fields %}
 <div class="system-document-filter__field system-document-filter__field--span-4">
@@ -156,68 +151,135 @@
 
 <section class="roteiro-list-grid documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Visualizacao completa de roteiros">
     {% for roteiro in object_list %}
-    <article class="app-page-card app-page-card--spacious roteiro-list-card {{ roteiro.card_theme_class }}">
-        <div class="roteiro-list-card__header">
-            <div class="roteiro-list-card__title-wrap">
-                <h2 class="roteiro-list-card__title">
+    <article class="oficio-list-card roteiro-list-card documento-cascade-card {{ roteiro.card_theme_class }}" id="roteiro-card-{{ roteiro.pk }}">
+        <div class="oficio-list-rich-layout">
+            <div class="oficio-list-card__header">
+                <div class="documento-cascade-card__intro documento-cascade-card__intro--header">
+                    <div class="documento-cascade-card__title-row">
+                        <h2 class="documento-cascade-card__title">
+                            {% if roteiro.is_avulso %}
+                            Roteiro avulso
+                            {% else %}
+                            <a href="{{ roteiro.evento_url }}" class="text-decoration-none">{{ roteiro.evento_display }}</a>
+                            {% endif %}
+                        </h2>
+                        <span class="oficio-list-badge is-muted roteiro-list-card__type-badge">{{ roteiro.tipo_label }}</span>
+                    </div>
+                    <p class="documento-cascade-card__subtitle">{{ roteiro.periodo_display }}</p>
+                </div>
+
+                <div class="oficio-list-card__header-status">
+                    <span class="oficio-list-badge {{ roteiro.status_meta.badge_css_class }}">{{ roteiro.status_meta.label }}</span>
+                </div>
+            </div>
+
+            <div class="documento-cascade-meta-grid roteiro-list-card__meta-grid">
+                <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
+                    <span class="documento-cascade-meta-item__label">Sede</span>
+                    <strong class="documento-cascade-meta-item__value">{{ roteiro.sede_display }}</strong>
+                </div>
+
+                <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
+                    <span class="documento-cascade-meta-item__label">Periodo</span>
+                    <strong class="documento-cascade-meta-item__value">{{ roteiro.periodo_display }}</strong>
+                </div>
+
+                <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
+                    <span class="documento-cascade-meta-item__label">Destinos</span>
+                    <strong class="documento-cascade-meta-item__value">{{ roteiro.destinos_count_label }}</strong>
+                    <span class="documento-cascade-inline-note roteiro-list-card__meta-support">{{ roteiro.destinos_display }}</span>
+                </div>
+
+                <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
+                    <span class="documento-cascade-meta-item__label">Vinculo documental</span>
+                    <strong class="documento-cascade-meta-item__value">{{ roteiro.oficios_count_label }}</strong>
+                </div>
+            </div>
+
+            <div class="documento-cascade-block-grid documento-cascade-block-grid--double roteiro-list-card__block-grid">
+                <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                    <div class="oficio-list-subcard__header">
+                        <div>
+                            <p class="oficio-list-subcard__subtitle">Identificacao e parametros</p>
+                            <h3 class="oficio-list-subcard__title">Dados basicos do roteiro</h3>
+                        </div>
+                    </div>
+                    <div class="oficio-list-subcard__body">
+                        <div class="documento-cascade-chip-list roteiro-list-card__chip-list">
+                            {% for chip in roteiro.header_chips %}
+                            <span class="documento-cascade-chip oficio-list-surface oficio-list-surface--soft">
+                                <span>{{ chip.label }}</span>
+                                <strong>{{ chip.value }}</strong>
+                            </span>
+                            {% endfor %}
+
+                            <span class="documento-cascade-chip oficio-list-surface oficio-list-surface--soft documento-cascade-chip--compact">
+                                <span>Status</span>
+                                <strong>{{ roteiro.status_meta.label }}</strong>
+                            </span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
+                    <div class="oficio-list-subcard__header">
+                        <div>
+                            <p class="oficio-list-subcard__subtitle">Integracao com documentos</p>
+                            <h3 class="oficio-list-subcard__title">Oficios vinculados</h3>
+                        </div>
+                    </div>
+                    <div class="oficio-list-subcard__body">
+                        {% if roteiro.oficios_preview %}
+                        <div class="documento-cascade-list roteiro-list-card__linked-list">
+                            {% for oficio in roteiro.oficios_preview %}
+                            <div class="documento-cascade-item oficio-list-surface oficio-list-surface--soft">
+                                <div class="documento-cascade-item__main">
+                                    <a href="{{ oficio.url }}" class="documento-cascade-item__title">{{ oficio.label }}</a>
+                                    <div class="documento-cascade-item__meta">Oficio associado ao roteiro</div>
+                                </div>
+                                <div class="documento-cascade-item__actions">
+                                    <span class="documento-cascade-item__badge">Vinculado</span>
+                                    <a href="{{ oficio.url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir oficio vinculado">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                        <span>Abrir</span>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% if roteiro.extra_oficios_count %}
+                            <div class="documento-cascade-empty documento-cascade-empty--pt">+{{ roteiro.extra_oficios_count }} oficio(s) adicionais vinculados</div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="documento-cascade-empty">Nenhum oficio vinculado a este roteiro.</div>
+                        {% endif %}
+                    </div>
+                </section>
+            </div>
+
+            <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+                <div class="oficio-list-card__footer-actions roteiro-list-card__footer-actions">
+                    <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Editar roteiro">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Editar</span>
+                    </a>
                     {% if roteiro.is_avulso %}
-                    Roteiro avulso
-                    {% else %}
-                    <a href="{{ roteiro.evento_url }}" class="text-decoration-none">{{ roteiro.evento_display }}</a>
+                    <span class="oficio-list-badge is-info">Roteiro avulso</span>
                     {% endif %}
-                </h2>
-                <p class="roteiro-list-card__subtitle">{{ roteiro.tipo_label }} • {{ roteiro.periodo_display }}</p>
+                    {% if roteiro.etapa_url %}
+                    <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Abrir etapa 2 do roteiro">
+                        <i class="bi bi-signpost-2"></i>
+                        <span>Etapa 2</span>
+                    </a>
+                    {% endif %}
+                    {% if roteiro.oficios_url %}
+                    <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Vincular roteiro em oficio">
+                        <i class="bi bi-link-45deg"></i>
+                        <span>Usar no oficio</span>
+                    </a>
+                    {% endif %}
+                </div>
             </div>
-            <span class="oficio-list-badge {{ roteiro.status_meta.badge_css_class }}">{{ roteiro.status_meta.label }}</span>
-        </div>
-
-        <div class="roteiro-list-card__chips">
-            {% for chip in roteiro.header_chips %}
-            <span class="roteiro-list-card__chip">
-                <span class="roteiro-list-card__chip-label">{{ chip.label }}</span>
-                <strong class="roteiro-list-card__chip-value">{{ chip.value }}</strong>
-            </span>
-            {% endfor %}
-            <span class="roteiro-list-card__chip roteiro-list-card__chip--oficios">
-                <span class="roteiro-list-card__chip-label">Oficios</span>
-                <strong class="roteiro-list-card__chip-value">{{ roteiro.oficios_count_label }}</strong>
-            </span>
-        </div>
-
-        <div class="roteiro-list-card__meta-grid">
-            <div class="roteiro-list-card__meta-item">
-                <span class="roteiro-list-card__meta-label">Sede</span>
-                <strong class="roteiro-list-card__meta-value">{{ roteiro.sede_display }}</strong>
-            </div>
-            <div class="roteiro-list-card__meta-item roteiro-list-card__meta-item--destinos">
-                <span class="roteiro-list-card__meta-label">Destinos</span>
-                <strong class="roteiro-list-card__meta-value">{{ roteiro.destinos_count_label }}</strong>
-                <span class="roteiro-list-card__meta-extra">{{ roteiro.destinos_display }}</span>
-            </div>
-        </div>
-
-        {% if roteiro.oficios_preview %}
-        <div class="roteiro-list-card__linked-docs">
-            <span class="roteiro-list-card__meta-label">Oficios vinculados</span>
-            <div class="roteiro-list-card__linked-docs-list">
-                {% for oficio in roteiro.oficios_preview %}
-                <a href="{{ oficio.url }}" class="roteiro-list-card__linked-doc">{{ oficio.label }}</a>
-                {% endfor %}
-                {% if roteiro.extra_oficios_count %}
-                <span class="roteiro-list-card__linked-doc roteiro-list-card__linked-doc--muted">+{{ roteiro.extra_oficios_count }} adicionais</span>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="roteiro-list-card__actions">
-            <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-outline-primary">Editar</a>
-            {% if roteiro.etapa_url %}
-            <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary">Etapa 2</a>
-            {% endif %}
-            {% if roteiro.oficios_url %}
-            <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-outline-secondary">Usar no oficio</a>
-            {% endif %}
         </div>
     </article>
     {% empty %}
