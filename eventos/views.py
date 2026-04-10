@@ -2290,6 +2290,7 @@ def guiado_etapa_3(request, evento_id):
         'evento': evento,
         'object': evento,
         'oficios': oficios,
+        'object_list': oficios,  # Para compatibilidade com partial _oficios_list_content.html
         'oficios_summary': oficios_summary,
     }
     return render(request, 'eventos/guiado/etapa_3.html', context)
