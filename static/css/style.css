@@ -10321,5 +10321,32 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     }
 }
 
+/* ----- Fluxo guiado: topo aberto sem card externo ----- */
+.guiado-paginated-page .oficio-wizard-header-card,
+.oficio-wizard-page .oficio-wizard-header-card {
+    gap: 0.9rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.guiado-paginated-page .oficio-wizard-header-main,
+.oficio-wizard-page .oficio-wizard-header-main {
+    align-items: flex-start;
+}
+
+.guiado-paginated-page .oficio-wizard-header-badges,
+.oficio-wizard-page .oficio-wizard-header-badges {
+    margin-top: 0.1rem;
+}
+
+.guiado-paginated-page .oficio-wizard-stepper-shell,
+.oficio-wizard-page .oficio-wizard-stepper-shell {
+    margin-top: 0.15rem;
+}
+
 
 
