@@ -3,7 +3,7 @@
   <a
     href="{{ item.url }}"
     data-step-key="{{ item.key }}"
-    class="oficio-stepper-link is-{{ item.state }}{% if item.active %} is-active{% endif %}"
+    class="oficio-stepper-link is-{{ item.state }} is-base-{{ item.base_state|default:item.state }}{% if item.active %} is-active{% endif %}"
     {% if not item.active %}data-autosave-link="1"{% endif %}
     aria-current="{% if item.active %}step{% else %}false{% endif %}"
   >

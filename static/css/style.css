@@ -10119,6 +10119,27 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     box-shadow: 0 15px 30px rgba(31, 76, 125, 0.24);
 }
 
+.guiado-flow-page .oficio-stepper-link.is-active.is-base-completed {
+    background: linear-gradient(135deg, #115e3b 0%, #15803d 48%, #22a06b 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 15px 30px rgba(21, 128, 61, 0.24);
+}
+
+.guiado-flow-page .oficio-stepper-link.is-active.is-base-draft {
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 48%, #dc2626 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 15px 30px rgba(153, 27, 27, 0.24);
+}
+
+.guiado-flow-page .oficio-stepper-link.is-active.is-base-pending {
+    background: linear-gradient(135deg, #1a3f69 0%, #1f4c7d 48%, #2f6ea8 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 15px 30px rgba(31, 76, 125, 0.24);
+}
+
 .guiado-flow-page .oficio-stepper-link.is-completed {
     border-color: rgba(var(--guiado-etapa3-success-rgb), 0.22);
     background: linear-gradient(180deg, rgba(var(--guiado-etapa3-success-rgb), 0.12) 0%, rgba(255, 255, 255, 0.92) 100%);
