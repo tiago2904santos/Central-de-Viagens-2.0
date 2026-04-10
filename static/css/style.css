@@ -9934,6 +9934,9 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     --guiado-etapa3-soft-rgb: 231, 240, 249;
     --guiado-etapa3-success-rgb: 30, 132, 73;
     --guiado-etapa3-danger-rgb: 185, 28, 28;
+    --guiado-etapa3-header-border: rgba(15, 23, 42, 0.08);
+    --guiado-etapa3-header-shadow: 0 20px 36px rgba(15, 23, 42, 0.1);
+    --guiado-etapa3-header-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(245, 251, 247, 0.97));
 }
 
 .guiado-etapa3-page.oficios-list-page {
@@ -9967,15 +9970,20 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     position: static;
 }
 
-.guiado-etapa3-page .guiado-etapa3-header .oficio-wizard-header-main {
-    gap: 0.7rem;
-}
-
 .guiado-etapa3-page .guiado-etapa3-header .oficio-wizard-header-copy {
     max-width: none;
 }
 
-.guiado-etapa3-page .guiado-etapa3-header-top {
+.guiado-etapa3-page .guided-flow-header-card {
+    gap: 0.9rem;
+    padding: 1.02rem 1.08rem 1.08rem;
+    border-color: var(--guiado-etapa3-header-border);
+    background: var(--guiado-etapa3-header-surface);
+    box-shadow: var(--guiado-etapa3-header-shadow);
+}
+
+.guiado-etapa3-page .guided-flow-header__lead {
+    gap: 1rem;
     align-items: flex-start;
 }
 
@@ -10011,34 +10019,42 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .guiado-etapa3-page .guiado-etapa3-header-badges {
     justify-content: flex-start;
-    gap: 0.55rem;
+    gap: 0.7rem;
+    align-items: center;
 }
 
 .guiado-etapa3-page .guiado-etapa3-header-badges .oficio-wizard-header-badge {
     min-width: 0;
-    padding: 0.62rem 0.82rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.9);
+    min-height: 3rem;
+    padding: 0.76rem 1rem;
+    border-radius: 1.05rem;
+    border: 1px solid rgba(var(--guiado-etapa3-accent-rgb), 0.12);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(238, 245, 252, 0.94) 100%);
+    box-shadow: 0 12px 26px rgba(16, 36, 63, 0.06);
 }
 
 .guiado-etapa3-page .guiado-etapa3-context-badge strong {
-    font-size: 0.8rem;
-    font-weight: 700;
+    font-size: 0.84rem;
+    font-weight: 800;
     line-height: 1.2;
 }
 
 .guiado-etapa3-page .guiado-etapa3-context-badge--type strong,
 .guiado-etapa3-page .guiado-etapa3-context-badge--location strong,
 .guiado-etapa3-page .guiado-etapa3-context-badge--destinations strong {
-    color: var(--oficio-wizard-muted);
+    color: #30465d;
 }
 
 .guiado-etapa3-page .guiado-etapa3-count-badge {
+    min-height: 3.15rem;
+    padding-inline: 1.08rem;
     border-width: 1px;
+    border-radius: 1.15rem;
+    box-shadow: 0 14px 28px rgba(31, 76, 125, 0.1);
 }
 
 .guiado-etapa3-page .guiado-etapa3-count-badge strong {
-    font-size: 0.84rem;
+    font-size: 0.9rem;
     font-weight: 800;
     line-height: 1.2;
 }
@@ -10063,6 +10079,21 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .guiado-etapa3-page .oficio-stepper-link.is-pending {
     color: var(--oficio-wizard-ink);
+}
+
+.guiado-etapa3-page .oficio-stepper {
+    gap: 0.65rem;
+}
+
+.guiado-etapa3-page .oficio-stepper-link {
+    min-height: 5rem;
+    padding: 0.9rem 1rem;
+    border-radius: 1.18rem;
+}
+
+.guiado-etapa3-page .oficio-stepper-badge {
+    width: 2.15rem;
+    height: 2.15rem;
 }
 
 .guiado-etapa3-page .oficio-stepper-link.is-active {
@@ -10092,27 +10123,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 .guiado-etapa3-page .oficio-stepper-link.is-draft .oficio-stepper-badge {
     background: rgba(var(--guiado-etapa3-danger-rgb), 0.14);
     color: #991b1b;
-}
-
-.guiado-etapa3-page .guiado-etapa3-oficios-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    width: 100%;
-}
-
-.guiado-etapa3-page .guiado-etapa3-oficios-meta__item {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.3rem;
-    padding: 0.62rem 0.92rem;
-    border-radius: 999px;
-    border: 1px solid rgba(var(--guiado-etapa3-accent-rgb), 0.12);
-    background: rgba(255, 255, 255, 0.82);
-    color: #405568;
-    font-size: 0.82rem;
-    font-weight: 700;
-    box-shadow: 0 10px 22px rgba(16, 36, 63, 0.05);
 }
 
 .guiado-etapa3-page .guiado-etapa3-oficios-stack {
@@ -10310,11 +10320,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
     .guiado-etapa3-page .guiado-etapa3-header-badges .oficio-wizard-header-badge {
         width: 100%;
-    }
-
-    .guiado-etapa3-page .guiado-etapa3-oficios-meta {
-        flex-direction: column;
-        align-items: stretch;
     }
 
     .guiado-etapa3-page .oficio-stepper {
