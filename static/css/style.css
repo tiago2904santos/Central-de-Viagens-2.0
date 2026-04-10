@@ -9990,43 +9990,55 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     flex-wrap: nowrap;
     justify-content: flex-end;
     align-items: center;
-    gap: 0.75rem;
-    scrollbar-width: thin;
+    gap: var(--list-toolbar-gap);
+    margin: 0;
 }
 
 .guiado-flow-page .guiado-etapa3-header-actions .btn {
-    height: 2.45rem;
-    min-height: 2.45rem;
-    padding-inline: 1.08rem;
-    padding-block: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: var(--list-button-height);
+    min-height: var(--list-button-height);
+    padding: 0.4rem 1rem;
     line-height: 1;
     font-size: 0.95rem;
     font-weight: 600;
     min-width: 0;
-    border-radius: 0.82rem;
+    border-radius: var(--list-input-radius);
     white-space: nowrap;
     flex: 0 0 auto;
+    margin: 0;
 }
 
 .guiado-flow-page .guiado-etapa3-header-toggle .oficios-view-toggle {
-    padding: 0.18rem;
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 0;
+    padding: 0.22rem;
     border: 1px solid rgba(var(--guiado-etapa3-accent-rgb), 0.12);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 8px 18px rgba(16, 36, 63, 0.05);
     flex: 0 0 auto;
+    margin: 0;
 }
 
 .guiado-flow-page .guiado-etapa3-header-toggle .oficios-view-toggle__button {
-    height: 2.45rem;
-    min-height: 2.45rem;
-    padding-inline: 1.08rem;
-    padding-block: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 2rem;
+    padding: 0.48rem 0.88rem;
     line-height: 1;
-    border-radius: 0.82rem;
-    font-size: 0.95rem;
-    font-weight: 600;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
     min-width: 0;
+    margin: 0;
 }
 
 .guiado-flow-page .guiado-etapa3-header-badges {
