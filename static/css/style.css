@@ -3758,6 +3758,14 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     gap: 1rem;
 }
 
+.oficios-list-page .system-document-top {
+    margin-bottom: 0;
+}
+
+.oficios-list-page .system-document-filter {
+    display: none !important;
+}
+
 .oficios-list-header {
     display: flex;
     align-items: flex-start;
@@ -9928,6 +9936,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .guiado-etapa3-page .system-document-top {
+    display: contents;
     margin-bottom: 0;
 }
 
