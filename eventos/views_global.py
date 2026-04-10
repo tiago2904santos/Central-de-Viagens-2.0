@@ -1969,6 +1969,23 @@ def roteiro_global_lista(request):
             }
             for destino in destinos
         ]
+        primeira_saida = None
+        ultima_chegada = None
+        for trecho in trechos:
+            saida_dt = getattr(trecho, 'saida_dt', None)
+            chegada_dt = getattr(trecho, 'chegada_dt', None)
+            if saida_dt and (primeira_saida is None or saida_dt < primeira_saida):
+                primeira_saida = saida_dt
+            if chegada_dt and (ultima_chegada is None or chegada_dt > ultima_chegada):
+                ultima_chegada = chegada_dt
+        if primeira_saida is None:
+            primeira_saida = getattr(roteiro, 'saida_dt', None)
+        if ultima_chegada is None:
+            ultima_chegada = (
+                getattr(roteiro, 'retorno_chegada_dt', None)
+                or getattr(roteiro, 'chegada_dt', None)
+                or primeira_saida
+            )
         destinos_count = len(roteiro.destinos_items)
         if destinos_count == 1:
             roteiro.destinos_count_label = '1 destino planejado'
@@ -1978,10 +1995,19 @@ def roteiro_global_lista(request):
             roteiro.destinos_count_label = 'Nenhum destino cadastrado'
         title_destinos = roteiro.destinos_display if roteiro.destinos_display not in EMPTY_DISPLAY_ALIASES else 'Destino a definir'
         roteiro.card_title = f'{roteiro.sede_display} > {title_destinos}'
-        roteiro.header_chips = [
-            {'label': 'Roteiro', 'value': f'RT-{roteiro.pk:04d}'},
-            {'label': 'Sede', 'value': roteiro.sede_display},
-            {'label': 'Periodo', 'value': roteiro.periodo_display},
+        roteiro.header_fields = [
+            {'label': 'SEDE', 'value': roteiro.sede_display, 'css_class': 'is-key'},
+            {'label': 'DESTINOS', 'value': title_destinos, 'css_class': ''},
+            {
+                'label': 'DATA/HORA DE SAIDA',
+                'value': _oficio_list_format_datetime(primeira_saida),
+                'css_class': 'is-date',
+            },
+            {
+                'label': 'DATA/HORA DE CHEGADA',
+                'value': _oficio_list_format_datetime(ultima_chegada),
+                'css_class': 'is-date',
+            },
         ]
 
         roteiro.trechos_card = []

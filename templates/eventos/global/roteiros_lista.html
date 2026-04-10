@@ -154,10 +154,13 @@
     <article class="oficio-list-card roteiro-list-card documento-cascade-card {{ roteiro.card_theme_class }}" id="roteiro-card-{{ roteiro.pk }}">
         <div class="oficio-list-rich-layout">
             <div class="oficio-list-card__header">
-                <div class="documento-cascade-card__intro documento-cascade-card__intro--header roteiro-list-card__header-main">
-                    <div class="documento-cascade-card__title-row">
-                        <h2 class="documento-cascade-card__title">{{ roteiro.card_title }}</h2>
-                    </div>
+                <div class="oficio-list-chip-list oficio-list-chip-list--meta roteiro-list-card__header-fields">
+                    {% for field in roteiro.header_fields %}
+                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature{% if field.css_class %} {{ field.css_class }}{% endif %}">
+                        <span class="oficio-list-chip__label">{{ field.label }}</span>
+                        <span class="oficio-list-chip__value">{{ field.value }}</span>
+                    </span>
+                    {% endfor %}
                 </div>
 
                 <div class="oficio-list-card__header-status">
@@ -178,8 +181,7 @@
                 {% endfor %}
             </div>
 
-            <div class="oficio-list-core-grid roteiro-list-card__line3-grid{% if not roteiro.has_linked_refs %} roteiro-list-card__line3-grid--single{% endif %}">
-                {% if roteiro.has_linked_refs %}
+            <div class="oficio-list-core-grid roteiro-list-card__line3-grid">
                 <section class="oficio-list-core-card oficio-list-core-card--travelers oficio-list-surface oficio-list-surface--panel">
                     <div class="oficio-list-subcard__header">
                         <div>
@@ -227,7 +229,6 @@
                         </div>
                     </div>
                 </section>
-                {% endif %}
 
                 <section class="oficio-list-core-card oficio-list-core-card--transport oficio-list-surface oficio-list-surface--panel roteiro-list-card__valor-col">
                     <div class="oficio-list-core-card__header">
