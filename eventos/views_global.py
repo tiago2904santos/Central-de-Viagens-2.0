@@ -38,6 +38,7 @@ from .models import (
     OficioTrecho,
     PlanoTrabalho,
     RoteiroEvento,
+    RoteiroEventoTrecho,
     TermoAutorizacao,
 )
 from .services.diarias import (
@@ -1860,7 +1861,21 @@ def roteiro_global_lista(request):
     }
     queryset = (
         RoteiroEvento.objects.select_related('evento', 'origem_estado', 'origem_cidade')
-        .prefetch_related('destinos__estado', 'destinos__cidade', 'oficios')
+        .prefetch_related(
+            'destinos__estado',
+            'destinos__cidade',
+            Prefetch('oficios', queryset=Oficio.objects.select_related('evento').order_by('-updated_at', '-created_at')),
+            Prefetch(
+                'trechos',
+                queryset=RoteiroEventoTrecho.objects.select_related(
+                    'origem_estado',
+                    'origem_cidade',
+                    'destino_estado',
+                    'destino_cidade',
+                ).order_by('ordem', 'pk'),
+            ),
+            Prefetch('planos_trabalho', queryset=PlanoTrabalho.objects.select_related('evento').order_by('-updated_at', '-created_at')),
+        )
         .annotate(oficios_count=Count('oficios', distinct=True))
     )
     if filters['q']:
@@ -1896,7 +1911,9 @@ def roteiro_global_lista(request):
     object_list = list(page_obj.object_list)
     for roteiro in object_list:
         destinos = list(roteiro.destinos.all())
+        trechos = list(roteiro.trechos.all())
         oficios = list(roteiro.oficios.all())
+        planos = list(roteiro.planos_trabalho.all())
         roteiro.destinos_display = _roteiro_destinos_display(roteiro)
         roteiro.sede_display = _label_local(roteiro.origem_cidade, roteiro.origem_estado)
         roteiro.periodo_display = _format_roteiro_periodo_display(roteiro)
@@ -1917,11 +1934,62 @@ def roteiro_global_lista(request):
             roteiro.destinos_count_label = f'{destinos_count} destinos planejados'
         else:
             roteiro.destinos_count_label = 'Nenhum destino cadastrado'
+        title_destinos = roteiro.destinos_display if roteiro.destinos_display not in EMPTY_DISPLAY_ALIASES else 'Destino a definir'
+        roteiro.card_title = f'{roteiro.sede_display} > {title_destinos}'
         roteiro.header_chips = [
             {'label': 'Roteiro', 'value': f'RT-{roteiro.pk:04d}'},
             {'label': 'Sede', 'value': roteiro.sede_display},
             {'label': 'Periodo', 'value': roteiro.periodo_display},
         ]
+
+        roteiro.trechos_card = []
+        for trecho in trechos:
+            origem_label = _label_local(getattr(trecho, 'origem_cidade', None), getattr(trecho, 'origem_estado', None))
+            destino_label = _label_local(getattr(trecho, 'destino_cidade', None), getattr(trecho, 'destino_estado', None))
+            roteiro.trechos_card.append(
+                {
+                    'saida_label': f'Saida de {origem_label}',
+                    'saida_datetime': _oficio_list_format_datetime(getattr(trecho, 'saida_dt', None)),
+                    'chegada_label': f'Chegada em {destino_label}',
+                    'chegada_datetime': _oficio_list_format_datetime(getattr(trecho, 'chegada_dt', None)),
+                }
+            )
+
+        if not roteiro.trechos_card:
+            destino_fallback = roteiro.destinos_items[0]['label'] if roteiro.destinos_items else 'Destino a definir'
+            roteiro.trechos_card.append(
+                {
+                    'saida_label': f'Saida de {roteiro.sede_display}',
+                    'saida_datetime': _oficio_list_format_datetime(getattr(roteiro, 'saida_dt', None)),
+                    'chegada_label': f'Chegada em {destino_fallback}',
+                    'chegada_datetime': _oficio_list_format_datetime(getattr(roteiro, 'chegada_dt', None)),
+                }
+            )
+
+        eventos_linked = []
+        eventos_seen = set()
+        if roteiro.evento_id and roteiro.evento:
+            eventos_seen.add(roteiro.evento_id)
+            eventos_linked.append(
+                {
+                    'label': roteiro.evento.titulo or f'Evento #{roteiro.evento_id}',
+                    'url': reverse('eventos:guiado-painel', kwargs={'pk': roteiro.evento_id}),
+                }
+            )
+        for oficio in oficios:
+            evento_oficio = getattr(oficio, 'evento', None)
+            if not evento_oficio or not evento_oficio.pk or evento_oficio.pk in eventos_seen:
+                continue
+            eventos_seen.add(evento_oficio.pk)
+            eventos_linked.append(
+                {
+                    'label': evento_oficio.titulo or f'Evento #{evento_oficio.pk}',
+                    'url': reverse('eventos:guiado-painel', kwargs={'pk': evento_oficio.pk}),
+                }
+            )
+        roteiro.eventos_linked = eventos_linked[:4]
+        roteiro.eventos_linked_extra = max(len(eventos_linked) - len(roteiro.eventos_linked), 0)
+
         roteiro.oficios_preview = [
             {
                 'label': oficio.numero_formatado or f'Oficio #{oficio.pk}',
@@ -1936,6 +2004,31 @@ def roteiro_global_lista(request):
         else:
             roteiro.oficios_count_label = 'Aguardando vinculo documental'
         roteiro.extra_oficios_count = max(roteiro.oficios_count - len(roteiro.oficios_preview), 0)
+
+        roteiro.valor_por_servidor = 'Nao calculado'
+        roteiro.valor_por_servidor_fonte = 'Sem plano de trabalho vinculado'
+        for plano in planos:
+            valor_unitario_display = _clean(plano.diarias_valor_unitario)
+            if valor_unitario_display:
+                try:
+                    valor_unitario_decimal = Decimal(valor_unitario_display.replace('.', '').replace(',', '.'))
+                except (InvalidOperation, ValueError):
+                    roteiro.valor_por_servidor = valor_unitario_display
+                else:
+                    roteiro.valor_por_servidor = f'R$ {formatar_valor_diarias(valor_unitario_decimal)}'
+                roteiro.valor_por_servidor_fonte = f'PT {plano.numero_formatado or f"#{plano.pk}"}'
+                break
+
+            if plano.valor_diarias is not None and (plano.quantidade_servidores or 0) > 0:
+                try:
+                    valor_por_servidor = Decimal(str(plano.valor_diarias)) / Decimal(plano.quantidade_servidores)
+                except (InvalidOperation, ValueError, ZeroDivisionError):
+                    continue
+                roteiro.valor_por_servidor = f'R$ {formatar_valor_diarias(valor_por_servidor)}'
+                roteiro.valor_por_servidor_fonte = f'PT {plano.numero_formatado or f"#{plano.pk}"}'
+                break
+
+        roteiro.has_linked_refs = bool(roteiro.eventos_linked or roteiro.oficios_preview)
         roteiro.observacoes_preview = _clean(roteiro.observacoes)
         roteiro.is_avulso = roteiro.tipo == RoteiroEvento.TIPO_AVULSO or not roteiro.evento_id
         if roteiro.is_avulso:
