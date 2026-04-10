@@ -139,6 +139,7 @@
     --app-shell-max-width-dashboard: 1380px;
     --app-shell-max-width-confirm: 760px;
     --app-shell-max-width-wizard: 1320px;
+    --app-document-accent-strip-width: 4px;
     --app-section-gap: clamp(1rem, 0.75rem + 0.8vw, 1.5rem);
     --app-stack-gap: clamp(1rem, 0.7rem + 0.9vw, 1.5rem);
     --app-card-radius: var(--cv-card-radius-lg);
@@ -713,6 +714,10 @@ a:hover {
 .app-page-shell--list {
     --app-page-max-width: var(--app-shell-max-width-wide);
     padding-bottom: max(var(--app-shell-padding-block-end), 4.75rem);
+}
+
+.app-page-shell--wide {
+    --app-page-max-width: var(--app-shell-max-width-wide);
 }
 
 .app-page-shell--form {
@@ -2566,7 +2571,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     position: relative;
     overflow: hidden;
     border: 1px solid rgba(15, 23, 42, 0.08);
-    border-left: 4px solid var(--oficio-card-accent);
+    border-left: var(--app-document-accent-strip-width) solid var(--oficio-card-accent);
     border-radius: 1rem;
     background:
         radial-gradient(circle at top right, rgba(255, 255, 255, 0.98), transparent 36%),
@@ -5204,8 +5209,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     --termo-card-accent-rgb: 100, 116, 139;
     --termo-card-ink: #4a5568;
     border: 1px solid rgba(15, 23, 42, 0.08);
-    border-top: 4px solid var(--termo-card-accent);
-    border-left: 4px solid var(--termo-card-accent);
+    border-top: var(--app-document-accent-strip-width) solid var(--termo-card-accent);
+    border-left: var(--app-document-accent-strip-width) solid var(--termo-card-accent);
     border-radius: 1rem;
     background:
         radial-gradient(circle at top right, rgba(255, 255, 255, 0.88), transparent 36%),
@@ -10119,7 +10124,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .guiado-etapa3-page .oficio-list-card {
     border-radius: 1rem;
-    border-left-width: 4px;
     padding: 0.9rem 1rem 0.95rem;
     background:
         radial-gradient(circle at top right, rgba(255, 255, 255, 0.97), transparent 34%),
