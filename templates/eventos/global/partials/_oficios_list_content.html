@@ -63,7 +63,7 @@
     {% endif %}
 </section>
 
-<section class="oficio-list-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de oficios">
+<section class="oficio-list-grid documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de oficios">
     {% for oficio in object_list %}
     {% include 'eventos/global/partials/_oficio_card.html' with oficio=oficio %}
     {% empty %}
