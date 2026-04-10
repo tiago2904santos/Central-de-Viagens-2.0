@@ -61,13 +61,7 @@
         </section>
         {% endif %}
 
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary">Voltar ao painel</a>
-            <a href="{% url 'eventos:guiado-etapa-3' evento.pk %}" class="btn btn-primary">Etapa 3 - Ofícios / Justificativas</a>
-        </div>
 
-        {% url 'eventos:guiado-etapa-2-cadastrar' evento.pk as roteiro_novo_url %}
-        {% include 'includes/list/floating_new_button.html' with url=roteiro_novo_url label='Cadastrar roteiro' icon='bi-plus-lg' %}
     </div>
 </div>
 {% endblock %}
