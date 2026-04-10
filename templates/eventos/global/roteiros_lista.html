@@ -1,11 +1,15 @@
 {% extends 'includes/list/document_list_base.html' %}
 {% load static %}
 
-{% block list_page_class %}system-list-page--simple{% endblock %}
+{% block list_page_class %}roteiros-list-page system-list-page--complete{% endblock %}
+{% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.roteiros.view-mode"{% endblock %}
 {% block page_title_block %}Roteiros{% endblock %}
 {% block page_header_title %}Roteiros{% endblock %}
 {% block list_title %}Roteiros{% endblock %}
-{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='simple' %}{% endblock %}
+{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
+{% block list_header_aux_controls %}
+{% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao da lista de roteiros' %}
+{% endblock %}
 
 {% block list_header_actions %}
 <a href="{{ eventos_url }}" class="btn btn-outline-secondary system-list-action-btn">Eventos</a>
@@ -89,64 +93,137 @@
 {% endblock %}
 
 {% block page_result_content %}
-<div class="system-list-table-wrap">
-    <div class="table-responsive">
-        <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
-            <thead class="table-light">
-                <tr>
-                    <th>Evento / tipo</th>
-                    <th>Sede</th>
-                    <th>Destinos</th>
-                    <th>Status</th>
-                    <th>Oficios ligados</th>
-                    <th class="text-end" width="260">Acoes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for roteiro in object_list %}
-                <tr>
-                    <td>
-                        {% if roteiro.is_avulso %}
-                        <span class="badge bg-secondary me-1">Avulso</span>
-                        <span class="text-muted">Sem evento</span>
-                        {% else %}
-                        <a href="{{ roteiro.evento_url }}" class="text-decoration-none">{{ roteiro.evento.titulo|default:"(sem titulo)" }}</a>
-                        {% endif %}
-                    </td>
-                    <td>{{ roteiro.origem_cidade.nome|default:roteiro.origem_estado.sigla|default:"-" }}</td>
-                    <td>
-                        <div>{{ roteiro.destinos_display }}</div>
-                        <div class="small text-muted">
-                            {% if roteiro.saida_dt %}{{ roteiro.saida_dt|date:"d/m/Y H:i" }}{% else %}Sem horario inicial{% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        {% if roteiro.status == 'FINALIZADO' %}
-                        <span class="badge bg-success">Finalizado</span>
-                        {% else %}
-                        <span class="badge bg-warning text-dark">Rascunho</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ roteiro.oficios_count }}</td>
-                    <td class="text-end">
-                        <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                        {% if roteiro.etapa_url %}
-                        <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary">Etapa 2</a>
-                        {% endif %}
-                        {% if roteiro.oficios_url %}
-                        <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-outline-secondary">Usar no oficio</a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" class="text-center text-muted py-5">Nenhum roteiro encontrado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<section class="oficios-table-panel oficios-view-pane oficios-view-pane--basic" aria-label="Tabela simplificada de roteiros">
+    <div class="system-list-table-wrap">
+        <div class="table-responsive">
+            <table class="table table-hover table-cadastro mb-0 align-middle system-list-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>Evento / tipo</th>
+                        <th>Sede</th>
+                        <th>Destinos</th>
+                        <th>Status</th>
+                        <th>Oficios ligados</th>
+                        <th class="text-end" width="260">Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for roteiro in object_list %}
+                    <tr>
+                        <td>
+                            {% if roteiro.is_avulso %}
+                            <span class="badge bg-secondary me-1">Avulso</span>
+                            <span class="text-muted">Sem evento</span>
+                            {% else %}
+                            <a href="{{ roteiro.evento_url }}" class="text-decoration-none">{{ roteiro.evento.titulo|default:"(sem titulo)" }}</a>
+                            {% endif %}
+                        </td>
+                        <td>{{ roteiro.origem_cidade.nome|default:roteiro.origem_estado.sigla|default:"-" }}</td>
+                        <td>
+                            <div>{{ roteiro.destinos_display }}</div>
+                            <div class="small text-muted">
+                                {% if roteiro.saida_dt %}{{ roteiro.saida_dt|date:"d/m/Y H:i" }}{% else %}Sem horario inicial{% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if roteiro.status == 'FINALIZADO' %}
+                            <span class="badge bg-success">Finalizado</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Rascunho</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ roteiro.oficios_count }}</td>
+                        <td class="text-end">
+                            <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                            {% if roteiro.etapa_url %}
+                            <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary">Etapa 2</a>
+                            {% endif %}
+                            {% if roteiro.oficios_url %}
+                            <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-outline-secondary">Usar no oficio</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">Nenhum roteiro encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+</section>
+
+<section class="roteiro-list-grid documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Visualizacao completa de roteiros">
+    {% for roteiro in object_list %}
+    <article class="app-page-card app-page-card--spacious roteiro-list-card {{ roteiro.card_theme_class }}">
+        <div class="roteiro-list-card__header">
+            <div class="roteiro-list-card__title-wrap">
+                <h2 class="roteiro-list-card__title">
+                    {% if roteiro.is_avulso %}
+                    Roteiro avulso
+                    {% else %}
+                    <a href="{{ roteiro.evento_url }}" class="text-decoration-none">{{ roteiro.evento_display }}</a>
+                    {% endif %}
+                </h2>
+                <p class="roteiro-list-card__subtitle">{{ roteiro.tipo_label }} • {{ roteiro.periodo_display }}</p>
+            </div>
+            <span class="oficio-list-badge {{ roteiro.status_meta.badge_css_class }}">{{ roteiro.status_meta.label }}</span>
+        </div>
+
+        <div class="roteiro-list-card__chips">
+            {% for chip in roteiro.header_chips %}
+            <span class="roteiro-list-card__chip">
+                <span class="roteiro-list-card__chip-label">{{ chip.label }}</span>
+                <strong class="roteiro-list-card__chip-value">{{ chip.value }}</strong>
+            </span>
+            {% endfor %}
+            <span class="roteiro-list-card__chip roteiro-list-card__chip--oficios">
+                <span class="roteiro-list-card__chip-label">Oficios</span>
+                <strong class="roteiro-list-card__chip-value">{{ roteiro.oficios_count_label }}</strong>
+            </span>
+        </div>
+
+        <div class="roteiro-list-card__meta-grid">
+            <div class="roteiro-list-card__meta-item">
+                <span class="roteiro-list-card__meta-label">Sede</span>
+                <strong class="roteiro-list-card__meta-value">{{ roteiro.sede_display }}</strong>
+            </div>
+            <div class="roteiro-list-card__meta-item roteiro-list-card__meta-item--destinos">
+                <span class="roteiro-list-card__meta-label">Destinos</span>
+                <strong class="roteiro-list-card__meta-value">{{ roteiro.destinos_count_label }}</strong>
+                <span class="roteiro-list-card__meta-extra">{{ roteiro.destinos_display }}</span>
+            </div>
+        </div>
+
+        {% if roteiro.oficios_preview %}
+        <div class="roteiro-list-card__linked-docs">
+            <span class="roteiro-list-card__meta-label">Oficios vinculados</span>
+            <div class="roteiro-list-card__linked-docs-list">
+                {% for oficio in roteiro.oficios_preview %}
+                <a href="{{ oficio.url }}" class="roteiro-list-card__linked-doc">{{ oficio.label }}</a>
+                {% endfor %}
+                {% if roteiro.extra_oficios_count %}
+                <span class="roteiro-list-card__linked-doc roteiro-list-card__linked-doc--muted">+{{ roteiro.extra_oficios_count }} adicionais</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="roteiro-list-card__actions">
+            <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-outline-primary">Editar</a>
+            {% if roteiro.etapa_url %}
+            <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary">Etapa 2</a>
+            {% endif %}
+            {% if roteiro.oficios_url %}
+            <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-outline-secondary">Usar no oficio</a>
+            {% endif %}
+        </div>
+    </article>
+    {% empty %}
+    <div class="oficios-table-panel__empty">Nenhum roteiro encontrado com os filtros atuais.</div>
+    {% endfor %}
+</section>
 {% endblock %}
 
 {% block list_floating_actions %}{% include 'includes/list/floating_new_button.html' with url=novo_roteiro_avulso_url label='Novo roteiro avulso' icon='bi-plus-lg' %}{% endblock %}
