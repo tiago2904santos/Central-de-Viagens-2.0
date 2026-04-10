@@ -1,44 +1,47 @@
-<section class="guiado-etapa3-header oficio-wizard-page" aria-label="Topo da etapa 3">
-	<div class="oficio-wizard-header" data-oficio-sticky-header>
-		<div class="oficio-wizard-header-card">
-			<div class="oficio-wizard-header-main guiado-etapa3-header-top">
-				<div class="oficio-wizard-header-copy">
-					<span class="oficio-wizard-eyebrow">Cadastro de ofício</span>
-					<h1>{{ top_title|default:"Cadastro de ofício" }}</h1>
-					<p class="oficio-wizard-header-support">
-						{{ top_subtitle|default:"Fluxo guiado com resumo essencial integrado ao topo e sem atalhos soltos no cabeçalho." }}
-					</p>
-				</div>
+<section class="guiado-etapa3-header" aria-label="Topo da etapa 3">
+    <div class="oficio-wizard-header guided-flow-header" data-oficio-sticky-header>
+        <section class="guided-flow-header__section guided-flow-header__title" aria-label="Titulo da etapa">
+            <div class="oficio-wizard-header-copy">
+                <span class="oficio-wizard-eyebrow">Cadastro de ofício</span>
+                <h1>{{ top_title|default:"Cadastro de ofício" }}</h1>
+                <p class="oficio-wizard-header-support">
+                    {{ top_subtitle|default:"Fluxo guiado com resumo essencial integrado ao topo e sem atalhos soltos no cabeçalho." }}
+                </p>
+            </div>
+        </section>
 
-				{% if header_actions_template %}
-				<div class="guiado-etapa3-header-actions">
-					{% include header_actions_template %}
-				</div>
-				{% endif %}
-			</div>
+        {% if header_actions_template %}
+        <section class="guided-flow-header__section guided-flow-header__actions" aria-label="Ações da etapa">
+            <div class="guiado-etapa3-header-actions">
+                {% include header_actions_template %}
+            </div>
+        </section>
+        {% endif %}
 
-			{% if evento_context_items or evento_document_counts %}
-			<div class="oficio-wizard-header-badges guiado-etapa3-header-badges">
-				{% for item in evento_context_items %}
-				<span class="oficio-wizard-header-badge guiado-etapa3-context-badge guiado-etapa3-context-badge--{{ item.kind }}">
-					<strong>{{ item.label }}</strong>
-				</span>
-				{% endfor %}
+        {% if evento_context_items or evento_document_counts %}
+        <section class="guided-flow-header__section guided-flow-header__chips" aria-label="Resumo do evento">
+            <div class="oficio-wizard-header-badges guiado-etapa3-header-badges">
+                {% for item in evento_context_items %}
+                <span class="oficio-wizard-header-badge guiado-etapa3-context-badge guiado-etapa3-context-badge--{{ item.kind }}">
+                    <strong>{{ item.label }}</strong>
+                </span>
+                {% endfor %}
 
-				{% for item in evento_document_counts %}
-				<span class="oficio-wizard-header-badge guiado-etapa3-count-badge guiado-etapa3-count-badge--{{ item.state }}">
-					<strong>{{ item.value }} {{ item.label }}</strong>
-				</span>
-				{% endfor %}
-			</div>
-			{% endif %}
+                {% for item in evento_document_counts %}
+                <span class="oficio-wizard-header-badge guiado-etapa3-count-badge guiado-etapa3-count-badge--{{ item.state }}">
+                    <strong>{{ item.value }} {{ item.label }}</strong>
+                </span>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
 
-			{% if top_show_stepper and wizard_steps %}
-			<div class="oficio-wizard-stepper-shell">
-				{% include 'eventos/oficio/_wizard_stepper.html' %}
-			</div>
-			{% endif %}
-		</div>
-	</div>
+        {% if top_show_stepper and wizard_steps %}
+        <section class="guided-flow-header__section guided-flow-header__steps" aria-label="Etapas do fluxo">
+            <div class="oficio-wizard-stepper-shell">
+                {% include 'eventos/oficio/_wizard_stepper.html' %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
 </section>
-

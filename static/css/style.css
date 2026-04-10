@@ -4175,6 +4175,15 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     --guiado-header-accent-rgb: 31, 76, 125;
     --guiado-header-success-rgb: 30, 132, 73;
     --guiado-header-danger-rgb: 185, 28, 28;
+    --oficio-wizard-sticky-top: 0.9rem;
+    --oficio-wizard-accent: #1f4c7d;
+    --oficio-wizard-accent-strong: #1a3f69;
+    --oficio-wizard-accent-soft: rgba(31, 76, 125, 0.1);
+    --oficio-wizard-highlight: #d97706;
+    --oficio-wizard-ink: #10243f;
+    --oficio-wizard-muted: #5b6b81;
+    --oficio-wizard-line: rgba(16, 36, 63, 0.1);
+    --oficio-wizard-shadow-soft: 0 16px 32px rgba(16, 36, 63, 0.08);
 }
 
 .guiado-paginated-page .system-document-top {
@@ -9947,7 +9956,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     margin-bottom: 0;
 }
 
-.guiado-etapa3-page .guiado-etapa3-header.oficio-wizard-page {
+.guiado-etapa3-page .guiado-etapa3-header {
     --oficio-wizard-max-width: none;
     padding-inline: 0;
     padding-block: 0;
@@ -10321,31 +10330,41 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     }
 }
 
-/* ----- Fluxo guiado: topo aberto sem card externo ----- */
-.guiado-paginated-page .oficio-wizard-header-card,
-.oficio-wizard-page .oficio-wizard-header-card {
+/* ----- Fluxo guiado: topo aberto em secoes independentes ----- */
+.guiado-paginated-page .oficio-wizard-header,
+.oficio-wizard-page .oficio-wizard-header {
+    display: grid;
     gap: 0.9rem;
+    width: 100%;
+    margin: 0;
     padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
 }
 
-.guiado-paginated-page .oficio-wizard-header-main,
-.oficio-wizard-page .oficio-wizard-header-main {
-    align-items: flex-start;
+.guided-flow-header__section {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
 }
 
-.guiado-paginated-page .oficio-wizard-header-badges,
-.oficio-wizard-page .oficio-wizard-header-badges {
-    margin-top: 0.1rem;
+.guided-flow-header__title {
+    display: grid;
+    gap: 0.32rem;
 }
 
-.guiado-paginated-page .oficio-wizard-stepper-shell,
-.oficio-wizard-page .oficio-wizard-stepper-shell {
-    margin-top: 0.15rem;
+.guided-flow-header__actions {
+    display: grid;
+    justify-items: end;
+}
+
+.guided-flow-header__chips,
+.guided-flow-header__steps {
+    display: block;
+}
+
+@media (max-width: 991.98px) {
+    .guided-flow-header__actions {
+        justify-items: start;
+    }
 }
 
 
