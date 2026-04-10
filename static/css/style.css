@@ -139,7 +139,7 @@
     --app-shell-max-width-dashboard: 1380px;
     --app-shell-max-width-confirm: 760px;
     --app-shell-max-width-wizard: 1320px;
-    --app-document-accent-strip-width: 4px;
+    --app-document-accent-strip-width: 10px;
     --app-section-gap: clamp(1rem, 0.75rem + 0.8vw, 1.5rem);
     --app-stack-gap: clamp(1rem, 0.7rem + 0.9vw, 1.5rem);
     --app-card-radius: var(--cv-card-radius-lg);
@@ -6204,7 +6204,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .oficio-wizard-header-badge strong {
-    display: block;
+    align-items: center;
     color: var(--oficio-wizard-ink);
     font-size: 0.92rem;
     font-weight: 800;
@@ -10029,23 +10029,27 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 .guiado-etapa3-page .guiado-etapa3-header-badges .oficio-wizard-header-badge {
     min-width: 0;
     min-height: 2.45rem;
-    padding: 0.58rem 0.9rem;
+    padding: 0.35rem 0.9rem;
     border-radius: 999px;
-    border: 1px solid rgba(var(--guiado-etapa3-accent-rgb), 0.12);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(237, 244, 252, 0.94) 100%);
-    box-shadow: 0 8px 18px rgba(16, 36, 63, 0.05);
+    border: 1px solid rgba(var(--guiado-etapa3-accent-rgb), 0.18);
+    background: linear-gradient(180deg, rgba(222, 236, 250, 0.98) 0%, rgba(239, 246, 253, 0.94) 100%);
+    box-shadow: 0 8px 18px rgba(31, 76, 125, 0.08);
 }
 
 .guiado-etapa3-page .guiado-etapa3-context-badge strong {
     font-size: 0.8rem;
     font-weight: 800;
     line-height: 1.2;
+    color: inherit;
 }
 
-.guiado-etapa3-page .guiado-etapa3-context-badge--type strong,
-.guiado-etapa3-page .guiado-etapa3-context-badge--location strong,
-.guiado-etapa3-page .guiado-etapa3-context-badge--destinations strong {
-    color: #30465d;
+.guiado-etapa3-page .guiado-etapa3-context-badge--type,
+.guiado-etapa3-page .guiado-etapa3-context-badge--location,
+.guiado-etapa3-page .guiado-etapa3-context-badge--destinations {
+    border-color: rgba(var(--guiado-etapa3-accent-rgb), 0.24);
+    background: linear-gradient(180deg, rgba(222, 236, 250, 0.98) 0%, rgba(239, 246, 253, 0.94) 100%);
+    box-shadow: 0 8px 18px rgba(31, 76, 125, 0.08);
+    color: #1f4c7d;
 }
 
 .guiado-etapa3-page .guiado-etapa3-count-badge {
@@ -10060,20 +10064,33 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     font-size: 0.84rem;
     font-weight: 800;
     line-height: 1.2;
+    color: inherit;
 }
 
-.guiado-etapa3-page .guiado-etapa3-count-badge--completed {
-    border-color: rgba(var(--guiado-etapa3-success-rgb), 0.22);
-    background: linear-gradient(180deg, rgba(var(--guiado-etapa3-success-rgb), 0.12) 0%, rgba(255, 255, 255, 0.96) 100%);
+.guiado-etapa3-page .guiado-etapa3-header-badges .oficio-wizard-header-badge.guiado-etapa3-count-badge--completed {
+    border-color: rgba(var(--guiado-etapa3-accent-rgb), 0.24);
+    background: linear-gradient(180deg, rgba(222, 236, 250, 0.98) 0%, rgba(239, 246, 253, 0.94) 100%);
+    box-shadow: 0 8px 18px rgba(31, 76, 125, 0.08);
+    color: #1f4c7d;
 }
 
 .guiado-etapa3-page .guiado-etapa3-count-badge--completed strong {
-    color: #166534;
+    color: inherit;
 }
 
-.guiado-etapa3-page .guiado-etapa3-count-badge--draft {
-    border-color: rgba(var(--guiado-etapa3-danger-rgb), 0.18);
-    background: linear-gradient(180deg, rgba(var(--guiado-etapa3-danger-rgb), 0.1) 0%, rgba(255, 255, 255, 0.96) 100%);
+.guiado-etapa3-page .guiado-etapa3-header-badges .oficio-wizard-header-badge.guiado-etapa3-count-badge--draft {
+    border-color: rgba(var(--guiado-etapa3-danger-rgb), 0.24);
+    background: linear-gradient(180deg, rgba(254, 226, 226, 0.98) 0%, rgba(255, 243, 243, 0.95) 100%);
+    box-shadow: 0 8px 18px rgba(var(--guiado-etapa3-danger-rgb), 0.12);
+    color: #991b1b;
+}
+
+.guiado-etapa3-page .guiado-etapa3-header-badges .oficio-wizard-header-badge.guiado-etapa3-count-badge--draft:hover,
+.guiado-etapa3-page .guiado-etapa3-header-badges .oficio-wizard-header-badge.guiado-etapa3-count-badge--draft:focus-visible {
+    border-color: rgba(var(--guiado-etapa3-danger-rgb), 0.34);
+    background: linear-gradient(180deg, rgba(254, 226, 226, 1) 0%, rgba(255, 235, 235, 0.98) 100%);
+    box-shadow: 0 10px 22px rgba(var(--guiado-etapa3-danger-rgb), 0.16);
+    color: #991b1b;
 }
 
 .guiado-etapa3-page .guiado-etapa3-count-badge--draft strong {
@@ -10089,7 +10106,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .guiado-etapa3-page .oficio-stepper-link {
-    min-height: 4.45rem;
+    min-height: 4.5rem;
     padding: 0.74rem 0.88rem;
     border-radius: 1.1rem;
 }
