@@ -2902,6 +2902,24 @@ class EventoEtapa5TermosTest(TestCase):
         self.assertContains(response, 'value="COMPLETO"')
         self.assertContains(response, 'value="SEMIPREENCHIDO"')
 
+    def test_etapa_5_restaura_toolbar_propria_com_toggle_sem_filtros_globais(self):
+        response = self.client.get(reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+
+        self.assertContains(response, 'Oficios do evento')
+        self.assertContains(response, 'Completa')
+        self.assertContains(response, 'Visualizacao simples')
+        self.assertContains(response, 'Novo oficio')
+        self.assertIn('data-list-view-root', content)
+        self.assertIn('data-view-mode="rich"', content)
+        self.assertIn('data-view-storage-key="central-viagens.guiado.etapa3.oficios.view-mode"', content)
+        self.assertIn('<script src="/static/js/list_standard.js"></script>', content)
+        self.assertNotContains(response, 'Oficios salvos')
+        self.assertNotContains(response, 'name="q"', html=False)
+        self.assertNotContains(response, 'name="status"', html=False)
+        self.assertNotContains(response, 'placeholder="Oficio, protocolo, destino ou servidor"', html=False)
+
     def test_etapa_5_post_salva_status_e_modalidade(self):
         viajante = self._criar_viajante(nome='Viajante B')
         self._vincular_viajante_em_oficio(viajante)

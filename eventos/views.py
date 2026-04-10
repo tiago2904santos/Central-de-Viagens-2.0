@@ -3229,6 +3229,7 @@ def guiado_etapa_3_v2(request, evento_id):
         .filter(evento_id=evento.pk)
     )
     wizard_steps = _build_guiado_v2_wizard_steps(evento, current_key='oficios')
+    oficios_summary = _build_evento_oficios_summary(evento)
     if False:
         wizard_steps = [
         {
@@ -3291,6 +3292,7 @@ def guiado_etapa_3_v2(request, evento_id):
             'evento_heading': evento_heading,
             'evento_context_items': evento_context_items,
             'evento_document_counts': evento_document_counts,
+            'oficios_summary': oficios_summary,
             'wizard_steps': wizard_steps,
         },
     )

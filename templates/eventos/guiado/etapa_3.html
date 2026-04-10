@@ -1,16 +1,55 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Etapa 3 - Ofícios / Justificativas - {{ evento.titulo|default:"Evento" }} - Central de Viagens{% endblock %}
-{% block page_title %}Fluxo guiado - Etapa 3: Ofícios / Justificativas{% endblock %}
+{% block title %}Etapa 3 - Oficios / Justificativas - {{ evento.titulo|default:"Evento" }} - Central de Viagens{% endblock %}
+{% block page_title %}Fluxo guiado - Etapa 3: Oficios / Justificativas{% endblock %}
 
 {% block content %}
-<div class="app-page-shell app-page-shell--detail guiado-paginated-page guiado-etapa3-page">
+<div
+    class="app-page-shell app-page-shell--detail guiado-paginated-page guiado-etapa3-page"
+    data-list-view-root
+    data-view-mode="rich"
+    data-view-storage-key="central-viagens.guiado.etapa3.oficios.view-mode"
+>
     <div class="app-page-shell__inner app-page-stack">
         {% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa3.html' top_show_stepper=True %}
 
         <section class="app-page-card">
+            <div class="page-header-cadastro system-list-header system-list-header--standard">
+                <div class="system-list-header__content">
+                    <div class="system-list-header__copy">
+                        <div class="system-list-header__intro">
+                            <h2 class="system-list-header__title">Oficios do evento</h2>
+                            <p class="system-list-header__subtitle mb-0">
+                                A etapa usa o mesmo miolo da listagem global, mas preserva o contexto do fluxo guiado.
+                            </p>
+                        </div>
+                        <div class="system-list-header__meta">
+                            <span class="system-list-header__meta-item">{{ oficios_summary.texto }}</span>
+                            <span class="system-list-header__meta-item">Somente documentos vinculados a este evento</span>
+                        </div>
+                    </div>
+                    <div class="system-list-header__controls">
+                        <div class="guiado-etapa3-header-toggle">
+                            {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos oficios do evento' %}
+                        </div>
+                        <div class="system-list-header__actions-group">
+                            <a href="{{ oficio_novo_url }}" class="btn btn-primary system-list-action-btn">Novo oficio</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {% include 'eventos/global/partials/_oficios_list_content.html' %}
+
+            {% if page_obj %}
+            {% include 'includes/pagination.html' %}
+            {% endif %}
         </section>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}
