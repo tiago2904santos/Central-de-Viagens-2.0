@@ -14,40 +14,24 @@
     <div class="app-page-shell__inner app-page-stack">
         {% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa3.html' top_show_stepper=True %}
 
-        <section class="app-page-card">
-            <div class="app-page-card__body guiado-etapa3-list-shell">
-                <div class="page-header-cadastro system-list-header system-list-header--standard">
-                    <div class="system-list-header__content">
-                        <div class="system-list-header__copy">
-                            <div class="system-list-header__intro">
-                                <h2 class="system-list-header__title">Oficios do evento</h2>
-                                <p class="system-list-header__subtitle mb-0">
-                                    A etapa usa o mesmo miolo da listagem global, mas preserva o contexto do fluxo guiado.
-                                </p>
-                            </div>
-                            <div class="system-list-header__meta">
-                                <span class="system-list-header__meta-item">{{ oficios_summary.texto }}</span>
-                                <span class="system-list-header__meta-item">Somente documentos vinculados a este evento</span>
-                            </div>
-                        </div>
-                        <div class="system-list-header__controls">
-                            <div class="guiado-etapa3-header-toggle">
-                                {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos oficios do evento' %}
-                            </div>
-                            <div class="system-list-header__actions-group">
-                                <a href="{{ oficio_novo_url }}" class="btn btn-primary system-list-action-btn">Novo oficio</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div class="guiado-etapa3-oficios-meta" aria-label="Resumo dos oficios do evento">
+            <span class="guiado-etapa3-oficios-meta__item">{{ oficios_summary.texto }}</span>
+            <span class="guiado-etapa3-oficios-meta__item">Somente documentos vinculados a este evento</span>
+        </div>
 
-                {% include 'eventos/global/partials/_oficios_list_content.html' %}
-
-                {% if page_obj %}
-                {% include 'includes/pagination.html' %}
-                {% endif %}
-            </div>
+        {% if object_list %}
+        <section class="guiado-etapa3-oficios-stack" aria-label="Cards dos oficios do evento">
+            {% for oficio in object_list %}
+            {% include 'eventos/global/partials/_oficio_card.html' with oficio=oficio %}
+            {% endfor %}
         </section>
+        {% else %}
+        <div class="guiado-etapa3-oficios-empty">Nenhum oficio encontrado com os filtros atuais.</div>
+        {% endif %}
+
+        {% if page_obj %}
+        {% include 'includes/pagination.html' %}
+        {% endif %}
     </div>
 </div>
 {% endblock %}

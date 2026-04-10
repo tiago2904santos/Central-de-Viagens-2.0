@@ -10078,40 +10078,39 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     color: #991b1b;
 }
 
-.guiado-etapa3-page .system-list-header.system-list-header--standard {
-    display: none;
+.guiado-etapa3-page .guiado-etapa3-oficios-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
 }
 
-.guiado-etapa3-page .guiado-etapa3-list-shell {
+.guiado-etapa3-page .guiado-etapa3-oficios-meta__item {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.3rem;
+    padding: 0.62rem 0.92rem;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--guiado-etapa3-accent-rgb), 0.12);
+    background: rgba(255, 255, 255, 0.82);
+    color: #405568;
+    font-size: 0.82rem;
+    font-weight: 700;
+    box-shadow: 0 10px 22px rgba(16, 36, 63, 0.05);
+}
+
+.guiado-etapa3-page .guiado-etapa3-oficios-stack {
     display: grid;
-    gap: 1.1rem;
-}
-
-.guiado-etapa3-page .floating-new-button {
-    box-shadow: 0 14px 30px rgba(31, 76, 125, 0.18);
-}
-
-.guiado-etapa3-page .oficios-table-panel,
-.guiado-etapa3-page .oficios-table-panel__empty {
-    border-radius: 1.25rem;
-}
-
-.guiado-etapa3-page .oficios-table-panel {
-    border: 1px solid rgba(15, 23, 42, 0.07);
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
-}
-
-.guiado-etapa3-page .oficios-table thead th {
-    background: rgba(247, 250, 252, 0.92);
-}
-
-.guiado-etapa3-page .oficios-table__actions {
-    gap: 0.45rem;
-}
-
-.guiado-etapa3-page .oficio-list-grid {
     gap: 1.4rem;
     align-content: start;
+}
+
+.guiado-etapa3-page .guiado-etapa3-oficios-empty {
+    padding: 1.3rem 1.35rem;
+    border-radius: 1.3rem;
+    border: 1px dashed rgba(var(--guiado-etapa3-accent-rgb), 0.18);
+    background: rgba(255, 255, 255, 0.72);
+    color: #4b5d6d;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
 }
 
 .guiado-etapa3-page .oficio-list-card {
@@ -10225,11 +10224,46 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     font-size: 0.88rem;
 }
 
-.guiado-etapa3-page .oficios-table-panel__empty {
-    border: 1px dashed rgba(var(--guiado-etapa3-accent-rgb), 0.18);
-    background: linear-gradient(180deg, rgba(249, 251, 253, 0.96) 0%, rgba(243, 247, 251, 0.98) 100%);
-    color: #4b5d6d;
-    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
+.guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack {
+    gap: 0.95rem;
+}
+
+.guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack .oficio-list-card {
+    padding: 0.92rem 0.98rem 0.96rem 1.18rem;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.06);
+}
+
+.guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack .oficio-list-card__secondary {
+    display: none;
+}
+
+.guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack .oficio-list-core-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.72rem;
+}
+
+.guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack .oficio-list-card__footer {
+    margin-top: 0.72rem;
+}
+
+.guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack .oficio-list-chip-list--meta {
+    gap: 0.42rem;
+}
+
+.guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack .oficio-list-chip {
+    padding: 0.4rem 0.55rem;
+}
+
+.guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack .oficio-list-traveler-list {
+    gap: 0.36rem;
+}
+
+.guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack .oficio-list-traveler-pill {
+    min-height: 2.25rem;
+}
+
+.guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack .oficio-list-card__footer-actions {
+    gap: 0.42rem;
 }
 
 @media (max-width: 991.98px) {
@@ -10251,6 +10285,10 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     .guiado-etapa3-page .oficio-stepper {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .guiado-etapa3-page[data-view-mode="basic"] .guiado-etapa3-oficios-stack .oficio-list-core-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 767.98px) {
@@ -10270,6 +10308,11 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
     .guiado-etapa3-page .guiado-etapa3-header-badges .oficio-wizard-header-badge {
         width: 100%;
+    }
+
+    .guiado-etapa3-page .guiado-etapa3-oficios-meta {
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .guiado-etapa3-page .oficio-stepper {
