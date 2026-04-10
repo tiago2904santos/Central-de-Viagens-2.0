@@ -5337,6 +5337,11 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     gap: 0.78rem;
 }
 
+.roteiro-list-card__header-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .roteiro-list-card .documento-cascade-card__title {
     font-size: 1.05rem;
 }
@@ -5344,11 +5349,13 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 .roteiro-list-card__trechos-wrap {
     display: grid;
     gap: 0.52rem;
-    margin-top: 0.35rem;
+    width: 100%;
 }
 
 .roteiro-list-card__trecho-row {
+    width: 100%;
     align-items: center;
+    justify-content: space-between;
     gap: 1rem;
     padding: 0.64rem 0.78rem;
     border-radius: 0.92rem;
@@ -5356,6 +5363,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .roteiro-list-card__trecho-side {
     min-width: 0;
+    flex: 1 1 0;
 }
 
 .roteiro-list-card__trecho-line {
@@ -5368,6 +5376,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .roteiro-list-card__trecho-arrival {
     align-items: flex-end;
+    justify-content: flex-end;
 }
 
 .roteiro-list-card__line3-grid {

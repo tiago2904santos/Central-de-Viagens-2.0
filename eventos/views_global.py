@@ -2061,6 +2061,7 @@ def roteiro_global_lista(request):
         roteiro.is_avulso = roteiro.tipo == RoteiroEvento.TIPO_AVULSO or not roteiro.evento_id
         if roteiro.is_avulso:
             roteiro.editar_url = reverse('eventos:roteiro-avulso-editar', kwargs={'pk': roteiro.pk})
+            roteiro.open_url = roteiro.editar_url
             roteiro.evento_url = ''
             roteiro.etapa_url = ''
             roteiro.oficios_url = ''
@@ -2070,6 +2071,7 @@ def roteiro_global_lista(request):
                 'eventos:guiado-etapa-2-editar',
                 kwargs={'evento_id': roteiro.evento_id, 'pk': roteiro.pk},
             )
+            roteiro.open_url = roteiro.editar_url
             roteiro.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': roteiro.evento_id})
             roteiro.etapa_url = reverse('eventos:guiado-etapa-2', kwargs={'evento_id': roteiro.evento_id})
             roteiro.oficios_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': roteiro.evento_id})

@@ -154,27 +154,28 @@
     <article class="oficio-list-card roteiro-list-card documento-cascade-card {{ roteiro.card_theme_class }}" id="roteiro-card-{{ roteiro.pk }}">
         <div class="oficio-list-rich-layout">
             <div class="oficio-list-card__header">
-                <div class="documento-cascade-card__intro documento-cascade-card__intro--header">
+                <div class="documento-cascade-card__intro documento-cascade-card__intro--header roteiro-list-card__header-main">
                     <div class="documento-cascade-card__title-row">
                         <h2 class="documento-cascade-card__title">{{ roteiro.card_title }}</h2>
-                    </div>
-                    <div class="roteiro-list-card__trechos-wrap">
-                        {% for trecho in roteiro.trechos_card %}
-                        <div class="documento-cascade-item oficio-list-surface oficio-list-surface--soft roteiro-list-card__trecho-row">
-                            <div class="documento-cascade-item__main roteiro-list-card__trecho-side">
-                                <span class="roteiro-list-card__trecho-line">{{ trecho.saida_label }} {{ trecho.saida_datetime }}</span>
-                            </div>
-                            <div class="documento-cascade-item__actions roteiro-list-card__trecho-arrival roteiro-list-card__trecho-side">
-                                <span class="roteiro-list-card__trecho-line">{{ trecho.chegada_label }} {{ trecho.chegada_datetime }}</span>
-                            </div>
-                        </div>
-                        {% endfor %}
                     </div>
                 </div>
 
                 <div class="oficio-list-card__header-status">
                     <span class="oficio-list-badge {{ roteiro.status_meta.badge_css_class }}">{{ roteiro.status_meta.label }}</span>
                 </div>
+            </div>
+
+            <div class="roteiro-list-card__trechos-wrap">
+                {% for trecho in roteiro.trechos_card %}
+                <div class="documento-cascade-item oficio-list-surface oficio-list-surface--soft roteiro-list-card__trecho-row">
+                    <div class="documento-cascade-item__main roteiro-list-card__trecho-side">
+                        <span class="roteiro-list-card__trecho-line">{{ trecho.saida_label }} {{ trecho.saida_datetime }}</span>
+                    </div>
+                    <div class="documento-cascade-item__actions roteiro-list-card__trecho-arrival roteiro-list-card__trecho-side">
+                        <span class="roteiro-list-card__trecho-line">{{ trecho.chegada_label }} {{ trecho.chegada_datetime }}</span>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
 
             <div class="oficio-list-core-grid roteiro-list-card__line3-grid{% if not roteiro.has_linked_refs %} roteiro-list-card__line3-grid--single{% endif %}">
@@ -245,7 +246,11 @@
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions roteiro-list-card__footer-actions">
-                    <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Editar roteiro">
+                    <a href="{{ roteiro.open_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir roteiro">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Abrir</span>
+                    </a>
+                    <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Editar roteiro">
                         <i class="bi bi-pencil-square"></i>
                         <span>Editar</span>
                     </a>
