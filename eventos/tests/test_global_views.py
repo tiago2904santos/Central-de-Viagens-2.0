@@ -266,7 +266,7 @@ class GlobalViewsTest(TestCase):
         self.assertIn('data-list-view-toggle="rich"', content)
         self.assertIn('data-list-view-toggle="basic"', content)
         self.assertIn('Completa', content)
-        self.assertIn('Visualizacao simples', content)
+        self.assertIn('Visualizacao unica', content)
         self.assertIn('<script src="/static/js/list_standard.js"></script>', content)
         self.assertIn('<table class="table oficios-table mb-0">', content)
         self.assertIn('oficio-list-grid', content)

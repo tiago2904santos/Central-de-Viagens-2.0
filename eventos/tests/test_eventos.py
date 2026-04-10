@@ -2909,7 +2909,7 @@ class EventoEtapa5TermosTest(TestCase):
 
         self.assertContains(response, 'Oficios do evento')
         self.assertContains(response, 'Completa')
-        self.assertContains(response, 'Visualizacao simples')
+        self.assertContains(response, 'Visualizacao unica')
         self.assertContains(response, 'Novo oficio')
         self.assertIn('data-list-view-root', content)
         self.assertIn('data-view-mode="rich"', content)

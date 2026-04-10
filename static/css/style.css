@@ -10082,6 +10082,11 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     display: none;
 }
 
+.guiado-etapa3-page .guiado-etapa3-list-shell {
+    display: grid;
+    gap: 1.1rem;
+}
+
 .guiado-etapa3-page .floating-new-button {
     box-shadow: 0 14px 30px rgba(31, 76, 125, 0.18);
 }
@@ -10105,13 +10110,15 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .guiado-etapa3-page .oficio-list-grid {
-    gap: 1.15rem;
+    gap: 1.4rem;
+    align-content: start;
 }
 
 .guiado-etapa3-page .oficio-list-card {
+    isolation: isolate;
     border-radius: 1.35rem;
-    border-left-width: 8px;
-    padding: 1.08rem 1.1rem 1.14rem;
+    border-left-width: 1px;
+    padding: 1.08rem 1.1rem 1.14rem 1.3rem;
     background:
         radial-gradient(circle at top right, rgba(255, 255, 255, 0.99), transparent 34%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(245, 249, 252, 0.98));
@@ -10122,6 +10129,20 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     background:
         radial-gradient(circle at right top, rgba(var(--oficio-card-accent-rgb), 0.14), transparent 34%),
         linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), 0.03), rgba(255, 255, 255, 0));
+}
+
+.guiado-etapa3-page .oficio-list-card::after {
+    content: "";
+    position: absolute;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    left: 0.36rem;
+    width: 0.42rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(var(--oficio-card-accent-rgb), 0.98), rgba(var(--oficio-card-accent-rgb), 0.82));
+    box-shadow: 0 0 0 1px rgba(var(--oficio-card-accent-rgb), 0.08);
+    pointer-events: none;
+    z-index: 1;
 }
 
 .guiado-etapa3-page .oficio-list-rich-layout {
