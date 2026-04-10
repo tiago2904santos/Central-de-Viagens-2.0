@@ -1,20 +1,16 @@
-{% extends 'eventos/global/oficios_lista.html' %}
+{% extends 'base.html' %}
 
-{% block page_title_block %}Etapa 3 - Oficios / Justificativas{% endblock %}
-{% block page_header_title %}Fluxo guiado - Etapa 3: Oficios / Justificativas{% endblock %}
+{% block title %}Etapa 3 - Ofícios / Justificativas - {{ evento.titulo|default:"Evento" }} - Central de Viagens{% endblock %}
+{% block page_title %}Fluxo guiado - Etapa 3: Ofícios / Justificativas{% endblock %}
 
-{% block list_page_class %}oficios-list-page system-list-page--complete guiado-etapa3-page guiado-paginated-page{% endblock %}
-{% block list_shell_class %}oficios-list-shell system-list-shell guiado-etapa3-shell{% endblock %}
+{% block content %}
+<div class="app-page-shell app-page-shell--detail guiado-paginated-page guiado-etapa3-page">
+    <div class="app-page-shell__inner app-page-stack">
+        {% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa3.html' top_show_stepper=True %}
 
-{% block list_title %}{% endblock %}
-{% block list_subtitle %}{% endblock %}
-{% block list_meta %}{% endblock %}
-{% block list_header_controls %}{% endblock %}
-{% block list_header_aux_controls %}{% endblock %}
-{% block list_header_actions %}{% endblock %}
-
-{% block list_pre_header %}
-{% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa3.html' top_show_stepper=True %}
+        <section class="app-page-card">
+            {% include 'eventos/global/partials/_oficios_list_content.html' %}
+        </section>
+    </div>
+</div>
 {% endblock %}
-
-{% block list_filter_block %}{% endblock %}
