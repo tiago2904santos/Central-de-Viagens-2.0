@@ -161,13 +161,11 @@
                     <div class="roteiro-list-card__trechos-wrap">
                         {% for trecho in roteiro.trechos_card %}
                         <div class="documento-cascade-item oficio-list-surface oficio-list-surface--soft roteiro-list-card__trecho-row">
-                            <div class="documento-cascade-item__main">
-                                <span class="documento-cascade-meta-item__label">{{ trecho.saida_label }}</span>
-                                <div class="documento-cascade-item__meta roteiro-list-card__trecho-datetime">{{ trecho.saida_datetime }}</div>
+                            <div class="documento-cascade-item__main roteiro-list-card__trecho-side">
+                                <span class="roteiro-list-card__trecho-line">{{ trecho.saida_label }} {{ trecho.saida_datetime }}</span>
                             </div>
-                            <div class="documento-cascade-item__actions roteiro-list-card__trecho-arrival">
-                                <span class="documento-cascade-meta-item__label">{{ trecho.chegada_label }}</span>
-                                <div class="documento-cascade-item__meta roteiro-list-card__trecho-datetime">{{ trecho.chegada_datetime }}</div>
+                            <div class="documento-cascade-item__actions roteiro-list-card__trecho-arrival roteiro-list-card__trecho-side">
+                                <span class="roteiro-list-card__trecho-line">{{ trecho.chegada_label }} {{ trecho.chegada_datetime }}</span>
                             </div>
                         </div>
                         {% endfor %}
@@ -240,11 +238,6 @@
                             <div class="diaria-block__title">Valor por servidor</div>
                             <div class="diaria-block__value">{{ roteiro.valor_por_servidor }}</div>
                             <div class="diaria-block__meta">Referencia de calculo vinculada ao roteiro</div>
-                        </div>
-                        <div class="diaria-block oficio-list-surface oficio-list-surface--soft">
-                            <div class="diaria-block__title">Resumo do roteiro</div>
-                            <div class="diaria-block__value">{{ roteiro.destinos_count_label }}</div>
-                            <div class="diaria-block__meta">{{ roteiro.periodo_display }}</div>
                         </div>
                     </div>
                 </section>

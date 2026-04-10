@@ -332,6 +332,45 @@ def _refresh_plano_diarias(plano):
         updated_at=timezone.now(),
     )
 
+
+def _resolve_plano_valor_por_servidor(plano):
+    valor_unitario_display = _clean(plano.diarias_valor_unitario)
+    if valor_unitario_display:
+        try:
+            valor_unitario_decimal = Decimal(valor_unitario_display.replace('.', '').replace(',', '.'))
+        except (InvalidOperation, ValueError):
+            return valor_unitario_display
+        return f'R$ {formatar_valor_diarias(valor_unitario_decimal)}'
+
+    if plano.valor_diarias is not None and (plano.quantidade_servidores or 0) > 0:
+        try:
+            valor_por_servidor = Decimal(str(plano.valor_diarias)) / Decimal(plano.quantidade_servidores)
+        except (InvalidOperation, ValueError, ZeroDivisionError):
+            pass
+        else:
+            return f'R$ {formatar_valor_diarias(valor_por_servidor)}'
+
+    markers, chegada_final = _build_plano_diarias_markers(plano)
+    if markers and chegada_final:
+        try:
+            resultado = calculate_periodized_diarias(
+                markers,
+                chegada_final,
+                quantidade_servidores=max(1, int(plano.quantidade_servidores or 1)),
+            )
+        except Exception:
+            return ''
+        totais = (resultado or {}).get('totais') or {}
+        valor_calculado = _clean(totais.get('valor_por_servidor'))
+        if valor_calculado:
+            try:
+                valor_calculado_decimal = Decimal(valor_calculado.replace('.', '').replace(',', '.'))
+            except (InvalidOperation, ValueError):
+                return valor_calculado
+            return f'R$ {formatar_valor_diarias(valor_calculado_decimal)}'
+
+    return ''
+
 OFICIO_STATUS_CARD_META = {
     Oficio.STATUS_RASCUNHO: {'label': 'Rascunho', 'css_class': 'is-rascunho'},
     'ASSINADO': {'label': 'Assinado', 'css_class': 'is-assinado'},
@@ -1874,7 +1913,10 @@ def roteiro_global_lista(request):
                     'destino_cidade',
                 ).order_by('ordem', 'pk'),
             ),
-            Prefetch('planos_trabalho', queryset=PlanoTrabalho.objects.select_related('evento').order_by('-updated_at', '-created_at')),
+            Prefetch(
+                'planos_trabalho',
+                queryset=PlanoTrabalho.objects.select_related('evento', 'oficio', 'roteiro').prefetch_related('oficios').order_by('-updated_at', '-created_at'),
+            ),
         )
         .annotate(oficios_count=Count('oficios', distinct=True))
     )
@@ -2008,23 +2050,9 @@ def roteiro_global_lista(request):
         roteiro.valor_por_servidor = 'Nao calculado'
         roteiro.valor_por_servidor_fonte = 'Sem plano de trabalho vinculado'
         for plano in planos:
-            valor_unitario_display = _clean(plano.diarias_valor_unitario)
-            if valor_unitario_display:
-                try:
-                    valor_unitario_decimal = Decimal(valor_unitario_display.replace('.', '').replace(',', '.'))
-                except (InvalidOperation, ValueError):
-                    roteiro.valor_por_servidor = valor_unitario_display
-                else:
-                    roteiro.valor_por_servidor = f'R$ {formatar_valor_diarias(valor_unitario_decimal)}'
-                roteiro.valor_por_servidor_fonte = f'PT {plano.numero_formatado or f"#{plano.pk}"}'
-                break
-
-            if plano.valor_diarias is not None and (plano.quantidade_servidores or 0) > 0:
-                try:
-                    valor_por_servidor = Decimal(str(plano.valor_diarias)) / Decimal(plano.quantidade_servidores)
-                except (InvalidOperation, ValueError, ZeroDivisionError):
-                    continue
-                roteiro.valor_por_servidor = f'R$ {formatar_valor_diarias(valor_por_servidor)}'
+            valor_calculado = _resolve_plano_valor_por_servidor(plano)
+            if valor_calculado:
+                roteiro.valor_por_servidor = valor_calculado
                 roteiro.valor_por_servidor_fonte = f'PT {plano.numero_formatado or f"#{plano.pk}"}'
                 break
 

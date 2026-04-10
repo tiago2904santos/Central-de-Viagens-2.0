@@ -5354,11 +5354,16 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     border-radius: 0.92rem;
 }
 
-.roteiro-list-card__trecho-datetime {
-    margin-top: 0.14rem;
+.roteiro-list-card__trecho-side {
+    min-width: 0;
+}
+
+.roteiro-list-card__trecho-line {
+    display: block;
     color: #162033;
     font-size: 0.84rem;
     font-weight: 700;
+    line-height: 1.35;
 }
 
 .roteiro-list-card__trecho-arrival {
@@ -5395,8 +5400,50 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .roteiro-list-card__valor-blocks {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.6rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+}
+
+.roteiro-list-card .diaria-block {
+    border-radius: 0.9rem;
+    padding: 0.95rem;
+    min-width: 0;
+    text-align: left;
+    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.86)),
+        linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), 0.09), rgba(255, 255, 255, 0.14));
+}
+
+.roteiro-list-card .diaria-block--total {
+    border-color: rgba(var(--oficio-card-accent-rgb), 0.22);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.9)),
+        radial-gradient(circle at top right, rgba(var(--oficio-card-accent-rgb), 0.13), transparent 60%);
+}
+
+.roteiro-list-card .diaria-block__title {
+    font-size: 0.66rem;
+    font-weight: 800;
+    color: var(--oficios-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.46rem;
+}
+
+.roteiro-list-card .diaria-block__value {
+    color: #122033;
+    font-size: 1.78rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+}
+
+.roteiro-list-card .diaria-block__meta {
+    margin-top: 0.48rem;
+    color: #5f6b7a;
+    font-size: 0.82rem;
 }
 
 .roteiro-list-card__footer-actions {
@@ -5408,8 +5455,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 @media (max-width: 991.98px) {
     .roteiro-list-card__line3-grid,
-    .roteiro-list-card__vinculos-grid,
-    .roteiro-list-card__valor-blocks {
+    .roteiro-list-card__vinculos-grid {
         grid-template-columns: 1fr;
     }
 }
