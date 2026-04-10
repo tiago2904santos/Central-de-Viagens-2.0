@@ -4,18 +4,9 @@
 {% block page_title %}Fluxo guiado do evento{% endblock %}
 
 {% block content %}
-<div class="app-page-shell app-page-shell--wide">
+<div class="app-page-shell app-page-shell--wide guiado-paginated-page guiado-flow-page guiado-painel-page">
     <div class="app-page-shell__inner app-page-stack">
-        <header class="app-page-header">
-            <div>
-                <h1 class="h3 mb-1">Fluxo guiado de 5 etapas</h1>
-                <p class="text-muted mb-0">A ordem oficial agora é: Dados do evento, Roteiros, Ofícios / Justificativas, PT / OS e Termos.</p>
-            </div>
-            <div class="app-page-header__actions">
-                <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary btn-sm">Lista de eventos</a>
-                <a href="{% url 'eventos:editar' object.pk %}" class="btn btn-outline-secondary btn-sm">Editar evento</a>
-            </div>
-        </header>
+        {% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_painel.html' top_show_stepper=True %}
 
         <section class="app-page-card app-page-card--spacious">
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">

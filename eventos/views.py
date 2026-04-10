@@ -1043,6 +1043,10 @@ def guiado_etapa_1(request, pk):
         selected_tipos_pks = [int(x) for x in request.POST.getlist('tipos_demanda') if x.isdigit()]
     else:
         selected_tipos_pks = list(obj.tipos_demanda.values_list('pk', flat=True))
+    evento_heading = _guiado_v2_evento_heading(obj)
+    evento_context_items = _guiado_v2_build_evento_context_items(obj)
+    evento_document_counts = _guiado_v2_build_evento_document_counts(obj)
+    wizard_steps = _build_guiado_v2_wizard_steps(obj, current_key='dados-evento')
     context = {
         'form': form,
         'object': obj,
@@ -1054,6 +1058,10 @@ def guiado_etapa_1(request, pk):
         'selected_tipos_pks': selected_tipos_pks,
         'tipo_outros_pk': tipo_outros_pk,
         'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
+        'evento_heading': evento_heading,
+        'evento_context_items': evento_context_items,
+        'evento_document_counts': evento_document_counts,
+        'wizard_steps': wizard_steps,
     }
     return render(request, 'eventos/guiado/etapa_1.html', context)
 
@@ -3176,11 +3184,19 @@ def guiado_painel_v2(request, pk):
             cta_label='Abrir etapa',
         ),
     ]
+    evento_heading = _guiado_v2_evento_heading(obj)
+    evento_context_items = _guiado_v2_build_evento_context_items(obj)
+    evento_document_counts = _guiado_v2_build_evento_document_counts(obj)
+    wizard_steps = _build_guiado_v2_wizard_steps(obj, current_key='dados-evento')
     context = {
         'object': obj,
         'etapas': etapas,
         'resumo_cards': resumo_cards,
         'oficios_summary': oficios_summary,
+        'evento_heading': evento_heading,
+        'evento_context_items': evento_context_items,
+        'evento_document_counts': evento_document_counts,
+        'wizard_steps': wizard_steps,
         'finalizacao': {
             'url': reverse('eventos:guiado-finalizacao', kwargs={'evento_id': obj.pk}),
             'ok': finalizacao_ok,
