@@ -3,7 +3,7 @@
 {# Conteúdo reutilizável da listagem de ofícios #}
 {# Esperados no contexto: object_list (QuerySet de ofícios) #}
 
-<section class="oficios-table-panel oficios-view-pane oficios-view-pane--basic" aria-label="Tabela de oficios salvos">
+<section class="oficios-table-panel oficios-view-pane oficios-view-pane--basic{% if basic_container_class %} {{ basic_container_class }}{% endif %}" aria-label="{{ basic_aria_label|default:'Tabela de oficios salvos' }}">
     {% if object_list %}
     <div class="table-responsive">
         <table class="table oficios-table mb-0">
@@ -59,14 +59,14 @@
         </table>
     </div>
     {% else %}
-    <div class="oficios-table-panel__empty">Nenhum oficio encontrado com os filtros atuais.</div>
+    <div class="oficios-table-panel__empty{% if empty_state_class %} {{ empty_state_class }}{% endif %}">Nenhum oficio encontrado com os filtros atuais.</div>
     {% endif %}
 </section>
 
-<section class="oficio-list-grid documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Lista completa de oficios">
+<section class="oficio-list-grid documento-cascade-grid oficios-view-pane oficios-view-pane--rich{% if rich_container_class %} {{ rich_container_class }}{% endif %}" aria-label="{{ rich_aria_label|default:'Lista completa de oficios' }}">
     {% for oficio in object_list %}
     {% include 'eventos/global/partials/_oficio_card.html' with oficio=oficio %}
     {% empty %}
-    <div class="oficios-table-panel__empty">Nenhum oficio encontrado com os filtros atuais.</div>
+    <div class="oficios-table-panel__empty{% if empty_state_class %} {{ empty_state_class }}{% endif %}">Nenhum oficio encontrado com os filtros atuais.</div>
     {% endfor %}
 </section>

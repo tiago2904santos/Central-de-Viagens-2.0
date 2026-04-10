@@ -2909,19 +2909,19 @@ class EventoEtapa5TermosTest(TestCase):
 
         self.assertContains(response, 'Completa')
         self.assertContains(response, 'Visualizacao unica')
-        self.assertContains(response, 'Novo oficio')
-        self.assertContains(response, 'Somente documentos vinculados a este evento')
+        self.assertContains(response, 'Novo ofício')
         self.assertIn('data-list-view-root', content)
         self.assertIn('data-view-mode="rich"', content)
         self.assertIn('data-view-storage-key="central-viagens.guiado.etapa3.oficios.view-mode"', content)
         self.assertIn('<script src="/static/js/list_standard.js"></script>', content)
         self.assertIn('guiado-etapa3-oficios-empty', content)
+        self.assertIn('oficios-view-pane--basic', content)
+        self.assertIn('oficios-view-pane--rich', content)
+        self.assertIn('guiado-etapa3-oficios-stack', content)
         self.assertNotContains(response, 'Oficios salvos')
         self.assertNotContains(response, 'name="q"', html=False)
         self.assertNotContains(response, 'name="status"', html=False)
         self.assertNotContains(response, 'placeholder="Oficio, protocolo, destino ou servidor"', html=False)
-        self.assertNotContains(response, 'oficios-table-panel', html=False)
-        self.assertNotContains(response, 'oficio-list-grid', html=False)
 
     def test_etapa_5_post_salva_status_e_modalidade(self):
         viajante = self._criar_viajante(nome='Viajante B')
