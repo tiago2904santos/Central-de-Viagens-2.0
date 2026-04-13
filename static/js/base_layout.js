@@ -62,19 +62,33 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!control) {
             return false;
         }
+        if (control.hasAttribute('data-essential-open-action')) {
+            return false;
+        }
         var text = normalizeActionText(control.textContent);
         var title = normalizeActionText(control.getAttribute('title'));
         var ariaLabel = normalizeActionText(control.getAttribute('aria-label'));
         var href = normalizeActionText(control.getAttribute('href'));
+        var labels = [text, title, ariaLabel];
 
-        var hasEditTerm = [text, title, ariaLabel].some(function(value) {
+        var hasOpenTerm = labels.some(function(value) {
+            return value.indexOf('abrir') !== -1 || value.indexOf('visualizar') !== -1;
+        });
+        if (hasOpenTerm) {
+            return false;
+        }
+
+        var hasEditTerm = labels.some(function(value) {
             return value.indexOf('editar') !== -1 || value.indexOf('edicao') !== -1;
         });
         if (hasEditTerm) {
             return true;
         }
 
-        if (href && (href.indexOf('/editar/') !== -1 || href.indexOf('-editar') !== -1)) {
+        var hasExplicitLabel = labels.some(function(value) {
+            return !!value;
+        });
+        if (!hasExplicitLabel && href && (href.indexOf('/editar/') !== -1 || href.indexOf('-editar') !== -1)) {
             return true;
         }
         return false;

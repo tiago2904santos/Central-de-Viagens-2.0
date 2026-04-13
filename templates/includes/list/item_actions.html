@@ -1,10 +1,10 @@
 {% if abrir_url %}
-<a href="{{ abrir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="{{ abrir_aria|default:'Abrir documento' }}" title="{{ abrir_aria|default:'Abrir documento' }}">
+<a href="{{ abrir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" data-essential-open-action="true" aria-label="{{ abrir_aria|default:'Abrir documento' }}" title="{{ abrir_aria|default:'Abrir documento' }}">
     <i class="bi bi-box-arrow-up-right"></i>
     <span>Abrir</span>
 </a>
 {% else %}
-<span class="btn btn-sm btn-doc-action btn-doc-action--primary is-disabled" aria-label="Abertura indisponivel" aria-disabled="true" role="button" tabindex="-1">
+<span class="btn btn-sm btn-doc-action btn-doc-action--primary is-disabled" data-essential-open-action="true" aria-label="Abertura indisponivel" aria-disabled="true" role="button" tabindex="-1">
     <i class="bi bi-box-arrow-up-right"></i>
     <span>Abrir</span>
 </span>

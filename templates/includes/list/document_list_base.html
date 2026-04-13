@@ -6,6 +6,25 @@
 
 {% block content %}
 <div class="app-page-shell app-page-shell--list system-list-page {% block list_page_class %}system-list-page--complete{% endblock %}" {% block list_page_attributes %}data-list-view-root{% endblock %}>
+    <script>
+        (function() {
+            var root = document.currentScript && document.currentScript.parentElement;
+            if (!root) {
+                return;
+            }
+            var storageKey = root.getAttribute('data-view-storage-key');
+            if (!storageKey) {
+                return;
+            }
+            try {
+                var savedMode = window.localStorage.getItem(storageKey);
+                if (savedMode === 'basic' || savedMode === 'rich') {
+                    root.setAttribute('data-view-mode', savedMode);
+                }
+            } catch (error) {
+            }
+        })();
+    </script>
     <div class="app-page-shell__inner {% block list_shell_class %}oficios-list-shell system-list-shell{% endblock %}">
         <section class="system-document-top">
             {% block list_pre_header %}{% endblock %}

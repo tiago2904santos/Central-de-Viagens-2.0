@@ -21,6 +21,14 @@ document.addEventListener('DOMContentLoaded', function() {
             root.querySelectorAll('[data-list-view-toggle], [data-oficios-view-toggle]')
         );
 
+        function getStoredMode() {
+            try {
+                return window.localStorage.getItem(storageKey);
+            } catch (error) {
+                return null;
+            }
+        }
+
         function getButtonMode(button) {
             return button.getAttribute('data-list-view-toggle') || button.getAttribute('data-oficios-view-toggle');
         }
@@ -37,12 +45,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
             if (persist) {
-                window.localStorage.setItem(storageKey, nextMode);
+                try {
+                    window.localStorage.setItem(storageKey, nextMode);
+                } catch (error) {
+                }
             }
         }
 
         if (toggleButtons.length) {
-            applyMode(window.localStorage.getItem(storageKey), false);
+            applyMode(root.getAttribute('data-view-mode') || getStoredMode(), false);
             toggleButtons.forEach(function(button) {
                 button.addEventListener('click', function() {
                     applyMode(getButtonMode(button), true);
@@ -67,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
         );
 
         function rehydrateUi() {
+            applyMode(root.getAttribute('data-view-mode') || getStoredMode(), false);
             if (window.OficioSelectPicker && typeof window.OficioSelectPicker.refresh === 'function') {
                 window.OficioSelectPicker.refresh(root);
             }
