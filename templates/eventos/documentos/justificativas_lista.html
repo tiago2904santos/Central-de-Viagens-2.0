@@ -102,9 +102,9 @@
                     <td>{{ just.modelo.nome|default:'Sem modelo' }}</td>
                     <td>{{ just.updated_at|date:'d/m/Y H:i' }}</td>
                     <td class="text-end">
-                        <a href="{{ just.detail_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-                        <a href="{{ just.edicao_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
-                        <a href="{{ just.excluir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--danger"><i class="bi bi-trash"></i><span>Excluir</span></a>
+                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                            {% include 'includes/list/item_actions.html' with abrir_url=just.abrir_url abrir_aria='Abrir justificativa' docx_url=just.docx_url docx_aria='Baixar DOCX da justificativa' pdf_url=just.pdf_url pdf_aria='Baixar PDF da justificativa' delete_url=just.delete_url delete_aria='Excluir justificativa' %}
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
@@ -191,7 +191,7 @@
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">
-                    {% include 'includes/list/card_actions_oficios_pattern.html' with open_url=just.detail_url open_aria='Abrir justificativa' delete_url=just.excluir_url delete_aria='Excluir justificativa' %}
+                    {% include 'includes/list/item_actions.html' with abrir_url=just.abrir_url abrir_aria='Abrir justificativa' docx_url=just.docx_url docx_aria='Baixar DOCX da justificativa' pdf_url=just.pdf_url pdf_aria='Baixar PDF da justificativa' delete_url=just.delete_url delete_aria='Excluir justificativa' %}
                 </div>
             </div>
         </div>

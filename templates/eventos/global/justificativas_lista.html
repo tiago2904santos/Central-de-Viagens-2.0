@@ -103,8 +103,9 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
-                        <a href="{{ row.justificativa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-                        <a href="{{ row.oficio_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-journal-text"></i><span>Step 4</span></a>
+                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                            {% include 'includes/list/item_actions.html' with abrir_url=row.abrir_url|default:row.justificativa_url abrir_aria='Abrir justificativa' docx_url=row.docx_url|default:row.download_docx_url pdf_url=row.pdf_url|default:row.download_pdf_url delete_url=row.delete_url|default:row.excluir_url delete_aria='Excluir justificativa' %}
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
@@ -183,14 +184,7 @@
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">
-                    <a href="{{ row.justificativa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir justificativa">
-                        <i class="bi bi-box-arrow-up-right"></i>
-                        <span>Abrir</span>
-                    </a>
-                    <a href="{{ row.oficio_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Abrir oficio no wizard">
-                        <i class="bi bi-journal-text"></i>
-                        <span>Step 4</span>
-                    </a>
+                    {% include 'includes/list/item_actions.html' with abrir_url=row.abrir_url|default:row.justificativa_url abrir_aria='Abrir justificativa' docx_url=row.docx_url|default:row.download_docx_url pdf_url=row.pdf_url|default:row.download_pdf_url delete_url=row.delete_url|default:row.excluir_url delete_aria='Excluir justificativa' %}
                 </div>
             </div>
         </div>

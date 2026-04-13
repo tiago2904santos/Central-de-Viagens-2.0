@@ -111,8 +111,9 @@
                     <td>{{ object.evento_display }}</td>
                     <td>{{ object.oficio_display }}</td>
                     <td class="text-end">
-                        <a class="btn btn-sm btn-doc-action btn-doc-action--primary" href="{{ object.open_url }}"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-                        <a class="btn btn-sm btn-doc-action btn-doc-action--secondary" href="{{ object.edit_url }}"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                            {% include 'includes/list/item_actions.html' with abrir_url=object.abrir_url abrir_aria='Abrir ordem de servico' docx_url=object.docx_url docx_aria='Baixar DOCX da ordem de servico' pdf_url=object.pdf_url pdf_aria='Baixar PDF da ordem de servico' delete_url=object.delete_url delete_aria='Excluir ordem de servico' %}
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
@@ -207,7 +208,7 @@
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">
-                    {% include 'includes/list/card_actions_oficios_pattern.html' with open_url=object.open_url open_aria='Abrir ordem de servico' docx_url=object.download_docx_url docx_aria='Baixar DOCX da ordem de servico' pdf_url=object.download_pdf_url pdf_aria='Baixar PDF da ordem de servico' delete_url=object.delete_url delete_aria='Excluir ordem de servico' %}
+                    {% include 'includes/list/item_actions.html' with abrir_url=object.abrir_url abrir_aria='Abrir ordem de servico' docx_url=object.docx_url docx_aria='Baixar DOCX da ordem de servico' pdf_url=object.pdf_url pdf_aria='Baixar PDF da ordem de servico' delete_url=object.delete_url delete_aria='Excluir ordem de servico' %}
                 </div>
             </div>
         </div>

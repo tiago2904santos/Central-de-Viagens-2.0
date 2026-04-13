@@ -112,7 +112,7 @@
                 <hr>
                 <div class="small text-muted text-uppercase mb-2">Evento vinculado</div>
                 <div class="fw-semibold">{{ object.oficio.evento.titulo|default:"(sem titulo)" }}</div>
-                <a href="{% url 'eventos:guiado-painel' object.oficio.evento.pk %}" class="btn btn-outline-secondary btn-sm mt-2">
+                <a href="{% url 'eventos:guiado-painel' object.oficio.evento.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--primary mt-2">
                     Painel do evento
                 </a>
                 {% endif %}

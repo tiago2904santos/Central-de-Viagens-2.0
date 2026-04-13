@@ -21,7 +21,7 @@
             <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary btn-sm">Lista de ofícios</a>
             {% if evento %}
             <a href="{% url 'eventos:guiado-etapa-3' evento.pk %}" class="btn btn-outline-secondary btn-sm">Ofícios do evento</a>
-            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">Painel do evento</a>
+            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--primary">Painel do evento</a>
             {% endif %}
             <a href="{% url 'eventos:oficio-step1' oficio.pk %}" class="btn btn-outline-secondary btn-sm">Dados e viajantes</a>
             <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger btn-sm">Excluir ofício</a>

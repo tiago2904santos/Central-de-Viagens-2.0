@@ -388,6 +388,65 @@ class GlobalViewsTest(TestCase):
         self.assertIn('btn-doc-action--pdf is-icon-only', row_html)
         self.assertIn('btn-doc-action--danger is-icon-only', row_html)
 
+    def test_lista_global_de_roteiros_mantem_acao_abrir_nos_modos_basico_e_completo(self):
+        response = self.client.get(reverse('eventos:roteiros-global'))
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode('utf-8')
+        self.assertIn('oficios-view-pane--basic', html)
+        self.assertIn('oficios-view-pane--rich', html)
+        self.assertIn('Abrir roteiro', html)
+        self.assertIn('>Abrir</span>', html)
+        self.assertIn('btn-doc-action--primary', html)
+
+        # A acao precisa existir nas duas visoes padronizadas da lista (tabela + card).
+        self.assertGreaterEqual(html.count('aria-label="Abrir roteiro"'), 2)
+
+    def test_lista_global_de_roteiros_aponta_edicao_para_o_roteiro_especifico(self):
+        roteiro_avulso = RoteiroEvento.objects.create(
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_origem,
+            tipo=RoteiroEvento.TIPO_AVULSO,
+            saida_dt=timezone.make_aware(datetime(2026, 5, 1, 7, 30)),
+            chegada_dt=timezone.make_aware(datetime(2026, 5, 1, 11, 45)),
+            status=RoteiroEvento.STATUS_RASCUNHO,
+        )
+        RoteiroEventoDestino.objects.create(
+            roteiro=roteiro_avulso,
+            estado=self.estado,
+            cidade=self.cidade_destino,
+            ordem=0,
+        )
+
+        response = self.client.get(reverse('eventos:roteiros-global'))
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode('utf-8')
+        evento_editar_url = reverse(
+            'eventos:guiado-etapa-2-editar',
+            kwargs={'evento_id': self.evento_pt.pk, 'pk': self.roteiro.pk},
+        )
+        avulso_editar_url = reverse(
+            'eventos:roteiro-avulso-editar',
+            kwargs={'pk': roteiro_avulso.pk},
+        )
+
+        self.assertGreaterEqual(html.count(f'href="{evento_editar_url}"'), 2)
+        self.assertGreaterEqual(html.count(f'href="{avulso_editar_url}"'), 2)
+
+    def test_lista_global_de_planos_mantem_acao_abrir_nos_modos_basico_e_completo(self):
+        response = self.client.get(reverse('eventos:documentos-planos-trabalho'))
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode('utf-8')
+        self.assertIn('oficios-view-pane--basic', html)
+        self.assertIn('oficios-view-pane--rich', html)
+        self.assertIn('Abrir plano de trabalho', html)
+        self.assertIn('btn-doc-action--primary', html)
+
+        # A mesma acao precisa existir nas duas visoes (tabela + card).
+        self.assertGreaterEqual(html.count('aria-label="Abrir plano de trabalho"'), 2)
+
     def test_lista_global_de_oficios_exibe_todos_os_primeiros_nomes_no_modo_basico_sem_resumo(self):
         viajante_extra_1 = Viajante.objects.create(
             nome='Yara Villela de Barros',

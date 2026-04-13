@@ -3522,15 +3522,15 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .btn-doc-action.is-icon-only {
-    width: 2.3rem;
-    height: 2.3rem;
-    min-width: 2.3rem;
+    width: 2.45rem;
+    height: 2.45rem;
+    min-width: 2.45rem;
     padding: 0;
-    border-radius: 0.72rem;
+    border-radius: 999px;
 }
 
 .btn-doc-action.is-icon-only .bi {
-    font-size: 1rem;
+    font-size: 1.04rem;
 }
 
 .oficio-list-driver-carona-grid {
@@ -3567,13 +3567,23 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     justify-content: center;
     gap: 0.4rem;
     padding: 0.4rem 0.74rem;
-    border-radius: 999px;
+    border-radius: 1.1rem;
     font-size: 0.76rem;
     font-weight: 700;
     line-height: 1.1;
     border: 1px solid rgba(15, 23, 42, 0.1);
     text-decoration: none;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.btn-doc-action.is-disabled,
+.btn-doc-action.is-disabled:hover,
+.btn-doc-action.is-disabled:focus {
+    opacity: 0.52;
+    cursor: not-allowed;
+    pointer-events: none;
+    transform: none;
+    box-shadow: none;
 }
 
 .btn-doc-action:hover {
@@ -10653,6 +10663,28 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
         padding: 0.78rem 0.82rem;
         gap: 0.72rem;
     }
+}
+
+/* Garantia final: o botao Abrir nao pode ser ocultado pela cascata em listas. */
+.system-list-page .oficio-list-card__footer-actions .btn-doc-action--primary,
+.system-list-page .system-list-table .btn-doc-action--primary {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #fff !important;
+    min-width: 6.2rem;
+}
+
+.system-list-page .oficio-list-card__footer-actions .btn-doc-action--primary span,
+.system-list-page .system-list-table .btn-doc-action--primary span {
+    display: inline !important;
+}
+
+.system-list-page .oficio-list-card__footer-actions,
+.system-list-page .system-list-table td .d-inline-flex {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 

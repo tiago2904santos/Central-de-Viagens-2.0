@@ -345,6 +345,31 @@ def render_docx_template_bytes(template_path, mapping, post_processor=None):
     return document_to_bytes(document)
 
 
+def _convert_via_libreoffice(docx_path, pdf_path):
+    """Converte DOCX para PDF usando LibreOffice headless via subprocess."""
+    from .backends import _find_libreoffice_soffice
+    import subprocess
+    soffice = _find_libreoffice_soffice()
+    if not soffice:
+        raise DocumentRendererUnavailable('LibreOffice nao encontrado para conversao PDF.')
+    result = subprocess.run(
+        [soffice, '--headless', '--convert-to', 'pdf', '--outdir', str(pdf_path.parent), str(docx_path)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if result.returncode != 0:
+        raise DocumentRendererUnavailable(
+            f'LibreOffice falhou na conversao DOCX para PDF (codigo {result.returncode}): {result.stderr[:400]}'
+        )
+    # LibreOffice nomeia o PDF com o mesmo stem do docx de entrada
+    expected_pdf = pdf_path.parent / (docx_path.stem + '.pdf')
+    if not expected_pdf.exists() or expected_pdf.stat().st_size == 0:
+        raise DocumentRendererUnavailable('LibreOffice nao gerou um PDF valido.')
+    if expected_pdf != pdf_path:
+        expected_pdf.rename(pdf_path)
+
+
 def _convert_via_word_com(docx_path, pdf_path):
     pythoncom = importlib.import_module('pythoncom')
     win32_client = importlib.import_module('win32com.client')
@@ -374,31 +399,44 @@ def _convert_via_word_com(docx_path, pdf_path):
 
 
 def convert_docx_bytes_to_pdf_bytes(docx_bytes):
-    docx2pdf_module = _load_pdf_backend()
+    _load_pdf_backend()  # raises DocumentRendererUnavailable se nenhum backend disponivel
     with TemporaryDirectory() as tmp_dir:
         base_dir = Path(tmp_dir)
         docx_path = base_dir / 'documento.docx'
         pdf_path = base_dir / 'documento.pdf'
         docx_path.write_bytes(docx_bytes)
+
+        errors = []
+
+        # Tentativa 1: docx2pdf (Word COM via docx2pdf)
         try:
+            docx2pdf_module = importlib.import_module('docx2pdf')
             docx2pdf_module.convert(str(docx_path), str(pdf_path))
-        except Exception as docx2pdf_exc:
-            if os.name != 'nt':
-                raise DocumentRendererUnavailable(
-                    f'Falha na conversão DOCX para PDF neste ambiente Windows: {docx2pdf_exc}'
-                ) from docx2pdf_exc
+            if pdf_path.exists() and pdf_path.stat().st_size > 0:
+                return pdf_path.read_bytes()
+        except Exception as exc:
+            errors.append(f'docx2pdf: {exc}')
+
+        # Tentativa 2: Word COM direto
+        if os.name == 'nt':
             try:
                 _convert_via_word_com(docx_path, pdf_path)
-            except Exception as com_exc:
-                raise DocumentRendererUnavailable(
-                    'Falha na conversão DOCX para PDF neste ambiente Windows: '
-                    f'{docx2pdf_exc} | fallback COM: {com_exc}'
-                ) from com_exc
-        if not pdf_path.exists() or pdf_path.stat().st_size == 0:
-            raise DocumentRendererUnavailable(
-                'A conversão DOCX para PDF não gerou um arquivo PDF válido.'
-            )
-        return pdf_path.read_bytes()
+                if pdf_path.exists() and pdf_path.stat().st_size > 0:
+                    return pdf_path.read_bytes()
+            except Exception as exc:
+                errors.append(f'COM: {exc}')
+
+        # Tentativa 3: LibreOffice
+        try:
+            _convert_via_libreoffice(docx_path, pdf_path)
+            if pdf_path.exists() and pdf_path.stat().st_size > 0:
+                return pdf_path.read_bytes()
+        except Exception as exc:
+            errors.append(f'LibreOffice: {exc}')
+
+        raise DocumentRendererUnavailable(
+            'Falha na conversao DOCX para PDF. Tentativas: ' + ' | '.join(errors)
+        )
 
 
 def _render_document_docx_bytes(oficio, tipo_documento):

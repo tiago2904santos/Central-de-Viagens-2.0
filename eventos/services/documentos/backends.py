@@ -47,12 +47,61 @@ def _module_status(module_name, *, label, install_hint=''):
     }
 
 
+def _find_libreoffice_soffice():
+    """Retorna o caminho do executavel soffice do LibreOffice, ou None se nao encontrado."""
+    import shutil
+    windows_candidates = [
+        r'C:\Program Files\LibreOffice\program\soffice.exe',
+        r'C:\Program Files (x86)\LibreOffice\program\soffice.exe',
+    ]
+    for path in windows_candidates:
+        if os.path.isfile(path):
+            return path
+    return shutil.which('soffice')
+
+
 @lru_cache(maxsize=1)
+def _check_libreoffice_availability():
+    soffice = _find_libreoffice_soffice()
+    if not soffice:
+        return {
+            'available': False,
+            'reason': 'LibreOffice nao encontrado neste ambiente. Instale o LibreOffice para habilitar conversao PDF.',
+            'soffice_path': None,
+        }
+    import subprocess
+    try:
+        result = subprocess.run(
+            [soffice, '--version'],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode == 0:
+            return {'available': True, 'reason': '', 'soffice_path': soffice}
+        return {
+            'available': False,
+            'reason': f'LibreOffice retornou codigo {result.returncode} ao verificar versao.',
+            'soffice_path': None,
+        }
+    except Exception as exc:
+        return {
+            'available': False,
+            'reason': f'LibreOffice falhou ao inicializar ({exc.__class__.__name__}).',
+            'soffice_path': None,
+        }
+
+
+_word_com_availability_cache = None
+
+
 def _check_word_com_availability():
+    """Verifica disponibilidade do Word COM. Somente cacheia resultados positivos."""
+    global _word_com_availability_cache
+    if _word_com_availability_cache is not None and _word_com_availability_cache.get('available'):
+        return _word_com_availability_cache
     if os.name != 'nt':
         return {
             'available': False,
-            'reason': 'Conversão PDF suportada apenas em ambiente Windows.',
+            'reason': 'Conversão PDF via Word COM suportada apenas em ambiente Windows.',
         }
     try:
         win32_client = importlib.import_module('win32com.client')
@@ -77,13 +126,19 @@ def _check_word_com_availability():
                 f'({exc.__class__.__name__}).'
             ),
         }
-    return {
-        'available': True,
-        'reason': '',
-    }
+    result = {'available': True, 'reason': ''}
+    _word_com_availability_cache = result
+    return result
 
 
-@lru_cache(maxsize=1)
+def _clear_word_com_availability_cache():
+    global _word_com_availability_cache
+    _word_com_availability_cache = None
+
+
+_check_word_com_availability.cache_clear = _clear_word_com_availability_cache
+
+
 def get_document_backend_capabilities():
     docx_module_status = _module_status(
         'docx',
@@ -124,8 +179,20 @@ def get_document_backend_capabilities():
     if os.name == 'nt' and docx_module_status['available']:
         if docx2pdf_module_status['available'] and win32com_module_status['available']:
             word_com_status = _check_word_com_availability()
-            if not word_com_status['available']:
-                pdf_reasons.append(word_com_status['reason'])
+
+    libreoffice_status = _check_libreoffice_availability()
+
+    word_com_available = word_com_status.get('available', False)
+    libreoffice_available = libreoffice_status.get('available', False)
+
+    docx_available = docx_module_status['available']
+    pdf_available = docx_available and (word_com_available or libreoffice_available)
+
+    if not pdf_available:
+        if not word_com_available and word_com_status.get('reason'):
+            pdf_reasons.append(word_com_status['reason'])
+        if not libreoffice_available and libreoffice_status.get('reason'):
+            pdf_reasons.append(libreoffice_status['reason'])
 
     notes = []
     if not docxtpl_module_status['available']:
@@ -133,15 +200,6 @@ def get_document_backend_capabilities():
             'docxtpl não está disponível neste ambiente. O renderer atual continua apto para DOCX '
             'usando python-docx, mas modelos futuros baseados em docxtpl dependerão dessa biblioteca.'
         )
-
-    docx_available = docx_module_status['available']
-    pdf_available = (
-        os.name == 'nt'
-        and docx_available
-        and docx2pdf_module_status['available']
-        and win32com_module_status['available']
-        and word_com_status.get('available', False)
-    )
 
     return {
         'docx_available': docx_available,
@@ -162,7 +220,9 @@ def get_document_backend_capabilities():
                 'python_docx': docx_module_status['available'],
                 'docx2pdf': docx2pdf_module_status['available'],
                 'win32com_client': win32com_module_status['available'],
-                'word_com': word_com_status.get('available', False),
+                'word_com': word_com_available,
+                'libreoffice': libreoffice_available,
+                'libreoffice_path': libreoffice_status.get('soffice_path'),
             },
         ),
         'notes': notes,
@@ -170,8 +230,9 @@ def get_document_backend_capabilities():
 
 
 def reset_document_backend_capabilities_cache():
-    get_document_backend_capabilities.cache_clear()
-    _check_word_com_availability.cache_clear()
+    global _word_com_availability_cache
+    _word_com_availability_cache = None
+    _check_libreoffice_availability.cache_clear()
 
 
 def _load_docx_backend():
@@ -197,12 +258,11 @@ def _load_pdf_backend():
         raise DocumentRendererUnavailable(
             capabilities['pdf']['message'] or PDF_BACKEND_UNAVAILABLE_MESSAGE
         )
+    # Retorna o modulo docx2pdf se disponivel (pode nao ser necessario quando LibreOffice e usado).
     try:
         return importlib.import_module('docx2pdf')
-    except ImportError as exc:
-        raise DocumentRendererUnavailable(
-            capabilities['pdf']['message'] or PDF_BACKEND_UNAVAILABLE_MESSAGE
-        ) from exc
+    except ImportError:
+        return None
 
 
 def get_docx_backend_availability():

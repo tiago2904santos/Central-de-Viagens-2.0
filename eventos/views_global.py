@@ -1171,6 +1171,61 @@ def _oficio_list_footer_actions(oficio, oficio_downloads):
     return actions
 
 
+def _roteiro_list_actions(roteiro):
+    actions = [
+        {
+            'label': 'Abrir',
+            'aria_label': 'Abrir roteiro',
+            'url': getattr(roteiro, 'abrir_url', '') or getattr(roteiro, 'open_url', '') or roteiro.editar_url,
+            'css_class': 'btn-doc-action--primary',
+            'icon': 'bi-box-arrow-up-right',
+            'download': False,
+            'icon_only': False,
+        }
+    ]
+
+    if getattr(roteiro, 'docx_url', ''):
+        actions.append(
+            {
+                'label': 'DOCX',
+                'aria_label': 'Baixar roteiro em DOCX',
+                'url': roteiro.docx_url,
+                'css_class': 'btn-doc-action--secondary',
+                'icon': 'bi-filetype-docx',
+                'download': True,
+                'icon_only': True,
+            }
+        )
+
+    if getattr(roteiro, 'pdf_url', ''):
+        actions.append(
+            {
+                'label': 'PDF',
+                'aria_label': 'Baixar roteiro em PDF',
+                'url': roteiro.pdf_url,
+                'css_class': 'btn-doc-action--pdf',
+                'icon': 'bi-filetype-pdf',
+                'download': True,
+                'icon_only': True,
+            }
+        )
+
+    if getattr(roteiro, 'delete_url', ''):
+        actions.append(
+            {
+                'label': 'Excluir',
+                'aria_label': 'Excluir roteiro',
+                'url': roteiro.delete_url,
+                'css_class': 'btn-doc-action--danger',
+                'icon': 'bi-trash3',
+                'download': False,
+                'icon_only': True,
+            }
+        )
+
+    return actions
+
+
 def _oficio_list_corner_badges(oficio, viagem_status):
     oficio_status = _oficio_process_status_meta(oficio)
     badges = []
@@ -2087,7 +2142,11 @@ def roteiro_global_lista(request):
         roteiro.is_avulso = roteiro.tipo == RoteiroEvento.TIPO_AVULSO or not roteiro.evento_id
         if roteiro.is_avulso:
             roteiro.editar_url = reverse('eventos:roteiro-avulso-editar', kwargs={'pk': roteiro.pk})
+            roteiro.abrir_url = roteiro.editar_url
             roteiro.open_url = roteiro.editar_url
+            roteiro.docx_url = ''
+            roteiro.pdf_url = ''
+            roteiro.delete_url = ''
             roteiro.evento_url = ''
             roteiro.etapa_url = ''
             roteiro.oficios_url = ''
@@ -2097,11 +2156,18 @@ def roteiro_global_lista(request):
                 'eventos:guiado-etapa-2-editar',
                 kwargs={'evento_id': roteiro.evento_id, 'pk': roteiro.pk},
             )
+            roteiro.abrir_url = roteiro.editar_url
             roteiro.open_url = roteiro.editar_url
+            roteiro.docx_url = ''
+            roteiro.pdf_url = ''
+            roteiro.delete_url = reverse('eventos:guiado-etapa-2-excluir', kwargs={'evento_id': roteiro.evento_id, 'pk': roteiro.pk})
             roteiro.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': roteiro.evento_id})
             roteiro.etapa_url = reverse('eventos:guiado-etapa-2', kwargs={'evento_id': roteiro.evento_id})
             roteiro.oficios_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': roteiro.evento_id})
             roteiro.tipo_label = 'Vinculado a evento'
+
+            roteiro.table_actions = _roteiro_list_actions(roteiro)
+            roteiro.footer_actions = roteiro.table_actions
 
     selected_event = None
     if filters['evento_id'].isdigit():
@@ -2481,16 +2547,19 @@ def _decorate_plano_trabalho_list_items(items):
             for oficio in related_oficios
         ]
         plano.oficios_count_label = oficios_count_label
+        plano.abrir_url = reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk})
         plano.open_url = reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk})
         plano.edit_url = reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk})
-        plano.download_docx_url = reverse(
+        plano.docx_url = reverse(
             'eventos:documentos-planos-trabalho-download',
             kwargs={'pk': plano.pk, 'formato': DocumentoFormato.DOCX.value},
         )
-        plano.download_pdf_url = reverse(
+        plano.pdf_url = reverse(
             'eventos:documentos-planos-trabalho-download',
             kwargs={'pk': plano.pk, 'formato': DocumentoFormato.PDF.value},
         )
+        plano.download_docx_url = plano.docx_url
+        plano.download_pdf_url = plano.pdf_url
         plano.delete_url = reverse('eventos:documentos-planos-trabalho-excluir', kwargs={'pk': plano.pk})
         plano.updated_display = plano.updated_at.strftime('%d/%m/%Y %H:%M')
         plano.resumo_curto = resumo_curto
@@ -3565,17 +3634,20 @@ def ordens_servico_global(request):
     for ordem in object_list:
         ordem.status_meta = _build_ordem_servico_status_meta(ordem)
         ordem.card_theme_class = ordem.status_meta['theme_class']
+        ordem.abrir_url = reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk})
         ordem.open_url = reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk})
         ordem.edit_url = reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk})
         ordem.delete_url = reverse('eventos:documentos-ordens-servico-excluir', kwargs={'pk': ordem.pk})
-        ordem.download_docx_url = reverse(
+        ordem.docx_url = reverse(
             'eventos:documentos-ordens-servico-download',
             kwargs={'pk': ordem.pk, 'formato': DocumentoFormato.DOCX.value},
         )
-        ordem.download_pdf_url = reverse(
+        ordem.pdf_url = reverse(
             'eventos:documentos-ordens-servico-download',
             kwargs={'pk': ordem.pk, 'formato': DocumentoFormato.PDF.value},
         )
+        ordem.download_docx_url = ordem.docx_url
+        ordem.download_pdf_url = ordem.pdf_url
         ordem.evento_display = (
             (ordem.evento.titulo or '').strip() if ordem.evento_id else 'Sem evento'
         )
@@ -3803,8 +3875,12 @@ def justificativas_global(request):
     page_obj = _paginate(queryset, request.GET.get('page'))
     object_list = []
     for just in page_obj.object_list:
+        just.abrir_url = reverse('eventos:documentos-justificativas-editar', kwargs={'pk': just.pk})
         just.detail_url = reverse('eventos:documentos-justificativas-editar', kwargs={'pk': just.pk})
         just.edicao_url = reverse('eventos:documentos-justificativas-editar', kwargs={'pk': just.pk})
+        just.docx_url = ''
+        just.pdf_url = ''
+        just.delete_url = reverse('eventos:documentos-justificativas-excluir', kwargs={'pk': just.pk})
         just.excluir_url = reverse('eventos:documentos-justificativas-excluir', kwargs={'pk': just.pk})
         just.oficio_url = (
             reverse('eventos:oficio-step4', kwargs={'pk': just.oficio_id})
@@ -3952,6 +4028,10 @@ def termos_global(request):
         termo.oficios_relacionados = oficios_relacionados
         termo.oficios_display = ', '.join(oficio.numero_formatado for oficio in oficios_relacionados) if oficios_relacionados else 'â€”'
         termo.termos_url = reverse('eventos:guiado-etapa-5', kwargs={'evento_id': termo.evento_id})
+        termo.abrir_url = termo.termos_url
+        termo.docx_url = ''
+        termo.pdf_url = ''
+        termo.delete_url = ''
         termo.oficios_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': termo.evento_id})
         termo.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': termo.evento_id})
         termo.documentos_url = (
@@ -4486,17 +4566,21 @@ def termos_global(request):
             termo.vinculo_badge_detail = ''
 
         termo.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
+        termo.abrir_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
         termo.detail_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
         termo.edicao_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
+        termo.delete_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
         termo.excluir_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
-        termo.download_docx_url = reverse(
+        termo.docx_url = reverse(
             'eventos:documentos-termos-download',
             kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value},
         )
-        termo.download_pdf_url = reverse(
+        termo.pdf_url = reverse(
             'eventos:documentos-termos-download',
             kwargs={'pk': termo.pk, 'formato': DocumentoFormato.PDF.value},
         )
+        termo.download_docx_url = termo.docx_url
+        termo.download_pdf_url = termo.pdf_url
 
     return render(
         request,

@@ -109,8 +109,9 @@
                     <td>{{ object.periodo_display }}</td>
                     <td>{{ object.status_meta.label }}</td>
                     <td class="text-end">
-                        <a href="{{ object.open_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
-                        <a href="{{ object.edit_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                            {% include 'includes/list/item_actions.html' with abrir_url=object.abrir_url abrir_aria='Abrir plano de trabalho' docx_url=object.docx_url docx_aria='Baixar DOCX do plano de trabalho' pdf_url=object.pdf_url pdf_aria='Baixar PDF do plano de trabalho' delete_url=object.delete_url delete_aria='Excluir plano de trabalho' %}
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
@@ -214,7 +215,7 @@
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">
-                    {% include 'includes/list/card_actions_oficios_pattern.html' with open_url=object.open_url open_aria='Abrir plano de trabalho' docx_url=object.download_docx_url docx_aria='Baixar DOCX do plano de trabalho' pdf_url=object.download_pdf_url pdf_aria='Baixar PDF do plano de trabalho' delete_url=object.delete_url delete_aria='Excluir plano de trabalho' %}
+                    {% include 'includes/list/item_actions.html' with abrir_url=object.abrir_url abrir_aria='Abrir plano de trabalho' docx_url=object.docx_url docx_aria='Baixar DOCX do plano de trabalho' pdf_url=object.pdf_url pdf_aria='Baixar PDF do plano de trabalho' delete_url=object.delete_url delete_aria='Excluir plano de trabalho' %}
                 </div>
             </div>
         </div>

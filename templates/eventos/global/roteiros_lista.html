@@ -129,13 +129,15 @@
                         </td>
                         <td>{{ roteiro.oficios_count }}</td>
                         <td class="text-end">
-                            <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                            {% if roteiro.etapa_url %}
-                            <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary">Etapa 2</a>
-                            {% endif %}
-                            {% if roteiro.oficios_url %}
-                            <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-outline-secondary">Usar no oficio</a>
-                            {% endif %}
+                            <div class="oficios-table__actions justify-content-end">
+                                {% include 'includes/list/item_actions.html' with abrir_url=roteiro.abrir_url abrir_aria='Abrir roteiro' docx_url=roteiro.docx_url docx_aria='Baixar roteiro em DOCX' pdf_url=roteiro.pdf_url pdf_aria='Baixar roteiro em PDF' delete_url=roteiro.delete_url delete_aria='Excluir roteiro' delete_method='post' delete_confirm='Confirmar exclusao do roteiro?' %}
+                                {% if roteiro.etapa_url %}
+                                <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary" aria-label="Abrir etapa 2 do evento">Etapa 2</a>
+                                {% endif %}
+                                {% if roteiro.oficios_url %}
+                                <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-outline-secondary" aria-label="Usar roteiro no oficio">Usar no oficio</a>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
@@ -247,31 +249,12 @@
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions roteiro-list-card__footer-actions">
-                    <a href="{{ roteiro.open_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" aria-label="Abrir roteiro">
-                        <i class="bi bi-box-arrow-up-right"></i>
-                        <span>Abrir</span>
-                    </a>
-                    <a href="{{ roteiro.editar_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Editar roteiro">
-                        <i class="bi bi-pencil-square"></i>
-                        <span>Editar</span>
-                    </a>
+                    {% include 'includes/list/item_actions.html' with abrir_url=roteiro.abrir_url abrir_aria='Abrir roteiro' docx_url=roteiro.docx_url docx_aria='Baixar roteiro em DOCX' pdf_url=roteiro.pdf_url pdf_aria='Baixar roteiro em PDF' delete_url=roteiro.delete_url delete_aria='Excluir roteiro' delete_method='post' delete_confirm='Confirmar exclusao do roteiro?' %}
                     {% if roteiro.etapa_url %}
-                    <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Abrir etapa 2 do roteiro">
-                        <i class="bi bi-signpost-2"></i>
-                        <span>Etapa 2</span>
-                    </a>
+                    <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary" aria-label="Abrir etapa 2 do evento">Etapa 2</a>
                     {% endif %}
                     {% if roteiro.oficios_url %}
-                    <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Vincular roteiro em oficio">
-                        <i class="bi bi-link-45deg"></i>
-                        <span>Usar no oficio</span>
-                    </a>
-                    {% endif %}
-                    {% if roteiro.evento_url %}
-                    <a href="{{ roteiro.evento_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Abrir evento vinculado ao roteiro">
-                        <i class="bi bi-calendar3"></i>
-                        <span>Evento</span>
-                    </a>
+                    <a href="{{ roteiro.oficios_url }}" class="btn btn-sm btn-outline-secondary" aria-label="Usar roteiro no oficio">Usar no oficio</a>
                     {% endif %}
                 </div>
             </div>
