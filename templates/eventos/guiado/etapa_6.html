@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Finalização - {{ evento.titulo|default:"Evento" }} - Central de Viagens{% endblock %}
 {% block page_title %}Fluxo guiado - Finalização{% endblock %}
@@ -96,4 +97,25 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/oficio_wizard.js' %}"></script>
+<script>
+(function() {
+  var form = document.getElementById('form-finalizacao');
+  if (!form || !window.OficioWizard) return;
+  var autosave = window.OficioWizard.createAutosave({
+    form: form,
+    statusElement: document.getElementById('guiado-finalizacao-autosave-status'),
+    captureSubmit: false
+  });
+  var textarea = document.getElementById('id_observacoes_finais');
+  if (textarea) {
+    textarea.addEventListener('input', function() {
+      autosave.schedule();
+    });
+  }
+})();
+</script>
 {% endblock %}

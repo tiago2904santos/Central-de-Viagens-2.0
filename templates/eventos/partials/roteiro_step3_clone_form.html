@@ -20,6 +20,7 @@
 
         <form method="post" id="oficio-step3-form" novalidate class="oficio-stage-form">
           {% csrf_token %}
+          <input type="hidden" name="autosave_obj_id" id="id_autosave_obj_id" value="{{ object.pk|default:'' }}">
           <input type="hidden" name="tipo_destino" id="id_tipo_destino" value="{{ step3_diarias_resultado.tipo_destino|default:'' }}">
           <input type="hidden" name="quantidade_diarias" id="id_quantidade_diarias" value="{{ step3_diarias_resultado.totais.total_diarias|default:'' }}">
           <input type="hidden" name="valor_diarias" id="id_valor_diarias" value="{{ step3_diarias_resultado.totais.total_valor|default:'' }}">
@@ -250,6 +251,23 @@
   var apiCidades = '{{ api_cidades_por_estado_url|escapejs }}';
   var apiDiarias = '{{ api_calcular_diarias_url|escapejs }}';
   var csrf = (form.querySelector('input[name="csrfmiddlewaretoken"]') || {}).value || '';
+  var autosaveIdInput = $('id_autosave_obj_id');
+  var autosaveStatus = $('roteiro-autosave-status');
+  var autosave = window.OficioWizard ? window.OficioWizard.createAutosave({
+    form: form,
+    statusElement: autosaveStatus,
+    captureSubmit: false,
+    onSuccess: function(data) {
+      if (!data || !data.id) return;
+      if (autosaveIdInput) autosaveIdInput.value = String(data.id);
+      if (data.edit_url) {
+        form.setAttribute('action', data.edit_url);
+        if (window.location.pathname !== data.edit_url) {
+          window.history.replaceState({}, '', data.edit_url);
+        }
+      }
+    }
+  }) : null;
   var destinoEstadoDefaultId = '{{ destino_estado_fixo_id|default:"" }}';
   var applyingState = false;
   var diariasTimer = null;
@@ -263,6 +281,9 @@
     if (window.OficioWizard && typeof window.OficioWizard.refreshSelectPickers === 'function') {
       window.OficioWizard.refreshSelectPickers(root || form);
     }
+  }
+  function scheduleAutosave() {
+    if (autosave) autosave.schedule();
   }
   function cidadesUrl(estadoId) { return apiCidades.replace(/\/0\/?$/, '/' + estadoId + '/'); }
   function pad(v) { return v < 10 ? '0' + v : String(v); }
@@ -603,7 +624,7 @@
       if (!dr || dr === row) { row.classList.remove('is-drop-target'); return; }
       var c = $('destinos-container'); var all = getDestinoRows(); var ti = all.indexOf(row); var di = all.indexOf(dr);
       if (di < ti) c.insertBefore(dr, row.nextSibling); else c.insertBefore(dr, row);
-      row.classList.remove('is-drop-target'); reindexDestinoRows(); renderTrechos(captureCurrentState(), { force: true }); scheduleRealtimeDiarias();
+      row.classList.remove('is-drop-target'); reindexDestinoRows(); renderTrechos(captureCurrentState(), { force: true }); scheduleRealtimeDiarias(); scheduleAutosave();
     });
   }
   function addDestinoRow(destino) {
@@ -943,32 +964,32 @@
   }
   $('destinos-container').addEventListener('change', function(e) {
     if (applyingState) return; var row = e.target.closest('.destino-row'); if (!row) return;
-    if (e.target.classList.contains('destino-estado')) { var cs = row.querySelector('.destino-cidade'); loadCities(cs, e.target.value||'', null).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); }); }
-    else { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); }
+    if (e.target.classList.contains('destino-estado')) { var cs = row.querySelector('.destino-cidade'); loadCities(cs, e.target.value||'', null).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); }); }
+    else { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); }
   });
   $('destinos-container').addEventListener('click', function(e) {
     var btn = e.target.closest('.btn-remover-destino'); if (!btn) return;
     var rows = getDestinoRows(); if (rows.length <= 1) return;
-    btn.closest('.destino-row').remove(); reindexDestinoRows(); refreshDestinoButtons(); renderTrechos(captureCurrentState()); scheduleRealtimeDiarias();
+    btn.closest('.destino-row').remove(); reindexDestinoRows(); refreshDestinoButtons(); renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave();
   });
-  $('btn-adicionar-destino').addEventListener('click', function() { addDestinoRow({ estado_id: destinoEstadoDefaultId||null, cidade_id: null }).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); }); });
-  $('id_origem_estado').addEventListener('change', function() { if (applyingState) return; loadCities($('id_origem_cidade'), $('id_origem_estado').value, null).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); }); });
-  $('id_origem_cidade').addEventListener('change', function() { if (applyingState) return; renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); });
+  $('btn-adicionar-destino').addEventListener('click', function() { addDestinoRow({ estado_id: destinoEstadoDefaultId||null, cidade_id: null }).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); }); });
+  $('id_origem_estado').addEventListener('change', function() { if (applyingState) return; loadCities($('id_origem_cidade'), $('id_origem_estado').value, null).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); }); });
+  $('id_origem_cidade').addEventListener('change', function() { if (applyingState) return; renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); });
   $('trechos-gerados-container').addEventListener('input', function(e) {
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';
     if (n.indexOf('_saida_')!==-1||n.indexOf('_tempo_adicional_min')!==-1||n.indexOf('_tempo_cru_estimado_min')!==-1||e.target.classList.contains('trecho-tempo-viagem-hhmm')) recalcCard(c, true);
-    updateResumo(); scheduleRealtimeDiarias();
+    updateResumo(); scheduleRealtimeDiarias(); scheduleAutosave();
   });
   $('trechos-gerados-container').addEventListener('change', function(e) {
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';
     if (n.indexOf('_tempo_adicional_min')!==-1||n.indexOf('_tempo_cru_estimado_min')!==-1||e.target.classList.contains('trecho-tempo-viagem-hhmm')) recalcCard(c, true);
-    updateResumo(); scheduleRealtimeDiarias();
+    updateResumo(); scheduleRealtimeDiarias(); scheduleAutosave();
   });
   ['id_retorno_saida_data','id_retorno_saida_hora','id_retorno_chegada_data','id_retorno_chegada_hora','id_retorno_tempo_viagem_hhmm','id_retorno_tempo_adicional_min'].forEach(function(id) {
-    $(id).addEventListener('input', function() { if (applyingState) return; recalcRetorno(id.indexOf('saida_')!==-1||id.indexOf('tempo_')!==-1); scheduleRealtimeDiarias(); });
-    $(id).addEventListener('change', function() { if (applyingState) return; recalcRetorno(true); scheduleRealtimeDiarias(); });
+    $(id).addEventListener('input', function() { if (applyingState) return; recalcRetorno(id.indexOf('saida_')!==-1||id.indexOf('tempo_')!==-1); scheduleRealtimeDiarias(); scheduleAutosave(); });
+    $(id).addEventListener('change', function() { if (applyingState) return; recalcRetorno(true); scheduleRealtimeDiarias(); scheduleAutosave(); });
   });
   if ($('id_roteiro_busca')) {
     $('id_roteiro_busca').addEventListener('input', function() {
@@ -985,6 +1006,7 @@
       if (applyingState) return;
       toggleBateVoltaPanel();
       scheduleLoopTrechosRender({ preferSeed: false, force: true });
+      scheduleAutosave();
     });
   });
   [
@@ -1001,6 +1023,7 @@
       hiddenInput.value = parsed != null ? String(parsed) : '';
       if (normalized !== this.value) this.value = normalized;
       scheduleLoopTrechosRender({ preferSeed: false, force: true });
+      scheduleAutosave();
     });
     textInput.addEventListener('blur', function() {
       syncBateVoltaDurationInputs();
@@ -1015,12 +1038,14 @@
     setModeUi();
     if ($('id_roteiro_modo_evento').checked && $('id_roteiro_evento_id').value) { var r = routeMap[String($('id_roteiro_evento_id').value)]; if (r && r.state) applyState(r.state); }
     else { scheduleRealtimeDiarias(); }
+    scheduleAutosave();
   });
-  $('id_roteiro_modo_proprio').addEventListener('change', function() { setModeUi(); scheduleRealtimeDiarias(); });
+  $('id_roteiro_modo_proprio').addEventListener('change', function() { setModeUi(); scheduleRealtimeDiarias(); scheduleAutosave(); });
   $('id_roteiro_evento_id').addEventListener('change', function() {
     routeResumo(); var r = routeMap[String($('id_roteiro_evento_id').value||'')];
     if (r && r.state && $('id_roteiro_modo_evento').checked) applyState(r.state);
     else scheduleRealtimeDiarias();
+    scheduleAutosave();
   });
   $('btn-calcular-diarias-avulso').addEventListener('click', function() { calculateDiarias(); });
   setModeUi();

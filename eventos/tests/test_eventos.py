@@ -139,6 +139,8 @@ class EventoListaAuthTest(TestCase):
         self.assertContains(response, 'PCPR')
         self.assertContains(response, 'Curitiba')
         self.assertContains(response, 'Editar Etapa 1')
+        self.assertContains(response, reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}))
+        self.assertNotContains(response, reverse('eventos:guiado-painel', kwargs={'pk': ev.pk}))
 
 
 class EventoCRUDTest(TestCase):
@@ -443,6 +445,50 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
+    def test_etapa_2_lista_filtra_apenas_roteiros_do_evento_atual(self):
+        outro_evento = Evento.objects.create(
+            titulo='Outro evento',
+            tipo_demanda=Evento.TIPO_OUTRO,
+            data_inicio=date(2025, 2, 1),
+            data_fim=date(2025, 2, 3),
+            status=Evento.STATUS_EM_ANDAMENTO,
+            cidade_base=self.cidade_a,
+        )
+        roteiro_evento = RoteiroEvento.objects.create(
+            evento=self.evento,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_a,
+            status=RoteiroEvento.STATUS_FINALIZADO,
+            tipo=RoteiroEvento.TIPO_EVENTO,
+        )
+        RoteiroEventoDestino.objects.create(roteiro=roteiro_evento, estado=self.estado, cidade=self.cidade_b, ordem=0)
+        roteiro_outro_evento = RoteiroEvento.objects.create(
+            evento=outro_evento,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_a,
+            status=RoteiroEvento.STATUS_FINALIZADO,
+            tipo=RoteiroEvento.TIPO_EVENTO,
+        )
+        RoteiroEventoDestino.objects.create(roteiro=roteiro_outro_evento, estado=self.estado, cidade=self.cidade_b, ordem=0)
+
+        response = self.client.get(reverse('eventos:guiado-etapa-2', kwargs={'evento_id': self.evento.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'roteiro-card-{roteiro_evento.pk}')
+        self.assertNotContains(response, f'roteiro-card-{roteiro_outro_evento.pk}')
+        self.assertEqual([item.pk for item in response.context['object_list']], [roteiro_evento.pk])
+
+    def test_etapa_2_lista_usa_shell_moderno_com_toggle_persistido_e_fab(self):
+        response = self.client.get(reverse('eventos:guiado-etapa-2', kwargs={'evento_id': self.evento.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-view-storage-key="central-viagens.guiado.etapa2.roteiros.view-mode"')
+        self.assertContains(response, 'oficios-view-pane--basic')
+        self.assertContains(response, 'oficios-view-pane--rich')
+        self.assertContains(response, 'aria-label="Alternar visualizacao dos roteiros do evento"')
+        self.assertContains(response, 'Subir lista')
+        self.assertContains(response, 'Novo roteiro')
+
     def test_criar_roteiro_dentro_de_evento(self):
         saida = datetime(2025, 1, 2, 8, 0)
         data = {
@@ -548,6 +594,31 @@ class EventoEtapa2RoteirosTest(TestCase):
         r = RoteiroEvento.objects.get(evento=self.evento)
         self.assertEqual(r.status, RoteiroEvento.STATUS_RASCUNHO)
         self.assertEqual(r.observacoes, 'PARCIAL')
+
+    def test_autosave_cria_roteiro_em_rascunho_e_retorna_url_edicao(self):
+        response = self.client.post(
+            reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk}),
+            {
+                'autosave': '1',
+                'autosave_obj_id': '',
+                'origem_estado': self.estado.pk,
+                'origem_cidade': self.cidade_a.pk,
+                'destino_estado_0': self.estado.pk,
+                'destino_cidade_0': self.cidade_b.pk,
+                'observacoes': 'rascunho autosave',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body.get('ok'))
+        self.assertTrue(body.get('edit_url'))
+
+        roteiro = RoteiroEvento.objects.get(evento=self.evento)
+        self.assertEqual(roteiro.status, RoteiroEvento.STATUS_RASCUNHO)
+        self.assertEqual(roteiro.observacoes, 'RASCUNHO AUTOSAVE')
+        self.assertIn(str(roteiro.pk), body.get('edit_url'))
 
     def test_salvar_completo_finalizado(self):
         """Roteiro fica FINALIZADO quando tem saida_dt e chegada_dt (preenchidos a partir dos trechos)."""
@@ -1476,6 +1547,36 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertEqual(response.status_code, 302)
         ev.refresh_from_db()
         self.assertEqual(ev.tipos_demanda.count(), 2)
+
+    def test_etapa_1_autosave_persiste_dados_sem_redirect(self):
+        tipo = self.tipos[0] if self.tipos else None
+        self.assertIsNotNone(tipo)
+        ev = Evento.objects.create(titulo='', data_inicio=date(2025, 3, 12), data_fim=date(2025, 3, 12), status=Evento.STATUS_RASCUNHO)
+
+        response = self.client.post(
+            reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}),
+            {
+                'autosave': '1',
+                'tipos_demanda': [tipo.pk],
+                'data_unica': 'on',
+                'data_inicio': '2025-03-20',
+                'descricao': '',
+                'tem_convite_ou_oficio_evento': 'on',
+                'destino_estado_0': self.estado.pk,
+                'destino_cidade_0': self.cidade_a.pk,
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('ok'))
+
+        ev.refresh_from_db()
+        self.assertEqual(ev.data_inicio, date(2025, 3, 20))
+        self.assertEqual(ev.data_fim, date(2025, 3, 20))
+        self.assertTrue(ev.data_unica)
+        self.assertTrue(ev.tem_convite_ou_oficio_evento)
+        self.assertEqual(ev.destinos.count(), 1)
 
     def test_etapa_1_titulo_gerado_automaticamente(self):
         tipo = self.tipos[0] if self.tipos else None
@@ -2938,6 +3039,26 @@ class EventoEtapa5TermosTest(TestCase):
         self.assertEqual(termo.status, EventoTermoParticipante.STATUS_DISPENSADO)
         self.assertEqual(termo.modalidade, EventoTermoParticipante.MODALIDADE_SEMIPREENCHIDO)
 
+    def test_etapa_5_autosave_persiste_status_e_modalidade(self):
+        viajante = self._criar_viajante(nome='Viajante Autosave')
+        self._vincular_viajante_em_oficio(viajante)
+
+        response = self.client.post(
+            reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}),
+            {
+                'autosave': '1',
+                f'status_{viajante.pk}': EventoTermoParticipante.STATUS_CONCLUIDO,
+                f'modalidade_{viajante.pk}': EventoTermoParticipante.MODALIDADE_SEMIPREENCHIDO,
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('ok'))
+        termo = EventoTermoParticipante.objects.get(evento=self.evento, viajante=viajante)
+        self.assertEqual(termo.status, EventoTermoParticipante.STATUS_CONCLUIDO)
+        self.assertEqual(termo.modalidade, EventoTermoParticipante.MODALIDADE_SEMIPREENCHIDO)
+
     def test_etapa_5_acoes_participante_dispensar_reabrir(self):
         viajante = self._criar_viajante(nome='Viajante C')
         self._vincular_viajante_em_oficio(viajante)
@@ -3172,6 +3293,21 @@ class EventoEtapa6FinalizacaoTest(TestCase):
         fin = EventoFinalizacao.objects.get(evento=self.evento)
         self.assertEqual((fin.observacoes_finais or '').strip(), 'Obs finais do evento.')
         self.assertIsNone(fin.finalizado_em)
+
+    def test_etapa_6_autosave_persiste_observacoes(self):
+        response = self.client.post(
+            reverse('eventos:guiado-finalizacao', kwargs={'evento_id': self.evento.pk}),
+            {
+                'autosave': '1',
+                'observacoes_finais': 'Observação salva automaticamente.',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('ok'))
+        fin = EventoFinalizacao.objects.get(evento=self.evento)
+        self.assertEqual((fin.observacoes_finais or '').strip(), 'Observação salva automaticamente.')
 
     def test_etapa_6_finalizar_com_criterios_atendidos(self):
         tipo = TipoDemandaEvento.objects.create(nome='AÇÃO TESTE FINALIZAR', ordem=999, ativo=True, is_outros=False)

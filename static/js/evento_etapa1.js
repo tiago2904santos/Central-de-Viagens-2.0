@@ -27,6 +27,24 @@
   var wrapDescricao = document.getElementById('wrap-descricao');
   var destinosContainer = document.getElementById('destinos-container');
   var btnAdicionarDestino = document.getElementById('btn-adicionar-destino');
+  var autosaveStatus = document.getElementById('evento-etapa1-autosave-status');
+  var autosave = window.OficioWizard && typeof window.OficioWizard.createAutosave === 'function'
+    ? window.OficioWizard.createAutosave({
+        form: form,
+        statusElement: autosaveStatus,
+        captureSubmit: false,
+        transformPayload: function(data) {
+          data.delete('convite_documentos');
+          return data;
+        }
+      })
+    : null;
+
+  function scheduleAutosave() {
+    if (autosave) {
+      autosave.schedule();
+    }
+  }
 
   function getCidadesUrl(estadoId) {
     return apiCidadesUrl.replace(/\/0\/?$/, '/' + String(estadoId) + '/');
@@ -173,6 +191,7 @@
           return;
         }
         row.remove();
+        scheduleAutosave();
       });
     }
   }
@@ -214,21 +233,29 @@
     input.addEventListener('change', function() {
       updateDemandCards();
       toggleDescricao();
+      scheduleAutosave();
     });
   });
 
   if (dataUnicaInput) {
-    dataUnicaInput.addEventListener('change', updateDataUnica);
+    dataUnicaInput.addEventListener('change', function() {
+      updateDataUnica();
+      scheduleAutosave();
+    });
   }
   if (dataInicioInput) {
     dataInicioInput.addEventListener('change', function() {
       if (dataUnicaInput && dataUnicaInput.checked && dataFimInput) {
         dataFimInput.value = dataInicioInput.value;
       }
+      scheduleAutosave();
     });
   }
   if (conviteInput) {
-    conviteInput.addEventListener('change', updateConvite);
+    conviteInput.addEventListener('change', function() {
+      updateConvite();
+      scheduleAutosave();
+    });
   }
   if (conviteFilesInput) {
     conviteFilesInput.addEventListener('change', function() {
@@ -236,11 +263,18 @@
         conviteInput.checked = true;
       }
       updateConvite();
+      if (autosaveStatus && conviteFilesInput.files && conviteFilesInput.files.length) {
+        autosaveStatus.dataset.state = '';
+        autosaveStatus.textContent = 'Arquivos pendentes: use Salvar para enviar.';
+      }
     });
   }
 
   if (btnAdicionarDestino) {
-    btnAdicionarDestino.addEventListener('click', createDestinoRow);
+    btnAdicionarDestino.addEventListener('click', function() {
+      createDestinoRow();
+      scheduleAutosave();
+    });
   }
 
   destinosContainer.querySelectorAll('[data-destino-row]').forEach(bindDestinoRow);

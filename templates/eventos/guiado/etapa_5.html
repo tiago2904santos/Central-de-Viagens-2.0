@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Etapa 5 - Termos - {{ evento.titulo|default:"Evento" }} - Central de Viagens{% endblock %}
 {% block page_title %}Fluxo guiado - Etapa 5: Termos{% endblock %}
@@ -12,25 +13,25 @@
             <div class="col-12 col-md-6 col-xl-3">
                 <article class="app-page-card h-100">
                     <p class="small text-uppercase text-muted mb-2">Participantes</p>
-                    <strong>{{ total_participantes }}</strong>
+                    <strong id="termos-count-participantes">{{ total_participantes }}</strong>
                 </article>
             </div>
             <div class="col-12 col-md-6 col-xl-3">
                 <article class="app-page-card h-100">
                     <p class="small text-uppercase text-muted mb-2">Concluídos</p>
-                    <strong>{{ termos_concluidos }}</strong>
+                    <strong id="termos-count-concluidos">{{ termos_concluidos }}</strong>
                 </article>
             </div>
             <div class="col-12 col-md-6 col-xl-3">
                 <article class="app-page-card h-100">
                     <p class="small text-uppercase text-muted mb-2">Dispensados</p>
-                    <strong>{{ termos_dispensados }}</strong>
+                    <strong id="termos-count-dispensados">{{ termos_dispensados }}</strong>
                 </article>
             </div>
             <div class="col-12 col-md-6 col-xl-3">
                 <article class="app-page-card h-100">
                     <p class="small text-uppercase text-muted mb-2">Pendentes / Gerados</p>
-                    <strong>{{ termos_pendentes }} / {{ termos_gerados }}</strong>
+                    <strong id="termos-count-pendentes-gerados">{{ termos_pendentes }} / {{ termos_gerados }}</strong>
                 </article>
             </div>
         </section>
@@ -54,7 +55,7 @@
 
         {% if participantes %}
         <section class="app-page-card app-page-card--spacious">
-            <form method="post">
+            <form method="post" id="guiado-termos-form">
                 {% csrf_token %}
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -115,9 +116,10 @@
                 </div>
 
                 <div class="d-flex flex-wrap gap-2 mt-3">
+                    <span class="oficio-autosave-status" id="guiado-termos-autosave-status" aria-live="polite">Autosave ativo.</span>
                     <button type="submit" class="btn btn-primary">Salvar termos</button>
                     <button type="submit" name="voltar_painel" value="1" class="btn btn-outline-primary">Salvar e voltar ao painel</button>
-                    <a href="{% url 'eventos:guiado-finalizacao' evento.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--primary">Abrir finalização</a>
+                    <a href="{% url 'eventos:guiado-finalizacao' evento.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--primary" data-autosave-link="1">Abrir finalização</a>
                 </div>
             </form>
         </section>
@@ -158,4 +160,51 @@
 
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/oficio_wizard.js' %}"></script>
+<script>
+(function() {
+  var form = document.getElementById('guiado-termos-form');
+  if (!form || !window.OficioWizard) return;
+
+  var autosave = window.OficioWizard.createAutosave({
+    form: form,
+    statusElement: document.getElementById('guiado-termos-autosave-status'),
+    captureSubmit: false
+  });
+
+  function countByStatus(value) {
+    return Array.from(form.querySelectorAll('select[name^="status_"]')).filter(function(select) {
+      return select.value === value;
+    }).length;
+  }
+
+  function updateSummary() {
+    var concluidos = countByStatus('CONCLUIDO');
+    var dispensados = countByStatus('DISPENSADO');
+    var gerados = countByStatus('GERADO');
+    var pendentes = countByStatus('PENDENTE');
+    var total = form.querySelectorAll('select[name^="status_"]').length;
+    var participantesEl = document.getElementById('termos-count-participantes');
+    var concluidosEl = document.getElementById('termos-count-concluidos');
+    var dispensadosEl = document.getElementById('termos-count-dispensados');
+    var pendentesGeradosEl = document.getElementById('termos-count-pendentes-gerados');
+    if (participantesEl) participantesEl.textContent = String(total);
+    if (concluidosEl) concluidosEl.textContent = String(concluidos);
+    if (dispensadosEl) dispensadosEl.textContent = String(dispensados);
+    if (pendentesGeradosEl) pendentesGeradosEl.textContent = pendentes + ' / ' + gerados;
+  }
+
+  form.querySelectorAll('select[name^="status_"], select[name^="modalidade_"]').forEach(function(field) {
+    field.addEventListener('change', function() {
+      updateSummary();
+      autosave.schedule();
+    });
+  });
+
+  updateSummary();
+})();
+</script>
 {% endblock %}

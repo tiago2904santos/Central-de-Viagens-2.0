@@ -162,23 +162,43 @@
     var statusElement = options.statusElement || null;
     var url = options.url || window.location.href;
     var beforeSerialize = typeof options.beforeSerialize === 'function' ? options.beforeSerialize : function() {};
+    var transformPayload = typeof options.transformPayload === 'function' ? options.transformPayload : null;
+    var onSuccess = typeof options.onSuccess === 'function' ? options.onSuccess : null;
     var captureSubmit = options.captureSubmit !== false;
+    var statusMessages = Object.assign({
+      idle: 'Autosave ativo.',
+      saving: 'Salvando...',
+      saved: 'Salvo automaticamente.',
+      error: 'Falha no autosave.'
+    }, (options && options.statusMessages) || {});
     var dirty = false;
     var timer = null;
     var activeRequest = null;
     var queuedAfterActive = false;
+    var lastSavedAtLabel = '';
 
-    function setStatus(state) {
+    function resolveStatusMessage(state) {
+      if (state === 'saved' && lastSavedAtLabel) {
+        return 'Salvo automaticamente às ' + lastSavedAtLabel + '.';
+      }
+      return statusMessages[state] || '';
+    }
+
+    function setStatus(state, message) {
       if (!statusElement) {
         return;
       }
       statusElement.dataset.state = state || '';
+      statusElement.textContent = message || resolveStatusMessage(state);
     }
 
     function buildPayload() {
       beforeSerialize();
       var data = new FormData(form);
       data.set('autosave', '1');
+      if (transformPayload) {
+        data = transformPayload(data, form) || data;
+      }
       return data;
     }
 
@@ -203,13 +223,17 @@
             if (!response.ok || data.ok === false) {
               throw new Error(data.error || 'Falha no autosave.');
             }
+            lastSavedAtLabel = data.saved_at || '';
             setStatus('saved');
+            if (onSuccess) {
+              onSuccess(data);
+            }
             return true;
           });
         })
         .catch(function(error) {
           dirty = true;
-          setStatus('error');
+          setStatus('error', error && error.message ? error.message : undefined);
           return false;
         })
         .finally(function() {

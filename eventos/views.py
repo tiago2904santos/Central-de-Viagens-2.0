@@ -13,6 +13,7 @@ from django.db.models import Max, Prefetch, Q
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.utils.dateparse import parse_date
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.utils.text import slugify
@@ -808,7 +809,7 @@ def _decorate_evento_list_items(eventos):
         evento.quick_actions = [
             {
                 'label': 'Abrir fluxo guiado',
-                'url': reverse('eventos:guiado-painel', kwargs={'pk': evento.pk}),
+                    'url': reverse('eventos:guiado-etapa-1', kwargs={'pk': evento.pk}),
                 'css_class': 'btn-doc-action--primary',
                 'icon': 'bi-box-arrow-up-right',
             },
@@ -987,6 +988,8 @@ def guiado_etapa_1(request, pk):
     tipo_outros_pk = tipo_outros.pk if tipo_outros else None
 
     if request.method == 'POST':
+        if _is_autosave_request(request):
+            return _autosave_evento_etapa_1(obj, request)
         arquivos_convite = [f for f in request.FILES.getlist('convite_documentos') if getattr(f, 'name', '')]
         ok_arquivos, msg_arquivos = _validar_anexos_convite(arquivos_convite)
         destinos_post = _parse_destinos_post(request)
@@ -2392,6 +2395,8 @@ def guiado_etapa_5(request, evento_id):
     )
     evento_apenas_consulta = _evento_esta_finalizado(evento)
     if request.method == 'POST' and evento_apenas_consulta:
+        if _is_autosave_request(request):
+            return _autosave_error_response('Evento finalizado. Não é possível alterar os termos.')
         messages.error(
             request,
             'Evento finalizado. Não é possível alterar os termos.',
@@ -2402,6 +2407,9 @@ def guiado_etapa_5(request, evento_id):
     participantes = _evento_participantes_termo(evento)
 
     if request.method == 'POST':
+        if _is_autosave_request(request):
+            updated = _autosave_termos_participantes(participantes, request)
+            return _autosave_success_response({'updated': updated})
         updated = 0
         acao_participante = (request.POST.get('acao_participante') or '').strip()
         if ':' in acao_participante:
@@ -2432,22 +2440,7 @@ def guiado_etapa_5(request, evento_id):
                         termo.save(update_fields=['status', 'updated_at'])
                         updated += 1
             else:
-                for viajante, termo, _oficios in participantes:
-                    status_key = f'status_{viajante.pk}'
-                    modalidade_key = f'modalidade_{viajante.pk}'
-                    new_status = _normalizar_status_termo(request.POST.get(status_key)) or termo.status
-                    new_modalidade = _normalizar_modalidade_termo(request.POST.get(modalidade_key))
-                    update_fields = []
-                    if new_status != termo.status:
-                        termo.status = new_status
-                        update_fields.append('status')
-                    if new_modalidade != termo.modalidade:
-                        termo.modalidade = new_modalidade
-                        update_fields.append('modalidade')
-                    if update_fields:
-                        update_fields.append('updated_at')
-                        termo.save(update_fields=update_fields)
-                        updated += 1
+                updated = _autosave_termos_participantes(participantes, request)
         if updated:
             messages.success(request, 'Termos atualizados com sucesso.')
         voltar = request.POST.get('voltar_painel')
@@ -3373,6 +3366,8 @@ def guiado_etapa_5_v2(request, evento_id):
     )
     evento_apenas_consulta = _evento_esta_finalizado(evento)
     if request.method == 'POST' and evento_apenas_consulta:
+        if _is_autosave_request(request):
+            return _autosave_error_response('Evento finalizado. Não é possível alterar os termos.')
         messages.error(request, 'Evento finalizado. Não é possível alterar os termos.')
         return redirect('eventos:guiado-painel', pk=evento.pk)
 
@@ -3380,6 +3375,9 @@ def guiado_etapa_5_v2(request, evento_id):
     participantes = _evento_participantes_termo(evento)
 
     if request.method == 'POST':
+        if _is_autosave_request(request):
+            updated = _autosave_termos_participantes(participantes, request)
+            return _autosave_success_response({'updated': updated})
         updated = 0
         acao_participante = (request.POST.get('acao_participante') or '').strip()
         if ':' in acao_participante:
@@ -3410,22 +3408,7 @@ def guiado_etapa_5_v2(request, evento_id):
                         termo.save(update_fields=['status', 'updated_at'])
                         updated += 1
             else:
-                for viajante, termo, _oficios in participantes:
-                    status_key = f'status_{viajante.pk}'
-                    modalidade_key = f'modalidade_{viajante.pk}'
-                    new_status = _normalizar_status_termo(request.POST.get(status_key)) or termo.status
-                    new_modalidade = _normalizar_modalidade_termo(request.POST.get(modalidade_key))
-                    update_fields = []
-                    if new_status != termo.status:
-                        termo.status = new_status
-                        update_fields.append('status')
-                    if new_modalidade != termo.modalidade:
-                        termo.modalidade = new_modalidade
-                        update_fields.append('modalidade')
-                    if update_fields:
-                        update_fields.append('updated_at')
-                        termo.save(update_fields=update_fields)
-                        updated += 1
+                updated = _autosave_termos_participantes(participantes, request)
         if updated:
             messages.success(request, 'Termos atualizados com sucesso.')
         if request.POST.get('voltar_painel'):
@@ -3707,6 +3690,8 @@ def guiado_finalizacao_v2(request, evento_id):
         pk=evento_id,
     )
     if request.method == 'POST' and _evento_esta_finalizado(evento):
+        if _is_autosave_request(request):
+            return _autosave_error_response('Evento já está finalizado. Não é possível alterar a finalização.')
         messages.error(request, 'Evento já está finalizado. Não é possível alterar a finalização.')
         return redirect('eventos:guiado-painel', pk=evento.pk)
 
@@ -3730,6 +3715,8 @@ def guiado_finalizacao_v2(request, evento_id):
         form = EventoFinalizacaoForm(request.POST, instance=finalizacao)
         if form.is_valid():
             form.save()
+            if _is_autosave_request(request):
+                return _autosave_success_response({'id': finalizacao.pk})
             if request.POST.get('finalizar') and pode_finalizar:
                 finalizacao.refresh_from_db()
                 finalizacao.finalizado_em = timezone.now()
@@ -3895,6 +3882,106 @@ def _autosave_success_response(extra=None):
     if extra:
         payload.update(extra)
     return JsonResponse(payload)
+
+
+def _autosave_error_response(message, status=400):
+    return JsonResponse({'ok': False, 'error': message}, status=status)
+
+
+def _autosave_checkbox_value(request, key):
+    value = request.POST.get(key)
+    if value is None:
+        return False
+    return str(value).strip().lower() not in {'', '0', 'false', 'off', 'no'}
+
+
+def _autosave_date_value(raw_value):
+    raw = (raw_value or '').strip()
+    if not raw:
+        return None
+    return parse_date(raw)
+
+
+def _autosave_evento_etapa_1(obj, request):
+    tipos_ids = [int(value) for value in request.POST.getlist('tipos_demanda') if str(value).isdigit()]
+    tipos_qs = TipoDemandaEvento.objects.filter(pk__in=tipos_ids, ativo=True).order_by('ordem', 'nome')
+    data_unica = _autosave_checkbox_value(request, 'data_unica')
+    tem_convite = _autosave_checkbox_value(request, 'tem_convite_ou_oficio_evento')
+    data_inicio = _autosave_date_value(request.POST.get('data_inicio')) or obj.data_inicio
+    data_fim = _autosave_date_value(request.POST.get('data_fim')) or obj.data_fim
+    descricao = (request.POST.get('descricao') or '').strip()
+    destinos_post = _parse_destinos_post(request)
+    ok_destinos, msg_destinos = _validar_destinos(destinos_post) if destinos_post else (True, None)
+    if not ok_destinos:
+        return _autosave_error_response(msg_destinos)
+
+    obj.data_unica = data_unica
+    obj.tem_convite_ou_oficio_evento = tem_convite
+    obj.data_inicio = data_inicio
+    if data_unica:
+        obj.data_fim = data_inicio
+    else:
+        obj.data_fim = data_fim
+    obj.save(update_fields=['data_unica', 'tem_convite_ou_oficio_evento', 'data_inicio', 'data_fim', 'updated_at'])
+
+    obj.tipos_demanda.set(tipos_qs)
+    tem_outros = tipos_qs.filter(is_outros=True).exists()
+    obj.descricao = descricao if tem_outros else ''
+    obj.save(update_fields=['descricao', 'updated_at'])
+
+    obj.destinos.all().delete()
+    for ordem, (estado_id, cidade_id) in enumerate(destinos_post):
+        EventoDestino.objects.create(evento=obj, estado_id=estado_id, cidade_id=cidade_id, ordem=ordem)
+
+    obj.titulo = obj.gerar_titulo()
+    update_fields = ['titulo', 'updated_at']
+    if _evento_etapa1_completa(obj) and obj.status == Evento.STATUS_RASCUNHO:
+        obj.status = Evento.STATUS_EM_ANDAMENTO
+        update_fields.append('status')
+    obj.save(update_fields=update_fields)
+    return _autosave_success_response({'id': obj.pk, 'status': obj.status})
+
+
+def _autosave_save_roteiro(roteiro, request):
+    form = RoteiroEventoForm(request.POST or None, instance=roteiro)
+    _setup_roteiro_querysets(form, request, roteiro if roteiro.pk else None)
+    if not form.is_valid():
+        errors = form.non_field_errors() or [err for errs in form.errors.values() for err in errs]
+        return None, _autosave_error_response(errors[0] if errors else 'Falha ao salvar o roteiro automaticamente.')
+
+    destinos_post = _parse_destinos_post(request)
+    ok_destinos, msg_destinos = _validar_destinos(destinos_post) if destinos_post else (True, None)
+    if not ok_destinos:
+        return None, _autosave_error_response(msg_destinos)
+
+    roteiro = form.save()
+    num_trechos = len(destinos_post)
+    trechos_times = _parse_trechos_times_post(request, num_trechos)
+    retorno_data = _parse_retorno_from_post(request)
+    trechos_times.append(retorno_data)
+    _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times)
+    return roteiro, None
+
+
+def _autosave_termos_participantes(participantes, request):
+    updated = 0
+    for viajante, termo, _oficios in participantes:
+        status_key = f'status_{viajante.pk}'
+        modalidade_key = f'modalidade_{viajante.pk}'
+        new_status = _normalizar_status_termo(request.POST.get(status_key)) or termo.status
+        new_modalidade = _normalizar_modalidade_termo(request.POST.get(modalidade_key))
+        update_fields = []
+        if new_status != termo.status:
+            termo.status = new_status
+            update_fields.append('status')
+        if new_modalidade != termo.modalidade:
+            termo.modalidade = new_modalidade
+            update_fields.append('modalidade')
+        if update_fields:
+            update_fields.append('updated_at')
+            termo.save(update_fields=update_fields)
+            updated += 1
+    return updated
 
 
 def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None):
@@ -7031,29 +7118,56 @@ def _setup_roteiro_querysets(form, request, instance=None):
 
 @login_required
 def guiado_etapa_2_lista(request, evento_id):
-    """Lista de roteiros do evento (Etapa 2). RASCUNHO primeiro, depois FINALIZADO."""
+    """Lista de roteiros do evento (Etapa 2) no mesmo shell visual da Etapa 3."""
     evento = _get_evento_etapa2(evento_id)
-    from django.db.models import Case, Value, When
-    roteiros = (
+    from django.db.models import Case, Prefetch, Value, When
+    from . import views_global
+
+    queryset = (
         RoteiroEvento.objects.filter(evento=evento)
-        .select_related('origem_estado', 'origem_cidade')
-        .prefetch_related('destinos', 'destinos__estado', 'destinos__cidade')
+        .select_related('evento', 'origem_estado', 'origem_cidade')
+        .prefetch_related(
+            'destinos__estado',
+            'destinos__cidade',
+            Prefetch('oficios', queryset=Oficio.objects.select_related('evento').order_by('-updated_at', '-created_at')),
+            Prefetch(
+                'trechos',
+                queryset=RoteiroEventoTrecho.objects.select_related(
+                    'origem_estado',
+                    'origem_cidade',
+                    'destino_estado',
+                    'destino_cidade',
+                ).order_by('ordem', 'pk'),
+            ),
+            Prefetch(
+                'planos_trabalho',
+                queryset=PlanoTrabalho.objects.select_related('evento', 'oficio', 'roteiro').prefetch_related('oficios').order_by('-updated_at', '-created_at'),
+            ),
+        )
         .order_by(
             Case(When(status=RoteiroEvento.STATUS_RASCUNHO, then=Value(0)), default=Value(1)),
             '-created_at',
         )
     )
+
+    page_obj = views_global._paginate(queryset, request.GET.get('page'))
+    object_list = views_global._build_roteiro_list_object_list(list(page_obj.object_list))
     evento_heading = _guiado_v2_evento_heading(evento)
     evento_context_items = _guiado_v2_build_evento_context_items(evento)
     evento_document_counts = _guiado_v2_build_evento_document_counts(evento)
     wizard_steps = _build_guiado_v2_wizard_steps(evento, current_key='roteiros')
     context = {
         'evento': evento,
-        'roteiros': roteiros,
+        'object': evento,
+        'object_list': object_list,
+        'page_obj': page_obj,
+        'pagination_query': views_global._query_without_page(request),
         'evento_heading': evento_heading,
         'evento_context_items': evento_context_items,
         'evento_document_counts': evento_document_counts,
         'wizard_steps': wizard_steps,
+        'eventos_lista_url': reverse('eventos:lista'),
+        'novo_roteiro_url': reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': evento.pk}),
     }
     return render(request, 'eventos/guiado/etapa_2_lista.html', context)
 
@@ -7325,6 +7439,21 @@ def guiado_etapa_2_cadastrar(request, evento_id):
     _setup_roteiro_querysets(form, request, None)
     destinos_atuais = _destinos_roteiro_para_template(evento) if request.method != 'POST' else []
     if request.method == 'POST':
+        if _is_autosave_request(request):
+            draft_id_raw = (request.POST.get('autosave_obj_id') or '').strip()
+            roteiro = None
+            if draft_id_raw.isdigit():
+                roteiro = RoteiroEvento.objects.filter(pk=int(draft_id_raw), evento=evento).first()
+            if roteiro is None:
+                roteiro = RoteiroEvento(evento=evento, tipo=RoteiroEvento.TIPO_EVENTO)
+            roteiro, error_response = _autosave_save_roteiro(roteiro, request)
+            if error_response is not None:
+                return error_response
+            return _autosave_success_response({
+                'id': roteiro.pk,
+                'edit_url': reverse('eventos:guiado-etapa-2-editar', kwargs={'evento_id': evento.pk, 'pk': roteiro.pk}),
+                'status': roteiro.status,
+            })
         destinos_post = _parse_destinos_post(request)
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
         if form.is_valid() and ok_destinos:
@@ -7380,6 +7509,11 @@ def guiado_etapa_2_editar(request, evento_id, pk):
     form = RoteiroEventoForm(request.POST or None, instance=roteiro)
     _setup_roteiro_querysets(form, request, roteiro)
     if request.method == 'POST':
+        if _is_autosave_request(request):
+            roteiro, error_response = _autosave_save_roteiro(roteiro, request)
+            if error_response is not None:
+                return error_response
+            return _autosave_success_response({'id': roteiro.pk, 'status': roteiro.status})
         destinos_post = _parse_destinos_post(request)
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
         if form.is_valid() and ok_destinos:

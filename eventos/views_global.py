@@ -1226,6 +1226,178 @@ def _roteiro_list_actions(roteiro):
     return actions
 
 
+def _build_roteiro_list_object_list(roteiros):
+    object_list = []
+    for roteiro in roteiros:
+        destinos = list(roteiro.destinos.all())
+        trechos = list(roteiro.trechos.all())
+        oficios = list(roteiro.oficios.all())
+        planos = list(roteiro.planos_trabalho.all()) if hasattr(roteiro, 'planos_trabalho') else []
+        roteiro.destinos_display = _roteiro_destinos_display(roteiro)
+        roteiro.sede_display = _label_local(roteiro.origem_cidade, roteiro.origem_estado)
+        roteiro.periodo_display = _format_roteiro_periodo_display(roteiro)
+        roteiro.status_meta = _build_roteiro_status_meta(roteiro)
+        roteiro.card_theme_class = roteiro.status_meta['theme_class']
+        roteiro.evento_display = roteiro.evento.titulo if roteiro.evento_id and roteiro.evento else 'Sem evento vinculado'
+        roteiro.destinos_items = [
+            {
+                'label': _label_local(destino.cidade, destino.estado),
+                'ordem': (destino.ordem or 0) + 1,
+            }
+            for destino in destinos
+        ]
+
+        primeira_saida = None
+        ultima_chegada = None
+        for trecho in trechos:
+            saida_dt = getattr(trecho, 'saida_dt', None)
+            chegada_dt = getattr(trecho, 'chegada_dt', None)
+            if saida_dt and (primeira_saida is None or saida_dt < primeira_saida):
+                primeira_saida = saida_dt
+            if chegada_dt and (ultima_chegada is None or chegada_dt > ultima_chegada):
+                ultima_chegada = chegada_dt
+        if primeira_saida is None:
+            primeira_saida = getattr(roteiro, 'saida_dt', None)
+        if ultima_chegada is None:
+            ultima_chegada = (
+                getattr(roteiro, 'retorno_chegada_dt', None)
+                or getattr(roteiro, 'chegada_dt', None)
+                or primeira_saida
+            )
+
+        destinos_count = len(roteiro.destinos_items)
+        if destinos_count == 1:
+            roteiro.destinos_count_label = '1 destino planejado'
+        elif destinos_count > 1:
+            roteiro.destinos_count_label = f'{destinos_count} destinos planejados'
+        else:
+            roteiro.destinos_count_label = 'Nenhum destino cadastrado'
+
+        title_destinos = roteiro.destinos_display if roteiro.destinos_display not in EMPTY_DISPLAY_ALIASES else 'Destino a definir'
+        roteiro.card_title = f'{roteiro.sede_display} > {title_destinos}'
+        roteiro.header_fields = [
+            {'label': 'SEDE', 'value': roteiro.sede_display, 'css_class': 'is-key'},
+            {'label': 'DESTINOS', 'value': title_destinos, 'css_class': ''},
+            {
+                'label': 'DATA/HORA DE SAIDA',
+                'value': _oficio_list_format_datetime(primeira_saida),
+                'css_class': 'is-date',
+            },
+            {
+                'label': 'DATA/HORA DE CHEGADA',
+                'value': _oficio_list_format_datetime(ultima_chegada),
+                'css_class': 'is-date',
+            },
+        ]
+
+        roteiro.trechos_card = []
+        for trecho in trechos:
+            origem_label = _label_local(getattr(trecho, 'origem_cidade', None), getattr(trecho, 'origem_estado', None))
+            destino_label = _label_local(getattr(trecho, 'destino_cidade', None), getattr(trecho, 'destino_estado', None))
+            roteiro.trechos_card.append(
+                {
+                    'saida_label': f'Saida de {origem_label}',
+                    'saida_datetime': _oficio_list_format_datetime(getattr(trecho, 'saida_dt', None)),
+                    'chegada_label': f'Chegada em {destino_label}',
+                    'chegada_datetime': _oficio_list_format_datetime(getattr(trecho, 'chegada_dt', None)),
+                }
+            )
+
+        if not roteiro.trechos_card:
+            destino_fallback = roteiro.destinos_items[0]['label'] if roteiro.destinos_items else 'Destino a definir'
+            roteiro.trechos_card.append(
+                {
+                    'saida_label': f'Saida de {roteiro.sede_display}',
+                    'saida_datetime': _oficio_list_format_datetime(getattr(roteiro, 'saida_dt', None)),
+                    'chegada_label': f'Chegada em {destino_fallback}',
+                    'chegada_datetime': _oficio_list_format_datetime(getattr(roteiro, 'chegada_dt', None)),
+                }
+            )
+
+        eventos_linked = []
+        eventos_seen = set()
+        if roteiro.evento_id and roteiro.evento:
+            eventos_seen.add(roteiro.evento_id)
+            eventos_linked.append(
+                {
+                    'label': roteiro.evento.titulo or f'Evento #{roteiro.evento_id}',
+                    'url': reverse('eventos:guiado-etapa-1', kwargs={'pk': roteiro.evento_id}),
+                }
+            )
+        for oficio in oficios:
+            evento_oficio = getattr(oficio, 'evento', None)
+            if not evento_oficio or not evento_oficio.pk or evento_oficio.pk in eventos_seen:
+                continue
+            eventos_seen.add(evento_oficio.pk)
+            eventos_linked.append(
+                {
+                    'label': evento_oficio.titulo or f'Evento #{evento_oficio.pk}',
+                    'url': reverse('eventos:guiado-etapa-1', kwargs={'pk': evento_oficio.pk}),
+                }
+            )
+        roteiro.eventos_linked = eventos_linked[:4]
+        roteiro.eventos_linked_extra = max(len(eventos_linked) - len(roteiro.eventos_linked), 0)
+
+        roteiro.oficios_preview = [
+            {
+                'label': oficio.numero_formatado or f'Oficio #{oficio.pk}',
+                'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            }
+            for oficio in oficios[:4]
+        ]
+        roteiro.oficios_count = getattr(roteiro, 'oficios_count', len(oficios))
+        if roteiro.oficios_count == 1:
+            roteiro.oficios_count_label = '1 oficio vinculado'
+        elif roteiro.oficios_count > 1:
+            roteiro.oficios_count_label = f'{roteiro.oficios_count} oficios vinculados'
+        else:
+            roteiro.oficios_count_label = 'Aguardando vinculo documental'
+        roteiro.extra_oficios_count = max(roteiro.oficios_count - len(roteiro.oficios_preview), 0)
+
+        roteiro.valor_por_servidor = 'Nao calculado'
+        roteiro.valor_por_servidor_fonte = 'Sem plano de trabalho vinculado'
+        for plano in planos:
+            valor_calculado = _resolve_plano_valor_por_servidor(plano)
+            if valor_calculado:
+                roteiro.valor_por_servidor = valor_calculado
+                roteiro.valor_por_servidor_fonte = f'PT {plano.numero_formatado or f"#{plano.pk}"}'
+                break
+
+        roteiro.has_linked_refs = bool(roteiro.eventos_linked or roteiro.oficios_preview)
+        roteiro.observacoes_preview = _clean(roteiro.observacoes)
+        roteiro.is_avulso = roteiro.tipo == RoteiroEvento.TIPO_AVULSO or not roteiro.evento_id
+        if roteiro.is_avulso:
+            roteiro.editar_url = reverse('eventos:roteiro-avulso-editar', kwargs={'pk': roteiro.pk})
+            roteiro.abrir_url = roteiro.editar_url
+            roteiro.open_url = roteiro.editar_url
+            roteiro.docx_url = ''
+            roteiro.pdf_url = ''
+            roteiro.delete_url = ''
+            roteiro.evento_url = ''
+            roteiro.etapa_url = ''
+            roteiro.oficios_url = ''
+            roteiro.tipo_label = 'Avulso'
+        else:
+            roteiro.editar_url = reverse(
+                'eventos:guiado-etapa-2-editar',
+                kwargs={'evento_id': roteiro.evento_id, 'pk': roteiro.pk},
+            )
+            roteiro.abrir_url = roteiro.editar_url
+            roteiro.open_url = roteiro.editar_url
+            roteiro.docx_url = ''
+            roteiro.pdf_url = ''
+            roteiro.delete_url = reverse('eventos:guiado-etapa-2-excluir', kwargs={'evento_id': roteiro.evento_id, 'pk': roteiro.pk})
+            roteiro.evento_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': roteiro.evento_id})
+            roteiro.etapa_url = reverse('eventos:guiado-etapa-2', kwargs={'evento_id': roteiro.evento_id})
+            roteiro.oficios_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': roteiro.evento_id})
+            roteiro.tipo_label = 'Vinculado a evento'
+
+        roteiro.table_actions = _roteiro_list_actions(roteiro)
+        roteiro.footer_actions = roteiro.table_actions
+        object_list.append(roteiro)
+    return object_list
+
+
 def _oficio_list_corner_badges(oficio, viagem_status):
     oficio_status = _oficio_process_status_meta(oficio)
     badges = []
@@ -1719,7 +1891,7 @@ def _oficio_list_card(oficio, precomputed=None):
         'transport_block': _oficio_list_transport_block(oficio),
         'justificativa': justificativa,
         'termos': termos,
-        'evento_url': reverse('eventos:guiado-painel', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
+            'evento_url': reverse('eventos:guiado-etapa-1', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
         'wizard_url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
         'search_blob': ' '.join(
             value
@@ -2005,169 +2177,7 @@ def roteiro_global_lista(request):
         queryset.distinct().order_by(ordering, '-created_at'),
         request.GET.get('page'),
     )
-    object_list = list(page_obj.object_list)
-    for roteiro in object_list:
-        destinos = list(roteiro.destinos.all())
-        trechos = list(roteiro.trechos.all())
-        oficios = list(roteiro.oficios.all())
-        planos = list(roteiro.planos_trabalho.all())
-        roteiro.destinos_display = _roteiro_destinos_display(roteiro)
-        roteiro.sede_display = _label_local(roteiro.origem_cidade, roteiro.origem_estado)
-        roteiro.periodo_display = _format_roteiro_periodo_display(roteiro)
-        roteiro.status_meta = _build_roteiro_status_meta(roteiro)
-        roteiro.card_theme_class = roteiro.status_meta['theme_class']
-        roteiro.evento_display = roteiro.evento.titulo if roteiro.evento_id and roteiro.evento else 'Sem evento vinculado'
-        roteiro.destinos_items = [
-            {
-                'label': _label_local(destino.cidade, destino.estado),
-                'ordem': (destino.ordem or 0) + 1,
-            }
-            for destino in destinos
-        ]
-        primeira_saida = None
-        ultima_chegada = None
-        for trecho in trechos:
-            saida_dt = getattr(trecho, 'saida_dt', None)
-            chegada_dt = getattr(trecho, 'chegada_dt', None)
-            if saida_dt and (primeira_saida is None or saida_dt < primeira_saida):
-                primeira_saida = saida_dt
-            if chegada_dt and (ultima_chegada is None or chegada_dt > ultima_chegada):
-                ultima_chegada = chegada_dt
-        if primeira_saida is None:
-            primeira_saida = getattr(roteiro, 'saida_dt', None)
-        if ultima_chegada is None:
-            ultima_chegada = (
-                getattr(roteiro, 'retorno_chegada_dt', None)
-                or getattr(roteiro, 'chegada_dt', None)
-                or primeira_saida
-            )
-        destinos_count = len(roteiro.destinos_items)
-        if destinos_count == 1:
-            roteiro.destinos_count_label = '1 destino planejado'
-        elif destinos_count > 1:
-            roteiro.destinos_count_label = f'{destinos_count} destinos planejados'
-        else:
-            roteiro.destinos_count_label = 'Nenhum destino cadastrado'
-        title_destinos = roteiro.destinos_display if roteiro.destinos_display not in EMPTY_DISPLAY_ALIASES else 'Destino a definir'
-        roteiro.card_title = f'{roteiro.sede_display} > {title_destinos}'
-        roteiro.header_fields = [
-            {'label': 'SEDE', 'value': roteiro.sede_display, 'css_class': 'is-key'},
-            {'label': 'DESTINOS', 'value': title_destinos, 'css_class': ''},
-            {
-                'label': 'DATA/HORA DE SAIDA',
-                'value': _oficio_list_format_datetime(primeira_saida),
-                'css_class': 'is-date',
-            },
-            {
-                'label': 'DATA/HORA DE CHEGADA',
-                'value': _oficio_list_format_datetime(ultima_chegada),
-                'css_class': 'is-date',
-            },
-        ]
-
-        roteiro.trechos_card = []
-        for trecho in trechos:
-            origem_label = _label_local(getattr(trecho, 'origem_cidade', None), getattr(trecho, 'origem_estado', None))
-            destino_label = _label_local(getattr(trecho, 'destino_cidade', None), getattr(trecho, 'destino_estado', None))
-            roteiro.trechos_card.append(
-                {
-                    'saida_label': f'Saida de {origem_label}',
-                    'saida_datetime': _oficio_list_format_datetime(getattr(trecho, 'saida_dt', None)),
-                    'chegada_label': f'Chegada em {destino_label}',
-                    'chegada_datetime': _oficio_list_format_datetime(getattr(trecho, 'chegada_dt', None)),
-                }
-            )
-
-        if not roteiro.trechos_card:
-            destino_fallback = roteiro.destinos_items[0]['label'] if roteiro.destinos_items else 'Destino a definir'
-            roteiro.trechos_card.append(
-                {
-                    'saida_label': f'Saida de {roteiro.sede_display}',
-                    'saida_datetime': _oficio_list_format_datetime(getattr(roteiro, 'saida_dt', None)),
-                    'chegada_label': f'Chegada em {destino_fallback}',
-                    'chegada_datetime': _oficio_list_format_datetime(getattr(roteiro, 'chegada_dt', None)),
-                }
-            )
-
-        eventos_linked = []
-        eventos_seen = set()
-        if roteiro.evento_id and roteiro.evento:
-            eventos_seen.add(roteiro.evento_id)
-            eventos_linked.append(
-                {
-                    'label': roteiro.evento.titulo or f'Evento #{roteiro.evento_id}',
-                    'url': reverse('eventos:guiado-painel', kwargs={'pk': roteiro.evento_id}),
-                }
-            )
-        for oficio in oficios:
-            evento_oficio = getattr(oficio, 'evento', None)
-            if not evento_oficio or not evento_oficio.pk or evento_oficio.pk in eventos_seen:
-                continue
-            eventos_seen.add(evento_oficio.pk)
-            eventos_linked.append(
-                {
-                    'label': evento_oficio.titulo or f'Evento #{evento_oficio.pk}',
-                    'url': reverse('eventos:guiado-painel', kwargs={'pk': evento_oficio.pk}),
-                }
-            )
-        roteiro.eventos_linked = eventos_linked[:4]
-        roteiro.eventos_linked_extra = max(len(eventos_linked) - len(roteiro.eventos_linked), 0)
-
-        roteiro.oficios_preview = [
-            {
-                'label': oficio.numero_formatado or f'Oficio #{oficio.pk}',
-                'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
-            }
-            for oficio in oficios[:4]
-        ]
-        if roteiro.oficios_count == 1:
-            roteiro.oficios_count_label = '1 oficio vinculado'
-        elif roteiro.oficios_count > 1:
-            roteiro.oficios_count_label = f'{roteiro.oficios_count} oficios vinculados'
-        else:
-            roteiro.oficios_count_label = 'Aguardando vinculo documental'
-        roteiro.extra_oficios_count = max(roteiro.oficios_count - len(roteiro.oficios_preview), 0)
-
-        roteiro.valor_por_servidor = 'Nao calculado'
-        roteiro.valor_por_servidor_fonte = 'Sem plano de trabalho vinculado'
-        for plano in planos:
-            valor_calculado = _resolve_plano_valor_por_servidor(plano)
-            if valor_calculado:
-                roteiro.valor_por_servidor = valor_calculado
-                roteiro.valor_por_servidor_fonte = f'PT {plano.numero_formatado or f"#{plano.pk}"}'
-                break
-
-        roteiro.has_linked_refs = bool(roteiro.eventos_linked or roteiro.oficios_preview)
-        roteiro.observacoes_preview = _clean(roteiro.observacoes)
-        roteiro.is_avulso = roteiro.tipo == RoteiroEvento.TIPO_AVULSO or not roteiro.evento_id
-        if roteiro.is_avulso:
-            roteiro.editar_url = reverse('eventos:roteiro-avulso-editar', kwargs={'pk': roteiro.pk})
-            roteiro.abrir_url = roteiro.editar_url
-            roteiro.open_url = roteiro.editar_url
-            roteiro.docx_url = ''
-            roteiro.pdf_url = ''
-            roteiro.delete_url = ''
-            roteiro.evento_url = ''
-            roteiro.etapa_url = ''
-            roteiro.oficios_url = ''
-            roteiro.tipo_label = 'Avulso'
-        else:
-            roteiro.editar_url = reverse(
-                'eventos:guiado-etapa-2-editar',
-                kwargs={'evento_id': roteiro.evento_id, 'pk': roteiro.pk},
-            )
-            roteiro.abrir_url = roteiro.editar_url
-            roteiro.open_url = roteiro.editar_url
-            roteiro.docx_url = ''
-            roteiro.pdf_url = ''
-            roteiro.delete_url = reverse('eventos:guiado-etapa-2-excluir', kwargs={'evento_id': roteiro.evento_id, 'pk': roteiro.pk})
-            roteiro.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': roteiro.evento_id})
-            roteiro.etapa_url = reverse('eventos:guiado-etapa-2', kwargs={'evento_id': roteiro.evento_id})
-            roteiro.oficios_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': roteiro.evento_id})
-            roteiro.tipo_label = 'Vinculado a evento'
-
-            roteiro.table_actions = _roteiro_list_actions(roteiro)
-            roteiro.footer_actions = roteiro.table_actions
+    object_list = _build_roteiro_list_object_list(list(page_obj.object_list))
 
     selected_event = None
     if filters['evento_id'].isdigit():
@@ -3887,7 +3897,7 @@ def justificativas_global(request):
             if just.oficio_id else ''
         )
         just.evento_url = (
-            reverse('eventos:guiado-painel', kwargs={'pk': just.oficio.evento_id})
+            reverse('eventos:guiado-etapa-1', kwargs={'pk': just.oficio.evento_id})
             if just.oficio_id and just.oficio and just.oficio.evento_id else ''
         )
         just.card_theme_class = 'is-tone-blue'
@@ -4033,7 +4043,7 @@ def termos_global(request):
         termo.pdf_url = ''
         termo.delete_url = ''
         termo.oficios_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': termo.evento_id})
-        termo.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': termo.evento_id})
+        termo.evento_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': termo.evento_id})
         termo.documentos_url = (
             reverse('eventos:oficio-step4', kwargs={'pk': oficios_relacionados[0].pk})
             if len(oficios_relacionados) == 1
@@ -4565,7 +4575,7 @@ def termos_global(request):
             termo.vinculo_badge_label = ''
             termo.vinculo_badge_detail = ''
 
-        termo.evento_url = reverse('eventos:guiado-painel', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
+        termo.evento_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
         termo.abrir_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
         termo.detail_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
         termo.edicao_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})

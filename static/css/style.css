@@ -3567,7 +3567,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     justify-content: center;
     gap: 0.4rem;
     padding: 0.4rem 0.74rem;
-    border-radius: 1.1rem;
+    border-radius: 3rem;
     font-size: 0.76rem;
     font-weight: 700;
     line-height: 1.1;
@@ -10672,7 +10672,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     visibility: visible !important;
     opacity: 1 !important;
     color: #fff !important;
-    min-width: 6.2rem;
+    min-height: 2rem;
+
 }
 
 .system-list-page .oficio-list-card__footer-actions .btn-doc-action--primary span,

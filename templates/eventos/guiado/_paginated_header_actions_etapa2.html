@@ -1,4 +1,7 @@
-<a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary btn-sm">
+<a href="{{ eventos_lista_url }}" class="btn btn-outline-secondary btn-sm">
     <i class="bi bi-arrow-left"></i>
-    <span>Voltar ao painel</span>
+    <span>Voltar para lista</span>
 </a>
+<div class="guiado-etapa3-header-toggle">
+    {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos roteiros do evento' %}
+</div>
