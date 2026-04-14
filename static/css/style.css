@@ -10682,6 +10682,18 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     gap: 0.42rem;
 }
 
+.guiado-etapa4-page .guiado-etapa4-lista-shell {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+}
+
+.guiado-etapa4-page .guiado-etapa4-lista-shell .guiado-etapa4-lista-unificada {
+    width: 100%;
+}
+
 @media (max-width: 991.98px) {
     .guiado-flow-page .guiado-etapa3-header-top,
     .guiado-flow-page .guiado-etapa3-header-actions {

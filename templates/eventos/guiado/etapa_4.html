@@ -17,13 +17,7 @@
             {% include 'eventos/guiado/_convite_upload_section.html' with convite_checked=convite_checked convite_next_url=convite_next_url convite_form_id='form-etapa4-convite' %}
         </section>
 
-        <section class="app-page-card app-page-card--spacious">
-            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
-                <div>
-                    <h2 class="h6 mb-1">Documentos vinculados ao evento</h2>
-                    <p class="text-muted mb-0">Planos de Trabalho e Ordens de Serviço aparecem juntos nesta etapa, preservando o card original de cada tipo.</p>
-                </div>
-            </div>
+        <section class="guiado-etapa4-lista-shell">
             {% include 'eventos/guiado/partials/_pt_os_list_content.html' with itens_unificados=itens_unificados empty_state_class='guiado-etapa4-empty' rich_aria_label='Lista unificada de planos de trabalho e ordens de servico do evento' %}
         </section>
 

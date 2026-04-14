@@ -500,6 +500,27 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(form.initial.get('origem_cidade'), self.cidade_a.pk)
         self.assertEqual(form.initial.get('origem_estado'), self.estado.pk)
 
+    def test_origem_padrao_cai_para_cidade_base_do_evento_quando_nao_houver_config(self):
+        """Sem cidade_sede_padrao, a etapa 2 deve usar a cidade base do evento."""
+        from cadastros.models import ConfiguracaoSistema
+
+        config = ConfiguracaoSistema.get_singleton()
+        config.cidade_sede_padrao = None
+        config.save(update_fields=['cidade_sede_padrao'])
+        self.evento.cidade_base = self.cidade_a
+        self.evento.save(update_fields=['cidade_base'])
+        EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade_b, ordem=0)
+
+        response = self.client.get(
+            reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['sede_cidade_id'], self.cidade_a.pk)
+        self.assertEqual(response.context['sede_estado_id'], self.estado.pk)
+        self.assertGreaterEqual(len(response.context.get('trechos') or []), 2)
+        self.assertContains(response, f'value="{self.cidade_a.pk}" selected')
+
     def test_cidade_destino_deve_pertencer_ao_estado(self):
         outro_estado = Estado.objects.create(nome='SÃ£o Paulo', sigla='SP', codigo_ibge='35')
         cidade_sp = Cidade.objects.create(nome='SÃ£o Paulo', estado=outro_estado, codigo_ibge='3550308')

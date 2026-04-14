@@ -6883,6 +6883,23 @@ def _get_evento_etapa2(evento_id):
     )
 
 
+def _build_evento_roteiro_initial(evento):
+    """
+    Monta o initial da etapa 2 priorizando a configuração global, mas caindo
+    para a sede do próprio evento quando não houver padrão configurado.
+    """
+    initial = {}
+    config = ConfiguracaoSistema.get_singleton()
+    sede_cidade = getattr(config, 'cidade_sede_padrao', None) if config else None
+    if not sede_cidade:
+        sede_cidade = getattr(evento, 'cidade_base', None) or getattr(evento, 'cidade_principal', None)
+    if sede_cidade and sede_cidade.pk:
+        initial['origem_cidade'] = sede_cidade.pk
+        if getattr(sede_cidade, 'estado_id', None):
+            initial['origem_estado'] = sede_cidade.estado_id
+    return initial
+
+
 def _setup_roteiro_querysets(form, request, instance=None):
     """Preenche querysets de estado/cidade para sede (origem). No cadastro novo usa initial da config."""
     form.fields['origem_estado'].queryset = Estado.objects.filter(ativo=True).order_by('nome')
@@ -7221,12 +7238,7 @@ def guiado_etapa_2_cadastrar(request, evento_id):
     Usa o mesmo template e a mesma lÃ³gica de trechos da ediÃ§Ã£o; trechos jÃ¡ vÃªm renderizados no primeiro load."""
     evento = _get_evento_etapa2(evento_id)
     from types import SimpleNamespace
-    initial = {}
-    config = ConfiguracaoSistema.get_singleton()
-    if config and config.cidade_sede_padrao_id:
-        initial['origem_cidade'] = config.cidade_sede_padrao_id
-        if config.cidade_sede_padrao and config.cidade_sede_padrao.estado_id:
-            initial['origem_estado'] = config.cidade_sede_padrao.estado_id
+    initial = _build_evento_roteiro_initial(evento)
     form = RoteiroEventoForm(request.POST or None, initial=initial)
     form.instance.evento = evento
     if request.method != 'POST' and initial:
