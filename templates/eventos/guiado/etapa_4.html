@@ -8,33 +8,48 @@
     <div class="app-page-shell__inner app-page-stack">
         {% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa4.html' top_show_stepper=True %}
 
-        <section class="app-page-card">
-            <p class="mb-0">Esta etapa consolida os cadastros documentais reais de Plano de Trabalho e Ordem de Serviço vinculados ao evento.</p>
-        </section>
+        <form method="post" enctype="multipart/form-data" class="app-page-card app-page-card--spacious">
+            {% csrf_token %}
+            <input type="hidden" name="modo_documento" value="{{ modo_documento }}">
+            {% include 'eventos/guiado/_convite_upload_section.html' with convite_checked=convite_checked convite_next_url=convite_next_url %}
+            <div class="d-flex justify-content-end pt-3">
+                <button type="submit" class="btn btn-primary">Salvar anexos de convite</button>
+            </div>
+        </form>
 
-        {% if anexos_convite %}
-        <section class="app-page-card">
-            <h2 class="h6 mb-3">Convite / ofício solicitante do evento</h2>
-            <div class="d-grid gap-2">
-                {% for anexo in anexos_convite %}
-                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                    <span>{{ anexo.nome_original }} <small class="text-muted">({{ anexo.uploaded_at|date:"d/m/Y H:i" }})</small></span>
-                    <span class="d-inline-flex gap-2">
-                        <a href="{% url 'eventos:evento-anexo-visualizar' anexo.id %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Visualizar</a>
-                        <a href="{% url 'eventos:evento-anexo-baixar' anexo.id %}" class="btn btn-outline-secondary btn-sm">Baixar</a>
-                    </span>
-                </div>
-                {% endfor %}
+        <section class="app-page-card app-page-card--spacious">
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <h2 class="h6 mb-0">Tipo de documento</h2>
+                <form method="get" class="system-list-view-toggle oficios-view-toggle" role="group" aria-label="Alternar entre Plano de Trabalho e Ordem de Servico">
+                    <button
+                        type="submit"
+                        name="modo_documento"
+                        value="PT"
+                        class="system-list-view-toggle__button oficios-view-toggle__button{% if modo_documento == 'PT' %} is-active{% endif %}"
+                        aria-pressed="{% if modo_documento == 'PT' %}true{% else %}false{% endif %}"
+                    >
+                        Plano de Trabalho
+                    </button>
+                    <button
+                        type="submit"
+                        name="modo_documento"
+                        value="OS"
+                        class="system-list-view-toggle__button oficios-view-toggle__button{% if modo_documento == 'OS' %} is-active{% endif %}"
+                        aria-pressed="{% if modo_documento == 'OS' %}true{% else %}false{% endif %}"
+                    >
+                        Ordem de Serviço
+                    </button>
+                </form>
             </div>
         </section>
-        {% endif %}
 
         <section class="row g-3">
-            <div class="col-12 col-xl-6">
+            <div class="col-12">
+                {% if modo_documento == 'PT' %}
                 <div class="app-page-card h-100">
                     <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
                         <h2 class="h6 mb-0">Planos de Trabalho vinculados</h2>
-                        <a href="{{ novo_plano_trabalho_url }}" class="btn btn-sm btn-outline-primary">Novo</a>
+                        <a href="{{ novo_plano_trabalho_url }}" class="btn btn-sm btn-outline-primary">Novo Plano de Trabalho</a>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sm table-hover mb-0">
@@ -45,10 +60,10 @@
                                 {% for pt in planos_trabalho %}
                                 <tr>
                                     <td>{{ pt.pk }}</td>
-                                    <td>{{ pt.numero_formatado|default:'—' }}</td>
+                                    <td>{{ pt.numero_formatado|default:'-' }}</td>
                                     <td>{{ pt.get_status_display }}</td>
                                     <td class="text-end">
-                                        <a href="{% url 'eventos:documentos-planos-trabalho-editar' pt.pk %}?return_to={{ return_to|urlencode }}&context_source=evento&preselected_event_id={{ evento.pk }}" class="btn btn-outline-primary btn-sm">Editar</a>
+                                        <a href="{% url 'eventos:documentos-planos-trabalho-editar' pt.pk %}?return_to={{ return_to_with_mode|urlencode }}&context_source=evento&preselected_event_id={{ evento.pk }}" class="btn btn-outline-primary btn-sm">Editar</a>
                                     </td>
                                 </tr>
                                 {% empty %}
@@ -58,13 +73,11 @@
                         </table>
                     </div>
                 </div>
-            </div>
-
-            <div class="col-12 col-xl-6">
+                {% else %}
                 <div class="app-page-card h-100">
                     <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
                         <h2 class="h6 mb-0">Ordens de Serviço vinculadas</h2>
-                        <a href="{{ nova_ordem_servico_url }}" class="btn btn-sm btn-outline-primary">Nova</a>
+                        <a href="{{ nova_ordem_servico_url }}" class="btn btn-sm btn-outline-primary">Nova Ordem de Serviço</a>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sm table-hover mb-0">
@@ -75,10 +88,10 @@
                                 {% for os in ordens_servico %}
                                 <tr>
                                     <td>{{ os.pk }}</td>
-                                    <td>{{ os.numero_formatado|default:'—' }}</td>
+                                    <td>{{ os.numero_formatado|default:'-' }}</td>
                                     <td>{{ os.get_status_display }}</td>
                                     <td class="text-end">
-                                        <a href="{% url 'eventos:documentos-ordens-servico-editar' os.pk %}?return_to={{ return_to|urlencode }}&context_source=evento&preselected_event_id={{ evento.pk }}" class="btn btn-outline-primary btn-sm">Editar</a>
+                                        <a href="{% url 'eventos:documentos-ordens-servico-editar' os.pk %}?return_to={{ return_to_with_mode|urlencode }}&context_source=evento&preselected_event_id={{ evento.pk }}" class="btn btn-outline-primary btn-sm">Editar</a>
                                     </td>
                                 </tr>
                                 {% empty %}
@@ -88,10 +101,45 @@
                         </table>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </section>
 
 
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var conviteInput = document.getElementById('id_tem_convite_ou_oficio_evento');
+    var conviteState = document.querySelector('[data-convite-state]');
+    var conviteUploadWrap = document.querySelector('[data-convite-upload-wrap]');
+    var conviteFilesInput = document.getElementById('id_convite_documentos');
+
+    if (!conviteInput || !conviteState || !conviteUploadWrap) {
+        return;
+    }
+
+    function updateConviteUi() {
+        var temUploadSelecionado = !!(conviteFilesInput && conviteFilesInput.files && conviteFilesInput.files.length);
+        var ativo = !!conviteInput.checked || temUploadSelecionado;
+        conviteState.textContent = ativo ? 'SIM' : 'NÃO';
+        conviteUploadWrap.classList.toggle('d-none', !ativo);
+    }
+
+    conviteInput.addEventListener('change', updateConviteUi);
+    if (conviteFilesInput) {
+        conviteFilesInput.addEventListener('change', function() {
+            if (conviteFilesInput.files && conviteFilesInput.files.length) {
+                conviteInput.checked = true;
+            }
+            updateConviteUi();
+        });
+    }
+
+    updateConviteUi();
+})();
+</script>
 {% endblock %}

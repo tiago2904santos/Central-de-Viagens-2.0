@@ -116,58 +116,7 @@
                     </div>
                 </section>
 
-                <section class="evento-section evento-section-convite">
-                    <div class="evento-section-head evento-section-head--datas">
-                        <h3 class="evento-section-title">Convite</h3>
-                        <label class="evento-dataunica-pill" for="id_tem_convite_ou_oficio_evento">
-                            <input type="checkbox" name="tem_convite_ou_oficio_evento" id="id_tem_convite_ou_oficio_evento" class="visually-hidden" {% if form.tem_convite_ou_oficio_evento.value %}checked{% endif %}>
-                            <span class="evento-dataunica-pill__icon"><i class="bi bi-file-earmark-text"></i></span>
-                            <span class="evento-dataunica-pill__copy">
-                                <strong>Tem convite/ofício solicitante?</strong>
-                                <small>Marque para indicar que existe documento</small>
-                            </span>
-                            <span class="evento-dataunica-pill__state" data-convite-state>NÃO</span>
-                        </label>
-                    </div>
-
-                    <div id="convite-upload-wrap" class="evento-convite-upload-wrap d-none" data-convite-upload-wrap>
-                        <div class="evento-convite-upload-head">
-                            <h4 class="evento-convite-upload-title">Documentos anexados</h4>
-                            <p class="evento-convite-upload-text">Envie um ou mais PDFs de convite/ofício solicitante. Você pode adicionar novos arquivos a qualquer momento.</p>
-                        </div>
-
-                        <div class="evento-convite-upload-input">
-                            <label for="id_convite_documentos" class="form-label">Adicionar PDFs</label>
-                            <input type="file" name="convite_documentos" id="id_convite_documentos" class="form-control" accept="application/pdf,.pdf" multiple>
-                            <small class="text-muted">Formato permitido: PDF. Selecione múltiplos arquivos no mesmo envio.</small>
-                        </div>
-
-                        <div class="evento-convite-files-list">
-                            {% for anexo in anexos_convite %}
-                            <article class="evento-convite-file-item">
-                                <div class="evento-convite-file-main">
-                                    <i class="bi bi-file-earmark-pdf"></i>
-                                    <div>
-                                        <strong>{{ anexo.nome_original }}</strong>
-                                        <small>Enviado em {{ anexo.uploaded_at|date:"d/m/Y H:i" }}</small>
-                                    </div>
-                                </div>
-                                <div class="evento-convite-file-actions">
-                                    <a href="{% url 'eventos:evento-anexo-visualizar' anexo.id %}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">Visualizar</a>
-                                    <a href="{% url 'eventos:evento-anexo-baixar' anexo.id %}" class="btn btn-sm btn-outline-secondary">Baixar</a>
-                                    <form method="post" action="{% url 'eventos:evento-anexo-remover' anexo.id %}" onsubmit="return confirm('Remover este anexo?');">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="next" value="{% url 'eventos:guiado-etapa-1' object.pk %}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Remover</button>
-                                    </form>
-                                </div>
-                            </article>
-                            {% empty %}
-                            <div class="evento-empty-state">Nenhum documento anexado até o momento.</div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </section>
+                {% include 'eventos/guiado/_convite_upload_section.html' with convite_checked=form.tem_convite_ou_oficio_evento.value convite_next_url=convite_next_url %}
 
                 <div class="form-actions system-form-actions">
                     <div class="system-form-actions__group system-form-actions__group--secondary">

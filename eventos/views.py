@@ -1054,6 +1054,7 @@ def guiado_etapa_1(request, pk):
         'form': form,
         'object': obj,
         'anexos_convite': obj.anexos_solicitante.all().order_by('ordem', '-uploaded_at', 'id'),
+        'convite_next_url': reverse('eventos:guiado-etapa-1', kwargs={'pk': obj.pk}),
         'destinos_atuais': destinos_atuais,
         'estado_pr': estado_pr,
         'estados': estados_qs,
@@ -2346,6 +2347,29 @@ def guiado_etapa_4(request, evento_id):
         pk=evento_id,
     )
 
+    modo_documento = (request.GET.get('modo_documento') or request.POST.get('modo_documento') or 'PT').strip().upper()
+    if modo_documento not in {'PT', 'OS'}:
+        modo_documento = 'PT'
+
+    if request.method == 'POST':
+        arquivos_convite = [f for f in request.FILES.getlist('convite_documentos') if getattr(f, 'name', '')]
+        ok_arquivos, msg_arquivos = _validar_anexos_convite(arquivos_convite)
+        if not ok_arquivos:
+            messages.error(request, msg_arquivos)
+            return redirect(f"{reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk})}?modo_documento={modo_documento}")
+
+        _salvar_anexos_convite(evento, arquivos_convite)
+
+        convite_flag = request.POST.get('tem_convite_ou_oficio_evento') == 'on'
+        if evento.anexos_solicitante.exists():
+            convite_flag = True
+        if evento.tem_convite_ou_oficio_evento != convite_flag:
+            evento.tem_convite_ou_oficio_evento = convite_flag
+            evento.save(update_fields=['tem_convite_ou_oficio_evento'])
+
+        messages.success(request, 'Convite/ofício solicitante atualizado com sucesso.')
+        return redirect(f"{reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk})}?modo_documento={modo_documento}")
+
     oficios = list(evento.oficios.order_by('ano', 'numero', 'id'))
     for oficio in oficios:
         oficio.justificativa_info = _build_oficio_justificativa_info(oficio)
@@ -2354,29 +2378,35 @@ def guiado_etapa_4(request, evento_id):
     ordens = list(OrdemServico.objects.filter(evento=evento).select_related('oficio').order_by('-updated_at'))
 
     return_to = reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk})
+    return_to_with_mode = f"{return_to}?modo_documento={modo_documento}"
     novo_pt_url = (
         f"{reverse('eventos:documentos-planos-trabalho-novo')}?"
-        f"context_source=evento&preselected_event_id={evento.pk}&return_to={quote(return_to)}"
+        f"context_source=evento&preselected_event_id={evento.pk}&return_to={quote(return_to_with_mode)}"
     )
     novo_os_url = (
         f"{reverse('eventos:documentos-ordens-servico-novo')}?"
-        f"context_source=evento&preselected_event_id={evento.pk}&return_to={quote(return_to)}"
+        f"context_source=evento&preselected_event_id={evento.pk}&return_to={quote(return_to_with_mode)}"
     )
     evento_heading = _guiado_v2_evento_heading(evento)
     evento_context_items = _guiado_v2_build_evento_context_items(evento)
     evento_document_counts = _guiado_v2_build_evento_document_counts(evento)
     wizard_steps = _build_guiado_v2_wizard_steps(evento, current_key='pt-os')
+    convite_next_url = return_to_with_mode
 
     context = {
         'evento': evento,
         'object': evento,
         'oficios': oficios,
         'anexos_convite': evento.anexos_solicitante.all().order_by('ordem', '-uploaded_at', 'id'),
+        'convite_checked': evento.tem_convite_ou_oficio_evento,
+        'convite_next_url': convite_next_url,
         'planos_trabalho': planos,
         'ordens_servico': ordens,
         'novo_plano_trabalho_url': novo_pt_url,
         'nova_ordem_servico_url': novo_os_url,
+        'modo_documento': modo_documento,
         'return_to': return_to,
+        'return_to_with_mode': return_to_with_mode,
         'evento_heading': evento_heading,
         'evento_context_items': evento_context_items,
         'evento_document_counts': evento_document_counts,
