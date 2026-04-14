@@ -3863,11 +3863,12 @@ def _save_oficio_preserving_status(oficio, update_fields):
 
 
 def _is_autosave_request(request):
-    return (
-        request.method == 'POST'
-        and request.POST.get('autosave') == '1'
-        and request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-    )
+    if request.method != 'POST' or request.POST.get('autosave') != '1':
+        return False
+    # `navigator.sendBeacon()` não permite definir `X-Requested-With`.
+    # Aceitamos também o POST de autosave sem esse header para não perder
+    # alterações quando o usuário navega para fora da tela antes do fetch.
+    return True
 
 
 def _autosave_success_response(extra=None):

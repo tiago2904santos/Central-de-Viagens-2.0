@@ -7909,6 +7909,22 @@ class OficioStep1ProtocolRegressionTest(TestCase):
         oficio.refresh_from_db()
         self.assertEqual(oficio.protocolo, '123456789')
 
+    def test_autosave_step1_sem_header_xhr_salva_com_sendbeacon(self):
+        oficio = self._criar_oficio()
+        response = self.client.post(
+            reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            data={
+                **self._payload(oficio, '12.345.678-9'),
+                'autosave': '1',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['ok'], True)
+        oficio.refresh_from_db()
+        self.assertEqual(oficio.protocolo, '123456789')
+        self.assertEqual(oficio.motivo, 'Motivo protocolo')
+        self.assertEqual(list(oficio.viajantes.values_list('pk', flat=True)), [self.viajante.pk])
+
     def test_reabrir_step1_reexibe_protocolo_mascarado(self):
         oficio = self._criar_oficio()
         self.client.post(
