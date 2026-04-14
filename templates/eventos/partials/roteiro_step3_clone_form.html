@@ -220,7 +220,7 @@
             <button type="submit" class="btn btn-primary">{% if object %}Salvar roteiro{% else %}Cadastrar roteiro{% endif %}</button>
             {% else %}
             <a href="{% url 'eventos:guiado-etapa-2' evento.pk %}" class="btn btn-outline-secondary">Voltar</a>
-            <a href="{% url 'eventos:guiado-painel' evento.pk %}" class="btn btn-outline-secondary">Painel</a>
+            <a href="{% url 'eventos:guiado-etapa-1' evento.pk %}" class="btn btn-outline-secondary">Dados do evento</a>
             <button type="submit" class="btn btn-primary">Salvar roteiro</button>
             {% endif %}
           </div>

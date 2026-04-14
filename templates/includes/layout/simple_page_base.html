@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}{% block simple_page_title_block %}Pagina{% endblock %} - Central de Viagens{% endblock %}
-{% block page_title %}{% block simple_page_page_title %}{% block simple_page_title %}Pagina{% endblock %}{% endblock %}{% endblock %}
+{% block page_title %}{% block simple_page_page_title %}{% block simple_page_page_title_fallback %}Pagina{% endblock %}{% endblock %}{% endblock %}
 
 {% block content %}
 <div class="app-page-shell app-page-shell--{% block simple_page_variant %}detail{% endblock %} {% block simple_page_class %}{% endblock %}">

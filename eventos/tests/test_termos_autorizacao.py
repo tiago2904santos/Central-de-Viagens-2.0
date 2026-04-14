@@ -147,20 +147,20 @@ class TermoAutorizacaoModuleTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.context['return_to_url'],
-            reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}),
+            reverse('eventos:guiado-etapa-1', kwargs={'pk': self.evento.pk}),
         )
         self.assertEqual(response.context['evento_context'].pk, self.evento.pk)
         self.assertIn(f'preselected_event_id={self.evento.pk}', response.context['termo_novo_url'])
         self.assertIn('context_source=evento', response.context['termo_novo_url'])
-        self.assertContains(response, 'Painel do evento')
+        self.assertContains(response, 'Voltar ao evento')
 
-    def test_novo_termo_contextualizado_por_evento_redireciona_para_painel(self):
-        panel_url = reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk})
+    def test_novo_termo_contextualizado_por_evento_redireciona_para_etapa_1(self):
+        etapa1_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': self.evento.pk})
 
         response = self.client.post(
             reverse('eventos:documentos-termos-novo'),
             {
-                'return_to': panel_url,
+                'return_to': etapa1_url,
                 'context_source': 'evento',
                 'preselected_event_id': str(self.evento.pk),
                 'preselected_oficio_id': '',
@@ -176,7 +176,7 @@ class TermoAutorizacaoModuleTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, panel_url)
+        self.assertEqual(response.url, etapa1_url)
 
     def test_rotas_legadas_reaproveitam_formulario_unico(self):
         response = self.client.get(reverse('eventos:documentos-termos-novo-rapido'))

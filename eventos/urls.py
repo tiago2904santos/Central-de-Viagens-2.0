@@ -89,7 +89,6 @@ urlpatterns = [
     path('anexos-convite/<int:anexo_id>/visualizar/', login_required(views.evento_anexo_visualizar), name='evento-anexo-visualizar'),
     path('anexos-convite/<int:anexo_id>/baixar/', login_required(views.evento_anexo_baixar), name='evento-anexo-baixar'),
     path('anexos-convite/<int:anexo_id>/remover/', login_required(views.evento_anexo_remover), name='evento-anexo-remover'),
-    path('<int:pk>/guiado/painel/', login_required(views.guiado_painel_v2), name='guiado-painel'),
     path('<int:evento_id>/guiado/etapa-2/', login_required(views.guiado_etapa_2_lista), name='guiado-etapa-2'),
     path('<int:evento_id>/guiado/etapa-2/cadastrar/', login_required(views.guiado_etapa_2_cadastrar), name='guiado-etapa-2-cadastrar'),
     path('<int:evento_id>/guiado/etapa-2/<int:pk>/editar/', login_required(views.guiado_etapa_2_editar), name='guiado-etapa-2-editar'),
@@ -130,5 +129,6 @@ urlpatterns = [
     path('trechos/estimar/', login_required(views.estimar_km_por_cidades), name='trechos-estimar'),
     path('roteiros/avulso/novo/', login_required(views.roteiro_avulso_cadastrar), name='roteiro-avulso-cadastrar'),
     path('roteiros/avulso/<int:pk>/editar/', login_required(views.roteiro_avulso_editar), name='roteiro-avulso-editar'),
+    path('roteiros/avulso/<int:pk>/excluir/', login_required(views.roteiro_avulso_excluir), name='roteiro-avulso-excluir'),
     path('roteiros/avulso/calcular-diarias/', login_required(views.roteiro_avulso_calcular_diarias), name='roteiro-avulso-calcular-diarias'),
 ]

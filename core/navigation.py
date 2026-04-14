@@ -59,7 +59,6 @@ def get_sidebar_config():
                 'eventos:editar',
                 'eventos:guiado-novo',
                 'eventos:guiado-etapa-1',
-                'eventos:guiado-painel',
             ],
             active_route_prefixes=['eventos:guiado-etapa-2', 'eventos:guiado-etapa-3', 'eventos:guiado-etapa-4', 'eventos:guiado-etapa-5', 'eventos:guiado-etapa-6', 'eventos:guiado-etapa-7'],
         ),

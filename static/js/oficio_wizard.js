@@ -164,6 +164,7 @@
     var beforeSerialize = typeof options.beforeSerialize === 'function' ? options.beforeSerialize : function() {};
     var transformPayload = typeof options.transformPayload === 'function' ? options.transformPayload : null;
     var onSuccess = typeof options.onSuccess === 'function' ? options.onSuccess : null;
+    var shouldSchedule = typeof options.shouldSchedule === 'function' ? options.shouldSchedule : function() { return true; };
     var captureSubmit = options.captureSubmit !== false;
     var statusMessages = Object.assign({
       idle: 'Autosave ativo.',
@@ -256,22 +257,38 @@
 
     function flush() {
       window.clearTimeout(timer);
-      return sendRequest(true);
+      timer = null;
+
+      function drainQueue() {
+        if (activeRequest) {
+          queuedAfterActive = true;
+          return activeRequest.then(function(ok) {
+            if (ok === false) {
+              return false;
+            }
+            return drainQueue();
+          });
+        }
+        if (dirty) {
+          return sendRequest(true).then(function(ok) {
+            if (ok === false) {
+              return false;
+            }
+            return drainQueue();
+          });
+        }
+        return Promise.resolve(true);
+      }
+
+      return drainQueue();
     }
 
     function sendBeaconSave() {
       if (!dirty || !navigator.sendBeacon) {
         return;
       }
-      beforeSerialize();
-      var payload = new URLSearchParams(new FormData(form));
-      payload.set('autosave', '1');
-      navigator.sendBeacon(
-        url,
-        new Blob([payload.toString()], {
-          type: 'application/x-www-form-urlencoded;charset=UTF-8'
-        })
-      );
+      var payload = buildPayload();
+      navigator.sendBeacon(url, payload);
       dirty = false;
     }
 
@@ -279,9 +296,17 @@
       if (event.target && event.target.type === 'hidden') {
         return;
       }
+      if (!shouldSchedule(event, 'input')) {
+        return;
+      }
       schedule();
     });
-    form.addEventListener('change', schedule);
+    form.addEventListener('change', function(event) {
+      if (!shouldSchedule(event, 'change')) {
+        return;
+      }
+      schedule();
+    });
 
     if (captureSubmit) {
       form.addEventListener('submit', function(event) {
@@ -293,7 +318,11 @@
         event.preventDefault();
         var p = flush();
         if (nextUrl) {
-          p.finally(function() { window.location.href = nextUrl; });
+          p.then(function(ok) {
+            if (ok !== false) {
+              window.location.href = nextUrl;
+            }
+          });
         }
       });
     }
@@ -314,8 +343,10 @@
         return;
       }
       event.preventDefault();
-      flush().finally(function() {
-        window.location.href = href;
+      flush().then(function(ok) {
+        if (ok !== false) {
+          window.location.href = href;
+        }
       });
     });
 

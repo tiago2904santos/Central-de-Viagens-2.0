@@ -1524,7 +1524,7 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
         if not self.cleaned_veiculo and self.context_data['veiculo_inferido']:
             self.cleaned_veiculo = self.context_data['veiculo_inferido']
 
-        data_unica = bool(cleaned_data.get('data_evento_unica'))
+        data_unica = bool(data.get('data_evento_unica'))
         if data_unica and data.get('data_evento'):
             data['data_evento_fim'] = data['data_evento']
 

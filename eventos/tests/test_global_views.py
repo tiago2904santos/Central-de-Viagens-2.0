@@ -288,7 +288,7 @@ class GlobalViewsTest(TestCase):
         self.assertIn('Veiculo e motorista', card_html)
         self.assertIn('oficio-list-card__footer-actions', card_html)
         self.assertIn(reverse('eventos:oficio-step1', kwargs={'pk': self.oficio_pt.pk}), card_html)
-        self.assertNotIn(reverse('eventos:guiado-painel', kwargs={'pk': self.evento_pt.pk}), card_html)
+        self.assertNotIn('/guiado/painel/', card_html)
         self.assertIn('VIAJANTE GLOBAL', card_html)
         self.assertIn('aria-label="Excluir oficio"', card_html)
         self.assertIn('is-icon-only', card_html)
@@ -311,7 +311,7 @@ class GlobalViewsTest(TestCase):
         row_html = self._extract_oficio_row_html(response, self.oficio_pt.pk)
         card_html = self._extract_oficio_card_html(response, self.oficio_pt.pk)
         wizard_url = reverse('eventos:oficio-step1', kwargs={'pk': self.oficio_pt.pk})
-        pacote_url = reverse('eventos:guiado-painel', kwargs={'pk': self.evento_pt.pk})
+        pacote_url = '/guiado/painel/'
         self.assertIn('Abrir', row_html)
         self.assertIn('Abrir', card_html)
         self.assertIn(wizard_url, row_html)
@@ -433,6 +433,85 @@ class GlobalViewsTest(TestCase):
 
         self.assertGreaterEqual(html.count(f'href="{evento_editar_url}"'), 2)
         self.assertGreaterEqual(html.count(f'href="{avulso_editar_url}"'), 2)
+
+    def test_lista_global_de_roteiros_exibe_exclusao_para_evento_e_avulso(self):
+        roteiro_avulso = RoteiroEvento.objects.create(
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_origem,
+            tipo=RoteiroEvento.TIPO_AVULSO,
+            saida_dt=timezone.make_aware(datetime(2026, 5, 2, 7, 30)),
+            chegada_dt=timezone.make_aware(datetime(2026, 5, 2, 11, 45)),
+            status=RoteiroEvento.STATUS_RASCUNHO,
+        )
+        RoteiroEventoDestino.objects.create(
+            roteiro=roteiro_avulso,
+            estado=self.estado,
+            cidade=self.cidade_destino,
+            ordem=0,
+        )
+
+        response = self.client.get(reverse('eventos:roteiros-global'))
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode('utf-8')
+        evento_delete_url = reverse(
+            'eventos:guiado-etapa-2-excluir',
+            kwargs={'evento_id': self.evento_pt.pk, 'pk': self.roteiro.pk},
+        )
+        avulso_delete_url = reverse(
+            'eventos:roteiro-avulso-excluir',
+            kwargs={'pk': roteiro_avulso.pk},
+        )
+
+        self.assertIn(evento_delete_url, html)
+        self.assertIn(avulso_delete_url, html)
+        self.assertGreaterEqual(html.count('method="post"'), 2)
+
+    def test_excluir_roteiro_avulso_remove_registro(self):
+        roteiro_avulso = RoteiroEvento.objects.create(
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_origem,
+            tipo=RoteiroEvento.TIPO_AVULSO,
+            saida_dt=timezone.make_aware(datetime(2026, 5, 3, 7, 30)),
+            chegada_dt=timezone.make_aware(datetime(2026, 5, 3, 11, 45)),
+            status=RoteiroEvento.STATUS_RASCUNHO,
+        )
+        RoteiroEventoDestino.objects.create(
+            roteiro=roteiro_avulso,
+            estado=self.estado,
+            cidade=self.cidade_destino,
+            ordem=0,
+        )
+
+        response = self.client.post(
+            reverse('eventos:roteiro-avulso-excluir', kwargs={'pk': roteiro_avulso.pk}),
+            {'return_to': reverse('eventos:roteiros-global')},
+            follow=True,
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('eventos:roteiros-global'),
+            fetch_redirect_response=False,
+        )
+        self.assertFalse(RoteiroEvento.objects.filter(pk=roteiro_avulso.pk).exists())
+
+    def test_excluir_roteiro_do_evento_remove_registro(self):
+        response = self.client.post(
+            reverse(
+                'eventos:guiado-etapa-2-excluir',
+                kwargs={'evento_id': self.evento_pt.pk, 'pk': self.roteiro.pk},
+            ),
+            {'return_to': reverse('eventos:guiado-etapa-2', kwargs={'evento_id': self.evento_pt.pk})},
+            follow=True,
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('eventos:guiado-etapa-2', kwargs={'evento_id': self.evento_pt.pk}),
+            fetch_redirect_response=False,
+        )
+        self.assertFalse(RoteiroEvento.objects.filter(pk=self.roteiro.pk).exists())
 
     def test_lista_global_de_planos_mantem_acao_abrir_nos_modos_basico_e_completo(self):
         response = self.client.get(reverse('eventos:documentos-planos-trabalho'))

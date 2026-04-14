@@ -37,6 +37,24 @@
                         <td class="text-end">
                             <div class="oficios-table__actions justify-content-end">
                                 {% for action in roteiro.table_actions %}
+                                {% if action.delete_method == 'post' %}
+                                <form method="post" action="{{ action.url }}" style="display:inline" {% if action.delete_confirm %}onsubmit="return confirm('{{ action.delete_confirm|escapejs }}')"{% endif %}>
+                                    {% csrf_token %}
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}"
+                                        aria-label="{{ action.aria_label|default:action.label }}"
+                                        title="{{ action.aria_label|default:action.label }}"
+                                    >
+                                        <i class="bi {{ action.icon }}"></i>
+                                        {% if action.icon_only %}
+                                        <span class="visually-hidden">{{ action.label }}</span>
+                                        {% else %}
+                                        <span>{{ action.label }}</span>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                {% else %}
                                 <a
                                     href="{{ action.url }}"
                                     class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}"
@@ -51,6 +69,7 @@
                                     <span>{{ action.label }}</span>
                                     {% endif %}
                                 </a>
+                                {% endif %}
                                 {% endfor %}
                                 {% if show_etapa_link and roteiro.etapa_url %}
                                 <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary" aria-label="Abrir etapa 2 do evento">Etapa 2</a>
@@ -171,6 +190,24 @@
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions roteiro-list-card__footer-actions">
                     {% for action in roteiro.footer_actions %}
+                    {% if action.delete_method == 'post' %}
+                    <form method="post" action="{{ action.url }}" style="display:inline" {% if action.delete_confirm %}onsubmit="return confirm('{{ action.delete_confirm|escapejs }}')"{% endif %}>
+                        {% csrf_token %}
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}"
+                            aria-label="{{ action.aria_label|default:action.label }}"
+                            title="{{ action.aria_label|default:action.label }}"
+                        >
+                            <i class="bi {{ action.icon }}"></i>
+                            {% if action.icon_only %}
+                            <span class="visually-hidden">{{ action.label }}</span>
+                            {% else %}
+                            <span>{{ action.label }}</span>
+                            {% endif %}
+                        </button>
+                    </form>
+                    {% else %}
                     <a
                         href="{{ action.url }}"
                         class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}"
@@ -185,6 +222,7 @@
                         <span>{{ action.label }}</span>
                         {% endif %}
                     </a>
+                    {% endif %}
                     {% endfor %}
                     {% if show_etapa_link and roteiro.etapa_url %}
                     <a href="{{ roteiro.etapa_url }}" class="btn btn-sm btn-outline-secondary" aria-label="Abrir etapa 2 do evento">Etapa 2</a>

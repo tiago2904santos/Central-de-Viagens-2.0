@@ -5,7 +5,7 @@
                 <section class="guided-flow-header__section guided-flow-header__title" aria-label="Titulo da etapa">
                     <div class="oficio-wizard-header-copy">
                         <span class="oficio-wizard-eyebrow">Cadastro de ofício</span>
-                        <h1>{{ top_title|default:"Cadastro de ofício" }}</h1>
+                        <h1 id="{{ header_title_id|default:'guided-flow-header-title' }}">{{ top_title|default:"Cadastro de ofício" }}</h1>
                     </div>
                 </section>
 
@@ -22,8 +22,11 @@
             <section class="guided-flow-header__section guided-flow-header__chips" aria-label="Resumo do evento">
                 <div class="oficio-wizard-header-badges guiado-etapa3-header-badges">
                     {% for item in evento_context_items %}
-                    <span class="oficio-wizard-header-badge guiado-etapa3-context-badge guiado-etapa3-context-badge--{{ item.kind }}">
-                        <strong>{{ item.label }}</strong>
+                    <span
+                        class="oficio-wizard-header-badge guiado-etapa3-context-badge guiado-etapa3-context-badge--{{ item.kind }}"
+                        {% if item.id %}data-glance-id="{{ item.id }}"{% endif %}
+                    >
+                        <strong {% if item.id %}id="{{ item.id }}"{% endif %}>{{ item.label }}</strong>
                     </span>
                     {% endfor %}
 

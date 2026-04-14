@@ -10249,7 +10249,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .guiado-flow-page .guiado-etapa3-context-badge--type,
 .guiado-flow-page .guiado-etapa3-context-badge--location,
-.guiado-flow-page .guiado-etapa3-context-badge--destinations {
+.guiado-flow-page .guiado-etapa3-context-badge--destinations,
+.guiado-flow-page .guiado-etapa3-context-badge--date {
     border-color: rgba(var(--guiado-etapa3-accent-rgb), 0.24);
     background: linear-gradient(180deg, rgba(222, 236, 250, 0.98) 0%, rgba(239, 246, 253, 0.94) 100%);
     box-shadow: 0 8px 18px rgba(31, 76, 125, 0.08);

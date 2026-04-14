@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 from copy import deepcopy
 from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
@@ -122,7 +122,7 @@ from .utils import (
 def _evento_etapa1_completa(evento):
     """
     Etapa 1 = OK se: ao menos 1 tipo de demanda, ao menos 1 destino,
-    datas válidas, descrição válida, título gerado.
+    datas vÃ¡lidas, descriÃ§Ã£o vÃ¡lida, tÃ­tulo gerado.
     """
     if not evento.data_inicio or not evento.data_fim:
         return False
@@ -134,7 +134,7 @@ def _evento_etapa1_completa(evento):
         return False
     if not evento.destinos.exists():
         return False
-    # Se tem tipo OUTROS, descrição obrigatória
+    # Se tem tipo OUTROS, descriÃ§Ã£o obrigatÃ³ria
     tem_outros = any(t.is_outros for t in evento.tipos_demanda.all())
     if tem_outros and not (evento.descricao and evento.descricao.strip()):
         return False
@@ -198,9 +198,9 @@ def _validar_destinos(destinos):
             if cidade.estado_id != estado_id:
                 return False, 'A cidade deve pertencer ao estado selecionado.'
         except Cidade.DoesNotExist:
-            return False, 'Cidade inválida.'
+            return False, 'Cidade invÃ¡lida.'
         if not Estado.objects.filter(pk=estado_id, ativo=True).exists():
-            return False, 'Estado inválido.'
+            return False, 'Estado invÃ¡lido.'
     return True, None
 
 
@@ -215,7 +215,7 @@ def _is_pdf_upload(uploaded_file):
 def _validar_anexos_convite(arquivos):
     for arquivo in arquivos:
         if not _is_pdf_upload(arquivo):
-            return False, f'O arquivo "{arquivo.name}" não é PDF. Envie apenas PDF.'
+            return False, f'O arquivo "{arquivo.name}" nÃ£o Ã© PDF. Envie apenas PDF.'
     return True, None
 
 
@@ -259,13 +259,13 @@ def _estrutura_trechos(roteiro, destinos_list=None):
     ordem = 0
     # Origem = sede
     o_estado, o_cidade = roteiro.origem_estado_id, roteiro.origem_cidade_id
-    o_nome = (roteiro.origem_cidade.nome if roteiro.origem_cidade else (roteiro.origem_estado.sigla if roteiro.origem_estado else '—'))
+    o_nome = (roteiro.origem_cidade.nome if roteiro.origem_cidade else (roteiro.origem_estado.sigla if roteiro.origem_estado else 'â€”'))
     for estado_id, cidade_id in destinos_list:
         try:
             d_cidade = Cidade.objects.filter(pk=cidade_id).select_related('estado').first()
-            d_nome = d_cidade.nome if d_cidade else Estado.objects.filter(pk=estado_id).first().sigla if estado_id else '—'
+            d_nome = d_cidade.nome if d_cidade else Estado.objects.filter(pk=estado_id).first().sigla if estado_id else 'â€”'
         except Exception:
-            d_nome = '—'
+            d_nome = 'â€”'
         t_db = trechos_db.get(ordem)
         t_adic = getattr(t_db, 'tempo_adicional_min', None) if t_db else 0
         if t_adic is None:
@@ -294,8 +294,8 @@ def _estrutura_trechos(roteiro, destinos_list=None):
         o_estado, o_cidade = estado_id, cidade_id
         o_nome = d_nome
         ordem += 1
-    # Retorno: último destino -> sede
-    sede_nome = (roteiro.origem_cidade.nome if roteiro.origem_cidade else (roteiro.origem_estado.sigla if roteiro.origem_estado else '—'))
+    # Retorno: Ãºltimo destino -> sede
+    sede_nome = (roteiro.origem_cidade.nome if roteiro.origem_cidade else (roteiro.origem_estado.sigla if roteiro.origem_estado else 'â€”'))
     t_db = trechos_db.get(ordem)
     t_adic = getattr(t_db, 'tempo_adicional_min', None) if t_db else 0
     if t_adic is None:
@@ -328,7 +328,7 @@ def _salvar_trechos_roteiro(roteiro, destinos_list, trechos_data):
     """
     Substitui os trechos do roteiro pela estrutura sede + destinos_list.
     trechos_data = lista de dicts com saida_dt, chegada_dt, distancia_km, duracao_estimada_min (por ordem).
-    Índice i de trechos_data corresponde ao trecho de ordem i (ida 0..n-1, depois retorno n).
+    Ãndice i de trechos_data corresponde ao trecho de ordem i (ida 0..n-1, depois retorno n).
     """
     roteiro.trechos.all().delete()
     if not roteiro.origem_estado_id and not roteiro.origem_cidade_id:
@@ -431,8 +431,8 @@ def _parse_trechos_times_post(request, num_trechos):
     """
     Extrai do POST trecho_N_saida_dt, trecho_N_chegada_dt, trecho_N_distancia_km, trecho_N_duracao_estimada_min.
     Tenta primeiro o campo hidden combinado (trecho_N_saida_dt). Se vazio, usa os campos
-    visíveis individuais (trecho_N_saida_date + trecho_N_saida_time) como fallback, garantindo
-    que as datas sejam sempre salvas mesmo quando o JS não sincronizou o campo oculto.
+    visÃ­veis individuais (trecho_N_saida_date + trecho_N_saida_time) como fallback, garantindo
+    que as datas sejam sempre salvas mesmo quando o JS nÃ£o sincronizou o campo oculto.
     Retorna lista de dicts: saida_dt, chegada_dt, distancia_km (Decimal ou None), duracao_estimada_min (int ou None).
     """
     from datetime import datetime
@@ -441,7 +441,7 @@ def _parse_trechos_times_post(request, num_trechos):
     for i in range(num_trechos):
         s = request.POST.get(f'trecho_{i}_saida_dt', '').strip()
         c = request.POST.get(f'trecho_{i}_chegada_dt', '').strip()
-        # Fallback: campos visíveis individuais, enviados sempre pelo browser independente do JS
+        # Fallback: campos visÃ­veis individuais, enviados sempre pelo browser independente do JS
         if not s:
             # Support both old (saida_date/saida_time) and Oficio-compatible (saida_data/saida_hora) field names
             s_date = (request.POST.get(f'trecho_{i}_saida_data', '') or
@@ -804,7 +804,7 @@ def _decorate_evento_list_items(eventos):
             },
         ]
         evento.document_counts_display = (
-            f'{len(oficios_items)} oficios • {len(planos_items)} PT • {len(ordens_items)} OS'
+            f'{len(oficios_items)} oficios â€¢ {len(planos_items)} PT â€¢ {len(ordens_items)} OS'
         )
         evento.quick_actions = [
             {
@@ -890,9 +890,9 @@ def evento_lista(request):
         'status_choices': Evento.STATUS_CHOICES,
         'tipos_demanda_list': TipoDemandaEvento.objects.filter(ativo=True).order_by('ordem', 'nome'),
         'order_by_choices': [
-            ('data_inicio', 'Data de início'),
-            ('updated_at', 'Atualização'),
-            ('titulo', 'Título'),
+            ('data_inicio', 'Data de inÃ­cio'),
+            ('updated_at', 'AtualizaÃ§Ã£o'),
+            ('titulo', 'TÃ­tulo'),
             ('status', 'Status'),
         ],
         'order_dir_choices': DOCUMENT_LIST_ORDER_DIR_CHOICES,
@@ -904,13 +904,13 @@ def evento_lista(request):
 
 @login_required
 def evento_cadastrar(request):
-    """Criação unificada: redireciona para o fluxo guiado (novo evento → Etapa 1)."""
+    """CriaÃ§Ã£o unificada: redireciona para o fluxo guiado (novo evento â†’ Etapa 1)."""
     return redirect('eventos:guiado-novo')
 
 
 @login_required
 def evento_editar(request, pk):
-    """Edição unificada: redireciona para a Etapa 1 do fluxo guiado (mesma tela e lógica)."""
+    """EdiÃ§Ã£o unificada: redireciona para a Etapa 1 do fluxo guiado (mesma tela e lÃ³gica)."""
     get_object_or_404(Evento, pk=pk)
     return redirect('eventos:guiado-etapa-1', pk=pk)
 
@@ -925,24 +925,24 @@ def evento_detalhe(request, pk):
 @require_http_methods(['POST'])
 def evento_excluir(request, pk):
     """
-    Exclui o evento somente se não houver vínculos impeditivos (roteiros).
-    Evento finalizado não pode ser excluído.
+    Exclui o evento somente se nÃ£o houver vÃ­nculos impeditivos (roteiros).
+    Evento finalizado nÃ£o pode ser excluÃ­do.
     """
     evento = get_object_or_404(Evento, pk=pk)
     if _evento_esta_finalizado(evento):
         messages.error(
             request,
-            'Evento finalizado não pode ser excluído. Apenas consulta é permitida.',
+            'Evento finalizado nÃ£o pode ser excluÃ­do. Apenas consulta Ã© permitida.',
         )
-        return redirect('eventos:guiado-painel', pk=evento.pk)
+        return redirect('eventos:guiado-etapa-1', pk=evento.pk)
     if evento.roteiros.exists():
         messages.error(
             request,
-            'Este evento não pode ser excluído porque já possui dados vinculados (roteiros).'
+            'Este evento nÃ£o pode ser excluÃ­do porque jÃ¡ possui dados vinculados (roteiros).'
         )
         return redirect('eventos:lista')
     evento.delete()
-    messages.success(request, 'Evento excluído com sucesso.')
+    messages.success(request, 'Evento excluÃ­do com sucesso.')
     return redirect('eventos:lista')
 
 
@@ -951,7 +951,7 @@ def evento_excluir(request, pk):
 @login_required
 @require_http_methods(['POST'])
 def guiado_novo(request):
-    """Cria um evento em RASCUNHO e redireciona para a Etapa 1. Requer POST para evitar criação acidental."""
+    """Cria um evento em RASCUNHO e redireciona para a Etapa 1. Requer POST para evitar criaÃ§Ã£o acidental."""
     from datetime import date
     hoje = date.today()
     evento = Evento.objects.create(
@@ -969,7 +969,7 @@ def guiado_novo(request):
 
 @login_required
 def guiado_etapa_1(request, pk):
-    """GET+POST da Etapa 1 do fluxo guiado refatorado: tipos, datas, destinos, descrição. Título gerado automaticamente."""
+    """GET+POST da Etapa 1 do fluxo guiado refatorado: tipos, datas, destinos, descriÃ§Ã£o. TÃ­tulo gerado automaticamente."""
     obj = get_object_or_404(
         Evento.objects.prefetch_related('tipos_demanda', 'destinos', 'anexos_solicitante').prefetch_related(
             'destinos__estado',
@@ -978,12 +978,12 @@ def guiado_etapa_1(request, pk):
         pk=pk,
     )
 
-    form = EventoEtapa1Form(request.POST or None, instance=obj)
+    form = EventoEtapa1Form(request.POST or None, request.FILES or None, instance=obj)
     destinos_atuais = list(obj.destinos.select_related('estado', 'cidade').order_by('ordem', 'id'))
     estado_pr = Estado.objects.filter(sigla='PR').first()
-    # Sempre pelo menos 1 bloco de destino visível (placeholder se não houver nenhum)
+    # Sempre pelo menos 1 bloco de destino visÃ­vel (placeholder se nÃ£o houver nenhum)
     if not destinos_atuais:
-        destinos_atuais = [type('DestinoPlaceholder', (), {'estado_id': estado_pr.id if estado_pr else None, 'cidade_id': None, 'cidade': None, 'estado': estado_pr})()]
+        destinos_atuais = [type('DestinoPlaceholder', (), {'estado_id': estado_pr.id if estado_pr else None, 'cidade_id': None, 'cidade': None, 'estado': estado_pr, 'is_placeholder': True})()]
     tipo_outros = TipoDemandaEvento.objects.filter(ativo=True, is_outros=True).first()
     tipo_outros_pk = tipo_outros.pk if tipo_outros else None
 
@@ -995,42 +995,7 @@ def guiado_etapa_1(request, pk):
         destinos_post = _parse_destinos_post(request)
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
         if form.is_valid() and ok_destinos and ok_arquivos:
-            # Salvar evento (tipos, data_unica, data_inicio, data_fim, descricao, tem_convite)
-            ev = form.save(commit=False)
-            # Garantir persistência explícita das datas (fonte: form.cleaned_data)
-            data_inicio = form.cleaned_data.get('data_inicio')
-            data_fim = form.cleaned_data.get('data_fim')
-            data_unica = form.cleaned_data.get('data_unica', False)
-            if data_inicio is not None:
-                ev.data_inicio = data_inicio
-            if data_unica and data_inicio is not None:
-                ev.data_fim = data_inicio
-            elif data_fim is not None:
-                ev.data_fim = data_fim
-            ev.data_unica = data_unica
-            ev.save()
-            form.save_m2m()
-            _salvar_anexos_convite(ev, arquivos_convite)
-            # Destinos: remover antigos e criar novos
-            obj.destinos.all().delete()
-            for ordem, (estado_id, cidade_id) in enumerate(destinos_post):
-                EventoDestino.objects.create(evento=obj, estado_id=estado_id, cidade_id=cidade_id, ordem=ordem)
-            if getattr(obj, '_prefetched_objects_cache', None) and 'destinos' in obj._prefetched_objects_cache:
-                del obj._prefetched_objects_cache['destinos']
-            if not ev.tem_convite_ou_oficio_evento and ev.anexos_solicitante.exists():
-                ev.tem_convite_ou_oficio_evento = True
-                ev.save(update_fields=['tem_convite_ou_oficio_evento'])
-            # Descrição: só manter quando tipo OUTROS está selecionado; senão limpar (form já pode ter setado '' no clean)
-            tem_outros = obj.tipos_demanda.filter(is_outros=True).exists()
-            if not tem_outros:
-                obj.descricao = ''
-                obj.save(update_fields=['descricao'])
-            # Título automático
-            obj.titulo = obj.gerar_titulo()
-            obj.save(update_fields=['titulo'])
-            if _evento_etapa1_completa(obj) and obj.status == Evento.STATUS_RASCUNHO:
-                obj.status = Evento.STATUS_EM_ANDAMENTO
-                obj.save(update_fields=['status'])
+            obj = _persist_evento_etapa1(obj, form, destinos_post, arquivos_convite)
             if request.POST.get('continuar'):
                 return redirect('eventos:guiado-etapa-2', evento_id=obj.pk)
             return redirect('eventos:guiado-etapa-1', pk=obj.pk)
@@ -1066,6 +1031,7 @@ def guiado_etapa_1(request, pk):
         'evento_context_items': evento_context_items,
         'evento_document_counts': evento_document_counts,
         'wizard_steps': wizard_steps,
+        'header_title_id': 'guiado-etapa1-heading',
     }
     return render(request, 'eventos/guiado/etapa_1.html', context)
 
@@ -1140,7 +1106,7 @@ def _build_evento_oficios_summary(evento):
         'finalizados': finalizados,
         'rascunhos': max(total - finalizados, 0),
         'texto': (
-            f'{total} ofício(s), {finalizados} finalizado(s), '
+            f'{total} ofÃ­cio(s), {finalizados} finalizado(s), '
             f'{max(total - finalizados, 0)} rascunho(s)'
         ),
     }
@@ -1148,7 +1114,7 @@ def _build_evento_oficios_summary(evento):
 
 def _evento_oficios_ok(evento):
     """
-    True quando há ao menos um ofício e todos estão finalizados.
+    True quando hÃ¡ ao menos um ofÃ­cio e todos estÃ£o finalizados.
     """
     total = evento.oficios.count()
     if total == 0:
@@ -1157,7 +1123,7 @@ def _evento_oficios_ok(evento):
 
 
 def _evento_oficios_em_andamento(evento):
-    """True quando já existem ofícios, mas a etapa ainda não está concluída."""
+    """True quando jÃ¡ existem ofÃ­cios, mas a etapa ainda nÃ£o estÃ¡ concluÃ­da."""
     total = evento.oficios.count()
     if total == 0:
         return False
@@ -1173,7 +1139,7 @@ def _evento_pt_os_ok(evento):
 
 
 def _evento_pt_os_em_andamento(evento):
-    """True quando há PT/OS em rascunho vinculados ao evento."""
+    """True quando hÃ¡ PT/OS em rascunho vinculados ao evento."""
     return (
         PlanoTrabalho.objects.filter(evento=evento, status=PlanoTrabalho.STATUS_RASCUNHO).exists()
         or OrdemServico.objects.filter(evento=evento, status=OrdemServico.STATUS_RASCUNHO).exists()
@@ -1181,7 +1147,7 @@ def _evento_pt_os_em_andamento(evento):
 
 
 def _evento_justificativa_ok(evento):
-    """True quando todo ofício que exige justificativa está com justificativa preenchida (ou não há ofícios)."""
+    """True quando todo ofÃ­cio que exige justificativa estÃ¡ com justificativa preenchida (ou nÃ£o hÃ¡ ofÃ­cios)."""
     oficios = list(evento.oficios.all())
     if not oficios:
         return True
@@ -1193,8 +1159,8 @@ def _evento_justificativa_ok(evento):
 
 def _evento_sincronizar_participantes(evento, viajantes_ids=None):
     """
-    Mantém participantes no nível do evento.
-    Se viajantes_ids vier vazio/None, sincroniza a partir dos ofícios do evento.
+    MantÃ©m participantes no nÃ­vel do evento.
+    Se viajantes_ids vier vazio/None, sincroniza a partir dos ofÃ­cios do evento.
     """
     if evento is None:
         return
@@ -1241,10 +1207,10 @@ def _evento_sincronizar_participantes(evento, viajantes_ids=None):
 
 def _evento_participantes_termo(evento):
     """
-    Participantes no nível do evento, com status do termo (Etapa 3).
-    Sincroniza automaticamente participantes vindos de ofícios.
-    Cria EventoTermoParticipante pendente para quem ainda não tem.
-    Retorna lista de tuplas (viajante, EventoTermoParticipante, lista de ofícios).
+    Participantes no nÃ­vel do evento, com status do termo (Etapa 3).
+    Sincroniza automaticamente participantes vindos de ofÃ­cios.
+    Cria EventoTermoParticipante pendente para quem ainda nÃ£o tem.
+    Retorna lista de tuplas (viajante, EventoTermoParticipante, lista de ofÃ­cios).
     """
     _evento_sincronizar_participantes(evento)
     participantes_qs = (
@@ -1270,8 +1236,8 @@ def _evento_participantes_termo(evento):
 
 def _evento_termos_ok(evento):
     """
-    True quando há pelo menos um participante do evento e todos
-    têm status DISPENSADO ou CONCLUIDO. Sem participantes, considera OK (nada a fazer).
+    True quando hÃ¡ pelo menos um participante do evento e todos
+    tÃªm status DISPENSADO ou CONCLUIDO. Sem participantes, considera OK (nada a fazer).
     """
     _evento_sincronizar_participantes(evento)
     viajante_ids = set(
@@ -1286,7 +1252,7 @@ def _evento_termos_ok(evento):
 
 
 def _evento_termos_em_andamento(evento):
-    """True quando existe ao menos um participante com status definido (não pendente) mas etapa não concluída."""
+    """True quando existe ao menos um participante com status definido (nÃ£o pendente) mas etapa nÃ£o concluÃ­da."""
     if _evento_termos_ok(evento):
         return False
     _evento_sincronizar_participantes(evento)
@@ -1359,7 +1325,7 @@ def _get_veiculos_termo_queryset():
 
 
 def _get_viajantes_disponiveis_termo(evento):
-    """Lista de servidores para geração de termos na etapa do evento."""
+    """Lista de servidores para geraÃ§Ã£o de termos na etapa do evento."""
     _evento_sincronizar_participantes(evento)
     ids_participantes = list(
         EventoParticipante.objects.filter(evento=evento).values_list('viajante_id', flat=True)
@@ -1380,25 +1346,25 @@ def _evento_esta_finalizado(evento):
 
 def _evento_pendencias_finalizacao(evento):
     """
-    Retorna lista de mensagens de pendências que impedem a finalização do evento.
-    Ordem funcional: 1 Dados, 2 Roteiros, 3 Termos, 4 PT/OS, 5 Ofícios, 6 Justificativa.
+    Retorna lista de mensagens de pendÃªncias que impedem a finalizaÃ§Ã£o do evento.
+    Ordem funcional: 1 Dados, 2 Roteiros, 3 Termos, 4 PT/OS, 5 OfÃ­cios, 6 Justificativa.
     """
     pendencias = []
     if not _evento_etapa1_completa(evento):
-        pendencias.append('Etapa 1 (Dados do evento) não concluída.')
+        pendencias.append('Etapa 1 (Dados do evento) nÃ£o concluÃ­da.')
     if not _evento_roteiros_ok(evento):
-        pendencias.append('Etapa 2 (Roteiros) não concluída. Cadastre ao menos um roteiro finalizado.')
+        pendencias.append('Etapa 2 (Roteiros) nÃ£o concluÃ­da. Cadastre ao menos um roteiro finalizado.')
     if not _evento_termos_ok(evento):
         pendencias.append(
-            'Etapa 3 (Termos) não concluída. Defina status (Dispensado ou Concluído) para todos os participantes do evento.'
+            'Etapa 3 (Termos) nÃ£o concluÃ­da. Defina status (Dispensado ou ConcluÃ­do) para todos os participantes do evento.'
         )
     if not _evento_pt_os_ok(evento):
-        pendencias.append('Etapa 4 (PT / OS) não concluída. Finalize ao menos um Plano de Trabalho ou uma Ordem de Serviço.')
+        pendencias.append('Etapa 4 (PT / OS) nÃ£o concluÃ­da. Finalize ao menos um Plano de Trabalho ou uma Ordem de ServiÃ§o.')
     if not _evento_oficios_ok(evento):
-        pendencias.append('Etapa 5 (Ofícios) não concluída. Finalize todos os ofícios vinculados ao evento.')
+        pendencias.append('Etapa 5 (OfÃ­cios) nÃ£o concluÃ­da. Finalize todos os ofÃ­cios vinculados ao evento.')
     if not _evento_justificativa_ok(evento):
         pendencias.append(
-            'Etapa 6 (Justificativa) não concluída. Preencha a justificativa nos ofícios que exigem (prazo < 10 dias).'
+            'Etapa 6 (Justificativa) nÃ£o concluÃ­da. Preencha a justificativa nos ofÃ­cios que exigem (prazo < 10 dias).'
         )
     return pendencias
 
@@ -1409,7 +1375,7 @@ def _evento_etapa2_ok(evento):
 
 
 def _evento_etapa3_ok(evento):
-    """Compat: etapa antiga 3 = ofícios."""
+    """Compat: etapa antiga 3 = ofÃ­cios."""
     return _evento_oficios_ok(evento)
 
 
@@ -1434,7 +1400,7 @@ def _evento_etapa5_em_andamento(evento):
 
 
 def _evento_etapa6_ok(evento):
-    """True quando a finalização (Etapa 7) foi registrada (finalizado_em preenchido)."""
+    """True quando a finalizaÃ§Ã£o (Etapa 7) foi registrada (finalizado_em preenchido)."""
     try:
         return evento.finalizacao.concluido
     except EventoFinalizacao.DoesNotExist:
@@ -1442,174 +1408,12 @@ def _evento_etapa6_ok(evento):
 
 
 def _evento_etapa6_em_andamento(evento):
-    """True quando existe registro da etapa 7 com observações mas ainda não finalizado."""
+    """True quando existe registro da etapa 7 com observaÃ§Ãµes mas ainda nÃ£o finalizado."""
     try:
         fin = evento.finalizacao
         return not fin.concluido and bool((fin.observacoes_finais or '').strip())
     except EventoFinalizacao.DoesNotExist:
         return False
-
-
-def _build_guiado_etapa_card(
-    numero,
-    nome,
-    url,
-    *,
-    ok=False,
-    em_breve=False,
-    em_andamento=False,
-    summary='',
-    description='',
-    cta_label='Abrir etapa',
-):
-    if em_breve:
-        return {
-            'numero': numero,
-            'nome': nome,
-            'ok': False,
-            'em_breve': True,
-            'em_andamento': False,
-            'url': url,
-            'summary': summary,
-            'description': description,
-            'cta_label': cta_label,
-            'status_label': 'Em breve',
-            'badge_class': 'is-muted',
-            'theme_class': 'is-tone-gray',
-        }
-    if ok:
-        status_label = 'Concluida'
-        badge_class = 'is-ready'
-        theme_class = 'is-tone-accent'
-    elif em_andamento:
-        status_label = 'Em andamento'
-        badge_class = 'is-info'
-        theme_class = 'is-tone-blue'
-    else:
-        status_label = 'Pendente'
-        badge_class = 'is-warning'
-        theme_class = 'is-tone-yellow'
-    return {
-        'numero': numero,
-        'nome': nome,
-        'ok': ok,
-        'em_breve': em_breve,
-        'em_andamento': em_andamento,
-        'url': url,
-        'summary': summary,
-        'description': description,
-        'cta_label': cta_label,
-        'status_label': status_label,
-        'badge_class': badge_class,
-        'theme_class': theme_class,
-    }
-
-
-@login_required
-def guiado_painel(request, pk):
-    """Painel do evento guiado — ordem funcional real: 1 Dados, 2 Roteiros, 3 Termos, 4 PT/OS, 5 Ofícios, 6 Justificativa, 7 Finalização."""
-    obj = get_object_or_404(
-        Evento.objects.select_related('estado_principal', 'cidade_principal', 'cidade_base')
-        .prefetch_related(
-            'tipos_demanda',
-            'destinos',
-            Prefetch(
-                'oficios',
-                queryset=Oficio.objects.select_related('justificativa').prefetch_related('viajantes'),
-            ),
-            Prefetch(
-                'roteiros',
-                queryset=RoteiroEvento.objects.select_related('origem_cidade', 'origem_estado'),
-            ),
-            Prefetch('termos_autorizacao', queryset=TermoAutorizacao.objects.only('pk', 'status', 'evento_id')),
-            Prefetch('planos_trabalho', queryset=PlanoTrabalho.objects.only('pk', 'status', 'evento_id')),
-            Prefetch('ordens_servico', queryset=OrdemServico.objects.only('pk', 'status', 'evento_id')),
-            'finalizacao',
-            Prefetch('termos_participantes', queryset=EventoTermoParticipante.objects.select_related('viajante')),
-        ),
-        pk=pk
-    )
-    etapa1_ok = _evento_etapa1_completa(obj)
-    etapa2_ok = _evento_roteiros_ok(obj)
-    etapa2_em_andamento = _evento_roteiros_em_andamento(obj)
-    etapa3_ok = _evento_termos_ok(obj)
-    etapa3_em_andamento = _evento_termos_em_andamento(obj)
-    etapa4_ok = _evento_pt_os_ok(obj)
-    etapa4_em_andamento = _evento_pt_os_em_andamento(obj)
-    etapa5_ok = _evento_oficios_ok(obj)
-    etapa5_em_andamento = _evento_oficios_em_andamento(obj)
-    etapa6_ok = _evento_justificativa_ok(obj)
-    etapa7_ok = _evento_etapa6_ok(obj)
-    etapa7_em_andamento = _evento_etapa6_em_andamento(obj)
-    oficios_summary = _build_evento_oficios_summary(obj)
-    termos_urls = _build_evento_termos_urls(obj)
-    roteiros_total = len(obj.roteiros.all())
-    termos_documentais_total = len(obj.termos_autorizacao.all())
-    planos_total = len(obj.planos_trabalho.all())
-    ordens_total = len(obj.ordens_servico.all())
-    obj.destinos_display = _evento_lista_destinos_display(obj)
-    obj.periodo_display = _evento_lista_periodo_display(obj)
-    obj.tipos_display = _evento_lista_tipos_display(obj)
-    obj.temporal_meta = _evento_lista_temporal_meta(obj)
-    obj.card_theme_class = obj.temporal_meta['theme_class']
-    obj.document_counts_display = (
-        f'{oficios_summary["total"]} oficios • '
-        f'{termos_documentais_total} termos • '
-        f'{planos_total} PT • '
-        f'{ordens_total} OS'
-    )
-    resumo_cards = [
-        {'label': 'Roteiros', 'value': f'{roteiros_total} cadastrado(s)'},
-        {'label': 'Termos', 'value': f'{termos_documentais_total} registro(s) no modulo documental'},
-        {'label': 'PT / OS', 'value': f'{planos_total} PT • {ordens_total} OS'},
-        {'label': 'Oficios', 'value': oficios_summary['texto']},
-    ]
-    etapas = [
-        _build_guiado_etapa_card(
-            1,
-            'Dados do evento',
-            reverse('eventos:guiado-etapa-1', kwargs={'pk': obj.pk}),
-            ok=etapa1_ok,
-            summary=obj.tipos_display,
-            description='Base cadastral, periodo, destinos e tipo de demanda.',
-            cta_label='Revisar dados',
-        ),
-        _build_guiado_etapa_card(
-            2,
-            'Roteiros',
-            reverse('eventos:guiado-etapa-2', kwargs={'evento_id': obj.pk}),
-            ok=etapa2_ok,
-            em_andamento=etapa2_em_andamento,
-            summary=f'{roteiros_total} roteiro(s) vinculado(s)' if roteiros_total else 'Nenhum roteiro cadastrado.',
-            description='Planejamento operacional do deslocamento e da malha de destinos.',
-            cta_label='Abrir roteiros',
-        ),
-        _build_guiado_etapa_card(
-            3,
-            'Termos',
-            termos_urls['list_url'],
-            ok=etapa3_ok,
-            em_andamento=etapa3_em_andamento,
-            summary=(
-                f'{termos_documentais_total} termo(s) no modulo documental'
-                if termos_documentais_total
-                else 'A etapa agora usa o modulo documental real filtrado por evento.'
-            ),
-            description='Orquestracao para o modulo documental real de Termos de autorizacao.',
-            cta_label='Abrir modulo',
-        ),
-        {'numero': 4, 'nome': 'Plano de Trabalho / Ordem de Serviço', 'ok': etapa4_ok, 'em_breve': False, 'em_andamento': etapa4_em_andamento, 'url': reverse('eventos:guiado-etapa-4', kwargs={'evento_id': obj.pk})},
-        {'numero': 5, 'nome': 'Ofícios', 'ok': etapa5_ok, 'em_breve': False, 'em_andamento': etapa5_em_andamento, 'url': reverse('eventos:guiado-etapa-5', kwargs={'evento_id': obj.pk}), 'summary': oficios_summary['texto']},
-        {'numero': 6, 'nome': 'Justificativa', 'ok': etapa6_ok, 'em_breve': False, 'em_andamento': False, 'url': reverse('eventos:guiado-etapa-6', kwargs={'evento_id': obj.pk})},
-        {'numero': 7, 'nome': 'Finalização', 'ok': etapa7_ok, 'em_breve': False, 'em_andamento': etapa7_em_andamento, 'url': reverse('eventos:guiado-etapa-7', kwargs={'evento_id': obj.pk})},
-    ]
-    context = {
-        'object': obj,
-        'etapas': etapas,
-        'etapa1_ok': etapa1_ok,
-        'oficios_summary': oficios_summary,
-    }
-    return render(request, 'eventos/guiado/painel.html', context)
 
 
 # ---------- Tipos de demanda (CRUD) ----------
@@ -1659,7 +1463,7 @@ def tipos_demanda_excluir(request, pk):
     if request.method == 'POST':
         em_uso = Evento.objects.filter(tipos_demanda=obj).exists()
         if em_uso:
-            messages.error(request, 'Não é possível excluir: este tipo está em uso por pelo menos um evento.')
+            messages.error(request, 'NÃ£o Ã© possÃ­vel excluir: este tipo estÃ¡ em uso por pelo menos um evento.')
             return redirect('eventos:tipos-demanda-editar', pk=pk)
         obj.delete()
         volta = request.GET.get('volta_etapa1')
@@ -1675,7 +1479,7 @@ def tipos_demanda_excluir(request, pk):
 
 @login_required
 def plano_trabalho_atividades_lista(request):
-    """Lista de atividades gerenciáveis do Plano de Trabalho."""
+    """Lista de atividades gerenciÃ¡veis do Plano de Trabalho."""
     lista = AtividadePlanoTrabalho.objects.all().order_by('ordem', 'nome')
     context = {
         'object_list': lista,
@@ -1686,7 +1490,7 @@ def plano_trabalho_atividades_lista(request):
 
 @login_required
 def plano_trabalho_atividades_cadastrar(request):
-    """Cadastro de atividade do Plano de Trabalho com meta e recurso obrigatórios."""
+    """Cadastro de atividade do Plano de Trabalho com meta e recurso obrigatÃ³rios."""
     form = AtividadePlanoTrabalhoForm(request.POST or None)
     if form.is_valid():
         form.save()
@@ -1702,7 +1506,7 @@ def plano_trabalho_atividades_cadastrar(request):
 
 @login_required
 def plano_trabalho_atividades_editar(request, pk):
-    """Edição de atividade do Plano de Trabalho."""
+    """EdiÃ§Ã£o de atividade do Plano de Trabalho."""
     obj = get_object_or_404(AtividadePlanoTrabalho, pk=pk)
     form = AtividadePlanoTrabalhoForm(request.POST or None, instance=obj)
     if form.is_valid():
@@ -1719,7 +1523,7 @@ def plano_trabalho_atividades_editar(request, pk):
 
 @login_required
 def plano_trabalho_atividades_excluir(request, pk):
-    """Exclusão de atividade (bloqueia se em uso em Plano de Trabalho)."""
+    """ExclusÃ£o de atividade (bloqueia se em uso em Plano de Trabalho)."""
     obj = get_object_or_404(AtividadePlanoTrabalho, pk=pk)
     if request.method == 'POST':
         codigo = obj.codigo
@@ -1730,10 +1534,10 @@ def plano_trabalho_atividades_excluir(request, pk):
             | Q(atividades_codigos__contains=f',{codigo},')
         ).exists()
         if em_uso:
-            messages.error(request, 'Não é possível excluir: atividade em uso por pelo menos um Plano de Trabalho.')
+            messages.error(request, 'NÃ£o Ã© possÃ­vel excluir: atividade em uso por pelo menos um Plano de Trabalho.')
             return redirect('eventos:plano-trabalho-atividades-editar', pk=obj.pk)
         obj.delete()
-        messages.success(request, 'Atividade excluída com sucesso.')
+        messages.success(request, 'Atividade excluÃ­da com sucesso.')
         return redirect('eventos:plano-trabalho-atividades-lista')
     return render(
         request,
@@ -1774,7 +1578,7 @@ def plano_trabalho_coordenadores_cadastrar(request):
 
 @login_required
 def plano_trabalho_coordenadores_editar(request, pk):
-    """Edição de coordenador operacional."""
+    """EdiÃ§Ã£o de coordenador operacional."""
     obj = get_object_or_404(CoordenadorOperacional, pk=pk)
     form = CoordenadorOperacionalForm(request.POST or None, instance=obj)
     if form.is_valid():
@@ -1794,17 +1598,17 @@ def plano_trabalho_coordenadores_editar(request, pk):
 
 @login_required
 def plano_trabalho_coordenadores_excluir(request, pk):
-    """Exclusão de coordenador operacional (bloqueia se estiver em uso em Plano de Trabalho)."""
+    """ExclusÃ£o de coordenador operacional (bloqueia se estiver em uso em Plano de Trabalho)."""
     obj = get_object_or_404(CoordenadorOperacional, pk=pk)
     if request.method == 'POST':
         em_uso = PlanoTrabalho.objects.filter(
             Q(coordenador_operacional=obj) | Q(coordenadores=obj)
         ).exists()
         if em_uso:
-            messages.error(request, 'Não é possível excluir: coordenador em uso por pelo menos um Plano de Trabalho.')
+            messages.error(request, 'NÃ£o Ã© possÃ­vel excluir: coordenador em uso por pelo menos um Plano de Trabalho.')
             return redirect('eventos:coordenadores-operacionais-editar', pk=obj.pk)
         obj.delete()
-        messages.success(request, 'Coordenador excluído com sucesso.')
+        messages.success(request, 'Coordenador excluÃ­do com sucesso.')
         return redirect('eventos:coordenadores-operacionais-lista')
     return render(
         request,
@@ -1815,7 +1619,7 @@ def plano_trabalho_coordenadores_excluir(request, pk):
 
 @login_required
 def plano_trabalho_solicitantes_lista(request):
-    """Lista de solicitantes gerenciáveis do Plano de Trabalho."""
+    """Lista de solicitantes gerenciÃ¡veis do Plano de Trabalho."""
     lista = SolicitantePlanoTrabalho.objects.all().order_by('ordem', 'nome')
     context = {
         'object_list': lista,
@@ -1842,7 +1646,7 @@ def plano_trabalho_solicitantes_cadastrar(request):
 
 @login_required
 def plano_trabalho_solicitantes_editar(request, pk):
-    """Edição de solicitante do Plano de Trabalho."""
+    """EdiÃ§Ã£o de solicitante do Plano de Trabalho."""
     obj = get_object_or_404(SolicitantePlanoTrabalho, pk=pk)
     form = SolicitantePlanoTrabalhoForm(request.POST or None, instance=obj)
     if form.is_valid():
@@ -1859,15 +1663,15 @@ def plano_trabalho_solicitantes_editar(request, pk):
 
 @login_required
 def plano_trabalho_solicitantes_excluir(request, pk):
-    """Exclusão de solicitante (bloqueia se estiver em uso em Plano de Trabalho)."""
+    """ExclusÃ£o de solicitante (bloqueia se estiver em uso em Plano de Trabalho)."""
     obj = get_object_or_404(SolicitantePlanoTrabalho, pk=pk)
     if request.method == 'POST':
         em_uso = PlanoTrabalho.objects.filter(solicitante=obj).exists()
         if em_uso:
-            messages.error(request, 'Não é possível excluir: solicitante em uso por pelo menos um Plano de Trabalho.')
+            messages.error(request, 'NÃ£o Ã© possÃ­vel excluir: solicitante em uso por pelo menos um Plano de Trabalho.')
             return redirect('eventos:plano-trabalho-solicitantes-editar', pk=obj.pk)
         obj.delete()
-        messages.success(request, 'Solicitante excluído com sucesso.')
+        messages.success(request, 'Solicitante excluÃ­do com sucesso.')
         return redirect('eventos:plano-trabalho-solicitantes-lista')
     return render(
         request,
@@ -1878,7 +1682,7 @@ def plano_trabalho_solicitantes_excluir(request, pk):
 
 @login_required
 def plano_trabalho_horarios_lista(request):
-    """Lista de horários de atendimento gerenciáveis do Plano de Trabalho."""
+    """Lista de horÃ¡rios de atendimento gerenciÃ¡veis do Plano de Trabalho."""
     lista = HorarioAtendimentoPlanoTrabalho.objects.all().order_by('ordem', 'descricao')
     context = {
         'object_list': lista,
@@ -1889,11 +1693,11 @@ def plano_trabalho_horarios_lista(request):
 
 @login_required
 def plano_trabalho_horarios_cadastrar(request):
-    """Cadastro de horário de atendimento para uso no Plano de Trabalho."""
+    """Cadastro de horÃ¡rio de atendimento para uso no Plano de Trabalho."""
     form = HorarioAtendimentoPlanoTrabalhoForm(request.POST or None)
     if form.is_valid():
         form.save()
-        messages.success(request, 'Horário de atendimento cadastrado com sucesso.')
+        messages.success(request, 'HorÃ¡rio de atendimento cadastrado com sucesso.')
         return redirect('eventos:plano-trabalho-horarios-lista')
     context = {
         'form': form,
@@ -1905,12 +1709,12 @@ def plano_trabalho_horarios_cadastrar(request):
 
 @login_required
 def plano_trabalho_horarios_editar(request, pk):
-    """Edição de horário de atendimento do Plano de Trabalho."""
+    """EdiÃ§Ã£o de horÃ¡rio de atendimento do Plano de Trabalho."""
     obj = get_object_or_404(HorarioAtendimentoPlanoTrabalho, pk=pk)
     form = HorarioAtendimentoPlanoTrabalhoForm(request.POST or None, instance=obj)
     if form.is_valid():
         form.save()
-        messages.success(request, 'Horário de atendimento atualizado com sucesso.')
+        messages.success(request, 'HorÃ¡rio de atendimento atualizado com sucesso.')
         return redirect('eventos:plano-trabalho-horarios-lista')
     context = {
         'form': form,
@@ -1922,15 +1726,15 @@ def plano_trabalho_horarios_editar(request, pk):
 
 @login_required
 def plano_trabalho_horarios_excluir(request, pk):
-    """Exclusão de horário de atendimento (bloqueia se estiver em uso em Plano de Trabalho)."""
+    """ExclusÃ£o de horÃ¡rio de atendimento (bloqueia se estiver em uso em Plano de Trabalho)."""
     obj = get_object_or_404(HorarioAtendimentoPlanoTrabalho, pk=pk)
     if request.method == 'POST':
         em_uso = PlanoTrabalho.objects.filter(horario_atendimento__iexact=obj.descricao).exists()
         if em_uso:
-            messages.error(request, 'Não é possível excluir: horário em uso por pelo menos um Plano de Trabalho.')
+            messages.error(request, 'NÃ£o Ã© possÃ­vel excluir: horÃ¡rio em uso por pelo menos um Plano de Trabalho.')
             return redirect('eventos:plano-trabalho-horarios-editar', pk=obj.pk)
         obj.delete()
-        messages.success(request, 'Horário de atendimento excluído com sucesso.')
+        messages.success(request, 'HorÃ¡rio de atendimento excluÃ­do com sucesso.')
         return redirect('eventos:plano-trabalho-horarios-lista')
     return render(
         request,
@@ -1961,9 +1765,9 @@ def _append_query_params(url, **params):
 
 
 def _build_evento_termos_urls(evento):
-    panel_url = reverse('eventos:guiado-painel', kwargs={'pk': evento.pk})
+    evento_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': evento.pk})
     return {
-        'panel_url': panel_url,
+        'evento_url': evento_url,
         'list_url': _append_query_params(
             reverse('eventos:documentos-termos'),
             evento_id=evento.pk,
@@ -1972,7 +1776,7 @@ def _build_evento_termos_urls(evento):
             reverse('eventos:documentos-termos-novo'),
             context_source='evento',
             preselected_event_id=evento.pk,
-            return_to=panel_url,
+            return_to=evento_url,
         ),
     }
 
@@ -2009,7 +1813,7 @@ def _get_safe_next_url(request, default_url=''):
 
 @login_required
 def modelos_motivo_lista(request):
-    """Lista de modelos de motivo para uso no Step 1 do Ofício."""
+    """Lista de modelos de motivo para uso no Step 1 do OfÃ­cio."""
     volta_step1 = request.GET.get('volta_step1', '')
     q = (request.GET.get('q') or '').strip()
     date_from = (request.GET.get('date_from') or '').strip()
@@ -2084,7 +1888,7 @@ def modelos_motivo_cadastrar(request):
 
 @login_required
 def modelos_motivo_editar(request, pk):
-    """Edição de modelo de motivo."""
+    """EdiÃ§Ã£o de modelo de motivo."""
     volta_step1 = request.GET.get('volta_step1', '')
     obj = get_object_or_404(ModeloMotivoViagem, pk=pk)
     form = ModeloMotivoViagemForm(request.POST or None, instance=obj)
@@ -2103,13 +1907,13 @@ def modelos_motivo_editar(request, pk):
 
 @login_required
 def modelos_motivo_excluir(request, pk):
-    """Exclusão de modelo de motivo."""
+    """ExclusÃ£o de modelo de motivo."""
     volta_step1 = request.GET.get('volta_step1', '')
     obj = get_object_or_404(ModeloMotivoViagem, pk=pk)
     if request.method == 'POST':
         nome = obj.nome
         obj.delete()
-        messages.success(request, f'Modelo "{nome}" excluído com sucesso.')
+        messages.success(request, f'Modelo "{nome}" excluÃ­do com sucesso.')
         return redirect(_modelos_motivo_lista_url(volta_step1))
     context = {
         'object': obj,
@@ -2122,19 +1926,19 @@ def modelos_motivo_excluir(request, pk):
 @login_required
 @require_http_methods(['POST'])
 def modelos_motivo_definir_padrao(request, pk):
-    """Define modelo de motivo padrão para preseleção no Step 1 do Ofício."""
+    """Define modelo de motivo padrÃ£o para preseleÃ§Ã£o no Step 1 do OfÃ­cio."""
     volta_step1 = request.GET.get('volta_step1', '')
     obj = get_object_or_404(ModeloMotivoViagem, pk=pk)
     ModeloMotivoViagem.objects.exclude(pk=obj.pk).update(padrao=False)
     obj.padrao = True
     obj.save()
-    messages.success(request, f'Modelo "{obj.nome}" definido como padrão.')
+    messages.success(request, f'Modelo "{obj.nome}" definido como padrÃ£o.')
     return redirect(_modelos_motivo_lista_url(volta_step1))
 
 
 @login_required
 def modelo_motivo_texto_api(request, pk):
-    """Retorna texto do modelo de motivo para preenchimento automático no Step 1."""
+    """Retorna texto do modelo de motivo para preenchimento automÃ¡tico no Step 1."""
     modelo = get_object_or_404(ModeloMotivoViagem, pk=pk)
     return JsonResponse({'ok': True, 'texto': modelo.texto, 'nome': modelo.nome})
 
@@ -2258,7 +2062,7 @@ def modelos_justificativa_excluir(request, pk):
     if request.method == 'POST':
         nome = obj.nome
         obj.delete()
-        messages.success(request, f'Modelo "{nome}" excluído com sucesso.')
+        messages.success(request, f'Modelo "{nome}" excluÃ­do com sucesso.')
         return redirect(_modelos_justificativa_lista_url(volta_justificativa, next_url))
     context = {
         'object': obj,
@@ -2277,7 +2081,7 @@ def modelos_justificativa_definir_padrao(request, pk):
     ModeloJustificativa.objects.exclude(pk=obj.pk).update(padrao=False)
     obj.padrao = True
     obj.save()
-    messages.success(request, f'Modelo "{obj.nome}" definido como padrão.')
+    messages.success(request, f'Modelo "{obj.nome}" definido como padrÃ£o.')
     return redirect(_modelos_justificativa_lista_url(volta_justificativa, next_url))
 
 
@@ -2287,11 +2091,11 @@ def modelo_justificativa_texto_api(request, pk):
     return JsonResponse({'ok': True, 'texto': modelo.texto, 'nome': modelo.nome})
 
 
-# ---------- Ofícios do evento (hub; etapa 5 no fluxo de negócio) ----------
+# ---------- OfÃ­cios do evento (hub; etapa 5 no fluxo de negÃ³cio) ----------
 
 @login_required
 def guiado_etapa_3(request, evento_id):
-    """Ofícios do evento (Etapa 5): listar ofícios, criar novo, editar (wizard)."""
+    """OfÃ­cios do evento (Etapa 5): listar ofÃ­cios, criar novo, editar (wizard)."""
     evento = get_object_or_404(Evento, pk=evento_id)
     oficios_qs = evento.oficios.prefetch_related('trechos').order_by('ano', 'numero', 'id')
     oficios = list(oficios_qs)
@@ -2312,23 +2116,23 @@ def guiado_etapa_3(request, evento_id):
 @require_http_methods(['GET', 'POST'])
 def guiado_etapa_3_criar_oficio(request, evento_id):
     """
-    Cria rascunho de ofício vinculado ao evento e redireciona para o Step 1 do wizard.
+    Cria rascunho de ofÃ­cio vinculado ao evento e redireciona para o Step 1 do wizard.
 
-    Esta view é apenas um hub/orquestrador da Etapa 5: delega a criação para a
-    view global de criação de ofício (`oficio_novo`), passando o evento_id.
+    Esta view Ã© apenas um hub/orquestrador da Etapa 5: delega a criaÃ§Ã£o para a
+    view global de criaÃ§Ã£o de ofÃ­cio (`oficio_novo`), passando o evento_id.
     """
     evento = get_object_or_404(Evento, pk=evento_id)
     if request.method != 'POST':
         return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
 
-    # Redireciona para a criação global, que centraliza a regra de contexto
+    # Redireciona para a criaÃ§Ã£o global, que centraliza a regra de contexto
     # (avulso vs. evento) e de tipo_origem.
     novo_url = f"{reverse('eventos:oficio-novo')}?evento_id={evento.pk}"
     return redirect(novo_url)
 
 
 def _guiado_etapa_em_breve(request, evento_id, numero, nome):
-    """Renderiza página 'Em breve' para etapa do evento ainda não implementada."""
+    """Renderiza pÃ¡gina 'Em breve' para etapa do evento ainda nÃ£o implementada."""
     evento = get_object_or_404(Evento, pk=evento_id)
     return render(request, 'eventos/guiado/etapa_em_breve.html', {
         'evento': evento,
@@ -2367,7 +2171,7 @@ def guiado_etapa_4(request, evento_id):
             evento.tem_convite_ou_oficio_evento = convite_flag
             evento.save(update_fields=['tem_convite_ou_oficio_evento'])
 
-        messages.success(request, 'Convite/ofício solicitante atualizado com sucesso.')
+        messages.success(request, 'Convite/ofÃ­cio solicitante atualizado com sucesso.')
         return redirect(f"{reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk})}?modo_documento={modo_documento}")
 
     oficios = list(evento.oficios.order_by('ano', 'numero', 'id'))
@@ -2418,7 +2222,7 @@ def guiado_etapa_4(request, evento_id):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def guiado_etapa_5(request, evento_id):
-    """Termos (Etapa 3): controle por participante no nível do evento."""
+    """Termos (Etapa 3): controle por participante no nÃ­vel do evento."""
     evento = get_object_or_404(
         Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
         pk=evento_id,
@@ -2426,12 +2230,12 @@ def guiado_etapa_5(request, evento_id):
     evento_apenas_consulta = _evento_esta_finalizado(evento)
     if request.method == 'POST' and evento_apenas_consulta:
         if _is_autosave_request(request):
-            return _autosave_error_response('Evento finalizado. Não é possível alterar os termos.')
+            return _autosave_error_response('Evento finalizado. NÃ£o Ã© possÃ­vel alterar os termos.')
         messages.error(
             request,
-            'Evento finalizado. Não é possível alterar os termos.',
+            'Evento finalizado. NÃ£o Ã© possÃ­vel alterar os termos.',
         )
-        return redirect('eventos:guiado-painel', pk=evento.pk)
+        return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
 
     oficios = list(evento.oficios.order_by('ano', 'numero', 'id'))
     participantes = _evento_participantes_termo(evento)
@@ -2473,9 +2277,6 @@ def guiado_etapa_5(request, evento_id):
                 updated = _autosave_termos_participantes(participantes, request)
         if updated:
             messages.success(request, 'Termos atualizados com sucesso.')
-        voltar = request.POST.get('voltar_painel')
-        if voltar:
-            return redirect('eventos:guiado-painel', pk=evento.pk)
         return redirect('eventos:guiado-etapa-3', evento_id=evento.pk)
 
     total_participantes = len(participantes)
@@ -2494,10 +2295,10 @@ def guiado_etapa_5(request, evento_id):
                 'viajante': viajante,
                 'termo': termo,
                 'oficios': oficios_part,
-                'rg': getattr(viajante, 'rg_formatado', '') or '—',
-                'cpf': getattr(viajante, 'cpf_formatado', '') or '—',
-                'telefone': getattr(viajante, 'telefone_formatado', '') or '—',
-                'lotacao': (getattr(getattr(viajante, 'unidade_lotacao', None), 'nome', '') or '—'),
+                'rg': getattr(viajante, 'rg_formatado', '') or 'â€”',
+                'cpf': getattr(viajante, 'cpf_formatado', '') or 'â€”',
+                'telefone': getattr(viajante, 'telefone_formatado', '') or 'â€”',
+                'lotacao': (getattr(getattr(viajante, 'unidade_lotacao', None), 'nome', '') or 'â€”'),
                 'download_docx_url': reverse(
                     'eventos:guiado-etapa-3-termo-download',
                     kwargs={
@@ -2562,7 +2363,7 @@ def guiado_etapa_5_termo_download(request, evento_id, viajante_id, formato):
     )
     formato = (formato or '').strip().lower()
     if formato not in {'docx', 'pdf'}:
-        raise Http404('Formato de documento inválido.')
+        raise Http404('Formato de documento invÃ¡lido.')
 
     _evento_sincronizar_participantes(evento)
     viajante, termo, oficios_relacionados = _get_termo_participante_evento(evento, viajante_id)
@@ -2625,7 +2426,7 @@ def guiado_etapa_5_termo_padrao_download(request, evento_id, formato):
     )
     formato = (formato or '').strip().lower()
     if formato not in {'docx', 'pdf'}:
-        raise Http404('Formato de documento inválido.')
+        raise Http404('Formato de documento invÃ¡lido.')
     validation_errors = validate_evento_participante_termo_data(
         evento,
         viajante=None,
@@ -2665,7 +2466,7 @@ def guiado_etapa_5_termo_viatura_lote_download(request, evento_id, formato):
     )
     formato = (formato or '').strip().lower()
     if formato not in {'docx', 'pdf'}:
-        raise Http404('Formato de documento inválido.')
+        raise Http404('Formato de documento invÃ¡lido.')
 
     veiculo_id_raw = (request.POST.get('veiculo_id') or '').strip()
     viajantes_ids_raw = request.POST.getlist('viajantes')
@@ -2686,7 +2487,7 @@ def guiado_etapa_5_termo_viatura_lote_download(request, evento_id, formato):
         if not set(viajantes_ids).issubset(participantes_ids):
             messages.error(
                 request,
-                'Evento finalizado: gere apenas termos de participantes já vinculados ao evento.',
+                'Evento finalizado: gere apenas termos de participantes jÃ¡ vinculados ao evento.',
             )
             return redirect('eventos:guiado-etapa-3', evento_id=evento.pk)
     else:
@@ -2696,7 +2497,7 @@ def guiado_etapa_5_termo_viatura_lote_download(request, evento_id, formato):
         Viajante.objects.filter(pk__in=viajantes_ids).select_related('cargo', 'unidade_lotacao').order_by('nome')
     )
     if not viajantes:
-        messages.error(request, 'Não foi possível localizar os servidores selecionados.')
+        messages.error(request, 'NÃ£o foi possÃ­vel localizar os servidores selecionados.')
         return redirect('eventos:guiado-etapa-3', evento_id=evento.pk)
 
     template_status = get_termo_autorizacao_templates_availability()
@@ -2762,7 +2563,7 @@ def guiado_etapa_5_termo_viatura_lote_download(request, evento_id, formato):
 @login_required
 @require_http_methods(['GET'])
 def guiado_etapa_6_justificativa(request, evento_id):
-    """Etapa 6 — Justificativa: exigida quando prazo entre data-base e data do evento < 10 dias; lista ofícios que precisam preencher."""
+    """Etapa 6 â€” Justificativa: exigida quando prazo entre data-base e data do evento < 10 dias; lista ofÃ­cios que precisam preencher."""
     evento = get_object_or_404(
         Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
         pk=evento_id,
@@ -2795,7 +2596,7 @@ def guiado_etapa_6_justificativa(request, evento_id):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def guiado_etapa_6(request, evento_id):
-    """Etapa 7 — Finalização: checklist, pendências, observações finais e ação de finalizar evento."""
+    """Etapa 7 â€” FinalizaÃ§Ã£o: checklist, pendÃªncias, observaÃ§Ãµes finais e aÃ§Ã£o de finalizar evento."""
     evento = get_object_or_404(
         Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
         pk=evento_id,
@@ -2803,9 +2604,9 @@ def guiado_etapa_6(request, evento_id):
     if request.method == 'POST' and _evento_esta_finalizado(evento):
         messages.error(
             request,
-            'Evento já está finalizado. Não é possível alterar a finalização.',
+            'Evento jÃ¡ estÃ¡ finalizado. NÃ£o Ã© possÃ­vel alterar a finalizaÃ§Ã£o.',
         )
-        return redirect('eventos:guiado-painel', pk=evento.pk)
+        return redirect('eventos:guiado-finalizacao', evento_id=evento.pk)
 
     finalizacao, _ = EventoFinalizacao.objects.get_or_create(
         evento=evento,
@@ -2837,10 +2638,8 @@ def guiado_etapa_6(request, evento_id):
                     evento.status = Evento.STATUS_FINALIZADO
                     evento.save(update_fields=['status'])
                 messages.success(request, 'Evento finalizado com sucesso.')
-                return redirect('eventos:guiado-painel', pk=evento.pk)
-            messages.success(request, 'Observações finais salvas.')
-            if request.POST.get('voltar_painel'):
-                return redirect('eventos:guiado-painel', pk=evento.pk)
+                return redirect('eventos:guiado-finalizacao', evento_id=evento.pk)
+            messages.success(request, 'ObservaÃ§Ãµes finais salvas.')
             return redirect('eventos:guiado-etapa-7', evento_id=evento.pk)
     else:
         form = EventoFinalizacaoForm(instance=finalizacao)
@@ -3025,16 +2824,73 @@ def _guiado_v2_evento_heading(evento):
 
 def _guiado_v2_build_evento_context_items(evento):
     items = []
+    periodo = _evento_lista_periodo_display(evento)
+    items.append({'id': 'guiado-etapa1-periodo', 'label': periodo or 'Período a definir', 'kind': 'date'})
+
     tipos_display = _evento_lista_tipos_display(evento)
-    if tipos_display and tipos_display != 'Tipo a definir':
-        items.append({'label': tipos_display, 'kind': 'type'})
+    items.append({'id': 'guiado-etapa1-tipos', 'label': tipos_display or 'Tipo a definir', 'kind': 'type'})
 
     destinos = list(evento.destinos.all())
     if len(destinos) > 1:
-        items.append({'label': f'{len(destinos)} destinos', 'kind': 'destinations'})
+        items.append({'id': 'guiado-etapa1-destinos', 'label': f'{len(destinos)} destinos', 'kind': 'destinations'})
     elif len(destinos) == 1:
-        items.append({'label': _evento_lista_destinos_display(evento), 'kind': 'location'})
+        items.append({'id': 'guiado-etapa1-destinos', 'label': _evento_lista_destinos_display(evento), 'kind': 'location'})
+    else:
+        items.append({'id': 'guiado-etapa1-destinos', 'label': 'Destino a definir', 'kind': 'location'})
     return items
+
+
+def _clear_prefetched_relations(instance, *relation_names):
+    cache = getattr(instance, '_prefetched_objects_cache', None)
+    if not cache:
+        return
+    for relation_name in relation_names:
+        cache.pop(relation_name, None)
+
+
+def _persist_evento_etapa1(obj, form, destinos_post, arquivos_convite=None):
+    arquivos_convite = [arquivo for arquivo in (arquivos_convite or []) if getattr(arquivo, 'name', '')]
+    cleaned = form.cleaned_data
+    tipos_qs = cleaned.get('tipos_demanda')
+    data_unica = bool(cleaned.get('data_unica'))
+    data_inicio = cleaned.get('data_inicio') or obj.data_inicio
+    data_fim = cleaned.get('data_fim') or obj.data_fim
+    descricao = (cleaned.get('descricao') or '').strip()
+    tem_convite = bool(cleaned.get('tem_convite_ou_oficio_evento'))
+
+    obj.data_unica = data_unica
+    obj.tem_convite_ou_oficio_evento = tem_convite or bool(arquivos_convite) or EventoAnexoSolicitante.objects.filter(evento=obj).exists()
+    obj.data_inicio = data_inicio
+    obj.data_fim = data_inicio if data_unica else data_fim
+    obj.save(update_fields=['data_unica', 'tem_convite_ou_oficio_evento', 'data_inicio', 'data_fim', 'updated_at'])
+
+    form.save(commit=False)
+    form.save_m2m()
+    _clear_prefetched_relations(obj, 'tipos_demanda')
+
+    obj.destinos.all().delete()
+    for ordem, (estado_id, cidade_id) in enumerate(destinos_post):
+        EventoDestino.objects.create(evento=obj, estado_id=estado_id, cidade_id=cidade_id, ordem=ordem)
+    _clear_prefetched_relations(obj, 'destinos')
+
+    if arquivos_convite:
+        _salvar_anexos_convite(obj, arquivos_convite)
+        obj.tem_convite_ou_oficio_evento = True
+        obj.save(update_fields=['tem_convite_ou_oficio_evento', 'updated_at'])
+    _clear_prefetched_relations(obj, 'anexos_solicitante')
+
+    if not tipos_qs.filter(is_outros=True).exists():
+        descricao = ''
+    obj.descricao = descricao
+    obj.save(update_fields=['descricao', 'updated_at'])
+
+    obj.titulo = obj.gerar_titulo()
+    update_fields = ['titulo', 'updated_at']
+    if _evento_etapa1_completa(obj) and obj.status == Evento.STATUS_RASCUNHO:
+        obj.status = Evento.STATUS_EM_ANDAMENTO
+        update_fields.append('status')
+    obj.save(update_fields=update_fields)
+    return obj
 
 
 def _guiado_v2_build_evento_document_counts(evento):
@@ -3094,144 +2950,8 @@ def _guiado_v2_build_evento_document_counts(evento):
 
 
 @login_required
-def guiado_painel_v2(request, pk):
-    """Painel do evento guiado na ordem oficial de 5 etapas."""
-    obj = get_object_or_404(
-        Evento.objects.select_related('estado_principal', 'cidade_principal', 'cidade_base').prefetch_related(
-            'tipos_demanda',
-            'destinos',
-            Prefetch(
-                'oficios',
-                queryset=Oficio.objects.select_related('justificativa').prefetch_related('viajantes'),
-            ),
-            Prefetch(
-                'roteiros',
-                queryset=RoteiroEvento.objects.select_related('origem_cidade', 'origem_estado'),
-            ),
-            Prefetch('planos_trabalho', queryset=PlanoTrabalho.objects.only('pk', 'status', 'evento_id')),
-            Prefetch('ordens_servico', queryset=OrdemServico.objects.only('pk', 'status', 'evento_id')),
-            'finalizacao',
-            Prefetch('termos_participantes', queryset=EventoTermoParticipante.objects.select_related('viajante')),
-        ),
-        pk=pk,
-    )
-    etapa1_ok = _evento_etapa1_completa(obj)
-    etapa2_ok = _evento_roteiros_ok(obj)
-    etapa2_em_andamento = _evento_roteiros_em_andamento(obj)
-    etapa3_ok = _guiado_v2_oficios_justificativas_ok(obj)
-    etapa3_em_andamento = _guiado_v2_oficios_justificativas_em_andamento(obj)
-    etapa4_ok = _evento_pt_os_ok(obj)
-    etapa4_em_andamento = _evento_pt_os_em_andamento(obj)
-    etapa5_ok = _evento_termos_ok(obj)
-    etapa5_em_andamento = _evento_termos_em_andamento(obj)
-    finalizacao_ok = _evento_etapa6_ok(obj)
-    finalizacao_em_andamento = _evento_etapa6_em_andamento(obj)
-    oficios_summary = _build_evento_oficios_summary(obj)
-    roteiros_total = len(obj.roteiros.all())
-    termos_total = len(obj.termos_participantes.all())
-    planos_total = len(obj.planos_trabalho.all())
-    ordens_total = len(obj.ordens_servico.all())
-    justificativas_pendentes = sum(
-        1
-        for oficio in obj.oficios.all()
-        if oficio_exige_justificativa(oficio) and not oficio_tem_justificativa(oficio)
-    )
-    obj.destinos_display = _evento_lista_destinos_display(obj)
-    obj.periodo_display = _evento_lista_periodo_display(obj)
-    obj.tipos_display = _evento_lista_tipos_display(obj)
-    obj.temporal_meta = _evento_lista_temporal_meta(obj)
-    obj.card_theme_class = obj.temporal_meta['theme_class']
-    obj.document_counts_display = (
-        f'{oficios_summary["total"]} oficios • '
-        f'{termos_total} termos • '
-        f'{planos_total} PT • '
-        f'{ordens_total} OS'
-    )
-    resumo_cards = [
-        {'label': 'Roteiros', 'value': f'{roteiros_total} cadastrado(s)'},
-        {
-            'label': 'Ofícios / Justificativas',
-            'value': f'{oficios_summary["texto"]} • {justificativas_pendentes} justificativa(s) pendente(s)',
-        },
-        {'label': 'PT / OS', 'value': f'{planos_total} PT • {ordens_total} OS'},
-        {'label': 'Termos', 'value': f'{termos_total} participante(s) monitorado(s)'},
-    ]
-    etapas = [
-        _build_guiado_etapa_card(
-            1,
-            'Dados do evento',
-            reverse('eventos:guiado-etapa-1', kwargs={'pk': obj.pk}),
-            ok=etapa1_ok,
-            summary=obj.tipos_display,
-            description='Base cadastral, período, destinos e tipo de demanda.',
-            cta_label='Revisar dados',
-        ),
-        _build_guiado_etapa_card(
-            2,
-            'Roteiros',
-            reverse('eventos:guiado-etapa-2', kwargs={'evento_id': obj.pk}),
-            ok=etapa2_ok,
-            em_andamento=etapa2_em_andamento,
-            summary=f'{roteiros_total} roteiro(s) vinculado(s)' if roteiros_total else 'Nenhum roteiro cadastrado.',
-            description='Planejamento operacional do deslocamento e da malha de destinos.',
-            cta_label='Abrir etapa',
-        ),
-        _build_guiado_etapa_card(
-            3,
-            'Ofícios / Justificativas',
-            reverse('eventos:guiado-etapa-3', kwargs={'evento_id': obj.pk}),
-            ok=etapa3_ok,
-            em_andamento=etapa3_em_andamento,
-            summary=f'{oficios_summary["texto"]} • {justificativas_pendentes} justificativa(s) pendente(s)',
-            description='Hub do evento para ofícios vinculados e justificativas exigidas por prazo.',
-            cta_label='Abrir etapa',
-        ),
-        _build_guiado_etapa_card(
-            4,
-            'Plano de Trabalho / Ordem de Serviço',
-            reverse('eventos:guiado-etapa-4', kwargs={'evento_id': obj.pk}),
-            ok=etapa4_ok,
-            em_andamento=etapa4_em_andamento,
-            summary=f'{planos_total} PT • {ordens_total} OS',
-            description='Listas documentais do evento para PT e OS.',
-            cta_label='Abrir etapa',
-        ),
-        _build_guiado_etapa_card(
-            5,
-            'Termos',
-            reverse('eventos:guiado-etapa-5', kwargs={'evento_id': obj.pk}),
-            ok=etapa5_ok,
-            em_andamento=etapa5_em_andamento,
-            summary=f'{termos_total} participante(s) monitorado(s)',
-            description='Gestão dos termos por participante dentro do evento.',
-            cta_label='Abrir etapa',
-        ),
-    ]
-    evento_heading = _guiado_v2_evento_heading(obj)
-    evento_context_items = _guiado_v2_build_evento_context_items(obj)
-    evento_document_counts = _guiado_v2_build_evento_document_counts(obj)
-    wizard_steps = _build_guiado_v2_wizard_steps(obj, current_key='dados-evento')
-    context = {
-        'object': obj,
-        'etapas': etapas,
-        'resumo_cards': resumo_cards,
-        'oficios_summary': oficios_summary,
-        'evento_heading': evento_heading,
-        'evento_context_items': evento_context_items,
-        'evento_document_counts': evento_document_counts,
-        'wizard_steps': wizard_steps,
-        'finalizacao': {
-            'url': reverse('eventos:guiado-finalizacao', kwargs={'evento_id': obj.pk}),
-            'ok': finalizacao_ok,
-            'em_andamento': finalizacao_em_andamento,
-        },
-    }
-    return render(request, 'eventos/guiado/painel.html', context)
-
-
-@login_required
 def guiado_etapa_3_v2(request, evento_id):
-    """Etapa 3 oficial: a própria listagem de Ofícios filtrada pelo evento atual."""
+    """Etapa 3 oficial: a prÃ³pria listagem de OfÃ­cios filtrada pelo evento atual."""
     from . import views_global
 
     evento = get_object_or_404(
@@ -3292,7 +3012,7 @@ def guiado_etapa_3_v2(request, evento_id):
         {
             'key': 'oficios',
             'number': 3,
-            'label': 'Ofícios / Justificativas',
+            'label': 'OfÃ­cios / Justificativas',
             'state': 'active',
             'state_label': 'Etapa atual',
             'active': True,
@@ -3350,7 +3070,7 @@ def guiado_etapa_3_criar_oficio_v2(request, evento_id):
 @login_required
 @require_http_methods(['GET'])
 def guiado_etapa_3_justificativas_v2(request, evento_id):
-    """Subetapa da etapa 3: justificativas exigidas pelos ofícios do evento."""
+    """Subetapa da etapa 3: justificativas exigidas pelos ofÃ­cios do evento."""
     evento = get_object_or_404(
         Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
         pk=evento_id,
@@ -3434,10 +3154,10 @@ def guiado_etapa_5_v2(request, evento_id):
             'viajante': viajante,
             'termo': termo,
             'oficios': oficios_part,
-            'rg': getattr(viajante, 'rg_formatado', '') or '—',
-            'cpf': getattr(viajante, 'cpf_formatado', '') or '—',
-            'telefone': getattr(viajante, 'telefone_formatado', '') or '—',
-            'lotacao': (getattr(getattr(viajante, 'unidade_lotacao', None), 'nome', '') or '—'),
+            'rg': getattr(viajante, 'rg_formatado', '') or 'â€”',
+            'cpf': getattr(viajante, 'cpf_formatado', '') or 'â€”',
+            'telefone': getattr(viajante, 'telefone_formatado', '') or 'â€”',
+            'lotacao': (getattr(getattr(viajante, 'unidade_lotacao', None), 'nome', '') or 'â€”'),
             'download_docx_url': reverse(
                 'eventos:guiado-etapa-5-termo-download',
                 kwargs={'evento_id': evento.pk, 'viajante_id': viajante.pk, 'formato': 'docx'},
@@ -3476,7 +3196,7 @@ def guiado_etapa_5_termo_download_v2(request, evento_id, viajante_id, formato):
     )
     formato = (formato or '').strip().lower()
     if formato not in {'docx', 'pdf'}:
-        raise Http404('Formato de documento inválido.')
+        raise Http404('Formato de documento invÃ¡lido.')
 
     _evento_sincronizar_participantes(evento)
     viajante, termo, oficios_relacionados = _get_termo_participante_evento(evento, viajante_id)
@@ -3535,7 +3255,7 @@ def guiado_etapa_5_termo_padrao_download_v2(request, evento_id, formato):
     )
     formato = (formato or '').strip().lower()
     if formato not in {'docx', 'pdf'}:
-        raise Http404('Formato de documento inválido.')
+        raise Http404('Formato de documento invÃ¡lido.')
     validation_errors = validate_evento_participante_termo_data(
         evento,
         viajante=None,
@@ -3575,7 +3295,7 @@ def guiado_etapa_5_termo_viatura_lote_download_v2(request, evento_id, formato):
     )
     formato = (formato or '').strip().lower()
     if formato not in {'docx', 'pdf'}:
-        raise Http404('Formato de documento inválido.')
+        raise Http404('Formato de documento invÃ¡lido.')
 
     veiculo_id_raw = (request.POST.get('veiculo_id') or '').strip()
     viajantes_ids_raw = request.POST.getlist('viajantes')
@@ -3594,7 +3314,7 @@ def guiado_etapa_5_termo_viatura_lote_download_v2(request, evento_id, formato):
             EventoParticipante.objects.filter(evento=evento).values_list('viajante_id', flat=True)
         )
         if not set(viajantes_ids).issubset(participantes_ids):
-            messages.error(request, 'Evento finalizado: gere apenas termos de participantes já vinculados ao evento.')
+            messages.error(request, 'Evento finalizado: gere apenas termos de participantes jÃ¡ vinculados ao evento.')
             return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
     else:
         _evento_sincronizar_participantes(evento, viajantes_ids=viajantes_ids)
@@ -3603,7 +3323,7 @@ def guiado_etapa_5_termo_viatura_lote_download_v2(request, evento_id, formato):
         Viajante.objects.filter(pk__in=viajantes_ids).select_related('cargo', 'unidade_lotacao').order_by('nome')
     )
     if not viajantes:
-        messages.error(request, 'Não foi possível localizar os servidores selecionados.')
+        messages.error(request, 'NÃ£o foi possÃ­vel localizar os servidores selecionados.')
         return redirect('eventos:guiado-etapa-5', evento_id=evento.pk)
 
     template_status = get_termo_autorizacao_templates_availability()
@@ -3665,31 +3385,31 @@ def guiado_etapa_5_termo_viatura_lote_download_v2(request, evento_id, formato):
 def _guiado_v2_pendencias_finalizacao(evento):
     pendencias = []
     if not _evento_etapa1_completa(evento):
-        pendencias.append('Etapa 1 (Dados do evento) não concluída.')
+        pendencias.append('Etapa 1 (Dados do evento) nÃ£o concluÃ­da.')
     if not _evento_roteiros_ok(evento):
-        pendencias.append('Etapa 2 (Roteiros) não concluída. Cadastre ao menos um roteiro finalizado.')
+        pendencias.append('Etapa 2 (Roteiros) nÃ£o concluÃ­da. Cadastre ao menos um roteiro finalizado.')
     if not _guiado_v2_oficios_justificativas_ok(evento):
-        pendencias.append('Etapa 3 (Ofícios / Justificativas) não concluída. Finalize os ofícios e preencha as justificativas obrigatórias.')
+        pendencias.append('Etapa 3 (OfÃ­cios / Justificativas) nÃ£o concluÃ­da. Finalize os ofÃ­cios e preencha as justificativas obrigatÃ³rias.')
     if not _evento_pt_os_ok(evento):
-        pendencias.append('Etapa 4 (PT / OS) não concluída. Finalize ao menos um Plano de Trabalho ou uma Ordem de Serviço.')
+        pendencias.append('Etapa 4 (PT / OS) nÃ£o concluÃ­da. Finalize ao menos um Plano de Trabalho ou uma Ordem de ServiÃ§o.')
     if not _evento_termos_ok(evento):
-        pendencias.append('Etapa 5 (Termos) não concluída. Defina status final para todos os participantes do evento.')
+        pendencias.append('Etapa 5 (Termos) nÃ£o concluÃ­da. Defina status final para todos os participantes do evento.')
     return pendencias
 
 
 @login_required
 @require_http_methods(['GET', 'POST'])
 def guiado_finalizacao_v2(request, evento_id):
-    """Finalização auxiliar após as 5 etapas oficiais."""
+    """FinalizaÃ§Ã£o auxiliar apÃ³s as 5 etapas oficiais."""
     evento = get_object_or_404(
         Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
         pk=evento_id,
     )
     if request.method == 'POST' and _evento_esta_finalizado(evento):
         if _is_autosave_request(request):
-            return _autosave_error_response('Evento já está finalizado. Não é possível alterar a finalização.')
-        messages.error(request, 'Evento já está finalizado. Não é possível alterar a finalização.')
-        return redirect('eventos:guiado-painel', pk=evento.pk)
+            return _autosave_error_response('Evento jÃ¡ estÃ¡ finalizado. NÃ£o Ã© possÃ­vel alterar a finalizaÃ§Ã£o.')
+        messages.error(request, 'Evento jÃ¡ estÃ¡ finalizado. NÃ£o Ã© possÃ­vel alterar a finalizaÃ§Ã£o.')
+        return redirect('eventos:guiado-finalizacao', evento_id=evento.pk)
 
     finalizacao, _ = EventoFinalizacao.objects.get_or_create(
         evento=evento,
@@ -3722,10 +3442,8 @@ def guiado_finalizacao_v2(request, evento_id):
                     evento.status = Evento.STATUS_FINALIZADO
                     evento.save(update_fields=['status'])
                 messages.success(request, 'Evento finalizado com sucesso.')
-                return redirect('eventos:guiado-painel', pk=evento.pk)
-            messages.success(request, 'Observações finais salvas.')
-            if request.POST.get('voltar_painel'):
-                return redirect('eventos:guiado-painel', pk=evento.pk)
+                return redirect('eventos:guiado-finalizacao', evento_id=evento.pk)
+            messages.success(request, 'ObservaÃ§Ãµes finais salvas.')
             return redirect('eventos:guiado-finalizacao', evento_id=evento.pk)
     else:
         form = EventoFinalizacaoForm(instance=finalizacao)
@@ -3767,7 +3485,7 @@ def guiado_etapa_7_legado_redirect_v2(request, evento_id):
 
 @login_required
 def oficio_editar(request, pk):
-    """Redireciona para o Step 1 do wizard do ofício."""
+    """Redireciona para o Step 1 do wizard do ofÃ­cio."""
     return redirect('eventos:oficio-step1', pk=pk)
 
 
@@ -3775,10 +3493,10 @@ def oficio_editar(request, pk):
 @require_http_methods(['GET'])
 def oficio_novo(request):
     """
-    Cria um novo ofício em rascunho e redireciona para o Step 1 do wizard.
+    Cria um novo ofÃ­cio em rascunho e redireciona para o Step 1 do wizard.
 
-    - Sem evento_id na querystring => ofício avulso (tipo_origem = AVULSO).
-    - Com evento_id válido         => ofício vinculado ao evento (tipo_origem = EVENTO).
+    - Sem evento_id na querystring => ofÃ­cio avulso (tipo_origem = AVULSO).
+    - Com evento_id vÃ¡lido         => ofÃ­cio vinculado ao evento (tipo_origem = EVENTO).
     """
     evento_id_raw = request.GET.get('evento_id')
     evento = None
@@ -3800,7 +3518,7 @@ def oficio_novo(request):
             status=Oficio.STATUS_RASCUNHO,
             tipo_origem=Oficio.ORIGEM_AVULSO,
         )
-    messages.success(request, 'Ofício criado. Preencha os dados no wizard.')
+    messages.success(request, 'OfÃ­cio criado. Preencha os dados no wizard.')
     return redirect('eventos:oficio-step1', pk=oficio.pk)
 
 
@@ -3812,19 +3530,19 @@ def _oficio_redirect_pos_exclusao(oficio):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def oficio_excluir(request, pk):
-    """Exclusão segura de ofício com redirecionamento coerente."""
+    """ExclusÃ£o segura de ofÃ­cio com redirecionamento coerente."""
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
     redirect_url = _oficio_redirect_pos_exclusao(oficio)
     if request.method == 'POST':
         if oficio.evento_id and _evento_esta_finalizado(oficio.evento):
             messages.error(
                 request,
-                'Não é possível excluir ofício vinculado a evento finalizado.',
+                'NÃ£o Ã© possÃ­vel excluir ofÃ­cio vinculado a evento finalizado.',
             )
             return redirect(redirect_url)
         numero = oficio.numero_formatado
         oficio.delete()
-        messages.success(request, f'Ofício {numero} excluído com sucesso.')
+        messages.success(request, f'OfÃ­cio {numero} excluÃ­do com sucesso.')
         return redirect(redirect_url)
     context = {
         'oficio': oficio,
@@ -3834,14 +3552,14 @@ def oficio_excluir(request, pk):
     return render(request, 'eventos/oficio/excluir_confirm.html', context)
 
 
-# ---------- Wizard do Ofício (Steps 1–4) ----------
+# ---------- Wizard do OfÃ­cio (Steps 1â€“4) ----------
 
 def _get_oficio_or_404_for_user(pk, user=None):
     """
-    Carrega o ofício com as relações necessárias para o wizard.
+    Carrega o ofÃ­cio com as relaÃ§Ãµes necessÃ¡rias para o wizard.
 
-    Nesta fase, ofícios finalizados continuam editáveis e qualquer usuário autenticado
-    pode operar o fluxo; o parâmetro `user` centraliza um eventual endurecimento futuro.
+    Nesta fase, ofÃ­cios finalizados continuam editÃ¡veis e qualquer usuÃ¡rio autenticado
+    pode operar o fluxo; o parÃ¢metro `user` centraliza um eventual endurecimento futuro.
     """
     queryset = Oficio.objects.prefetch_related('viajantes', 'trechos').select_related(
         'evento',
@@ -3856,7 +3574,7 @@ def _get_oficio_or_404_for_user(pk, user=None):
 
 def _save_oficio_preserving_status(oficio, update_fields):
     """
-    Steps 1–3 podem editar um ofício finalizado sem rebaixar o status nesta fase.
+    Steps 1â€“3 podem editar um ofÃ­cio finalizado sem rebaixar o status nesta fase.
     """
     fields = [field for field in update_fields if field != 'status']
     oficio.save(update_fields=list(dict.fromkeys([*fields, 'updated_at'])))
@@ -3865,9 +3583,9 @@ def _save_oficio_preserving_status(oficio, update_fields):
 def _is_autosave_request(request):
     if request.method != 'POST' or request.POST.get('autosave') != '1':
         return False
-    # `navigator.sendBeacon()` não permite definir `X-Requested-With`.
-    # Aceitamos também o POST de autosave sem esse header para não perder
-    # alterações quando o usuário navega para fora da tela antes do fetch.
+    # `navigator.sendBeacon()` nÃ£o permite definir `X-Requested-With`.
+    # Aceitamos tambÃ©m o POST de autosave sem esse header para nÃ£o perder
+    # alteraÃ§Ãµes quando o usuÃ¡rio navega para fora da tela antes do fetch.
     return True
 
 
@@ -3885,57 +3603,23 @@ def _autosave_error_response(message, status=400):
     return JsonResponse({'ok': False, 'error': message}, status=status)
 
 
-def _autosave_checkbox_value(request, key):
-    value = request.POST.get(key)
-    if value is None:
-        return False
-    return str(value).strip().lower() not in {'', '0', 'false', 'off', 'no'}
-
-
-def _autosave_date_value(raw_value):
-    raw = (raw_value or '').strip()
-    if not raw:
-        return None
-    return parse_date(raw)
-
-
 def _autosave_evento_etapa_1(obj, request):
-    tipos_ids = [int(value) for value in request.POST.getlist('tipos_demanda') if str(value).isdigit()]
-    tipos_qs = TipoDemandaEvento.objects.filter(pk__in=tipos_ids, ativo=True).order_by('ordem', 'nome')
-    data_unica = _autosave_checkbox_value(request, 'data_unica')
-    tem_convite = _autosave_checkbox_value(request, 'tem_convite_ou_oficio_evento')
-    data_inicio = _autosave_date_value(request.POST.get('data_inicio')) or obj.data_inicio
-    data_fim = _autosave_date_value(request.POST.get('data_fim')) or obj.data_fim
-    descricao = (request.POST.get('descricao') or '').strip()
+    form = EventoEtapa1Form(request.POST or None, request.FILES or None, instance=obj)
+    if not form.is_valid():
+        errors = form.non_field_errors() or [err for errs in form.errors.values() for err in errs]
+        return _autosave_error_response(errors[0] if errors else 'Falha ao salvar a etapa 1 automaticamente.')
+
     destinos_post = _parse_destinos_post(request)
     ok_destinos, msg_destinos = _validar_destinos(destinos_post) if destinos_post else (True, None)
     if not ok_destinos:
         return _autosave_error_response(msg_destinos)
 
-    obj.data_unica = data_unica
-    obj.tem_convite_ou_oficio_evento = tem_convite
-    obj.data_inicio = data_inicio
-    if data_unica:
-        obj.data_fim = data_inicio
-    else:
-        obj.data_fim = data_fim
-    obj.save(update_fields=['data_unica', 'tem_convite_ou_oficio_evento', 'data_inicio', 'data_fim', 'updated_at'])
+    arquivos_convite = [f for f in request.FILES.getlist('convite_documentos') if getattr(f, 'name', '')]
+    ok_arquivos, msg_arquivos = _validar_anexos_convite(arquivos_convite)
+    if not ok_arquivos:
+        return _autosave_error_response(msg_arquivos)
 
-    obj.tipos_demanda.set(tipos_qs)
-    tem_outros = tipos_qs.filter(is_outros=True).exists()
-    obj.descricao = descricao if tem_outros else ''
-    obj.save(update_fields=['descricao', 'updated_at'])
-
-    obj.destinos.all().delete()
-    for ordem, (estado_id, cidade_id) in enumerate(destinos_post):
-        EventoDestino.objects.create(evento=obj, estado_id=estado_id, cidade_id=cidade_id, ordem=ordem)
-
-    obj.titulo = obj.gerar_titulo()
-    update_fields = ['titulo', 'updated_at']
-    if _evento_etapa1_completa(obj) and obj.status == Evento.STATUS_RASCUNHO:
-        obj.status = Evento.STATUS_EM_ANDAMENTO
-        update_fields.append('status')
-    obj.save(update_fields=update_fields)
+    obj = _persist_evento_etapa1(obj, form, destinos_post, arquivos_convite)
     return _autosave_success_response({'id': obj.pk, 'status': obj.status})
 
 
@@ -4002,7 +3686,7 @@ def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None):
         {
             'key': 'step3',
             'number': 3,
-            'label': 'Roteiro e diárias',
+            'label': 'Roteiro e diÃ¡rias',
             'url': reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
         },
         {
@@ -4032,7 +3716,7 @@ def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None):
             item['state'] = 'pending'
         item['state_label'] = {
             'active': 'Etapa atual',
-            'completed': 'Concluído',
+            'completed': 'ConcluÃ­do',
             'optional': 'Opcional',
             'pending': 'Pendente',
         }.get(item['state'], 'Pendente')
@@ -4060,7 +3744,7 @@ def _build_oficio_wizard_glance_data(oficio, step1_preview=None, step2_preview=N
     if evento and evento.data_inicio:
         inicio = evento.data_inicio.strftime('%d/%m/%Y')
         fim = evento.data_fim.strftime('%d/%m/%Y') if evento.data_fim else ''
-        data_label = inicio if not fim or fim == inicio else f'{inicio} até {fim}'
+        data_label = inicio if not fim or fim == inicio else f'{inicio} atÃ© {fim}'
     else:
         data_label = step3_preview.get('periodo_display') or ''
     return {
@@ -4090,7 +3774,7 @@ def _apply_oficio_wizard_context(context, oficio, current_key, page_title, justi
             'hide_page_header': True,
             'wizard_page_title': page_title,
             'wizard_header_title': page_title,
-            'wizard_header_subtitle': 'Fluxo guiado com resumo essencial integrado ao topo e sem atalhos soltos no cabeçalho.',
+            'wizard_header_subtitle': 'Fluxo guiado com resumo essencial integrado ao topo e sem atalhos soltos no cabeÃ§alho.',
             'wizard_steps': _build_oficio_wizard_steps(
                 oficio,
                 current_key,
@@ -4257,8 +3941,8 @@ def oficio_step2_motoristas_api(request):
 
 def _bloquear_edicao_oficio_se_evento_finalizado(request, oficio):
     """
-    Regra atual: mesmo que o evento esteja finalizado, a edição de ofícios continua permitida.
-    Mantemos esta função por compatibilidade, mas ela não bloqueia mais a edição.
+    Regra atual: mesmo que o evento esteja finalizado, a ediÃ§Ã£o de ofÃ­cios continua permitida.
+    Mantemos esta funÃ§Ã£o por compatibilidade, mas ela nÃ£o bloqueia mais a ediÃ§Ã£o.
     """
     return False
 
@@ -4266,7 +3950,7 @@ def _bloquear_edicao_oficio_se_evento_finalizado(request, oficio):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def oficio_step1(request, pk):
-    """Wizard Step 1 — Dados gerais + viajantes (fiel ao legado)."""
+    """Wizard Step 1 â€” Dados gerais + viajantes (fiel ao legado)."""
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
     if _bloquear_edicao_oficio_se_evento_finalizado(request, oficio):
         return redirect('eventos:oficio-step4', pk=oficio.pk)
@@ -4378,7 +4062,7 @@ def oficio_step1(request, pk):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def _legacy_oficio_step2(request, pk):
-    """Wizard Step 2 — Transporte. Placa, modelo, combustível obrigatórios; motorista carona exige ofício/protocolo."""
+    """Wizard Step 2 â€” Transporte. Placa, modelo, combustÃ­vel obrigatÃ³rios; motorista carona exige ofÃ­cio/protocolo."""
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
     evento = oficio.evento
     initial = {
@@ -4738,7 +4422,7 @@ def _step3_resolve_travel_minutes(raw_minutes, total_minutes, additional_minutes
 
 
 def _build_step3_roteiro_label(roteiro):
-    origem = _step3_local_label(roteiro.origem_cidade, roteiro.origem_estado) or 'Sede não informada'
+    origem = _step3_local_label(roteiro.origem_cidade, roteiro.origem_estado) or 'Sede nÃ£o informada'
     destinos = [
         _step3_local_label(destino.cidade, destino.estado)
         for destino in roteiro.destinos.select_related('cidade', 'estado').order_by('ordem', 'id')
@@ -4874,7 +4558,7 @@ def _get_step3_saved_routes(oficio, include_ids=None):
     )
 
 
-def _build_step3_state_from_roteiro_evento(roteiro, seed_source_label='Pré-preenchido com o roteiro salvo.'):
+def _build_step3_state_from_roteiro_evento(roteiro, seed_source_label='PrÃ©-preenchido com o roteiro salvo.'):
     state = _build_step3_state_from_saved_trechos(
         roteiro,
         seed_source_label=seed_source_label,
@@ -5265,7 +4949,7 @@ def _get_oficio_step3_saved_state(oficio):
     return base_state
 
 
-# Step 3 overrides - escolha de roteiro do evento, roteiro próprio e diárias legadas
+# Step 3 overrides - escolha de roteiro do evento, roteiro prÃ³prio e diÃ¡rias legadas
 
 def _get_oficio_step3_seed_state(oficio, route_options, route_state_map):
     saved_state = _get_oficio_step3_saved_state(oficio)
@@ -5302,7 +4986,7 @@ def _get_oficio_step3_seed_state(oficio, route_options, route_state_map):
                 destinos_atuais,
                 sede_estado.pk if sede_estado else None,
                 sede_cidade.pk if sede_cidade else None,
-                'Pré-preenchido com os destinos do evento.',
+                'PrÃ©-preenchido com os destinos do evento.',
             )
             state['roteiro_modo'] = Oficio.ROTEIRO_MODO_PROPRIO
             return state
@@ -5617,11 +5301,11 @@ def _validate_step3_state(state, oficio=None):
     roteiro_evento = None
     if roteiro_modo == Oficio.ROTEIRO_MODO_EVENTO:
         if not roteiro_evento_id:
-            errors.append('Selecione um roteiro salvo para usar neste ofício.')
+            errors.append('Selecione um roteiro salvo para usar neste ofÃ­cio.')
         else:
             roteiro_evento = RoteiroEvento.objects.filter(pk=roteiro_evento_id).first()
             if not roteiro_evento:
-                errors.append('O roteiro salvo selecionado não está mais disponível.')
+                errors.append('O roteiro salvo selecionado nÃ£o estÃ¡ mais disponÃ­vel.')
 
     sede_estado_id = state.get('sede_estado_id')
     sede_cidade_id = state.get('sede_cidade_id')
@@ -5648,7 +5332,7 @@ def _validate_step3_state(state, oficio=None):
         errors.append(msg_destinos)
     bate_volta_diario = _build_step3_bate_volta_diario_state(state.get('bate_volta_diario'))
     if bate_volta_diario['ativo'] and len(destinos_list) != 1:
-        errors.append('No modo bate-volta diário, informe exatamente um destino operacional.')
+        errors.append('No modo bate-volta diÃ¡rio, informe exatamente um destino operacional.')
 
     cleaned_trechos = []
     raw_trechos = state.get('trechos', [])
@@ -5656,20 +5340,20 @@ def _validate_step3_state(state, oficio=None):
         errors.append('Adicione ao menos um trecho antes de salvar.')
     for idx, trecho in enumerate(raw_trechos, start=1):
         if not trecho.get('origem_estado_id') or not trecho.get('origem_cidade_id'):
-            errors.append(f'Trecho {idx}: informe uma origem válida.')
+            errors.append(f'Trecho {idx}: informe uma origem vÃ¡lida.')
         if not trecho.get('destino_estado_id') or not trecho.get('destino_cidade_id'):
-            errors.append(f'Trecho {idx}: informe um destino válido.')
+            errors.append(f'Trecho {idx}: informe um destino vÃ¡lido.')
         saida_data = _parse_step3_date(trecho.get('saida_data'))
         saida_hora = _parse_step3_time(trecho.get('saida_hora'))
         chegada_data = _parse_step3_date(trecho.get('chegada_data'))
         chegada_hora = _parse_step3_time(trecho.get('chegada_hora'))
         if not saida_data or not saida_hora:
-            errors.append(f'Trecho {idx}: informe a saída (data e hora).')
+            errors.append(f'Trecho {idx}: informe a saÃ­da (data e hora).')
         if not chegada_data or not chegada_hora:
             errors.append(f'Trecho {idx}: informe a chegada (data e hora).')
         if saida_data and saida_hora and chegada_data and chegada_hora:
             if datetime.combine(chegada_data, chegada_hora) < datetime.combine(saida_data, saida_hora):
-                errors.append(f'Trecho {idx}: a chegada deve ocorrer no mesmo momento ou após a saída.')
+                errors.append(f'Trecho {idx}: a chegada deve ocorrer no mesmo momento ou apÃ³s a saÃ­da.')
 
         tempo_cru = trecho.get('tempo_cru_estimado_min')
         try:
@@ -5714,12 +5398,12 @@ def _validate_step3_state(state, oficio=None):
     retorno_chegada_data = _parse_step3_date(retorno.get('chegada_data'))
     retorno_chegada_hora = _parse_step3_time(retorno.get('chegada_hora'))
     if not retorno_saida_data or not retorno_saida_hora:
-        errors.append('Informe a saída do retorno (data e hora).')
+        errors.append('Informe a saÃ­da do retorno (data e hora).')
     if not retorno_chegada_data or not retorno_chegada_hora:
         errors.append('Informe a chegada do retorno (data e hora).')
     if retorno_saida_data and retorno_saida_hora and retorno_chegada_data and retorno_chegada_hora:
         if datetime.combine(retorno_chegada_data, retorno_chegada_hora) < datetime.combine(retorno_saida_data, retorno_saida_hora):
-            errors.append('O retorno deve chegar no mesmo momento ou após a saída.')
+            errors.append('O retorno deve chegar no mesmo momento ou apÃ³s a saÃ­da.')
     ultimo_trecho = cleaned_trechos[-1] if cleaned_trechos else None
     ultimo_trecho_retorna_sede = False
     if ultimo_trecho and sede_cidade:
@@ -5742,7 +5426,7 @@ def _validate_step3_state(state, oficio=None):
         chegada_final_ida = datetime.combine(ultimo_trecho['chegada_data'], ultimo_trecho['chegada_hora'])
         saida_retorno = datetime.combine(retorno_saida_data, retorno_saida_hora)
         if saida_retorno < chegada_final_ida:
-            errors.append('O retorno deve sair no mesmo momento ou após a chegada do último trecho.')
+            errors.append('O retorno deve sair no mesmo momento ou apÃ³s a chegada do Ãºltimo trecho.')
 
     return {
         'ok': not errors,
@@ -5763,7 +5447,7 @@ def _collect_step3_markers_payload(state, oficio=None):
     roteiro_modo = state.get('roteiro_modo') or Oficio.ROTEIRO_MODO_PROPRIO
     roteiro_evento_id = state.get('roteiro_evento_id')
     if roteiro_modo == Oficio.ROTEIRO_MODO_EVENTO and not roteiro_evento_id:
-        raise ValueError('Selecione um roteiro salvo para usar neste ofício.')
+        raise ValueError('Selecione um roteiro salvo para usar neste ofÃ­cio.')
     trechos = state.get('trechos') or []
     if not trechos:
         raise ValueError('Preencha datas e horas para calcular.')
@@ -5819,7 +5503,7 @@ def _calculate_step3_diarias_from_state(oficio, state):
     markers, paradas, chegada_final, sede_cidade, sede_uf = _collect_step3_markers_payload(state, oficio=oficio)
     total_servidores = oficio.viajantes.count()
     if total_servidores < 1:
-        raise ValueError('Selecione ao menos um viajante no Step 1 para calcular as diárias.')
+        raise ValueError('Selecione ao menos um viajante no Step 1 para calcular as diÃ¡rias.')
     resultado = calculate_periodized_diarias(
         markers,
         chegada_final,
@@ -6209,7 +5893,7 @@ def _build_oficio_justificativa_info(oficio):
 
     if dias_antecedencia is None:
         status_key = 'indefinida'
-        status_label = 'Aguardando dados válidos do Step 3'
+        status_label = 'Aguardando dados vÃ¡lidos do Step 3'
     elif exige and not preenchida:
         status_key = 'pendente'
         status_label = 'Pendente'
@@ -6218,7 +5902,7 @@ def _build_oficio_justificativa_info(oficio):
         status_label = 'Preenchida'
     else:
         status_key = 'nao_exigida'
-        status_label = 'Não exigida'
+        status_label = 'NÃ£o exigida'
 
     return {
         'required': exige,
@@ -6237,18 +5921,18 @@ def _build_oficio_justificativa_info(oficio):
 
 def _validate_oficio_for_finalize(oficio):
     section_labels = {
-        'step1': 'Step 1 — Dados gerais',
-        'step2': 'Step 2 — Transporte',
-        'step3': 'Step 3 — Trechos e diárias',
+        'step1': 'Step 1 â€” Dados gerais',
+        'step2': 'Step 2 â€” Transporte',
+        'step3': 'Step 3 â€” Trechos e diÃ¡rias',
         'justificativa': 'Justificativa',
     }
     errors_by_section = {key: [] for key in section_labels}
 
     protocolo = Oficio.normalize_protocolo(oficio.protocolo or '')
     if not protocolo:
-        errors_by_section['step1'].append('Informe o protocolo do ofício.')
+        errors_by_section['step1'].append('Informe o protocolo do ofÃ­cio.')
     elif len(protocolo) != 9:
-        errors_by_section['step1'].append('Informe um protocolo válido no formato XX.XXX.XXX-X.')
+        errors_by_section['step1'].append('Informe um protocolo vÃ¡lido no formato XX.XXX.XXX-X.')
     if not oficio.viajantes.exists():
         errors_by_section['step1'].append('Selecione ao menos um viajante.')
     if not (oficio.motivo or '').strip():
@@ -6257,26 +5941,26 @@ def _validate_oficio_for_finalize(oficio):
         oficio.custeio_tipo == Oficio.CUSTEIO_OUTRA_INSTITUICAO
         and not (oficio.nome_instituicao_custeio or '').strip()
     ):
-        errors_by_section['step1'].append('Informe a instituição responsável pelo custeio.')
+        errors_by_section['step1'].append('Informe a instituiÃ§Ã£o responsÃ¡vel pelo custeio.')
 
     if not (oficio.placa or '').strip():
-        errors_by_section['step2'].append('Informe a placa do veículo.')
+        errors_by_section['step2'].append('Informe a placa do veÃ­culo.')
     if not (oficio.modelo or '').strip():
-        errors_by_section['step2'].append('Informe o modelo do veículo.')
+        errors_by_section['step2'].append('Informe o modelo do veÃ­culo.')
     if not (oficio.combustivel or '').strip():
-        errors_by_section['step2'].append('Informe o combustível do veículo.')
+        errors_by_section['step2'].append('Informe o combustÃ­vel do veÃ­culo.')
     if not (oficio.motorista_viajante_id or (oficio.motorista or '').strip()):
-        errors_by_section['step2'].append('Informe o motorista do ofício.')
+        errors_by_section['step2'].append('Informe o motorista do ofÃ­cio.')
     motorista_protocolo = Oficio.normalize_protocolo(oficio.motorista_protocolo or '')
     if oficio.motorista_carona:
         if not oficio.motorista_oficio_numero:
-            errors_by_section['step2'].append('Informe o número do ofício do motorista carona.')
+            errors_by_section['step2'].append('Informe o nÃºmero do ofÃ­cio do motorista carona.')
         if not oficio.motorista_oficio_ano:
-            errors_by_section['step2'].append('Informe o ano do ofício do motorista carona.')
+            errors_by_section['step2'].append('Informe o ano do ofÃ­cio do motorista carona.')
         if not motorista_protocolo:
             errors_by_section['step2'].append('Informe o protocolo do motorista carona.')
         elif len(motorista_protocolo) != 9:
-            errors_by_section['step2'].append('Informe um protocolo válido para o motorista carona.')
+            errors_by_section['step2'].append('Informe um protocolo vÃ¡lido para o motorista carona.')
 
     saved_state = _get_oficio_step3_saved_state(oficio)
     if not saved_state:
@@ -6292,7 +5976,7 @@ def _validate_oficio_for_finalize(oficio):
         (oficio.valor_diarias_extenso or '').strip(),
     ]
     if not all(diarias_values):
-        errors_by_section['step3'].append('Calcule e salve as diárias do Step 3.')
+        errors_by_section['step3'].append('Calcule e salve as diÃ¡rias do Step 3.')
 
     justificativa_info = _build_oficio_justificativa_info(oficio)
     if justificativa_info['required'] and not justificativa_info['filled']:
@@ -6300,11 +5984,11 @@ def _validate_oficio_for_finalize(oficio):
         prazo_minimo = justificativa_info['prazo_minimo_dias']
         if dias_antecedencia is None:
             errors_by_section['justificativa'].append(
-                'Preencha a justificativa antes de finalizar o ofício.'
+                'Preencha a justificativa antes de finalizar o ofÃ­cio.'
             )
         else:
             errors_by_section['justificativa'].append(
-                f'Preencha a justificativa. A antecedência da viagem é de {dias_antecedencia} dia(s), abaixo do prazo mínimo de {prazo_minimo} dia(s).'
+                f'Preencha a justificativa. A antecedÃªncia da viagem Ã© de {dias_antecedencia} dia(s), abaixo do prazo mÃ­nimo de {prazo_minimo} dia(s).'
             )
 
     sections = []
@@ -6473,9 +6157,9 @@ def _build_oficio_documentos_context(oficio):
     backend_docx_status = get_docx_backend_availability()
     backend_pdf_status = get_pdf_backend_availability()
     status_labels = {
-        'available': 'Disponível',
+        'available': 'DisponÃ­vel',
         'pending': 'Pendente',
-        'unavailable': 'Indisponível no ambiente',
+        'unavailable': 'IndisponÃ­vel no ambiente',
         'planned': 'Em breve',
     }
     status_priority = {
@@ -6501,7 +6185,7 @@ def _build_oficio_documentos_context(oficio):
             'format': formato.value,
             'label': formato.value.upper(),
             'status': status_info['status'],
-            'status_label': status_labels.get(status_info['status'], 'Indisponível no ambiente'),
+            'status_label': status_labels.get(status_info['status'], 'IndisponÃ­vel no ambiente'),
             'errors': status_info.get('errors') or [],
             'url': url,
             'global_backend_issue': (
@@ -6515,7 +6199,7 @@ def _build_oficio_documentos_context(oficio):
         if not actions:
             return {
                 'status': 'planned',
-                'errors': ['Ainda não implementado nesta fase.'],
+                'errors': ['Ainda nÃ£o implementado nesta fase.'],
                 'global_backend_issue': False,
             }
         return sorted(actions, key=lambda action: status_priority.get(action['status'], 99))[0]
@@ -6560,7 +6244,7 @@ def _build_oficio_documentos_context(oficio):
                 'label': meta.label,
                 'group': grupo,
                 'status': primary_action['status'],
-                'status_label': status_labels.get(primary_action['status'], 'Indisponível no ambiente'),
+                'status_label': status_labels.get(primary_action['status'], 'IndisponÃ­vel no ambiente'),
                 'errors': item_errors,
                 'global_backend_issue_only': (
                     primary_action['status'] == 'unavailable'
@@ -6624,7 +6308,7 @@ def oficio_step3(request, pk):
                 _apply_saved_route_reference_to_step3(step3_state, validated, roteiro_salvo)
                 with transaction.atomic():
                     _salvar_step3_oficio(oficio, step3_state, validated)
-                messages.success(request, 'Roteiro salvo para reutilização.')
+                messages.success(request, 'Roteiro salvo para reutilizaÃ§Ã£o.')
                 justificativa_info = _build_oficio_justificativa_info(oficio)
                 if justificativa_info['required'] and not justificativa_info['filled']:
                     return redirect(
@@ -6635,7 +6319,7 @@ def oficio_step3(request, pk):
                     )
                 return redirect('eventos:oficio-step4', pk=oficio.pk)
             _salvar_step3_oficio(oficio, step3_state, validated)
-            messages.success(request, 'Step 3 do ofício salvo.')
+            messages.success(request, 'Step 3 do ofÃ­cio salvo.')
             if request.POST.get('avancar'):
                 return redirect('eventos:oficio-step4', pk=oficio.pk)
             return redirect('eventos:oficio-step3', pk=oficio.pk)
@@ -6692,11 +6376,11 @@ def oficio_step3(request, pk):
         'destino_estado_fixo_nome': (
             f'{destino_estado_fixo.nome} ({destino_estado_fixo.sigla})'
             if destino_estado_fixo
-            else 'Paraná (PR)'
+            else 'ParanÃ¡ (PR)'
         ),
     }
     wizard_key = 'step3'
-    wizard_title = 'Roteiro e diárias'
+    wizard_title = 'Roteiro e diÃ¡rias'
     return render(
         request,
         'eventos/oficio/wizard_step3.html',
@@ -6749,7 +6433,7 @@ def oficio_step3_calcular_diarias(request, pk):
         return JsonResponse(
             {
                 'ok': False,
-                'error': 'Revise os dados do roteiro antes de calcular as diárias.',
+                'error': 'Revise os dados do roteiro antes de calcular as diÃ¡rias.',
                 'errors': validated['errors'],
             },
             status=400,
@@ -6795,7 +6479,7 @@ def _legacy_oficio_step4(request, pk):
         if request.POST.get('finalizar'):
             oficio.status = Oficio.STATUS_FINALIZADO
             oficio.save(update_fields=['status', 'updated_at'])
-            messages.success(request, 'Ofício finalizado.')
+            messages.success(request, 'OfÃ­cio finalizado.')
         if request.POST.get('voltar_etapa3') and evento:
             return redirect('eventos:guiado-etapa-3', evento_id=evento.pk)
         return redirect('eventos:oficio-step4', pk=oficio.pk)
@@ -6858,7 +6542,7 @@ def oficio_documentos(request, pk):
 
 def _get_or_create_termos_from_oficio(oficio, user=None):
     """
-    Obtém ou cria registros TermoAutorizacao vinculados a este Ofício.
+    ObtÃ©m ou cria registros TermoAutorizacao vinculados a este OfÃ­cio.
     Retorna (lista_de_termos, created_bool).
     """
     context = _build_termo_context_for_oficio(oficios=[oficio])
@@ -6943,17 +6627,17 @@ def _download_oficio_documento(request, oficio, tipo_documento, formato):
         meta = get_document_type_meta(tipo_documento)
         formato = DocumentoFormato(formato)
     except (KeyError, ValueError):
-        raise Http404('Documento inválido.')
-    # Termo de Autorização: cria registro persistente e redireciona para download oficial
+        raise Http404('Documento invÃ¡lido.')
+    # Termo de AutorizaÃ§Ã£o: cria registro persistente e redireciona para download oficial
     if meta.tipo == DocumentoOficioTipo.TERMO_AUTORIZACAO:
         termos, created = _get_or_create_termos_from_oficio(oficio, user=request.user)
         if not termos:
-            messages.error(request, 'Não foi possível registrar o termo de autorização para este ofício.')
+            messages.error(request, 'NÃ£o foi possÃ­vel registrar o termo de autorizaÃ§Ã£o para este ofÃ­cio.')
             return redirect('eventos:oficio-step4', pk=oficio.pk)
         if created:
             messages.success(
                 request,
-                f'{len(termos)} termo(s) de autorização registrado(s) e vinculado(s) ao ofício.',
+                f'{len(termos)} termo(s) de autorizaÃ§Ã£o registrado(s) e vinculado(s) ao ofÃ­cio.',
             )
         return redirect(
             reverse(
@@ -6965,7 +6649,7 @@ def _download_oficio_documento(request, oficio, tipo_documento, formato):
     if status_info['status'] != 'available':
         messages.error(
             request,
-            (status_info.get('errors') or ['O documento solicitado não está disponível para download.'])[0],
+            (status_info.get('errors') or ['O documento solicitado nÃ£o estÃ¡ disponÃ­vel para download.'])[0],
         )
         return redirect('eventos:oficio-step4', pk=oficio.pk)
     try:
@@ -7007,7 +6691,7 @@ def oficio_step4(request, pk):
             oficio.gerar_termo_preenchido = gerar_termo_preenchido
         if request.POST.get('salvar_oficio'):
             _save_oficio_preserving_status(oficio, ['gerar_termo_preenchido'])
-            messages.success(request, 'Ofício salvo.')
+            messages.success(request, 'OfÃ­cio salvo.')
             return redirect(step4_url)
         if termo_changed:
             _save_oficio_preserving_status(oficio, ['gerar_termo_preenchido'])
@@ -7020,9 +6704,9 @@ def oficio_step4(request, pk):
                     finalize_validation['justificativa_missing']
                     and not finalize_validation['has_non_justificativa_errors']
                 ):
-                    messages.error(request, 'Preencha a justificativa antes de finalizar o ofício.')
+                    messages.error(request, 'Preencha a justificativa antes de finalizar o ofÃ­cio.')
                     return redirect(_oficio_justificativa_url(oficio, next_url=step4_url))
-                messages.error(request, 'O ofício não pode ser finalizado enquanto houver pendências.')
+                messages.error(request, 'O ofÃ­cio nÃ£o pode ser finalizado enquanto houver pendÃªncias.')
                 context = _build_oficio_step4_context(oficio, finalize_validation=finalize_validation)
                 return render(
                     request,
@@ -7045,22 +6729,22 @@ def oficio_step4(request, pk):
                 if gerar_termo_preenchido:
                     termos, termos_created = _get_or_create_termos_from_oficio(oficio, user=request.user)
 
-            messages.success(request, 'Ofício finalizado com sucesso.')
+            messages.success(request, 'OfÃ­cio finalizado com sucesso.')
             if gerar_termo_preenchido:
                 if termos and termos_created:
                     messages.success(
                         request,
-                        f'{len(termos)} termo(s) de autorização gerado(s) e vinculado(s) ao ofício.',
+                        f'{len(termos)} termo(s) de autorizaÃ§Ã£o gerado(s) e vinculado(s) ao ofÃ­cio.',
                     )
                 elif termos:
                     messages.info(
                         request,
-                        f'{len(termos)} termo(s) de autorização já existente(s) para este ofício.',
+                        f'{len(termos)} termo(s) de autorizaÃ§Ã£o jÃ¡ existente(s) para este ofÃ­cio.',
                     )
                 else:
                     messages.warning(
                         request,
-                        'Não foi possível gerar termos de autorização para este ofício.',
+                        'NÃ£o foi possÃ­vel gerar termos de autorizaÃ§Ã£o para este ofÃ­cio.',
                     )
         return redirect('eventos:oficios-global')
     context = _build_oficio_step4_context(oficio)
@@ -7077,7 +6761,7 @@ def oficio_step4(request, pk):
     )
 
 
-# ---------- Roteiros do evento (etapa 2 no fluxo de negócio) ----------
+# ---------- Roteiros do evento (etapa 2 no fluxo de negÃ³cio) ----------
 
 def _get_evento_etapa2(evento_id):
     """Retorna o evento ou 404 (rotas legadas de roteiros)."""
@@ -7148,7 +6832,10 @@ def guiado_etapa_2_lista(request, evento_id):
     )
 
     page_obj = views_global._paginate(queryset, request.GET.get('page'))
-    object_list = views_global._build_roteiro_list_object_list(list(page_obj.object_list))
+    object_list = views_global._build_roteiro_list_object_list(
+        list(page_obj.object_list),
+        delete_return_to=reverse('eventos:guiado-etapa-2', kwargs={'evento_id': evento.pk}),
+    )
     evento_heading = _guiado_v2_evento_heading(evento)
     evento_context_items = _guiado_v2_build_evento_context_items(evento)
     evento_document_counts = _guiado_v2_build_evento_document_counts(evento)
@@ -7349,8 +7036,8 @@ def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated):
 
 def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_list, is_avulso=False, step3_state=None, route_options=None, seed_source_label=''):
     """
-    Monta contexto completo para o formulário de roteiro (guiado e avulso).
-    Quando step3_state é fornecido, usa diretamente; caso contrário, constrói
+    Monta contexto completo para o formulÃ¡rio de roteiro (guiado e avulso).
+    Quando step3_state Ã© fornecido, usa diretamente; caso contrÃ¡rio, constrÃ³i
     a partir de trechos_list + destinos_atuais (compatibilidade com forms guiados).
     """
     if step3_state is None:
@@ -7411,15 +7098,15 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         'destino_estado_fixo_nome': (
             f'{destino_estado_fixo.nome} ({destino_estado_fixo.sigla})'
             if destino_estado_fixo
-            else 'Paraná (PR)'
+            else 'ParanÃ¡ (PR)'
         ),
     }
 
 
 @login_required
 def guiado_etapa_2_cadastrar(request, evento_id):
-    """Criar roteiro. Sede pré-preenchida da ConfiguracaoSistema; destinos pré-preenchidos da Etapa 1 do evento.
-    Usa o mesmo template e a mesma lógica de trechos da edição; trechos já vêm renderizados no primeiro load."""
+    """Criar roteiro. Sede prÃ©-preenchida da ConfiguracaoSistema; destinos prÃ©-preenchidos da Etapa 1 do evento.
+    Usa o mesmo template e a mesma lÃ³gica de trechos da ediÃ§Ã£o; trechos jÃ¡ vÃªm renderizados no primeiro load."""
     evento = _get_evento_etapa2(evento_id)
     from types import SimpleNamespace
     initial = {}
@@ -7492,7 +7179,7 @@ def guiado_etapa_2_cadastrar(request, evento_id):
 
 @login_required
 def guiado_etapa_2_editar(request, evento_id, pk):
-    """Editar roteiro (mostra dados salvos; trechos com horários próprios editáveis)."""
+    """Editar roteiro (mostra dados salvos; trechos com horÃ¡rios prÃ³prios editÃ¡veis)."""
     evento = _get_evento_etapa2(evento_id)
     from types import SimpleNamespace
     roteiro = get_object_or_404(
@@ -7549,20 +7236,32 @@ def guiado_etapa_2_editar(request, evento_id, pk):
 
 
 @login_required
+def _safe_return_to(request, default_url=''):
+    candidate = (request.POST.get('return_to') or request.GET.get('return_to') or '').strip()
+    if candidate and url_has_allowed_host_and_scheme(
+        candidate,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return candidate
+    return default_url
+
+
 def guiado_etapa_2_excluir(request, evento_id, pk):
     """Excluir roteiro do evento (POST)."""
     evento = _get_evento_etapa2(evento_id)
     roteiro = get_object_or_404(RoteiroEvento, pk=pk, evento=evento)
+    return_to = _safe_return_to(request, reverse('eventos:guiado-etapa-2', kwargs={'evento_id': evento.pk}))
     if request.method == 'POST':
         roteiro.delete()
-        return redirect('eventos:guiado-etapa-2', evento_id=evento.pk)
-    return redirect('eventos:guiado-etapa-2', evento_id=evento.pk)
+        return redirect(return_to)
+    return redirect(return_to)
 
 
 @login_required
 @require_http_methods(['GET', 'POST'])
 def roteiro_avulso_cadastrar(request):
-    """Cadastro de roteiro avulso — espelha lógica do oficio_step3."""
+    """Cadastro de roteiro avulso â€” espelha lÃ³gica do oficio_step3."""
     from cadastros.models import ConfiguracaoSistema
 
     initial = {}
@@ -7635,7 +7334,7 @@ def roteiro_avulso_cadastrar(request):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def roteiro_avulso_editar(request, pk):
-    """Edição de roteiro avulso — espelha lógica do oficio_step3."""
+    """EdiÃ§Ã£o de roteiro avulso â€” espelha lÃ³gica do oficio_step3."""
     roteiro = get_object_or_404(
         RoteiroEvento.objects.prefetch_related(
             'destinos', 'destinos__estado', 'destinos__cidade',
@@ -7699,6 +7398,19 @@ def roteiro_avulso_editar(request, pk):
 
 
 @login_required
+@require_http_methods(['GET', 'POST'])
+def roteiro_avulso_excluir(request, pk):
+    """Excluir roteiro avulso."""
+    roteiro = get_object_or_404(RoteiroEvento, pk=pk, tipo=RoteiroEvento.TIPO_AVULSO)
+    return_to = _safe_return_to(request, reverse('eventos:roteiros-global'))
+    if request.method == 'POST':
+        roteiro.delete()
+        messages.success(request, 'Roteiro avulso excluído com sucesso.')
+        return redirect(return_to)
+    return redirect(return_to)
+
+
+@login_required
 @require_http_methods(['POST'])
 def roteiro_avulso_calcular_diarias(request):
     """Realtime diarias calculation for roteiro avulso (always one server)."""
@@ -7712,7 +7424,7 @@ def roteiro_avulso_calcular_diarias(request):
         return JsonResponse(
             {
                 'ok': False,
-                'error': 'Revise os dados do roteiro antes de calcular as diárias.',
+                'error': 'Revise os dados do roteiro antes de calcular as diÃ¡rias.',
                 'errors': validated['errors'],
             },
             status=400,
@@ -7730,7 +7442,7 @@ def roteiro_avulso_calcular_diarias(request):
 @require_http_methods(['POST'])
 def trecho_calcular_km(request, pk):
     """
-    POST: calcula distância e duração do trecho via estimativa local (coordenadas, sem API externa).
+    POST: calcula distÃ¢ncia e duraÃ§Ã£o do trecho via estimativa local (coordenadas, sem API externa).
     Retorna JSON: ok, distancia_km, duracao_estimada_min, duracao_estimada_hhmm, rota_fonte, erro.
     """
     trecho = get_object_or_404(
@@ -7784,7 +7496,7 @@ def trecho_calcular_km(request, pk):
         trecho.distancia_km = out['distancia_km']
         trecho.tempo_cru_estimado_min = t_cru
         trecho.tempo_adicional_min = t_adic_sug
-        trecho.duracao_estimada_min = out['duracao_estimada_min']  # inclui correção final por distância
+        trecho.duracao_estimada_min = out['duracao_estimada_min']  # inclui correÃ§Ã£o final por distÃ¢ncia
         trecho.rota_fonte = ROTA_FONTE_ESTIMATIVA_LOCAL
         trecho.rota_calculada_em = timezone.now()
         trecho.save(update_fields=[
@@ -7908,7 +7620,7 @@ def _build_step2_preview_data(oficio, form):
     if veiculo:
         veiculo_lookup['message'] = f'Viatura localizada: {veiculo.modelo}.'
     elif _step2_field_value(form, 'placa'):
-        veiculo_lookup['message'] = 'Placa não localizada no cadastro. Você pode preencher manualmente.'
+        veiculo_lookup['message'] = 'Placa nÃ£o localizada no cadastro. VocÃª pode preencher manualmente.'
 
     return {
         'placa': _step2_field_value(form, 'placa'),
@@ -7976,7 +7688,7 @@ def _build_step3_periodo_display_from_state(state):
     if fim_retorno:
         fim = fim_retorno
     if inicio and fim:
-        return f'{inicio} até {fim}'
+        return f'{inicio} atÃ© {fim}'
     return inicio or fim
 
 
@@ -8007,7 +7719,7 @@ def _autosave_oficio_step2(oficio, request):
     if tipo_viatura not in dict(Oficio.TIPO_VIATURA_CHOICES):
         tipo_viatura = Oficio.TIPO_VIATURA_DESCARACTERIZADA
     porte_raw = (request.POST.get('porte_transporte_armas') or '1').strip().lower()
-    porte_transporte_armas = porte_raw not in ('0', 'false', 'nao', 'não')
+    porte_transporte_armas = porte_raw not in ('0', 'false', 'nao', 'nÃ£o')
     if veiculo:
         if not modelo:
             modelo = (veiculo.modelo or '').strip().upper()
@@ -8099,8 +7811,8 @@ def oficio_step2_veiculos_busca_api(request):
         payload = serializar_veiculo_para_oficio(veiculo)
         payload['id'] = veiculo.pk
         payload['label'] = (
-            f"{payload['placa_formatada']} — {payload['modelo']} — "
-            f"{payload['combustivel'] or 'Sem combustível'}"
+            f"{payload['placa_formatada']} â€” {payload['modelo']} â€” "
+            f"{payload['combustivel'] or 'Sem combustÃ­vel'}"
         )
         results.append(payload)
     return JsonResponse({'results': results})
@@ -8109,7 +7821,7 @@ def oficio_step2_veiculos_busca_api(request):
 @login_required
 @require_http_methods(['GET'])
 def oficio_step2_veiculo_api(request):
-    """Busca veículo finalizado por placa para autopreenchimento do Step 2."""
+    """Busca veÃ­culo finalizado por placa para autopreenchimento do Step 2."""
     placa = (request.GET.get('placa') or '').strip()
     veiculo = buscar_veiculo_finalizado_por_placa(placa)
     if not veiculo:
@@ -8122,7 +7834,7 @@ def oficio_step2_veiculo_api(request):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def oficio_step2(request, pk):
-    """Wizard Step 2 — Transporte do ofício com lookup de viatura e regra automática de carona."""
+    """Wizard Step 2 â€” Transporte do ofÃ­cio com lookup de viatura e regra automÃ¡tica de carona."""
     from cadastros.models import CombustivelVeiculo
 
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
@@ -8149,7 +7861,7 @@ def oficio_step2(request, pk):
         oficio.motorista_oficio_ano = form.cleaned_data.get('motorista_oficio_ano') or None
         oficio.motorista_oficio = form.cleaned_data.get('motorista_oficio') or ''
         oficio.motorista_protocolo = (form.cleaned_data.get('motorista_protocolo') or '').strip()
-        # Preencher carona_oficio_referencia quando motorista carona e número/ano informados
+        # Preencher carona_oficio_referencia quando motorista carona e nÃºmero/ano informados
         if oficio.motorista_carona and oficio.motorista_oficio_numero is not None and oficio.motorista_oficio_ano is not None:
             ref = Oficio.objects.filter(
                 numero=oficio.motorista_oficio_numero,
@@ -8217,7 +7929,7 @@ def estimar_km_por_cidades(request):
     """
     POST JSON: { origem_cidade_id, destino_cidade_id }.
     Retorna o mesmo JSON de trecho_calcular_km (ok, distancia_km, tempo_cru_estimado_min, tempo_adicional_sugerido_min, ...)
-    sem salvar em trecho. Usado no cadastro quando o trecho ainda não tem ID.
+    sem salvar em trecho. Usado no cadastro quando o trecho ainda nÃ£o tem ID.
     """
     try:
         body = __import__('json').loads(request.body or '{}')
@@ -8247,7 +7959,7 @@ def estimar_km_por_cidades(request):
             'tempo_cru_estimado_min': None,
             'tempo_adicional_sugerido_min': None,
             'rota_fonte': ROTA_FONTE_ESTIMATIVA_LOCAL,
-            'erro': 'Cidade de origem ou destino não encontrada.',
+            'erro': 'Cidade de origem ou destino nÃ£o encontrada.',
         })
     if origem.latitude is None or origem.longitude is None:
         return JsonResponse({
@@ -8304,3 +8016,4 @@ def estimar_km_por_cidades(request):
         'serra_presente': out.get('serra_presente', False),
         'erro': out['erro'],
     })
+

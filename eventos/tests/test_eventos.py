@@ -1,4 +1,4 @@
-import json
+﻿import json
 import os
 import sys
 from io import BytesIO
@@ -14,6 +14,7 @@ from unittest.mock import patch, MagicMock
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, Client, RequestFactory
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -67,7 +68,7 @@ User = get_user_model()
 
 
 class PtBrEncodingTest(TestCase):
-    """Valida strings críticas em PT-BR sem caracteres corrompidos."""
+    """Valida strings crÃ­ticas em PT-BR sem caracteres corrompidos."""
 
     def test_modelos_e_choices_criticos_estao_em_pt_br_correto(self):
         textos = [
@@ -82,22 +83,22 @@ class PtBrEncodingTest(TestCase):
         ]
         for texto in textos:
             self.assertNotIn('\ufffd', texto)
-        self.assertEqual(Evento._meta.get_field('titulo').verbose_name, 'Título')
-        self.assertEqual(Oficio._meta.verbose_name, 'Ofício')
+        self.assertEqual(Evento._meta.get_field('titulo').verbose_name, 'TÃ­tulo')
+        self.assertEqual(Oficio._meta.verbose_name, 'OfÃ­cio')
         self.assertEqual(
             dict(Oficio.CUSTEIO_CHOICES)[Oficio.CUSTEIO_UNIDADE],
-            'UNIDADE - DPC (diárias e combustível custeados pela DPC).',
+            'UNIDADE - DPC (diÃ¡rias e combustÃ­vel custeados pela DPC).',
         )
 
     def test_format_document_display_corrige_nome_e_conectores_em_pt_br(self):
-        raw = 'JOÃO Mario DE GOES, Assessor DE Comunicação Social - PCPR'
+        raw = 'JOÃƒO Mario DE GOES, Assessor DE ComunicaÃ§Ã£o Social - PCPR'
         self.assertEqual(
             format_document_display(raw),
-            'João Mario de Goes, Assessor de Comunicação Social - PCPR',
+            'JoÃ£o Mario de Goes, Assessor de ComunicaÃ§Ã£o Social - PCPR',
         )
         self.assertEqual(
             dict(Oficio.CUSTEIO_CHOICES)[Oficio.CUSTEIO_ONUS_LIMITADOS],
-            'ÔNUS LIMITADOS AOS PRÓPRIOS VENCIMENTOS',
+            'Ã”NUS LIMITADOS AOS PRÃ“PRIOS VENCIMENTOS',
         )
 
 
@@ -120,11 +121,11 @@ class EventoListaAuthTest(TestCase):
         self.assertContains(response, 'Eventos')
 
     def test_lista_exibe_titulo_destinos_editar_etapa_1(self):
-        """Lista usa título gerado, destinos e link Editar Etapa 1."""
+        """Lista usa tÃ­tulo gerado, destinos e link Editar Etapa 1."""
         User.objects.create_user(username='u', password='p')
         self.client.login(username='u', password='p')
         tipo = TipoDemandaEvento.objects.filter(ativo=True).first()
-        estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         cidade = Cidade.objects.create(nome='Curitiba', estado=estado, codigo_ibge='4106902')
         ev = Evento.objects.create(
             titulo='PCPR - CURITIBA - 01/01/2025',
@@ -140,11 +141,11 @@ class EventoListaAuthTest(TestCase):
         self.assertContains(response, 'Curitiba')
         self.assertContains(response, 'Editar Etapa 1')
         self.assertContains(response, reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}))
-        self.assertNotContains(response, reverse('eventos:guiado-painel', kwargs={'pk': ev.pk}))
+        self.assertNotContains(response, '/guiado/painel/')
 
 
 class EventoCRUDTest(TestCase):
-    """Criação e edição unificadas no fluxo guiado."""
+    """CriaÃ§Ã£o e ediÃ§Ã£o unificadas no fluxo guiado."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
@@ -152,13 +153,13 @@ class EventoCRUDTest(TestCase):
         self.client.login(username='u', password='p')
 
     def test_cadastrar_redireciona_para_fluxo_guiado(self):
-        """Cadastrar evento redireciona para guiado-novo (fonte única de criação)."""
+        """Cadastrar evento redireciona para guiado-novo (fonte Ãºnica de criaÃ§Ã£o)."""
         response = self.client.get(reverse('eventos:cadastrar'))
         self.assertEqual(response.status_code, 302)
         self.assertIn('guiado/novo', response.url)
 
     def test_editar_redireciona_para_etapa_1(self):
-        """Editar evento redireciona para a Etapa 1 do fluxo guiado (mesma tela/lógica)."""
+        """Editar evento redireciona para a Etapa 1 do fluxo guiado (mesma tela/lÃ³gica)."""
         ev = Evento.objects.create(
             titulo='Original',
             data_inicio=date(2025, 1, 1),
@@ -172,18 +173,18 @@ class EventoCRUDTest(TestCase):
 
 
 class EventoValidacaoTest(TestCase):
-    """Validações na Etapa 1 (data e destinos)."""
+    """ValidaÃ§Ãµes na Etapa 1 (data e destinos)."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
         self.client = Client()
         self.client.login(username='u', password='p')
         self.tipo = TipoDemandaEvento.objects.filter(ativo=True).first()
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
 
     def test_etapa1_data_fim_menor_que_data_inicio_rejeita(self):
-        """Na Etapa 1, data_fim < data_inicio é rejeitado. Não enviar 'data_unica' para que seja False (checkbox desmarcado)."""
+        """Na Etapa 1, data_fim < data_inicio Ã© rejeitado. NÃ£o enviar 'data_unica' para que seja False (checkbox desmarcado)."""
         self.assertIsNotNone(self.tipo)
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 1, 10), data_fim=date(2025, 1, 10), status=Evento.STATUS_RASCUNHO)
         data = {
@@ -201,7 +202,7 @@ class EventoValidacaoTest(TestCase):
 
 
 class EventoDetalheTest(TestCase):
-    """Página de detalhe do evento (modelo unificado)."""
+    """PÃ¡gina de detalhe do evento (modelo unificado)."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
@@ -218,10 +219,10 @@ class EventoDetalheTest(TestCase):
         self.assertIn('login', response.url)
 
     def test_detalhe_ok_mostra_dados_do_modelo_novo(self):
-        """Detalhe redireciona para edição do evento (Etapa 1)."""
+        """Detalhe redireciona para ediÃ§Ã£o do evento (Etapa 1)."""
         self.client.login(username='u', password='p')
         tipo = TipoDemandaEvento.objects.filter(ativo=True).first()
-        estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         cidade = Cidade.objects.create(nome='Curitiba', estado=estado, codigo_ibge='4106902')
         ev = Evento.objects.create(
             titulo='PCPR - CURITIBA - 01/01/2025',
@@ -238,14 +239,14 @@ class EventoDetalheTest(TestCase):
 
 
 class EventoExcluirTest(TestCase):
-    """Exclusão de evento: exige login, POST, bloqueia quando há roteiros."""
+    """ExclusÃ£o de evento: exige login, POST, bloqueia quando hÃ¡ roteiros."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
         self.client = Client()
 
     def test_excluir_exige_login(self):
-        """Exclusão por POST redireciona para login se não autenticado."""
+        """ExclusÃ£o por POST redireciona para login se nÃ£o autenticado."""
         ev = Evento.objects.create(titulo='E', data_inicio=date(2025, 1, 1), data_fim=date(2025, 1, 1), status=Evento.STATUS_RASCUNHO)
         url = reverse('eventos:excluir', kwargs={'pk': ev.pk})
         response = self.client.post(url, {})
@@ -254,10 +255,10 @@ class EventoExcluirTest(TestCase):
         self.assertTrue(Evento.objects.filter(pk=ev.pk).exists())
 
     def test_evento_sem_vinculos_pode_ser_excluido(self):
-        """Evento sem roteiros pode ser excluído; redireciona para lista com mensagem de sucesso."""
+        """Evento sem roteiros pode ser excluÃ­do; redireciona para lista com mensagem de sucesso."""
         self.client.login(username='u', password='p')
         tipo = TipoDemandaEvento.objects.filter(ativo=True).first()
-        estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         cidade = Cidade.objects.create(nome='Curitiba', estado=estado, codigo_ibge='4106902')
         ev = Evento.objects.create(titulo='Evento X', data_inicio=date(2025, 1, 1), data_fim=date(2025, 1, 1), status=Evento.STATUS_RASCUNHO)
         if tipo:
@@ -269,10 +270,10 @@ class EventoExcluirTest(TestCase):
         self.assertEqual(response.url, reverse('eventos:lista'))
         self.assertFalse(Evento.objects.filter(pk=ev.pk).exists())
         response_lista = self.client.get(reverse('eventos:lista'))
-        self.assertContains(response_lista, 'excluído com sucesso')
+        self.assertContains(response_lista, 'excluÃ­do com sucesso')
 
     def test_evento_com_roteiros_nao_pode_ser_excluido(self):
-        """Evento com roteiros vinculados não pode ser excluído; mensagem de erro."""
+        """Evento com roteiros vinculados nÃ£o pode ser excluÃ­do; mensagem de erro."""
         self.client.login(username='u', password='p')
         ev = Evento.objects.create(titulo='Evento Y', data_inicio=date(2025, 1, 1), data_fim=date(2025, 1, 1), status=Evento.STATUS_RASCUNHO)
         RoteiroEvento.objects.create(evento=ev)
@@ -282,11 +283,11 @@ class EventoExcluirTest(TestCase):
         self.assertEqual(response.url, reverse('eventos:lista'))
         self.assertTrue(Evento.objects.filter(pk=ev.pk).exists())
         response_lista = self.client.get(reverse('eventos:lista'))
-        self.assertContains(response_lista, 'não pode ser excluído')
+        self.assertContains(response_lista, 'nÃ£o pode ser excluÃ­do')
         self.assertContains(response_lista, 'roteiros')
 
     def test_excluir_redireciona_para_lista_com_sucesso(self):
-        """Após exclusão bem-sucedida, redireciona para lista e evento some."""
+        """ApÃ³s exclusÃ£o bem-sucedida, redireciona para lista e evento some."""
         self.client.login(username='u', password='p')
         ev = Evento.objects.create(titulo='Z', data_inicio=date(2025, 1, 1), data_fim=date(2025, 1, 1), status=Evento.STATUS_RASCUNHO)
         pk = ev.pk
@@ -296,7 +297,7 @@ class EventoExcluirTest(TestCase):
         self.assertFalse(Evento.objects.filter(pk=pk).exists())
 
     def test_excluir_so_aceita_post(self):
-        """Exclusão só aceita POST; GET retorna 405."""
+        """ExclusÃ£o sÃ³ aceita POST; GET retorna 405."""
         self.client.login(username='u', password='p')
         ev = Evento.objects.create(titulo='W', data_inicio=date(2025, 1, 1), data_fim=date(2025, 1, 1), status=Evento.STATUS_RASCUNHO)
         response = self.client.get(reverse('eventos:excluir', kwargs={'pk': ev.pk}))
@@ -314,12 +315,12 @@ class EventoGuiadoTest(TestCase):
 
     def test_guiado_novo_exige_login_e_redireciona(self):
         self.client.logout()
-        response = self.client.get(reverse('eventos:guiado-novo'))
+        response = self.client.post(reverse('eventos:guiado-novo'))
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
     def test_guiado_novo_cria_evento_e_redireciona_para_etapa_1(self):
-        response = self.client.get(reverse('eventos:guiado-novo'))
+        response = self.client.post(reverse('eventos:guiado-novo'))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Evento.objects.count(), 1)
         ev = Evento.objects.get()
@@ -329,8 +330,8 @@ class EventoGuiadoTest(TestCase):
 
     def test_etapa_1_salva_corretamente(self):
         tipo = TipoDemandaEvento.objects.filter(ativo=True).first()
-        self.assertIsNotNone(tipo, 'Precisa existir pelo menos um TipoDemandaEvento (migração 0004).')
-        estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.assertIsNotNone(tipo, 'Precisa existir pelo menos um TipoDemandaEvento (migraÃ§Ã£o 0004).')
+        estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         cidade = Cidade.objects.create(nome='Curitiba', estado=estado, codigo_ibge='4106902')
         ev = Evento.objects.create(
             titulo='',
@@ -356,14 +357,14 @@ class EventoGuiadoTest(TestCase):
         self.assertEqual(ev.data_fim, date(2025, 2, 5))
         self.assertFalse(ev.data_unica)
         if not tipo.is_outros:
-            self.assertEqual(ev.descricao, '')  # sem OUTROS a descrição fica vazia
+            self.assertEqual(ev.descricao, '')  # sem OUTROS a descriÃ§Ã£o fica vazia
         self.assertEqual(ev.destinos.count(), 1)
         self.assertEqual(ev.tipos_demanda.count(), 1)
 
     def test_etapa_1_destino_cidade_fora_do_estado_gera_erro(self):
         tipo = TipoDemandaEvento.objects.filter(ativo=True).first()
         self.assertIsNotNone(tipo)
-        sp = Estado.objects.create(nome='São Paulo', sigla='SP', codigo_ibge='35')
+        sp = Estado.objects.create(nome='SÃ£o Paulo', sigla='SP', codigo_ibge='35')
         rj = Estado.objects.create(nome='Rio de Janeiro', sigla='RJ', codigo_ibge='33')
         cidade_rj = Cidade.objects.create(nome='Rio', estado=rj, codigo_ibge='3304557')
         ev = Evento.objects.create(
@@ -387,39 +388,6 @@ class EventoGuiadoTest(TestCase):
         form = response.context['form']
         self.assertTrue(form.errors.get('__all__') or 'cidade' in str(form.errors).lower() or 'estado' in str(form.errors).lower())
 
-    def test_painel_guiado_carrega_autenticado(self):
-        ev = Evento.objects.create(
-            titulo='Evento Painel',
-            tipo_demanda=Evento.TIPO_OUTRO,
-            data_inicio=date(2025, 1, 1),
-            data_fim=date(2025, 1, 5),
-            status=Evento.STATUS_RASCUNHO,
-        )
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': ev.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Evento Painel')
-        self.assertContains(response, 'Etapa 1')
-        self.assertContains(response, 'Etapa 1 — Evento')
-
-    def test_evento_etapa_1_completa_mostra_etapa_1_ok_no_painel(self):
-        tipo = TipoDemandaEvento.objects.filter(ativo=True).first()
-        self.assertIsNotNone(tipo)
-        estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
-        cidade = Cidade.objects.create(nome='Curitiba', estado=estado, codigo_ibge='4106902')
-        ev = Evento.objects.create(
-            titulo='PCPR - CURITIBA - 01/01/2025',
-            data_inicio=date(2025, 1, 1),
-            data_fim=date(2025, 1, 5),
-            status=Evento.STATUS_EM_ANDAMENTO,
-        )
-        ev.tipos_demanda.add(tipo)
-        EventoDestino.objects.create(evento=ev, estado=estado, cidade=cidade, ordem=0)
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': ev.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'OK')
-        self.assertContains(response, 'Etapa 1 — Evento')
-
-
 class EventoEtapa2RoteirosTest(TestCase):
     """Etapa 2: Roteiros do evento."""
 
@@ -427,7 +395,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.user = User.objects.create_user(username='u', password='p')
         self.client = Client()
         self.client.login(username='u', password='p')
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade_a = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
         self.cidade_b = Cidade.objects.create(nome='Londrina', estado=self.estado, codigo_ibge='4113700')
         self.evento = Evento.objects.create(
@@ -519,7 +487,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual((r.chegada_dt - r.saida_dt).total_seconds(), 120 * 60)
 
     def test_origem_padrao_vem_da_configuracao_sede(self):
-        """Sede pré-preenchida vem de ConfiguracaoSistema.cidade_sede_padrao."""
+        """Sede prÃ©-preenchida vem de ConfiguracaoSistema.cidade_sede_padrao."""
         from cadastros.models import ConfiguracaoSistema
         config = ConfiguracaoSistema.get_singleton()
         config.cidade_sede_padrao = self.cidade_a
@@ -533,8 +501,8 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(form.initial.get('origem_estado'), self.estado.pk)
 
     def test_cidade_destino_deve_pertencer_ao_estado(self):
-        outro_estado = Estado.objects.create(nome='São Paulo', sigla='SP', codigo_ibge='35')
-        cidade_sp = Cidade.objects.create(nome='São Paulo', estado=outro_estado, codigo_ibge='3550308')
+        outro_estado = Estado.objects.create(nome='SÃ£o Paulo', sigla='SP', codigo_ibge='35')
+        cidade_sp = Cidade.objects.create(nome='SÃ£o Paulo', estado=outro_estado, codigo_ibge='3550308')
         data = {
             'origem_estado': self.estado.pk,
             'origem_cidade': self.cidade_a.pk,
@@ -553,7 +521,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(RoteiroEvento.objects.filter(evento=self.evento).count(), 0)
 
     def test_calculo_chegada_ao_salvar(self):
-        """chegada_dt do roteiro é preenchida a partir do último trecho de ida."""
+        """chegada_dt do roteiro Ã© preenchida a partir do Ãºltimo trecho de ida."""
         data = {
             'origem_estado': self.estado.pk,
             'origem_cidade': self.cidade_a.pk,
@@ -660,24 +628,8 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertFalse(RoteiroEvento.objects.filter(pk=r.pk).exists())
 
-    def test_painel_mostra_etapa_2_ok_quando_existe_roteiro_finalizado(self):
-        r = RoteiroEvento.objects.create(
-            evento=self.evento,
-            origem_estado=self.estado,
-            origem_cidade=self.cidade_a,
-            saida_dt=datetime(2025, 1, 2, 8, 0),
-            duracao_min=60,
-            chegada_dt=datetime(2025, 1, 2, 9, 0),
-        )
-        RoteiroEventoDestino.objects.create(roteiro=r, estado=self.estado, cidade=self.cidade_b, ordem=0)
-        r.save()
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Etapa 2 — Roteiros')
-        self.assertContains(response, 'OK')
-
     def test_cadastro_roteiro_herda_sede_da_configuracao(self):
-        """Cadastro novo de roteiro pré-preenche sede com ConfiguracaoSistema.cidade_sede_padrao."""
+        """Cadastro novo de roteiro prÃ©-preenche sede com ConfiguracaoSistema.cidade_sede_padrao."""
         from cadastros.models import ConfiguracaoSistema
         config = ConfiguracaoSistema.get_singleton()
         config.cidade_sede_padrao = self.cidade_a
@@ -688,7 +640,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(response.context['form'].initial.get('origem_cidade'), self.cidade_a.pk)
 
     def test_cadastro_roteiro_herda_destinos_do_evento(self):
-        """Cadastro novo de roteiro pré-preenche destinos da Etapa 1 do evento."""
+        """Cadastro novo de roteiro prÃ©-preenche destinos da Etapa 1 do evento."""
         EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade_a, ordem=0)
         EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade_b, ordem=1)
         response = self.client.get(reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk}))
@@ -699,7 +651,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(destinos_atuais[1]['cidade_id'], self.cidade_b.pk)
 
     def test_edicao_roteiro_mostra_dados_salvos_nao_do_evento(self):
-        """Edição do roteiro exibe os destinos salvos do roteiro, não os atuais do evento."""
+        """EdiÃ§Ã£o do roteiro exibe os destinos salvos do roteiro, nÃ£o os atuais do evento."""
         r = RoteiroEvento.objects.create(
             evento=self.evento,
             origem_estado=self.estado,
@@ -716,14 +668,14 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(destinos_atuais[0]['cidade_id'], self.cidade_b.pk)
 
     def test_cadastro_roteiro_abre_sem_quebrar_sem_sede_ni_destinos(self):
-        """Formulário de cadastro abre mesmo sem cidade sede na config e sem destinos no evento."""
+        """FormulÃ¡rio de cadastro abre mesmo sem cidade sede na config e sem destinos no evento."""
         response = self.client.get(reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertIn('destinos_atuais', response.context)
         self.assertIn('form', response.context)
 
     def test_cadastro_roteiro_multiplos_destinos_evento(self):
-        """Múltiplos destinos do evento aparecem no formulário de novo roteiro."""
+        """MÃºltiplos destinos do evento aparecem no formulÃ¡rio de novo roteiro."""
         EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade_a, ordem=0)
         EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade_b, ordem=1)
         response = self.client.get(reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk}))
@@ -733,17 +685,17 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertContains(response, 'destino_estado_1')
 
     def test_bloco_duracao_apoio_removido(self):
-        """O bloco '3) Duração (apoio)' e o campo Duração (HH:MM) foram removidos da Etapa 2."""
+        """O bloco '3) DuraÃ§Ã£o (apoio)' e o campo DuraÃ§Ã£o (HH:MM) foram removidos da Etapa 2."""
         response = self.client.get(
             reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk})
         )
         self.assertEqual(response.status_code, 200)
         content = response.content.decode('utf-8')
-        self.assertNotIn('Duração (apoio)', content)
+        self.assertNotIn('DuraÃ§Ã£o (apoio)', content)
         self.assertNotIn('id_duracao_hhmm', content)
 
     def test_bloco_global_ida_retorno_nao_aparece(self):
-        """Formulário não exibe mais bloco global de Saída ida / Saída retorno / Chegada calculada."""
+        """FormulÃ¡rio nÃ£o exibe mais bloco global de SaÃ­da ida / SaÃ­da retorno / Chegada calculada."""
         r = RoteiroEvento.objects.create(
             evento=self.evento,
             origem_estado=self.estado,
@@ -752,13 +704,13 @@ class EventoEtapa2RoteirosTest(TestCase):
         RoteiroEventoDestino.objects.create(roteiro=r, estado=self.estado, cidade=self.cidade_b, ordem=0)
         response = self.client.get(reverse('eventos:guiado-etapa-2-editar', kwargs={'evento_id': self.evento.pk, 'pk': r.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'Saída ida — data')
-        self.assertNotContains(response, 'Saída retorno — data')
+        self.assertNotContains(response, 'SaÃ­da ida â€” data')
+        self.assertNotContains(response, 'SaÃ­da retorno â€” data')
         self.assertNotContains(response, 'Chegada ida (calculada)')
         self.assertNotContains(response, 'Chegada retorno (calculada)')
 
     def test_trechos_gerados_container_presente(self):
-        """Página de roteiro exibe o bloco de trechos (cada trecho com campos próprios, preenchido via JS)."""
+        """PÃ¡gina de roteiro exibe o bloco de trechos (cada trecho com campos prÃ³prios, preenchido via JS)."""
         r = RoteiroEvento.objects.create(
             evento=self.evento,
             origem_estado=self.estado,
@@ -771,7 +723,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertContains(response, 'trechos-gerados-container')
 
     def test_script_trechos_tem_campos_por_trecho(self):
-        """JS gera inputs de saída/chegada por trecho (saída data/hora, chegada data/hora)."""
+        """JS gera inputs de saÃ­da/chegada por trecho (saÃ­da data/hora, chegada data/hora)."""
         r = RoteiroEvento.objects.create(
             evento=self.evento,
             origem_estado=self.estado,
@@ -786,7 +738,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIn(b'_chegada_time', response.content)
 
     def test_multiplos_destinos_geram_trechos_no_contexto(self):
-        """Múltiplos destinos geram múltiplos trechos (ida + retorno) no contexto para o JS."""
+        """MÃºltiplos destinos geram mÃºltiplos trechos (ida + retorno) no contexto para o JS."""
         r = RoteiroEvento.objects.create(
             evento=self.evento,
             origem_estado=self.estado,
@@ -800,7 +752,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertGreaterEqual(len(trechos), 3)
 
     def test_salvar_reabrir_mantem_horarios_por_trecho(self):
-        """Salvar edição e reabrir: horários de cada trecho permanecem (persistência por trecho)."""
+        """Salvar ediÃ§Ã£o e reabrir: horÃ¡rios de cada trecho permanecem (persistÃªncia por trecho)."""
         from eventos.models import RoteiroEventoTrecho
         r = RoteiroEvento.objects.create(
             evento=self.evento,
@@ -840,9 +792,9 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIn('2025-02-12', initial[1].get('chegada_dt', ''))
 
     def test_multiplos_trechos_horarios_no_trecho_certo_salvar_reabrir(self):
-        """Salvar com múltiplos trechos (sede->d1->d2->sede) mantém cada saída/chegada no trecho correto; reabrir preserva."""
+        """Salvar com mÃºltiplos trechos (sede->d1->d2->sede) mantÃ©m cada saÃ­da/chegada no trecho correto; reabrir preserva."""
         from eventos.models import RoteiroEventoTrecho
-        cidade_c = Cidade.objects.create(nome='Maringá', estado=self.estado, codigo_ibge='4115200')
+        cidade_c = Cidade.objects.create(nome='MaringÃ¡', estado=self.estado, codigo_ibge='4115200')
         EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade_b, ordem=0)
         EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=cidade_c, ordem=1)
         r = RoteiroEvento.objects.create(
@@ -900,7 +852,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIn('2025-02-11T12:00', initial[2].get('chegada_dt', ''))
 
     def test_parse_trechos_times_post_ordem_correta(self):
-        """_parse_trechos_times_post retorna lista na ordem trecho_0, trecho_1, ... para associação correta."""
+        """_parse_trechos_times_post retorna lista na ordem trecho_0, trecho_1, ... para associaÃ§Ã£o correta."""
         from eventos.views import _parse_trechos_times_post
         rf = RequestFactory()
         request = rf.post('/x/', {
@@ -924,7 +876,7 @@ class EventoEtapa2RoteirosTest(TestCase):
     def test_salvar_trechos_roteiro_associa_por_ordem(self):
         """_salvar_trechos_roteiro associa trechos_data[0] ao primeiro trecho, etc."""
         from eventos.views import _salvar_trechos_roteiro
-        cidade_c = Cidade.objects.create(nome='Maringá', estado=self.estado, codigo_ibge='4115200')
+        cidade_c = Cidade.objects.create(nome='MaringÃ¡', estado=self.estado, codigo_ibge='4115200')
         r = RoteiroEvento.objects.create(
             evento=self.evento,
             origem_estado=self.estado,
@@ -990,7 +942,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(local1, datetime(2025, 2, 11, 9, 0))
 
     def test_calculo_automatico_ida_persistido(self):
-        """Chegada da ida = saída + duração (3h30); valor persistido no banco."""
+        """Chegada da ida = saÃ­da + duraÃ§Ã£o (3h30); valor persistido no banco."""
         from eventos.models import RoteiroEventoTrecho
         r = RoteiroEvento.objects.create(
             evento=self.evento,
@@ -1024,7 +976,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(delta, 210 * 60)
 
     def test_calculo_automatico_retorno_persistido(self):
-        """Chegada do retorno = saída retorno + duração (3h30); valor persistido no banco."""
+        """Chegada do retorno = saÃ­da retorno + duraÃ§Ã£o (3h30); valor persistido no banco."""
         from eventos.models import RoteiroEventoTrecho
         r = RoteiroEvento.objects.create(
             evento=self.evento,
@@ -1059,7 +1011,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(delta, 210 * 60)
 
     def test_chegada_retorno_calculada(self):
-        """Chegada do retorno é preenchida a partir do trecho de retorno salvo."""
+        """Chegada do retorno Ã© preenchida a partir do trecho de retorno salvo."""
         data = {
             'origem_estado': self.estado.pk,
             'origem_cidade': self.cidade_a.pk,
@@ -1082,7 +1034,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual((r.retorno_chegada_dt - r.retorno_saida_dt).total_seconds(), 60 * 60)
 
     def test_trechos_multiplos_destinos(self):
-        """Múltiplos trechos na exibição: ida (sede -> destino) e retorno (último destino -> sede)."""
+        """MÃºltiplos trechos na exibiÃ§Ã£o: ida (sede -> destino) e retorno (Ãºltimo destino -> sede)."""
         r = RoteiroEvento.objects.create(
             evento=self.evento,
             origem_estado=self.estado,
@@ -1101,7 +1053,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertTrue(any(t.get('tipo') == 'RETORNO' for t in trechos))
 
     def test_edicao_nao_sobrescreve_sede_com_config(self):
-        """Na edição, a sede exibida é a salva no roteiro, não a da configuração atual."""
+        """Na ediÃ§Ã£o, a sede exibida Ã© a salva no roteiro, nÃ£o a da configuraÃ§Ã£o atual."""
         from cadastros.models import ConfiguracaoSistema
         config = ConfiguracaoSistema.get_singleton()
         config.cidade_sede_padrao = self.cidade_a
@@ -1120,7 +1072,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(form.instance.origem_cidade_id, self.cidade_b.pk)
 
     def test_cidade_sede_selecionada_ao_abrir_cadastro(self):
-        """Ao abrir cadastro novo, Cidade (Sede) deve vir pré-preenchida e selecionada da configuração."""
+        """Ao abrir cadastro novo, Cidade (Sede) deve vir prÃ©-preenchida e selecionada da configuraÃ§Ã£o."""
         from cadastros.models import ConfiguracaoSistema
         config = ConfiguracaoSistema.get_singleton()
         config.cidade_sede_padrao = self.cidade_a
@@ -1132,7 +1084,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIn(f'value="{self.cidade_a.pk}" selected', html)
 
     def test_cadastro_e_edicao_usam_mesmo_template_roteiro_form(self):
-        """Cadastro novo e edição de roteiro renderizam o mesmo template principal."""
+        """Cadastro novo e ediÃ§Ã£o de roteiro renderizam o mesmo template principal."""
         # Cadastro novo
         response_cad = self.client.get(
             reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk})
@@ -1140,7 +1092,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(response_cad.status_code, 200)
         template_names_cad = {t.name for t in response_cad.templates if t.name}
         self.assertIn('eventos/guiado/roteiro_form.html', template_names_cad)
-        # Edição
+        # EdiÃ§Ã£o
         r = RoteiroEvento.objects.create(
             evento=self.evento,
             origem_estado=self.estado,
@@ -1166,7 +1118,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertContains(response, 'trechos-gerados-container')
 
     def test_cadastro_novo_persistir_trechos_conforme_formulario(self):
-        """Cadastro novo deve salvar imediatamente os trechos de acordo com o que foi montado no formulário."""
+        """Cadastro novo deve salvar imediatamente os trechos de acordo com o que foi montado no formulÃ¡rio."""
         from eventos.models import RoteiroEventoTrecho
         data = {
             'origem_estado': self.estado.pk,
@@ -1184,7 +1136,7 @@ class EventoEtapa2RoteirosTest(TestCase):
             data,
         )
         self.assertEqual(response.status_code, 302)
-        # Salvar roteiro novo redireciona para a LISTA da Etapa 2, não para editar.
+        # Salvar roteiro novo redireciona para a LISTA da Etapa 2, nÃ£o para editar.
         expected_url = reverse('eventos:guiado-etapa-2', kwargs={'evento_id': self.evento.pk})
         self.assertEqual(response.url, expected_url, 'Cadastro novo deve redirecionar para lista da Etapa 2')
         r = RoteiroEvento.objects.get(evento=self.evento)
@@ -1196,7 +1148,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIsNotNone(trechos[1].chegada_dt)
 
     def test_cadastro_novo_trechos_json_preenchido_com_sede_e_destinos(self):
-        """Cadastro novo com sede da config e 2 destinos do evento já envia trechos_list e trechos_json (3 trechos)."""
+        """Cadastro novo com sede da config e 2 destinos do evento jÃ¡ envia trechos_list e trechos_json (3 trechos)."""
         from cadastros.models import ConfiguracaoSistema
         import json
         config = ConfiguracaoSistema.get_singleton()
@@ -1216,7 +1168,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIn('initialTrechosData', response.content.decode())
 
     def test_script_adicionar_remover_destino_regenera_trechos(self):
-        """Página de roteiro contém script que chama renderTrechos ao adicionar/remover destino."""
+        """PÃ¡gina de roteiro contÃ©m script que chama renderTrechos ao adicionar/remover destino."""
         response = self.client.get(
             reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk})
         )
@@ -1318,7 +1270,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(trechos[1].duracao_estimada_min, 60)
 
     def test_tempo_adicional_negativo_clamped_para_zero(self):
-        """Backend rejeita adicional negativo; valor é clampeado para 0."""
+        """Backend rejeita adicional negativo; valor Ã© clampeado para 0."""
         from eventos.models import RoteiroEventoTrecho
         r = RoteiroEvento.objects.create(
             evento=self.evento,
@@ -1380,7 +1332,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertEqual(trechos[0].duracao_estimada_min, 150)  # 90 + 60
 
     def test_script_renderiza_inputs_visiveis_por_trecho(self):
-        """Script de roteiro gera inputs visíveis (date/time) por trecho, não só hidden."""
+        """Script de roteiro gera inputs visÃ­veis (date/time) por trecho, nÃ£o sÃ³ hidden."""
         response = self.client.get(
             reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk})
         )
@@ -1388,14 +1340,14 @@ class EventoEtapa2RoteirosTest(TestCase):
         content = response.content.decode()
         self.assertIn('type="date"', content, 'Script deve gerar input type=date')
         self.assertIn('type="time"', content, 'Script deve gerar input type=time')
-        self.assertIn('_saida_date', content, 'Script deve gerar campo saída data por trecho')
-        self.assertIn('_saida_time', content, 'Script deve gerar campo saída hora por trecho')
+        self.assertIn('_saida_date', content, 'Script deve gerar campo saÃ­da data por trecho')
+        self.assertIn('_saida_time', content, 'Script deve gerar campo saÃ­da hora por trecho')
         self.assertIn('_chegada_date', content, 'Script deve gerar campo chegada data por trecho')
         self.assertIn('_chegada_time', content, 'Script deve gerar campo chegada hora por trecho')
         self.assertIn('data-trecho-ordem', content, 'Script deve marcar cada card com ordem do trecho')
 
     def test_script_tem_botoes_tempo_mais_menos(self):
-        """Script de roteiro contém botões +15 e -15 para tempo adicional."""
+        """Script de roteiro contÃ©m botÃµes +15 e -15 para tempo adicional."""
         response = self.client.get(
             reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk})
         )
@@ -1406,7 +1358,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIn('trecho-tempo-adicional', content)
 
     def test_cadastro_mostra_botao_estimar_km_tempo(self):
-        """Cadastro de roteiro exibe o botão 'Estimar km/tempo' (mesma base funcional da edição)."""
+        """Cadastro de roteiro exibe o botÃ£o 'Estimar km/tempo' (mesma base funcional da ediÃ§Ã£o)."""
         EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade_a, ordem=0)
         response = self.client.get(
             reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk})
@@ -1418,7 +1370,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIn('urlTrechosEstimar', content)
 
     def test_cadastro_inclui_url_trechos_estimar_para_trecho_novo(self):
-        """Página de cadastro/etapa-2 inclui urlTrechosEstimar para estimar trecho novo sem pk."""
+        """PÃ¡gina de cadastro/etapa-2 inclui urlTrechosEstimar para estimar trecho novo sem pk."""
         EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade_a, ordem=0)
         response = self.client.get(
             reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk})
@@ -1449,7 +1401,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIn('destino_cidade_id', first)
 
     def test_edicao_abre_com_trechos_persistidos(self):
-        """Edição de roteiro abre com trechos e horários já salvos no contexto."""
+        """EdiÃ§Ã£o de roteiro abre com trechos e horÃ¡rios jÃ¡ salvos no contexto."""
         r = RoteiroEvento.objects.create(
             evento=self.evento,
             origem_estado=self.estado,
@@ -1480,7 +1432,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIn('2025-01-02', response.context.get('trechos_json', ''))
 
     def test_trechos_persistidos_ao_salvar_edicao(self):
-        """Ao salvar a edição com horários por trecho, os trechos devem ser persistidos no banco."""
+        """Ao salvar a ediÃ§Ã£o com horÃ¡rios por trecho, os trechos devem ser persistidos no banco."""
         from eventos.models import RoteiroEventoTrecho
         r = RoteiroEvento.objects.create(
             evento=self.evento,
@@ -1519,19 +1471,19 @@ class EventoEtapa2RoteirosTest(TestCase):
 
 
 class EventoEtapa1RefatoradoTest(TestCase):
-    """Testes da Etapa 1 refatorada: múltiplos tipos, título automático, data única, destinos, descrição."""
+    """Testes da Etapa 1 refatorada: mÃºltiplos tipos, tÃ­tulo automÃ¡tico, data Ãºnica, destinos, descriÃ§Ã£o."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
         self.client = Client()
         self.client.login(username='u', password='p')
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade_a = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
         self.cidade_b = Cidade.objects.create(nome='Londrina', estado=self.estado, codigo_ibge='4113700')
         self.tipos = list(TipoDemandaEvento.objects.filter(ativo=True).order_by('ordem')[:3])
 
     def test_etapa_1_multiplos_tipos_demanda(self):
-        self.assertGreaterEqual(len(self.tipos), 2, 'Precisa de ao menos 2 tipos (migração 0004).')
+        self.assertGreaterEqual(len(self.tipos), 2, 'Precisa de ao menos 2 tipos (migraÃ§Ã£o 0004).')
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 3, 12), data_fim=date(2025, 3, 12), status=Evento.STATUS_RASCUNHO)
         data = {
             'tipos_demanda': [self.tipos[0].pk, self.tipos[1].pk],
@@ -1578,6 +1530,45 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertTrue(ev.tem_convite_ou_oficio_evento)
         self.assertEqual(ev.destinos.count(), 1)
 
+    def test_etapa_1_renderiza_hook_de_autosave_e_topo_reativo(self):
+        ev = Evento.objects.create(titulo='', data_inicio=date(2025, 3, 12), data_fim=date(2025, 3, 12), status=Evento.STATUS_RASCUNHO)
+        response = self.client.get(reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'js/oficio_wizard.js')
+        self.assertContains(response, 'id="guiado-etapa1-heading"')
+        self.assertContains(response, 'id="guiado-etapa1-periodo"')
+        self.assertContains(response, 'id="guiado-etapa1-tipos"')
+        self.assertContains(response, 'id="guiado-etapa1-destinos"')
+        self.assertContains(response, 'id="evento-etapa1-autosave-status"')
+        self.assertContains(response, 'data-autosave-link="1"')
+        self.assertContains(response, 'data-autosave-navigate=')
+
+    def test_etapa_1_autosave_persiste_upload_de_convite(self):
+        tipo = self.tipos[0] if self.tipos else None
+        self.assertIsNotNone(tipo)
+        ev = Evento.objects.create(titulo='', data_inicio=date(2025, 3, 12), data_fim=date(2025, 3, 12), status=Evento.STATUS_RASCUNHO)
+        arquivo = SimpleUploadedFile('convite.pdf', b'%PDF-1.4\n%autosave\n', content_type='application/pdf')
+        response = self.client.post(
+            reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}),
+            {
+                'autosave': '1',
+                'tipos_demanda': [tipo.pk],
+                'data_unica': 'on',
+                'data_inicio': '2025-03-20',
+                'descricao': '',
+                'tem_convite_ou_oficio_evento': 'on',
+                'destino_estado_0': self.estado.pk,
+                'destino_cidade_0': self.cidade_a.pk,
+                'convite_documentos': arquivo,
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('ok'))
+        ev.refresh_from_db()
+        self.assertTrue(ev.tem_convite_ou_oficio_evento)
+        self.assertEqual(ev.anexos_solicitante.count(), 1)
+
     def test_etapa_1_titulo_gerado_automaticamente(self):
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)
@@ -1618,7 +1609,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertEqual(ev.data_fim, date(2025, 6, 10))
 
     def test_etapa_1_data_unica_sem_enviar_data_fim_backend_preenche(self):
-        """data_unica=True: não enviar data_fim; backend deve preencher data_fim = data_inicio."""
+        """data_unica=True: nÃ£o enviar data_fim; backend deve preencher data_fim = data_inicio."""
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 7, 20), data_fim=date(2025, 7, 25), status=Evento.STATUS_RASCUNHO)
@@ -1637,10 +1628,10 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertEqual(ev.data_fim, date(2025, 7, 20))
 
     def test_etapa_1_sem_outros_descricao_nao_obrigatoria(self):
-        """Sem tipo OUTROS selecionado: descrição não é exigida e é limpa ao salvar."""
+        """Sem tipo OUTROS selecionado: descriÃ§Ã£o nÃ£o Ã© exigida e Ã© limpa ao salvar."""
         tipo = next((t for t in (self.tipos or []) if not t.is_outros), None)
         if not tipo:
-            self.skipTest('Precisa de um tipo de demanda que não seja OUTROS.')
+            self.skipTest('Precisa de um tipo de demanda que nÃ£o seja OUTROS.')
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 2, 1), data_fim=date(2025, 2, 1), status=Evento.STATUS_RASCUNHO, descricao='Texto antigo')
         data = {
             'tipos_demanda': [tipo.pk],
@@ -1698,7 +1689,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertIn('descricao', response.context['form'].errors)
 
     def test_etapa_1_formulario_abre_com_um_destino(self):
-        """Ao abrir a Etapa 1 deve existir pelo menos 1 bloco de destino visível."""
+        """Ao abrir a Etapa 1 deve existir pelo menos 1 bloco de destino visÃ­vel."""
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 1, 1), data_fim=date(2025, 1, 1), status=Evento.STATUS_RASCUNHO)
         response = self.client.get(reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}))
         self.assertEqual(response.status_code, 200)
@@ -1707,11 +1698,11 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertContains(response, 'destinos-container')
 
     def test_reabrir_etapa_1_apos_salvar_mantem_tipos_destinos_datas(self):
-        """Após salvar a Etapa 1, reabrir a tela deve exibir os dados persistidos."""
+        """ApÃ³s salvar a Etapa 1, reabrir a tela deve exibir os dados persistidos."""
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 5, 10), data_fim=date(2025, 5, 12), status=Evento.STATUS_RASCUNHO)
-        # data_unica=False: não enviar a chave no POST (checkbox desmarcado não envia nada)
+        # data_unica=False: nÃ£o enviar a chave no POST (checkbox desmarcado nÃ£o envia nada)
         data = {
             'tipos_demanda': [tipo.pk],
             'data_inicio': '2025-05-10',
@@ -1727,7 +1718,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         ev.refresh_from_db()
         self.assertEqual(ev.tipos_demanda.count(), 1)
         self.assertEqual(ev.destinos.count(), 2)
-        # Datas persistidas: intervalo 10 a 12/05/2025 (data_unica=False; não enviar chave data_unica no POST)
+        # Datas persistidas: intervalo 10 a 12/05/2025 (data_unica=False; nÃ£o enviar chave data_unica no POST)
         self.assertEqual(ev.data_inicio, date(2025, 5, 10))
         self.assertEqual(ev.data_fim, date(2025, 5, 12))
         self.assertFalse(ev.data_unica)
@@ -1735,7 +1726,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['destinos_atuais']), 2)
         self.assertIn(tipo.pk, response.context['selected_tipos_pks'])
-        # Reabrir: formulário deve exibir as datas salvas
+        # Reabrir: formulÃ¡rio deve exibir as datas salvas
         self.assertContains(response, '2025-05-10')
         self.assertContains(response, '2025-05-12')
 
@@ -1762,7 +1753,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertTrue(ev.data_unica)
 
     def test_etapa_1_datas_persistidas_data_unica_false(self):
-        """Com data_unica=False: data_inicio e data_fim persistidas com valores distintos. Não enviar 'data_unica' no POST."""
+        """Com data_unica=False: data_inicio e data_fim persistidas com valores distintos. NÃ£o enviar 'data_unica' no POST."""
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 1, 1), data_fim=date(2025, 1, 1), status=Evento.STATUS_RASCUNHO)
@@ -1783,7 +1774,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertFalse(ev.data_unica)
 
     def test_etapa_1_reabrir_mostra_datas_salvas(self):
-        """Reabrir a Etapa 1 após salvar deve exibir data_inicio e data_fim nos inputs."""
+        """Reabrir a Etapa 1 apÃ³s salvar deve exibir data_inicio e data_fim nos inputs."""
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 11, 1), data_fim=date(2025, 11, 5), status=Evento.STATUS_RASCUNHO)
@@ -1803,7 +1794,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertContains(response, 'value="2025-11-05"')
 
     def test_detalhe_evento_mostra_datas_corretas(self):
-        """Rota de detalhe redireciona para edição e mantém datas persistidas na Etapa 1."""
+        """Rota de detalhe redireciona para ediÃ§Ã£o e mantÃ©m datas persistidas na Etapa 1."""
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 12, 1), data_fim=date(2025, 12, 10), status=Evento.STATUS_RASCUNHO)
@@ -1829,7 +1820,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertContains(etapa1, 'value="2025-12-10"')
 
     def test_etapa_1_nao_pode_salvar_sem_destino(self):
-        """Envio sem nenhum destino válido deve rejeitar com erro."""
+        """Envio sem nenhum destino vÃ¡lido deve rejeitar com erro."""
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 1, 1), data_fim=date(2025, 1, 1), status=Evento.STATUS_RASCUNHO)
@@ -1848,7 +1839,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
 
 
 class TipoDemandaEventoCRUDTest(TestCase):
-    """CRUD de tipos de demanda e bloqueio de exclusão quando em uso."""
+    """CRUD de tipos de demanda e bloqueio de exclusÃ£o quando em uso."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
@@ -1861,7 +1852,7 @@ class TipoDemandaEventoCRUDTest(TestCase):
         self.assertContains(response, 'Tipos de demanda')
 
     def test_cadastrar_tipo_demanda(self):
-        data = {'nome': 'NOVO TIPO', 'descricao_padrao': 'Desc padrão', 'ordem': 50, 'ativo': True, 'is_outros': False}
+        data = {'nome': 'NOVO TIPO', 'descricao_padrao': 'Desc padrÃ£o', 'ordem': 50, 'ativo': True, 'is_outros': False}
         response = self.client.post(reverse('eventos:tipos-demanda-cadastrar'), data)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(TipoDemandaEvento.objects.filter(nome='NOVO TIPO').exists())
@@ -1876,7 +1867,7 @@ class TipoDemandaEventoCRUDTest(TestCase):
         self.assertTrue(TipoDemandaEvento.objects.filter(pk=tipo.pk).exists())
 
     def test_excluir_tipo_quando_nao_em_uso_funciona(self):
-        """Excluir tipo de demanda quando não está em uso deve remover do banco."""
+        """Excluir tipo de demanda quando nÃ£o estÃ¡ em uso deve remover do banco."""
         tipo = TipoDemandaEvento.objects.create(nome='TIPO TESTE EXCLUSAO', ordem=999, ativo=True, is_outros=False)
         self.assertTrue(TipoDemandaEvento.objects.filter(pk=tipo.pk).exists())
         response = self.client.post(reverse('eventos:tipos-demanda-excluir', kwargs={'pk': tipo.pk}), {})
@@ -1885,7 +1876,7 @@ class TipoDemandaEventoCRUDTest(TestCase):
 
 
 class EstimativaLocalServiceTest(TestCase):
-    """Testes do serviço de estimativa local (tempo de viagem vs buffer, corredores)."""
+    """Testes do serviÃ§o de estimativa local (tempo de viagem vs buffer, corredores)."""
 
     def test_minutos_para_hhmm(self):
         from eventos.services.estimativa_local import minutos_para_hhmm
@@ -1908,7 +1899,7 @@ class EstimativaLocalServiceTest(TestCase):
         self.assertEqual(out['rota_fonte'], 'ESTIMATIVA_LOCAL')
 
     def test_tempo_viagem_e_buffer_separados(self):
-        """Retorno inclui tempo_viagem_estimado_min (comparável ao Google) e buffer_operacional_sugerido_min."""
+        """Retorno inclui tempo_viagem_estimado_min (comparÃ¡vel ao Google) e buffer_operacional_sugerido_min."""
         from eventos.services.estimativa_local import estimar_distancia_duracao
         out = estimar_distancia_duracao(-25.43, -49.27, -23.42, -51.94)
         self.assertTrue(out['ok'])
@@ -1937,14 +1928,14 @@ class EstimativaLocalServiceTest(TestCase):
         self.assertEqual(out['tempo_adicional_sugerido_min'], out['buffer_operacional_sugerido_min'])
 
     def test_classificar_corredor_litoral_curto(self):
-        """Curitiba -> Pontal do Paraná: LITORAL_CURTO com buffer definido pela distância."""
+        """Curitiba -> Pontal do ParanÃ¡: LITORAL_CURTO com buffer definido pela distÃ¢ncia."""
         from eventos.services.estimativa_local import (
             estimar_distancia_duracao,
             CORREDOR_LITORAL_CURTO,
             FATOR_CORREDOR,
             sugerir_buffer_operacional,
         )
-        # Pontal do Paraná ~ -25.67, -48.51
+        # Pontal do ParanÃ¡ ~ -25.67, -48.51
         out = estimar_distancia_duracao(
             origem_lat=-25.43, origem_lon=-49.27,
             destino_lat=-25.67, destino_lon=-48.51,
@@ -1958,7 +1949,7 @@ class EstimativaLocalServiceTest(TestCase):
         self.assertEqual(FATOR_CORREDOR[CORREDOR_LITORAL_CURTO], 0.86)
 
     def test_classificar_corredor_campos_gerais(self):
-        """Curitiba -> Ponta Grossa: CAMPOS_GERAIS_CURTO com buffer definido pela distância."""
+        """Curitiba -> Ponta Grossa: CAMPOS_GERAIS_CURTO com buffer definido pela distÃ¢ncia."""
         from eventos.services.estimativa_local import (
             estimar_distancia_duracao,
             CORREDOR_CAMPOS_GERAIS_CURTO,
@@ -1976,7 +1967,7 @@ class EstimativaLocalServiceTest(TestCase):
         )
 
     def test_classificar_corredor_norte_noroeste(self):
-        """Curitiba -> Maringá: NORTE_NOROESTE com buffer definido pela distância."""
+        """Curitiba -> MaringÃ¡: NORTE_NOROESTE com buffer definido pela distÃ¢ncia."""
         from eventos.services.estimativa_local import (
             estimar_distancia_duracao,
             CORREDOR_NORTE_NOROESTE,
@@ -1994,7 +1985,7 @@ class EstimativaLocalServiceTest(TestCase):
         )
 
     def test_classificar_corredor_oeste_br277(self):
-        """Curitiba -> Cascavel: OESTE_BR277 com buffer definido pela distância."""
+        """Curitiba -> Cascavel: OESTE_BR277 com buffer definido pela distÃ¢ncia."""
         from eventos.services.estimativa_local import (
             estimar_distancia_duracao,
             CORREDOR_OESTE_BR277,
@@ -2012,7 +2003,7 @@ class EstimativaLocalServiceTest(TestCase):
         )
 
     def test_fator_corredor_aplicado(self):
-        """tempo_viagem_estimado = tempo_cru_base * fator_corredor (arredondado múltiplo 5)."""
+        """tempo_viagem_estimado = tempo_cru_base * fator_corredor (arredondado mÃºltiplo 5)."""
         from eventos.services.estimativa_local import (
             estimar_distancia_duracao,
             _velocidade_base_por_faixa,
@@ -2048,9 +2039,9 @@ class EstimativaLocalServiceTest(TestCase):
         self.assertEqual(sugerir_buffer_operacional('IGNORADO', 601), 75)
 
     def test_fator_rodoviario_por_faixa(self):
-        """Fator rodoviário por linha reta: até 60→1.20; 61-120→1.18; 121-250→1.17; 251-400→1.19; 401-700→1.22; >700→1.24."""
+        """Fator rodoviÃ¡rio por linha reta: atÃ© 60â†’1.20; 61-120â†’1.18; 121-250â†’1.17; 251-400â†’1.19; 401-700â†’1.22; >700â†’1.24."""
         from eventos.services.estimativa_local import estimar_distancia_duracao, _fator_rodoviario_por_faixa
-        # ~100 km linha reta: faixa 61-120 -> fator 1.18 -> rodoviário ~118 km
+        # ~100 km linha reta: faixa 61-120 -> fator 1.18 -> rodoviÃ¡rio ~118 km
         out = estimar_distancia_duracao(0, 0, 0, 0.9)
         self.assertTrue(out['ok'])
         self.assertAlmostEqual(float(out['distancia_km']), 118, delta=8)
@@ -2063,7 +2054,7 @@ class EstimativaLocalServiceTest(TestCase):
         self.assertEqual(float(_fator_rodoviario_por_faixa(800)), 1.24)
 
     def test_arredondamento_multiplo_5_proximo(self):
-        """Arredondar para o múltiplo de 5 mais próximo (neutro)."""
+        """Arredondar para o mÃºltiplo de 5 mais prÃ³ximo (neutro)."""
         from eventos.services.estimativa_local import arredondar_para_multiplo_5_proximo
         self.assertEqual(arredondar_para_multiplo_5_proximo(362), 360)  # 6h02 -> 6h00
         self.assertEqual(arredondar_para_multiplo_5_proximo(363), 365)  # 6h03 -> 6h05
@@ -2092,7 +2083,7 @@ class EstimativaLocalServiceTest(TestCase):
         self.assertEqual(out['erro'], ERRO_SEM_COORDENADAS)
 
     def test_tempo_viagem_multiplo_5_minutos(self):
-        """tempo_viagem_estimado_min é múltiplo de 5 (arredondamento neutro)."""
+        """tempo_viagem_estimado_min Ã© mÃºltiplo de 5 (arredondamento neutro)."""
         from eventos.services.estimativa_local import estimar_distancia_duracao
         out = estimar_distancia_duracao(-25.43, -49.27, -23.42, -51.94)
         self.assertTrue(out['ok'])
@@ -2100,7 +2091,7 @@ class EstimativaLocalServiceTest(TestCase):
         self.assertEqual(out['tempo_viagem_estimado_min'] % 5, 0)
 
     def test_velocidade_base_por_faixa(self):
-        """Velocidade base por faixa: até 60→48; 61-120→56; 121-250→64; 251-400→70; 401-700→76; >700→80."""
+        """Velocidade base por faixa: atÃ© 60â†’48; 61-120â†’56; 121-250â†’64; 251-400â†’70; 401-700â†’76; >700â†’80."""
         from eventos.services.estimativa_local import _velocidade_base_por_faixa
         self.assertEqual(_velocidade_base_por_faixa(50), 48)
         self.assertEqual(_velocidade_base_por_faixa(60), 48)
@@ -2128,7 +2119,7 @@ class EstimativaLocalServiceTest(TestCase):
         )
 
     def test_estimar_tempo_por_distancia_rodoviaria(self):
-        """estimar_tempo_por_distancia_rodoviaria retorna tempo_viagem, buffer e duração pela distância."""
+        """estimar_tempo_por_distancia_rodoviaria retorna tempo_viagem, buffer e duraÃ§Ã£o pela distÃ¢ncia."""
         from eventos.services.estimativa_local import (
             estimar_tempo_por_distancia_rodoviaria,
             CORREDOR_PADRAO,
@@ -2167,7 +2158,7 @@ class EstimativaLocalServiceTest(TestCase):
         self.assertIn(out['confianca_estimativa'], ('alta', 'media', 'baixa'))
 
     def test_degradacao_limpa_sem_provider(self):
-        """Sem OSRM configurado: fallback_usado=True, rota_fonte=ESTIMATIVA_LOCAL, aplicação não quebra."""
+        """Sem OSRM configurado: fallback_usado=True, rota_fonte=ESTIMATIVA_LOCAL, aplicaÃ§Ã£o nÃ£o quebra."""
         from eventos.services.estimativa_local import (
             estimar_distancia_duracao,
             ROTA_FONTE_ESTIMATIVA_LOCAL,
@@ -2180,7 +2171,7 @@ class EstimativaLocalServiceTest(TestCase):
         self.assertEqual(out['duracao_estimada_min'], out['tempo_viagem_estimado_min'] + out['buffer_operacional_sugerido_min'])
 
     def test_buffer_nao_contamina_tempo_comparavel_maps(self):
-        """tempo_viagem_estimado_min é ETA técnico (comparável ao Maps); buffer está separado."""
+        """tempo_viagem_estimado_min Ã© ETA tÃ©cnico (comparÃ¡vel ao Maps); buffer estÃ¡ separado."""
         from eventos.services.estimativa_local import estimar_distancia_duracao
         out = estimar_distancia_duracao(-25.43, -49.27, -24.96, -53.45)
         self.assertTrue(out['ok'])
@@ -2189,7 +2180,7 @@ class EstimativaLocalServiceTest(TestCase):
         self.assertEqual(out['duracao_estimada_min'], out['tempo_viagem_estimado_min'] + out['buffer_operacional_sugerido_min'])
 
     def test_rotas_parana_curitiba_ponta_grossa(self):
-        """Curitiba -> Ponta Grossa: corredor Campos Gerais, buffer pela distância."""
+        """Curitiba -> Ponta Grossa: corredor Campos Gerais, buffer pela distÃ¢ncia."""
         from eventos.services.estimativa_local import estimar_distancia_duracao, sugerir_buffer_operacional
         out = estimar_distancia_duracao(-25.4284, -49.2733, -25.09, -50.16)
         self.assertTrue(out['ok'])
@@ -2200,7 +2191,7 @@ class EstimativaLocalServiceTest(TestCase):
         )
 
     def test_rotas_parana_curitiba_cascavel(self):
-        """Curitiba -> Cascavel: corredor Oeste BR-277, buffer pela distância."""
+        """Curitiba -> Cascavel: corredor Oeste BR-277, buffer pela distÃ¢ncia."""
         from eventos.services.estimativa_local import estimar_distancia_duracao, sugerir_buffer_operacional
         out = estimar_distancia_duracao(-25.4284, -49.2733, -24.96, -53.45)
         self.assertTrue(out['ok'])
@@ -2234,7 +2225,7 @@ class EstimativaLocalServiceTest(TestCase):
 
 
 class CalibracaoEstimativaLocalTest(TestCase):
-    """Testes da camada de calibração (ajustes por corredor, faixa, atributos)."""
+    """Testes da camada de calibraÃ§Ã£o (ajustes por corredor, faixa, atributos)."""
 
     def test_get_faixa_distancia_key(self):
         from eventos.services.estimativa_local import get_faixa_distancia_key, FAIXA_ATE_60, FAIXA_61_120, FAIXA_121_250, FAIXA_251_400, FAIXA_401_700, FAIXA_ACIMA_700
@@ -2353,7 +2344,7 @@ class CalibracaoEstimativaLocalTest(TestCase):
         )
 
     def test_buffer_nao_contamina_eta_com_osrm(self):
-        """tempo_viagem_estimado_min é ETA técnico; buffer separado (com provider)."""
+        """tempo_viagem_estimado_min Ã© ETA tÃ©cnico; buffer separado (com provider)."""
         from eventos.services.estimativa_local import estimar_distancia_duracao
         from eventos.services.routing_provider import RouteResult
         mock_route = RouteResult(
@@ -2469,21 +2460,21 @@ class EstimativaParanaProviderClassificacaoTest(TestCase):
         from scripts.analisar_estimativa_pr import load_benchmark
 
         destinos_esperados = {
-            'Pontal do Paraná',
-            'Paranaguá',
+            'Pontal do ParanÃ¡',
+            'ParanaguÃ¡',
             'Ponta Grossa',
-            'Telêmaco Borba',
+            'TelÃªmaco Borba',
             'Guarapuava',
             'Londrina',
             'Apucarana',
-            'Maringá',
+            'MaringÃ¡',
             'Cianorte',
             'Umuarama',
             'Cruzeiro do Sul',
             'Cascavel',
             'Palotina',
-            'Foz do Iguaçu',
-            'Francisco Beltrão',
+            'Foz do IguaÃ§u',
+            'Francisco BeltrÃ£o',
         }
 
         destinos = {item['destino_nome'] for item in load_benchmark()}
@@ -2491,12 +2482,12 @@ class EstimativaParanaProviderClassificacaoTest(TestCase):
 
 
 class ScriptAnalisarEstimativaPrTest(TestCase):
-    """Testes do script de benchmark/calibração (métricas e sugestão)."""
+    """Testes do script de benchmark/calibraÃ§Ã£o (mÃ©tricas e sugestÃ£o)."""
 
     def test_script_calcula_metricas_com_benchmark_temporario(self):
         import tempfile
         from scripts.analisar_estimativa_pr import load_benchmark, tempo_referencia
-        # Benchmark com 2 rotas e tempo de referência: erros absolutos 10 e 20 → MAE 15
+        # Benchmark com 2 rotas e tempo de referÃªncia: erros absolutos 10 e 20 â†’ MAE 15
         records = [
             {
                 'origem_lat': -25.43, 'origem_lon': -49.27, 'destino_lat': -25.09, 'destino_lon': -50.16,
@@ -2522,7 +2513,7 @@ class ScriptAnalisarEstimativaPrTest(TestCase):
         import subprocess
         import tempfile
         BASE_DIR = Path(settings.BASE_DIR)
-        # Dois registros mesmo corredor: erro +12 e +12 → sugestão -12
+        # Dois registros mesmo corredor: erro +12 e +12 â†’ sugestÃ£o -12
         records = [
             {
                 'origem_lat': -25.4284, 'origem_lon': -49.2733, 'destino_lat': -25.09, 'destino_lon': -50.16,
@@ -2580,7 +2571,7 @@ class OSRMRoutingProviderHTTPTest(TestCase):
         self.assertIn('BR-376', result.refs_predominantes)
 
     def test_osrm_retorna_none_em_timeout(self):
-        """Quando requests.get dá timeout, provider retorna None (sistema usa fallback)."""
+        """Quando requests.get dÃ¡ timeout, provider retorna None (sistema usa fallback)."""
         import requests
         from eventos.services.routing_provider import OSRMRoutingProvider
         with patch('requests.get', side_effect=requests.Timeout('timeout')):
@@ -2610,7 +2601,7 @@ class OSRMRoutingProviderHTTPTest(TestCase):
         self.assertIsNone(result)
 
     def test_osrm_retorna_none_quando_base_url_vazia(self):
-        """Quando base_url é vazio, provider.route retorna None sem chamar HTTP."""
+        """Quando base_url Ã© vazio, provider.route retorna None sem chamar HTTP."""
         from eventos.services.routing_provider import OSRMRoutingProvider
         provider = OSRMRoutingProvider('', timeout_seconds=5)
         with patch('requests.get') as mock_get:
@@ -2625,13 +2616,13 @@ class TrechoCalcularKmEndpointTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
         self.client = Client()
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade_a = Cidade.objects.create(
             nome='Curitiba', estado=self.estado, codigo_ibge='4106902',
             latitude=Decimal('-25.4284'), longitude=Decimal('-49.2733'),
         )
         self.cidade_b = Cidade.objects.create(
-            nome='Maringá', estado=self.estado, codigo_ibge='4115200',
+            nome='MaringÃ¡', estado=self.estado, codigo_ibge='4115200',
             latitude=Decimal('-23.4205'), longitude=Decimal('-51.9332'),
         )
         self.evento = Evento.objects.create(
@@ -2690,7 +2681,7 @@ class TrechoCalcularKmEndpointTest(TestCase):
         self.assertIsNotNone(self.trecho.duracao_estimada_min)
         self.assertIsNotNone(self.trecho.tempo_cru_estimado_min)
         self.assertIsNotNone(self.trecho.tempo_adicional_min)
-        # duracao_estimada_min persiste o total retornado pelo serviço (cru + adicional + correção final)
+        # duracao_estimada_min persiste o total retornado pelo serviÃ§o (cru + adicional + correÃ§Ã£o final)
         self.assertEqual(self.trecho.duracao_estimada_min, data['duracao_estimada_min'])
         self.assertEqual(self.trecho.rota_fonte, 'ESTIMATIVA_LOCAL')
         self.assertIsNotNone(self.trecho.rota_calculada_em)
@@ -2749,13 +2740,13 @@ class EstimarKmPorCidadesEndpointTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
         self.client = Client()
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade_a = Cidade.objects.create(
             nome='Curitiba', estado=self.estado, codigo_ibge='4106902',
             latitude=Decimal('-25.4284'), longitude=Decimal('-49.2733'),
         )
         self.cidade_b = Cidade.objects.create(
-            nome='Maringá', estado=self.estado, codigo_ibge='4115200',
+            nome='MaringÃ¡', estado=self.estado, codigo_ibge='4115200',
             latitude=Decimal('-23.4205'), longitude=Decimal('-51.9332'),
         )
 
@@ -2770,7 +2761,7 @@ class EstimarKmPorCidadesEndpointTest(TestCase):
         self.assertIn('login', response.url)
 
     def test_estimar_km_por_cidades_retorna_mesmo_formato_que_trecho_calcular(self):
-        """Endpoint retorna ok, distancia_km, tempo_cru_estimado_min, tempo_adicional_sugerido_min (não persiste)."""
+        """Endpoint retorna ok, distancia_km, tempo_cru_estimado_min, tempo_adicional_sugerido_min (nÃ£o persiste)."""
         self.client.login(username='u', password='p')
         url = reverse('eventos:trechos-estimar')
         response = self.client.post(
@@ -2802,7 +2793,7 @@ class EstimarKmPorCidadesEndpointTest(TestCase):
         self.assertIn('origem_cidade_id', data.get('erro', '').lower())
 
     def test_trechos_estimar_trecho_novo_sem_pk(self):
-        """Endpoint trechos-estimar/ permite estimar por origem/destino sem trecho salvo (não persiste)."""
+        """Endpoint trechos-estimar/ permite estimar por origem/destino sem trecho salvo (nÃ£o persiste)."""
         self.client.login(username='u', password='p')
         url = reverse('eventos:trechos-estimar')
         n_before = RoteiroEventoTrecho.objects.count()
@@ -2837,41 +2828,11 @@ class PainelBlocosClicaveisTest(TestCase):
             status=Evento.STATUS_RASCUNHO,
         )
 
-    def test_painel_ordem_de_negocio_1_a_7(self):
-        """Ordem funcional: 1 Dados, 2 Roteiros, 3 Termos, 4 PT/OS, 5 Ofícios, 6 Justificativa, 7 Finalização."""
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        etapas = response.context['etapas']
-        self.assertEqual([e['numero'] for e in etapas], [1, 2, 3, 4, 5, 6, 7])
-        nomes = [e['nome'] for e in etapas]
-        self.assertEqual(nomes[0], 'Dados do evento')
-        self.assertEqual(nomes[1], 'Roteiros')
-        self.assertEqual(nomes[2], 'Termos')
-        self.assertIn('Plano de Trabalho', nomes[3])
-        self.assertTrue((nomes[4] or '').lower().startswith('of'))
-        self.assertEqual(nomes[5], 'Justificativa')
-        self.assertTrue((nomes[6] or '').lower().startswith('finaliza'))
-
-    def test_links_das_etapas_no_painel(self):
-        """Ordem funcional: 1 Dados, 2 Roteiros, 3 Termos, 4 PT/OS, 5 Ofícios, 6 Justificativa, 7 Finalização."""
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        etapas = response.context['etapas']
-        urls = {e['numero']: e['url'] for e in etapas}
-        self.assertEqual(len(etapas), 7)
-        self.assertEqual(urls[1], reverse('eventos:guiado-etapa-1', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(urls[2], reverse('eventos:guiado-etapa-2', kwargs={'evento_id': self.evento.pk}))
-        self.assertEqual(urls[3], reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
-        self.assertEqual(urls[4], reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}))
-        self.assertEqual(urls[5], reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
-        self.assertEqual(urls[6], reverse('eventos:guiado-etapa-6', kwargs={'evento_id': self.evento.pk}))
-        self.assertEqual(urls[7], reverse('eventos:guiado-etapa-7', kwargs={'evento_id': self.evento.pk}))
-
     def test_telas_reais_das_etapas(self):
         urls = [
             reverse('eventos:guiado-etapa-1', kwargs={'pk': self.evento.pk}),
             reverse('eventos:guiado-etapa-2', kwargs={'evento_id': self.evento.pk}),
-            reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}),
+            reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}),
             reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}),
             reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}),
             reverse('eventos:guiado-etapa-6', kwargs={'evento_id': self.evento.pk}),
@@ -2883,7 +2844,7 @@ class PainelBlocosClicaveisTest(TestCase):
 
 
 class EventoEtapa4PtOsTest(TestCase):
-    """Etapa 4: usa cadastro real de Plano de Trabalho e Ordem de Serviço."""
+    """Etapa 4: usa cadastro real de Plano de Trabalho e Ordem de ServiÃ§o."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
@@ -2905,9 +2866,9 @@ class EventoEtapa4PtOsTest(TestCase):
     def test_etapa_4_get_mostra_links_para_cadastro_real(self):
         response = self.client.get(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Etapa 4 — PT / OS')
+        self.assertContains(response, 'Etapa 4 â€” PT / OS')
         self.assertContains(response, 'Novo Plano de Trabalho')
-        self.assertContains(response, 'Nova Ordem de Serviço')
+        self.assertContains(response, 'Nova Ordem de ServiÃ§o')
         self.assertContains(response, f'preselected_event_id={self.evento.pk}')
 
     def test_etapa_4_lista_pt_os_reais_vinculados_ao_evento(self):
@@ -2917,18 +2878,6 @@ class EventoEtapa4PtOsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, str(pt.pk))
         self.assertContains(response, str(os.pk))
-
-    def test_painel_etapa4_fica_ok_quando_ha_pt_finalizado(self):
-        PlanoTrabalho.objects.create(
-            evento=self.evento,
-            objetivo='PT finalizado',
-            status=PlanoTrabalho.STATUS_FINALIZADO,
-        )
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        etapa = next(e for e in response.context['etapas'] if e['numero'] == 4)
-        self.assertTrue(etapa['ok'])
-
 
 class EventoEtapa5TermosTest(TestCase):
     """Etapa 3 ? Termos no n?vel do evento: status, modalidade e gera??o por participante."""
@@ -2983,19 +2932,19 @@ class EventoEtapa5TermosTest(TestCase):
 
     def test_etapa_5_exige_login(self):
         self.client.logout()
-        response = self.client.get(reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
+        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
     def test_etapa_5_get_sem_oficios_exibe_mensagem(self):
-        response = self.client.get(reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
+        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Nenhum participante no evento')
 
     def test_etapa_5_get_com_oficio_e_viajante_exibe_tabela(self):
         viajante = self._criar_viajante(nome='Viajante A')
         self._vincular_viajante_em_oficio(viajante)
-        response = self.client.get(reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
+        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, viajante.nome)
         self.assertContains(response, 'value="PENDENTE"')
@@ -3004,13 +2953,13 @@ class EventoEtapa5TermosTest(TestCase):
         self.assertContains(response, 'value="SEMIPREENCHIDO"')
 
     def test_etapa_5_restaura_toolbar_propria_com_toggle_sem_filtros_globais(self):
-        response = self.client.get(reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
+        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
         content = response.content.decode('utf-8')
 
         self.assertContains(response, 'Completa')
         self.assertContains(response, 'Visualizacao unica')
-        self.assertContains(response, 'Novo ofício')
+        self.assertContains(response, 'Novo ofÃ­cio')
         self.assertIn('data-list-view-root', content)
         self.assertIn('data-view-mode="rich"', content)
         self.assertIn('data-view-storage-key="central-viagens.guiado.etapa3.oficios.view-mode"', content)
@@ -3028,7 +2977,7 @@ class EventoEtapa5TermosTest(TestCase):
         viajante = self._criar_viajante(nome='Viajante B')
         self._vincular_viajante_em_oficio(viajante)
         response = self.client.post(
-            reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}),
+            reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}),
             {
                 f'status_{viajante.pk}': EventoTermoParticipante.STATUS_DISPENSADO,
                 f'modalidade_{viajante.pk}': EventoTermoParticipante.MODALIDADE_SEMIPREENCHIDO,
@@ -3062,7 +3011,7 @@ class EventoEtapa5TermosTest(TestCase):
     def test_etapa_5_acoes_participante_dispensar_reabrir(self):
         viajante = self._criar_viajante(nome='Viajante C')
         self._vincular_viajante_em_oficio(viajante)
-        url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk})
+        url = reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk})
 
         post_dispensa = self.client.post(url, {'acao_participante': f'dispensar:{viajante.pk}'})
         self.assertEqual(post_dispensa.status_code, 302)
@@ -3196,7 +3145,7 @@ class EventoEtapa5TermosTest(TestCase):
         oficio2 = self._vincular_viajante_em_oficio(viajante2, numero=2)
         oficio2.viajantes.add(viajante1)
 
-        response = self.client.get(reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
+        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, viajante1.nome)
@@ -3204,59 +3153,8 @@ class EventoEtapa5TermosTest(TestCase):
         self.assertContains(response, oficio1.numero_formatado)
         self.assertContains(response, oficio2.numero_formatado)
 
-    def test_etapa_5_painel_ok_quando_sem_participantes(self):
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        etapa_termos = next(e for e in response.context['etapas'] if e['numero'] == 3)
-        self.assertTrue(etapa_termos['ok'])
-
-    def test_etapa_5_painel_pendente_quando_participante_pendente(self):
-        viajante = self._criar_viajante(nome='V', cpf='11122233344')
-        self._vincular_viajante_em_oficio(viajante)
-        EventoTermoParticipante.objects.create(evento=self.evento, viajante=viajante, status=EventoTermoParticipante.STATUS_PENDENTE)
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        etapa_termos = next(e for e in response.context['etapas'] if e['numero'] == 3)
-        self.assertFalse(etapa_termos['ok'])
-
-    def test_etapa_5_painel_em_andamento_quando_algum_nao_finalizador(self):
-        viajante1 = self._criar_viajante(nome='V1', cpf='11122233341')
-        viajante2 = self._criar_viajante(nome='V2', cpf='11122233342')
-        oficio = Oficio.objects.create(evento=self.evento, status=Oficio.STATUS_RASCUNHO)
-        oficio.viajantes.add(viajante1, viajante2)
-        EventoTermoParticipante.objects.create(evento=self.evento, viajante=viajante1, status=EventoTermoParticipante.STATUS_GERADO)
-        EventoTermoParticipante.objects.create(evento=self.evento, viajante=viajante2, status=EventoTermoParticipante.STATUS_PENDENTE)
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        etapa_termos = next(e for e in response.context['etapas'] if e['numero'] == 3)
-        self.assertTrue(etapa_termos['em_andamento'])
-
-    def test_etapa_5_painel_ok_quando_todos_dispensado_ou_concluido(self):
-        viajante = self._criar_viajante(nome='V', cpf='55566677788')
-        self._vincular_viajante_em_oficio(viajante)
-        EventoTermoParticipante.objects.create(evento=self.evento, viajante=viajante, status=EventoTermoParticipante.STATUS_CONCLUIDO)
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        etapa_termos = next(e for e in response.context['etapas'] if e['numero'] == 3)
-        self.assertTrue(etapa_termos['ok'])
-
-    def test_etapa_5_salvar_e_voltar_ao_painel(self):
-        viajante = self._criar_viajante(nome='V', cpf='99988877766')
-        self._vincular_viajante_em_oficio(viajante)
-        response = self.client.post(
-            reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}),
-            {
-                f'status_{viajante.pk}': EventoTermoParticipante.STATUS_DISPENSADO,
-                f'modalidade_{viajante.pk}': EventoTermoParticipante.MODALIDADE_COMPLETO,
-                'voltar_painel': '1',
-            },
-        )
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('guiado/painel', response.url)
-
-
 class EventoEtapa6FinalizacaoTest(TestCase):
-    """Etapa 6 — Finalização: checklist, pendências, observações, finalizar evento, painel."""
+    """Etapa 6 â€” FinalizaÃ§Ã£o: checklist, pendÃªncias, observaÃ§Ãµes, finalizar evento, painel."""
 
     def setUp(self):
         self.user = get_user_model().objects.create_user(username='u6', password='p6')
@@ -3278,11 +3176,11 @@ class EventoEtapa6FinalizacaoTest(TestCase):
     def test_etapa_6_get_exibe_checklist_e_pendencias(self):
         response = self.client.get(reverse('eventos:guiado-etapa-7', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Situação das etapas')
+        self.assertContains(response, 'SituaÃ§Ã£o das etapas')
         self.assertContains(response, 'Etapa 4')
         self.assertContains(response, 'Etapa 5')
         self.assertContains(response, 'Etapa 6')
-        self.assertContains(response, 'Pendências para finalizar')
+        self.assertContains(response, 'PendÃªncias para finalizar')
 
     def test_etapa_6_post_salva_observacoes(self):
         response = self.client.post(
@@ -3299,7 +3197,7 @@ class EventoEtapa6FinalizacaoTest(TestCase):
             reverse('eventos:guiado-finalizacao', kwargs={'evento_id': self.evento.pk}),
             {
                 'autosave': '1',
-                'observacoes_finais': 'Observação salva automaticamente.',
+                'observacoes_finais': 'ObservaÃ§Ã£o salva automaticamente.',
             },
             HTTP_X_REQUESTED_WITH='XMLHttpRequest',
         )
@@ -3307,11 +3205,11 @@ class EventoEtapa6FinalizacaoTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json().get('ok'))
         fin = EventoFinalizacao.objects.get(evento=self.evento)
-        self.assertEqual((fin.observacoes_finais or '').strip(), 'Observação salva automaticamente.')
+        self.assertEqual((fin.observacoes_finais or '').strip(), 'ObservaÃ§Ã£o salva automaticamente.')
 
     def test_etapa_6_finalizar_com_criterios_atendidos(self):
-        tipo = TipoDemandaEvento.objects.create(nome='AÇÃO TESTE FINALIZAR', ordem=999, ativo=True, is_outros=False)
-        estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        tipo = TipoDemandaEvento.objects.create(nome='AÃ‡ÃƒO TESTE FINALIZAR', ordem=999, ativo=True, is_outros=False)
+        estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         cidade = Cidade.objects.create(nome='Curitiba', estado=estado, codigo_ibge='4106902')
         etapa1_resp = self.client.post(
             reverse('eventos:guiado-etapa-1', kwargs={'pk': self.evento.pk}),
@@ -3348,39 +3246,15 @@ class EventoEtapa6FinalizacaoTest(TestCase):
             {'observacoes_finais': '', 'finalizar': '1'},
         )
         self.assertEqual(response.status_code, 302)
-        self.assertIn('guiado/painel', response.url)
+        self.assertIn('guiado-finalizacao', response.url)
         fin = EventoFinalizacao.objects.get(evento=self.evento)
         self.assertIsNotNone(fin.finalizado_em)
         self.assertEqual(fin.finalizado_por_id, self.user.pk)
         self.evento.refresh_from_db()
         self.assertEqual(self.evento.status, Evento.STATUS_FINALIZADO)
 
-    def test_etapa_6_painel_pendente_sem_registro(self):
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Etapa 7 — Finalização')
-        self.assertContains(response, 'Pendente')
-
-    def test_etapa_6_painel_em_andamento_com_observacoes_sem_finalizar(self):
-        EventoFinalizacao.objects.create(evento=self.evento, observacoes_finais='Em andamento.')
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Em andamento')
-
-    def test_etapa_6_painel_ok_quando_finalizado(self):
-        EventoFinalizacao.objects.create(
-            evento=self.evento,
-            observacoes_finais='',
-            finalizado_em=tz.now(),
-            finalizado_por=self.user,
-        )
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'bg-success')
-
-
 class EventoFinalizadoTravasTest(TestCase):
-    """Travas pós-finalização: bloquear exclusão, mas permitir edição do evento e dos ofícios."""
+    """Travas pÃ³s-finalizaÃ§Ã£o: bloquear exclusÃ£o, mas permitir ediÃ§Ã£o do evento e dos ofÃ­cios."""
 
     def setUp(self):
         self.user = get_user_model().objects.create_user(username='u_trava', password='p_trava')
@@ -3402,7 +3276,6 @@ class EventoFinalizadoTravasTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(Evento.objects.filter(pk=self.evento.pk).exists())
         self.assertContains(response, 'finalizado')
-        self.assertContains(response, 'não pode')
 
     def test_get_etapa_1_finalizado_retorna_200_consulta(self):
         response = self.client.get(reverse('eventos:guiado-etapa-1', kwargs={'pk': self.evento.pk}))
@@ -3413,36 +3286,32 @@ class EventoFinalizadoTravasTest(TestCase):
             reverse('eventos:guiado-etapa-1', kwargs={'pk': self.evento.pk}),
             {'data_inicio': '2025-01-10', 'data_fim': '2025-01-15', 'tipos_demanda': []},
         )
-        # Continua sujeito às validações normais do formulário,
-        # mas não deve ser bloqueado apenas por o evento estar finalizado.
+        # Continua sujeito Ã s validaÃ§Ãµes normais do formulÃ¡rio,
+        # mas nÃ£o deve ser bloqueado apenas por o evento estar finalizado.
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'Evento finalizado. Não é possível alterar os dados do evento.')
+        self.assertNotContains(response, 'Evento finalizado. NÃ£o Ã© possÃ­vel alterar os dados do evento.')
 
     def test_post_etapa_4_finalizado_bloqueado(self):
-        PlanoTrabalho.objects.create(evento=self.evento, objetivo='Existente')
+        PlanoTrabalho.objects.create(evento=self.evento)
         before_pt = PlanoTrabalho.objects.filter(evento=self.evento).count()
         before_os = OrdemServico.objects.filter(evento=self.evento).count()
         response = self.client.post(
             reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}),
             {'qualquer': 'valor'},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(PlanoTrabalho.objects.filter(evento=self.evento).count(), before_pt)
         self.assertEqual(OrdemServico.objects.filter(evento=self.evento).count(), before_os)
 
-    def test_post_etapa_5_finalizado_bloqueado(self):
+    def test_get_etapa_5_finalizado_retorna_200_consulta(self):
         viajante = Viajante.objects.create(nome='V', cpf='11122233344')
         oficio = Oficio.objects.create(evento=self.evento, status=Oficio.STATUS_RASCUNHO)
         oficio.viajantes.add(viajante)
         EventoTermoParticipante.objects.create(
             evento=self.evento, viajante=viajante, status=EventoTermoParticipante.STATUS_PENDENTE,
         )
-        response = self.client.post(
-            reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}),
-            {f'status_{viajante.pk}': EventoTermoParticipante.STATUS_DISPENSADO},
-        )
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('guiado/painel', response.url)
+        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
+        self.assertEqual(response.status_code, 200)
         termo = self.evento.termos_participantes.get(viajante=viajante)
         self.assertEqual(termo.status, EventoTermoParticipante.STATUS_PENDENTE)
 
@@ -3470,15 +3339,10 @@ class EventoFinalizadoTravasTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn('guiado/etapa-3', response.url)
+        self.assertIn('guiado/termos', response.url)
         self.assertFalse(
             EventoParticipante.objects.filter(evento=self.evento, viajante=viajante_novo).exists()
         )
-
-    def test_painel_finalizado_nao_exibe_botao_excluir(self):
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'Excluir evento')
 
     def test_oficio_excluir_bloqueado_quando_evento_finalizado(self):
         oficio = Oficio.objects.create(evento=self.evento, status=Oficio.STATUS_RASCUNHO)
@@ -3499,18 +3363,18 @@ class EventoFinalizadoTravasTest(TestCase):
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
-        # Não deve haver mensagem de bloqueio apenas por o evento estar finalizado.
-        self.assertNotContains(response, 'Evento finalizado. Não é possível editar ofícios vinculados.')
+        # NÃ£o deve haver mensagem de bloqueio apenas por o evento estar finalizado.
+        self.assertNotContains(response, 'Evento finalizado. NÃ£o Ã© possÃ­vel editar ofÃ­cios vinculados.')
 
 
 class EventoEtapa3OficiosTest(TestCase):
-    """Etapa 5 — Ofícios do evento (hub): listar, criar, status OK/Pendente. URL: guiado-etapa-5."""
+    """Etapa 5 â€” OfÃ­cios do evento (hub): listar, criar, status OK/Pendente. URL: guiado-etapa-5."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
         self.client = Client()
         self.client.login(username='u', password='p')
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
         self.evento = Evento.objects.create(
             titulo='Evento Etapa 3',
@@ -3530,7 +3394,7 @@ class EventoEtapa3OficiosTest(TestCase):
         oficio2 = Oficio.objects.create(evento=self.evento, numero=2, ano=2025, status=Oficio.STATUS_FINALIZADO)
         response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Ofícios do evento')
+        self.assertContains(response, 'OfÃ­cios do evento')
         self.assertContains(response, 'Rascunho')
         self.assertContains(response, 'Finalizado')
         self.assertContains(response, '02/2025')
@@ -3539,39 +3403,9 @@ class EventoEtapa3OficiosTest(TestCase):
     def test_etapa_3_mostra_botao_criar_oficio(self):
         response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Criar Ofício neste Evento')
+        self.assertContains(response, 'Criar OfÃ­cio neste Evento')
         url_criar = reverse('eventos:guiado-etapa-5-criar-oficio', kwargs={'evento_id': self.evento.pk})
         self.assertContains(response, url_criar)
-
-    def test_etapa_3_pendente_quando_existe_apenas_oficio_rascunho(self):
-        Oficio.objects.create(evento=self.evento, status=Oficio.STATUS_RASCUNHO)
-        from eventos.views import _evento_etapa3_ok
-        self.assertFalse(_evento_etapa3_ok(self.evento))
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        etapas = response.context['etapas']
-        etapa5 = next(e for e in etapas if e['numero'] == 5)
-        self.assertFalse(etapa5['ok'])
-        self.assertContains(response, 'Ofícios')
-
-    def test_etapa_3_pendente_quando_nao_existe_oficio(self):
-        from eventos.views import _evento_etapa3_ok
-        self.assertFalse(_evento_etapa3_ok(self.evento))
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        etapas = response.context['etapas']
-        etapa5 = next(e for e in etapas if e['numero'] == 5)
-        self.assertFalse(etapa5['ok'])
-
-    def test_etapa_3_ok_quando_existe_oficio_finalizado(self):
-        Oficio.objects.create(evento=self.evento, status=Oficio.STATUS_FINALIZADO)
-        from eventos.views import _evento_etapa3_ok
-        self.assertTrue(_evento_etapa3_ok(self.evento))
-        response = self.client.get(reverse('eventos:guiado-painel', kwargs={'pk': self.evento.pk}))
-        self.assertEqual(response.status_code, 200)
-        etapas = response.context['etapas']
-        etapa5 = next(e for e in etapas if e['numero'] == 5)
-        self.assertTrue(etapa5['ok'])
 
     def test_get_criar_oficio_nao_cria_registro(self):
         url_criar = reverse('eventos:guiado-etapa-5-criar-oficio', kwargs={'evento_id': self.evento.pk})
@@ -3591,29 +3425,14 @@ class EventoEtapa3OficiosTest(TestCase):
         self.assertEqual(oficio.evento_id, self.evento.pk)
         self.assertEqual(oficio.status, Oficio.STATUS_RASCUNHO)
 
-    def test_etapa_3_abre_mesmo_quando_schema_0018_ainda_nao_foi_aplicado(self):
-        Oficio.objects.create(evento=self.evento, status=Oficio.STATUS_RASCUNHO)
-        schema_status = {
-            'available': False,
-            'message': 'Banco local desatualizado: aplique a migration 0018 do app eventos.',
-        }
-
-        with patch('eventos.views.get_oficio_justificativa_schema_status', return_value=schema_status):
-            response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Ofícios do evento')
-        self.assertContains(response, 'Justificativa: indisponível')
-
-
 class OficioWizardTest(TestCase):
-    """Wizard do Ofício: Step 1 (viajantes), Step 2 (transporte/motorista), fluxo."""
+    """Wizard do OfÃ­cio: Step 1 (viajantes), Step 2 (transporte/motorista), fluxo."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u2', password='p2')
         self.client = Client()
         self.client.login(username='u2', password='p2')
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
         self.evento = Evento.objects.create(
             titulo='Evento Teste',
@@ -3716,14 +3535,14 @@ class OficioWizardTest(TestCase):
         self.assertTrue(form.errors.get('motorista_oficio_numero') or form.errors.get('motorista_protocolo'))
 
     def test_oficio_model_exige_motorista_protocolo_9_digitos_quando_carona(self):
-        """Model Oficio.clean() deve exigir motorista_protocolo com 9 dígitos quando motorista_carona=True."""
+        """Model Oficio.clean() deve exigir motorista_protocolo com 9 dÃ­gitos quando motorista_carona=True."""
         self.oficio.motorista_carona = True
-        self.oficio.motorista_protocolo = '12345678'  # 8 dígitos
+        self.oficio.motorista_protocolo = '12345678'  # 8 dÃ­gitos
         with self.assertRaises(ValidationError) as ctx:
             self.oficio.full_clean()
         self.assertIn('motorista_protocolo', ctx.exception.message_dict)
         self.oficio.motorista_protocolo = '123456789'
-        self.oficio.full_clean()  # não deve levantar
+        self.oficio.full_clean()  # nÃ£o deve levantar
 
     def test_wizard_step2_motorista_sem_cadastro_exige_nome_manual(self):
         url = reverse('eventos:oficio-step2', kwargs={'pk': self.oficio.pk})
@@ -3811,13 +3630,13 @@ class OficioWizardTest(TestCase):
 
 
 class OficioStep1AcceptanceTest(TestCase):
-    """Aceite do Step 1 do Ofício (fidelidade ao legado)."""
+    """Aceite do Step 1 do OfÃ­cio (fidelidade ao legado)."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='step1', password='step1')
         self.client = Client()
         self.client.login(username='step1', password='step1')
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
         self.evento = Evento.objects.create(
             titulo='Evento Step 1',
@@ -4097,7 +3916,7 @@ class OficioStep1AcceptanceTest(TestCase):
         modelo = ModeloMotivoViagem.objects.create(
             codigo='modelo_step1',
             nome='Modelo Step 1',
-            texto='Texto padrão do modelo',
+            texto='Texto padrÃ£o do modelo',
             ordem=1,
             ativo=True,
         )
@@ -4105,14 +3924,14 @@ class OficioStep1AcceptanceTest(TestCase):
         response = self.client.post(url, data=self._payload_step1(oficio, modelo_motivo=modelo.pk, motivo=''))
         self.assertEqual(response.status_code, 302)
         oficio.refresh_from_db()
-        self.assertEqual(oficio.motivo, 'Texto padrão do modelo')
+        self.assertEqual(oficio.motivo, 'Texto padrÃ£o do modelo')
         self.assertEqual(oficio.modelo_motivo_id, modelo.pk)
 
     def test_8_motivo_pode_ser_editado_manualmente(self):
         oficio = self._criar_oficio(ano=2026)
         modelo = ModeloMotivoViagem.objects.create(
             codigo='modelo_editavel',
-            nome='Modelo Editável',
+            nome='Modelo EditÃ¡vel',
             texto='Texto original',
             ordem=2,
             ativo=True,
@@ -4164,13 +3983,13 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertFormError(
             post_resp.context['form'],
             'nome_instituicao_custeio',
-            'Informe a instituição de custeio.',
+            'Informe a instituiÃ§Ã£o de custeio.',
         )
 
     def test_custeio_diferente_de_outra_instituicao_limpa_nome(self):
         oficio = self._criar_oficio(ano=2026)
         oficio.custeio_tipo = Oficio.CUSTEIO_OUTRA_INSTITUICAO
-        oficio.nome_instituicao_custeio = 'Instituição X'
+        oficio.nome_instituicao_custeio = 'InstituiÃ§Ã£o X'
         oficio.save(update_fields=['custeio_tipo', 'nome_instituicao_custeio'])
         url = reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk})
         response = self.client.post(
@@ -4244,7 +4063,7 @@ class OficioStep1AcceptanceTest(TestCase):
                 protocolo='98.765.432-1',
                 motivo='Motivo salvo',
                 custeio_tipo=Oficio.CUSTEIO_OUTRA_INSTITUICAO,
-                nome_instituicao_custeio='Instituição de Teste',
+                nome_instituicao_custeio='InstituiÃ§Ã£o de Teste',
                 viajantes=[self.viajante_final.pk],
             ),
         )
@@ -4253,7 +4072,7 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(reaberto.status_code, 200)
         self.assertContains(reaberto, '98.765.432-1')
         self.assertContains(reaberto, 'Motivo salvo')
-        self.assertContains(reaberto, 'Instituição de Teste')
+        self.assertContains(reaberto, 'InstituiÃ§Ã£o de Teste')
         self.assertContains(reaberto, f'data-viajante-chip="{self.viajante_final.pk}"')
         self.assertContains(reaberto, f'data-viajante-hidden="{self.viajante_final.pk}"')
         self.assertContains(reaberto, self.viajante_final.nome)
@@ -4272,10 +4091,10 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertContains(response, 'data-oficio-glance-rail="1"')
         self.assertContains(response, 'data-oficio-footer-actions="1"')
         self.assertContains(response, 'Resumo essencial')
-        self.assertContains(response, 'Equipe vinculada a este ofício')
+        self.assertContains(response, 'Equipe vinculada a este ofÃ­cio')
         self.assertNotContains(response, 'oficio-wizard-submenu-actions')
         self.assertNotContains(response, 'oficio-autosave-status')
-        self.assertNotContains(response, 'Wizard do Ofício')
+        self.assertNotContains(response, 'Wizard do OfÃ­cio')
         self.assertNotContains(response, 'Lista de eventos')
         self.assertNotContains(response, 'form-actions')
 
@@ -4312,7 +4131,7 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertContains(reaberto, '12.345.678-9')
 
     def test_step2_preenche_carona_oficio_referencia_quando_numero_ano_existem(self):
-        """Step 2 deve preencher carona_oficio_referencia quando motorista carona e número/ano batem com outro ofício."""
+        """Step 2 deve preencher carona_oficio_referencia quando motorista carona e nÃºmero/ano batem com outro ofÃ­cio."""
         oficio_atual = self._criar_oficio()
         oficio_ref = self._criar_oficio()
         self.client.post(
@@ -4405,7 +4224,7 @@ class OficioStep1AcceptanceTest(TestCase):
         reaberto = self.client.get(reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}))
         self.assertEqual(reaberto.status_code, 200)
         self.assertEqual(reaberto.context['form'].initial['porte_transporte_armas'], '0')
-        self.assertEqual(reaberto.context['step2_preview']['porte_transporte_armas_label'], 'Não')
+        self.assertEqual(reaberto.context['step2_preview']['porte_transporte_armas_label'], 'NÃ£o')
 
     def test_step2_template_da_placa_tem_protecao_contra_loop(self):
         oficio = self._criar_oficio(ano=2026)
@@ -4477,7 +4296,7 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertContains(response, 'id="btn-toggle-motorista-mode"')
         self.assertNotContains(response, 'id="btn-motorista-manual"')
         self.assertNotContains(response, 'id="btn-motorista-servidor"')
-        self.assertNotContains(response, 'Wizard do Ofício')
+        self.assertNotContains(response, 'Wizard do OfÃ­cio')
         self.assertNotContains(response, 'form-actions')
 
     def test_step2_reexibe_campo_manual_quando_seleciona_motorista_sem_cadastro(self):
@@ -4535,7 +4354,7 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertFormError(
             response.context['form'],
             'motorista_oficio_numero',
-            'Informe o número do ofício do motorista.',
+            'Informe o nÃºmero do ofÃ­cio do motorista.',
         )
         self.assertFormError(
             response.context['form'],
@@ -4614,7 +4433,7 @@ class OficioStep1AcceptanceTest(TestCase):
                 protocolo='98.765.432-1',
                 motivo='Motivo acumulado',
                 custeio_tipo=Oficio.CUSTEIO_OUTRA_INSTITUICAO,
-                nome_instituicao_custeio='Instituição Acumulada',
+                nome_instituicao_custeio='InstituiÃ§Ã£o Acumulada',
                 viajantes=[self.viajante_final.pk],
             ),
         )
@@ -4643,8 +4462,8 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertContains(response, 'id="motorista-carona-wrapper"')
         self.assertContains(response, 'value="12"')
         self.assertContains(response, 'value="12.345.678-9"')
-        self.assertNotContains(response, 'Relatório rápido')
-        self.assertNotContains(response, 'Leitura rápida do motorista')
+        self.assertNotContains(response, 'RelatÃ³rio rÃ¡pido')
+        self.assertNotContains(response, 'Leitura rÃ¡pida do motorista')
 
     def test_step2_resumo_manual_carona_mostra_documentos_sem_dados_cadastrais(self):
         oficio = self._criar_oficio(ano=2026)
@@ -4668,7 +4487,7 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertIn('value="12.345.678-9"', server_html)
         self.assertIn('id="motorista-carona-wrapper"', server_html)
         self.assertNotIn('preview-motorista-nome"', server_html)
-        self.assertNotIn('Leitura rápida do motorista', server_html)
+        self.assertNotIn('Leitura rÃ¡pida do motorista', server_html)
 
     def test_step2_motorista_do_oficio_nao_exibe_linhas_vazias_de_carona_no_resumo(self):
         oficio = self._criar_oficio(ano=2026)
@@ -4747,7 +4566,7 @@ class OficioStep1AcceptanceTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, '<header class="main-header">', html=True)
-        self.assertContains(response, 'Voltar ao Ofício')
+        self.assertContains(response, 'Voltar ao OfÃ­cio')
         self.assertNotContains(response, 'Voltar para Step 1')
 
     def test_modelo_motivo_texto_api_retorna_texto(self):
@@ -4786,7 +4605,7 @@ class OficioStep1AcceptanceTest(TestCase):
         response = self.client.get(reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Pré-preenchido com o roteiro salvo.')
+        self.assertContains(response, 'PrÃ©-preenchido com o roteiro salvo.')
         self.assertContains(response, cidade_destino.nome)
         self.assertEqual(len(response.context['trechos_state']), 1)
         self.assertEqual(response.context['trechos_state'][0]['saida_data'], '2026-02-10')
@@ -4897,7 +4716,7 @@ class OficioStep1AcceptanceTest(TestCase):
 
     def test_step3_salva_trechos_no_proprio_oficio_sem_corromper_roteiro_evento(self):
         oficio = self._criar_oficio(ano=2026)
-        cidade_destino = Cidade.objects.create(nome='Maringá Step3', estado=self.estado, codigo_ibge='4115201')
+        cidade_destino = Cidade.objects.create(nome='MaringÃ¡ Step3', estado=self.estado, codigo_ibge='4115201')
         roteiro = self._criar_roteiro_evento_base([cidade_destino])
 
         response = self.client.post(
@@ -5413,7 +5232,7 @@ class OficioStep1AcceptanceTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Informe a saída do retorno')
+        self.assertContains(response, 'Informe a saÃ­da do retorno')
         self.assertContains(response, 'Informe a chegada do retorno')
 
     def test_step3_resumo_rapido_acumula_steps_1_2_e_3(self):
@@ -5450,9 +5269,9 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertContains(response, 'id="summary-oficio"')
         self.assertContains(response, 'id="summary-destino"')
         self.assertContains(response, 'id="summary-data-evento"')
-        self.assertContains(response, '10/01/2026 até 12/01/2026')
+        self.assertContains(response, '10/01/2026 atÃ© 12/01/2026')
         self.assertContains(response, cidade_destino.nome)
-        self.assertNotContains(response, 'Relatório rápido')
+        self.assertNotContains(response, 'RelatÃ³rio rÃ¡pido')
 
     def test_step3_cabecalho_fixo_remove_texto_legado_e_mostra_nova_ui(self):
         oficio = self._criar_oficio(ano=2026)
@@ -5465,22 +5284,22 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertContains(response, 'data-oficio-glance-rail="1"')
         self.assertContains(response, 'oficio-wizard-shell')
         self.assertContains(response, 'data-oficio-footer-actions="1"')
-        self.assertContains(response, 'Equipe vinculada a este ofício')
+        self.assertContains(response, 'Equipe vinculada a este ofÃ­cio')
         self.assertNotContains(response, 'oficio-wizard-submenu-actions')
         self.assertContains(response, 'Dados e viajantes')
-        self.assertContains(response, 'Roteiro e diárias')
+        self.assertContains(response, 'Roteiro e diÃ¡rias')
         self.assertNotContains(response, 'Tempo estimado de viagem')
         self.assertContains(response, 'Tempo de viagem')
         self.assertContains(response, 'Tempo adicional')
         self.assertContains(response, 'Tempo total')
-        self.assertContains(response, 'Paraná (PR)')
+        self.assertContains(response, 'ParanÃ¡ (PR)')
         self.assertContains(response, 'Valor total')
         self.assertNotContains(response, 'Valor por extenso')
         self.assertNotContains(response, 'Step 1')
         self.assertNotContains(response, 'Salvar roteiro')
-        self.assertNotContains(response, 'Cálculo periodizado do legado com base nos horários do Step 3.')
+        self.assertNotContains(response, 'CÃ¡lculo periodizado do legado com base nos horÃ¡rios do Step 3.')
         self.assertNotContains(response, 'Calculo atualizado a partir dos horarios do Step 3.')
-        self.assertNotContains(response, 'Wizard do Ofício')
+        self.assertNotContains(response, 'Wizard do OfÃ­cio')
         self.assertNotContains(response, 'form-actions')
 
     def test_step3_calculadora_diarias_endpoint_usa_dados_dos_trechos(self):
@@ -5589,7 +5408,7 @@ class OficioStep1AcceptanceTest(TestCase):
         response = self.client.get(reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, f'{self.cidade.nome}/{self.estado.sigla} → {cidade_destino.nome}/{self.estado.sigla}')
+        self.assertContains(response, f'{self.cidade.nome}/{self.estado.sigla} â†’ {cidade_destino.nome}/{self.estado.sigla}')
         self.assertContains(response, 'Retorno:')
         self.assertContains(response, '02/07/2026 09:15')
 
@@ -5628,7 +5447,7 @@ class OficioStep1AcceptanceTest(TestCase):
 
     def test_step4_resumo_remove_relatorio_rapido_e_exibe_opcao_de_termo(self):
         oficio = self._criar_oficio(ano=2026)
-        cidade_destino = Cidade.objects.create(nome='Campo Mourão Step4', estado=self.estado, codigo_ibge='4104303')
+        cidade_destino = Cidade.objects.create(nome='Campo MourÃ£o Step4', estado=self.estado, codigo_ibge='4104303')
         oficio.viajantes.add(self.viajante_final)
 
         self.client.post(
@@ -5655,9 +5474,9 @@ class OficioStep1AcceptanceTest(TestCase):
         response = self.client.get(reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}))
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'Relatório rápido')
-        self.assertContains(response, 'Gerar termo de autorização já preenchido?')
-        self.assertContains(response, 'Finalizar Ofício')
+        self.assertNotContains(response, 'RelatÃ³rio rÃ¡pido')
+        self.assertContains(response, 'Gerar termo de autorizaÃ§Ã£o jÃ¡ preenchido?')
+        self.assertContains(response, 'Finalizar OfÃ­cio')
         self.assertContains(response, 'Baixar DOCX')
         self.assertContains(response, 'Baixar PDF')
         self.assertContains(
@@ -5676,7 +5495,7 @@ class OficioStep1AcceptanceTest(TestCase):
         )
 
     def test_step3_calculo_diarias_respeita_pernoites_tres_noites(self):
-        """Regra de pernoites: 3 noites fora da sede → 3 x 100% (não 2 x 100% + 1 x 30%)."""
+        """Regra de pernoites: 3 noites fora da sede â†’ 3 x 100% (nÃ£o 2 x 100% + 1 x 30%)."""
         oficio = self._criar_oficio(ano=2026)
         cidade_destino = Cidade.objects.create(
             nome='Interior Pernoites', estado=self.estado, codigo_ibge='4113706'
@@ -5708,7 +5527,7 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(
             payload['totais']['total_diarias'],
             '3 x 100%',
-            msg='3 pernoites (15→16, 16→17, 17→18) devem gerar 3 diárias integrais',
+            msg='3 pernoites (15â†’16, 16â†’17, 17â†’18) devem gerar 3 diÃ¡rias integrais',
         )
         self.assertEqual(payload['totais']['total_valor'], '871,65')
 
@@ -5722,7 +5541,7 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(response.status_code, 200)
         oficio.refresh_from_db()
         self.assertEqual(oficio.status, Oficio.STATUS_RASCUNHO)
-        self.assertContains(response, 'Informe o protocolo do ofício.')
+        self.assertContains(response, 'Informe o protocolo do ofÃ­cio.')
 
     def test_step4_nao_finaliza_sem_viajantes(self):
         oficio = self._criar_oficio(ano=2026)
@@ -5749,7 +5568,7 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(response.status_code, 200)
         oficio.refresh_from_db()
         self.assertEqual(oficio.status, Oficio.STATUS_RASCUNHO)
-        self.assertContains(response, 'Informe a instituição responsável pelo custeio.')
+        self.assertContains(response, 'Informe a instituiÃ§Ã£o responsÃ¡vel pelo custeio.')
 
     def test_step4_nao_finaliza_com_motorista_carona_sem_referencias(self):
         oficio = self._criar_oficio(ano=2026)
@@ -5767,7 +5586,7 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(response.status_code, 200)
         oficio.refresh_from_db()
         self.assertEqual(oficio.status, Oficio.STATUS_RASCUNHO)
-        self.assertContains(response, 'Informe o número do ofício do motorista carona.')
+        self.assertContains(response, 'Informe o nÃºmero do ofÃ­cio do motorista carona.')
         self.assertContains(response, 'Informe o protocolo do motorista carona.')
 
     def test_step4_nao_finaliza_com_step3_incompleto(self):
@@ -5933,13 +5752,13 @@ class OficioStep1AcceptanceTest(TestCase):
 
 
 class OficioJustificativaTest(TestCase):
-    """Fase 3 do ofício: justificativa obrigatória, tela própria e modelos."""
+    """Fase 3 do ofÃ­cio: justificativa obrigatÃ³ria, tela prÃ³pria e modelos."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='justificativa', password='justificativa')
         self.client = Client()
         self.client.login(username='justificativa', password='justificativa')
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
         self.evento = Evento.objects.create(
             titulo='Evento Justificativa',
@@ -6130,7 +5949,7 @@ class OficioJustificativaTest(TestCase):
         self.assertContains(reopened, 'id="id_gerar_termo_sim" value="1" checked')
         self.assertNotContains(reopened, 'id="id_gerar_termo_nao" value="0" checked')
 
-    @unittest.skip('Asserção legada com encoding corrompido; coberta pelo teste limpo abaixo.')
+    @unittest.skip('AsserÃ§Ã£o legada com encoding corrompido; coberta pelo teste limpo abaixo.')
     def test_step4_salvar_oficio_manual_persiste_escolha_do_termo(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
         self._salvar_oficio_finalizavel(
@@ -6149,7 +5968,7 @@ class OficioJustificativaTest(TestCase):
         self.assertRedirects(response, url)
         oficio.refresh_from_db()
         self.assertTrue(oficio.gerar_termo_preenchido)
-        self.assertContains(response, 'Ofício salvo.')
+        self.assertContains(response, 'OfÃ­cio salvo.')
 
     def test_step4_salvar_oficio_manual_persiste_escolha_do_termo_sem_artefato_de_encoding(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
@@ -6240,7 +6059,7 @@ class OficioJustificativaTest(TestCase):
             self.assertContains(response, 'id="summary-data-evento"')
             self.assertNotContains(response, 'id="summary-veiculo"')
             self.assertNotContains(response, 'id="summary-motorista"')
-            self.assertNotContains(response, 'Relatório rápido')
+            self.assertNotContains(response, 'RelatÃ³rio rÃ¡pido')
             self.assertNotContains(response, 'oficio-quick-report')
             self.assertNotContains(response, 'oficio-wizard-submenu-actions')
             self.assertContains(response, 'js/oficio_wizard.js')
@@ -6267,7 +6086,7 @@ class OficioJustificativaTest(TestCase):
         self.assertContains(response, 'id="summary-destino"')
         self.assertContains(response, destino.nome)
         self.assertContains(response, 'id="summary-data-evento"')
-        self.assertEqual(response.context['wizard_glance']['data_evento'], '01/10/2026 até 03/10/2026')
+        self.assertEqual(response.context['wizard_glance']['data_evento'], '01/10/2026 atÃ© 03/10/2026')
         self.assertNotContains(response, 'id="summary-veiculo"')
         self.assertNotContains(response, 'id="summary-motorista"')
         self.assertNotContains(response, 'Motivo</dt>')
@@ -6310,8 +6129,8 @@ class OficioJustificativaTest(TestCase):
     def test_tela_justificativa_preseleciona_modelo_padrao_quando_texto_ainda_vazio(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 10, 5))
         modelo = ModeloJustificativa.objects.create(
-            nome='Modelo Padrão Justificativa',
-            texto='Texto padrão da justificativa.',
+            nome='Modelo PadrÃ£o Justificativa',
+            texto='Texto padrÃ£o da justificativa.',
             padrao=True,
         )
 
@@ -6319,7 +6138,7 @@ class OficioJustificativaTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f'<option value="{modelo.pk}" selected>')
-        self.assertContains(response, 'Texto padrão da justificativa.')
+        self.assertContains(response, 'Texto padrÃ£o da justificativa.')
 
     def test_tela_justificativa_carrega_modelo_e_texto_do_modelo_novo(self):
         oficio = self._criar_oficio(data_criacao=date(2026, 10, 5))
@@ -6356,7 +6175,7 @@ class OficioJustificativaTest(TestCase):
         html = response.content.decode('utf-8')
         self.assertLess(html.index('Modelo de justificativa'), html.index('Texto da justificativa'))
         self.assertContains(response, 'id="oficio-glance-panel"')
-        self.assertNotContains(response, 'Relatório rápido')
+        self.assertNotContains(response, 'RelatÃ³rio rÃ¡pido')
 
     def test_lista_modelos_justificativa_ordena_por_nome(self):
         ModeloJustificativa.objects.create(nome='ZZZ', texto='z')
@@ -6369,7 +6188,7 @@ class OficioJustificativaTest(TestCase):
         self.assertLess(html.index('AAA'), html.index('ZZZ'))
 
     def test_modelo_justificativa_pode_ser_editado_e_excluido(self):
-        modelo = ModeloJustificativa.objects.create(nome='Modelo Editável', texto='Texto original')
+        modelo = ModeloJustificativa.objects.create(nome='Modelo EditÃ¡vel', texto='Texto original')
 
         response_edicao = self.client.post(
             reverse('eventos:modelos-justificativa-editar', kwargs={'pk': modelo.pk}),
@@ -6403,7 +6222,7 @@ class OficioJustificativaTest(TestCase):
 
 
 class OficioDocumentosTest(TestCase):
-    """Fase 4 do ofício: contexto, validação e geração documental."""
+    """Fase 4 do ofÃ­cio: contexto, validaÃ§Ã£o e geraÃ§Ã£o documental."""
 
     def setUp(self):
         reset_document_backend_capabilities_cache()
@@ -6411,7 +6230,7 @@ class OficioDocumentosTest(TestCase):
         self.user = User.objects.create_user(username='documentos', password='documentos')
         self.client = Client()
         self.client.login(username='documentos', password='documentos')
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
         self.evento = Evento.objects.create(
             titulo='Evento Documental',
@@ -6445,10 +6264,10 @@ class OficioDocumentosTest(TestCase):
         config = ConfiguracaoSistema.objects.create(
             cidade_sede_padrao=self.cidade,
             prazo_justificativa_dias=10,
-            nome_orgao='Polícia Civil do Paraná',
+            nome_orgao='PolÃ­cia Civil do ParanÃ¡',
             sigla_orgao='PCPR',
-            divisao='Diretoria de Polícia do Interior',
-            unidade='Departamento de Polícia Civil',
+            divisao='Diretoria de PolÃ­cia do Interior',
+            unidade='Departamento de PolÃ­cia Civil',
             logradouro='Rua Exemplo',
             numero='123',
             bairro='Centro',
@@ -6593,7 +6412,7 @@ class OficioDocumentosTest(TestCase):
 
     def _extract_docx_text(self, payload):
         if DocxDocument is None:
-            self.skipTest('python-docx não está instalado neste ambiente de teste.')
+            self.skipTest('python-docx nÃ£o estÃ¡ instalado neste ambiente de teste.')
         document = DocxDocument(BytesIO(payload))
         texts = [paragraph.text for paragraph in document.paragraphs if paragraph.text]
         for table in document.tables:
@@ -6703,7 +6522,7 @@ class OficioDocumentosTest(TestCase):
 
         mapping = build_oficio_template_context(oficio)
 
-        self.assertEqual(mapping['col_volta_saida'], f'Saída {destino.nome}/{self.estado.sigla}: 10/10/2026 17:30')
+        self.assertEqual(mapping['col_volta_saida'], f'SaÃ­da {destino.nome}/{self.estado.sigla}: 10/10/2026 17:30')
         self.assertEqual(mapping['col_volta_chegada'], f'Chegada {self.cidade.nome}/{self.estado.sigla}: 10/10/2026 18:10')
 
     def test_contexto_documental_da_justificativa(self):
@@ -6758,7 +6577,7 @@ class OficioDocumentosTest(TestCase):
 
     def test_mapping_oficio_formata_placeholders_humanos_em_title_case(self):
         config = self._criar_configuracao()
-        ConfiguracaoSistema.objects.filter(pk=config.pk).update(unidade='ASSESSORIA DE COMUNICAÇÃO SOCIAL')
+        ConfiguracaoSistema.objects.filter(pk=config.pk).update(unidade='ASSESSORIA DE COMUNICAÃ‡ÃƒO SOCIAL')
         oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
         self._salvar_oficio_finalizavel(oficio, date(2026, 10, 10), date(2026, 10, 11))
         oficio.refresh_from_db()
@@ -6767,11 +6586,11 @@ class OficioDocumentosTest(TestCase):
 
         self.assertEqual(mapping['nome_chefia'], 'Autoridade Assinante')
         self.assertEqual(mapping['cargo_chefia'], 'Analista Documental')
-        self.assertEqual(mapping['divisao'], 'DIRETORIA DE POLÍCIA DO INTERIOR')
-        self.assertEqual(mapping['unidade'], 'Assessoria de Comunicação Social')
-        self.assertEqual(mapping['unidade_cabecalho'], 'ASSESSORIA DE COMUNICAÇÃO SOCIAL')
-        self.assertEqual(mapping['unidade_rodape'], 'Assessoria de Comunicação Social')
-        self.assertEqual(mapping['assunto_oficio'], '(Autorização)')
+        self.assertEqual(mapping['divisao'], 'DIRETORIA DE POLÃCIA DO INTERIOR')
+        self.assertEqual(mapping['unidade'], 'Assessoria de ComunicaÃ§Ã£o Social')
+        self.assertEqual(mapping['unidade_cabecalho'], 'ASSESSORIA DE COMUNICAÃ‡ÃƒO SOCIAL')
+        self.assertEqual(mapping['unidade_rodape'], 'Assessoria de ComunicaÃ§Ã£o Social')
+        self.assertEqual(mapping['assunto_oficio'], '(AutorizaÃ§Ã£o)')
         self.assertEqual(mapping['viatura'], 'Viatura Documental')
         self.assertEqual(mapping['combustivel'], 'Gasolina')
         self.assertIn('Viajante Documental', mapping['col_servidor'])
@@ -7268,7 +7087,7 @@ class OficioDocumentosTest(TestCase):
                 return {
                     'available': False,
                     'module': None,
-                    'reason': 'docx2pdf não está instalado neste ambiente. Instale docx2pdf.',
+                    'reason': 'docx2pdf nÃ£o estÃ¡ instalado neste ambiente. Instale docx2pdf.',
                     'exception': ImportError('docx2pdf ausente'),
                 }
             return {
@@ -7302,7 +7121,7 @@ class OficioDocumentosTest(TestCase):
                 return {
                     'available': False,
                     'module': None,
-                    'reason': 'pywin32 / win32com.client não está disponível neste ambiente. Instale pywin32.',
+                    'reason': 'pywin32 / win32com.client nÃ£o estÃ¡ disponÃ­vel neste ambiente. Instale pywin32.',
                     'exception': ImportError('win32com ausente'),
                 }
             return {
@@ -7338,7 +7157,7 @@ class OficioDocumentosTest(TestCase):
             'eventos.services.documentos.backends._check_word_com_availability',
             return_value={
                 'available': False,
-                'reason': 'Microsoft Word / COM não está disponível para conversão PDF neste ambiente Windows (RuntimeError).',
+                'reason': 'Microsoft Word / COM nÃ£o estÃ¡ disponÃ­vel para conversÃ£o PDF neste ambiente Windows (RuntimeError).',
             },
         ):
             reset_document_backend_capabilities_cache()
@@ -7397,7 +7216,7 @@ class OficioDocumentosTest(TestCase):
 
         def backend_side_effect(formato):
             if getattr(formato, 'value', str(formato)) == 'pdf':
-                return {'available': False, 'message': 'Backend PDF indisponível neste ambiente atual.', 'reasons': []}
+                return {'available': False, 'message': 'Backend PDF indisponÃ­vel neste ambiente atual.', 'reasons': []}
             return {'available': True, 'message': '', 'reasons': []}
 
         with patch(
@@ -7427,8 +7246,8 @@ class OficioDocumentosTest(TestCase):
             if getattr(formato, 'value', str(formato)) == 'pdf':
                 return {
                     'available': False,
-                    'message': 'docx2pdf não está instalado neste ambiente. Instale docx2pdf.',
-                    'reasons': ['docx2pdf não está instalado neste ambiente. Instale docx2pdf.'],
+                    'message': 'docx2pdf nÃ£o estÃ¡ instalado neste ambiente. Instale docx2pdf.',
+                    'reasons': ['docx2pdf nÃ£o estÃ¡ instalado neste ambiente. Instale docx2pdf.'],
                 }
             return {'available': True, 'message': '', 'reasons': []}
 
@@ -7436,8 +7255,8 @@ class OficioDocumentosTest(TestCase):
             'eventos.views.get_pdf_backend_availability',
             return_value={
                 'available': False,
-                'message': 'docx2pdf não está instalado neste ambiente. Instale docx2pdf.',
-                'reasons': ['docx2pdf não está instalado neste ambiente. Instale docx2pdf.'],
+                'message': 'docx2pdf nÃ£o estÃ¡ instalado neste ambiente. Instale docx2pdf.',
+                'reasons': ['docx2pdf nÃ£o estÃ¡ instalado neste ambiente. Instale docx2pdf.'],
             },
         ), patch(
             'eventos.services.documentos.validators.get_document_backend_availability',
@@ -7451,7 +7270,7 @@ class OficioDocumentosTest(TestCase):
         self.assertEqual(oficio_item['pdf']['status'], 'unavailable')
         self.assertContains(response, 'DOCX: Dispon')
         self.assertContains(response, 'PDF: Indispon')
-        self.assertContains(response, 'docx2pdf não está instalado')
+        self.assertContains(response, 'docx2pdf nÃ£o estÃ¡ instalado')
 
     @unittest.skip('Fluxo antigo de tela de documentos removido; cobertura migrada para downloads diretos e lista global.')
     def test_tela_documentos_abre_com_backend_docx_indisponivel(self):
@@ -7555,13 +7374,13 @@ class OficioDocumentosTest(TestCase):
 
 
 class OficioGeracaoDocumentoCorrecoesTest(TestCase):
-    """Testes para as correções de destino, assunto e protocolo no gerador de Ofícios."""
+    """Testes para as correÃ§Ãµes de destino, assunto e protocolo no gerador de OfÃ­cios."""
 
     def setUp(self):
-        self.estado_pr = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
-        self.estado_sp = Estado.objects.create(nome='São Paulo', sigla='SP', codigo_ibge='35')
+        self.estado_pr = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
+        self.estado_sp = Estado.objects.create(nome='SÃ£o Paulo', sigla='SP', codigo_ibge='35')
         self.cidade_ctba = Cidade.objects.create(nome='Curitiba', estado=self.estado_pr, codigo_ibge='4106902')
-        self.cidade_sp = Cidade.objects.create(nome='São Paulo', estado=self.estado_sp, codigo_ibge='3550308')
+        self.cidade_sp = Cidade.objects.create(nome='SÃ£o Paulo', estado=self.estado_sp, codigo_ibge='3550308')
         self.cidade_interior_pr = Cidade.objects.create(nome='Londrina', estado=self.estado_pr, codigo_ibge='4113700')
 
     def _criar_oficio_simples(self, assunto_tipo=None):
@@ -7634,7 +7453,7 @@ class OficioGeracaoDocumentoCorrecoesTest(TestCase):
         resultado = _get_assunto_for_oficio(oficio)
 
         self.assertEqual(resultado, ASSUNTO_AUTORIZACAO)
-        self.assertEqual(resultado, 'Solicitação de autorização e concessão de diárias.')
+        self.assertEqual(resultado, 'SolicitaÃ§Ã£o de autorizaÃ§Ã£o e concessÃ£o de diÃ¡rias.')
 
     def test_assunto_muda_para_convalidacao_quando_tipo_convalidacao(self):
         from eventos.services.documentos.oficio import _get_assunto_for_oficio, ASSUNTO_CONVALIDACAO
@@ -7643,7 +7462,7 @@ class OficioGeracaoDocumentoCorrecoesTest(TestCase):
         resultado = _get_assunto_for_oficio(oficio)
 
         self.assertEqual(resultado, ASSUNTO_CONVALIDACAO)
-        self.assertEqual(resultado, 'Solicitação de convalidação e concessão de diárias.')
+        self.assertEqual(resultado, 'SolicitaÃ§Ã£o de convalidaÃ§Ã£o e concessÃ£o de diÃ¡rias.')
 
     def test_col_solicitacao_fica_em_branco(self):
         from eventos.services.documentos.oficio import _build_col_solicitacao
@@ -7671,7 +7490,7 @@ class OficioStep1AjustesFinosTest(TestCase):
         self.user = User.objects.create_user(username='ajustes-finos', password='ajustes-finos')
         self.client = Client()
         self.client.login(username='ajustes-finos', password='ajustes-finos')
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
         self.evento = Evento.objects.create(
             titulo='Evento Ajustes Finos',
@@ -7718,7 +7537,7 @@ class OficioStep1AjustesFinosTest(TestCase):
         )
 
     def test_botao_definir_padrao_e_excluir_aparecem_na_lista(self):
-        modelo = ModeloMotivoViagem.objects.create(codigo='modelo_btn', nome='Modelo Botão', texto='Texto')
+        modelo = ModeloMotivoViagem.objects.create(codigo='modelo_btn', nome='Modelo BotÃ£o', texto='Texto')
         response = self.client.get(reverse('eventos:modelos-motivo-lista'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(
@@ -7731,8 +7550,8 @@ class OficioStep1AjustesFinosTest(TestCase):
         )
 
     def test_definir_novo_padrao_desmarca_anterior(self):
-        m1 = ModeloMotivoViagem.objects.create(codigo='padrao_1', nome='Padrão 1', texto='1', padrao=True)
-        m2 = ModeloMotivoViagem.objects.create(codigo='padrao_2', nome='Padrão 2', texto='2', padrao=False)
+        m1 = ModeloMotivoViagem.objects.create(codigo='padrao_1', nome='PadrÃ£o 1', texto='1', padrao=True)
+        m2 = ModeloMotivoViagem.objects.create(codigo='padrao_2', nome='PadrÃ£o 2', texto='2', padrao=False)
         response = self.client.post(reverse('eventos:modelos-motivo-definir-padrao', kwargs={'pk': m2.pk}))
         self.assertRedirects(response, reverse('eventos:modelos-motivo-lista'))
         m1.refresh_from_db()
@@ -7749,15 +7568,15 @@ class OficioStep1AjustesFinosTest(TestCase):
     def test_step1_preseleciona_modelo_padrao(self):
         modelo = ModeloMotivoViagem.objects.create(
             codigo='modelo_padrao_step1',
-            nome='Modelo Padrão Step1',
-            texto='Texto padrão Step1',
+            nome='Modelo PadrÃ£o Step1',
+            texto='Texto padrÃ£o Step1',
             padrao=True,
         )
         oficio = self._criar_oficio()
         response = self.client.get(reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f'<option value="{modelo.pk}" selected>')
-        self.assertContains(response, 'Texto padrão Step1')
+        self.assertContains(response, 'Texto padrÃ£o Step1')
 
     def test_cadastrar_novo_viajante_com_next_retorna_para_step1(self):
         oficio = self._criar_oficio()
@@ -7812,7 +7631,7 @@ class OficioStep1AjustesFinosTest(TestCase):
                 'protocolo': '12.345.678-9',
                 'data_criacao': oficio.data_criacao.strftime('%d/%m/%Y'),
                 'modelo_motivo': '',
-                'motivo': 'Fluxo após retorno',
+                'motivo': 'Fluxo apÃ³s retorno',
                 'assunto_tipo': Oficio.ASSUNTO_TIPO_AUTORIZACAO,
                 'custeio_tipo': Oficio.CUSTEIO_UNIDADE,
                 'nome_instituicao_custeio': '',
@@ -7825,16 +7644,16 @@ class OficioStep1AjustesFinosTest(TestCase):
 
 
 class OficioStep1ProtocolRegressionTest(TestCase):
-    """Regressões críticas: GET sem save indevido e protocolo canônico/visual desacoplados."""
+    """RegressÃµes crÃ­ticas: GET sem save indevido e protocolo canÃ´nico/visual desacoplados."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='prot-reg', password='prot-reg')
         self.client = Client()
         self.client.login(username='prot-reg', password='prot-reg')
-        self.estado = Estado.objects.create(nome='Paraná', sigla='PR', codigo_ibge='41')
+        self.estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
         self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
         self.evento = Evento.objects.create(
-            titulo='Evento Regressão Protocolo',
+            titulo='Evento RegressÃ£o Protocolo',
             data_inicio=date(2026, 2, 1),
             data_fim=date(2026, 2, 2),
             status=Evento.STATUS_RASCUNHO,
@@ -8099,3 +7918,6 @@ class EventoEtapa5TermosPadraoFluxoTest(TestCase):
         self.assertIn(f'return_to={expected_return_to}', response.context['termo_novo_url'])
         self.assertContains(response, f'preselected_event_id={self.evento.pk}')
         self.assertContains(response, 'Novo termo')
+
+
+

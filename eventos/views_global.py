@@ -572,6 +572,18 @@ def _append_next(url, next_url):
     return f'{url}{separator}{urlencode({"next": next_url})}'
 
 
+def _append_query_params(url, **params):
+    filtered = {
+        key: str(value).strip()
+        for key, value in params.items()
+        if str(value).strip()
+    }
+    if not filtered:
+        return url
+    separator = '&' if '?' in url else '?'
+    return f'{url}{separator}{urlencode(filtered)}'
+
+
 def _get_safe_return_to(request, default_url=''):
     candidate = _clean(request.POST.get('return_to') or request.GET.get('return_to'))
     if candidate and candidate.startswith('/'):
@@ -1220,13 +1232,15 @@ def _roteiro_list_actions(roteiro):
                 'icon': 'bi-trash3',
                 'download': False,
                 'icon_only': True,
+                'delete_method': getattr(roteiro, 'delete_method', ''),
+                'delete_confirm': getattr(roteiro, 'delete_confirm', ''),
             }
         )
 
     return actions
 
 
-def _build_roteiro_list_object_list(roteiros):
+def _build_roteiro_list_object_list(roteiros, *, delete_return_to=''):
     object_list = []
     for roteiro in roteiros:
         destinos = list(roteiro.destinos.all())
@@ -1372,7 +1386,12 @@ def _build_roteiro_list_object_list(roteiros):
             roteiro.open_url = roteiro.editar_url
             roteiro.docx_url = ''
             roteiro.pdf_url = ''
-            roteiro.delete_url = ''
+            roteiro.delete_url = _append_query_params(
+                reverse('eventos:roteiro-avulso-excluir', kwargs={'pk': roteiro.pk}),
+                return_to=delete_return_to,
+            )
+            roteiro.delete_method = 'post'
+            roteiro.delete_confirm = 'Excluir este roteiro?'
             roteiro.evento_url = ''
             roteiro.etapa_url = ''
             roteiro.oficios_url = ''
@@ -1386,7 +1405,12 @@ def _build_roteiro_list_object_list(roteiros):
             roteiro.open_url = roteiro.editar_url
             roteiro.docx_url = ''
             roteiro.pdf_url = ''
-            roteiro.delete_url = reverse('eventos:guiado-etapa-2-excluir', kwargs={'evento_id': roteiro.evento_id, 'pk': roteiro.pk})
+            roteiro.delete_url = _append_query_params(
+                reverse('eventos:guiado-etapa-2-excluir', kwargs={'evento_id': roteiro.evento_id, 'pk': roteiro.pk}),
+                return_to=delete_return_to,
+            )
+            roteiro.delete_method = 'post'
+            roteiro.delete_confirm = 'Excluir este roteiro?'
             roteiro.evento_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': roteiro.evento_id})
             roteiro.etapa_url = reverse('eventos:guiado-etapa-2', kwargs={'evento_id': roteiro.evento_id})
             roteiro.oficios_url = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': roteiro.evento_id})
@@ -2177,7 +2201,10 @@ def roteiro_global_lista(request):
         queryset.distinct().order_by(ordering, '-created_at'),
         request.GET.get('page'),
     )
-    object_list = _build_roteiro_list_object_list(list(page_obj.object_list))
+    object_list = _build_roteiro_list_object_list(
+        list(page_obj.object_list),
+        delete_return_to=reverse('eventos:roteiros-global'),
+    )
 
     selected_event = None
     if filters['evento_id'].isdigit():
@@ -4135,6 +4162,17 @@ def termos_global(request):
         queryset = queryset.filter(status=filters['status'])
 
     page_obj = _paginate(queryset, request.GET.get('page'))
+    evento_context = None
+    return_to_url = ''
+    termo_novo_url = reverse('eventos:documentos-termos-novo')
+    if filters['evento_id'].isdigit():
+        evento_context = Evento.objects.filter(pk=int(filters['evento_id'])).first()
+        if evento_context:
+            return_to_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': evento_context.pk})
+            termo_novo_url = (
+                f"{reverse('eventos:documentos-termos-novo')}?"
+                f"{urlencode({'context_source': 'evento', 'preselected_event_id': evento_context.pk, 'return_to': return_to_url})}"
+            )
     object_list = []
     for termo in page_obj.object_list:
         oficios_relacionados = []
@@ -4166,8 +4204,11 @@ def termos_global(request):
             'page_obj': page_obj,
             'pagination_query': _query_without_page(request),
             'filters': filters,
+            'evento_context': evento_context,
+            'return_to_url': return_to_url,
             'eventos_choices': _eventos_choices(),
             'status_choices': EventoTermoParticipante.STATUS_CHOICES,
+            'termo_novo_url': termo_novo_url,
         },
     )
 
@@ -4625,6 +4666,17 @@ def termos_global(request):
     if filters['modo_geracao']:
         queryset = queryset.filter(modo_geracao=filters['modo_geracao'])
     queryset = _apply_date_range_filter(queryset, field_name='updated_at', filters=filters)
+    evento_context = None
+    return_to_url = ''
+    termo_novo_url = reverse('eventos:documentos-termos-novo')
+    if filters['evento_id'].isdigit():
+        evento_context = Evento.objects.filter(pk=int(filters['evento_id'])).first()
+        if evento_context:
+            return_to_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': evento_context.pk})
+            termo_novo_url = (
+                f"{reverse('eventos:documentos-termos-novo')}?"
+                f"{urlencode({'context_source': 'evento', 'preselected_event_id': evento_context.pk, 'return_to': return_to_url})}"
+            )
 
     termo_order_map = {
         'numero': 'pk',
@@ -4707,6 +4759,8 @@ def termos_global(request):
             'page_obj': page_obj,
             'pagination_query': _query_without_page(request),
             'filters': filters,
+            'evento_context': evento_context,
+            'return_to_url': return_to_url,
             'eventos_choices': _eventos_choices(),
             'oficios_choices': Oficio.objects.order_by('-updated_at')[:200],
             'status_choices': TermoAutorizacao.STATUS_CHOICES,
@@ -4720,7 +4774,7 @@ def termos_global(request):
                 ('servidor', 'Servidor'),
             ],
             'order_dir_choices': ORDER_DIR_CHOICES,
-            'termo_novo_url': reverse('eventos:documentos-termos-novo'),
+            'termo_novo_url': termo_novo_url,
             'clear_filters_url': reverse('eventos:documentos-termos'),
         },
     )

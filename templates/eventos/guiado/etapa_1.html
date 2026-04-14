@@ -7,7 +7,7 @@
 {% block content %}
 <div class="app-page-shell app-page-shell--wide guiado-paginated-page guiado-flow-page guiado-etapa1-page system-form-page">
     <div class="app-page-shell__inner system-form-shell evento-etapa1-shell">
-        {% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa1.html' top_show_stepper=True %}
+        {% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa1.html' top_show_stepper=True header_title_id=header_title_id %}
 
         {% if form.non_field_errors %}
         <div class="alert alert-danger" role="alert">
@@ -15,13 +15,13 @@
         </div>
         {% endif %}
 
-        <form method="post" enctype="multipart/form-data" id="form-etapa1" class="card form-card app-page-card app-page-card--spacious system-form-card evento-etapa1-card" data-evento-etapa1 data-api-cidades-url="{{ api_cidades_por_estado_url }}" data-estado-pr-id="{{ estado_pr.id|default:'' }}" data-tipo-outros-pk="{{ tipo_outros_pk|default:'' }}" data-estados-json='{{ estados_json|escapejs }}' data-has-convite-anexos="{% if anexos_convite %}1{% else %}0{% endif %}">
+        <form method="post" enctype="multipart/form-data" id="form-etapa1" class="card form-card app-page-card app-page-card--spacious system-form-card evento-etapa1-card" data-evento-etapa1 data-evento-heading-fallback="{{ evento_heading }}" data-evento-base-cidade="{% if object.cidade_base %}{{ object.cidade_base.nome }}{% elif object.cidade_principal %}{{ object.cidade_principal.nome }}{% endif %}" data-evento-base-uf="{% if object.cidade_base and object.cidade_base.estado %}{{ object.cidade_base.estado.sigla }}{% elif object.cidade_principal and object.cidade_principal.estado %}{{ object.cidade_principal.estado.sigla }}{% endif %}" data-api-cidades-url="{{ api_cidades_por_estado_url }}" data-estado-pr-id="{{ estado_pr.id|default:'' }}" data-tipo-outros-pk="{{ tipo_outros_pk|default:'' }}" data-estados-json='{{ estados_json|escapejs }}' data-has-convite-anexos="{% if anexos_convite %}1{% else %}0{% endif %}">
             {% csrf_token %}
             <div class="card-body">
                 <section class="evento-section">
                     <div class="evento-section-head">
                         <h3 class="evento-section-title">Atividades</h3>
-                        <a href="{% url 'eventos:tipos-demanda-lista' %}?volta_etapa1={{ object.pk }}" class="btn btn-outline-secondary btn-sm">Gerenciar atividades</a>
+                        <a href="{% url 'eventos:tipos-demanda-lista' %}?volta_etapa1={{ object.pk }}" class="btn btn-outline-secondary btn-sm" data-autosave-link="1">Gerenciar atividades</a>
                     </div>
 
                     <div id="tipos-demanda-list" class="evento-atividade-grid">
@@ -91,7 +91,7 @@
 
                     <div id="destinos-container" class="evento-destinos-container">
                         {% for d in destinos_atuais %}
-                        <div class="evento-destino-row" data-destino-row>
+                        <div class="evento-destino-row" data-destino-row data-destino-placeholder="{% if d.is_placeholder %}1{% else %}0{% endif %}">
                             <div class="evento-destino-field evento-destino-field--uf">
                                 <label>ESTADO</label>
                                 <select name="destino_estado_{{ forloop.counter0 }}" class="destino-estado form-select">
@@ -119,13 +119,14 @@
                 {% include 'eventos/guiado/_convite_upload_section.html' with convite_checked=form.tem_convite_ou_oficio_evento.value convite_next_url=convite_next_url %}
 
                 <div class="form-actions system-form-actions">
-                    <div class="system-form-actions__group system-form-actions__group--secondary">
-                        <a href="{% url 'eventos:guiado-painel' object.pk %}" class="btn btn-outline-secondary">Voltar ao painel</a>
+                <div class="system-form-actions__group system-form-actions__group--secondary">
+                        <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary">Voltar para lista</a>
                     </div>
                     <div class="system-form-actions__group system-form-actions__group--primary">
                         <button type="submit" class="btn btn-primary">Salvar</button>
-                        <button type="submit" name="continuar" value="1" class="btn btn-success">Salvar e continuar</button>
+                        <button type="submit" name="continuar" value="1" class="btn btn-success" data-autosave-navigate="{% url 'eventos:guiado-etapa-2' evento_id=object.pk %}">Salvar e continuar</button>
                     </div>
+                    <p class="evento-etapa1-autosave-status small text-muted mb-0" id="evento-etapa1-autosave-status" aria-live="polite"></p>
                 </div>
             </div>
         </form>
@@ -134,5 +135,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/oficio_wizard.js' %}"></script>
 <script src="{% static 'js/evento_etapa1.js' %}"></script>
 {% endblock %}

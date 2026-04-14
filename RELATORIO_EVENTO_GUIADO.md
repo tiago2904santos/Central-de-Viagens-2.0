@@ -32,7 +32,7 @@ Implementação do fluxo principal: entrada do fluxo guiado, Etapa 1 do evento e
 |------|------|----------------|
 | `GET /eventos/guiado/novo/` | `eventos:guiado-novo` | Exige login. Cria evento em RASCUNHO (título provisório, tipo OUTRO, data_inicio/data_fim = hoje, cidade_base da configuração se houver) e redireciona para `/eventos/<id>/guiado/etapa-1/`. |
 | `GET` / `POST /eventos/<id>/guiado/etapa-1/` | `eventos:guiado-etapa-1` | Exige login. Exibe e processa formulário da Etapa 1. Salvar: persiste; se dados mínimos completos, status → EM_ANDAMENTO; permanece na etapa 1. Salvar e continuar: persiste e redireciona para o painel. |
-| `GET /eventos/<id>/guiado/painel/` | `eventos:guiado-painel` | Exige login. Exibe resumo do evento, status e cards das etapas; botões "Voltar para Etapa 1" e "Próxima etapa" (leva a "Em breve"). |
+| `GET /eventos/<id>/guiado/etapa-1/` | `eventos:guiado-etapa-1` | Exige login. Abre a etapa inicial do fluxo guiado com os dados do evento e o acesso às próximas etapas. |
 
 ---
 
