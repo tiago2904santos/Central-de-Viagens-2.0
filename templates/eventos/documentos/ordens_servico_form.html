@@ -248,6 +248,7 @@
     <input type="hidden" name="context_source" value="{{ context_source }}">
     <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
     <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
+    <input type="hidden" name="autosave_obj_id" id="id_autosave_obj_id" value="{{ object.pk|default:'' }}">
     {{ form.destinos_payload }}
 
     <section class="os-hero app-page-card app-page-card--spacious">
@@ -375,8 +376,9 @@
           <div class="os-panel-body">
             <div class="os-actions">
               <div class="os-actions-left">
-                <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/ordens-servico/' }}">Cancelar</a>
-                {% if object %}<a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-editar' object.pk %}">Ir para edicao</a>{% endif %}
+                <span class="oficio-autosave-status" id="ordem-servico-autosave-status" aria-live="polite">Autosave ativo.</span>
+                <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/ordens-servico/' }}" data-autosave-link="1">Cancelar</a>
+                {% if object %}<a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-editar' object.pk %}" data-autosave-link="1">Ir para edicao</a>{% endif %}
               </div>
               <div class="os-actions-right"><button class="btn btn-primary" type="submit">{% if object %}Salvar alterações{% else %}Salvar ordem de serviço{% endif %}</button></div>
             </div>
@@ -405,10 +407,13 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/oficio_wizard.js' %}"></script>
 <script>
 (() => {
   const form = document.getElementById('ordem-servico-form');
   if (!form) return;
+  const autosaveIdInput = document.getElementById('id_autosave_obj_id');
+  const autosaveStatus = document.getElementById('ordem-servico-autosave-status');
   const viajantesSelect = document.getElementById('{{ form.viajantes.id_for_label }}');
   const destinosInput = document.getElementById('{{ form.destinos_payload.id_for_label }}');
   const destinosList = document.getElementById('os-destinos-list');
@@ -431,11 +436,29 @@
     vinculoHero: document.getElementById('os-preview-vinculo-hero'),
   };
   let lastMotivoTemplate = '';
+  const autosave = window.OficioWizard ? window.OficioWizard.createAutosave({
+    form: form,
+    statusElement: autosaveStatus,
+    captureSubmit: false,
+    onSuccess(data) {
+      if (!data) return;
+      if (autosaveIdInput && data.id) autosaveIdInput.value = String(data.id);
+      if (data.edit_url) {
+        form.setAttribute('action', data.edit_url);
+        if (window.location.pathname !== data.edit_url) {
+          window.history.replaceState({}, '', data.edit_url);
+        }
+      }
+    }
+  }) : null;
 
   function refreshPickers(root) {
     if (window.OficioWizard && typeof window.OficioWizard.refreshSelectPickers === 'function') {
       window.OficioWizard.refreshSelectPickers(root || form);
     }
+  }
+  function scheduleAutosave() {
+    if (autosave) autosave.schedule();
   }
   function joinPtBr(values) {
     const list = values.filter(Boolean);
@@ -536,7 +559,8 @@
     const destinos = payload.map((item) => item.cidade_nome && item.estado_sigla ? item.cidade_nome + '/' + item.estado_sigla : item.cidade_nome).filter(Boolean);
     return { payload, destinos };
   }
-  async function addDestinoRow(initialData) {
+  async function addDestinoRow(initialData, options) {
+    const skipAutosave = options && options.skipAutosave;
     const fragment = destinoTemplate.content.cloneNode(true);
     const row = fragment.querySelector('[data-destino-row]');
     const estadoSelect = row.querySelector('.os-destino-estado');
@@ -550,21 +574,34 @@
       if (initialData && String(initialData.estado_id) === String(estado.id)) option.selected = true;
       estadoSelect.appendChild(option);
     });
-    estadoSelect.addEventListener('change', async () => { await populateCities(cidadeSelect, estadoSelect.value, null); setDestinosPreview(); });
-    cidadeSelect.addEventListener('change', setDestinosPreview);
-    row.querySelector('.os-remover-destino').addEventListener('click', () => { row.remove(); setDestinosPreview(); });
+    estadoSelect.addEventListener('change', async () => {
+      await populateCities(cidadeSelect, estadoSelect.value, null);
+      setDestinosPreview();
+      scheduleAutosave();
+    });
+    cidadeSelect.addEventListener('change', () => {
+      setDestinosPreview();
+      scheduleAutosave();
+    });
+    row.querySelector('.os-remover-destino').addEventListener('click', () => {
+      row.remove();
+      setDestinosPreview();
+      scheduleAutosave();
+    });
     destinosList.appendChild(row);
     await populateCities(cidadeSelect, estadoSelect.value, initialData ? initialData.cidade_id : null);
     refreshPickers(row);
     setDestinosPreview();
+    if (!skipAutosave) scheduleAutosave();
   }
   function hydrateDestinos() {
     let payload = [];
     try { payload = JSON.parse(destinosInput && destinosInput.value ? destinosInput.value : '[]'); } catch (error) { payload = []; }
-    if (!payload.length) addDestinoRow(null);
-    else payload.forEach((item) => addDestinoRow(item));
+    if (!payload.length) addDestinoRow(null, { skipAutosave: true });
+    else payload.forEach((item) => addDestinoRow(item, { skipAutosave: true }));
   }
-  async function applyMotivoTemplate(force) {
+  async function applyMotivoTemplate(force, options) {
+    const shouldAutosave = !options || options.autosave !== false;
     if (!modeloMotivoSelect || !modeloMotivoSelect.value || !motivoTextarea) return;
     try {
       const response = await fetch(buildMotivoApiUrl(modeloMotivoSelect.value), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
@@ -574,6 +611,7 @@
       if (force || !motivoTextarea.value.trim() || motivoTextarea.value.trim() === lastMotivoTemplate) motivoTextarea.value = texto;
       lastMotivoTemplate = texto;
       setMotivoPreview();
+      if (shouldAutosave) scheduleAutosave();
     } catch (error) {
       console.error('Falha ao carregar modelo de motivo', error);
     }
@@ -591,7 +629,9 @@
   updateLinkPreview();
   renderViajantesChips();
   setEquipePreview();
-  if (modeloMotivoSelect && modeloMotivoSelect.value && motivoTextarea && !motivoTextarea.value.trim()) applyMotivoTemplate(false);
+  if (modeloMotivoSelect && modeloMotivoSelect.value && motivoTextarea && !motivoTextarea.value.trim()) {
+    applyMotivoTemplate(false, { autosave: false });
+  }
 })();
 </script>
 {% endblock %}

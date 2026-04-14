@@ -5,36 +5,14 @@
 {% block page_title %}Fluxo guiado - Etapa 5: Termos{% endblock %}
 
 {% block content %}
-<div class="app-page-shell app-page-shell--wide guiado-paginated-page guiado-flow-page guiado-etapa5-page">
+<div
+    class="app-page-shell app-page-shell--wide guiado-paginated-page guiado-flow-page guiado-etapa5-page"
+    data-list-view-root
+    data-view-mode="rich"
+    data-view-storage-key="central-viagens.guiado.etapa5.termos.view-mode"
+>
     <div class="app-page-shell__inner app-page-stack">
         {% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa5.html' top_show_stepper=True %}
-
-        <section class="row g-3">
-            <div class="col-12 col-md-6 col-xl-3">
-                <article class="app-page-card h-100">
-                    <p class="small text-uppercase text-muted mb-2">Participantes</p>
-                    <strong id="termos-count-participantes">{{ total_participantes }}</strong>
-                </article>
-            </div>
-            <div class="col-12 col-md-6 col-xl-3">
-                <article class="app-page-card h-100">
-                    <p class="small text-uppercase text-muted mb-2">Concluídos</p>
-                    <strong id="termos-count-concluidos">{{ termos_concluidos }}</strong>
-                </article>
-            </div>
-            <div class="col-12 col-md-6 col-xl-3">
-                <article class="app-page-card h-100">
-                    <p class="small text-uppercase text-muted mb-2">Dispensados</p>
-                    <strong id="termos-count-dispensados">{{ termos_dispensados }}</strong>
-                </article>
-            </div>
-            <div class="col-12 col-md-6 col-xl-3">
-                <article class="app-page-card h-100">
-                    <p class="small text-uppercase text-muted mb-2">Pendentes / Gerados</p>
-                    <strong id="termos-count-pendentes-gerados">{{ termos_pendentes }} / {{ termos_gerados }}</strong>
-                </article>
-            </div>
-        </section>
 
         {% if not termo_templates_available %}
         <div class="alert alert-warning mb-0">
@@ -46,165 +24,27 @@
         <div class="alert alert-info mb-0">{{ pdf_backend_message }}</div>
         {% endif %}
 
-        <section class="app-page-card">
-            <div class="d-flex flex-wrap gap-2">
-                <a href="{{ termo_padrao_docx_url }}" class="btn btn-outline-primary btn-sm">Termo padrão DOCX</a>
-                <a href="{{ termo_padrao_pdf_url }}" class="btn btn-outline-primary btn-sm">Termo padrão PDF</a>
+        <section class="app-page-card app-page-card--spacious">
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <div>
+                    <h2 class="h6 mb-1">Termos de Autorizacao vinculados ao evento</h2>
+                    <p class="text-muted mb-0">A listagem abaixo considera somente os documentos ligados a {{ evento.titulo|default:"este evento" }}.</p>
+                </div>
+                {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos termos do evento' %}
             </div>
         </section>
 
-        {% if participantes %}
-        <section class="app-page-card app-page-card--spacious">
-            <form method="post" id="guiado-termos-form">
-                {% csrf_token %}
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Participante</th>
-                                <th>Ofícios</th>
-                                <th>Status</th>
-                                <th>Modalidade</th>
-                                <th class="text-end">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in participantes %}
-                            <tr>
-                                <td>
-                                    <strong>{{ item.viajante.nome }}</strong>
-                                    <div class="small text-muted">
-                                        CPF {{ item.cpf }} • RG {{ item.rg }} • {{ item.lotacao }}
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if item.oficios %}
-                                        {% for oficio in item.oficios %}
-                                        <span class="badge bg-secondary">{{ oficio.numero_formatado|default:oficio.pk }}</span>
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">—</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <select name="status_{{ item.viajante.pk }}" class="form-select form-select-sm">
-                                        {% for value, label in status_choices %}
-                                        <option value="{{ value }}"{% if item.termo.status == value %} selected{% endif %}>{{ label }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </td>
-                                <td>
-                                    <select name="modalidade_{{ item.viajante.pk }}" class="form-select form-select-sm">
-                                        {% for value, label in modalidade_choices %}
-                                        <option value="{{ value }}"{% if item.termo.modalidade == value %} selected{% endif %}>{{ label }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </td>
-                                <td class="text-end">
-                                    <div class="d-flex justify-content-end flex-wrap gap-2">
-                                        <button type="submit" name="acao_participante" value="concluir:{{ item.viajante.pk }}" class="btn btn-outline-success btn-sm">Concluir</button>
-                                        <button type="submit" name="acao_participante" value="dispensar:{{ item.viajante.pk }}" class="btn btn-outline-warning btn-sm">Dispensar</button>
-                                        <button type="submit" name="acao_participante" value="reabrir:{{ item.viajante.pk }}" class="btn btn-outline-secondary btn-sm">Reabrir</button>
-                                        <a href="{{ item.download_docx_url }}" class="btn btn-outline-primary btn-sm">DOCX</a>
-                                        <a href="{{ item.download_pdf_url }}" class="btn btn-outline-primary btn-sm">PDF</a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+        {% include 'eventos/documentos/partials/_termos_list_content.html' with basic_aria_label='Lista simples dos termos do evento' rich_aria_label='Cards dos termos do evento' empty_state_text='Nenhum termo de autorizacao vinculado a este evento.' rich_container_class='guiado-etapa5-termos-stack' empty_state_class='guiado-etapa5-termos-empty' %}
 
-                <div class="d-flex flex-wrap gap-2 mt-3">
-                    <span class="oficio-autosave-status" id="guiado-termos-autosave-status" aria-live="polite">Autosave ativo.</span>
-                    <button type="submit" class="btn btn-primary">Salvar termos</button>
-                    <button type="submit" name="voltar_painel" value="1" class="btn btn-outline-primary">Salvar e voltar ao painel</button>
-                    <a href="{% url 'eventos:guiado-finalizacao' evento.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--primary" data-autosave-link="1">Abrir finalização</a>
-                </div>
-            </form>
-        </section>
-        {% else %}
-        <section class="app-page-card">
-            <p class="text-muted mb-0">Nenhum participante no evento. Vincule participantes nos ofícios para começar esta etapa.</p>
-        </section>
+        {% if page_obj %}
+        {% include 'includes/pagination.html' %}
         {% endif %}
 
-        <section class="app-page-card">
-            <h2 class="h6 mb-3">Geração por viatura</h2>
-            <form method="post" action="{{ termo_viatura_docx_url }}" class="d-flex flex-wrap gap-2 align-items-end">
-                {% csrf_token %}
-                <div>
-                    <label class="form-label" for="id_veiculo_id">Viatura</label>
-                    <select name="veiculo_id" id="id_veiculo_id" class="form-select form-select-sm">
-                        <option value="">Selecione</option>
-                        {% for veiculo in veiculos %}
-                        <option value="{{ veiculo.pk }}">{{ veiculo }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="flex-grow-1">
-                    <label class="form-label d-block">Participantes</label>
-                    <div class="d-flex flex-wrap gap-2">
-                        {% for viajante in viajantes_disponiveis %}
-                        <label class="form-check-label border rounded px-2 py-1">
-                            <input class="form-check-input me-1" type="checkbox" name="viajantes" value="{{ viajante.pk }}">
-                            {{ viajante.nome }}
-                        </label>
-                        {% endfor %}
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-outline-primary btn-sm">Gerar lote DOCX</button>
-            </form>
-        </section>
-
-
+        {% include 'includes/list/floating_new_button.html' with url=termo_novo_url label='Novo termo' icon='bi-plus-lg' %}
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/oficio_wizard.js' %}"></script>
-<script>
-(function() {
-  var form = document.getElementById('guiado-termos-form');
-  if (!form || !window.OficioWizard) return;
-
-  var autosave = window.OficioWizard.createAutosave({
-    form: form,
-    statusElement: document.getElementById('guiado-termos-autosave-status'),
-    captureSubmit: false
-  });
-
-  function countByStatus(value) {
-    return Array.from(form.querySelectorAll('select[name^="status_"]')).filter(function(select) {
-      return select.value === value;
-    }).length;
-  }
-
-  function updateSummary() {
-    var concluidos = countByStatus('CONCLUIDO');
-    var dispensados = countByStatus('DISPENSADO');
-    var gerados = countByStatus('GERADO');
-    var pendentes = countByStatus('PENDENTE');
-    var total = form.querySelectorAll('select[name^="status_"]').length;
-    var participantesEl = document.getElementById('termos-count-participantes');
-    var concluidosEl = document.getElementById('termos-count-concluidos');
-    var dispensadosEl = document.getElementById('termos-count-dispensados');
-    var pendentesGeradosEl = document.getElementById('termos-count-pendentes-gerados');
-    if (participantesEl) participantesEl.textContent = String(total);
-    if (concluidosEl) concluidosEl.textContent = String(concluidos);
-    if (dispensadosEl) dispensadosEl.textContent = String(dispensados);
-    if (pendentesGeradosEl) pendentesGeradosEl.textContent = pendentes + ' / ' + gerados;
-  }
-
-  form.querySelectorAll('select[name^="status_"], select[name^="modalidade_"]').forEach(function(field) {
-    field.addEventListener('change', function() {
-      updateSummary();
-      autosave.schedule();
-    });
-  });
-
-  updateSummary();
-})();
-</script>
+<script src="{% static 'js/list_standard.js' %}"></script>
 {% endblock %}

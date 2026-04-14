@@ -2375,6 +2375,70 @@ def _build_termo_card_theme_meta(termo):
     return mapping.get(css, {'badge_css_class': 'is-muted', 'theme_class': 'is-tone-gray'})
 
 
+def _decorate_termo_list_items(items):
+    for termo in items:
+        termo.process_status = _termo_status_meta(termo)
+        termo.card_theme_meta = _build_termo_card_theme_meta(termo)
+        termo.card_theme_class = termo.card_theme_meta['theme_class']
+        termo.status_badge_css_class = termo.card_theme_meta['badge_css_class']
+        termo.mode_meta = _termo_mode_meta(termo.modo_geracao)
+        termo.context_display = _termo_context_display(termo)
+        termo.title_display = termo.titulo_display
+        termo.servidor_nome_card = (termo.servidor_display or '').strip()
+        termo.servidor_resumo = termo.servidor_nome_card or 'Sem servidor'
+        termo.servidor_lotacao_card = (termo.servidor_lotacao or '').strip()
+        termo.servidor_cargo_card = (
+            (getattr(getattr(termo, 'viajante', None), 'cargo', None) and getattr(termo.viajante.cargo, 'nome', ''))
+            or ''
+        ).strip()
+        termo.destino_resumo = termo.destino or '-'
+        termo.periodo_resumo = termo.periodo_display or '-'
+        termo.oficios_resumo = termo.oficios_relacionados_display or 'Sem oficio'
+        termo.veiculo_placa_card = (termo.veiculo_placa or '').strip()
+        termo.veiculo_modelo_card = (termo.veiculo_modelo or '').strip()
+        termo.veiculo_combustivel_card = (termo.veiculo_combustivel or '').strip()
+
+        termo.has_servidor_card = bool(termo.servidor_nome_card)
+        termo.has_viatura_card = bool(
+            termo.veiculo_placa_card
+            or termo.veiculo_modelo_card
+            or termo.veiculo_combustivel_card
+            or termo.veiculo_id
+        )
+
+        has_oficio_link = bool(termo.oficio_id or (termo.oficios_resumo and termo.oficios_resumo != 'Sem oficio'))
+        if termo.evento_id and has_oficio_link:
+            termo.vinculo_badge_label = 'Evento + oficio'
+            termo.vinculo_badge_detail = f"{(termo.evento.titulo or '').strip() or f'Evento #{termo.evento_id}'} • {termo.oficios_resumo}"
+        elif termo.evento_id:
+            termo.vinculo_badge_label = 'Evento'
+            termo.vinculo_badge_detail = (termo.evento.titulo or '').strip() or f'Evento #{termo.evento_id}'
+        elif has_oficio_link:
+            termo.vinculo_badge_label = 'Oficio'
+            termo.vinculo_badge_detail = termo.oficios_resumo
+        else:
+            termo.vinculo_badge_label = ''
+            termo.vinculo_badge_detail = ''
+
+        termo.evento_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
+        termo.abrir_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
+        termo.detail_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
+        termo.edicao_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
+        termo.delete_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
+        termo.excluir_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
+        termo.docx_url = reverse(
+            'eventos:documentos-termos-download',
+            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value},
+        )
+        termo.pdf_url = reverse(
+            'eventos:documentos-termos-download',
+            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.PDF.value},
+        )
+        termo.download_docx_url = termo.docx_url
+        termo.download_pdf_url = termo.pdf_url
+    return items
+
+
 def _resolve_plano_trabalho_periodo(plano, related_event):
     if plano.evento_data_inicio:
         return _format_periodo_curto(plano.evento_data_inicio, plano.evento_data_fim)
@@ -2744,6 +2808,28 @@ def _resolve_preselected_context(request):
     preselected_event = Evento.objects.filter(pk=preselected_event_id).first() if preselected_event_id else None
     preselected_oficio = Oficio.objects.filter(pk=preselected_oficio_id).first() if preselected_oficio_id else None
     return preselected_event, preselected_oficio
+
+
+def _is_form_autosave_request(request):
+    return (
+        request.method == 'POST'
+        and request.POST.get('autosave') == '1'
+        and request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    )
+
+
+def _autosave_form_success_response(extra=None):
+    payload = {
+        'ok': True,
+        'saved_at': timezone.localtime().strftime('%H:%M:%S'),
+    }
+    if extra:
+        payload.update(extra)
+    return JsonResponse(payload)
+
+
+def _autosave_form_error_response(message, status=400):
+    return JsonResponse({'ok': False, 'error': message}, status=status)
 
 
 def _autosave_bool(value):
@@ -3729,7 +3815,22 @@ def ordem_servico_novo(request):
     if preselected_oficio:
         initial['oficio'] = preselected_oficio.pk
 
-    form = OrdemServicoForm(request.POST or None, initial=initial)
+    form_instance = None
+    if _is_form_autosave_request(request):
+        autosave_obj_id = _autosave_int(request.POST.get('autosave_obj_id'))
+        if autosave_obj_id:
+            form_instance = OrdemServico.objects.filter(pk=autosave_obj_id).first()
+    form = OrdemServicoForm(request.POST or None, initial=initial, instance=form_instance)
+    if request.method == 'POST' and _is_form_autosave_request(request):
+        if not form.is_valid():
+            errors = form.non_field_errors() or [err for errs in form.errors.values() for err in errs]
+            return _autosave_form_error_response(errors[0] if errors else 'Falha ao salvar a ordem de serviço automaticamente.')
+        obj = form.save()
+        return _autosave_form_success_response({
+            'id': obj.pk,
+            'edit_url': reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': obj.pk}),
+            'status': obj.status,
+        })
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
         messages.success(request, 'Ordem de serviÃ§o criada com sucesso.')
@@ -3750,6 +3851,12 @@ def ordem_servico_editar(request, pk):
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-ordens-servico'))
     context_source = _get_context_source(request)
     form = OrdemServicoForm(request.POST or None, instance=obj)
+    if request.method == 'POST' and _is_form_autosave_request(request):
+        if not form.is_valid():
+            errors = form.non_field_errors() or [err for errs in form.errors.values() for err in errs]
+            return _autosave_form_error_response(errors[0] if errors else 'Falha ao salvar a ordem de serviço automaticamente.')
+        obj = form.save()
+        return _autosave_form_success_response({'id': obj.pk, 'status': obj.status})
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Ordem de serviÃ§o atualizada.')

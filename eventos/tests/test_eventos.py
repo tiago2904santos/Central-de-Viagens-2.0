@@ -7956,3 +7956,130 @@ class DocumentosHubTest(TestCase):
         self.assertContains(response, 'Ordens de servico')
         self.assertContains(response, 'Justificativas')
         self.assertContains(response, 'Termos')
+
+
+class EventoEtapa5TermosPadraoFluxoTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='u_etapa5_termos', password='p_etapa5_termos')
+        self.client = Client()
+        self.client.login(username='u_etapa5_termos', password='p_etapa5_termos')
+        self.estado = Estado.objects.create(nome='Parana', sigla='PR', codigo_ibge='41')
+        self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado, codigo_ibge='4106902')
+        self.cargo = Cargo.objects.create(nome='Analista de testes', is_padrao=True)
+        self.unidade = UnidadeLotacao.objects.create(nome='Unidade de testes')
+
+        self.evento = Evento.objects.create(
+            titulo='Evento com termos no fluxo',
+            data_inicio=date(2026, 4, 10),
+            data_fim=date(2026, 4, 12),
+            cidade_principal=self.cidade,
+            cidade_base=self.cidade,
+            estado_principal=self.estado,
+            status=Evento.STATUS_RASCUNHO,
+        )
+        self.evento_outro = Evento.objects.create(
+            titulo='Outro evento com termos',
+            data_inicio=date(2026, 5, 1),
+            data_fim=date(2026, 5, 2),
+            cidade_principal=self.cidade,
+            cidade_base=self.cidade,
+            estado_principal=self.estado,
+            status=Evento.STATUS_RASCUNHO,
+        )
+
+        self.viajante_evento = Viajante.objects.create(
+            nome='Viajante Etapa 5',
+            cargo=self.cargo,
+            unidade_lotacao=self.unidade,
+            cpf='52998224725',
+        )
+        self.viajante_oficio = Viajante.objects.create(
+            nome='Viajante Oficio Etapa 5',
+            cargo=self.cargo,
+            unidade_lotacao=self.unidade,
+            cpf='39053344705',
+        )
+        self.viajante_outro = Viajante.objects.create(
+            nome='Viajante Outro Evento',
+            cargo=self.cargo,
+            unidade_lotacao=self.unidade,
+            cpf='16899535009',
+        )
+
+        self.oficio_evento = Oficio.objects.create(
+            evento=self.evento,
+            status=Oficio.STATUS_FINALIZADO,
+            data_criacao=date(2026, 4, 10),
+        )
+        self.oficio_outro = Oficio.objects.create(
+            evento=self.evento_outro,
+            status=Oficio.STATUS_FINALIZADO,
+            data_criacao=date(2026, 5, 1),
+        )
+
+        self.termo_evento = TermoAutorizacao.objects.create(
+            evento=self.evento,
+            oficio=self.oficio_evento,
+            viajante=self.viajante_evento,
+            destino='Curitiba/PR',
+            data_evento=date(2026, 4, 10),
+            data_evento_fim=date(2026, 4, 12),
+            status=TermoAutorizacao.STATUS_GERADO,
+        )
+        self.termo_evento.oficios.add(self.oficio_evento)
+
+        self.termo_por_oficio = TermoAutorizacao.objects.create(
+            oficio=self.oficio_evento,
+            viajante=self.viajante_oficio,
+            destino='Londrina/PR',
+            data_evento=date(2026, 4, 11),
+            data_evento_fim=date(2026, 4, 11),
+            status=TermoAutorizacao.STATUS_RASCUNHO,
+        )
+        self.termo_por_oficio.oficios.add(self.oficio_evento)
+
+        self.termo_outro = TermoAutorizacao.objects.create(
+            evento=self.evento_outro,
+            oficio=self.oficio_outro,
+            viajante=self.viajante_outro,
+            destino='Maringa/PR',
+            data_evento=date(2026, 5, 1),
+            data_evento_fim=date(2026, 5, 2),
+            status=TermoAutorizacao.STATUS_GERADO,
+        )
+        self.termo_outro.oficios.add(self.oficio_outro)
+
+    def test_etapa_5_reaproveita_shell_moderno_e_filtra_termos_do_evento(self):
+        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item.pk for item in response.context['object_list']],
+            [self.termo_por_oficio.pk, self.termo_evento.pk],
+        )
+        self.assertContains(response, 'guided-flow-header-card', html=False)
+        self.assertContains(response, 'data-view-storage-key="central-viagens.guiado.etapa5.termos.view-mode"', html=False)
+        self.assertContains(response, 'data-list-view-toggle="rich"', html=False)
+        self.assertContains(response, 'data-list-view-toggle="basic"', html=False)
+        self.assertContains(response, 'data-scroll-top', html=False)
+        self.assertContains(response, self.termo_evento.numero_formatado)
+        self.assertContains(response, self.termo_por_oficio.numero_formatado)
+        self.assertContains(response, self.viajante_evento.nome)
+        self.assertContains(response, self.viajante_oficio.nome)
+        self.assertNotContains(response, self.termo_outro.numero_formatado)
+        self.assertNotContains(response, self.viajante_outro.nome)
+
+        etapa_ativa = next(step for step in response.context['wizard_steps'] if step['key'] == 'termos')
+        self.assertTrue(etapa_ativa['active'])
+        self.assertEqual(etapa_ativa['number'], 5)
+
+    def test_etapa_5_novo_termo_aponta_para_cadastro_real_contextualizado(self):
+        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        expected_return_to = quote(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
+        self.assertIn('context_source=evento', response.context['termo_novo_url'])
+        self.assertIn(f'preselected_event_id={self.evento.pk}', response.context['termo_novo_url'])
+        self.assertIn(f'return_to={expected_return_to}', response.context['termo_novo_url'])
+        self.assertContains(response, f'preselected_event_id={self.evento.pk}')
+        self.assertContains(response, 'Novo termo')

@@ -248,6 +248,78 @@ class PtOsDesacopladoTest(TestCase):
         self.assertEqual(ordem.status, OrdemServico.STATUS_RASCUNHO)
         self.assertEqual(ordem.data_criacao, timezone.localdate())
 
+    def test_autosave_os_cria_rascunho_editavel_e_reutiliza_mesmo_registro(self):
+        cargo = Cargo.objects.create(nome='Agente de PolÃ­cia Civil')
+        estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR')
+        cidade = Cidade.objects.create(nome='Curitiba', estado=estado)
+        viajante = Viajante.objects.create(
+            nome='MARIA SILVA',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=cargo,
+            cpf='12345678901',
+            telefone='41999998888',
+        )
+        modelo = self._novo_modelo_motivo('OS compartilhada')
+        create_url = reverse('eventos:documentos-ordens-servico-novo')
+
+        response = self.client.post(
+            create_url,
+            data={
+                'autosave': '1',
+                'autosave_obj_id': '',
+                'evento': str(self.evento.pk),
+                'oficio': str(self.oficio.pk),
+                'data_deslocamento': '2026-03-12',
+                'modelo_motivo': str(modelo.pk),
+                'motivo_texto': 'Primeiro rascunho operacional.',
+                'viajantes': [str(viajante.pk)],
+                'destinos_payload': (
+                    '[{"estado_id": %d, "estado_sigla": "PR", "cidade_id": %d, "cidade_nome": "Curitiba"}]'
+                    % (estado.pk, cidade.pk)
+                ),
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload['ok'])
+        ordem = OrdemServico.objects.get(pk=payload['id'])
+        self.assertEqual(
+            payload['edit_url'],
+            reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}),
+        )
+        self.assertEqual(OrdemServico.objects.count(), 1)
+        self.assertEqual(ordem.motivo_texto, 'Primeiro rascunho operacional.')
+
+        response = self.client.post(
+            create_url,
+            data={
+                'autosave': '1',
+                'autosave_obj_id': str(ordem.pk),
+                'evento': str(self.evento.pk),
+                'oficio': str(self.oficio.pk),
+                'data_deslocamento': '2026-03-13',
+                'modelo_motivo': str(modelo.pk),
+                'motivo_texto': 'Rascunho atualizado sem duplicar.',
+                'viajantes': [str(viajante.pk)],
+                'destinos_payload': (
+                    '[{"estado_id": %d, "estado_sigla": "PR", "cidade_id": %d, "cidade_nome": "Curitiba"}]'
+                    % (estado.pk, cidade.pk)
+                ),
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload['ok'])
+        self.assertEqual(payload['id'], ordem.pk)
+        self.assertEqual(OrdemServico.objects.count(), 1)
+        ordem.refresh_from_db()
+        self.assertEqual(ordem.motivo_texto, 'Rascunho atualizado sem duplicar.')
+        self.assertEqual(ordem.data_deslocamento, date(2026, 3, 13))
+
     def test_editar_os_preserva_viajantes_e_data_quando_campos_ausentes_no_post(self):
         cargo = Cargo.objects.create(nome='Agente de Polícia Civil')
         viajante = Viajante.objects.create(
