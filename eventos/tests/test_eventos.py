@@ -1527,7 +1527,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertEqual(ev.data_inicio, date(2025, 3, 20))
         self.assertEqual(ev.data_fim, date(2025, 3, 20))
         self.assertTrue(ev.data_unica)
-        self.assertTrue(ev.tem_convite_ou_oficio_evento)
+        self.assertFalse(ev.tem_convite_ou_oficio_evento)
         self.assertEqual(ev.destinos.count(), 1)
 
     def test_etapa_1_renderiza_hook_de_autosave_e_topo_reativo(self):
@@ -1543,7 +1543,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertContains(response, 'data-autosave-link="1"')
         self.assertContains(response, 'data-autosave-navigate=')
 
-    def test_etapa_1_autosave_persiste_upload_de_convite(self):
+    def test_etapa_1_ignora_upload_de_convite(self):
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 3, 12), data_fim=date(2025, 3, 12), status=Evento.STATUS_RASCUNHO)
@@ -1566,8 +1566,8 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json().get('ok'))
         ev.refresh_from_db()
-        self.assertTrue(ev.tem_convite_ou_oficio_evento)
-        self.assertEqual(ev.anexos_solicitante.count(), 1)
+        self.assertFalse(ev.tem_convite_ou_oficio_evento)
+        self.assertEqual(ev.anexos_solicitante.count(), 0)
 
     def test_etapa_1_titulo_gerado_automaticamente(self):
         tipo = self.tipos[0] if self.tipos else None

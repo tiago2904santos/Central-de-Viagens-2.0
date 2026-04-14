@@ -971,7 +971,7 @@ def guiado_novo(request):
 def guiado_etapa_1(request, pk):
     """GET+POST da Etapa 1 do fluxo guiado refatorado: tipos, datas, destinos, descriÃ§Ã£o. TÃ­tulo gerado automaticamente."""
     obj = get_object_or_404(
-        Evento.objects.prefetch_related('tipos_demanda', 'destinos', 'anexos_solicitante').prefetch_related(
+        Evento.objects.prefetch_related('tipos_demanda', 'destinos').prefetch_related(
             'destinos__estado',
             'destinos__cidade',
         ),
@@ -990,19 +990,15 @@ def guiado_etapa_1(request, pk):
     if request.method == 'POST':
         if _is_autosave_request(request):
             return _autosave_evento_etapa_1(obj, request)
-        arquivos_convite = [f for f in request.FILES.getlist('convite_documentos') if getattr(f, 'name', '')]
-        ok_arquivos, msg_arquivos = _validar_anexos_convite(arquivos_convite)
         destinos_post = _parse_destinos_post(request)
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
-        if form.is_valid() and ok_destinos and ok_arquivos:
-            obj = _persist_evento_etapa1(obj, form, destinos_post, arquivos_convite)
+        if form.is_valid() and ok_destinos:
+            obj = _persist_evento_etapa1(obj, form, destinos_post)
             if request.POST.get('continuar'):
                 return redirect('eventos:guiado-etapa-2', evento_id=obj.pk)
             return redirect('eventos:guiado-etapa-1', pk=obj.pk)
         if not ok_destinos:
             form.add_error(None, msg_destinos)
-        if not ok_arquivos:
-            form.add_error(None, msg_arquivos)
 
     import json
     estados_qs = Estado.objects.filter(ativo=True).order_by('nome')
@@ -1018,8 +1014,6 @@ def guiado_etapa_1(request, pk):
     context = {
         'form': form,
         'object': obj,
-        'anexos_convite': obj.anexos_solicitante.all().order_by('ordem', '-uploaded_at', 'id'),
-        'convite_next_url': reverse('eventos:guiado-etapa-1', kwargs={'pk': obj.pk}),
         'destinos_atuais': destinos_atuais,
         'estado_pr': estado_pr,
         'estados': estados_qs,
@@ -2980,21 +2974,18 @@ def _clear_prefetched_relations(instance, *relation_names):
         cache.pop(relation_name, None)
 
 
-def _persist_evento_etapa1(obj, form, destinos_post, arquivos_convite=None):
-    arquivos_convite = [arquivo for arquivo in (arquivos_convite or []) if getattr(arquivo, 'name', '')]
+def _persist_evento_etapa1(obj, form, destinos_post):
     cleaned = form.cleaned_data
     tipos_qs = cleaned.get('tipos_demanda')
     data_unica = bool(cleaned.get('data_unica'))
     data_inicio = cleaned.get('data_inicio') or obj.data_inicio
     data_fim = cleaned.get('data_fim') or obj.data_fim
     descricao = (cleaned.get('descricao') or '').strip()
-    tem_convite = bool(cleaned.get('tem_convite_ou_oficio_evento'))
 
     obj.data_unica = data_unica
-    obj.tem_convite_ou_oficio_evento = tem_convite or bool(arquivos_convite) or EventoAnexoSolicitante.objects.filter(evento=obj).exists()
     obj.data_inicio = data_inicio
     obj.data_fim = data_inicio if data_unica else data_fim
-    obj.save(update_fields=['data_unica', 'tem_convite_ou_oficio_evento', 'data_inicio', 'data_fim', 'updated_at'])
+    obj.save(update_fields=['data_unica', 'data_inicio', 'data_fim', 'updated_at'])
 
     form.save(commit=False)
     form.save_m2m()
@@ -3004,12 +2995,6 @@ def _persist_evento_etapa1(obj, form, destinos_post, arquivos_convite=None):
     for ordem, (estado_id, cidade_id) in enumerate(destinos_post):
         EventoDestino.objects.create(evento=obj, estado_id=estado_id, cidade_id=cidade_id, ordem=ordem)
     _clear_prefetched_relations(obj, 'destinos')
-
-    if arquivos_convite:
-        _salvar_anexos_convite(obj, arquivos_convite)
-        obj.tem_convite_ou_oficio_evento = True
-        obj.save(update_fields=['tem_convite_ou_oficio_evento', 'updated_at'])
-    _clear_prefetched_relations(obj, 'anexos_solicitante')
 
     if not tipos_qs.filter(is_outros=True).exists():
         descricao = ''
@@ -3746,12 +3731,7 @@ def _autosave_evento_etapa_1(obj, request):
     if not ok_destinos:
         return _autosave_error_response(msg_destinos)
 
-    arquivos_convite = [f for f in request.FILES.getlist('convite_documentos') if getattr(f, 'name', '')]
-    ok_arquivos, msg_arquivos = _validar_anexos_convite(arquivos_convite)
-    if not ok_arquivos:
-        return _autosave_error_response(msg_arquivos)
-
-    obj = _persist_evento_etapa1(obj, form, destinos_post, arquivos_convite)
+    obj = _persist_evento_etapa1(obj, form, destinos_post)
     return _autosave_success_response({'id': obj.pk, 'status': obj.status})
 
 

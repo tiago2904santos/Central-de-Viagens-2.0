@@ -15,7 +15,7 @@
         </div>
         {% endif %}
 
-        <form method="post" enctype="multipart/form-data" id="form-etapa1" class="card form-card app-page-card app-page-card--spacious system-form-card evento-etapa1-card" data-evento-etapa1 data-evento-heading-fallback="{{ evento_heading }}" data-evento-base-cidade="{% if object.cidade_base %}{{ object.cidade_base.nome }}{% elif object.cidade_principal %}{{ object.cidade_principal.nome }}{% endif %}" data-evento-base-uf="{% if object.cidade_base and object.cidade_base.estado %}{{ object.cidade_base.estado.sigla }}{% elif object.cidade_principal and object.cidade_principal.estado %}{{ object.cidade_principal.estado.sigla }}{% endif %}" data-api-cidades-url="{{ api_cidades_por_estado_url }}" data-estado-pr-id="{{ estado_pr.id|default:'' }}" data-tipo-outros-pk="{{ tipo_outros_pk|default:'' }}" data-estados-json='{{ estados_json|escapejs }}' data-has-convite-anexos="{% if anexos_convite %}1{% else %}0{% endif %}">
+        <form method="post" id="form-etapa1" class="card form-card app-page-card app-page-card--spacious system-form-card evento-etapa1-card" data-evento-etapa1 data-evento-heading-fallback="{{ evento_heading }}" data-evento-base-cidade="{% if object.cidade_base %}{{ object.cidade_base.nome }}{% elif object.cidade_principal %}{{ object.cidade_principal.nome }}{% endif %}" data-evento-base-uf="{% if object.cidade_base and object.cidade_base.estado %}{{ object.cidade_base.estado.sigla }}{% elif object.cidade_principal and object.cidade_principal.estado %}{{ object.cidade_principal.estado.sigla }}{% endif %}" data-api-cidades-url="{{ api_cidades_por_estado_url }}" data-estado-pr-id="{{ estado_pr.id|default:'' }}" data-tipo-outros-pk="{{ tipo_outros_pk|default:'' }}" data-estados-json='{{ estados_json|escapejs }}'>
             {% csrf_token %}
             <div class="card-body">
                 <section class="evento-section">
@@ -116,17 +116,14 @@
                     </div>
                 </section>
 
-                {% include 'eventos/guiado/_convite_upload_section.html' with convite_checked=form.tem_convite_ou_oficio_evento.value convite_next_url=convite_next_url %}
-
-                <div class="form-actions system-form-actions">
-                <div class="system-form-actions__group system-form-actions__group--secondary">
-                        <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary">Voltar para lista</a>
-                    </div>
-                    <div class="system-form-actions__group system-form-actions__group--primary">
-                        <button type="submit" class="btn btn-primary">Salvar</button>
-                        <button type="submit" name="continuar" value="1" class="btn btn-success" data-autosave-navigate="{% url 'eventos:guiado-etapa-2' evento_id=object.pk %}">Salvar e continuar</button>
+                <div class="form-actions system-form-actions evento-etapa1-footer">
+                    <div class="system-form-actions__group system-form-actions__group--secondary">
+                        <a href="{% url 'eventos:lista' %}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar</a>
                     </div>
                     <p class="evento-etapa1-autosave-status small text-muted mb-0" id="evento-etapa1-autosave-status" aria-live="polite"></p>
+                    <div class="system-form-actions__group system-form-actions__group--primary">
+                        <button type="submit" name="continuar" value="1" class="btn btn-primary" data-autosave-navigate="{% url 'eventos:guiado-etapa-2' evento_id=object.pk %}">Avançar</button>
+                    </div>
                 </div>
             </div>
         </form>

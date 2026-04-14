@@ -146,7 +146,7 @@ class EventoEtapa1Form(FormComErroInvalidMixin, forms.ModelForm):
         model = Evento
         fields = [
             'tipos_demanda', 'data_unica', 'data_inicio', 'data_fim',
-            'descricao', 'tem_convite_ou_oficio_evento',
+            'descricao',
         ]
         widgets = {
             'tipos_demanda': forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
@@ -154,7 +154,6 @@ class EventoEtapa1Form(FormComErroInvalidMixin, forms.ModelForm):
             'data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'data_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'tem_convite_ou_oficio_evento': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def __init__(self, *args, **kwargs):

@@ -43,25 +43,29 @@ class EventoAnexosSolicitanteTest(TestCase):
             'destino_cidade_0': self.cidade.pk,
         }
 
-    def test_etapa1_salva_multiplos_anexos_pdf(self):
+    def test_etapa4_salva_multiplos_anexos_pdf(self):
         arquivo_1 = SimpleUploadedFile('convite-1.pdf', b'%PDF-1.4 arquivo um', content_type='application/pdf')
         arquivo_2 = SimpleUploadedFile('oficio-2.pdf', b'%PDF-1.4 arquivo dois', content_type='application/pdf')
-        payload = self._payload_base()
-        payload['convite_documentos'] = [arquivo_1, arquivo_2]
+        payload = {
+            'tem_convite_ou_oficio_evento': 'on',
+            'convite_documentos': [arquivo_1, arquivo_2],
+        }
 
-        response = self.client.post(reverse('eventos:guiado-etapa-1', kwargs={'pk': self.evento.pk}), payload)
+        response = self.client.post(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}), payload)
 
         self.assertEqual(response.status_code, 302)
         self.evento.refresh_from_db()
         self.assertTrue(self.evento.tem_convite_ou_oficio_evento)
         self.assertEqual(self.evento.anexos_solicitante.count(), 2)
 
-    def test_etapa1_rejeita_anexo_nao_pdf(self):
+    def test_etapa4_rejeita_anexo_nao_pdf(self):
         arquivo_invalido = SimpleUploadedFile('convite.txt', b'teste', content_type='text/plain')
-        payload = self._payload_base()
-        payload['convite_documentos'] = [arquivo_invalido]
+        payload = {
+            'tem_convite_ou_oficio_evento': 'on',
+            'convite_documentos': [arquivo_invalido],
+        }
 
-        response = self.client.post(reverse('eventos:guiado-etapa-1', kwargs={'pk': self.evento.pk}), payload)
+        response = self.client.post(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}), payload, follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'PDF')

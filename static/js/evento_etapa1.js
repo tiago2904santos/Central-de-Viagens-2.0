@@ -22,11 +22,6 @@
   var dataInicioInput = document.getElementById('id_data_inicio');
   var dataFimInput = document.getElementById('id_data_fim');
   var dataUnicaState = form.querySelector('[data-data-unica-state]');
-  var conviteInput = document.getElementById('id_tem_convite_ou_oficio_evento');
-  var conviteState = form.querySelector('[data-convite-state]');
-  var conviteUploadWrap = form.querySelector('[data-convite-upload-wrap]');
-  var conviteFilesInput = document.getElementById('id_convite_documentos');
-  var hasConviteAnexos = form.getAttribute('data-has-convite-anexos') === '1';
   var wrapDescricao = document.getElementById('wrap-descricao');
   var destinosContainer = document.getElementById('destinos-container');
   var btnAdicionarDestino = document.getElementById('btn-adicionar-destino');
@@ -241,19 +236,6 @@
     updateHeaderSummary();
   }
 
-  function updateConvite() {
-    if (!conviteInput) {
-      return;
-    }
-    var temUploadSelecionado = !!(conviteFilesInput && conviteFilesInput.files && conviteFilesInput.files.length);
-    var ativo = !!conviteInput.checked || hasConviteAnexos || temUploadSelecionado;
-    setStatusLabel(conviteState, ativo, 'SIM', 'NÃO');
-    if (conviteUploadWrap) {
-      conviteUploadWrap.classList.toggle('d-none', !ativo);
-    }
-    updateHeaderSummary();
-  }
-
   function loadCidadesForSelect(selectCidade, estadoId, selectedCidadeId) {
     if (!selectCidade) {
       return Promise.resolve();
@@ -420,21 +402,6 @@
       scheduleAutosave();
     });
   }
-  if (conviteInput) {
-    conviteInput.addEventListener('change', function() {
-      updateConvite();
-      scheduleAutosave();
-    });
-  }
-  if (conviteFilesInput) {
-    conviteFilesInput.addEventListener('change', function() {
-      if (conviteFilesInput.files && conviteFilesInput.files.length && conviteInput) {
-        conviteInput.checked = true;
-      }
-      updateConvite();
-      scheduleAutosave();
-    });
-  }
 
   if (btnAdicionarDestino) {
     btnAdicionarDestino.addEventListener('click', function() {
@@ -447,6 +414,5 @@
   updateDemandCards();
   toggleDescricao();
   updateDataUnica();
-  updateConvite();
   updateHeaderSummary();
 })();
