@@ -1,9 +1,36 @@
-<div class="system-list-fab-group">
-	<a href="#" class="system-list-fab system-list-fab--scroll-up" data-scroll-top aria-label="Subir lista">
+<div class="system-list-fab-group" {% if secondary_buttons %}data-fab-group data-fab-open="false"{% endif %}>
+	<a href="#" class="system-list-fab system-list-fab--scroll-up" data-scroll-top aria-label="Subir ao topo">
 		<i class="bi bi-arrow-up"></i>
-		<span class="visually-hidden">Subir lista</span>
+		<span class="visually-hidden">Subir ao topo</span>
 	</a>
-	{% if post_action %}
+
+	{% if secondary_buttons %}
+	<div class="system-list-fab-group__stack">
+		<div class="system-list-fab-group__menu" data-fab-menu id="{{ fab_menu_id|default:'system-list-fab-menu' }}" aria-hidden="true" role="menu">
+			{% for button in secondary_buttons %}
+			<a
+				href="{{ button.url }}"
+				class="system-list-fab system-list-fab--child{% if button.extra_class %} {{ button.extra_class }}{% endif %}"
+				aria-label="{{ button.aria_label|default:button.label }}"
+			>
+				{% if button.icon %}<i class="bi {{ button.icon }}"></i>{% endif %}
+				<span>{{ button.label }}</span>
+			</a>
+			{% endfor %}
+		</div>
+		<button
+			type="button"
+			class="system-list-fab system-list-fab--toggle{% if extra_class %} {{ extra_class }}{% endif %}"
+			data-fab-toggle
+			aria-expanded="false"
+			aria-haspopup="menu"
+			aria-controls="{{ fab_menu_id|default:'system-list-fab-menu' }}"
+		>
+			<i class="bi {{ icon|default:'bi-plus-lg' }}"></i>
+			<span>{{ label|default:'Cadastrar novo' }}</span>
+		</button>
+	</div>
+	{% elif post_action %}
 	<form method="post" action="{{ url }}" class="system-list-fab-form">
 		{% csrf_token %}
 		<button type="submit" class="system-list-fab {% if extra_class %}{{ extra_class }}{% endif %}">

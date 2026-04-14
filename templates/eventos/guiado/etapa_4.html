@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Etapa 4 - PT / OS - {{ evento.titulo|default:"Evento" }} - Central de Viagens{% endblock %}
 {% block page_title %}Fluxo guiado - Etapa 4: PT / OS{% endblock %}
@@ -10,7 +11,6 @@
 
         <form id="form-etapa4-convite" method="post" enctype="multipart/form-data" class="d-none">
             {% csrf_token %}
-            <input type="hidden" name="modo_documento" value="{{ modo_documento }}">
         </form>
 
         <section class="app-page-card app-page-card--spacious">
@@ -21,99 +21,22 @@
         </section>
 
         <section class="app-page-card app-page-card--spacious">
-            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
-                <h2 class="h6 mb-0">Tipo de documento</h2>
-                <form method="get" class="system-list-view-toggle oficios-view-toggle" role="group" aria-label="Alternar entre Plano de Trabalho e Ordem de Servico">
-                    <button
-                        type="submit"
-                        name="modo_documento"
-                        value="PT"
-                        class="system-list-view-toggle__button oficios-view-toggle__button{% if modo_documento == 'PT' %} is-active{% endif %}"
-                        aria-pressed="{% if modo_documento == 'PT' %}true{% else %}false{% endif %}"
-                    >
-                        Plano de Trabalho
-                    </button>
-                    <button
-                        type="submit"
-                        name="modo_documento"
-                        value="OS"
-                        class="system-list-view-toggle__button oficios-view-toggle__button{% if modo_documento == 'OS' %} is-active{% endif %}"
-                        aria-pressed="{% if modo_documento == 'OS' %}true{% else %}false{% endif %}"
-                    >
-                        Ordem de Serviço
-                    </button>
-                </form>
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
+                <div>
+                    <h2 class="h6 mb-1">Documentos vinculados ao evento</h2>
+                    <p class="text-muted mb-0">Planos de Trabalho e Ordens de Serviço aparecem juntos nesta etapa, preservando o card original de cada tipo.</p>
+                </div>
             </div>
+            {% include 'eventos/guiado/partials/_pt_os_list_content.html' with itens_unificados=itens_unificados empty_state_class='guiado-etapa4-empty' rich_aria_label='Lista unificada de planos de trabalho e ordens de servico do evento' %}
         </section>
 
-        <section class="row g-3">
-            <div class="col-12">
-                {% if modo_documento == 'PT' %}
-                <div class="app-page-card h-100">
-                    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-                        <h2 class="h6 mb-0">Planos de Trabalho vinculados</h2>
-                        <a href="{{ novo_plano_trabalho_url }}" class="btn btn-sm btn-outline-primary">Novo Plano de Trabalho</a>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead class="table-light">
-                                <tr><th>ID</th><th>Número</th><th>Status</th><th class="text-end">Ações</th></tr>
-                            </thead>
-                            <tbody>
-                                {% for pt in planos_trabalho %}
-                                <tr>
-                                    <td>{{ pt.pk }}</td>
-                                    <td>{{ pt.numero_formatado|default:'-' }}</td>
-                                    <td>{{ pt.get_status_display }}</td>
-                                    <td class="text-end">
-                                        <a href="{% url 'eventos:documentos-planos-trabalho-editar' pt.pk %}?return_to={{ return_to_with_mode|urlencode }}&context_source=evento&preselected_event_id={{ evento.pk }}" class="btn btn-outline-primary btn-sm">Editar</a>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="4" class="text-center text-muted py-3">Nenhum plano vinculado.</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% else %}
-                <div class="app-page-card h-100">
-                    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-                        <h2 class="h6 mb-0">Ordens de Serviço vinculadas</h2>
-                        <a href="{{ nova_ordem_servico_url }}" class="btn btn-sm btn-outline-primary">Nova Ordem de Serviço</a>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead class="table-light">
-                                <tr><th>ID</th><th>Número</th><th>Status</th><th class="text-end">Ações</th></tr>
-                            </thead>
-                            <tbody>
-                                {% for os in ordens_servico %}
-                                <tr>
-                                    <td>{{ os.pk }}</td>
-                                    <td>{{ os.numero_formatado|default:'-' }}</td>
-                                    <td>{{ os.get_status_display }}</td>
-                                    <td class="text-end">
-                                        <a href="{% url 'eventos:documentos-ordens-servico-editar' os.pk %}?return_to={{ return_to_with_mode|urlencode }}&context_source=evento&preselected_event_id={{ evento.pk }}" class="btn btn-outline-primary btn-sm">Editar</a>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="4" class="text-center text-muted py-3">Nenhuma ordem vinculada.</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </section>
-
-
+        {% include 'includes/list/floating_new_button.html' with secondary_buttons=fab_secondary_buttons label='Cadastrar novo' icon='bi-plus-lg' %}
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/list_standard.js' %}"></script>
 <script>
 (function() {
     var conviteInput = document.getElementById('id_tem_convite_ou_oficio_evento');

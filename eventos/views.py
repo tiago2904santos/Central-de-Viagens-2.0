@@ -2142,6 +2142,106 @@ def _guiado_etapa_em_breve(request, evento_id, numero, nome):
     })
 
 
+def _guiado_etapa_4_contextual_url(url_name, evento_id, return_to):
+    return (
+        f"{reverse(url_name)}?"
+        f"context_source=evento&preselected_event_id={evento_id}&return_to={quote(return_to)}"
+    )
+
+
+def _guiado_etapa_4_decorate_plans(planos):
+    from . import views_global
+
+    views_global._decorate_plano_trabalho_list_items(planos)
+    for plano in planos:
+        plano.item_type = 'pt'
+        plano.sort_key = plano.updated_at or plano.created_at
+    return planos
+
+
+def _guiado_etapa_4_decorate_orders(ordens):
+    from . import views_global
+
+    chefia_contexto = views_global._ordem_servico_chefia_contexto()
+    def clean_text(value):
+        return str(value or '').strip()
+
+    for ordem in ordens:
+        status_meta = views_global._build_ordem_servico_status_meta(ordem)
+        ordem.status_meta = status_meta
+        ordem.card_theme_class = status_meta['theme_class']
+        ordem.abrir_url = reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk})
+        ordem.open_url = ordem.abrir_url
+        ordem.edit_url = ordem.abrir_url
+        ordem.delete_url = reverse('eventos:documentos-ordens-servico-excluir', kwargs={'pk': ordem.pk})
+        ordem.docx_url = reverse(
+            'eventos:documentos-ordens-servico-download',
+            kwargs={'pk': ordem.pk, 'formato': DocumentoFormato.DOCX.value},
+        )
+        ordem.pdf_url = reverse(
+            'eventos:documentos-ordens-servico-download',
+            kwargs={'pk': ordem.pk, 'formato': DocumentoFormato.PDF.value},
+        )
+        ordem.download_docx_url = ordem.docx_url
+        ordem.download_pdf_url = ordem.pdf_url
+        ordem.evento_display = (ordem.evento.titulo or '').strip() if ordem.evento_id else 'Sem evento'
+        ordem.oficio_display = ordem.oficio.numero_formatado if ordem.oficio_id else 'Sem oficio'
+        ordem.data_criacao_display = ordem.data_criacao.strftime('%d/%m/%Y') if ordem.data_criacao else 'Nao informada'
+        ordem.data_deslocamento_display = ordem.data_deslocamento.strftime('%d/%m/%Y') if ordem.data_deslocamento else 'Nao informada'
+        ordem.viajantes_display = views_global._ordem_servico_viajantes_display(ordem)
+        ordem.destinos_display = views_global._ordem_servico_destinos_display(ordem)
+        ordem.motivo_display = clean_text(ordem.motivo_texto or ordem.finalidade) or 'Nao informado'
+        ordem.missing_fields = views_global._ordem_servico_missing_fields(ordem)
+        ordem.header_chips = [
+            {'label': 'Ordem', 'value': ordem.numero_formatado or '-', 'css_class': 'is-key'},
+            {'label': 'Evento', 'value': ordem.evento_display, 'css_class': ''},
+            {'label': 'Oficio', 'value': ordem.oficio_display, 'css_class': ''},
+            {'label': 'Criacao', 'value': ordem.data_criacao_display, 'css_class': 'is-date'},
+            {'label': 'Deslocamento', 'value': ordem.data_deslocamento_display, 'css_class': 'is-date'},
+        ]
+        ordem.corner_badges = [
+            {'value': ordem.status_meta['label'], 'css_class': ordem.status_meta['badge_css_class']},
+        ]
+        if ordem.missing_fields:
+            ordem.corner_badges.append({'value': f'Pendencias: {len(ordem.missing_fields)}', 'css_class': 'is-warning'})
+        ordem.viajantes_block = {
+            'count_label': (
+                f"{len(ordem.get_viajantes_relacionados()) or len([line for line in str(ordem.responsaveis or '').splitlines() if clean_text(line)])} servidor(es)"
+            ),
+            'items': views_global._ordem_servico_viajantes_items(ordem),
+        }
+        ordem.contexto_block = {
+            'destinos': ordem.destinos_display,
+            'chefia_nome': chefia_contexto['nome'],
+            'chefia_cargo': chefia_contexto['cargo'],
+        }
+        ordem.item_type = 'os'
+        ordem.sort_key = ordem.updated_at or ordem.created_at
+    return ordens
+
+
+def _guiado_etapa_4_build_unified_items(planos, ordens):
+    items = []
+    for plano in planos:
+        items.append({
+            'item_type': 'pt',
+            'item_obj': plano,
+            'sort_key': plano.sort_key,
+            'type_priority': 1,
+            'pk': plano.pk,
+        })
+    for ordem in ordens:
+        items.append({
+            'item_type': 'os',
+            'item_obj': ordem,
+            'sort_key': ordem.sort_key,
+            'type_priority': 0,
+            'pk': ordem.pk,
+        })
+    items.sort(key=lambda item: (item['sort_key'], item['type_priority'], item['pk']), reverse=True)
+    return items
+
+
 @login_required
 @require_http_methods(['GET', 'POST'])
 def guiado_etapa_4(request, evento_id):
@@ -2151,16 +2251,12 @@ def guiado_etapa_4(request, evento_id):
         pk=evento_id,
     )
 
-    modo_documento = (request.GET.get('modo_documento') or request.POST.get('modo_documento') or 'PT').strip().upper()
-    if modo_documento not in {'PT', 'OS'}:
-        modo_documento = 'PT'
-
     if request.method == 'POST':
         arquivos_convite = [f for f in request.FILES.getlist('convite_documentos') if getattr(f, 'name', '')]
         ok_arquivos, msg_arquivos = _validar_anexos_convite(arquivos_convite)
         if not ok_arquivos:
             messages.error(request, msg_arquivos)
-            return redirect(f"{reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk})}?modo_documento={modo_documento}")
+            return redirect(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk}))
 
         _salvar_anexos_convite(evento, arquivos_convite)
 
@@ -2172,30 +2268,63 @@ def guiado_etapa_4(request, evento_id):
             evento.save(update_fields=['tem_convite_ou_oficio_evento'])
 
         messages.success(request, 'Convite/ofÃ­cio solicitante atualizado com sucesso.')
-        return redirect(f"{reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk})}?modo_documento={modo_documento}")
+        return redirect(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk}))
 
     oficios = list(evento.oficios.order_by('ano', 'numero', 'id'))
     for oficio in oficios:
         oficio.justificativa_info = _build_oficio_justificativa_info(oficio)
 
-    planos = list(PlanoTrabalho.objects.filter(evento=evento).select_related('oficio').order_by('-updated_at'))
-    ordens = list(OrdemServico.objects.filter(evento=evento).select_related('oficio').order_by('-updated_at'))
+    planos = list(
+        PlanoTrabalho.objects.filter(evento=evento)
+        .select_related('evento', 'oficio', 'roteiro', 'solicitante', 'coordenador_operacional', 'coordenador_administrativo')
+        .prefetch_related('oficios', 'coordenadores')
+        .order_by('-updated_at', '-created_at', '-pk')
+    )
+    ordens = list(
+        OrdemServico.objects.filter(evento=evento)
+        .select_related('evento', 'oficio')
+        .prefetch_related(
+            Prefetch('viajantes', queryset=Viajante.objects.select_related('cargo', 'unidade_lotacao')),
+            Prefetch('oficio__viajantes', queryset=Viajante.objects.select_related('cargo', 'unidade_lotacao')),
+        )
+        .order_by('-updated_at', '-created_at', '-pk')
+    )
+
+    _guiado_etapa_4_decorate_plans(planos)
+    _guiado_etapa_4_decorate_orders(ordens)
 
     return_to = reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk})
-    return_to_with_mode = f"{return_to}?modo_documento={modo_documento}"
-    novo_pt_url = (
-        f"{reverse('eventos:documentos-planos-trabalho-novo')}?"
-        f"context_source=evento&preselected_event_id={evento.pk}&return_to={quote(return_to_with_mode)}"
-    )
-    novo_os_url = (
-        f"{reverse('eventos:documentos-ordens-servico-novo')}?"
-        f"context_source=evento&preselected_event_id={evento.pk}&return_to={quote(return_to_with_mode)}"
-    )
+    for plano in planos:
+        plano.abrir_url = (
+            f"{reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk})}?"
+            f"context_source=evento&preselected_event_id={evento.pk}&return_to={quote(return_to)}"
+        )
+        plano.open_url = plano.abrir_url
+        plano.edit_url = plano.abrir_url
+        plano.delete_url = (
+            f"{reverse('eventos:documentos-planos-trabalho-excluir', kwargs={'pk': plano.pk})}?"
+            f"return_to={quote(return_to)}"
+        )
+    for ordem in ordens:
+        ordem.abrir_url = (
+            f"{reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk})}?"
+            f"context_source=evento&preselected_event_id={evento.pk}&return_to={quote(return_to)}"
+        )
+        ordem.open_url = ordem.abrir_url
+        ordem.edit_url = ordem.abrir_url
+        ordem.delete_url = (
+            f"{reverse('eventos:documentos-ordens-servico-excluir', kwargs={'pk': ordem.pk})}?"
+            f"return_to={quote(return_to)}"
+        )
+
+    itens_unificados = _guiado_etapa_4_build_unified_items(planos, ordens)
+    novo_pt_url = _guiado_etapa_4_contextual_url('eventos:documentos-planos-trabalho-novo', evento.pk, return_to)
+    novo_os_url = _guiado_etapa_4_contextual_url('eventos:documentos-ordens-servico-novo', evento.pk, return_to)
     evento_heading = _guiado_v2_evento_heading(evento)
     evento_context_items = _guiado_v2_build_evento_context_items(evento)
     evento_document_counts = _guiado_v2_build_evento_document_counts(evento)
     wizard_steps = _build_guiado_v2_wizard_steps(evento, current_key='pt-os')
-    convite_next_url = return_to_with_mode
+    convite_next_url = return_to
 
     context = {
         'evento': evento,
@@ -2206,11 +2335,14 @@ def guiado_etapa_4(request, evento_id):
         'convite_next_url': convite_next_url,
         'planos_trabalho': planos,
         'ordens_servico': ordens,
+        'itens_unificados': itens_unificados,
         'novo_plano_trabalho_url': novo_pt_url,
         'nova_ordem_servico_url': novo_os_url,
-        'modo_documento': modo_documento,
+        'fab_secondary_buttons': [
+            {'url': novo_pt_url, 'label': 'Plano de Trabalho', 'icon': 'bi-file-earmark-text'},
+            {'url': novo_os_url, 'label': 'Ordem de Serviço', 'icon': 'bi-clipboard-check'},
+        ],
         'return_to': return_to,
-        'return_to_with_mode': return_to_with_mode,
         'evento_heading': evento_heading,
         'evento_context_items': evento_context_items,
         'evento_document_counts': evento_document_counts,

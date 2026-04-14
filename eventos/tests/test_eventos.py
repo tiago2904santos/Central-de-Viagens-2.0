@@ -2866,18 +2866,30 @@ class EventoEtapa4PtOsTest(TestCase):
     def test_etapa_4_get_mostra_links_para_cadastro_real(self):
         response = self.client.get(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Etapa 4 â€” PT / OS')
-        self.assertContains(response, 'Novo Plano de Trabalho')
-        self.assertContains(response, 'Nova Ordem de ServiÃ§o')
+        self.assertContains(response, 'Etapa 4 - PT / OS')
+        self.assertContains(response, 'Cadastrar novo')
+        self.assertContains(response, 'Plano de Trabalho')
+        self.assertContains(response, 'bi-clipboard-check', html=False)
+        self.assertContains(response, 'data-scroll-top', html=False)
+        self.assertContains(response, 'data-fab-toggle', html=False)
+        self.assertContains(response, 'data-fab-menu', html=False)
+        self.assertContains(response, 'context_source=evento', html=False)
         self.assertContains(response, f'preselected_event_id={self.evento.pk}')
+        self.assertNotContains(response, 'data-list-view-toggle', html=False)
 
     def test_etapa_4_lista_pt_os_reais_vinculados_ao_evento(self):
-        pt = PlanoTrabalho.objects.create(evento=self.evento, objetivo='PT evento')
+        pt = PlanoTrabalho.objects.create(evento=self.evento)
         os = OrdemServico.objects.create(evento=self.evento, finalidade='OS evento')
+        PlanoTrabalho.objects.filter(pk=pt.pk).update(updated_at=tz.now() - timedelta(days=1))
+        OrdemServico.objects.filter(pk=os.pk).update(updated_at=tz.now())
         response = self.client.get(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, str(pt.pk))
         self.assertContains(response, str(os.pk))
+        self.assertEqual(
+            [item['item_type'] for item in response.context['itens_unificados']],
+            ['os', 'pt'],
+        )
 
 class EventoEtapa5TermosTest(TestCase):
     """Etapa 3 ? Termos no n?vel do evento: status, modalidade e gera??o por participante."""

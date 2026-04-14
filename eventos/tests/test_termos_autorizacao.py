@@ -600,16 +600,16 @@ class JustificativaModuleTest(TestCase):
         response = self.client.get(
             reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': just.pk})
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Detalhe test')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('documentos/justificativas', response.url)
 
     def test_detalhe_justificativa_sem_oficio_funciona(self):
         just = Justificativa.objects.create(oficio=None, texto='Sem vínculo')
         response = self.client.get(
             reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': just.pk})
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'sem ofício vinculado')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('documentos/justificativas', response.url)
 
     def test_excluir_justificativa_funciona(self):
         just = Justificativa.objects.create(oficio=self.oficio, texto='Para excluir')

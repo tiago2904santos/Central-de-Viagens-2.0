@@ -1,0 +1,13 @@
+<section class="documento-cascade-grid guiado-etapa4-lista-unificada" aria-label="{{ rich_aria_label|default:'Lista unificada de planos de trabalho e ordens de servico' }}">
+    {% for item in itens_unificados %}
+    {% if item.item_type == 'pt' %}
+    {% include 'eventos/guiado/partials/_plano_trabalho_card.html' with plano=item.item_obj %}
+    {% else %}
+    {% include 'eventos/guiado/partials/_ordem_servico_card.html' with ordem=item.item_obj %}
+    {% endif %}
+    {% empty %}
+    <div class="oficios-table-panel__empty{% if empty_state_class %} {{ empty_state_class }}{% endif %}">
+        Nenhum plano de trabalho ou ordem de servico vinculado a este evento.
+    </div>
+    {% endfor %}
+</section>
