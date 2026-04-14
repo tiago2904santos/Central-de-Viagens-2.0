@@ -1215,7 +1215,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 .btn-outline-primary,
 .btn-outline-secondary {
     font-weight: 600;
-    border-radius: 0.82rem;
+    border-radius: 999px;
     transition: 
         background var(--cv-transition-base),
         border-color var(--cv-transition-base),
@@ -10153,7 +10153,20 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     padding: 0 0.75rem;
     font-size: 0.78rem;
 }
-
+.btn.btn-sm.btn-outline-danger {
+    border-radius: 0.75rem;
+    border-color: rgba(185, 28, 28, 0.22);
+    background: rgba(254, 242, 242, 0.97);
+    color: #b42318;
+    box-shadow: 0 8px 18px rgba(185, 28, 28, 0.08);
+    
+}
+.btn.btn-sm.btn-outline-danger:hover,
+.btn.btn-sm.btn-outline-danger:focus {
+        border-color: #b42318;
+        background: linear-gradient(135deg, #e11d48 0%, #b42318 100%);
+        color: #fff;
+    }
 .evento-convite-file-actions form {
     margin: 0;
 }
@@ -10727,16 +10740,25 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .guiado-etapa4-page .system-list-fab-group__menu .system-list-fab {
     padding-inline: 1rem;
-    background: linear-gradient(135deg, #6f97c0 0%, #88afd7 100%);
+    background: linear-gradient(135deg, #f2f7fc 0%, #e1ecf7 100%);
+    color: #24415f;
+    border: 1px solid rgba(42, 95, 149, 0.12);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(15, 23, 42, 0.06);
 }
 
 .guiado-etapa4-page .system-list-fab-group__menu .system-list-fab:hover,
 .guiado-etapa4-page .system-list-fab-group__menu .system-list-fab:focus {
-    background: linear-gradient(135deg, #7aa2cb 0%, #96bfe6 100%);
+    background: linear-gradient(135deg, #ebf3fb 0%, #dbe8f4 100%);
+    color: #24415f;
 }
 
 .guiado-etapa4-page .system-list-fab--toggle {
     padding-inline: 1rem;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.14);
 }
 
 .guiado-etapa4-page .system-list-fab--toggle,
