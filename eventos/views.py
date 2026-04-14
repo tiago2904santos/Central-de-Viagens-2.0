@@ -1,4 +1,5 @@
 ﻿import uuid
+import hashlib
 from copy import deepcopy
 from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
@@ -13,6 +14,7 @@ from django.db.models import Max, Prefetch, Q
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.template.loader import render_to_string
 from django.utils.dateparse import parse_date
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
@@ -219,21 +221,94 @@ def _validar_anexos_convite(arquivos):
     return True, None
 
 
+def _fingerprint_upload_arquivo(arquivo):
+    hasher = hashlib.sha256()
+    if hasattr(arquivo, 'seek'):
+        arquivo.seek(0)
+    for bloco in iter(lambda: arquivo.read(1024 * 1024), b''):
+        hasher.update(bloco)
+    if hasattr(arquivo, 'seek'):
+        arquivo.seek(0)
+    return hasher.hexdigest()
+
+
+def _fingerprint_anexo_convite(anexo):
+    arquivo = getattr(anexo, 'arquivo', None)
+    if not arquivo:
+        return None
+    hasher = hashlib.sha256()
+    try:
+        arquivo.open('rb')
+        for bloco in iter(lambda: arquivo.read(1024 * 1024), b''):
+            hasher.update(bloco)
+    finally:
+        try:
+            arquivo.close()
+        except Exception:
+            pass
+    return hasher.hexdigest()
+
+
+def _limpar_anexos_convite_duplicados(evento):
+    anexos = list(
+        EventoAnexoSolicitante.objects.filter(evento=evento).order_by('ordem', 'uploaded_at', 'id')
+    )
+    vistos = {}
+    for anexo in anexos:
+        assinatura = _fingerprint_anexo_convite(anexo)
+        if not assinatura:
+            nome_original = (getattr(anexo, 'nome_original', '') or '').strip().lower()
+            tamanho = int(getattr(getattr(anexo, 'arquivo', None), 'size', 0) or 0)
+            assinatura = f'{nome_original}:{tamanho}'
+        if assinatura in vistos:
+            arquivo = anexo.arquivo
+            anexo.delete()
+            if arquivo:
+                arquivo.delete(save=False)
+            continue
+        vistos[assinatura] = anexo.pk
+
+
 def _salvar_anexos_convite(evento, arquivos):
     if not arquivos:
         return
+    _limpar_anexos_convite_duplicados(evento)
     ultima_ordem = (
         evento.anexos_solicitante.aggregate(max_ordem=Max('ordem')).get('max_ordem')
         or -1
     )
-    for indice, arquivo in enumerate(arquivos, start=1):
+    assinaturas_vistas = set()
+    for anexo in EventoAnexoSolicitante.objects.filter(evento=evento):
+        assinatura = _fingerprint_anexo_convite(anexo)
+        if not assinatura:
+            nome_original = (getattr(anexo, 'nome_original', '') or '').strip().lower()
+            tamanho = int(getattr(getattr(anexo, 'arquivo', None), 'size', 0) or 0)
+            assinatura = f'{nome_original}:{tamanho}'
+        assinaturas_vistas.add(assinatura)
+
+    proxima_ordem = ultima_ordem + 1
+    for arquivo in arquivos:
+        assinatura = _fingerprint_upload_arquivo(arquivo)
+        if assinatura in assinaturas_vistas:
+            continue
+        assinaturas_vistas.add(assinatura)
         nome_original = (getattr(arquivo, 'name', '') or '').strip()[:255] or f'anexo-{uuid.uuid4().hex[:8]}.pdf'
         EventoAnexoSolicitante.objects.create(
             evento=evento,
             arquivo=arquivo,
             nome_original=nome_original,
-            ordem=ultima_ordem + indice,
+            ordem=proxima_ordem,
         )
+        proxima_ordem += 1
+
+
+def _remover_anexos_convite(evento):
+    anexos = list(evento.anexos_solicitante.all())
+    for anexo in anexos:
+        arquivo = anexo.arquivo
+        anexo.delete()
+        if arquivo:
+            arquivo.delete(save=False)
 
 
 def _estrutura_trechos(roteiro, destinos_list=None):
@@ -2241,28 +2316,60 @@ def _guiado_etapa_4_build_unified_items(planos, ordens):
 def guiado_etapa_4(request, evento_id):
     """PT / OS do evento (Etapa 4): apenas consumo dos cadastros reais de PT e OS."""
     evento = get_object_or_404(
-        Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda', 'anexos_solicitante'),
+        Evento.objects.prefetch_related('oficios', 'destinos', 'tipos_demanda'),
         pk=evento_id,
     )
+    return_to = reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk})
 
     if request.method == 'POST':
-        arquivos_convite = [f for f in request.FILES.getlist('convite_documentos') if getattr(f, 'name', '')]
-        ok_arquivos, msg_arquivos = _validar_anexos_convite(arquivos_convite)
-        if not ok_arquivos:
-            messages.error(request, msg_arquivos)
-            return redirect(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk}))
+        is_xhr = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        with transaction.atomic():
+            evento = Evento.objects.select_for_update().get(pk=evento_id)
+            _limpar_anexos_convite_duplicados(evento)
 
-        _salvar_anexos_convite(evento, arquivos_convite)
+            remover_todos_anexos = request.POST.get('remover_todos_anexos_convite') == '1'
+            arquivos_convite = []
+            if not remover_todos_anexos:
+                arquivos_convite = [f for f in request.FILES.getlist('convite_documentos') if getattr(f, 'name', '')]
+                ok_arquivos, msg_arquivos = _validar_anexos_convite(arquivos_convite)
+                if not ok_arquivos:
+                    if is_xhr:
+                        return JsonResponse({'ok': False, 'error': msg_arquivos}, status=400)
+                    messages.error(request, msg_arquivos)
+                    return redirect(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk}))
 
-        convite_flag = request.POST.get('tem_convite_ou_oficio_evento') == 'on'
-        if evento.anexos_solicitante.exists():
-            convite_flag = True
-        if evento.tem_convite_ou_oficio_evento != convite_flag:
-            evento.tem_convite_ou_oficio_evento = convite_flag
-            evento.save(update_fields=['tem_convite_ou_oficio_evento'])
+                _salvar_anexos_convite(evento, arquivos_convite)
+            elif EventoAnexoSolicitante.objects.filter(evento=evento).exists():
+                _remover_anexos_convite(evento)
 
-        messages.success(request, 'Convite/ofÃ­cio solicitante atualizado com sucesso.')
-        return redirect(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk}))
+            convite_flag = request.POST.get('tem_convite_ou_oficio_evento') == 'on'
+            if remover_todos_anexos:
+                convite_flag = False
+            if evento.tem_convite_ou_oficio_evento != convite_flag:
+                evento.tem_convite_ou_oficio_evento = convite_flag
+                evento.save(update_fields=['tem_convite_ou_oficio_evento'])
+
+            anexos_convite = list(
+                EventoAnexoSolicitante.objects.filter(evento=evento).order_by('ordem', '-uploaded_at', 'id')
+            )
+
+        if is_xhr:
+            convite_section_html = render_to_string(
+                'eventos/guiado/_convite_upload_section.html',
+                {
+                    'convite_checked': evento.tem_convite_ou_oficio_evento,
+                    'anexos_convite': anexos_convite,
+                    'convite_next_url': return_to,
+                    'convite_form_id': 'form-etapa4-convite',
+                },
+                request=request,
+            )
+            return JsonResponse({'ok': True, 'html': convite_section_html})
+
+        messages.success(request, 'Convite/ofício solicitante atualizado com sucesso.')
+        return redirect(return_to)
+
+    _limpar_anexos_convite_duplicados(evento)
 
     oficios = list(evento.oficios.order_by('ano', 'numero', 'id'))
     for oficio in oficios:
@@ -2287,7 +2394,6 @@ def guiado_etapa_4(request, evento_id):
     _guiado_etapa_4_decorate_plans(planos)
     _guiado_etapa_4_decorate_orders(ordens)
 
-    return_to = reverse('eventos:guiado-etapa-4', kwargs={'evento_id': evento.pk})
     for plano in planos:
         plano.abrir_url = (
             f"{reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk})}?"
@@ -2324,7 +2430,9 @@ def guiado_etapa_4(request, evento_id):
         'evento': evento,
         'object': evento,
         'oficios': oficios,
-        'anexos_convite': evento.anexos_solicitante.all().order_by('ordem', '-uploaded_at', 'id'),
+        'anexos_convite': list(
+            EventoAnexoSolicitante.objects.filter(evento=evento).order_by('ordem', '-uploaded_at', 'id')
+        ),
         'convite_checked': evento.tem_convite_ou_oficio_evento,
         'convite_next_url': convite_next_url,
         'planos_trabalho': planos,

@@ -10081,10 +10081,12 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .evento-convite-upload-actions {
     display: flex;
+    gap: 0.5rem;
     justify-content: flex-end;
     align-items: flex-start;
     flex: 0 0 auto;
     margin-left: auto;
+    flex-wrap: wrap;
 }
 
 .evento-convite-upload-title {
@@ -10154,7 +10156,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     font-size: 0.78rem;
 }
 .btn.btn-sm.btn-outline-danger {
-    border-radius: 0.75rem;
+    border-radius: 999px;
     border-color: rgba(185, 28, 28, 0.22);
     background: rgba(254, 242, 242, 0.97);
     color: #b42318;

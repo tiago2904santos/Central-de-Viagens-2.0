@@ -1,14 +1,14 @@
 <section class="evento-section evento-section-convite">
     <div class="evento-section-head evento-section-head--datas">
         <h3 class="evento-section-title">Convite</h3>
-        <label class="evento-dataunica-pill" for="id_tem_convite_ou_oficio_evento">
+        <label class="evento-dataunica-pill{% if convite_checked %} is-on{% else %} is-off{% endif %}" for="id_tem_convite_ou_oficio_evento" data-convite-pill data-has-anexos="{% if anexos_convite %}1{% else %}0{% endif %}">
             <input type="checkbox" name="tem_convite_ou_oficio_evento" id="id_tem_convite_ou_oficio_evento" class="visually-hidden" {% if convite_form_id %}form="{{ convite_form_id }}"{% endif %} {% if convite_checked %}checked{% endif %}>
             <span class="evento-dataunica-pill__icon"><i class="bi bi-file-earmark-text"></i></span>
             <span class="evento-dataunica-pill__copy">
                 <strong>Tem convite/ofício solicitante?</strong>
                 <small>Marque para indicar que existe documento</small>
             </span>
-            <span class="evento-dataunica-pill__state" data-convite-state>{% if convite_checked or anexos_convite %}SIM{% else %}NÃO{% endif %}</span>
+            <span class="evento-dataunica-pill__state" data-convite-state>{% if convite_checked %}SIM{% else %}NÃO{% endif %}</span>
         </label>
     </div>
 
@@ -18,8 +18,9 @@
                 <h4 class="evento-convite-upload-title">Documentos anexados</h4>
                 <p class="evento-convite-upload-text">Envie um ou mais PDFs de convite/ofício solicitante. Você pode adicionar novos arquivos a qualquer momento.</p>
             </div>
-            <div class="evento-convite-upload-actions{% if not convite_checked %} d-none{% endif %}" data-convite-save-wrap>
-                <button type="submit" class="btn btn-primary" form="{{ convite_form_id }}">Salvar anexos de convite</button>
+            <div class="evento-convite-upload-actions{% if not convite_checked and not anexos_convite %} d-none{% endif %}" data-convite-save-wrap>
+                <button type="submit" class="btn btn-primary" form="{{ convite_form_id }}" data-convite-save-button>Salvar anexos de convite</button>
+                <button type="button" class="btn btn-outline-danger" form="{{ convite_form_id }}" data-convite-remove-all-button>Remover todos</button>
             </div>
         </div>
 

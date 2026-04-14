@@ -58,6 +58,132 @@ class EventoAnexosSolicitanteTest(TestCase):
         self.assertTrue(self.evento.tem_convite_ou_oficio_evento)
         self.assertEqual(self.evento.anexos_solicitante.count(), 2)
 
+    def test_etapa4_nao_duplica_o_mesmo_pdf_em_reenvio(self):
+        arquivo_1 = SimpleUploadedFile('convite-1.pdf', b'%PDF-1.4 arquivo repetido', content_type='application/pdf')
+        payload_1 = {
+            'tem_convite_ou_oficio_evento': 'on',
+            'convite_documentos': [arquivo_1],
+        }
+        arquivo_2 = SimpleUploadedFile('convite-1.pdf', b'%PDF-1.4 arquivo repetido', content_type='application/pdf')
+        payload_2 = {
+            'tem_convite_ou_oficio_evento': 'on',
+            'convite_documentos': [arquivo_2],
+        }
+
+        response_1 = self.client.post(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}), payload_1)
+        response_2 = self.client.post(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}), payload_2)
+
+        self.assertEqual(response_1.status_code, 302)
+        self.assertEqual(response_2.status_code, 302)
+        self.evento.refresh_from_db()
+        self.assertEqual(self.evento.anexos_solicitante.count(), 1)
+
+    def test_etapa4_permite_desmarcar_convite_mesmo_com_anexo_existente(self):
+        EventoAnexoSolicitante.objects.create(
+            evento=self.evento,
+            nome_original='convite-a.pdf',
+            arquivo=SimpleUploadedFile('convite-a.pdf', b'%PDF-1.4 a', content_type='application/pdf'),
+            ordem=0,
+        )
+        self.evento.tem_convite_ou_oficio_evento = True
+        self.evento.save(update_fields=['tem_convite_ou_oficio_evento'])
+
+        response = self.client.post(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}), {})
+
+        self.assertEqual(response.status_code, 302)
+        self.evento.refresh_from_db()
+        self.assertFalse(self.evento.tem_convite_ou_oficio_evento)
+        self.assertEqual(self.evento.anexos_solicitante.count(), 1)
+
+    def test_etapa4_remove_todos_os_anexos_quando_convite_e_desmarcado(self):
+        EventoAnexoSolicitante.objects.create(
+            evento=self.evento,
+            nome_original='convite-a.pdf',
+            arquivo=SimpleUploadedFile('convite-a.pdf', b'%PDF-1.4 a', content_type='application/pdf'),
+            ordem=0,
+        )
+        EventoAnexoSolicitante.objects.create(
+            evento=self.evento,
+            nome_original='convite-b.pdf',
+            arquivo=SimpleUploadedFile('convite-b.pdf', b'%PDF-1.4 b', content_type='application/pdf'),
+            ordem=1,
+        )
+        self.evento.tem_convite_ou_oficio_evento = True
+        self.evento.save(update_fields=['tem_convite_ou_oficio_evento'])
+
+        response = self.client.post(
+            reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}),
+            {'remover_todos_anexos_convite': '1'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.evento.refresh_from_db()
+        self.assertFalse(self.evento.tem_convite_ou_oficio_evento)
+        self.assertEqual(self.evento.anexos_solicitante.count(), 0)
+
+    def test_etapa4_ajax_remove_todos_os_anexos(self):
+        EventoAnexoSolicitante.objects.create(
+            evento=self.evento,
+            nome_original='convite-a.pdf',
+            arquivo=SimpleUploadedFile('convite-a.pdf', b'%PDF-1.4 a', content_type='application/pdf'),
+            ordem=0,
+        )
+        EventoAnexoSolicitante.objects.create(
+            evento=self.evento,
+            nome_original='convite-b.pdf',
+            arquivo=SimpleUploadedFile('convite-b.pdf', b'%PDF-1.4 b', content_type='application/pdf'),
+            ordem=1,
+        )
+        self.evento.tem_convite_ou_oficio_evento = True
+        self.evento.save(update_fields=['tem_convite_ou_oficio_evento'])
+
+        response = self.client.post(
+            reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}),
+            {'remover_todos_anexos_convite': '1'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload.get('ok'))
+        self.assertIn('evento-section-convite', payload.get('html', ''))
+        self.evento.refresh_from_db()
+        self.assertFalse(self.evento.tem_convite_ou_oficio_evento)
+        self.assertEqual(self.evento.anexos_solicitante.count(), 0)
+
+    def test_etapa4_get_deduplica_anexos_existentes(self):
+        EventoAnexoSolicitante.objects.create(
+            evento=self.evento,
+            nome_original='convite-a.pdf',
+            arquivo=SimpleUploadedFile('convite-a.pdf', b'%PDF-1.4 a', content_type='application/pdf'),
+            ordem=0,
+        )
+        EventoAnexoSolicitante.objects.create(
+            evento=self.evento,
+            nome_original='convite-a.pdf',
+            arquivo=SimpleUploadedFile('convite-a.pdf', b'%PDF-1.4 a', content_type='application/pdf'),
+            ordem=1,
+        )
+
+        response = self.client.get(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.evento.refresh_from_db()
+        self.assertEqual(self.evento.anexos_solicitante.count(), 1)
+
+    def test_etapa4_ajax_atualiza_sem_redirect(self):
+        response = self.client.post(
+            reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}),
+            {'tem_convite_ou_oficio_evento': 'on', 'remover_todos_anexos_convite': '0'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'].split(';')[0], 'application/json')
+        payload = response.json()
+        self.assertTrue(payload.get('ok'))
+        self.assertIn('evento-section-convite', payload.get('html', ''))
+
     def test_etapa4_rejeita_anexo_nao_pdf(self):
         arquivo_invalido = SimpleUploadedFile('convite.txt', b'teste', content_type='text/plain')
         payload = {
