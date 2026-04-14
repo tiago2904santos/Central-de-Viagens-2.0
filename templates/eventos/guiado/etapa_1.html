@@ -58,7 +58,7 @@
                 <section class="evento-section evento-section-datas">
                     <div class="evento-section-head evento-section-head--datas">
                         <h3 class="evento-section-title">Datas</h3>
-                        <label class="evento-dataunica-pill" for="id_data_unica">
+                        <label class="evento-dataunica-pill{% if form.data_unica.value %} is-on{% else %} is-off{% endif %}" for="id_data_unica" data-data-unica-pill>
                             <input type="checkbox" name="data_unica" id="id_data_unica" class="visually-hidden" {% if form.data_unica.value %}checked{% endif %}>
                             <span class="evento-dataunica-pill__icon"><i class="bi bi-calendar3"></i></span>
                             <span class="evento-dataunica-pill__copy">
@@ -83,33 +83,35 @@
                     </div>
                 </section>
 
-                <section class="evento-section evento-section-destinos">
-                    <div class="evento-section-head">
+                <section class="evento-section plano-trabalho-destinos-panel">
+                    <div class="plano-trabalho-destinos-panel__head evento-section-head">
                         <h3 class="evento-section-title">Destinos</h3>
                         <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary btn-sm evento-btn-add">+ Adicionar destino</button>
                     </div>
 
-                    <div id="destinos-container" class="evento-destinos-container">
+                    <div id="destinos-container" class="plano-trabalho-destino-stack">
                         {% for d in destinos_atuais %}
-                        <div class="evento-destino-row" data-destino-row data-destino-placeholder="{% if d.is_placeholder %}1{% else %}0{% endif %}">
-                            <div class="evento-destino-field evento-destino-field--uf">
-                                <label>ESTADO</label>
-                                <select name="destino_estado_{{ forloop.counter0 }}" class="destino-estado form-select">
-                                    <option value="">Selecione</option>
+                        <div class="pt-dest-row" data-destino-row data-destino-placeholder="{% if d.is_placeholder %}1{% else %}0{% endif %}">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="form-label">Estado</label>
+                                    <select name="destino_estado_{{ forloop.counter0 }}" class="destino-estado form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">
+                                        <option value="">Selecione...</option>
                                     {% for e in estados %}
                                     <option value="{{ e.pk }}" {% if d.estado_id == e.pk %}selected{% endif %}>{{ e.nome }} ({{ e.sigla }})</option>
                                     {% endfor %}
-                                </select>
-                            </div>
-                            <div class="evento-destino-field evento-destino-field--cidade">
-                                <label>CIDADE</label>
-                                <select name="destino_cidade_{{ forloop.counter0 }}" class="destino-cidade form-select" data-cidade-id="{{ d.cidade_id|default:'' }}">
-                                    <option value="">Selecione</option>
-                                    {% if d.cidade %}<option value="{{ d.cidade_id }}" selected>{{ d.cidade.nome }}</option>{% endif %}
-                                </select>
-                            </div>
-                            <div class="evento-destino-remove">
-                                <button type="button" class="btn btn-remover-destino" title="Remover destino">&times;</button>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label">Cidade</label>
+                                    <select name="destino_cidade_{{ forloop.counter0 }}" class="destino-cidade form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..." data-cidade-id="{{ d.cidade_id|default:'' }}">
+                                        <option value="">Selecione...</option>
+                                        {% if d.cidade %}<option value="{{ d.cidade_id }}" selected>{{ d.cidade.nome }}</option>{% endif %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-outline-danger w-100 btn-rem-destino btn-remover-destino" title="Remover destino">×</button>
+                                </div>
                             </div>
                         </div>
                         {% endfor %}

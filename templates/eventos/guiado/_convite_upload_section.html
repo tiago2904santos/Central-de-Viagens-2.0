@@ -13,9 +13,14 @@
     </div>
 
     <div id="convite-upload-wrap" class="evento-convite-upload-wrap{% if not convite_checked and not anexos_convite %} d-none{% endif %}" data-convite-upload-wrap>
-        <div class="evento-convite-upload-head">
-            <h4 class="evento-convite-upload-title">Documentos anexados</h4>
-            <p class="evento-convite-upload-text">Envie um ou mais PDFs de convite/ofício solicitante. Você pode adicionar novos arquivos a qualquer momento.</p>
+        <div class="evento-convite-upload-head evento-convite-upload-head--split">
+            <div class="evento-convite-upload-copy">
+                <h4 class="evento-convite-upload-title">Documentos anexados</h4>
+                <p class="evento-convite-upload-text">Envie um ou mais PDFs de convite/ofício solicitante. Você pode adicionar novos arquivos a qualquer momento.</p>
+            </div>
+            <div class="evento-convite-upload-actions{% if not convite_checked %} d-none{% endif %}" data-convite-save-wrap>
+                <button type="submit" class="btn btn-primary" form="{{ convite_form_id }}">Salvar anexos de convite</button>
+            </div>
         </div>
 
         <div class="evento-convite-upload-input">

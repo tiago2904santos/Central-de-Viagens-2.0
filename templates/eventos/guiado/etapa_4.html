@@ -15,9 +15,6 @@
 
         <section class="app-page-card app-page-card--spacious">
             {% include 'eventos/guiado/_convite_upload_section.html' with convite_checked=convite_checked convite_next_url=convite_next_url convite_form_id='form-etapa4-convite' %}
-            <div class="d-flex justify-content-end pt-3">
-                <button type="submit" class="btn btn-primary" form="form-etapa4-convite">Salvar anexos de convite</button>
-            </div>
         </section>
 
         <section class="app-page-card app-page-card--spacious">
@@ -42,6 +39,7 @@
     var conviteInput = document.getElementById('id_tem_convite_ou_oficio_evento');
     var conviteState = document.querySelector('[data-convite-state]');
     var conviteUploadWrap = document.querySelector('[data-convite-upload-wrap]');
+    var conviteSaveWrap = document.querySelector('[data-convite-save-wrap]');
     var conviteFilesInput = document.getElementById('id_convite_documentos');
 
     if (!conviteInput || !conviteState || !conviteUploadWrap) {
@@ -53,6 +51,9 @@
         var ativo = !!conviteInput.checked || temUploadSelecionado;
         conviteState.textContent = ativo ? 'SIM' : 'NÃO';
         conviteUploadWrap.classList.toggle('d-none', !ativo);
+        if (conviteSaveWrap) {
+            conviteSaveWrap.classList.toggle('d-none', !conviteInput.checked);
+        }
     }
 
     conviteInput.addEventListener('change', updateConviteUi);

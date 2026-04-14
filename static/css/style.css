@@ -4053,37 +4053,59 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 .system-list-fab-group__stack {
     position: relative;
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     align-items: flex-end;
     gap: 0.65rem;
 }
 
 .system-list-fab-group__menu {
-    position: absolute;
-    right: 0;
-    bottom: calc(100% + 0.65rem);
+    position: relative;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 0.55rem;
+    overflow: hidden;
+    max-height: 0;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transform: translateY(0.45rem) scale(0.98);
+    transform: translateY(0.35rem);
     transform-origin: bottom right;
-    transition: opacity 0.18s ease, transform 0.18s ease;
+    transition: max-height 0.24s ease, opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.24s;
 }
 
 .system-list-fab-group.is-open .system-list-fab-group__menu {
+    max-height: 12rem;
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
+    transition: max-height 0.24s ease, opacity 0.18s ease, transform 0.18s ease, visibility 0s;
 }
 
 .system-list-fab-group__menu .system-list-fab {
     min-width: 14rem;
     justify-content: flex-start;
+}
+
+.system-list-fab--cascade {
+    opacity: 0;
+    transform: translateY(0.48rem) scale(0.96);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.system-list-fab-group.is-open .system-list-fab--cascade {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.system-list-fab-group.is-open .system-list-fab--cascade:nth-child(1) {
+    transition-delay: 0.02s;
+}
+
+.system-list-fab-group.is-open .system-list-fab--cascade:nth-child(2) {
+    transition-delay: 0.07s;
 }
 
 .system-list-fab--toggle .bi {
@@ -9690,11 +9712,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 /* ----- Eventos: Etapa 1 (ajuste fino de fidelidade) ----- */
 .evento-etapa1-page {
     --app-page-max-width: var(--app-shell-max-width-guided-flow);
-    --app-page-background:
-        radial-gradient(circle at top right, rgba(47, 110, 168, 0.11), transparent 28%),
-        radial-gradient(circle at left 14%, rgba(31, 76, 125, 0.08), transparent 26%),
-        linear-gradient(180deg, rgba(247, 250, 253, 0.96) 0%, rgba(243, 247, 251, 0.94) 100%);
-    background: var(--app-page-background);
+    background: transparent;
 }
 
 .evento-etapa1-shell {
@@ -9704,48 +9722,29 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 .evento-etapa1-card {
     position: relative;
     overflow: hidden;
-    border-radius: 1.2rem;
+    border-radius: 1.35rem;
     border: 1px solid rgba(16, 36, 63, 0.08);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 251, 254, 0.97) 100%);
-    box-shadow: 0 16px 32px rgba(16, 36, 63, 0.08);
-}
-
-.evento-etapa1-card::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 0.28rem;
-    background: linear-gradient(90deg, rgba(31, 76, 125, 0.8) 0%, rgba(47, 110, 168, 0.72) 48%, rgba(91, 157, 216, 0.76) 100%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(245, 249, 252, 0.94) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
 .evento-etapa1-card > .card-body {
     position: relative;
     z-index: 1;
-    padding: 1.05rem;
+    padding: 1rem 1.05rem;
     display: grid;
-    gap: 1rem;
+    gap: 0.95rem;
 }
 
 .evento-section {
     position: relative;
     border: 1px solid rgba(16, 36, 63, 0.08);
-    border-radius: 1rem;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 251, 254, 0.96) 100%);
-    padding: 0.92rem;
-    box-shadow: 0 10px 22px rgba(16, 36, 63, 0.05);
+    border-radius: 1.35rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(245, 249, 252, 0.94) 100%);
+    padding: 1rem 1.05rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
     display: grid;
     gap: 0.72rem;
-}
-
-.evento-section::before {
-    content: '';
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
-    height: 0.22rem;
-    border-radius: 1rem 1rem 0 0;
-    background: linear-gradient(90deg, rgba(31, 76, 125, 0.52), rgba(47, 110, 168, 0.38), transparent 88%);
-    pointer-events: none;
 }
 
 .evento-section-head {
@@ -9849,12 +9848,30 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    padding: 0.44rem 0.62rem;
-    border: 1px solid rgba(13, 26, 45, 0.2);
-    border-radius: 999px;
-    background: rgba(13, 26, 45, 0.04);
+    padding: 0.58rem 0.72rem;
+    border: 1px solid rgba(31, 76, 125, 0.2);
+    border-radius: 1.05rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
     cursor: pointer;
-    min-width: 16.2rem;
+    min-width: 16.3rem;
+    transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.evento-dataunica-pill:hover,
+.evento-dataunica-pill:focus-within {
+    transform: translateY(-1px);
+}
+
+.evento-dataunica-pill.is-off {
+    border-color: rgba(185, 28, 28, 0.22);
+    background: linear-gradient(180deg, rgba(254, 242, 242, 0.97) 0%, rgba(255, 248, 248, 0.95) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 10px 18px rgba(185, 28, 28, 0.08);
+}
+
+.evento-dataunica-pill.is-on {
+    border-color: rgba(22, 163, 74, 0.24);
+    background: linear-gradient(180deg, rgba(240, 253, 244, 0.98) 0%, rgba(247, 255, 249, 0.96) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 10px 18px rgba(22, 163, 74, 0.08);
 }
 
 .evento-dataunica-pill__icon {
@@ -9868,6 +9885,16 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     background: rgba(13, 26, 45, 0.12);
     font-size: 0.78rem;
     flex: 0 0 auto;
+}
+
+.evento-dataunica-pill.is-off .evento-dataunica-pill__icon {
+    color: #b42318;
+    background: rgba(185, 28, 28, 0.12);
+}
+
+.evento-dataunica-pill.is-on .evento-dataunica-pill__icon {
+    color: #15803d;
+    background: rgba(22, 163, 74, 0.12);
 }
 
 .evento-dataunica-pill__copy {
@@ -9896,6 +9923,16 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     font-size: 0.72rem;
     font-weight: 900;
     letter-spacing: 0.03em;
+}
+
+.evento-dataunica-pill.is-off .evento-dataunica-pill__state {
+    background: rgba(185, 28, 28, 0.14);
+    color: #b42318;
+}
+
+.evento-dataunica-pill.is-on .evento-dataunica-pill__state {
+    background: rgba(22, 163, 74, 0.14);
+    color: #15803d;
 }
 
 .evento-datas-grid {
@@ -9929,10 +9966,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     color: #49617d;
 }
 
-.evento-section-destinos {
-    padding-top: 0.72rem;
-}
-
 .evento-btn-add {
     border-radius: 999px;
     font-weight: 700;
@@ -9950,6 +9983,56 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     color: #fff;
 }
 
+.evento-etapa1-page .plano-trabalho-destinos-panel {
+    padding: 1rem 1.05rem;
+}
+
+.evento-etapa1-page .plano-trabalho-destinos-panel__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.evento-etapa1-page .plano-trabalho-destino-stack {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.evento-etapa1-page .pt-dest-row {
+    padding: 0.9rem;
+    border: 1px solid rgba(16, 36, 63, 0.08);
+    border-radius: 1.35rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(245, 249, 252, 0.94) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.evento-etapa1-page .pt-dest-row .form-label {
+    margin-bottom: 0.28rem;
+    color: #64748b;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.evento-etapa1-page .pt-dest-row .row {
+    --bs-gutter-x: 0.75rem;
+    --bs-gutter-y: 0.75rem;
+}
+
+.evento-etapa1-page .pt-dest-row .btn-rem-destino {
+    height: 2.45rem;
+    border-radius: 0.95rem;
+    font-weight: 700;
+}
+
+.evento-etapa1-page .pt-dest-row .btn-rem-destino:hover,
+.evento-etapa1-page .pt-dest-row .btn-rem-destino:focus-visible {
+    box-shadow: 0 12px 22px rgba(185, 28, 28, 0.12);
+}
+
 .evento-etapa1-footer {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -9963,57 +10046,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .evento-etapa1-autosave-status {
     text-align: center;
-}
-
-.evento-destinos-container {
-    border: 1px solid rgba(16, 36, 63, 0.08);
-    border-radius: 0.95rem;
-    background: rgba(249, 251, 254, 0.92);
-    padding: 0.56rem;
-    display: grid;
-    gap: 0.48rem;
-}
-
-.evento-destino-row {
-    display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr) 5.4rem;
-    align-items: end;
-    gap: 0.46rem;
-    padding: 0.44rem;
-    border-radius: 0.8rem;
-    border: 1px solid rgba(16, 36, 63, 0.08);
-    background: #fff;
-}
-
-.evento-destino-field label {
-    display: block;
-    margin-bottom: 0.22rem;
-    color: #556b84;
-    font-size: 0.66rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.evento-destino-field .form-select {
-    min-height: 2.42rem;
-}
-
-.evento-destino-remove {
-    display: flex;
-    align-items: end;
-}
-
-.evento-destino-remove .btn-remover-destino {
-    width: 100%;
-    height: 2.42rem;
-    border-radius: 0.88rem;
-    border: 1px solid rgba(188, 72, 72, 0.28);
-    background: rgba(217, 88, 88, 0.08);
-    color: #c44747;
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1;
 }
 
 .evento-section-convite {
@@ -10032,6 +10064,27 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 .evento-convite-upload-head {
     display: grid;
     gap: 0.25rem;
+}
+
+.evento-convite-upload-head--split {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.evento-convite-upload-copy {
+    min-width: 0;
+    flex: 1 1 24rem;
+}
+
+.evento-convite-upload-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    flex: 0 0 auto;
+    margin-left: auto;
 }
 
 .evento-convite-upload-title {
@@ -10115,12 +10168,12 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 @media (max-width: 991.98px) {
     .evento-atividade-grid,
-    .evento-datas-grid,
-    .evento-destino-row {
+    .evento-datas-grid {
         grid-template-columns: 1fr;
     }
 
-    .evento-section-head--datas {
+    .evento-section-head--datas,
+    .evento-etapa1-page .plano-trabalho-destinos-panel__head {
         flex-wrap: wrap;
     }
 
@@ -10129,7 +10182,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
         min-width: 0;
     }
 
-    .evento-destino-remove .btn-remover-destino {
+    .evento-etapa1-page .pt-dest-row .btn-rem-destino {
         width: auto;
         min-width: 5rem;
     }

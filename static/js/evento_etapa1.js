@@ -22,6 +22,7 @@
   var dataInicioInput = document.getElementById('id_data_inicio');
   var dataFimInput = document.getElementById('id_data_fim');
   var dataUnicaState = form.querySelector('[data-data-unica-state]');
+  var dataUnicaPill = form.querySelector('[data-data-unica-pill]');
   var wrapDescricao = document.getElementById('wrap-descricao');
   var destinosContainer = document.getElementById('destinos-container');
   var btnAdicionarDestino = document.getElementById('btn-adicionar-destino');
@@ -55,7 +56,7 @@
     }
     var option = select.options && select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
     var text = option ? String(option.textContent || '').trim() : '';
-    return text && text !== 'Selecione' ? text : '';
+    return text && !/^Selecione(?:\.\.\.)?$/i.test(text) ? text : '';
   }
 
   function getEstadoUf(select) {
@@ -85,7 +86,7 @@
 
   function getDestinos() {
     var destinos = [];
-    destinosContainer.querySelectorAll('[data-destino-row]').forEach(function(row) {
+    destinosContainer.querySelectorAll('.pt-dest-row').forEach(function(row) {
       var isPlaceholder = row.getAttribute('data-destino-placeholder') === '1';
       var estadoSelect = row.querySelector('.destino-estado');
       var cidadeSelect = row.querySelector('.destino-cidade');
@@ -189,7 +190,7 @@
       return false;
     }
     if (target.classList && target.classList.contains('destino-cidade')) {
-      var row = target.closest('[data-destino-row]');
+      var row = target.closest('.pt-dest-row');
       var estadoSelect = row ? row.querySelector('.destino-estado') : null;
       return !!(estadoSelect && estadoSelect.value && target.value);
     }
@@ -226,6 +227,11 @@
 
     var active = !!dataUnicaInput.checked;
     setStatusLabel(dataUnicaState, active, 'LIGADA', 'DESLIGADA');
+    if (dataUnicaPill) {
+      dataUnicaPill.classList.toggle('is-on', active);
+      dataUnicaPill.classList.toggle('is-off', !active);
+      dataUnicaPill.setAttribute('data-state', active ? 'on' : 'off');
+    }
 
     dataFimInput.readOnly = active;
     dataFimInput.classList.toggle('is-locked', active);
@@ -241,7 +247,7 @@
       return Promise.resolve();
     }
 
-    selectCidade.innerHTML = '<option value="">Selecione</option>';
+    selectCidade.innerHTML = '<option value="">Selecione...</option>';
 
     if (!estadoId) {
       selectCidade.disabled = true;
@@ -271,7 +277,7 @@
         });
       })
       .catch(function() {
-        selectCidade.innerHTML = '<option value="">Selecione</option>';
+        selectCidade.innerHTML = '<option value="">Selecione...</option>';
       })
       .finally(function() {
         selectCidade.disabled = false;
@@ -290,7 +296,7 @@
   }
 
   function buildEstadosOptions(selectedId) {
-    var html = '<option value="">Selecione</option>';
+    var html = '<option value="">Selecione...</option>';
     estadosOptions.forEach(function(estado) {
       var selected = String(estado.id) === String(selectedId) ? ' selected' : '';
       html += '<option value="' + estado.id + '"' + selected + '>' + estado.nome + ' (' + estado.sigla + ')</option>';
@@ -335,7 +341,7 @@
 
     if (removeButton) {
       removeButton.addEventListener('click', function() {
-        var rows = destinosContainer.querySelectorAll('[data-destino-row]');
+        var rows = destinosContainer.querySelectorAll('.pt-dest-row');
         if (rows.length <= 1) {
           return;
         }
@@ -349,22 +355,20 @@
   function createDestinoRow() {
     var index = nextDestinoIndex();
     var row = document.createElement('div');
-    row.className = 'evento-destino-row';
+    row.className = 'pt-dest-row';
     row.setAttribute('data-destino-row', '1');
     row.setAttribute('data-destino-placeholder', '0');
     row.innerHTML =
-      '<div class="evento-destino-field evento-destino-field--uf">' +
-        '<label>ESTADO</label>' +
-        '<select name="destino_estado_' + index + '" class="destino-estado form-select">' + buildEstadosOptions(estadoPrId || '') + '</select>' +
-      '</div>' +
-      '<div class="evento-destino-field evento-destino-field--cidade">' +
-        '<label>CIDADE</label>' +
-        '<select name="destino_cidade_' + index + '" class="destino-cidade form-select">' +
-          '<option value="">Selecione</option>' +
-        '</select>' +
-      '</div>' +
-      '<div class="evento-destino-remove">' +
-        '<button type="button" class="btn btn-remover-destino" title="Remover destino">&times;</button>' +
+      '<div class="row g-2 align-items-end">' +
+        '<div class="col-md-5"><label class="form-label">Estado</label>' +
+          '<select name="destino_estado_' + index + '" class="destino-estado form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">' + buildEstadosOptions(estadoPrId || '') + '</select></div>' +
+        '<div class="col-md-5"><label class="form-label">Cidade</label>' +
+          '<select name="destino_cidade_' + index + '" class="destino-cidade form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade...">' +
+            '<option value="">Selecione...</option>' +
+          '</select></div>' +
+        '<div class="col-md-2 d-flex align-items-end">' +
+          '<button type="button" class="btn btn-outline-danger w-100 btn-rem-destino btn-remover-destino" title="Remover destino">×</button>' +
+        '</div>' +
       '</div>';
 
     destinosContainer.appendChild(row);
@@ -409,7 +413,7 @@
     });
   }
 
-  destinosContainer.querySelectorAll('[data-destino-row]').forEach(bindDestinoRow);
+  destinosContainer.querySelectorAll('.pt-dest-row').forEach(bindDestinoRow);
 
   updateDemandCards();
   toggleDescricao();

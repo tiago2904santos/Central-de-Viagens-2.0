@@ -10,7 +10,7 @@
 			{% for button in secondary_buttons %}
 			<a
 				href="{{ button.url }}"
-				class="system-list-fab system-list-fab--child{% if button.extra_class %} {{ button.extra_class }}{% endif %}"
+				class="system-list-fab system-list-fab--child system-list-fab--cascade{% if button.extra_class %} {{ button.extra_class }}{% endif %}"
 				aria-label="{{ button.aria_label|default:button.label }}"
 			>
 				{% if button.icon %}<i class="bi {{ button.icon }}"></i>{% endif %}
