@@ -8,14 +8,17 @@
     <div class="app-page-shell__inner app-page-stack">
         {% include 'eventos/guiado/_paginated_header.html' with top_title=evento_heading header_actions_template='eventos/guiado/_paginated_header_actions_etapa4.html' top_show_stepper=True %}
 
-        <form method="post" enctype="multipart/form-data" class="app-page-card app-page-card--spacious">
+        <form id="form-etapa4-convite" method="post" enctype="multipart/form-data" class="d-none">
             {% csrf_token %}
             <input type="hidden" name="modo_documento" value="{{ modo_documento }}">
-            {% include 'eventos/guiado/_convite_upload_section.html' with convite_checked=convite_checked convite_next_url=convite_next_url %}
-            <div class="d-flex justify-content-end pt-3">
-                <button type="submit" class="btn btn-primary">Salvar anexos de convite</button>
-            </div>
         </form>
+
+        <section class="app-page-card app-page-card--spacious">
+            {% include 'eventos/guiado/_convite_upload_section.html' with convite_checked=convite_checked convite_next_url=convite_next_url convite_form_id='form-etapa4-convite' %}
+            <div class="d-flex justify-content-end pt-3">
+                <button type="submit" class="btn btn-primary" form="form-etapa4-convite">Salvar anexos de convite</button>
+            </div>
+        </section>
 
         <section class="app-page-card app-page-card--spacious">
             <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">

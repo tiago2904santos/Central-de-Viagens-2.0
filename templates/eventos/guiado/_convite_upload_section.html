@@ -2,7 +2,7 @@
     <div class="evento-section-head evento-section-head--datas">
         <h3 class="evento-section-title">Convite</h3>
         <label class="evento-dataunica-pill" for="id_tem_convite_ou_oficio_evento">
-            <input type="checkbox" name="tem_convite_ou_oficio_evento" id="id_tem_convite_ou_oficio_evento" class="visually-hidden" {% if convite_checked %}checked{% endif %}>
+            <input type="checkbox" name="tem_convite_ou_oficio_evento" id="id_tem_convite_ou_oficio_evento" class="visually-hidden" {% if convite_form_id %}form="{{ convite_form_id }}"{% endif %} {% if convite_checked %}checked{% endif %}>
             <span class="evento-dataunica-pill__icon"><i class="bi bi-file-earmark-text"></i></span>
             <span class="evento-dataunica-pill__copy">
                 <strong>Tem convite/ofício solicitante?</strong>
@@ -20,7 +20,7 @@
 
         <div class="evento-convite-upload-input">
             <label for="id_convite_documentos" class="form-label">Adicionar PDFs</label>
-            <input type="file" name="convite_documentos" id="id_convite_documentos" class="form-control" accept="application/pdf,.pdf" multiple>
+            <input type="file" name="convite_documentos" id="id_convite_documentos" class="form-control" accept="application/pdf,.pdf" multiple {% if convite_form_id %}form="{{ convite_form_id }}"{% endif %}>
             <small class="text-muted">Formato permitido: PDF. Selecione múltiplos arquivos no mesmo envio.</small>
         </div>
 
