@@ -10163,8 +10163,20 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     box-shadow: 0 8px 18px rgba(185, 28, 28, 0.08);
     
 }
+
+.btn.btn-sm.btn-outline-danger-header {
+    border-radius: 999px;
+    border-color: rgba(185, 28, 28, 0.22);
+    background: rgba(254, 242, 242, 0.97);
+    color: #b42318;
+    box-shadow: 0 8px 18px rgba(185, 28, 28, 0.08);
+    height: 2.45rem;
+}
+
 .btn.btn-sm.btn-outline-danger:hover,
-.btn.btn-sm.btn-outline-danger:focus {
+.btn.btn-sm.btn-outline-danger:focus,
+.btn.btn-sm.btn-outline-danger-header:hover,
+.btn.btn-sm.btn-outline-danger-header:focus {
         border-color: #b42318;
         background: linear-gradient(135deg, #e11d48 0%, #b42318 100%);
         color: #fff;
