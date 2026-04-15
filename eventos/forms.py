@@ -1162,13 +1162,10 @@ class PlanoTrabalhoStep4Form(FormComErroInvalidMixin, forms.ModelForm):
 
 class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
     destinos_payload = forms.CharField(required=False, widget=forms.HiddenInput())
-    data_unica = forms.TypedChoiceField(
+    data_unica = forms.BooleanField(
         required=False,
-        choices=SIM_NAO_CHOICES,
-        coerce=lambda value: str(value) == '1',
-        empty_value=True,
         label='Data única',
-        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
     )
 
     class Meta:
@@ -1230,7 +1227,7 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['modelo_motivo'].queryset = ModeloMotivoViagem.objects.filter(ativo=True).order_by('nome')
         self.fields['viajantes'].queryset = Viajante.objects.select_related('cargo', 'unidade_lotacao').filter(status=Viajante.STATUS_FINALIZADO).order_by('nome')
         self.proximo_numero_preview = self._get_next_number_preview()
-        self.initial.setdefault('data_unica', '1')
+        self.initial.setdefault('data_unica', True)
 
         selected_event = None
         if self.is_bound:
@@ -1250,7 +1247,7 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
         if self.instance and self.instance.pk:
             self.initial.setdefault('viajantes', list(self.instance.viajantes.values_list('pk', flat=True)))
             self.initial.setdefault('destinos_payload', json.dumps(self.instance.destinos_json or []))
-            self.initial.setdefault('data_unica', '1' if self.instance.data_unica else '0')
+            self.initial.setdefault('data_unica', bool(self.instance.data_unica))
             if self.instance.data_deslocamento_fim:
                 self.initial.setdefault('data_deslocamento_fim', self.instance.data_deslocamento_fim)
             elif self.instance.data_deslocamento:
@@ -1385,9 +1382,6 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
         evento = cleaned_data.get('evento')
         oficio = cleaned_data.get('oficio')
         data_unica = cleaned_data.get('data_unica')
-        if data_unica in (None, ''):
-            data_unica = True
-            cleaned_data['data_unica'] = True
         motivo_texto = (cleaned_data.get('motivo_texto') or '').strip()
         modelo_motivo = cleaned_data.get('modelo_motivo')
         if not motivo_texto:

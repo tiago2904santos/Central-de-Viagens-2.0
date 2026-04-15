@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from cadastros.models import AssinaturaConfiguracao, Cargo, Cidade, ConfiguracaoSistema, Estado, Viajante
+from eventos.forms import OrdemServicoForm
 from eventos.models import Evento, Oficio, OrdemServico, PlanoTrabalho
 from eventos.services.documentos.ordem_servico import build_ordem_servico_model_template_context
 
@@ -146,12 +147,14 @@ class PtOsDesacopladoTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'app-page-header')
         self.assertContains(response, 'system-form-header')
-        self.assertContains(response, 'Data do deslocamento')
+        self.assertContains(response, 'Datas')
+        self.assertContains(response, 'evento-dataunica-pill')
+        self.assertContains(response, 'Oculta a data final')
+        self.assertContains(response, 'wrap-data-fim')
         self.assertContains(response, 'Equipe de deslocamento')
         self.assertContains(response, 'Destinos')
         self.assertContains(response, 'Motivo')
-        self.assertContains(response, 'Sim')
-        self.assertContains(response, 'Não')
+        self.assertNotContains(response, 'ordem-servico-data-choice-group')
         self.assertNotContains(response, 'Leitura documental')
         self.assertNotContains(response, 'Texto institucional')
         self.assertContains(response, 'js/ordem_servico_form.js')
@@ -174,7 +177,6 @@ class PtOsDesacopladoTest(TestCase):
             data={
                 'data_criacao': '2026-03-10',
                 'status': OrdemServico.STATUS_RASCUNHO,
-                'data_unica': '0',
                 'data_deslocamento': '2026-03-12',
                 'data_deslocamento_fim': '2026-03-14',
                 'modelo_motivo': modelo.pk,
@@ -241,6 +243,15 @@ class PtOsDesacopladoTest(TestCase):
 
         legacy_name = 'Evento' + 'Fundamentacao'
         self.assertFalse(hasattr(eventos_models, legacy_name))
+
+    def test_formulario_os_nao_reintroduz_campos_legados_removidos(self):
+        form = OrdemServicoForm()
+
+        self.assertIn('motivo_texto', form.fields)
+        self.assertIn('viajantes', form.fields)
+        self.assertNotIn('observacoes', form.fields)
+        self.assertNotIn('designacoes', form.fields)
+        self.assertNotIn('determinacoes', form.fields)
 
     def test_criar_os_salva_campos_documentais_e_numero_automatico(self):
         cargo = Cargo.objects.create(nome='Agente de Polícia Civil')

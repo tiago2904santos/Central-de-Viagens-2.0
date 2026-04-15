@@ -6,14 +6,15 @@
 
   var autosaveIdInput = document.getElementById('id_autosave_obj_id');
   var autosaveStatus = document.getElementById('ordem-servico-autosave-status');
+  var dataUnicaInput = document.getElementById('id_data_unica');
   var dataDeslocamentoInput = document.getElementById('id_data_deslocamento');
   var dataFimInput = document.getElementById('id_data_deslocamento_fim');
   var eventoSelect = document.getElementById('id_evento');
   var oficioSelect = document.getElementById('id_oficio');
   var modeloMotivoSelect = document.getElementById('id_modelo_motivo');
   var motivoTextarea = document.getElementById('id_motivo_texto');
-  var dataUnicaInputs = Array.prototype.slice.call(form.querySelectorAll('input[name="data_unica"]'));
-  var dataFimCard = document.getElementById('ordem-servico-data-fim-card');
+  var dataUnicaState = form.querySelector('[data-data-unica-state]');
+  var dataUnicaPill = form.querySelector('[data-data-unica-pill]');
   var destinosInput = document.getElementById('id_destinos_payload');
   var destinosList = document.getElementById('destinos-container');
   var destinoTemplate = document.getElementById('ordem-servico-destino-row-template');
@@ -37,7 +38,6 @@
   var fetchSequence = 0;
   var searchDebounceTimer = null;
   var lastMotivoTemplate = '';
-  var cachedDataFimValue = '';
 
   var preview = {
     numero: document.getElementById('ordem-servico-preview-numero'),
@@ -90,14 +90,20 @@
     return list.slice(0, -1).join(', ') + ' e ' + list[list.length - 1];
   }
 
-  function formatDateBr(value) {
-    var raw = String(value || '').trim();
-    if (!raw) {
-      return 'A definir';
+  function setStatusLabel(node, enabled, onText, offText) {
+    if (!node) {
+      return;
+    }
+    node.textContent = enabled ? onText : offText;
+  }
+
+  function parseDateParts(raw) {
+    if (!raw || raw.length !== 10) {
+      return '';
     }
     var parts = raw.split('-');
     if (parts.length !== 3) {
-      return raw;
+      return '';
     }
     return parts[2] + '/' + parts[1] + '/' + parts[0];
   }
@@ -110,47 +116,48 @@
   }
 
   function isDataUnica() {
-    var selected = form.querySelector('input[name="data_unica"]:checked');
-    if (!selected) {
-      return true;
-    }
-    return String(selected.value || '').trim() !== '0';
+    return !!(dataUnicaInput && dataUnicaInput.checked);
   }
 
-  function setDataMode() {
-    var unique = isDataUnica();
-    if (dataFimCard) {
-      dataFimCard.classList.toggle('d-none', unique);
+  function buildPeriodoLabel() {
+    if (!dataDeslocamentoInput || !dataDeslocamentoInput.value) {
+      return 'Período a definir';
     }
-    if (!dataFimInput) {
+    var inicio = parseDateParts(dataDeslocamentoInput.value);
+    if (!inicio) {
+      return 'Período a definir';
+    }
+    var fim = dataFimInput && dataFimInput.value ? parseDateParts(dataFimInput.value) : '';
+    if (isDataUnica()) {
+      return inicio;
+    }
+    if (fim && fim !== inicio) {
+      return inicio + ' a ' + fim;
+    }
+    return inicio;
+  }
+
+  function updateDataUnica() {
+    if (!dataUnicaInput || !dataFimInput) {
       return;
     }
-    if (unique) {
-      if (dataFimInput.value && dataDeslocamentoInput && dataFimInput.value !== dataDeslocamentoInput.value) {
-        cachedDataFimValue = dataFimInput.value;
-      }
-      if (dataDeslocamentoInput && dataDeslocamentoInput.value) {
-        dataFimInput.value = dataDeslocamentoInput.value;
-      }
-    } else {
-      if (dataFimInput.value) {
-        cachedDataFimValue = dataFimInput.value;
-      } else if (cachedDataFimValue) {
-        dataFimInput.value = cachedDataFimValue;
-      }
-    }
-  }
 
-  function formatPeriodoBr(startValue, endValue, uniqueMode) {
-    var start = formatDateBr(startValue);
-    var end = formatDateBr(endValue);
-    if (!startValue) {
-      return 'A definir';
+    var active = !!dataUnicaInput.checked;
+    setStatusLabel(dataUnicaState, active, 'LIGADA', 'DESLIGADA');
+    if (dataUnicaPill) {
+      dataUnicaPill.classList.toggle('is-on', active);
+      dataUnicaPill.classList.toggle('is-off', !active);
+      dataUnicaPill.setAttribute('data-state', active ? 'on' : 'off');
     }
-    if (uniqueMode || !endValue || start === end) {
-      return start;
+
+    dataFimInput.readOnly = active;
+    dataFimInput.classList.toggle('is-locked', active);
+
+    if (active && dataDeslocamentoInput) {
+      dataFimInput.value = dataDeslocamentoInput.value;
     }
-    return start + ' a ' + end;
+
+    updateContextPreview();
   }
 
   function renderAutosavePreview(payload) {
@@ -491,11 +498,7 @@
 
   function updateContextPreview() {
     if (preview.data) {
-      preview.data.textContent = formatPeriodoBr(
-        dataDeslocamentoInput && dataDeslocamentoInput.value ? dataDeslocamentoInput.value : '',
-        dataFimInput && dataFimInput.value ? dataFimInput.value : '',
-        isDataUnica()
-      );
+      preview.data.textContent = buildPeriodoLabel();
     }
     if (preview.vinculo) {
       var vinculo = 'Cadastro avulso';
@@ -713,13 +716,6 @@
   }
 
   if (dataDeslocamentoInput) {
-    dataDeslocamentoInput.addEventListener('input', function() {
-      if (isDataUnica() && dataFimInput) {
-        dataFimInput.value = dataDeslocamentoInput.value;
-      }
-      updateContextPreview();
-      scheduleAutosave();
-    });
     dataDeslocamentoInput.addEventListener('change', function() {
       if (isDataUnica() && dataFimInput) {
         dataFimInput.value = dataDeslocamentoInput.value;
@@ -730,29 +726,18 @@
   }
 
   if (dataFimInput) {
-    dataFimInput.addEventListener('input', function() {
-      if (!isDataUnica()) {
-        cachedDataFimValue = dataFimInput.value;
-      }
-      updateContextPreview();
-      scheduleAutosave();
-    });
     dataFimInput.addEventListener('change', function() {
-      if (!isDataUnica()) {
-        cachedDataFimValue = dataFimInput.value;
-      }
       updateContextPreview();
       scheduleAutosave();
     });
   }
 
-  dataUnicaInputs.forEach(function(input) {
-    input.addEventListener('change', function() {
-      setDataMode();
-      updateContextPreview();
+  if (dataUnicaInput) {
+    dataUnicaInput.addEventListener('change', function() {
+      updateDataUnica();
       scheduleAutosave();
     });
-  });
+  }
 
   if (eventoSelect) {
     eventoSelect.addEventListener('change', function() {
@@ -820,7 +805,7 @@
     updateContextPreview();
   });
 
-  setDataMode();
+  updateDataUnica();
   hydrateDestinos().then(function() {
     syncFromSelection();
     syncFromDestinos();

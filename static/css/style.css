@@ -10282,99 +10282,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     gap: 0.78rem;
 }
 
-.ordem-servico-data-choice-shell {
-    display: grid;
-    gap: 0.55rem;
-    min-width: min(100%, 34rem);
-}
-
-.ordem-servico-page .oficio-step4-choice-heading {
-    color: var(--oficio-wizard-ink);
-    font-size: 0.9rem;
-    font-weight: 800;
-}
-
-.ordem-servico-page .ordem-servico-data-choice-group {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem;
-}
-
-.ordem-servico-page .ordem-servico-data-choice-option {
-    min-height: 100%;
-}
-
-.ordem-servico-page .ordem-servico-data-choice-option .form-check-input {
-    margin-top: 0.1rem;
-}
-
-.ordem-servico-page .oficio-step4-choice-option {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.7rem;
-    align-items: start;
-    padding: 0.78rem 0.82rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 1rem;
-    background: #fff;
-    cursor: pointer;
-    transition: border-color var(--cv-transition-fast), box-shadow var(--cv-transition-fast), background var(--cv-transition-fast);
-}
-
-.ordem-servico-page .oficio-step4-choice-option:hover,
-.ordem-servico-page .oficio-step4-choice-option:has(input:focus-visible),
-.ordem-servico-page .oficio-step4-choice-option:has(input:checked) {
-    border-color: rgba(31, 76, 125, 0.32);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
-    background: #fbfdff;
-}
-
-.ordem-servico-page .oficio-step4-choice-copy {
-    display: grid;
-    gap: 0.18rem;
-}
-
-.ordem-servico-page .oficio-step4-choice-title {
-    color: var(--oficio-wizard-ink);
-    font-size: 0.88rem;
-    font-weight: 800;
-}
-
-.ordem-servico-page .oficio-step4-choice-text,
-.ordem-servico-page .oficio-step4-choice-note {
-    color: var(--oficio-wizard-muted);
-    font-size: 0.78rem;
-    line-height: 1.45;
-}
-
-.ordem-servico-page .evento-campo-card--fim {
-    border-style: dashed;
-}
-
-.ordem-servico-page .evento-datas-grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 0.72rem;
-}
-
-.ordem-servico-page .evento-campo-card {
-    grid-column: span 6;
-    border: 1px solid rgba(16, 36, 63, 0.08);
-    border-radius: 0.92rem;
-    background: #f9fbfe;
-    padding: 0.68rem;
-}
-
-.ordem-servico-page .evento-campo-card .form-label {
-    margin-bottom: 0.3rem;
-    color: #2a4363;
-    font-size: 0.82rem;
-    font-weight: 700;
-}
-
-.ordem-servico-page .evento-campo-card .form-control {
-    min-height: 2.55rem;
-}
-
 .ordem-servico-page .ordem-servico-autocomplete .app-page-autocomplete-menu {
     z-index: 35;
 }
@@ -10516,15 +10423,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
         flex-wrap: wrap;
     }
 
-    .ordem-servico-page .ordem-servico-data-choice-shell {
-        min-width: 0;
-        width: 100%;
-    }
-
-    .ordem-servico-page .ordem-servico-data-choice-group {
-        grid-template-columns: 1fr;
-    }
-
     .evento-dataunica-pill {
         width: 100%;
         min-width: 0;
@@ -10556,10 +10454,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
     .ordem-servico-page .plano-trabalho-destinos-panel__head {
         flex-wrap: wrap;
-    }
-
-    .ordem-servico-page .evento-campo-card {
-        grid-column: span 12;
     }
 
     .ordem-servico-page .ordem-servico-header {

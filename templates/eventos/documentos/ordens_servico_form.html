@@ -73,48 +73,31 @@
 
       <section class="evento-section evento-section-datas ordem-servico-section ordem-servico-section--datas">
         <div class="evento-section-head evento-section-head--datas">
-          <div>
-            <h2 class="evento-section-title">Data do deslocamento</h2>
-            <p class="oficio-stage-section-text">Use uma única data ou um período completo, conforme a necessidade do documento.</p>
-          </div>
-          <div class="ordem-servico-data-choice-shell">
-            <div class="oficio-step4-choice-heading">Data única?</div>
-            <div class="oficio-step4-choice-group ordem-servico-data-choice-group">
-              {% for radio in form.data_unica %}
-              <label class="oficio-step4-choice-option ordem-servico-data-choice-option" for="{{ radio.id_for_label }}">
-                {{ radio.tag }}
-                <span class="oficio-step4-choice-copy">
-                  <span class="oficio-step4-choice-title">{{ radio.choice_label }}</span>
-                  <span class="oficio-step4-choice-text">
-                    {% if forloop.first %}
-                    O deslocamento acontece em um único dia.
-                    {% else %}
-                    O deslocamento informa data inicial e final.
-                    {% endif %}
-                  </span>
-                </span>
-              </label>
-              {% endfor %}
-            </div>
-          </div>
+          <h2 class="evento-section-title">Datas</h2>
+          <label class="evento-dataunica-pill{% if form.data_unica.value %} is-on{% else %} is-off{% endif %}" for="id_data_unica" data-data-unica-pill>
+            <input type="checkbox" name="data_unica" id="id_data_unica" class="visually-hidden" {% if form.data_unica.value %}checked{% endif %}>
+            <span class="evento-dataunica-pill__icon"><i class="bi bi-calendar3"></i></span>
+            <span class="evento-dataunica-pill__copy">
+              <strong>Data única</strong>
+              <small>Oculta a data final</small>
+            </span>
+            <span class="evento-dataunica-pill__state" data-data-unica-state>DESLIGADA</span>
+          </label>
         </div>
 
-        {% if form.data_unica.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_unica.errors.0 }}</div>{% endif %}
-
-        {% with data_unica_val=form.data_unica.value|default:'1' %}
-        <div class="evento-datas-grid ordem-servico-datas-grid">
-          <div class="evento-campo-card ordem-servico-campo-card">
-            <label class="form-label" for="{{ form.data_deslocamento.id_for_label }}">Data inicial</label>
-            {{ form.data_deslocamento }}
+        <div class="evento-datas-grid">
+          <div class="evento-campo-card" id="wrap-data-inicio">
+            <label for="id_data_deslocamento" class="form-label">Data inicial</label>
+            <input type="date" name="data_deslocamento" value="{% if form.data_deslocamento.value %}{% firstof form.data_deslocamento.value|date:'Y-m-d' form.data_deslocamento.value %}{% endif %}" id="id_data_deslocamento" class="form-control">
             {% if form.data_deslocamento.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_deslocamento.errors.0 }}</div>{% endif %}
           </div>
-          <div class="evento-campo-card ordem-servico-campo-card ordem-servico-campo-card--fim{% if data_unica_val != '0' %} d-none{% endif %}" id="ordem-servico-data-fim-card">
-            <label class="form-label" for="{{ form.data_deslocamento_fim.id_for_label }}">Data final</label>
-            {{ form.data_deslocamento_fim }}
+          <div class="evento-campo-card" id="wrap-data-fim">
+            <label for="id_data_deslocamento_fim" class="form-label">Data final</label>
+            <input type="date" name="data_deslocamento_fim" value="{% if form.data_deslocamento_fim.value %}{% firstof form.data_deslocamento_fim.value|date:'Y-m-d' form.data_deslocamento_fim.value %}{% endif %}" id="id_data_deslocamento_fim" class="form-control">
             {% if form.data_deslocamento_fim.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_deslocamento_fim.errors.0 }}</div>{% endif %}
           </div>
         </div>
-        {% endwith %}
+        {% if form.data_unica.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_unica.errors.0 }}</div>{% endif %}
       </section>
 
       <section class="oficio-stage-section ordem-servico-section ordem-servico-section--equipe">
