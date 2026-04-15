@@ -74,7 +74,7 @@ class PlanoTrabalhoAdmin(admin.ModelAdmin):
 class OrdemServicoAdmin(admin.ModelAdmin):
     list_display = ('id', 'numero_formatado', 'status', 'evento', 'oficio', 'updated_at')
     list_filter = ('status',)
-    search_fields = ('finalidade', 'designacoes', 'determinacoes')
+    search_fields = ('finalidade', 'motivo_texto', 'responsaveis')
     raw_id_fields = ('evento', 'oficio')
     ordering = ('-updated_at',)
 

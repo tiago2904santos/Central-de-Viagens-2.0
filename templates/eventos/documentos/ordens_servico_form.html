@@ -12,7 +12,7 @@
         <span class="ordem-servico-kicker">Documento operacional institucional</span>
         <h1 class="app-page-header__title">{% if object %}Editar{% else %}Nova{% endif %} ordem de serviço</h1>
         <p class="app-page-header__subtitle">
-          Cadastro padronizado com vínculo opcional a evento ou ofício, reaproveitando os blocos reais do sistema para equipe, destinos e textos documentais.
+          Cadastro padronizado com vínculo opcional a evento ou ofício, usando os componentes oficiais do sistema para datas, equipe e destinos.
         </p>
       </div>
       <div class="app-page-header__actions ordem-servico-header__actions">
@@ -46,7 +46,7 @@
         <div class="oficio-stage-section-head">
           <div>
             <h2 class="oficio-stage-section-title">Contexto do documento</h2>
-            <p class="oficio-stage-section-text">Criação, número, vínculo e status automático acompanham a ordem de serviço sem criar um cabeçalho paralelo.</p>
+            <p class="oficio-stage-section-text">Número, vínculo e status acompanham a ordem sem criar uma variação visual paralela.</p>
           </div>
           <span class="ordem-servico-context-pill">{% if object and object.numero_formatado %}{{ object.numero_formatado }}{% else %}{{ ordem_numero_preview|default:'A definir' }}{% endif %}</span>
         </div>
@@ -73,46 +73,61 @@
 
       <section class="evento-section evento-section-datas ordem-servico-section ordem-servico-section--datas">
         <div class="evento-section-head evento-section-head--datas">
-          <h2 class="evento-section-title">Data do deslocamento</h2>
-          <div class="evento-dataunica-pill is-on ordem-servico-data-pill" aria-hidden="true">
-            <span class="evento-dataunica-pill__icon"><i class="bi bi-calendar3"></i></span>
-            <span class="evento-dataunica-pill__copy">
-              <strong>Data única</strong>
-              <small>Deslocamento singular</small>
-            </span>
-            <span class="evento-dataunica-pill__state">FIXA</span>
+          <div>
+            <h2 class="evento-section-title">Data do deslocamento</h2>
+            <p class="oficio-stage-section-text">Use uma única data ou um período completo, conforme a necessidade do documento.</p>
+          </div>
+          <div class="ordem-servico-data-choice-shell">
+            <div class="oficio-step4-choice-heading">Data única?</div>
+            <div class="oficio-step4-choice-group ordem-servico-data-choice-group">
+              {% for radio in form.data_unica %}
+              <label class="oficio-step4-choice-option ordem-servico-data-choice-option" for="{{ radio.id_for_label }}">
+                {{ radio.tag }}
+                <span class="oficio-step4-choice-copy">
+                  <span class="oficio-step4-choice-title">{{ radio.choice_label }}</span>
+                  <span class="oficio-step4-choice-text">
+                    {% if forloop.first %}
+                    O deslocamento acontece em um único dia.
+                    {% else %}
+                    O deslocamento informa data inicial e final.
+                    {% endif %}
+                  </span>
+                </span>
+              </label>
+              {% endfor %}
+            </div>
           </div>
         </div>
+
+        {% if form.data_unica.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_unica.errors.0 }}</div>{% endif %}
+
+        {% with data_unica_val=form.data_unica.value|default:'1' %}
         <div class="evento-datas-grid ordem-servico-datas-grid">
           <div class="evento-campo-card ordem-servico-campo-card">
-            <label class="form-label" for="{{ form.data_deslocamento.id_for_label }}">Data do deslocamento</label>
+            <label class="form-label" for="{{ form.data_deslocamento.id_for_label }}">Data inicial</label>
             {{ form.data_deslocamento }}
             {% if form.data_deslocamento.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_deslocamento.errors.0 }}</div>{% endif %}
-            <div class="form-text">A mesma data alimenta o texto final e a emissão documental da ordem.</div>
           </div>
-          <div class="evento-campo-card ordem-servico-campo-card ordem-servico-campo-card--note">
-            <label class="form-label">Leitura documental</label>
-            <div class="ordem-servico-note">
-              O deslocamento mantém a mesma lógica visual do bloco Datas do Evento, mas sem duplicar campos que não existem na OS.
-            </div>
-            <div class="ordem-servico-note mt-3">
-              Quando houver vínculo com evento ou ofício, o contexto documental é sugerido automaticamente pelo formulário.
-            </div>
+          <div class="evento-campo-card ordem-servico-campo-card ordem-servico-campo-card--fim{% if data_unica_val != '0' %} d-none{% endif %}" id="ordem-servico-data-fim-card">
+            <label class="form-label" for="{{ form.data_deslocamento_fim.id_for_label }}">Data final</label>
+            {{ form.data_deslocamento_fim }}
+            {% if form.data_deslocamento_fim.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_deslocamento_fim.errors.0 }}</div>{% endif %}
           </div>
         </div>
+        {% endwith %}
       </section>
 
       <section class="oficio-stage-section ordem-servico-section ordem-servico-section--equipe">
         <div class="oficio-stage-section-head">
           <div>
             <h2 class="oficio-stage-section-title">Equipe de deslocamento</h2>
-            <p class="oficio-stage-section-text">Autocomplete, chips e submissão por IDs seguem o mesmo padrão já consolidado no Ofício.</p>
+            <p class="oficio-stage-section-text">Busque servidores finalizados e mantenha a seleção visível enquanto monta a ordem de serviço.</p>
           </div>
           <a href="{{ cadastrar_viajante_url }}" class="btn btn-outline-secondary btn-sm" data-autosave-link="1">Cadastrar novo viajante</a>
         </div>
 
         <label class="form-label mb-2" for="viajantes-autocomplete-input">Buscar viajante</label>
-        <div class="position-relative ordem-servico-autocomplete" id="viajantes-autocomplete-wrapper" data-search-url="{{ buscar_viajantes_url }}">
+        <div class="position-relative" id="viajantes-autocomplete-wrapper" data-search-url="{{ buscar_viajantes_url }}">
           <input
             type="text"
             id="viajantes-autocomplete-input"
@@ -125,7 +140,7 @@
             class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none app-page-autocomplete-menu"
           ></div>
         </div>
-        <div class="form-text">A busca mostra apenas viajantes finalizados e permanece disponível após cada seleção.</div>
+        <div class="form-text">A busca mostra apenas viajantes finalizados e continua disponível após cada seleção.</div>
 
         <div id="viajantes-hidden-inputs" class="d-none">
           {% for viajante in selected_viajantes_payload %}
@@ -133,14 +148,14 @@
           {% endfor %}
         </div>
 
-        <div class="oficio-selection-panel ordem-servico-selection-panel mt-3">
+        <div class="oficio-selection-panel mt-3">
           <div class="oficio-selection-panel-head">
-            <span class="oficio-selection-panel-title">Equipe selecionada</span>
+            <span class="oficio-selection-panel-title">Viajantes selecionados</span>
             <span class="oficio-selection-panel-count" id="viajantes-chip-count">{{ selected_viajantes_payload|length }}</span>
           </div>
-          <div id="viajantes-chip-list" class="oficio-selection-chip-list ordem-servico-selection-chip-list">
+          <div id="viajantes-chip-list" class="oficio-selection-chip-list">
             {% for viajante in selected_viajantes_payload %}
-            <div class="oficio-glance-chip oficio-selection-chip ordem-servico-selection-chip" data-viajante-chip="{{ viajante.id }}">
+            <div class="oficio-glance-chip oficio-selection-chip" data-viajante-chip="{{ viajante.id }}">
               <span class="oficio-glance-chip-nome">{{ viajante.nome }}</span>
               {% if viajante.lotacao %}
               <span class="oficio-glance-chip-sub">{{ viajante.lotacao }}</span>
@@ -155,30 +170,29 @@
               >&times;</button>
             </div>
             {% empty %}
-            <span class="oficio-glance-empty" id="viajantes-chip-empty">Nenhum servidor selecionado.</span>
+            <span class="oficio-glance-empty" id="viajantes-chip-empty">Nenhum viajante selecionado.</span>
             {% endfor %}
           </div>
         </div>
+        {% if form.viajantes.errors %}<div class="invalid-feedback d-block mt-2">{{ form.viajantes.errors.0 }}</div>{% endif %}
       </section>
 
-      <section class="evento-section ordem-servico-section ordem-servico-section--destinos">
-        <div class="plano-trabalho-destinos-panel__head evento-section-head">
+      <section class="oficio-stage-section plano-trabalho-destinos-panel ordem-servico-section ordem-servico-section--destinos">
+        <div class="plano-trabalho-destinos-panel__head oficio-stage-section-head">
           <div>
-            <h2 class="evento-section-title">Destinos</h2>
-            <p class="oficio-stage-section-text">O bloco usa a mesma estrutura visual do Plano de Trabalho Etapa 2 para manter a edição consistente.</p>
+            <h2 class="oficio-stage-section-title">Destinos</h2>
           </div>
-          <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary btn-sm evento-btn-add">+ Adicionar destino</button>
+          <button type="button" class="btn btn-outline-primary btn-sm" id="btn-adicionar-destino">+ Adicionar destino</button>
         </div>
-
         <div id="destinos-container" class="plano-trabalho-destino-stack ordem-servico-destinos-stack"></div>
-        {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block mt-2">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
+        {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block mt-1">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
       </section>
 
       <section class="oficio-stage-section ordem-servico-section ordem-servico-section--motivo">
         <div class="oficio-stage-section-head">
           <div>
             <h2 class="oficio-stage-section-title">Motivo</h2>
-            <p class="oficio-stage-section-text">Modelo de motivo e texto consolidado ocupam toda a largura útil, sem coluna espremida.</p>
+            <p class="oficio-stage-section-text">O texto do motivo usa a base documental do sistema sem criar uma linguagem diferente para a OS.</p>
           </div>
           <a class="btn btn-outline-secondary btn-sm" href="{{ motivos_manager_url }}" target="_blank" rel="noopener" data-autosave-link="1">Gerenciar motivos</a>
         </div>
@@ -193,33 +207,6 @@
             <label class="form-label" for="{{ form.motivo_texto.id_for_label }}">Motivo consolidado</label>
             {{ form.motivo_texto }}
             {% if form.motivo_texto.errors %}<div class="invalid-feedback d-block mt-2">{{ form.motivo_texto.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
-      </section>
-
-      <section class="oficio-stage-section ordem-servico-section ordem-servico-section--institucional">
-        <div class="oficio-stage-section-head">
-          <div>
-            <h2 class="oficio-stage-section-title">Texto institucional</h2>
-            <p class="oficio-stage-section-text">Designações, determinações e observações entram em blocos largos para leitura editorial melhor.</p>
-          </div>
-        </div>
-
-        <div class="row g-4">
-          <div class="col-12">
-            <label class="form-label" for="{{ form.designacoes.id_for_label }}">Designações</label>
-            {{ form.designacoes }}
-            {% if form.designacoes.errors %}<div class="invalid-feedback d-block mt-2">{{ form.designacoes.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="{{ form.determinacoes.id_for_label }}">Determinações</label>
-            {{ form.determinacoes }}
-            {% if form.determinacoes.errors %}<div class="invalid-feedback d-block mt-2">{{ form.determinacoes.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
-            {{ form.observacoes }}
-            {% if form.observacoes.errors %}<div class="invalid-feedback d-block mt-2">{{ form.observacoes.errors.0 }}</div>{% endif %}
           </div>
         </div>
       </section>

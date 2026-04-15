@@ -5332,6 +5332,10 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     --termo-card-ink: #8d2016;
 }
 
+.guiado-etapa5-page .termo-list-card {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
 .termo-list-card .oficio-process-status {
     background: rgba(var(--termo-card-accent-rgb), 0.10);
     color: var(--termo-card-ink);
@@ -10274,6 +10278,79 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     gap: 0.85rem;
 }
 
+.ordem-servico-page .evento-section-datas {
+    gap: 0.78rem;
+}
+
+.ordem-servico-data-choice-shell {
+    display: grid;
+    gap: 0.55rem;
+    min-width: min(100%, 34rem);
+}
+
+.ordem-servico-page .oficio-step4-choice-heading {
+    color: var(--oficio-wizard-ink);
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.ordem-servico-page .ordem-servico-data-choice-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.ordem-servico-page .ordem-servico-data-choice-option {
+    min-height: 100%;
+}
+
+.ordem-servico-page .ordem-servico-data-choice-option .form-check-input {
+    margin-top: 0.1rem;
+}
+
+.ordem-servico-page .oficio-step4-choice-option {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.7rem;
+    align-items: start;
+    padding: 0.78rem 0.82rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color var(--cv-transition-fast), box-shadow var(--cv-transition-fast), background var(--cv-transition-fast);
+}
+
+.ordem-servico-page .oficio-step4-choice-option:hover,
+.ordem-servico-page .oficio-step4-choice-option:has(input:focus-visible),
+.ordem-servico-page .oficio-step4-choice-option:has(input:checked) {
+    border-color: rgba(31, 76, 125, 0.32);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+    background: #fbfdff;
+}
+
+.ordem-servico-page .oficio-step4-choice-copy {
+    display: grid;
+    gap: 0.18rem;
+}
+
+.ordem-servico-page .oficio-step4-choice-title {
+    color: var(--oficio-wizard-ink);
+    font-size: 0.88rem;
+    font-weight: 800;
+}
+
+.ordem-servico-page .oficio-step4-choice-text,
+.ordem-servico-page .oficio-step4-choice-note {
+    color: var(--oficio-wizard-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.ordem-servico-page .evento-campo-card--fim {
+    border-style: dashed;
+}
+
 .ordem-servico-page .evento-datas-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: 0.72rem;
@@ -10340,6 +10417,27 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     transform: translateY(-50%) scale(1.06);
 }
 
+.ordem-servico-page .plano-trabalho-destinos-panel {
+    padding: 1rem 1.05rem;
+}
+
+.ordem-servico-page .plano-trabalho-destinos-panel__head {
+    margin-bottom: 0.85rem;
+}
+
+.ordem-servico-page .plano-trabalho-destino-stack {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.ordem-servico-page .ordem-servico-destino-row {
+    padding: 0.9rem;
+}
+
+.ordem-servico-page .ordem-servico-destino-row .btn-remover-destino {
+    width: 100%;
+}
+
 .ordem-servico-page .ordem-servico-selection-chip-list .oficio-glance-chip {
     display: flex;
     flex-direction: column;
@@ -10399,25 +10497,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     text-overflow: ellipsis;
 }
 
-.ordem-servico-page .ordem-servico-note {
-    min-height: 100%;
-    padding: 0.95rem;
-    border-radius: 0.92rem;
-    background: rgba(31, 76, 125, 0.05);
-    border: 1px solid rgba(31, 76, 125, 0.12);
-    color: var(--cv-text-secondary);
-    line-height: 1.55;
-}
-
-.ordem-servico-page textarea#id_motivo_texto,
-.ordem-servico-page textarea#id_designacoes,
-.ordem-servico-page textarea#id_determinacoes,
-.ordem-servico-page textarea#id_observacoes {
-    min-height: 11rem;
-}
-
 .ordem-servico-page textarea#id_motivo_texto {
-    min-height: 13rem;
+    min-height: 15rem;
 }
 
 .ordem-servico-page .ordem-servico-form-actions {
@@ -10433,6 +10514,15 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     .evento-section-head--datas,
     .evento-etapa1-page .plano-trabalho-destinos-panel__head {
         flex-wrap: wrap;
+    }
+
+    .ordem-servico-page .ordem-servico-data-choice-shell {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .ordem-servico-page .ordem-servico-data-choice-group {
+        grid-template-columns: 1fr;
     }
 
     .evento-dataunica-pill {
@@ -10462,6 +10552,10 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     .ordem-servico-page .ordem-servico-context-grid,
     .ordem-servico-page .evento-datas-grid {
         grid-template-columns: 1fr;
+    }
+
+    .ordem-servico-page .plano-trabalho-destinos-panel__head {
+        flex-wrap: wrap;
     }
 
     .ordem-servico-page .evento-campo-card {

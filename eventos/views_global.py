@@ -4063,10 +4063,14 @@ def _render_ordem_servico_form(
             raw_viajantes = [form.data.get('viajantes')]
         viajante_ids = [int(pk) for pk in raw_viajantes if str(pk).isdigit()]
         if viajante_ids:
-            selected_viajantes = list(Viajante.objects.select_related('cargo').filter(pk__in=viajante_ids).order_by('nome'))
+            selected_viajantes = list(
+                Viajante.objects.select_related('cargo', 'unidade_lotacao').filter(pk__in=viajante_ids).order_by('nome')
+            )
     else:
         initial_ids = form.initial.get('viajantes') or []
-        selected_viajantes = list(Viajante.objects.select_related('cargo').filter(pk__in=initial_ids).order_by('nome'))
+        selected_viajantes = list(
+            Viajante.objects.select_related('cargo', 'unidade_lotacao').filter(pk__in=initial_ids).order_by('nome')
+        )
 
     vinculo_texto = 'Cadastro avulso'
     if object_instance:

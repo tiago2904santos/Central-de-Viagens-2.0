@@ -612,6 +612,8 @@ class OrdemServico(models.Model):
         verbose_name='Ofício',
     )
     data_deslocamento = models.DateField('Data do deslocamento', null=True, blank=True, db_index=True)
+    data_deslocamento_fim = models.DateField('Data final do deslocamento', null=True, blank=True, db_index=True)
+    data_unica = models.BooleanField('Data única', default=True)
     modelo_motivo = models.ForeignKey(
         'ModeloMotivoViagem',
         on_delete=models.SET_NULL,
@@ -630,9 +632,6 @@ class OrdemServico(models.Model):
     destinos_json = models.JSONField('Destinos estruturados', blank=True, default=list)
     finalidade = models.TextField('Finalidade', blank=True, default='')
     responsaveis = models.TextField('Responsáveis', blank=True, default='')
-    designacoes = models.TextField('Designações', blank=True, default='')
-    determinacoes = models.TextField('Determinações', blank=True, default='')
-    observacoes = models.TextField('Observações', blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -689,6 +688,15 @@ class OrdemServico(models.Model):
             self.data_criacao = timezone.localdate()
         if self.numero and not self.ano:
             self.ano = int(self.data_criacao.year)
+        if self.data_unica and self.data_deslocamento and not self.data_deslocamento_fim:
+            self.data_deslocamento_fim = self.data_deslocamento
+        if (
+            not self.data_unica
+            and self.data_deslocamento
+            and self.data_deslocamento_fim
+            and self.data_deslocamento_fim < self.data_deslocamento
+        ):
+            raise ValidationError({'data_deslocamento_fim': 'A data final não pode ser anterior à data inicial.'})
         if self.evento_id and self.oficio_id and self.oficio and self.oficio.evento_id:
             if self.oficio.evento_id != self.evento_id:
                 raise ValidationError({'oficio': 'O ofício selecionado pertence a outro evento.'})
@@ -699,6 +707,10 @@ class OrdemServico(models.Model):
             self.data_criacao = timezone.localdate()
         if self.numero and not self.ano:
             self.ano = int(self.data_criacao.year)
+        if self.data_unica and self.data_deslocamento:
+            self.data_deslocamento_fim = self.data_deslocamento
+        elif not self.data_unica and self.data_deslocamento and not self.data_deslocamento_fim:
+            self.data_deslocamento_fim = self.data_deslocamento
 
         if creating and not self.numero:
             ano = int(self.ano or self.data_criacao.year)

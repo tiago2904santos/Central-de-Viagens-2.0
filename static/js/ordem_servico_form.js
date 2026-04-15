@@ -7,13 +7,13 @@
   var autosaveIdInput = document.getElementById('id_autosave_obj_id');
   var autosaveStatus = document.getElementById('ordem-servico-autosave-status');
   var dataDeslocamentoInput = document.getElementById('id_data_deslocamento');
+  var dataFimInput = document.getElementById('id_data_deslocamento_fim');
   var eventoSelect = document.getElementById('id_evento');
   var oficioSelect = document.getElementById('id_oficio');
   var modeloMotivoSelect = document.getElementById('id_modelo_motivo');
   var motivoTextarea = document.getElementById('id_motivo_texto');
-  var designacoesTextarea = document.getElementById('id_designacoes');
-  var determinacoesTextarea = document.getElementById('id_determinacoes');
-  var observacoesTextarea = document.getElementById('id_observacoes');
+  var dataUnicaInputs = Array.prototype.slice.call(form.querySelectorAll('input[name="data_unica"]'));
+  var dataFimCard = document.getElementById('ordem-servico-data-fim-card');
   var destinosInput = document.getElementById('id_destinos_payload');
   var destinosList = document.getElementById('destinos-container');
   var destinoTemplate = document.getElementById('ordem-servico-destino-row-template');
@@ -37,6 +37,7 @@
   var fetchSequence = 0;
   var searchDebounceTimer = null;
   var lastMotivoTemplate = '';
+  var cachedDataFimValue = '';
 
   var preview = {
     numero: document.getElementById('ordem-servico-preview-numero'),
@@ -108,6 +109,50 @@
     return String(select.selectedOptions[0].textContent || '').trim();
   }
 
+  function isDataUnica() {
+    var selected = form.querySelector('input[name="data_unica"]:checked');
+    if (!selected) {
+      return true;
+    }
+    return String(selected.value || '').trim() !== '0';
+  }
+
+  function setDataMode() {
+    var unique = isDataUnica();
+    if (dataFimCard) {
+      dataFimCard.classList.toggle('d-none', unique);
+    }
+    if (!dataFimInput) {
+      return;
+    }
+    if (unique) {
+      if (dataFimInput.value && dataDeslocamentoInput && dataFimInput.value !== dataDeslocamentoInput.value) {
+        cachedDataFimValue = dataFimInput.value;
+      }
+      if (dataDeslocamentoInput && dataDeslocamentoInput.value) {
+        dataFimInput.value = dataDeslocamentoInput.value;
+      }
+    } else {
+      if (dataFimInput.value) {
+        cachedDataFimValue = dataFimInput.value;
+      } else if (cachedDataFimValue) {
+        dataFimInput.value = cachedDataFimValue;
+      }
+    }
+  }
+
+  function formatPeriodoBr(startValue, endValue, uniqueMode) {
+    var start = formatDateBr(startValue);
+    var end = formatDateBr(endValue);
+    if (!startValue) {
+      return 'A definir';
+    }
+    if (uniqueMode || !endValue || start === end) {
+      return start;
+    }
+    return start + ' a ' + end;
+  }
+
   function renderAutosavePreview(payload) {
     if (!payload) {
       return;
@@ -157,7 +202,7 @@
     var html = '<option value="">Selecione...</option>';
     estadosChoices.forEach(function(estado) {
       var selected = String(estado.id) === String(selectedId) ? ' selected' : '';
-      html += '<option value="' + estado.id + '" data-sigla="' + String(estado.sigla || '').toUpperCase() + '"' + selected + '>' + estado.sigla + ' - ' + estado.nome + '</option>';
+      html += '<option value="' + estado.id + '" data-sigla="' + String(estado.sigla || '').toUpperCase() + '"' + selected + '>' + estado.nome + ' (' + estado.sigla + ')</option>';
     });
     return html;
   }
@@ -411,6 +456,14 @@
           lotacaoEl.className = 'oficio-glance-chip-sub';
           lotacaoEl.textContent = lotacao;
           chip.appendChild(lotacaoEl);
+        } else {
+          var cargo = String(item.cargo || '').trim();
+          if (cargo) {
+            var cargoEl = document.createElement('span');
+            cargoEl.className = 'oficio-glance-chip-sub';
+            cargoEl.textContent = cargo;
+            chip.appendChild(cargoEl);
+          }
         }
 
         var removeButton = document.createElement('button');
@@ -438,7 +491,11 @@
 
   function updateContextPreview() {
     if (preview.data) {
-      preview.data.textContent = dataDeslocamentoInput && dataDeslocamentoInput.value ? formatDateBr(dataDeslocamentoInput.value) : 'A definir';
+      preview.data.textContent = formatPeriodoBr(
+        dataDeslocamentoInput && dataDeslocamentoInput.value ? dataDeslocamentoInput.value : '',
+        dataFimInput && dataFimInput.value ? dataFimInput.value : '',
+        isDataUnica()
+      );
     }
     if (preview.vinculo) {
       var vinculo = 'Cadastro avulso';
@@ -459,8 +516,10 @@
 
   function isDocumentComplete() {
     var destinos = syncDestinosPayload();
+    var unique = isDataUnica();
     return !!(
       (dataDeslocamentoInput && dataDeslocamentoInput.value) &&
+      (unique || (dataFimInput && dataFimInput.value)) &&
       (motivoTextarea && String(motivoTextarea.value || '').trim()) &&
       destinos.length &&
       selectedMap.size
@@ -653,26 +712,47 @@
     });
   }
 
-  [designacoesTextarea, determinacoesTextarea, observacoesTextarea].forEach(function(textarea) {
-    if (!textarea) {
-      return;
-    }
-    textarea.addEventListener('input', function() {
-      updateContextPreview();
-      scheduleAutosave();
-    });
-  });
-
   if (dataDeslocamentoInput) {
     dataDeslocamentoInput.addEventListener('input', function() {
+      if (isDataUnica() && dataFimInput) {
+        dataFimInput.value = dataDeslocamentoInput.value;
+      }
       updateContextPreview();
       scheduleAutosave();
     });
     dataDeslocamentoInput.addEventListener('change', function() {
+      if (isDataUnica() && dataFimInput) {
+        dataFimInput.value = dataDeslocamentoInput.value;
+      }
       updateContextPreview();
       scheduleAutosave();
     });
   }
+
+  if (dataFimInput) {
+    dataFimInput.addEventListener('input', function() {
+      if (!isDataUnica()) {
+        cachedDataFimValue = dataFimInput.value;
+      }
+      updateContextPreview();
+      scheduleAutosave();
+    });
+    dataFimInput.addEventListener('change', function() {
+      if (!isDataUnica()) {
+        cachedDataFimValue = dataFimInput.value;
+      }
+      updateContextPreview();
+      scheduleAutosave();
+    });
+  }
+
+  dataUnicaInputs.forEach(function(input) {
+    input.addEventListener('change', function() {
+      setDataMode();
+      updateContextPreview();
+      scheduleAutosave();
+    });
+  });
 
   if (eventoSelect) {
     eventoSelect.addEventListener('change', function() {
@@ -740,6 +820,7 @@
     updateContextPreview();
   });
 
+  setDataMode();
   hydrateDestinos().then(function() {
     syncFromSelection();
     syncFromDestinos();

@@ -40,6 +40,21 @@ def _format_data_single_extenso(value):
     return f'{value.day:02d} de {MESES_PTBR.get(value.month, value.month)} de {value.year}'
 
 
+def _format_data_periodo_extenso(inicio, fim, *, data_unica=False):
+    if not inicio and not fim:
+        return ''
+    inicio = inicio or fim
+    fim = fim or inicio
+    if data_unica or inicio == fim:
+        return _format_data_single_extenso(inicio)
+    if inicio.year == fim.year and inicio.month == fim.month:
+        return f'{inicio.day} a {fim.day} de {MESES_PTBR.get(inicio.month, inicio.month)} de {inicio.year}'
+    return (
+        f'{inicio.day} de {MESES_PTBR.get(inicio.month, inicio.month)} '
+        f'a {fim.day} de {MESES_PTBR.get(fim.month, fim.month)} de {fim.year}'
+    )
+
+
 def _format_data_extenso(oficio):
     primeira_saida = get_primeira_saida_oficio(oficio)
     data_inicio = primeira_saida.date() if primeira_saida else None
@@ -217,9 +232,12 @@ def build_ordem_servico_model_template_context(ordem_servico):
         or ''
     ).strip()
     data_deslocamento = ordem_servico.data_deslocamento
+    data_deslocamento_fim = getattr(ordem_servico, 'data_deslocamento_fim', None)
     if not data_deslocamento and oficio:
         primeira_saida = get_primeira_saida_oficio(oficio)
         data_deslocamento = primeira_saida.date() if primeira_saida else None
+    if ordem_servico.data_unica and data_deslocamento and not data_deslocamento_fim:
+        data_deslocamento_fim = data_deslocamento
 
     endereco = ''
     if context:
@@ -234,7 +252,7 @@ def build_ordem_servico_model_template_context(ordem_servico):
 
     return {
         'cargo_chefia': format_document_display(cargo_chefia),
-        'data_extenso': _format_data_single_extenso(data_deslocamento),
+        'data_extenso': _format_data_periodo_extenso(data_deslocamento, data_deslocamento_fim, data_unica=ordem_servico.data_unica),
         'data_atual_extenso': _format_data_single_extenso(ordem_servico.data_criacao or timezone.localdate()),
         'destino': _build_destino_ordem(ordem_servico, context),
         'divisao': format_document_header_display(divisao),

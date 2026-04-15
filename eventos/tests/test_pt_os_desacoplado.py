@@ -150,8 +150,49 @@ class PtOsDesacopladoTest(TestCase):
         self.assertContains(response, 'Equipe de deslocamento')
         self.assertContains(response, 'Destinos')
         self.assertContains(response, 'Motivo')
-        self.assertContains(response, 'Texto institucional')
+        self.assertContains(response, 'Sim')
+        self.assertContains(response, 'Não')
+        self.assertNotContains(response, 'Leitura documental')
+        self.assertNotContains(response, 'Texto institucional')
         self.assertContains(response, 'js/ordem_servico_form.js')
+
+    def test_os_data_unica_permite_periodo_completo(self):
+        cargo = Cargo.objects.create(nome='Agente de Polícia Civil')
+        viajante = Viajante.objects.create(
+            nome='MARIA SILVA',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=cargo,
+            cpf='12345678901',
+            telefone='41999998888',
+        )
+        estado = Estado.objects.create(nome='Paraná', sigla='PR')
+        cidade = Cidade.objects.create(nome='Curitiba', estado=estado)
+        modelo = self._novo_modelo_motivo('OS com período')
+
+        response = self.client.post(
+            reverse('eventos:documentos-ordens-servico-novo'),
+            data={
+                'data_criacao': '2026-03-10',
+                'status': OrdemServico.STATUS_RASCUNHO,
+                'data_unica': '0',
+                'data_deslocamento': '2026-03-12',
+                'data_deslocamento_fim': '2026-03-14',
+                'modelo_motivo': modelo.pk,
+                'motivo_texto': 'Apoio operacional em período estendido.',
+                'viajantes': [str(viajante.pk)],
+                'destinos_payload': (
+                    '[{"estado_id": %d, "estado_sigla": "PR", "cidade_id": %d, "cidade_nome": "Curitiba"}]'
+                    % (estado.pk, cidade.pk)
+                ),
+                'return_to': reverse('eventos:documentos-ordens-servico'),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        ordem = OrdemServico.objects.get(motivo_texto='Apoio operacional em período estendido.')
+        self.assertFalse(ordem.data_unica)
+        self.assertEqual(ordem.data_deslocamento, date(2026, 3, 12))
+        self.assertEqual(ordem.data_deslocamento_fim, date(2026, 3, 14))
 
     def test_etapa4_guiado_abre_cadastro_real_pt(self):
         response = self.client.get(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}))
