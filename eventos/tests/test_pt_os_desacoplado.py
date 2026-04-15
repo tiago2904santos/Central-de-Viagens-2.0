@@ -141,6 +141,18 @@ class PtOsDesacopladoTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['form'].initial.get('oficio'), self.oficio.pk)
 
+    def test_formulario_os_usa_padrao_visual_e_blocos_reaproveitados(self):
+        response = self.client.get(reverse('eventos:documentos-ordens-servico-novo'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'app-page-header')
+        self.assertContains(response, 'system-form-header')
+        self.assertContains(response, 'Data do deslocamento')
+        self.assertContains(response, 'Equipe de deslocamento')
+        self.assertContains(response, 'Destinos')
+        self.assertContains(response, 'Motivo')
+        self.assertContains(response, 'Texto institucional')
+        self.assertContains(response, 'js/ordem_servico_form.js')
+
     def test_etapa4_guiado_abre_cadastro_real_pt(self):
         response = self.client.get(reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)

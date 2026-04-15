@@ -10202,6 +10202,228 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     font-size: 0.84rem;
 }
 
+.ordem-servico-page .ordem-servico-shell {
+    gap: var(--app-stack-gap);
+}
+
+.ordem-servico-page .ordem-servico-header {
+    align-items: flex-start;
+}
+
+.ordem-servico-page .ordem-servico-header__actions {
+    align-items: flex-start;
+}
+
+.ordem-servico-kicker {
+    color: var(--cv-secondary);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.ordem-servico-context-card {
+    display: grid;
+    gap: 1rem;
+}
+
+.ordem-servico-context-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.35rem 0.72rem;
+    border-radius: 999px;
+    border: 1px solid rgba(31, 76, 125, 0.18);
+    background: rgba(31, 76, 125, 0.06);
+    color: var(--cv-navy-900);
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.ordem-servico-context-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.ordem-servico-context-item {
+    display: grid;
+    gap: 0.22rem;
+    padding: 0.9rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(244, 249, 253, 0.95) 100%);
+}
+
+.ordem-servico-context-item span {
+    color: var(--cv-text-secondary);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.ordem-servico-context-item strong {
+    color: var(--cv-navy-900);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.ordem-servico-section {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.ordem-servico-page .evento-datas-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0.72rem;
+}
+
+.ordem-servico-page .evento-campo-card {
+    grid-column: span 6;
+    border: 1px solid rgba(16, 36, 63, 0.08);
+    border-radius: 0.92rem;
+    background: #f9fbfe;
+    padding: 0.68rem;
+}
+
+.ordem-servico-page .evento-campo-card .form-label {
+    margin-bottom: 0.3rem;
+    color: #2a4363;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.ordem-servico-page .evento-campo-card .form-control {
+    min-height: 2.55rem;
+}
+
+.ordem-servico-page .ordem-servico-autocomplete .app-page-autocomplete-menu {
+    z-index: 35;
+}
+
+.ordem-servico-page .ordem-servico-selection-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.58rem;
+}
+
+.ordem-servico-page .ordem-servico-selection-chip {
+    position: relative;
+    padding-right: 2.35rem;
+}
+
+.ordem-servico-page .ordem-servico-selection-chip-remove {
+    position: absolute;
+    top: 50%;
+    right: 0.42rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.44rem;
+    height: 1.44rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: rgba(185, 28, 28, 0.08);
+    color: var(--bs-red);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.ordem-servico-page .ordem-servico-selection-chip-remove:hover {
+    background: rgba(185, 28, 28, 0.16);
+    transform: translateY(-50%) scale(1.06);
+}
+
+.ordem-servico-page .ordem-servico-selection-chip-list .oficio-glance-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    max-width: min(100%, 34rem);
+    min-height: auto;
+    padding: 0.56rem 3rem 0.56rem 1.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(16, 36, 63, 0.08);
+    background: rgba(255, 255, 255, 0.98);
+    color: var(--oficio-wizard-ink);
+    font-size: 0.84rem;
+    font-weight: 700;
+    box-shadow: 0 10px 22px rgba(16, 36, 63, 0.08);
+    overflow: hidden;
+}
+
+.ordem-servico-page .ordem-servico-selection-chip-list .oficio-glance-chip::before {
+    content: "";
+    position: absolute;
+    left: 0.62rem;
+    top: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #1a3f69 0%, #1f4c7d 100%);
+    transform: translateY(-50%);
+}
+
+.ordem-servico-page .ordem-servico-selection-chip-list .oficio-glance-chip-nome {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    font-size: 0.84rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ordem-servico-page .ordem-servico-selection-chip-list .oficio-glance-chip-nome::before {
+    display: none;
+}
+
+.ordem-servico-page .ordem-servico-selection-chip-list .oficio-glance-chip-sub {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.65;
+    padding-left: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ordem-servico-page .ordem-servico-note {
+    min-height: 100%;
+    padding: 0.95rem;
+    border-radius: 0.92rem;
+    background: rgba(31, 76, 125, 0.05);
+    border: 1px solid rgba(31, 76, 125, 0.12);
+    color: var(--cv-text-secondary);
+    line-height: 1.55;
+}
+
+.ordem-servico-page textarea#id_motivo_texto,
+.ordem-servico-page textarea#id_designacoes,
+.ordem-servico-page textarea#id_determinacoes,
+.ordem-servico-page textarea#id_observacoes {
+    min-height: 11rem;
+}
+
+.ordem-servico-page textarea#id_motivo_texto {
+    min-height: 13rem;
+}
+
+.ordem-servico-page .ordem-servico-form-actions {
+    align-items: center;
+}
+
 @media (max-width: 991.98px) {
     .evento-atividade-grid,
     .evento-datas-grid {
@@ -10235,6 +10457,24 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     .evento-etapa1-footer .system-form-actions__group--primary,
     .evento-etapa1-footer .btn {
         width: 100%;
+    }
+
+    .ordem-servico-page .ordem-servico-context-grid,
+    .ordem-servico-page .evento-datas-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ordem-servico-page .evento-campo-card {
+        grid-column: span 12;
+    }
+
+    .ordem-servico-page .ordem-servico-header {
+        flex-direction: column;
+    }
+
+    .ordem-servico-page .ordem-servico-header__actions {
+        width: 100%;
+        justify-content: flex-start;
     }
 }
 

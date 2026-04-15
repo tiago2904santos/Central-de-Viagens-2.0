@@ -4,634 +4,262 @@
 {% block title %}{% if object %}Editar{% else %}Nova{% endif %} ordem de serviço - Central de Viagens{% endblock %}
 {% block page_title %}{% if object %}Editar{% else %}Nova{% endif %} ordem de serviço{% endblock %}
 
-{% block extra_css %}
-<style>
-  .os-compose-page {
-    --os-ink: #10233b;
-    --os-muted: #62748a;
-    --os-border: #d7e2ec;
-    --os-panel: #ffffff;
-    --os-soft: #f6f9fc;
-    --os-shadow: 0 20px 55px rgba(16, 35, 59, 0.10);
-    color: var(--os-ink);
-  }
-  .os-compose-shell,
-  .os-main,
-  .os-side,
-  .os-preview {
-    display: grid;
-    gap: 1rem;
-  }
-  .os-compose-shell { gap: var(--app-stack-gap); }
-  .os-hero {
-    border: 1px solid rgba(16, 35, 59, 0.08);
-    border-radius: calc(var(--app-card-radius) + 0.55rem);
-    background:
-      radial-gradient(circle at top right, rgba(200, 107, 45, 0.18), transparent 28%),
-      radial-gradient(circle at left center, rgba(15, 109, 103, 0.16), transparent 34%),
-      linear-gradient(135deg, #0f2037 0%, #163a4d 54%, #1e5b5b 100%);
-    padding: var(--app-card-padding-lg);
-    color: #f8fbff;
-    box-shadow: var(--os-shadow);
-  }
-  .os-hero-grid,
-  .os-layout,
-  .os-hero-meta,
-  .os-preview-meta,
-  .os-grid {
-    display: grid;
-    gap: 1rem;
-  }
-  .os-hero-grid,
-  .os-layout { grid-template-columns: 1fr; }
-  .os-hero-grid { grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.85fr); }
-  .os-hero-meta,
-  .os-preview-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .os-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-  .os-eyebrow {
-    display: inline-flex;
-    padding: 0.32rem 0.72rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .os-hero h1 {
-    margin: 0.9rem 0 0.5rem;
-    font-size: clamp(1.9rem, 2vw + 1.2rem, 2.8rem);
-    font-weight: 900;
-    letter-spacing: -0.03em;
-  }
-  .os-hero p { margin: 0; color: rgba(248, 251, 255, 0.82); }
-  .os-meta-card,
-  .os-preview-kpi,
-  .os-preview-item,
-  .os-picker-card,
-  .os-selection-panel,
-  .os-destino-row,
-  .os-auto-note,
-  .os-panel,
-  .os-preview-card {
-    border-radius: var(--app-card-radius);
-    border: 1px solid var(--os-border);
-    background: #fff;
-  }
-  .os-meta-card {
-    padding: 0.95rem 1rem;
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.14);
-  }
-  .os-meta-card span,
-  .os-preview-kpi span,
-  .os-preview-item span {
-    display: block;
-    margin-bottom: 0.28rem;
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--os-muted);
-    font-weight: 800;
-  }
-  .os-meta-card span { color: rgba(248, 251, 255, 0.68); }
-  .os-meta-card strong,
-  .os-preview-kpi strong,
-  .os-preview-item strong {
-    display: block;
-    font-size: 1rem;
-    font-weight: 850;
-  }
-  .os-preview-item p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--os-ink);
-    white-space: pre-line;
-  }
-  .os-panel,
-  .os-preview-card { box-shadow: 0 10px 28px rgba(15, 35, 59, 0.05); }
-  .os-panel { overflow: visible; }
-  .os-preview-card { overflow: hidden; }
-  .os-panel-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: var(--app-card-padding) var(--app-card-padding) 0;
-  }
-  .os-panel-body { padding: var(--app-card-padding); }
-  .os-panel-title { margin: 0; font-size: 1rem; font-weight: 850; }
-  .os-panel-text { margin: 0.28rem 0 0; color: var(--os-muted); font-size: 0.9rem; }
-  .os-field { grid-column: span 12; }
-  .os-field--sm { grid-column: span 4; }
-  .os-field--md { grid-column: span 6; }
-  .os-field--lg { grid-column: span 8; }
-  .os-label {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 0.45rem;
-    font-size: 0.82rem;
-    font-weight: 800;
-  }
-  .os-label small,
-  .os-helper { color: var(--os-muted); font-size: 0.76rem; font-weight: 600; }
-  .os-input-shell {
-    border: 1px solid var(--os-border);
-    border-radius: 16px;
-    background: #fff;
-    padding: 0.28rem;
-  }
-  .os-input-shell select,
-  .os-input-shell textarea,
-  .os-input-shell input { border: 0; box-shadow: none; border-radius: 12px; }
-  .os-toolbar,
-  .os-actions,
-  .os-actions-left,
-  .os-actions-right,
-  .os-selection-head,
-  .os-chip-list { display: flex; gap: 0.75rem; }
-  .os-toolbar,
-  .os-actions,
-  .os-actions-left,
-  .os-actions-right,
-  .os-selection-head { align-items: center; flex-wrap: wrap; }
-  .os-toolbar .btn,
-  .os-actions .btn { border-radius: 999px; }
-  .os-picker-card,
-  .os-selection-panel,
-  .os-auto-note,
-  .os-preview-kpi,
-  .os-preview-item,
-  .os-destino-row { padding: var(--app-card-padding); }
-  .os-picker-card select[multiple] { min-height: 16rem; }
-  .os-selection-panel { margin-top: 0.9rem; border-style: dashed; background: linear-gradient(180deg, #fcfdff 0%, #f4f8fc 100%); }
-  .os-selection-title { font-size: 0.84rem; font-weight: 850; }
-  .os-selection-count {
-    min-width: 2rem;
-    height: 2rem;
-    border-radius: 999px;
-    background: #dceaf6;
-    color: #244766;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.82rem;
-    font-weight: 800;
-  }
-  .os-chip-list { flex-wrap: wrap; }
-  .os-chip {
-    display: inline-flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    min-width: 11rem;
-    padding: 0.62rem 0.75rem;
-    border-radius: 14px;
-    background: #fff;
-    border: 1px solid #dce6f0;
-  }
-  .os-chip strong { font-size: 0.84rem; }
-  .os-chip span,
-  .os-empty { color: var(--os-muted); font-size: 0.78rem; }
-  .os-destinos-list { display: grid; gap: 0.85rem; }
-  .os-destino-row { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr) auto; align-items: end; }
-  .os-destino-row .btn { border-radius: 14px; height: 2.9rem; }
-  .os-preview-head {
-    padding: 1rem 1.15rem;
-    background: linear-gradient(135deg, #0e2136 0%, #164f55 100%);
-    color: #fff;
-  }
-  .os-preview-head span {
-    display: block;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  .os-preview-head strong {
-    display: block;
-    margin-top: 0.28rem;
-    font-size: 1.18rem;
-    font-weight: 900;
-  }
-  .os-preview-body { padding: 1rem 1.15rem 1.15rem; }
-  .os-auto-note { background: linear-gradient(180deg, #fff8f1 0%, #fff3e7 100%); border-color: #f0d6bf; }
-  .os-auto-note strong { display: block; margin-bottom: 0.25rem; color: #7a4318; font-size: 0.88rem; }
-  .os-auto-note p { margin: 0; color: #8c5a33; font-size: 0.84rem; }
-  .os-actions { justify-content: space-between; }
-  @media (max-width: 1199px) {
-    .os-hero-grid,
-    .os-layout { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 767px) {
-    .os-hero,
-    .os-panel-body,
-    .os-preview-body { padding-inline: var(--app-card-padding); }
-    .os-panel-head { padding-inline: var(--app-card-padding); }
-    .os-field--sm,
-    .os-field--md,
-    .os-field--lg,
-    .os-destino-row,
-    .os-hero-meta,
-    .os-preview-meta { grid-column: span 12; grid-template-columns: 1fr; }
-    .os-destino-row { grid-template-columns: 1fr; }
-  }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="app-page-shell app-page-shell--document os-compose-page">
-  <div class="app-page-shell__inner">
-  <form method="post" class="os-compose-shell" id="ordem-servico-form">
-    {% csrf_token %}
-    <input type="hidden" name="return_to" value="{{ return_to }}">
-    <input type="hidden" name="context_source" value="{{ context_source }}">
-    <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
-    <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
-    <input type="hidden" name="autosave_obj_id" id="id_autosave_obj_id" value="{{ object.pk|default:'' }}">
-    {{ form.destinos_payload }}
-
-    <section class="os-hero app-page-card app-page-card--spacious">
-      <div class="os-hero-grid">
-        <div>
-          <span class="os-eyebrow">Documento operacional institucional</span>
-          <h1>{% if object %}Editar{% else %}Nova{% endif %} ordem de serviço</h1>
-          <p>Monte a ordem de serviço em formato documental: equipe, destinos, motivo compartilhado com ofícios e dados institucionais são combinados automaticamente para o modelo final.</p>
-        </div>
-          <div class="os-hero-meta">
-          <div class="os-meta-card"><span>Número previsto</span><strong id="os-preview-numero-hero">{{ ordem_numero_preview|default:'A definir' }}</strong></div>
-            <div class="os-meta-card"><span>Emissão</span><strong id="os-preview-data-emissao-hero">Hoje</strong></div>
-          <div class="os-meta-card"><span>Vínculo</span><strong id="os-preview-vinculo-hero">{% if object and object.oficio %}Ofício {{ object.oficio.numero_formatado }}{% elif object and object.evento %}Evento {{ object.evento.titulo|default:'sem título' }}{% else %}Cadastro avulso{% endif %}</strong></div>
-            <div class="os-meta-card"><span>Status automático</span><strong id="os-preview-status-hero">Rascunho/Finalizado</strong></div>
-        </div>
+<div class="app-page-shell app-page-shell--document system-form-page ordem-servico-page">
+  <div class="app-page-shell__inner system-form-shell ordem-servico-shell">
+    <header class="app-page-header page-header-cadastro system-form-header ordem-servico-header">
+      <div class="app-page-header__copy">
+        <span class="ordem-servico-kicker">Documento operacional institucional</span>
+        <h1 class="app-page-header__title">{% if object %}Editar{% else %}Nova{% endif %} ordem de serviço</h1>
+        <p class="app-page-header__subtitle">
+          Cadastro padronizado com vínculo opcional a evento ou ofício, reaproveitando os blocos reais do sistema para equipe, destinos e textos documentais.
+        </p>
       </div>
-    </section>
-
-    <div class="os-layout">
-      <div class="os-main">
-        <section class="os-panel app-page-card">
-          <div class="os-panel-head">
-            <div>
-              <h2 class="os-panel-title">Contexto do documento</h2>
-              <p class="os-panel-text">Data de criação e status são automáticos: ao salvar incompleto fica como rascunho; com dados completos fica finalizado.</p>
-            </div>
-            <div class="os-toolbar">{% if object %}<span class="badge text-bg-secondary">{{ object.numero_formatado }}</span>{% else %}<span class="badge text-bg-dark">{{ ordem_numero_preview }}</span>{% endif %}</div>
-          </div>
-          <div class="os-panel-body">
-            <div class="os-grid">
-              <div class="os-field os-field--sm">
-                <label class="os-label" for="{{ form.data_deslocamento.id_for_label }}">Data do deslocamento</label>
-                <div class="os-input-shell">{{ form.data_deslocamento }}</div>
-                <div class="os-helper">Preenche a data por extenso do deslocamento no documento.</div>
-                {% if form.data_deslocamento.errors %}<div class="invalid-feedback d-block">{{ form.data_deslocamento.errors.0 }}</div>{% endif %}
-              </div>
-              <div class="os-field os-field--md">
-                <label class="os-label" for="{{ form.evento.id_for_label }}">Evento relacionado <small>opcional</small></label>
-                <div class="os-input-shell">{{ form.evento }}</div>
-                {% if form.evento.errors %}<div class="invalid-feedback d-block">{{ form.evento.errors.0 }}</div>{% endif %}
-              </div>
-              <div class="os-field os-field--md">
-                <label class="os-label" for="{{ form.oficio.id_for_label }}">Ofício relacionado <small>opcional</small></label>
-                <div class="os-input-shell">{{ form.oficio }}</div>
-                <div class="os-helper">Se informado, a tela já sugere equipe e destinos.</div>
-                {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="os-panel app-page-card">
-          <div class="os-panel-head">
-            <div>
-              <h2 class="os-panel-title">Equipe de deslocamento</h2>
-              <p class="os-panel-text">Selecione um ou mais servidores. O texto documental é gerado automaticamente por cargo, no formato pedido para o modelo.</p>
-            </div>
-          </div>
-          <div class="os-panel-body">
-            <div class="os-picker-card">
-              <label class="os-label" for="{{ form.viajantes.id_for_label }}">Servidores selecionáveis <small>origem: viajantes finalizados</small></label>
-              {% with selected_ids=form.viajantes.value %}
-              <div class="os-input-shell">
-                <select name="viajantes" id="{{ form.viajantes.id_for_label }}" class="form-select" multiple size="8" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar servidor...">
-                  {% for viajante in form.fields.viajantes.queryset %}
-                  <option value="{{ viajante.pk }}" data-nome="{{ viajante.nome }}" data-cargo="{% if viajante.cargo_id %}{{ viajante.cargo.nome }}{% else %}Servidor{% endif %}" {% if selected_ids and viajante.pk in selected_ids or selected_ids and viajante.pk|stringformat:'s' in selected_ids %}selected{% endif %}>{{ viajante.nome }}{% if viajante.cargo_id %} - {{ viajante.cargo.nome }}{% endif %}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              {% endwith %}
-              {% if form.viajantes.errors %}<div class="invalid-feedback d-block">{{ form.viajantes.errors.0 }}</div>{% endif %}
-
-              <div class="os-selection-panel">
-                <div class="os-selection-head">
-                  <span class="os-selection-title">Equipe selecionada</span>
-                  <span class="os-selection-count" id="os-viajantes-count">0</span>
-                </div>
-                <div class="os-chip-list" id="os-viajantes-chip-list">
-                  <span class="os-empty" id="os-viajantes-empty">Nenhum servidor selecionado.</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="os-panel app-page-card">
-          <div class="os-panel-head">
-            <div>
-              <h2 class="os-panel-title">Destinos</h2>
-              <p class="os-panel-text">Mesmo padrão de escolha do Plano de Trabalho: você monta a lista de UF + cidade e a OS consolida o destino no texto final.</p>
-            </div>
-            <div class="os-toolbar"><button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-destino">Adicionar destino</button></div>
-          </div>
-          <div class="os-panel-body">
-            <div class="os-destinos-list" id="os-destinos-list"></div>
-            {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
-          </div>
-        </section>
-
-        <section class="os-panel app-page-card">
-          <div class="os-panel-head">
-            <div>
-              <h2 class="os-panel-title">Motivo e texto institucional</h2>
-              <p class="os-panel-text">A OS usa a mesma base de modelos de motivo dos ofícios. Você pode aplicar um modelo e ajustar o texto antes de salvar.</p>
-            </div>
-            <div class="os-toolbar"><a class="btn btn-outline-secondary btn-sm" href="{{ motivos_manager_url }}" target="_blank" rel="noopener">Gerenciar motivos</a></div>
-          </div>
-          <div class="os-panel-body">
-            <div class="os-grid">
-              <div class="os-field os-field--md">
-                <label class="os-label" for="{{ form.modelo_motivo.id_for_label }}">Modelo de motivo</label>
-                <div class="os-input-shell">{{ form.modelo_motivo }}</div>
-                {% if form.modelo_motivo.errors %}<div class="invalid-feedback d-block">{{ form.modelo_motivo.errors.0 }}</div>{% endif %}
-              </div>
-              <div class="os-field os-field--lg">
-                <label class="os-label" for="{{ form.motivo_texto.id_for_label }}">Motivo consolidado</label>
-                <div class="os-input-shell">{{ form.motivo_texto }}</div>
-                {% if form.motivo_texto.errors %}<div class="invalid-feedback d-block">{{ form.motivo_texto.errors.0 }}</div>{% endif %}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="os-panel app-page-card">
-          <div class="os-panel-body">
-            <div class="os-actions">
-              <div class="os-actions-left">
-                <span class="oficio-autosave-status" id="ordem-servico-autosave-status" aria-live="polite">Autosave ativo.</span>
-                <a class="btn btn-outline-secondary" href="{{ return_to|default:'/eventos/documentos/ordens-servico/' }}" data-autosave-link="1">Cancelar</a>
-                {% if object %}<a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-editar' object.pk %}" data-autosave-link="1">Ir para edicao</a>{% endif %}
-              </div>
-              <div class="os-actions-right"><button class="btn btn-primary" type="submit">{% if object %}Salvar alterações{% else %}Salvar ordem de serviço{% endif %}</button></div>
-            </div>
-          </div>
-        </section>
+      <div class="app-page-header__actions ordem-servico-header__actions">
+        <a href="{{ return_to|default:ordens_servico_lista_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar para lista</a>
+        {% if object %}
+        <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-download' object.pk 'docx' %}">DOCX</a>
+        <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-download' object.pk 'pdf' %}">PDF</a>
+        <a class="btn btn-outline-danger" href="{% url 'eventos:documentos-ordens-servico-excluir' object.pk %}" data-autosave-link="1">Excluir</a>
+        {% endif %}
       </div>
+    </header>
 
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+      {% for error in form.non_field_errors %}
+      <div>{{ error }}</div>
+      {% endfor %}
     </div>
-  </form>
+    {% endif %}
+
+    <form method="post" id="ordem-servico-form" class="ordem-servico-form" data-cidades-api-url="{{ api_cidades_por_estado_url }}" data-motivo-api-base="{{ motivo_texto_api_base_url }}">
+      {% csrf_token %}
+      <input type="hidden" name="return_to" value="{{ return_to }}">
+      <input type="hidden" name="context_source" value="{{ context_source }}">
+      <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
+      <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
+      <input type="hidden" name="autosave_obj_id" id="id_autosave_obj_id" value="{{ object.pk|default:'' }}">
+      {{ form.destinos_payload }}
+
+      <section class="app-page-card app-page-card--spacious ordem-servico-context-card">
+        <div class="oficio-stage-section-head">
+          <div>
+            <h2 class="oficio-stage-section-title">Contexto do documento</h2>
+            <p class="oficio-stage-section-text">Criação, número, vínculo e status automático acompanham a ordem de serviço sem criar um cabeçalho paralelo.</p>
+          </div>
+          <span class="ordem-servico-context-pill">{% if object and object.numero_formatado %}{{ object.numero_formatado }}{% else %}{{ ordem_numero_preview|default:'A definir' }}{% endif %}</span>
+        </div>
+
+        <div class="ordem-servico-context-grid">
+          <div class="ordem-servico-context-item">
+            <span>Número previsto</span>
+            <strong id="ordem-servico-preview-numero">{% if object and object.numero_formatado %}{{ object.numero_formatado }}{% else %}{{ ordem_numero_preview|default:'A definir' }}{% endif %}</strong>
+          </div>
+          <div class="ordem-servico-context-item">
+            <span>Criação</span>
+            <strong id="ordem-servico-preview-data">{% if object and object.data_criacao %}{{ object.data_criacao|date:'d/m/Y' }}{% else %}Hoje{% endif %}</strong>
+          </div>
+          <div class="ordem-servico-context-item">
+            <span>Vínculo</span>
+            <strong id="ordem-servico-preview-vinculo">{{ ordem_vinculo_texto|default:'Cadastro avulso' }}</strong>
+          </div>
+          <div class="ordem-servico-context-item">
+            <span>Status</span>
+            <strong id="ordem-servico-preview-status">{% if object %}{{ object.get_status_display }}{% else %}Rascunho{% endif %}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="evento-section evento-section-datas ordem-servico-section ordem-servico-section--datas">
+        <div class="evento-section-head evento-section-head--datas">
+          <h2 class="evento-section-title">Data do deslocamento</h2>
+          <div class="evento-dataunica-pill is-on ordem-servico-data-pill" aria-hidden="true">
+            <span class="evento-dataunica-pill__icon"><i class="bi bi-calendar3"></i></span>
+            <span class="evento-dataunica-pill__copy">
+              <strong>Data única</strong>
+              <small>Deslocamento singular</small>
+            </span>
+            <span class="evento-dataunica-pill__state">FIXA</span>
+          </div>
+        </div>
+        <div class="evento-datas-grid ordem-servico-datas-grid">
+          <div class="evento-campo-card ordem-servico-campo-card">
+            <label class="form-label" for="{{ form.data_deslocamento.id_for_label }}">Data do deslocamento</label>
+            {{ form.data_deslocamento }}
+            {% if form.data_deslocamento.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_deslocamento.errors.0 }}</div>{% endif %}
+            <div class="form-text">A mesma data alimenta o texto final e a emissão documental da ordem.</div>
+          </div>
+          <div class="evento-campo-card ordem-servico-campo-card ordem-servico-campo-card--note">
+            <label class="form-label">Leitura documental</label>
+            <div class="ordem-servico-note">
+              O deslocamento mantém a mesma lógica visual do bloco Datas do Evento, mas sem duplicar campos que não existem na OS.
+            </div>
+            <div class="ordem-servico-note mt-3">
+              Quando houver vínculo com evento ou ofício, o contexto documental é sugerido automaticamente pelo formulário.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="oficio-stage-section ordem-servico-section ordem-servico-section--equipe">
+        <div class="oficio-stage-section-head">
+          <div>
+            <h2 class="oficio-stage-section-title">Equipe de deslocamento</h2>
+            <p class="oficio-stage-section-text">Autocomplete, chips e submissão por IDs seguem o mesmo padrão já consolidado no Ofício.</p>
+          </div>
+          <a href="{{ cadastrar_viajante_url }}" class="btn btn-outline-secondary btn-sm" data-autosave-link="1">Cadastrar novo viajante</a>
+        </div>
+
+        <label class="form-label mb-2" for="viajantes-autocomplete-input">Buscar viajante</label>
+        <div class="position-relative ordem-servico-autocomplete" id="viajantes-autocomplete-wrapper" data-search-url="{{ buscar_viajantes_url }}">
+          <input
+            type="text"
+            id="viajantes-autocomplete-input"
+            class="form-control"
+            placeholder="Digite nome, RG ou CPF"
+            autocomplete="off"
+          >
+          <div
+            id="viajantes-autocomplete-results"
+            class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none app-page-autocomplete-menu"
+          ></div>
+        </div>
+        <div class="form-text">A busca mostra apenas viajantes finalizados e permanece disponível após cada seleção.</div>
+
+        <div id="viajantes-hidden-inputs" class="d-none">
+          {% for viajante in selected_viajantes_payload %}
+          <input type="hidden" name="viajantes" value="{{ viajante.id }}" data-viajante-hidden="{{ viajante.id }}">
+          {% endfor %}
+        </div>
+
+        <div class="oficio-selection-panel ordem-servico-selection-panel mt-3">
+          <div class="oficio-selection-panel-head">
+            <span class="oficio-selection-panel-title">Equipe selecionada</span>
+            <span class="oficio-selection-panel-count" id="viajantes-chip-count">{{ selected_viajantes_payload|length }}</span>
+          </div>
+          <div id="viajantes-chip-list" class="oficio-selection-chip-list ordem-servico-selection-chip-list">
+            {% for viajante in selected_viajantes_payload %}
+            <div class="oficio-glance-chip oficio-selection-chip ordem-servico-selection-chip" data-viajante-chip="{{ viajante.id }}">
+              <span class="oficio-glance-chip-nome">{{ viajante.nome }}</span>
+              {% if viajante.lotacao %}
+              <span class="oficio-glance-chip-sub">{{ viajante.lotacao }}</span>
+              {% elif viajante.cargo %}
+              <span class="oficio-glance-chip-sub">{{ viajante.cargo }}</span>
+              {% endif %}
+              <button
+                type="button"
+                class="oficio-selection-chip-remove"
+                data-remove-viajante="{{ viajante.id }}"
+                aria-label="Remover viajante {{ viajante.nome }}"
+              >&times;</button>
+            </div>
+            {% empty %}
+            <span class="oficio-glance-empty" id="viajantes-chip-empty">Nenhum servidor selecionado.</span>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="evento-section ordem-servico-section ordem-servico-section--destinos">
+        <div class="plano-trabalho-destinos-panel__head evento-section-head">
+          <div>
+            <h2 class="evento-section-title">Destinos</h2>
+            <p class="oficio-stage-section-text">O bloco usa a mesma estrutura visual do Plano de Trabalho Etapa 2 para manter a edição consistente.</p>
+          </div>
+          <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary btn-sm evento-btn-add">+ Adicionar destino</button>
+        </div>
+
+        <div id="destinos-container" class="plano-trabalho-destino-stack ordem-servico-destinos-stack"></div>
+        {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block mt-2">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
+      </section>
+
+      <section class="oficio-stage-section ordem-servico-section ordem-servico-section--motivo">
+        <div class="oficio-stage-section-head">
+          <div>
+            <h2 class="oficio-stage-section-title">Motivo</h2>
+            <p class="oficio-stage-section-text">Modelo de motivo e texto consolidado ocupam toda a largura útil, sem coluna espremida.</p>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ motivos_manager_url }}" target="_blank" rel="noopener" data-autosave-link="1">Gerenciar motivos</a>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-12">
+            <label class="form-label" for="{{ form.modelo_motivo.id_for_label }}">Modelo de motivo</label>
+            {{ form.modelo_motivo }}
+            {% if form.modelo_motivo.errors %}<div class="invalid-feedback d-block mt-2">{{ form.modelo_motivo.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="{{ form.motivo_texto.id_for_label }}">Motivo consolidado</label>
+            {{ form.motivo_texto }}
+            {% if form.motivo_texto.errors %}<div class="invalid-feedback d-block mt-2">{{ form.motivo_texto.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="oficio-stage-section ordem-servico-section ordem-servico-section--institucional">
+        <div class="oficio-stage-section-head">
+          <div>
+            <h2 class="oficio-stage-section-title">Texto institucional</h2>
+            <p class="oficio-stage-section-text">Designações, determinações e observações entram em blocos largos para leitura editorial melhor.</p>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-12">
+            <label class="form-label" for="{{ form.designacoes.id_for_label }}">Designações</label>
+            {{ form.designacoes }}
+            {% if form.designacoes.errors %}<div class="invalid-feedback d-block mt-2">{{ form.designacoes.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="{{ form.determinacoes.id_for_label }}">Determinações</label>
+            {{ form.determinacoes }}
+            {% if form.determinacoes.errors %}<div class="invalid-feedback d-block mt-2">{{ form.determinacoes.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+            {{ form.observacoes }}
+            {% if form.observacoes.errors %}<div class="invalid-feedback d-block mt-2">{{ form.observacoes.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </section>
+
+      <div class="form-actions system-form-actions ordem-servico-form-actions">
+        <div class="system-form-actions__group system-form-actions__group--secondary">
+          <a href="{{ return_to|default:ordens_servico_lista_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Cancelar</a>
+        </div>
+        <p class="oficio-autosave-status ordem-servico-autosave-status small text-muted mb-0" id="ordem-servico-autosave-status" aria-live="polite"></p>
+        <div class="system-form-actions__group system-form-actions__group--primary">
+          <button type="submit" class="btn btn-primary">{% if object %}Salvar alterações{% else %}Salvar ordem de serviço{% endif %}</button>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 
-<template id="os-destino-row-template">
-  <div class="os-destino-row" data-destino-row>
-    <div>
-      <label class="os-label">UF</label>
-      <div class="os-input-shell"><select class="form-select os-destino-estado" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF..."></select></div>
+{{ selected_viajantes_payload|json_script:"viajantes-selected-data" }}
+{{ estados_choices_payload|json_script:"ordem-servico-estados-data" }}
+
+<template id="ordem-servico-destino-row-template">
+  <div class="pt-dest-row ordem-servico-destino-row" data-destino-row>
+    <div class="row g-2 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label">Estado</label>
+        <select name="destino_estado_0" class="destino-estado form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF..."></select>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label">Cidade</label>
+        <select name="destino_cidade_0" class="destino-cidade form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..."></select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="button" class="btn btn-outline-danger w-100 btn-rem-destino btn-remover-destino" title="Remover destino">&times;</button>
+      </div>
     </div>
-    <div>
-      <label class="os-label">Cidade</label>
-      <div class="os-input-shell"><select class="form-select os-destino-cidade" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..."></select></div>
-    </div>
-    <button type="button" class="btn btn-outline-danger os-remover-destino">Remover</button>
   </div>
 </template>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/oficio_wizard.js' %}"></script>
-<script>
-(() => {
-  const form = document.getElementById('ordem-servico-form');
-  if (!form) return;
-  const autosaveIdInput = document.getElementById('id_autosave_obj_id');
-  const autosaveStatus = document.getElementById('ordem-servico-autosave-status');
-  const viajantesSelect = document.getElementById('{{ form.viajantes.id_for_label }}');
-  const destinosInput = document.getElementById('{{ form.destinos_payload.id_for_label }}');
-  const destinosList = document.getElementById('os-destinos-list');
-  const destinoTemplate = document.getElementById('os-destino-row-template');
-  const addDestinoBtn = document.getElementById('btn-add-destino');
-  const dataDeslocamentoInput = document.getElementById('{{ form.data_deslocamento.id_for_label }}');
-  const eventoSelect = document.getElementById('{{ form.evento.id_for_label }}');
-  const oficioSelect = document.getElementById('{{ form.oficio.id_for_label }}');
-  const modeloMotivoSelect = document.getElementById('{{ form.modelo_motivo.id_for_label }}');
-  const motivoTextarea = document.getElementById('{{ form.motivo_texto.id_for_label }}');
-  const chipList = document.getElementById('os-viajantes-chip-list');
-  const chipEmpty = document.getElementById('os-viajantes-empty');
-  const chipCount = document.getElementById('os-viajantes-count');
-  const estadosChoices = [{% for estado in estados_choices %}{ id: {{ estado.pk }}, sigla: '{{ estado.sigla }}', nome: '{{ estado.nome|escapejs }}' }{% if not forloop.last %}, {% endif %}{% endfor %}];
-  const cidadeApiBase = '{{ api_cidades_por_estado_url }}';
-  const motivoApiBase = '{{ motivo_texto_api_base_url }}';
-  const preview = {
-    numeroHero: document.getElementById('os-preview-numero-hero'),
-    dataHero: document.getElementById('os-preview-data-emissao-hero'),
-    vinculoHero: document.getElementById('os-preview-vinculo-hero'),
-  };
-  let lastMotivoTemplate = '';
-  const autosave = window.OficioWizard ? window.OficioWizard.createAutosave({
-    form: form,
-    statusElement: autosaveStatus,
-    captureSubmit: false,
-    onSuccess(data) {
-      if (!data) return;
-      if (autosaveIdInput && data.id) autosaveIdInput.value = String(data.id);
-      if (data.edit_url) {
-        form.setAttribute('action', data.edit_url);
-        if (window.location.pathname !== data.edit_url) {
-          window.history.replaceState({}, '', data.edit_url);
-        }
-      }
-    }
-  }) : null;
-
-  function refreshPickers(root) {
-    if (window.OficioWizard && typeof window.OficioWizard.refreshSelectPickers === 'function') {
-      window.OficioWizard.refreshSelectPickers(root || form);
-    }
-  }
-  function scheduleAutosave() {
-    if (autosave) autosave.schedule();
-  }
-  function joinPtBr(values) {
-    const list = values.filter(Boolean);
-    if (!list.length) return '';
-    if (list.length === 1) return list[0];
-    if (list.length === 2) return list[0] + ' e ' + list[1];
-    return list.slice(0, -1).join(', ') + ' e ' + list[list.length - 1];
-  }
-  function formatDatePtBr(value) {
-    if (!value) return 'A definir';
-    const parts = value.split('-');
-    return parts.length === 3 ? [parts[2], parts[1], parts[0]].join('/') : value;
-  }
-  function updateHeroNumber() {
-    const numero = '{{ ordem_numero_preview|default:"A definir"|escapejs }}';
-    if (preview.numeroHero) preview.numeroHero.textContent = numero;
-  }
-  function updateCreationPreview() {
-    if (preview.dataHero) preview.dataHero.textContent = 'Hoje';
-  }
-  function updateLinkPreview() {
-    let value = 'Cadastro avulso';
-    if (oficioSelect && oficioSelect.value && oficioSelect.selectedOptions.length) value = 'Ofício ' + oficioSelect.selectedOptions[0].textContent.trim();
-    else if (eventoSelect && eventoSelect.value && eventoSelect.selectedOptions.length) value = 'Evento ' + eventoSelect.selectedOptions[0].textContent.trim();
-    if (preview.vinculoHero) preview.vinculoHero.textContent = value;
-  }
-  function buildEquipeTexto() {
-    const selected = viajantesSelect ? Array.from(viajantesSelect.selectedOptions).map((option) => ({ nome: (option.dataset.nome || option.textContent || '').trim(), cargo: (option.dataset.cargo || 'Servidor').trim() })) : [];
-    const groups = [];
-    selected.forEach((item) => {
-      const last = groups[groups.length - 1];
-      if (last && last.cargo === item.cargo) last.nomes.push(item.nome);
-      else groups.push({ cargo: item.cargo, nomes: [item.nome] });
-    });
-    if (!groups.length) return { count: 0, text: 'dos servidores designados' };
-    return {
-      count: selected.length,
-      text: joinPtBr(groups.map((group) => (group.nomes.length === 1 ? 'do(a)' : 'dos(as)') + ' ' + group.cargo + ' ' + joinPtBr(group.nomes))),
-    };
-  }
-  function renderViajantesChips() {
-    if (!chipList || !viajantesSelect) return;
-    Array.from(chipList.querySelectorAll('.os-chip')).forEach((chip) => chip.remove());
-    const selected = Array.from(viajantesSelect.selectedOptions);
-    if (chipEmpty) chipEmpty.style.display = selected.length ? 'none' : '';
-    if (chipCount) chipCount.textContent = String(selected.length);
-    selected.forEach((option) => {
-      const chip = document.createElement('div');
-      chip.className = 'os-chip';
-      chip.innerHTML = '<strong>' + (option.dataset.nome || option.textContent || '').trim() + '</strong><span>' + (option.dataset.cargo || 'Servidor').trim() + '</span>';
-      chipList.appendChild(chip);
-    });
-  }
-  function setEquipePreview() {
-    const equipe = buildEquipeTexto();
-    return equipe;
-  }
-  function buildCidadeApiUrl(estadoId) { return cidadeApiBase.replace(/\/0\/?$/, '/' + String(estadoId) + '/'); }
-  function buildMotivoApiUrl(motivoId) { return motivoApiBase.replace(/0\/texto\/$/, String(motivoId) + '/texto/'); }
-  async function populateCities(select, estadoId, selectedCidadeId) {
-    select.innerHTML = '<option value="">Selecione...</option>';
-    if (!estadoId) { refreshPickers(select); return; }
-    try {
-      const response = await fetch(buildCidadeApiUrl(estadoId), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-      if (!response.ok) throw new Error('Falha ao buscar cidades');
-      const data = await response.json();
-      const cidades = Array.isArray(data) ? data : (data.cidades || []);
-      cidades.forEach((cidade) => {
-        const option = document.createElement('option');
-        option.value = String(cidade.id);
-        option.textContent = cidade.nome;
-        if (selectedCidadeId && String(selectedCidadeId) === String(cidade.id)) option.selected = true;
-        select.appendChild(option);
-      });
-    } catch (error) {
-      console.error('Falha ao carregar cidades', error);
-    }
-    refreshPickers(select);
-  }
-  function syncDestinosPayload() {
-    const payload = [];
-    Array.from(destinosList.querySelectorAll('[data-destino-row]')).forEach((row) => {
-      const estadoSelect = row.querySelector('.os-destino-estado');
-      const cidadeSelect = row.querySelector('.os-destino-cidade');
-      if (!estadoSelect.value || !cidadeSelect.value) return;
-      payload.push({
-        estado_id: Number(estadoSelect.value),
-        estado_sigla: estadoSelect.selectedOptions[0] ? (estadoSelect.selectedOptions[0].dataset.sigla || '').trim() : '',
-        cidade_id: Number(cidadeSelect.value),
-        cidade_nome: cidadeSelect.selectedOptions[0] ? cidadeSelect.selectedOptions[0].textContent.trim() : '',
-      });
-    });
-    if (destinosInput) destinosInput.value = JSON.stringify(payload);
-    return payload;
-  }
-  function setDestinosPreview() {
-    const payload = syncDestinosPayload();
-    const destinos = payload.map((item) => item.cidade_nome && item.estado_sigla ? item.cidade_nome + '/' + item.estado_sigla : item.cidade_nome).filter(Boolean);
-    return { payload, destinos };
-  }
-  async function addDestinoRow(initialData, options) {
-    const skipAutosave = options && options.skipAutosave;
-    const fragment = destinoTemplate.content.cloneNode(true);
-    const row = fragment.querySelector('[data-destino-row]');
-    const estadoSelect = row.querySelector('.os-destino-estado');
-    const cidadeSelect = row.querySelector('.os-destino-cidade');
-    estadoSelect.innerHTML = '<option value="">Selecione...</option>';
-    estadosChoices.forEach((estado) => {
-      const option = document.createElement('option');
-      option.value = String(estado.id);
-      option.textContent = estado.sigla + ' - ' + estado.nome;
-      option.dataset.sigla = estado.sigla;
-      if (initialData && String(initialData.estado_id) === String(estado.id)) option.selected = true;
-      estadoSelect.appendChild(option);
-    });
-    estadoSelect.addEventListener('change', async () => {
-      await populateCities(cidadeSelect, estadoSelect.value, null);
-      setDestinosPreview();
-      scheduleAutosave();
-    });
-    cidadeSelect.addEventListener('change', () => {
-      setDestinosPreview();
-      scheduleAutosave();
-    });
-    row.querySelector('.os-remover-destino').addEventListener('click', () => {
-      row.remove();
-      setDestinosPreview();
-      scheduleAutosave();
-    });
-    destinosList.appendChild(row);
-    await populateCities(cidadeSelect, estadoSelect.value, initialData ? initialData.cidade_id : null);
-    refreshPickers(row);
-    setDestinosPreview();
-    if (!skipAutosave) scheduleAutosave();
-  }
-  function hydrateDestinos() {
-    let payload = [];
-    try { payload = JSON.parse(destinosInput && destinosInput.value ? destinosInput.value : '[]'); } catch (error) { payload = []; }
-    if (!payload.length) addDestinoRow(null, { skipAutosave: true });
-    else payload.forEach((item) => addDestinoRow(item, { skipAutosave: true }));
-  }
-  async function applyMotivoTemplate(force, options) {
-    const shouldAutosave = !options || options.autosave !== false;
-    if (!modeloMotivoSelect || !modeloMotivoSelect.value || !motivoTextarea) return;
-    try {
-      const response = await fetch(buildMotivoApiUrl(modeloMotivoSelect.value), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-      const data = await response.json();
-      const texto = (data.texto || '').trim();
-      if (!texto) return;
-      if (force || !motivoTextarea.value.trim() || motivoTextarea.value.trim() === lastMotivoTemplate) motivoTextarea.value = texto;
-      lastMotivoTemplate = texto;
-      setMotivoPreview();
-      if (shouldAutosave) scheduleAutosave();
-    } catch (error) {
-      console.error('Falha ao carregar modelo de motivo', error);
-    }
-  }
-  function setMotivoPreview() { if (preview.motivoTexto) preview.motivoTexto.textContent = motivoTextarea && motivoTextarea.value.trim() ? motivoTextarea.value.trim() : 'Sem motivo informado.'; }
-  if (addDestinoBtn) addDestinoBtn.addEventListener('click', () => addDestinoRow(null));
-  if (viajantesSelect) viajantesSelect.addEventListener('change', () => { renderViajantesChips(); setEquipePreview(); });
-  if (eventoSelect) eventoSelect.addEventListener('change', updateLinkPreview);
-  if (oficioSelect) oficioSelect.addEventListener('change', updateLinkPreview);
-  if (modeloMotivoSelect) modeloMotivoSelect.addEventListener('change', () => applyMotivoTemplate(true));
-  refreshPickers(form);
-  hydrateDestinos();
-  updateHeroNumber();
-  updateCreationPreview();
-  updateLinkPreview();
-  renderViajantesChips();
-  setEquipePreview();
-  if (modeloMotivoSelect && modeloMotivoSelect.value && motivoTextarea && !motivoTextarea.value.trim()) {
-    applyMotivoTemplate(false, { autosave: false });
-  }
-})();
-</script>
+<script src="{% static 'js/ordem_servico_form.js' %}"></script>
 {% endblock %}

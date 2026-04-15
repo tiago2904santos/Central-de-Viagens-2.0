@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, time, timedelta
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 from django import forms
 from django.contrib import messages
@@ -3993,6 +3993,9 @@ def ordem_servico_novo(request):
             'id': obj.pk,
             'edit_url': reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': obj.pk}),
             'status': obj.status,
+            'status_display': obj.get_status_display(),
+            'numero_formatado': obj.numero_formatado,
+            'data_criacao_display': obj.data_criacao.strftime('%d/%m/%Y') if obj.data_criacao else '',
         })
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
@@ -4019,7 +4022,13 @@ def ordem_servico_editar(request, pk):
             errors = form.non_field_errors() or [err for errs in form.errors.values() for err in errs]
             return _autosave_form_error_response(errors[0] if errors else 'Falha ao salvar a ordem de serviço automaticamente.')
         obj = form.save()
-        return _autosave_form_success_response({'id': obj.pk, 'status': obj.status})
+        return _autosave_form_success_response({
+            'id': obj.pk,
+            'status': obj.status,
+            'status_display': obj.get_status_display(),
+            'numero_formatado': obj.numero_formatado,
+            'data_criacao_display': obj.data_criacao.strftime('%d/%m/%Y') if obj.data_criacao else '',
+        })
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Ordem de serviÃ§o atualizada.')
@@ -4047,12 +4056,50 @@ def _render_ordem_servico_form(
     if object_instance:
         selected_viajantes = object_instance.get_viajantes_relacionados()
     elif form.is_bound:
-        selected_viajantes = list(form.cleaned_data.get('viajantes') or []) if hasattr(form, 'cleaned_data') else []
+        raw_viajantes = []
+        if hasattr(form.data, 'getlist'):
+            raw_viajantes = form.data.getlist('viajantes')
+        elif form.data.get('viajantes'):
+            raw_viajantes = [form.data.get('viajantes')]
+        viajante_ids = [int(pk) for pk in raw_viajantes if str(pk).isdigit()]
+        if viajante_ids:
+            selected_viajantes = list(Viajante.objects.select_related('cargo').filter(pk__in=viajante_ids).order_by('nome'))
     else:
         initial_ids = form.initial.get('viajantes') or []
         selected_viajantes = list(Viajante.objects.select_related('cargo').filter(pk__in=initial_ids).order_by('nome'))
 
+    vinculo_texto = 'Cadastro avulso'
+    if object_instance:
+        if object_instance.oficio_id and object_instance.oficio:
+            vinculo_texto = f'Ofício {object_instance.oficio.numero_formatado}'
+        elif object_instance.evento_id and object_instance.evento:
+            vinculo_texto = f'Evento {object_instance.evento.titulo or "sem título"}'
+    elif getattr(form, 'is_bound', False):
+        raw_oficio = (form.data.get('oficio') or '').strip() if hasattr(form.data, 'get') else ''
+        raw_evento = (form.data.get('evento') or '').strip() if hasattr(form.data, 'get') else ''
+        if raw_oficio.isdigit():
+            oficio = Oficio.objects.select_related('evento').filter(pk=int(raw_oficio)).first()
+            if oficio:
+                vinculo_texto = f'Ofício {oficio.numero_formatado}'
+        elif raw_evento.isdigit():
+            evento = Evento.objects.filter(pk=int(raw_evento)).first()
+            if evento:
+                vinculo_texto = f'Evento {evento.titulo or "sem título"}'
+    elif form.initial.get('oficio'):
+        oficio = Oficio.objects.select_related('evento').filter(pk=form.initial.get('oficio')).first()
+        if oficio:
+            vinculo_texto = f'Ofício {oficio.numero_formatado}'
+    elif form.initial.get('evento'):
+        evento = Evento.objects.filter(pk=form.initial.get('evento')).first()
+        if evento:
+            vinculo_texto = f'Evento {evento.titulo or "sem título"}'
+
     numero_preview = object_instance.numero_formatado if object_instance and object_instance.pk else getattr(form, 'proximo_numero_preview', '')
+    estados_payload = [
+        {'id': estado.pk, 'sigla': estado.sigla, 'nome': estado.nome}
+        for estado in Estado.objects.filter(ativo=True).order_by('nome')
+    ]
+    current_path = request.get_full_path()
     return render(
         request,
         'eventos/documentos/ordens_servico_form.html',
@@ -4063,14 +4110,18 @@ def _render_ordem_servico_form(
             'context_source': context_source,
             'preselected_event_id': preselected_event.pk if preselected_event else (object_instance.evento_id if object_instance else ''),
             'preselected_oficio_id': preselected_oficio.pk if preselected_oficio else (object_instance.oficio_id if object_instance else ''),
-            'estados_choices': Estado.objects.filter(ativo=True).order_by('nome'),
+            'estados_choices_payload': estados_payload,
             'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
             'motivos_manager_url': reverse('eventos:modelos-motivo-lista'),
             'motivo_texto_api_base_url': reverse('eventos:modelos-motivo-texto-api', kwargs={'pk': 0}),
+            'buscar_viajantes_url': reverse('eventos:oficio-step1-viajantes-api'),
+            'cadastrar_viajante_url': f"{reverse('cadastros:viajante-cadastrar')}?next={quote(current_path)}",
             'selected_viajantes_payload': [
                 serializar_viajante_para_autocomplete(viajante) for viajante in selected_viajantes
             ],
             'ordem_numero_preview': numero_preview,
+            'ordem_vinculo_texto': vinculo_texto,
+            'ordens_servico_lista_url': reverse('eventos:documentos-ordens-servico'),
             'hide_page_header': True,
         },
     )
