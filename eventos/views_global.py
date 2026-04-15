@@ -1369,13 +1369,17 @@ def _build_roteiro_list_object_list(roteiros, *, delete_return_to=''):
         roteiro.extra_oficios_count = max(roteiro.oficios_count - len(roteiro.oficios_preview), 0)
 
         roteiro.valor_por_servidor = 'Nao calculado'
-        roteiro.valor_por_servidor_fonte = 'Sem plano de trabalho vinculado'
-        for plano in planos:
-            valor_calculado = _resolve_plano_valor_por_servidor(plano)
-            if valor_calculado:
-                roteiro.valor_por_servidor = valor_calculado
-                roteiro.valor_por_servidor_fonte = f'PT {plano.numero_formatado or f"#{plano.pk}"}'
-                break
+        roteiro.valor_por_servidor_fonte = 'Sem valor persistido'
+        if roteiro.valor_diarias is not None:
+            roteiro.valor_por_servidor = f'R$ {formatar_valor_diarias(Decimal(str(roteiro.valor_diarias)))}'
+            roteiro.valor_por_servidor_fonte = 'Roteiro salvo'
+        else:
+            for plano in planos:
+                valor_calculado = _resolve_plano_valor_por_servidor(plano)
+                if valor_calculado:
+                    roteiro.valor_por_servidor = valor_calculado
+                    roteiro.valor_por_servidor_fonte = f'PT {plano.numero_formatado or f"#{plano.pk}"}'
+                    break
 
         roteiro.has_linked_refs = bool(roteiro.eventos_linked or roteiro.oficios_preview)
         roteiro.observacoes_preview = _clean(roteiro.observacoes)

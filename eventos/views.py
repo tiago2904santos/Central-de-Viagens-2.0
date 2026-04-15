@@ -486,7 +486,7 @@ def _atualizar_datas_roteiro_apos_salvar_trechos(roteiro):
         roteiro.save(update_fields=update_fields)
 
 
-def _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times):
+def _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times, diarias_resultado=None):
     if roteiro.pk is None:
         roteiro.save()
     roteiro.destinos.all().delete()
@@ -499,6 +499,7 @@ def _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times
         )
     _salvar_trechos_roteiro(roteiro, destinos_post, trechos_times)
     _atualizar_datas_roteiro_apos_salvar_trechos(roteiro)
+    _persistir_diarias_roteiro(roteiro, diarias_resultado)
     return roteiro
 
 
@@ -3851,16 +3852,20 @@ def _autosave_save_roteiro(roteiro, request):
         return None, _autosave_error_response(errors[0] if errors else 'Falha ao salvar o roteiro automaticamente.')
 
     destinos_post = _parse_destinos_post(request)
-    ok_destinos, msg_destinos = _validar_destinos(destinos_post) if destinos_post else (True, None)
+    if not destinos_post:
+        roteiro = form.save()
+        return roteiro, None
+    ok_destinos, msg_destinos = _validar_destinos(destinos_post)
     if not ok_destinos:
         return None, _autosave_error_response(msg_destinos)
 
+    _, _, _, diarias_resultado = _build_roteiro_diarias_from_request(request, roteiro=roteiro)
     roteiro = form.save()
     num_trechos = len(destinos_post)
     trechos_times = _parse_trechos_times_post(request, num_trechos)
     retorno_data = _parse_retorno_from_post(request)
     trechos_times.append(retorno_data)
-    _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times)
+    _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times, diarias_resultado=diarias_resultado)
     return roteiro, None
 
 
@@ -7192,7 +7197,68 @@ def _calculate_avulso_diarias_from_state(state):
     return resultado
 
 
-def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated):
+def _build_roteiro_diarias_from_request(request, *, roteiro=None, evento=None):
+    from types import SimpleNamespace
+
+    post_data = request.POST.copy()
+    if 'roteiro_modo' not in post_data:
+        post_data['roteiro_modo'] = Oficio.ROTEIRO_MODO_PROPRIO
+    roteiro_evento_id = _parse_int(request.POST.get('roteiro_evento_id'))
+    if not roteiro_evento_id and roteiro is not None:
+        roteiro_evento_id = roteiro.pk
+    evento_id = None
+    if evento is not None:
+        evento_id = evento.pk
+    elif roteiro is not None:
+        evento_id = roteiro.evento_id
+    route_context = SimpleNamespace(
+        roteiro_evento_id=roteiro_evento_id,
+        evento_id=evento_id,
+    )
+    route_options, route_state_map = _build_step3_route_options(route_context)
+    fake_request = SimpleNamespace(POST=post_data)
+    step3_state = _build_avulso_step3_state_from_post(fake_request, route_state_map=route_state_map)
+    validated = _validate_step3_state(step3_state, oficio=route_context)
+    if not validated['ok']:
+        return route_options, step3_state, validated, None
+    return route_options, step3_state, validated, _calculate_avulso_diarias_from_state(step3_state)
+
+
+def _persistir_diarias_roteiro(roteiro, diarias_resultado):
+    if not diarias_resultado:
+        return
+    roteiro.aplicar_diarias_calculadas(diarias_resultado)
+    roteiro.save(update_fields=['quantidade_diarias', 'valor_diarias', 'valor_diarias_extenso'])
+
+
+def _build_roteiro_diarias_fallback(roteiro):
+    if not roteiro:
+        return None
+    if roteiro.valor_diarias is None and not roteiro.quantidade_diarias and not roteiro.valor_diarias_extenso:
+        return None
+    total_valor_decimal = roteiro.valor_diarias
+    if total_valor_decimal is None:
+        return None
+    total_valor = formatar_valor_diarias(total_valor_decimal)
+    return {
+        'periodos': [],
+        'totais': {
+            'total_diarias': roteiro.quantidade_diarias or '',
+            'total_horas': '',
+            'total_valor': total_valor,
+            'total_valor_decimal': total_valor_decimal,
+            'valor_extenso': roteiro.valor_diarias_extenso or '',
+            'quantidade_servidores': 1,
+            'diarias_por_servidor': roteiro.quantidade_diarias or '',
+            'valor_por_servidor': total_valor,
+            'valor_por_servidor_decimal': total_valor_decimal,
+            'valor_unitario_referencia': '',
+        },
+        'tipo_destino': '',
+    }
+
+
+def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated, diarias_resultado=None):
     destinos_post = []
     for item in (step3_state.get('destinos_atuais') or []):
         estado_id = _parse_int(item.get('estado_id'))
@@ -7269,6 +7335,7 @@ def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated):
     )
 
     _atualizar_datas_roteiro_apos_salvar_trechos(roteiro)
+    _persistir_diarias_roteiro(roteiro, diarias_resultado)
 
 
 def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_list, is_avulso=False, step3_state=None, route_options=None, seed_source_label=''):
@@ -7299,11 +7366,12 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         else Cidade.objects.none()
     )
     diarias_resultado = None
-    if is_avulso:
-        try:
-            diarias_resultado = _calculate_avulso_diarias_from_state(step3_state)
-        except ValueError:
-            diarias_resultado = None
+    try:
+        diarias_resultado = _calculate_avulso_diarias_from_state(step3_state)
+    except ValueError:
+        diarias_resultado = _build_roteiro_diarias_fallback(obj or form.instance)
+    if diarias_resultado is None:
+        diarias_resultado = _build_roteiro_diarias_fallback(obj or form.instance)
     destino_estado_fixo = _get_parana_estado()
     return {
         'evento': evento,
@@ -7316,11 +7384,7 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         'step3_state_json': _serialize_step3_state(step3_state),
         'step3_diarias_resultado': diarias_resultado,
         'step3_seed_source_label': step3_state.get('seed_source_label', ''),
-        'api_calcular_diarias_url': (
-            reverse('eventos:roteiro-avulso-calcular-diarias')
-            if is_avulso
-            else ''
-        ),
+        'api_calcular_diarias_url': reverse('eventos:roteiro-avulso-calcular-diarias'),
         'roteiro_modo': step3_state.get('roteiro_modo', 'ROTEIRO_PROPRIO'),
         'roteiro_evento_id': step3_state.get('roteiro_evento_id'),
         'roteiros_evento': route_options or [],
@@ -7374,11 +7438,12 @@ def guiado_etapa_2_cadastrar(request, evento_id):
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
         if form.is_valid() and ok_destinos:
             roteiro = form.save()
+            _, _, _, diarias_resultado = _build_roteiro_diarias_from_request(request, evento=evento, roteiro=roteiro)
             num_trechos = len(destinos_post)
             trechos_times = _parse_trechos_times_post(request, num_trechos)
             retorno_data = _parse_retorno_from_post(request)
             trechos_times.append(retorno_data)
-            _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times)
+            _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times, diarias_resultado=diarias_resultado)
             return redirect('eventos:guiado-etapa-2', evento_id=evento.pk)
         if not ok_destinos:
             form.add_error(None, msg_destinos)
@@ -7434,11 +7499,12 @@ def guiado_etapa_2_editar(request, evento_id, pk):
         ok_destinos, msg_destinos = _validar_destinos(destinos_post)
         if form.is_valid() and ok_destinos:
             form.save()
+            _, _, _, diarias_resultado = _build_roteiro_diarias_from_request(request, evento=evento, roteiro=roteiro)
             num_trechos = len(destinos_post)
             trechos_times = _parse_trechos_times_post(request, num_trechos)
             retorno_data = _parse_retorno_from_post(request)
             trechos_times.append(retorno_data)
-            _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times)
+            _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times, diarias_resultado=diarias_resultado)
             return redirect('eventos:guiado-etapa-2', evento_id=evento.pk)
         if not ok_destinos:
             form.add_error(None, msg_destinos)
@@ -7515,6 +7581,7 @@ def roteiro_avulso_cadastrar(request):
         step3_state = _build_avulso_step3_state_from_post(request, route_state_map=route_state_map)
         fake_oficio = SimpleNamespace(evento_id=None, roteiro_evento_id=None, evento=None)
         validated = _validate_step3_state(step3_state, oficio=fake_oficio)
+        _, _, _, diarias_resultado = _build_roteiro_diarias_from_request(request)
 
         if form.is_valid() and validated['ok']:
             roteiro = form.save(commit=False)
@@ -7523,7 +7590,7 @@ def roteiro_avulso_cadastrar(request):
             roteiro.origem_estado = validated.get('sede_estado')
             roteiro.origem_cidade = validated.get('sede_cidade')
             roteiro.save()
-            _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated)
+            _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated, diarias_resultado=diarias_resultado)
             return redirect('eventos:roteiros-global')
         for error in validated.get('errors', []):
             form.add_error(None, error)
@@ -7584,6 +7651,7 @@ def roteiro_avulso_editar(request, pk):
         step3_state = _build_avulso_step3_state_from_post(request, route_state_map=route_state_map)
         fake_oficio = SimpleNamespace(evento_id=None, roteiro_evento_id=None, evento=None)
         validated = _validate_step3_state(step3_state, oficio=fake_oficio)
+        _, _, _, diarias_resultado = _build_roteiro_diarias_from_request(request, roteiro=roteiro)
 
         if form.is_valid() and validated['ok']:
             roteiro_saved = form.save(commit=False)
@@ -7592,7 +7660,7 @@ def roteiro_avulso_editar(request, pk):
             roteiro_saved.origem_estado = validated.get('sede_estado')
             roteiro_saved.origem_cidade = validated.get('sede_cidade')
             roteiro_saved.save()
-            _salvar_roteiro_avulso_from_step3_state(roteiro_saved, step3_state, validated)
+            _salvar_roteiro_avulso_from_step3_state(roteiro_saved, step3_state, validated, diarias_resultado=diarias_resultado)
             return redirect('eventos:roteiros-global')
         for error in validated.get('errors', []):
             form.add_error(None, error)
@@ -7646,25 +7714,18 @@ def roteiro_avulso_excluir(request, pk):
 @require_http_methods(['POST'])
 def roteiro_avulso_calcular_diarias(request):
     """Realtime diarias calculation for roteiro avulso (always one server)."""
-    from types import SimpleNamespace
-
-    route_options, route_state_map = _build_roteiro_avulso_route_options()
-    step3_state = _build_avulso_step3_state_from_post(request, route_state_map=route_state_map)
-    fake_oficio = SimpleNamespace(evento_id=None, roteiro_evento_id=None, evento=None)
-    validated = _validate_step3_state(step3_state, oficio=fake_oficio)
+    route_options, step3_state, validated, resultado = _build_roteiro_diarias_from_request(request)
     if not validated['ok']:
         return JsonResponse(
             {
                 'ok': False,
-                'error': 'Revise os dados do roteiro antes de calcular as diÃ¡rias.',
+                'error': 'Revise os dados do roteiro antes de calcular as di?rias.',
                 'errors': validated['errors'],
             },
             status=400,
         )
-    try:
-        resultado = _calculate_avulso_diarias_from_state(step3_state)
-    except ValueError as exc:
-        return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
+    if not resultado:
+        return JsonResponse({'ok': False, 'error': 'Revise os dados do roteiro antes de calcular as di?rias.'}, status=400)
     payload = {'ok': True, 'quantidade_servidores_fixo': 1, 'roteiros_disponiveis': len(route_options)}
     payload.update(resultado)
     return JsonResponse(payload)

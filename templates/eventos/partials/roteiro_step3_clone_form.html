@@ -195,11 +195,10 @@
             <div class="oficio-step3-diarias">
               <div class="oficio-step3-diarias-head">
                 <div class="oficio-step3-diarias-head-copy"><span class="oficio-step3-diarias-eyebrow">Resumo financeiro</span>
-                  <div><h3 class="oficio-step3-section-title">7. Calculadora de diárias</h3><p class="oficio-step3-section-text">Cálculo reativo com base nos trechos e retorno preenchidos no roteiro avulso.</p></div>
+                  <div><h3 class="oficio-step3-section-title">7. Calculadora de diárias</h3><p class="oficio-step3-section-text">Cálculo reativo com base nos trechos e retorno preenchidos no roteiro.</p></div>
                 </div>
                 <div class="oficio-step3-diarias-head-action">
                   <div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending">Aguardando dados para cálculo.</div>
-                  <button type="button" id="btn-calcular-diarias-avulso" class="btn btn-primary oficio-step3-diarias-button">Recalcular agora</button>
                 </div>
               </div>
               <div class="small text-muted mb-2">Cálculo considerando <strong>1 servidor</strong> (regra fixa do roteiro avulso).</div>
@@ -803,11 +802,6 @@
     status.dataset.state = state || 'pending';
     status.textContent = text || 'Aguardando dados para cálculo.';
   }
-  function setDiariasButtonLoading(isLoading) {
-    var btn = $('btn-calcular-diarias-avulso'); if (!btn) return;
-    btn.disabled = !!isLoading;
-    btn.textContent = isLoading ? 'Calculando...' : 'Recalcular agora';
-  }
   function applyDiarias(result) {
     var totais = result && result.totais ? result.totais : null;
     $('diarias-error').classList.add('d-none');
@@ -859,7 +853,6 @@
     if (!apiDiarias) return Promise.resolve();
     if (diariasInFlight) { diariasNeedsRerun = true; return Promise.resolve(); }
     diariasInFlight = true;
-    setDiariasButtonLoading(true);
     $('diarias-error').classList.add('d-none');
     setDiariasStatus('pending', 'Calculando diárias...');
     return fetch(apiDiarias, {
@@ -884,7 +877,6 @@
         setDiariasStatus('error', 'Falha no cálculo.');
       }).finally(function() {
         diariasInFlight = false;
-        setDiariasButtonLoading(false);
         if (diariasNeedsRerun) {
           diariasNeedsRerun = false;
           scheduleRealtimeDiarias();
@@ -1047,7 +1039,6 @@
     else scheduleRealtimeDiarias();
     scheduleAutosave();
   });
-  $('btn-calcular-diarias-avulso').addEventListener('click', function() { calculateDiarias(); });
   setModeUi();
   toggleBateVoltaPanel();
   syncBateVoltaDurationInputs();

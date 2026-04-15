@@ -320,10 +320,12 @@ def calculate_periodized_diarias(
             'total_diarias': resumo_diarias,
             'total_horas': round(total_horas, 2),
             'total_valor': formatar_valor_diarias(total_valor_decimal),
+            'total_valor_decimal': total_valor_decimal,
             'valor_extenso': valor_por_extenso_ptbr(total_valor_decimal),
             'quantidade_servidores': servidores,
             'diarias_por_servidor': resumo_diarias,
             'valor_por_servidor': formatar_valor_diarias(valor_por_servidor),
+            'valor_por_servidor_decimal': valor_por_servidor,
             'valor_unitario_referencia': valor_unitario_referencia,
         },
     }

@@ -407,6 +407,39 @@ class EventoEtapa2RoteirosTest(TestCase):
             cidade_base=self.cidade_a,
         )
 
+    def _roteiro_payload(self, *, retorno_saida='2025-01-02T20:00', retorno_chegada='2025-01-03T09:00'):
+        return {
+            'origem_estado': self.estado.pk,
+            'origem_cidade': self.cidade_a.pk,
+            'destino_estado_0': self.estado.pk,
+            'destino_cidade_0': self.cidade_b.pk,
+            'saida_dt': '2025-01-02T08:00',
+            'retorno_saida_dt': '',
+            'observacoes': '',
+            'trecho_0_origem_nome': self.cidade_a.nome,
+            'trecho_0_destino_nome': self.cidade_b.nome,
+            'trecho_0_origem_estado_id': self.estado.pk,
+            'trecho_0_origem_cidade_id': self.cidade_a.pk,
+            'trecho_0_destino_estado_id': self.estado.pk,
+            'trecho_0_destino_cidade_id': self.cidade_b.pk,
+            'trecho_0_saida_data': '2025-01-02',
+            'trecho_0_saida_hora': '08:00',
+            'trecho_0_chegada_data': '2025-01-02',
+            'trecho_0_chegada_hora': '10:00',
+            'trecho_0_tempo_cru_estimado_min': '120',
+            'trecho_0_tempo_adicional_min': '0',
+            'trecho_0_duracao_estimada_min': '120',
+            'trecho_0_rota_fonte': '',
+            'retorno_saida_data': retorno_saida.split('T')[0],
+            'retorno_saida_hora': retorno_saida.split('T')[1],
+            'retorno_chegada_data': retorno_chegada.split('T')[0],
+            'retorno_chegada_hora': retorno_chegada.split('T')[1],
+            'retorno_tempo_cru_estimado_min': '780',
+            'retorno_tempo_adicional_min': '0',
+            'retorno_duracao_estimada_min': '780',
+            'retorno_rota_fonte': '',
+        }
+
     def test_etapa_2_lista_exige_login(self):
         self.client.logout()
         response = self.client.get(reverse('eventos:guiado-etapa-2', kwargs={'evento_id': self.evento.pk}))
@@ -458,20 +491,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertContains(response, 'Novo roteiro')
 
     def test_criar_roteiro_dentro_de_evento(self):
-        saida = datetime(2025, 1, 2, 8, 0)
-        data = {
-            'origem_estado': self.estado.pk,
-            'origem_cidade': self.cidade_a.pk,
-            'destino_estado_0': self.estado.pk,
-            'destino_cidade_0': self.cidade_b.pk,
-            'saida_dt': saida.strftime('%Y-%m-%dT%H:%M'),
-            'retorno_saida_dt': '',
-            'observacoes': '',
-            'trecho_0_saida_dt': saida.strftime('%Y-%m-%dT%H:%M'),
-            'trecho_0_chegada_dt': (saida + timedelta(minutes=120)).strftime('%Y-%m-%dT%H:%M'),
-            'trecho_1_saida_dt': '',
-            'trecho_1_chegada_dt': '',
-        }
+        data = self._roteiro_payload()
         response = self.client.post(
             reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk}),
             data,
@@ -485,6 +505,82 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertIsNotNone(r.saida_dt)
         self.assertIsNotNone(r.chegada_dt, 'chegada_dt preenchido a partir dos trechos')
         self.assertEqual((r.chegada_dt - r.saida_dt).total_seconds(), 120 * 60)
+
+    def test_criar_roteiro_persiste_valor_calculado_e_reabre_consistente(self):
+        response = self.client.post(
+            reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk}),
+            self._roteiro_payload(),
+        )
+        self.assertEqual(response.status_code, 302)
+        roteiro = RoteiroEvento.objects.get(evento=self.evento)
+        self.assertEqual(roteiro.quantidade_diarias, '1 x 100%')
+        self.assertEqual(roteiro.valor_diarias, Decimal('290.55'))
+        self.assertEqual(roteiro.valor_diarias_extenso, 'duzentos e noventa reais e cinquenta e cinco centavos')
+
+        reopened = self.client.get(
+            reverse('eventos:guiado-etapa-2-editar', kwargs={'evento_id': self.evento.pk, 'pk': roteiro.pk})
+        )
+        self.assertEqual(reopened.status_code, 200)
+        self.assertEqual(
+            reopened.context['step3_diarias_resultado']['totais']['total_valor'],
+            '290,55',
+        )
+
+    def test_edicao_roteiro_recalcula_e_persiste_valor(self):
+        roteiro = RoteiroEvento.objects.create(
+            evento=self.evento,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_a,
+            saida_dt=datetime(2025, 1, 2, 8, 0),
+            duracao_min=60,
+            status=RoteiroEvento.STATUS_FINALIZADO,
+        )
+        RoteiroEventoDestino.objects.create(roteiro=roteiro, estado=self.estado, cidade=self.cidade_b, ordem=0)
+
+        self.client.post(
+            reverse('eventos:guiado-etapa-2-editar', kwargs={'evento_id': self.evento.pk, 'pk': roteiro.pk}),
+            self._roteiro_payload(retorno_chegada='2025-01-04T09:00'),
+        )
+
+        roteiro.refresh_from_db()
+        self.assertEqual(roteiro.valor_diarias, Decimal('581.10'))
+        self.assertEqual(roteiro.quantidade_diarias, '2 x 100%')
+
+    def test_etapa_2_nao_exibe_botao_recalcular(self):
+        response = self.client.get(reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'btn-calcular-diarias-avulso')
+        self.assertNotContains(response, 'Recalcular agora')
+
+    def test_autosave_parcial_nao_apaga_valor_persistido(self):
+        roteiro = RoteiroEvento.objects.create(
+            evento=self.evento,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_a,
+            saida_dt=datetime(2025, 1, 2, 8, 0),
+            duracao_min=60,
+            status=RoteiroEvento.STATUS_FINALIZADO,
+            quantidade_diarias='1 x 100%',
+            valor_diarias=Decimal('290.55'),
+            valor_diarias_extenso='duzentos e noventa reais e cinquenta e cinco centavos',
+        )
+        RoteiroEventoDestino.objects.create(roteiro=roteiro, estado=self.estado, cidade=self.cidade_b, ordem=0)
+
+        response = self.client.post(
+            reverse('eventos:guiado-etapa-2-editar', kwargs={'evento_id': self.evento.pk, 'pk': roteiro.pk}),
+            {
+                'autosave': '1',
+                'autosave_obj_id': str(roteiro.pk),
+                'origem_estado': self.estado.pk,
+                'origem_cidade': self.cidade_a.pk,
+                'observacoes': 'autosave parcial',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 200)
+        roteiro.refresh_from_db()
+        self.assertEqual(roteiro.valor_diarias, Decimal('290.55'))
+        self.assertEqual(roteiro.quantidade_diarias, '1 x 100%')
 
     def test_origem_padrao_vem_da_configuracao_sede(self):
         """Sede prÃ©-preenchida vem de ConfiguracaoSistema.cidade_sede_padrao."""

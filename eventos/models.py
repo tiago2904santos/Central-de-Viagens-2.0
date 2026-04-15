@@ -1,5 +1,6 @@
 import uuid
 from pathlib import Path
+from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -37,7 +38,6 @@ class TipoDemandaEvento(models.Model):
         if self.nome:
             self.nome = self.nome.strip().upper()
         super().save(*args, **kwargs)
-
 
 class Evento(models.Model):
     TIPO_PCPR = 'PCPR_NA_COMUNIDADE'
@@ -1975,6 +1975,9 @@ class RoteiroEvento(models.Model):
     retorno_saida_dt = models.DateTimeField('Retorno - saída', null=True, blank=True)
     retorno_duracao_min = models.PositiveIntegerField('Retorno - duração (min)', null=True, blank=True)
     retorno_chegada_dt = models.DateTimeField('Retorno - chegada', null=True, blank=True)
+    quantidade_diarias = models.CharField('Quantidade de diárias', max_length=120, blank=True, default='')
+    valor_diarias = models.DecimalField('Valor das diárias', max_digits=12, decimal_places=2, null=True, blank=True)
+    valor_diarias_extenso = models.TextField('Valor das diárias por extenso', blank=True, default='')
     observacoes = models.TextField('Observações', blank=True, default='')
     status = models.CharField(
         'Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_RASCUNHO
@@ -1987,6 +1990,25 @@ class RoteiroEvento(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def aplicar_diarias_calculadas(self, resultado):
+        """
+        Persiste os totais calculados para o roteiro.
+        Aceita o payload retornado por calculate_periodized_diarias().
+        """
+        totais = (resultado or {}).get('totais') or {}
+        self.quantidade_diarias = totais.get('total_diarias') or ''
+
+        valor_decimal = totais.get('total_valor_decimal')
+        if valor_decimal is None:
+            valor_texto = (totais.get('total_valor') or '').strip()
+            if valor_texto:
+                try:
+                    valor_decimal = Decimal(valor_texto.replace('.', '').replace(',', '.'))
+                except (InvalidOperation, TypeError, ValueError):
+                    valor_decimal = None
+        self.valor_diarias = valor_decimal
+        self.valor_diarias_extenso = totais.get('valor_extenso') or ''
 
     class Meta:
         ordering = ['-created_at']
