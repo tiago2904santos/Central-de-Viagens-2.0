@@ -151,7 +151,7 @@ class PtOsDesacopladoTest(TestCase):
         self.assertContains(response, 'evento-dataunica-pill')
         self.assertContains(response, 'Oculta a data final')
         self.assertContains(response, 'wrap-data-fim')
-        self.assertContains(response, 'Equipe de deslocamento')
+        self.assertContains(response, 'Equipe do ofício')
         self.assertContains(response, 'Destinos')
         self.assertContains(response, 'Motivo')
         self.assertNotContains(response, 'ordem-servico-data-choice-group')
@@ -504,6 +504,20 @@ class PtOsDesacopladoTest(TestCase):
             'do(a) Escrivão Servidor 5 e do(a) Motorista Servidor 4'
         )
         self.assertEqual(context['equipe_deslocamento'], esperado)
+
+    @patch('eventos.services.documentos.ordem_servico.timezone.localdate', return_value=date(2026, 4, 9))
+    def test_contexto_template_os_usa_data_atual(self, mock_localdate):
+        ordem = OrdemServico.objects.create(
+            data_criacao=date(2026, 4, 3),
+            data_deslocamento=date(2026, 4, 3),
+            motivo_texto='Documento para teste de data.',
+            status=OrdemServico.STATUS_RASCUNHO,
+        )
+
+        context = build_ordem_servico_model_template_context(ordem)
+
+        self.assertEqual(context['data_atual_extenso'], '09 de abril de 2026')
+        mock_localdate.assert_called_once()
 
     def _novo_modelo_motivo(self, texto):
         from eventos.models import ModeloMotivoViagem

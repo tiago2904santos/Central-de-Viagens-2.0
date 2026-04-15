@@ -19,6 +19,8 @@
   var destinosList = document.getElementById('destinos-container');
   var destinoTemplate = document.getElementById('ordem-servico-destino-row-template');
   var addDestinoBtn = document.getElementById('btn-adicionar-destino');
+  var destinoEstadoDefaultId = destinosList ? destinosList.getAttribute('data-destino-estado-fixo-id') || '' : '';
+  var destinoEstadoDefaultNome = destinosList ? destinosList.getAttribute('data-destino-estado-fixo-nome') || 'Paraná (PR)' : 'Paraná (PR)';
   var estadosDataEl = document.getElementById('ordem-servico-estados-data');
   var selectedDataElement = document.getElementById('viajantes-selected-data');
   var buscarViajantesWrapper = document.getElementById('viajantes-autocomplete-wrapper');
@@ -113,6 +115,41 @@
       return '';
     }
     return String(select.selectedOptions[0].textContent || '').trim();
+  }
+
+  function getDestinoRows() {
+    if (!destinosList) {
+      return [];
+    }
+    return Array.from(destinosList.querySelectorAll('.destino-row'));
+  }
+
+  function refreshDestinoButtons() {
+    var rows = getDestinoRows();
+    rows.forEach(function(row) {
+      var btn = row.querySelector('.btn-remover-destino');
+      if (btn) {
+        btn.disabled = rows.length <= 1;
+      }
+    });
+  }
+
+  function reindexDestinoRows() {
+    getDestinoRows().forEach(function(row, idx) {
+      row.dataset.index = String(idx);
+      var estado = row.querySelector('.destino-estado');
+      var cidade = row.querySelector('.destino-cidade');
+      var dragHandle = row.querySelector('.destino-drag-handle');
+      if (estado) {
+        estado.name = 'destino_estado_' + idx;
+      }
+      if (cidade) {
+        cidade.name = 'destino_cidade_' + idx;
+      }
+      if (dragHandle) {
+        dragHandle.setAttribute('aria-label', 'Arrastar destino ' + (idx + 1));
+      }
+    });
   }
 
   function isDataUnica() {
@@ -224,6 +261,61 @@
     }
   }
 
+  function bindDestinoDragAndDrop(row) {
+    if (!row) {
+      return;
+    }
+
+    row.addEventListener('dragstart', function(event) {
+      row.classList.add('is-dragging');
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', row.dataset.index || '0');
+    });
+
+    row.addEventListener('dragend', function() {
+      row.classList.remove('is-dragging');
+      getDestinoRows().forEach(function(item) {
+        item.classList.remove('is-drop-target');
+      });
+    });
+
+    row.addEventListener('dragover', function(event) {
+      event.preventDefault();
+      if (!row.classList.contains('is-dragging')) {
+        row.classList.add('is-drop-target');
+      }
+    });
+
+    row.addEventListener('dragleave', function() {
+      row.classList.remove('is-drop-target');
+    });
+
+    row.addEventListener('drop', function(event) {
+      event.preventDefault();
+      var fromIndex = parseInt(event.dataTransfer.getData('text/plain') || '-1', 10);
+      var rows = getDestinoRows();
+      var dragged = rows[fromIndex];
+      if (!dragged || dragged === row) {
+        row.classList.remove('is-drop-target');
+        return;
+      }
+      var container = destinosList;
+      var allRows = getDestinoRows();
+      var targetIndex = allRows.indexOf(row);
+      var draggedIndex = allRows.indexOf(dragged);
+      if (draggedIndex < targetIndex) {
+        container.insertBefore(dragged, row.nextSibling);
+      } else {
+        container.insertBefore(dragged, row);
+      }
+      row.classList.remove('is-drop-target');
+      reindexDestinoRows();
+      refreshDestinoButtons();
+      syncFromDestinos();
+      scheduleAutosave();
+    });
+  }
+
   async function populateCities(selectCidade, estadoId, selectedCidadeId) {
     if (!selectCidade) {
       return;
@@ -263,20 +355,6 @@
     }
   }
 
-  function nextDestinoIndex() {
-    var max = -1;
-    if (!destinosList) {
-      return 0;
-    }
-    destinosList.querySelectorAll('.destino-estado').forEach(function(select) {
-      var match = (select.name || '').match(/destino_estado_(\d+)/);
-      if (match) {
-        max = Math.max(max, parseInt(match[1], 10));
-      }
-    });
-    return max + 1;
-  }
-
   function bindDestinoRow(row) {
     if (!row) {
       return;
@@ -284,7 +362,6 @@
 
     var estadoSelect = row.querySelector('.destino-estado');
     var cidadeSelect = row.querySelector('.destino-cidade');
-    var removeButton = row.querySelector('.btn-remover-destino');
 
     if (estadoSelect && cidadeSelect) {
       if (estadoSelect.value) {
@@ -307,16 +384,7 @@
       });
     }
 
-    if (removeButton) {
-      removeButton.addEventListener('click', function() {
-        if (destinosList && destinosList.querySelectorAll('[data-destino-row]').length <= 1) {
-          return;
-        }
-        row.remove();
-        syncDestinosPayload();
-        scheduleAutosave();
-      });
-    }
+    bindDestinoDragAndDrop(row);
   }
 
   async function addDestinoRow(initialData) {
@@ -333,21 +401,25 @@
       return;
     }
 
-    estadoSelect.innerHTML = buildEstadoOptions(initialData ? initialData.estado_id : '');
-    estadoSelect.value = initialData && initialData.estado_id ? String(initialData.estado_id) : '';
+    row.draggable = true;
+    var selectedEstadoId = initialData && initialData.estado_id ? initialData.estado_id : destinoEstadoDefaultId;
+    estadoSelect.innerHTML = buildEstadoOptions(selectedEstadoId);
+    estadoSelect.value = selectedEstadoId ? String(selectedEstadoId) : '';
     cidadeSelect.setAttribute('data-cidade-id', initialData && initialData.cidade_id ? String(initialData.cidade_id) : '');
 
     destinosList.appendChild(row);
     bindDestinoRow(row);
     await populateCities(cidadeSelect, estadoSelect.value, initialData ? initialData.cidade_id : null);
     refreshPickers(row);
+    reindexDestinoRows();
+    refreshDestinoButtons();
     syncDestinosPayload();
   }
 
   async function hydrateDestinos() {
     var payload = parseJsonValue(destinosInput, []);
     if (!Array.isArray(payload) || !payload.length) {
-      await addDestinoRow(null);
+      await addDestinoRow({ estado_id: destinoEstadoDefaultId || null, cidade_id: null });
       return;
     }
 
@@ -755,7 +827,7 @@
 
   if (addDestinoBtn) {
     addDestinoBtn.addEventListener('click', function() {
-      addDestinoRow(null).then(function() {
+      addDestinoRow({ estado_id: destinoEstadoDefaultId || null, cidade_id: null }).then(function() {
         syncFromDestinos();
         scheduleAutosave();
       });
@@ -783,6 +855,8 @@
         return;
       }
       row.remove();
+      reindexDestinoRows();
+      refreshDestinoButtons();
       syncFromDestinos();
       scheduleAutosave();
     });

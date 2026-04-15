@@ -1162,6 +1162,12 @@ class PlanoTrabalhoStep4Form(FormComErroInvalidMixin, forms.ModelForm):
 
 class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
     destinos_payload = forms.CharField(required=False, widget=forms.HiddenInput())
+    data_criacao = forms.DateField(
+        required=False,
+        label='Data de criação',
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+    )
     data_unica = forms.BooleanField(
         required=False,
         label='Data única',
@@ -1171,6 +1177,7 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
     class Meta:
         model = OrdemServico
         fields = [
+            'data_criacao',
             'evento',
             'oficio',
             'data_unica',
@@ -1212,11 +1219,14 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
                 patched_data['data_deslocamento'] = instance.data_deslocamento.isoformat()
             if 'data_deslocamento_fim' not in patched_data and instance.data_deslocamento_fim:
                 patched_data['data_deslocamento_fim'] = instance.data_deslocamento_fim.isoformat()
+            if 'data_criacao' not in patched_data and instance.data_criacao:
+                patched_data['data_criacao'] = instance.data_criacao.strftime('%d/%m/%Y')
             kwargs['data'] = patched_data
 
         super().__init__(*args, **kwargs)
         self.fields['evento'].required = False
         self.fields['oficio'].required = False
+        self.fields['data_criacao'].required = False
         self.fields['data_unica'].required = False
         self.fields['data_deslocamento'].required = False
         self.fields['data_deslocamento_fim'].required = False
@@ -1227,7 +1237,12 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['modelo_motivo'].queryset = ModeloMotivoViagem.objects.filter(ativo=True).order_by('nome')
         self.fields['viajantes'].queryset = Viajante.objects.select_related('cargo', 'unidade_lotacao').filter(status=Viajante.STATUS_FINALIZADO).order_by('nome')
         self.proximo_numero_preview = self._get_next_number_preview()
+        self.initial.setdefault('data_criacao', timezone.localdate())
         self.initial.setdefault('data_unica', True)
+
+        data_val = self.initial.get('data_criacao')
+        if data_val and hasattr(data_val, 'strftime'):
+            self.initial['data_criacao'] = data_val.strftime('%d/%m/%Y')
 
         selected_event = None
         if self.is_bound:
@@ -1279,6 +1294,12 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
                 self.initial['modelo_motivo'] = padrao.pk
                 if not self.initial.get('motivo_texto'):
                     self.initial['motivo_texto'] = padrao.texto
+
+    def clean(self):
+        data = super().clean()
+        if not data.get('data_criacao'):
+            data['data_criacao'] = timezone.localdate()
+        return data
 
     def _get_next_number_preview(self):
         ano_atual = timezone.now().year

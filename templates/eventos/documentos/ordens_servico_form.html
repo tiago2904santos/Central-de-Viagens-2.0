@@ -33,177 +33,186 @@
     </div>
     {% endif %}
 
-    <form method="post" id="ordem-servico-form" class="ordem-servico-form" data-cidades-api-url="{{ api_cidades_por_estado_url }}" data-motivo-api-base="{{ motivo_texto_api_base_url }}">
-      {% csrf_token %}
-      <input type="hidden" name="return_to" value="{{ return_to }}">
-      <input type="hidden" name="context_source" value="{{ context_source }}">
-      <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
-      <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
-      <input type="hidden" name="autosave_obj_id" id="id_autosave_obj_id" value="{{ object.pk|default:'' }}">
-      {{ form.destinos_payload }}
-
-      <section class="app-page-card app-page-card--spacious ordem-servico-context-card">
-        <div class="oficio-stage-section-head">
+    <div class="card oficio-stage-panel">
+      <div class="card-body">
+        <div class="oficio-stage-intro">
           <div>
-            <h2 class="oficio-stage-section-title">Contexto do documento</h2>
-            <p class="oficio-stage-section-text">Número, vínculo e status acompanham a ordem sem criar uma variação visual paralela.</p>
-          </div>
-          <span class="ordem-servico-context-pill">{% if object and object.numero_formatado %}{{ object.numero_formatado }}{% else %}{{ ordem_numero_preview|default:'A definir' }}{% endif %}</span>
-        </div>
-
-        <div class="ordem-servico-context-grid">
-          <div class="ordem-servico-context-item">
-            <span>Número previsto</span>
-            <strong id="ordem-servico-preview-numero">{% if object and object.numero_formatado %}{{ object.numero_formatado }}{% else %}{{ ordem_numero_preview|default:'A definir' }}{% endif %}</strong>
-          </div>
-          <div class="ordem-servico-context-item">
-            <span>Criação</span>
-            <strong id="ordem-servico-preview-data">{% if object and object.data_criacao %}{{ object.data_criacao|date:'d/m/Y' }}{% else %}Hoje{% endif %}</strong>
-          </div>
-          <div class="ordem-servico-context-item">
-            <span>Vínculo</span>
-            <strong id="ordem-servico-preview-vinculo">{{ ordem_vinculo_texto|default:'Cadastro avulso' }}</strong>
-          </div>
-          <div class="ordem-servico-context-item">
-            <span>Status</span>
-            <strong id="ordem-servico-preview-status">{% if object %}{{ object.get_status_display }}{% else %}Rascunho{% endif %}</strong>
+            <span class="oficio-stage-kicker">Documento operacional</span>
+            <h2 class="oficio-stage-title">Ordem de serviço</h2>
+            <p class="oficio-stage-description">Monte a OS no mesmo fluxo visual do cadastro de ofícios: um painel branco central e as seções organizadas em blocos internos.</p>
           </div>
         </div>
-      </section>
 
-      <section class="evento-section evento-section-datas ordem-servico-section ordem-servico-section--datas">
-        <div class="evento-section-head evento-section-head--datas">
-          <h2 class="evento-section-title">Datas</h2>
-          <label class="evento-dataunica-pill{% if form.data_unica.value %} is-on{% else %} is-off{% endif %}" for="id_data_unica" data-data-unica-pill>
-            <input type="checkbox" name="data_unica" id="id_data_unica" class="visually-hidden" {% if form.data_unica.value %}checked{% endif %}>
-            <span class="evento-dataunica-pill__icon"><i class="bi bi-calendar3"></i></span>
-            <span class="evento-dataunica-pill__copy">
-              <strong>Data única</strong>
-              <small>Oculta a data final</small>
-            </span>
-            <span class="evento-dataunica-pill__state" data-data-unica-state>DESLIGADA</span>
-          </label>
-        </div>
+        <form method="post" id="ordem-servico-form" class="ordem-servico-form oficio-stage-form" data-cidades-api-url="{{ api_cidades_por_estado_url }}" data-motivo-api-base="{{ motivo_texto_api_base_url }}">
+          {% csrf_token %}
+          <input type="hidden" name="return_to" value="{{ return_to }}">
+          <input type="hidden" name="context_source" value="{{ context_source }}">
+          <input type="hidden" name="preselected_event_id" value="{{ preselected_event_id }}">
+          <input type="hidden" name="preselected_oficio_id" value="{{ preselected_oficio_id }}">
+          <input type="hidden" name="autosave_obj_id" id="id_autosave_obj_id" value="{{ object.pk|default:'' }}">
+          {{ form.destinos_payload }}
 
-        <div class="evento-datas-grid">
-          <div class="evento-campo-card" id="wrap-data-inicio">
-            <label for="id_data_deslocamento" class="form-label">Data inicial</label>
-            <input type="date" name="data_deslocamento" value="{% if form.data_deslocamento.value %}{% firstof form.data_deslocamento.value|date:'Y-m-d' form.data_deslocamento.value %}{% endif %}" id="id_data_deslocamento" class="form-control">
-            {% if form.data_deslocamento.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_deslocamento.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="evento-campo-card" id="wrap-data-fim">
-            <label for="id_data_deslocamento_fim" class="form-label">Data final</label>
-            <input type="date" name="data_deslocamento_fim" value="{% if form.data_deslocamento_fim.value %}{% firstof form.data_deslocamento_fim.value|date:'Y-m-d' form.data_deslocamento_fim.value %}{% endif %}" id="id_data_deslocamento_fim" class="form-control">
-            {% if form.data_deslocamento_fim.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_deslocamento_fim.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
-        {% if form.data_unica.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_unica.errors.0 }}</div>{% endif %}
-      </section>
-
-      <section class="oficio-stage-section ordem-servico-section ordem-servico-section--equipe">
-        <div class="oficio-stage-section-head">
-          <div>
-            <h2 class="oficio-stage-section-title">Equipe de deslocamento</h2>
-            <p class="oficio-stage-section-text">Busque servidores finalizados e mantenha a seleção visível enquanto monta a ordem de serviço.</p>
-          </div>
-          <a href="{{ cadastrar_viajante_url }}" class="btn btn-outline-secondary btn-sm" data-autosave-link="1">Cadastrar novo viajante</a>
-        </div>
-
-        <label class="form-label mb-2" for="viajantes-autocomplete-input">Buscar viajante</label>
-        <div class="position-relative" id="viajantes-autocomplete-wrapper" data-search-url="{{ buscar_viajantes_url }}">
-          <input
-            type="text"
-            id="viajantes-autocomplete-input"
-            class="form-control"
-            placeholder="Digite nome, RG ou CPF"
-            autocomplete="off"
-          >
-          <div
-            id="viajantes-autocomplete-results"
-            class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none app-page-autocomplete-menu"
-          ></div>
-        </div>
-        <div class="form-text">A busca mostra apenas viajantes finalizados e continua disponível após cada seleção.</div>
-
-        <div id="viajantes-hidden-inputs" class="d-none">
-          {% for viajante in selected_viajantes_payload %}
-          <input type="hidden" name="viajantes" value="{{ viajante.id }}" data-viajante-hidden="{{ viajante.id }}">
-          {% endfor %}
-        </div>
-
-        <div class="oficio-selection-panel mt-3">
-          <div class="oficio-selection-panel-head">
-            <span class="oficio-selection-panel-title">Viajantes selecionados</span>
-            <span class="oficio-selection-panel-count" id="viajantes-chip-count">{{ selected_viajantes_payload|length }}</span>
-          </div>
-          <div id="viajantes-chip-list" class="oficio-selection-chip-list">
-            {% for viajante in selected_viajantes_payload %}
-            <div class="oficio-glance-chip oficio-selection-chip" data-viajante-chip="{{ viajante.id }}">
-              <span class="oficio-glance-chip-nome">{{ viajante.nome }}</span>
-              {% if viajante.lotacao %}
-              <span class="oficio-glance-chip-sub">{{ viajante.lotacao }}</span>
-              {% elif viajante.cargo %}
-              <span class="oficio-glance-chip-sub">{{ viajante.cargo }}</span>
-              {% endif %}
-              <button
-                type="button"
-                class="oficio-selection-chip-remove"
-                data-remove-viajante="{{ viajante.id }}"
-                aria-label="Remover viajante {{ viajante.nome }}"
-              >&times;</button>
+          <section class="oficio-stage-section ordem-servico-context-card">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h2 class="oficio-stage-section-title">Contexto do documento</h2>
+                <p class="oficio-stage-section-text">Número, vínculo e status acompanham a ordem sem criar uma variação visual paralela.</p>
+              </div>
+              <span class="ordem-servico-context-pill">{% if object and object.numero_formatado %}{{ object.numero_formatado }}{% else %}{{ ordem_numero_preview|default:'A definir' }}{% endif %}</span>
             </div>
-            {% empty %}
-            <span class="oficio-glance-empty" id="viajantes-chip-empty">Nenhum viajante selecionado.</span>
-            {% endfor %}
-          </div>
-        </div>
-        {% if form.viajantes.errors %}<div class="invalid-feedback d-block mt-2">{{ form.viajantes.errors.0 }}</div>{% endif %}
-      </section>
 
-      <section class="oficio-stage-section plano-trabalho-destinos-panel ordem-servico-section ordem-servico-section--destinos">
-        <div class="plano-trabalho-destinos-panel__head oficio-stage-section-head">
-          <div>
-            <h2 class="oficio-stage-section-title">Destinos</h2>
-          </div>
-          <button type="button" class="btn btn-outline-primary btn-sm" id="btn-adicionar-destino">+ Adicionar destino</button>
-        </div>
-        <div id="destinos-container" class="plano-trabalho-destino-stack ordem-servico-destinos-stack"></div>
-        {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block mt-1">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
-      </section>
+            <div class="ordem-servico-context-grid">
+              <div class="ordem-servico-context-item">
+                <span>Número previsto</span>
+                <strong id="ordem-servico-preview-numero">{% if object and object.numero_formatado %}{{ object.numero_formatado }}{% else %}{{ ordem_numero_preview|default:'A definir' }}{% endif %}</strong>
+              </div>
+              <div class="ordem-servico-context-item">
+                <span>Criação</span>
+                <strong id="ordem-servico-preview-data">{% if object and object.data_criacao %}{{ object.data_criacao|date:'d/m/Y' }}{% else %}Hoje{% endif %}</strong>
+              </div>
+              <div class="ordem-servico-context-item">
+                <span>Vínculo</span>
+                <strong id="ordem-servico-preview-vinculo">{{ ordem_vinculo_texto|default:'Cadastro avulso' }}</strong>
+              </div>
+              <div class="ordem-servico-context-item">
+                <span>Status</span>
+                <strong id="ordem-servico-preview-status">{% if object %}{{ object.get_status_display }}{% else %}Rascunho{% endif %}</strong>
+              </div>
+            </div>
+          </section>
 
-      <section class="oficio-stage-section ordem-servico-section ordem-servico-section--motivo">
-        <div class="oficio-stage-section-head">
-          <div>
-            <h2 class="oficio-stage-section-title">Motivo</h2>
-            <p class="oficio-stage-section-text">O texto do motivo usa a base documental do sistema sem criar uma linguagem diferente para a OS.</p>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ motivos_manager_url }}" target="_blank" rel="noopener" data-autosave-link="1">Gerenciar motivos</a>
-        </div>
+          <section class="evento-section evento-section-datas ordem-servico-section ordem-servico-section--datas">
+            <div class="evento-section-head evento-section-head--datas">
+              <h2 class="evento-section-title">Datas</h2>
+              <label class="evento-dataunica-pill{% if form.data_unica.value %} is-on{% else %} is-off{% endif %}" for="id_data_unica" data-data-unica-pill>
+                <input type="checkbox" name="data_unica" id="id_data_unica" class="visually-hidden" {% if form.data_unica.value %}checked{% endif %}>
+                <span class="evento-dataunica-pill__icon"><i class="bi bi-calendar3"></i></span>
+                <span class="evento-dataunica-pill__copy">
+                  <strong>Data única</strong>
+                  <small>Oculta a data final</small>
+                </span>
+                <span class="evento-dataunica-pill__state" data-data-unica-state>DESLIGADA</span>
+              </label>
+            </div>
 
-        <div class="row g-4">
-          <div class="col-12">
-            <label class="form-label" for="{{ form.modelo_motivo.id_for_label }}">Modelo de motivo</label>
-            {{ form.modelo_motivo }}
-            {% if form.modelo_motivo.errors %}<div class="invalid-feedback d-block mt-2">{{ form.modelo_motivo.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="{{ form.motivo_texto.id_for_label }}">Motivo consolidado</label>
-            {{ form.motivo_texto }}
-            {% if form.motivo_texto.errors %}<div class="invalid-feedback d-block mt-2">{{ form.motivo_texto.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
-      </section>
+            <div class="evento-datas-grid">
+              <div class="evento-campo-card" id="wrap-data-inicio">
+                <label for="id_data_deslocamento" class="form-label">Data inicial</label>
+                <input type="date" name="data_deslocamento" value="{% if form.data_deslocamento.value %}{% firstof form.data_deslocamento.value|date:'Y-m-d' form.data_deslocamento.value %}{% endif %}" id="id_data_deslocamento" class="form-control">
+                {% if form.data_deslocamento.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_deslocamento.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="evento-campo-card" id="wrap-data-fim">
+                <label for="id_data_deslocamento_fim" class="form-label">Data final</label>
+                <input type="date" name="data_deslocamento_fim" value="{% if form.data_deslocamento_fim.value %}{% firstof form.data_deslocamento_fim.value|date:'Y-m-d' form.data_deslocamento_fim.value %}{% endif %}" id="id_data_deslocamento_fim" class="form-control">
+                {% if form.data_deslocamento_fim.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_deslocamento_fim.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+            {% if form.data_unica.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_unica.errors.0 }}</div>{% endif %}
+          </section>
 
-      <div class="form-actions system-form-actions ordem-servico-form-actions">
-        <div class="system-form-actions__group system-form-actions__group--secondary">
-          <a href="{{ return_to|default:ordens_servico_lista_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Cancelar</a>
-        </div>
-        <p class="oficio-autosave-status ordem-servico-autosave-status small text-muted mb-0" id="ordem-servico-autosave-status" aria-live="polite"></p>
-        <div class="system-form-actions__group system-form-actions__group--primary">
-          <button type="submit" class="btn btn-primary">{% if object %}Salvar alterações{% else %}Salvar ordem de serviço{% endif %}</button>
-        </div>
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h2 class="oficio-stage-section-title">Equipe do ofício</h2>
+                <p class="oficio-stage-section-text">Busque servidores finalizados e mantenha a seleção visível enquanto monta o ofício.</p>
+              </div>
+              <a href="{{ cadastrar_viajante_url }}" class="btn btn-outline-secondary btn-sm" data-autosave-link="1">Cadastrar novo viajante</a>
+            </div>
+
+            <label class="form-label mb-2" for="viajantes-autocomplete-input">Buscar viajante</label>
+            <div class="position-relative" id="viajantes-autocomplete-wrapper" data-search-url="{{ buscar_viajantes_url }}">
+              <input
+                type="text"
+                id="viajantes-autocomplete-input"
+                class="form-control"
+                placeholder="Digite nome, RG ou CPF"
+                autocomplete="off"
+              >
+              <div
+                id="viajantes-autocomplete-results"
+                class="list-group position-absolute top-100 start-0 end-0 shadow-sm d-none app-page-autocomplete-menu"
+              ></div>
+            </div>
+            <div class="form-text">A busca mostra apenas viajantes finalizados e continua disponível após cada seleção.</div>
+
+            <div id="viajantes-hidden-inputs" class="d-none">
+              {% for viajante in selected_viajantes %}
+              <input type="hidden" name="viajantes" value="{{ viajante.pk }}" data-viajante-hidden="{{ viajante.pk }}">
+              {% endfor %}
+            </div>
+
+            <div class="oficio-selection-panel mt-3">
+              <div class="oficio-selection-panel-head">
+                <span class="oficio-selection-panel-title">Viajantes selecionados</span>
+                <span class="oficio-selection-panel-count" id="viajantes-chip-count">{{ selected_viajantes|length }}</span>
+              </div>
+              <div id="viajantes-chip-list" class="oficio-selection-chip-list">
+                {% for viajante in selected_viajantes %}
+                <div class="oficio-glance-chip oficio-selection-chip" data-viajante-chip="{{ viajante.pk }}">
+                  <span class="oficio-glance-chip-nome">{{ viajante.nome }}</span>
+                  {% if viajante.unidade_lotacao %}
+                  <span class="oficio-glance-chip-sub">{{ viajante.unidade_lotacao.nome }}</span>
+                  {% endif %}
+                  <button
+                    type="button"
+                    class="oficio-selection-chip-remove"
+                    data-remove-viajante="{{ viajante.pk }}"
+                    aria-label="Remover viajante {{ viajante.nome }}"
+                  >&times;</button>
+                </div>
+                {% empty %}
+                <span class="oficio-glance-empty" id="viajantes-chip-empty">Nenhum viajante selecionado.</span>
+                {% endfor %}
+              </div>
+            </div>
+            {% if form.viajantes.errors %}<div class="invalid-feedback d-block mt-2">{{ form.viajantes.errors.0 }}</div>{% endif %}
+          </section>
+
+          <section class="oficio-stage-section ordem-servico-section ordem-servico-section--destinos">
+            <div class="oficio-step3-section-head mb-2">
+              <h3 class="oficio-step3-section-title">3. Destinos</h3>
+              <p class="oficio-step3-section-text">Reordene por arrastar e soltar para atualizar automaticamente a sequência dos trechos.</p>
+            </div>
+            <div id="destinos-container" class="oficio-step3-destinos-stack" data-destino-estado-fixo-id="{{ destino_estado_fixo_id|default:'' }}" data-destino-estado-fixo-nome="{{ destino_estado_fixo_nome|default:'Paraná (PR)' }}"></div>
+            <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary mt-2 w-100">Adicionar destino</button>
+            {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block mt-1">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
+          </section>
+
+          <section class="oficio-stage-section ordem-servico-section ordem-servico-section--motivo">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h2 class="oficio-stage-section-title">Motivo</h2>
+                <p class="oficio-stage-section-text">O texto do motivo usa a base documental do sistema sem criar uma linguagem diferente para a OS.</p>
+              </div>
+              <a class="btn btn-outline-secondary btn-sm" href="{{ motivos_manager_url }}" target="_blank" rel="noopener" data-autosave-link="1">Gerenciar motivos</a>
+            </div>
+
+            <div class="row g-4">
+              <div class="col-12">
+                <label class="form-label" for="{{ form.modelo_motivo.id_for_label }}">Modelo de motivo</label>
+                {{ form.modelo_motivo }}
+                {% if form.modelo_motivo.errors %}<div class="invalid-feedback d-block mt-2">{{ form.modelo_motivo.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="{{ form.motivo_texto.id_for_label }}">Motivo consolidado</label>
+                {{ form.motivo_texto }}
+                {% if form.motivo_texto.errors %}<div class="invalid-feedback d-block mt-2">{{ form.motivo_texto.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+          </section>
+
+          <div class="form-actions system-form-actions ordem-servico-form-actions">
+            <div class="system-form-actions__group system-form-actions__group--secondary">
+              <a href="{{ return_to|default:ordens_servico_lista_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Cancelar</a>
+            </div>
+            <p class="oficio-autosave-status ordem-servico-autosave-status small text-muted mb-0" id="ordem-servico-autosave-status" aria-live="polite"></p>
+            <div class="system-form-actions__group system-form-actions__group--primary">
+              <button type="submit" class="btn btn-primary">{% if object %}Salvar alterações{% else %}Salvar ordem de serviço{% endif %}</button>
+            </div>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </div>
 </div>
 
@@ -211,19 +220,20 @@
 {{ estados_choices_payload|json_script:"ordem-servico-estados-data" }}
 
 <template id="ordem-servico-destino-row-template">
-  <div class="pt-dest-row ordem-servico-destino-row" data-destino-row>
-    <div class="row g-2 align-items-end">
-      <div class="col-md-5">
-        <label class="form-label">Estado</label>
-        <select name="destino_estado_0" class="destino-estado form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF..."></select>
-      </div>
-      <div class="col-md-5">
-        <label class="form-label">Cidade</label>
-        <select name="destino_cidade_0" class="destino-cidade form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..."></select>
-      </div>
-      <div class="col-md-2 d-flex align-items-end">
-        <button type="button" class="btn btn-outline-danger w-100 btn-rem-destino btn-remover-destino" title="Remover destino">&times;</button>
-      </div>
+  <div class="destino-row row g-2 align-items-end" data-destino-row>
+    <div class="col-md-1 destino-drag-col">
+      <button type="button" class="btn btn-sm btn-outline-secondary destino-drag-handle" aria-label="Arrastar destino 1">&#9776;</button>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small">UF</label>
+      <select name="destino_estado_0" class="destino-estado" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF..."></select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label small">Cidade</label>
+      <select name="destino_cidade_0" class="destino-cidade" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..."></select>
+    </div>
+    <div class="col-md-2 destino-remove-col">
+      <button type="button" class="btn btn-outline-danger btn-remover-destino">Remover</button>
     </div>
   </div>
 </template>

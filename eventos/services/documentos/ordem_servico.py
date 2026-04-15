@@ -253,7 +253,7 @@ def build_ordem_servico_model_template_context(ordem_servico):
     return {
         'cargo_chefia': format_document_display(cargo_chefia),
         'data_extenso': _format_data_periodo_extenso(data_deslocamento, data_deslocamento_fim, data_unica=ordem_servico.data_unica),
-        'data_atual_extenso': _format_data_single_extenso(ordem_servico.data_criacao or timezone.localdate()),
+        'data_atual_extenso': _format_data_single_extenso(timezone.localdate()),
         'destino': _build_destino_ordem(ordem_servico, context),
         'divisao': format_document_header_display(divisao),
         'divisao_capitalize': format_document_display(divisao),

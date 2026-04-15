@@ -4099,6 +4099,7 @@ def _render_ordem_servico_form(
             vinculo_texto = f'Evento {evento.titulo or "sem título"}'
 
     numero_preview = object_instance.numero_formatado if object_instance and object_instance.pk else getattr(form, 'proximo_numero_preview', '')
+    destino_estado_fixo = Estado.objects.filter(sigla__iexact='PR', ativo=True).first()
     estados_payload = [
         {'id': estado.pk, 'sigla': estado.sigla, 'nome': estado.nome}
         for estado in Estado.objects.filter(ativo=True).order_by('nome')
@@ -4120,6 +4121,13 @@ def _render_ordem_servico_form(
             'motivo_texto_api_base_url': reverse('eventos:modelos-motivo-texto-api', kwargs={'pk': 0}),
             'buscar_viajantes_url': reverse('eventos:oficio-step1-viajantes-api'),
             'cadastrar_viajante_url': f"{reverse('cadastros:viajante-cadastrar')}?next={quote(current_path)}",
+            'destino_estado_fixo_id': getattr(destino_estado_fixo, 'pk', None),
+            'destino_estado_fixo_nome': (
+                f'{destino_estado_fixo.nome} ({destino_estado_fixo.sigla})'
+                if destino_estado_fixo
+                else 'Paraná (PR)'
+            ),
+            'selected_viajantes': selected_viajantes,
             'selected_viajantes_payload': [
                 serializar_viajante_para_autocomplete(viajante) for viajante in selected_viajantes
             ],
