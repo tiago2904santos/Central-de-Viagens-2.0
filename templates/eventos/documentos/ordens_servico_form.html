@@ -7,24 +7,6 @@
 {% block content %}
 <div class="app-page-shell app-page-shell--document system-form-page ordem-servico-page">
   <div class="app-page-shell__inner system-form-shell ordem-servico-shell">
-    <header class="app-page-header page-header-cadastro system-form-header ordem-servico-header">
-      <div class="app-page-header__copy">
-        <span class="ordem-servico-kicker">Documento operacional institucional</span>
-        <h1 class="app-page-header__title">{% if object %}Editar{% else %}Nova{% endif %} ordem de serviço</h1>
-        <p class="app-page-header__subtitle">
-          Cadastro padronizado com vínculo opcional a evento ou ofício, usando os componentes oficiais do sistema para datas, equipe e destinos.
-        </p>
-      </div>
-      <div class="app-page-header__actions ordem-servico-header__actions">
-        <a href="{{ return_to|default:ordens_servico_lista_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar para lista</a>
-        {% if object %}
-        <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-download' object.pk 'docx' %}">DOCX</a>
-        <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-ordens-servico-download' object.pk 'pdf' %}">PDF</a>
-        <a class="btn btn-outline-danger" href="{% url 'eventos:documentos-ordens-servico-excluir' object.pk %}" data-autosave-link="1">Excluir</a>
-        {% endif %}
-      </div>
-    </header>
-
     {% if form.non_field_errors %}
     <div class="alert alert-danger" role="alert">
       {% for error in form.non_field_errors %}

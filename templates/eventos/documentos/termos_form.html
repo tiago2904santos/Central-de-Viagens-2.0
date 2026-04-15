@@ -7,23 +7,6 @@
 {% block content %}
 <div class="app-page-shell app-page-shell--document oficio-wizard-page plano-trabalho-page termo-workspace-page">
     <div class="app-page-shell__inner">
-    <header class="app-page-header termo-workspace-header">
-        <div class="app-page-header__copy">
-            <div class="termo-workspace-kicker">Central documental</div>
-            <h1 class="app-page-header__title">{% if object %}Editar {{ object.titulo_display }}{% else %}Novo termo de autorizacao{% endif %}</h1>
-            <p class="app-page-header__subtitle termo-workspace-subtitle">
-                {% if object %}
-                Atualize o contexto documental mantendo o termo coerente com os dados consolidados.
-                {% else %}
-                Preencha o contexto e gere os termos com consolidacao automatica de datas, destinos, servidores e viaturas.
-                {% endif %}
-            </p>
-        </div>
-        <div class="app-page-header__actions termo-workspace-header__stats">
-            <a href="{{ return_to|default:'/eventos/documentos/termos/' }}" class="btn btn-outline-secondary">Voltar</a>
-        </div>
-    </header>
-
     <form method="post" id="termo-form" data-preview-url="{{ preview_url }}" data-read-only-context="{% if read_only_context %}true{% else %}false{% endif %}" data-cidades-api-url="{{ api_cidades_por_estado_url }}" data-oficios-por-evento-url="{{ api_oficios_por_evento_url }}">
                 {% csrf_token %}
                 <input type="hidden" name="return_to" value="{{ return_to }}">
@@ -46,8 +29,8 @@
                     <div class="card-body">
                         <section class="oficio-stage-intro termo-stage-intro">
                             <div>
-                                <span class="oficio-stage-kicker">Cadastro guiado</span>
-                                <h2 class="oficio-stage-title">Período + destinos + equipe</h2>
+                                <span class="oficio-stage-kicker">Documento operacional</span>
+                                <h2 class="oficio-stage-title">Termo de autorização</h2>
                                 <p class="oficio-stage-description">Defina o contexto do termo, monte os destinos e consolide servidores e viatura usando os mesmos padrões visuais do plano de trabalho.</p>
                             </div>
                         </section>
