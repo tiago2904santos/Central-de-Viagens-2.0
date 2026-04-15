@@ -3170,6 +3170,23 @@ class EventoEtapa5TermosTest(TestCase):
         termo = EventoTermoParticipante.objects.get(evento=self.evento, viajante=viajante)
         self.assertEqual(termo.status, EventoTermoParticipante.STATUS_GERADO)
 
+    def test_etapa_5_fica_concluida_quando_termo_gerado_nao_esta_pendente(self):
+        viajante = self._criar_viajante(nome='Servidor Completo Visual', completo=True, cpf='98765432111')
+        self._vincular_viajante_em_oficio(viajante)
+        download_url = reverse(
+            'eventos:guiado-etapa-3-termo-download',
+            kwargs={'evento_id': self.evento.pk, 'viajante_id': viajante.pk, 'formato': 'docx'},
+        )
+
+        download_response = self.client.get(download_url)
+        self.assertEqual(download_response.status_code, 200)
+
+        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-step-key="termos"')
+        self.assertContains(response, 'is-active is-base-completed')
+        self.assertNotContains(response, 'is-active is-base-draft')
+
     def test_etapa_5_download_termo_padrao_branco_docx_sem_servidor(self):
         url = reverse(
             'eventos:guiado-etapa-3-termo-padrao-download',

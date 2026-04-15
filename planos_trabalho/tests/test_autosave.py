@@ -1,12 +1,13 @@
 import json
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from eventos.models import Evento, PlanoTrabalho
+from cadastros.models import Cidade, Estado
+from eventos.models import Evento, EventoDestino, PlanoTrabalho, RoteiroEvento, RoteiroEventoDestino
 
 
 User = get_user_model()
@@ -18,6 +19,8 @@ class PlanoTrabalhoAutosaveTestCase(TestCase):
         self.user = User.objects.create_user(username='autosave_user', password='autosave_pass123')
         self.client.login(username='autosave_user', password='autosave_pass123')
         self.url = reverse('eventos:documentos-planos-trabalho-autosave')
+        self.estado = Estado.objects.create(nome='Paraná', sigla='PR')
+        self.cidade = Cidade.objects.create(nome='Curitiba', estado=self.estado)
 
         self.evento = Evento.objects.create(
             titulo='Evento Autosave',
@@ -284,6 +287,73 @@ class PlanoTrabalhoAutosaveTestCase(TestCase):
         self.assertEqual(self.plano.hora_saida_sede, time(6, 30))
         self.assertEqual(self.plano.data_chegada_sede, date(2026, 3, 22))
         self.assertEqual(self.plano.hora_chegada_sede, time(21, 15))
+
+    def test_autosave_preenche_etapa2_herdada_do_evento_e_roteiro_mais_caro(self):
+        EventoDestino.objects.create(evento=self.evento, estado=self.estado, cidade=self.cidade, ordem=0)
+        RoteiroEventoDestino.objects.create(
+            roteiro=RoteiroEvento.objects.create(
+                evento=self.evento,
+                origem_estado=self.estado,
+                origem_cidade=self.cidade,
+                saida_dt=datetime(2026, 3, 10, 8, 0),
+                chegada_dt=datetime(2026, 3, 10, 10, 0),
+                retorno_saida_dt=datetime(2026, 3, 10, 8, 0),
+                retorno_chegada_dt=datetime(2026, 3, 10, 10, 0),
+                valor_diarias='150.00',
+                status=RoteiroEvento.STATUS_FINALIZADO,
+                tipo=RoteiroEvento.TIPO_EVENTO,
+            ),
+            estado=self.estado,
+            cidade=self.cidade,
+            ordem=0,
+        )
+        roteiro_caro = RoteiroEvento.objects.create(
+            evento=self.evento,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade,
+            saida_dt=datetime(2026, 3, 10, 6, 30),
+            chegada_dt=datetime(2026, 3, 12, 18, 15),
+            retorno_saida_dt=datetime(2026, 3, 10, 6, 30),
+            retorno_chegada_dt=datetime(2026, 3, 12, 18, 15),
+            valor_diarias='320.00',
+            status=RoteiroEvento.STATUS_FINALIZADO,
+            tipo=RoteiroEvento.TIPO_EVENTO,
+        )
+        RoteiroEventoDestino.objects.create(
+            roteiro=roteiro_caro,
+            estado=self.estado,
+            cidade=self.cidade,
+            ordem=0,
+        )
+
+        plano = PlanoTrabalho.objects.create(
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+            evento=self.evento,
+            quantidade_servidores=4,
+            recursos_texto='Plano autosave herança',
+        )
+
+        response = self._post_json({'id': plano.pk})
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body.get('success'))
+        self.assertEqual(body.get('roteiro_id'), roteiro_caro.pk)
+        self.assertEqual(body.get('evento_data_inicio'), '2026-03-10')
+        self.assertEqual(body.get('data_saida_sede'), '2026-03-10')
+
+        plano.refresh_from_db()
+        self.assertEqual(plano.roteiro_id, roteiro_caro.pk)
+        self.assertEqual(plano.evento_data_inicio, date(2026, 3, 10))
+        self.assertEqual(plano.evento_data_fim, date(2026, 3, 12))
+        self.assertEqual(plano.data_saida_sede, date(2026, 3, 10))
+        self.assertEqual(plano.hora_saida_sede, time(6, 30))
+        self.assertEqual(plano.data_chegada_sede, date(2026, 3, 12))
+        self.assertEqual(plano.hora_chegada_sede, time(18, 15))
+        self.assertTrue(plano.diarias_valor_total)
+        self.assertEqual(plano.step2_origem_json.get('roteiro'), 'evento')
+        self.assertEqual(plano.step2_origem_json.get('periodo'), 'evento')
+        self.assertEqual(plano.step2_origem_json.get('destino'), 'evento')
+        self.assertEqual(plano.step2_origem_json.get('calculadora'), 'roteiro_evento')
 
     def test_autosave_invalid_payload_safe(self):
         response = self.client.post(

@@ -70,6 +70,11 @@ from .services.plano_trabalho_domain import (
     build_recursos_necessarios_formatado,
     get_atividades_catalogo,
 )
+from .services.plano_trabalho_step2 import (
+    STEP2_SOURCE_MANUAL,
+    build_plano_step2_defaults,
+    reconcile_plano_step2_state,
+)
 from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
@@ -304,6 +309,72 @@ def _build_plano_diarias_markers(plano):
     return [], None
 
 
+def _ensure_plano_step2_defaults(plano):
+    evento = plano.get_evento_relacionado()
+    defaults = build_plano_step2_defaults(evento)
+    if not evento:
+        return False, defaults
+
+    current_values = {
+        'roteiro': plano.roteiro,
+        'evento_data_inicio': plano.evento_data_inicio,
+        'evento_data_fim': plano.evento_data_fim,
+        'destinos_json': list(plano.destinos_json or []),
+        'data_saida_sede': plano.data_saida_sede,
+        'hora_saida_sede': plano.hora_saida_sede,
+        'data_chegada_sede': plano.data_chegada_sede,
+        'hora_chegada_sede': plano.hora_chegada_sede,
+    }
+    present_fields = {name for name, value in current_values.items() if value not in (None, '', [], {}, ())}
+    result = reconcile_plano_step2_state(
+        plano,
+        defaults=defaults,
+        incoming=current_values,
+        present_fields=present_fields,
+    )
+    if not result.get('changed'):
+        return False, defaults
+
+    resolved = result.get('resolved') or {}
+    update_fields = []
+    for field_name, value in resolved.items():
+        setattr(plano, field_name, value)
+        update_fields.append(field_name)
+    plano.step2_origem_json = result.get('origin') or {}
+    update_fields.extend(['step2_origem_json', 'updated_at'])
+    plano.save(update_fields=[field for field in update_fields if field != 'updated_at'] + ['updated_at'])
+    plano.refresh_from_db(fields=[
+        'roteiro',
+        'evento_data_inicio',
+        'evento_data_fim',
+        'destinos_json',
+        'data_saida_sede',
+        'hora_saida_sede',
+        'data_chegada_sede',
+        'hora_chegada_sede',
+        'step2_origem_json',
+        'diarias_quantidade',
+        'diarias_valor_total',
+        'diarias_valor_unitario',
+        'diarias_valor_extenso',
+        'quantidade_diarias',
+        'valor_diarias',
+        'valor_diarias_extenso',
+    ])
+    _refresh_plano_diarias(plano)
+    plano.refresh_from_db(fields=[
+        'diarias_quantidade',
+        'diarias_valor_total',
+        'diarias_valor_unitario',
+        'diarias_valor_extenso',
+        'quantidade_diarias',
+        'valor_diarias',
+        'valor_diarias_extenso',
+        'updated_at',
+    ])
+    return True, defaults
+
+
 def _refresh_plano_diarias(plano):
     markers, chegada_final = _build_plano_diarias_markers(plano)
     if not markers or not chegada_final:
@@ -312,6 +383,9 @@ def _refresh_plano_diarias(plano):
             diarias_valor_total='',
             diarias_valor_unitario='',
             diarias_valor_extenso='',
+            quantidade_diarias=None,
+            valor_diarias=None,
+            valor_diarias_extenso='',
             updated_at=timezone.now(),
         )
         return
@@ -324,11 +398,15 @@ def _refresh_plano_diarias(plano):
     except Exception:
         return
     totais = (resultado or {}).get('totais') or {}
+    valor_total_decimal = totais.get('total_valor_decimal')
     PlanoTrabalho.objects.filter(pk=plano.pk).update(
         diarias_quantidade=totais.get('total_diarias', '') or '',
         diarias_valor_total=totais.get('total_valor', '') or '',
         diarias_valor_unitario=totais.get('valor_por_servidor', '') or '',
         diarias_valor_extenso=totais.get('valor_extenso', '') or '',
+        quantidade_diarias=None,
+        valor_diarias=valor_total_decimal if valor_total_decimal is not None else None,
+        valor_diarias_extenso=totais.get('valor_extenso', '') or '',
         updated_at=timezone.now(),
     )
 
@@ -2695,7 +2773,7 @@ def _build_plano_trabalho_form_ui_context(form, *, obj=None, preselected_event=N
         return ids
 
     if obj and obj.pk:
-        evento = obj.evento
+        evento = obj.get_evento_relacionado()
     else:
         evento = preselected_event
         if not evento:
@@ -3097,6 +3175,29 @@ def plano_trabalho_autosave(request):
         if _has('hora_chegada_sede'):
             plano.hora_chegada_sede = _autosave_time(payload.get('hora_chegada_sede'))
 
+        step2_defaults = build_plano_step2_defaults(plano.get_evento_relacionado())
+        step2_result = reconcile_plano_step2_state(
+            plano,
+            defaults=step2_defaults,
+            incoming={
+                'roteiro': plano.roteiro,
+                'evento_data_inicio': plano.evento_data_inicio,
+                'evento_data_fim': plano.evento_data_fim,
+                'destinos_json': list(plano.destinos_json or []),
+                'data_saida_sede': plano.data_saida_sede,
+                'hora_saida_sede': plano.hora_saida_sede,
+                'data_chegada_sede': plano.data_chegada_sede,
+                'hora_chegada_sede': plano.hora_chegada_sede,
+            },
+            present_fields=payload_keys,
+        )
+        step2_changed = bool(step2_result.get('changed'))
+        if step2_result.get('resolved'):
+            for field_name, value in step2_result['resolved'].items():
+                setattr(plano, field_name, value)
+        if step2_result.get('origin') is not None:
+            plano.step2_origem_json = step2_result.get('origin') or {}
+
         if _has('quantidade_servidores'):
             qtd_servidores = _autosave_int(payload.get('quantidade_servidores'))
             plano.quantidade_servidores = qtd_servidores if qtd_servidores and qtd_servidores > 0 else None
@@ -3185,6 +3286,23 @@ def plano_trabalho_autosave(request):
                 plano.coordenador_operacional_id = parsed_coord_ids[0]
                 plano.save(update_fields=['coordenador_operacional', 'updated_at'])
 
+        if step2_changed:
+            markers, chegada_final = _build_plano_diarias_markers(plano)
+            if markers and chegada_final:
+                _refresh_plano_diarias(plano)
+                plano.refresh_from_db(
+                    fields=[
+                        'diarias_quantidade',
+                        'diarias_valor_total',
+                        'diarias_valor_unitario',
+                        'diarias_valor_extenso',
+                        'quantidade_diarias',
+                        'valor_diarias',
+                        'valor_diarias_extenso',
+                        'updated_at',
+                    ]
+                )
+
     return JsonResponse(
         {
             'success': True,
@@ -3192,6 +3310,15 @@ def plano_trabalho_autosave(request):
             'status': plano.status,
             'valor_total': str(plano.valor_diarias or ''),
             'valor_extenso': plano.valor_diarias_extenso or '',
+            'roteiro_id': plano.roteiro_id or '',
+            'evento_data_inicio': plano.evento_data_inicio.isoformat() if plano.evento_data_inicio else '',
+            'evento_data_fim': plano.evento_data_fim.isoformat() if plano.evento_data_fim else '',
+            'data_saida_sede': plano.data_saida_sede.isoformat() if plano.data_saida_sede else '',
+            'hora_saida_sede': plano.hora_saida_sede.strftime('%H:%M') if plano.hora_saida_sede else '',
+            'data_chegada_sede': plano.data_chegada_sede.isoformat() if plano.data_chegada_sede else '',
+            'hora_chegada_sede': plano.hora_chegada_sede.strftime('%H:%M') if plano.hora_chegada_sede else '',
+            'destinos_json': plano.destinos_json or [],
+            'step2_warning': step2_result.get('warnings', ())[0] if step2_result.get('warnings') else '',
             'updated_at': timezone.localtime(plano.updated_at).isoformat(),
         }
     )
@@ -3451,6 +3578,7 @@ def plano_trabalho_novo(request):
         _assign_plano_auto_number(novo)
         if preselected_oficio:
             novo.oficios.add(preselected_oficio)
+        _, step2_defaults = _ensure_plano_step2_defaults(novo)
         query = {}
         if return_to:
             query['return_to'] = return_to
@@ -3470,6 +3598,7 @@ def plano_trabalho_novo(request):
 
     bound_data = _normalize_plano_trabalho_post_data(request.POST) if request.method == 'POST' else None
     form = PlanoTrabalhoForm(bound_data or None, initial=initial)
+    step2_defaults = getattr(form, '_step2_defaults', build_plano_step2_defaults(preselected_event))
     formset, has_efetivo_payload, default_cargo = _build_plano_trabalho_efetivo_formset(request)
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
@@ -3510,6 +3639,7 @@ def plano_trabalho_novo(request):
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
             'pt_solicitantes_manager_url': _get_solicitantes_manager_url(),
             'pt_horarios_manager_url': _get_horarios_manager_url(),
+            'pt_step2_warning': step2_defaults.warnings[0] if step2_defaults.warnings else '',
             'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
             'selected_coordenadores_payload': [],
             'hide_page_header': True,
@@ -3520,6 +3650,7 @@ def plano_trabalho_novo(request):
 @require_http_methods(['GET', 'POST'])
 def plano_trabalho_editar(request, pk):
     obj = get_object_or_404(PlanoTrabalho.objects.select_related('evento', 'oficio', 'roteiro').prefetch_related('oficios'), pk=pk)
+    _, step2_defaults = _ensure_plano_step2_defaults(obj)
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-planos-trabalho'))
     context_source = _get_context_source(request)
     bound_data = _normalize_plano_trabalho_post_data(request.POST) if request.method == 'POST' else None
@@ -3567,6 +3698,7 @@ def plano_trabalho_editar(request, pk):
             'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
             'pt_solicitantes_manager_url': _get_solicitantes_manager_url(),
             'pt_horarios_manager_url': _get_horarios_manager_url(),
+            'pt_step2_warning': step2_defaults.warnings[0] if step2_defaults.warnings else '',
             'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
             'selected_coordenadores_payload': [
                 {'id': c.pk, 'nome': c.nome, 'cargo': c.cargo or '', 'display': f'{c.cargo} — {c.nome}' if c.cargo else c.nome}

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Testes do módulo de Plano de Trabalho: domínio (atividades/metas), contexto e termo sem assinatura."""
+import json
 from datetime import date, datetime, time
 from decimal import Decimal
 from unittest.mock import patch
@@ -14,13 +15,17 @@ from eventos.models import (
     CoordenadorOperacional,
     EfetivoPlanoTrabalho,
     Evento,
+    EventoDestino,
     Oficio,
     PlanoTrabalho,
+    RoteiroEvento,
+    RoteiroEventoDestino,
     SolicitantePlanoTrabalho,
 )
 from eventos.services.diarias import PeriodMarker, calculate_periodized_diarias
 from eventos.services.documentos.context import build_plano_trabalho_document_context
 from eventos.services.documentos.plano_trabalho import render_plano_trabalho_model_docx
+from eventos.services.plano_trabalho_step2 import select_roteiro_mais_caro
 from eventos.services.plano_trabalho_domain import (
     ATIVIDADES_CATALOGO,
     CODIGO_UNIDADE_MOVEL,
@@ -382,6 +387,35 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
             'efetivo-2-quantidade': '',
         }
 
+    def _criar_roteiro_evento(self, *, valor_diarias, saida_dt, chegada_dt, ordem_destino=0):
+        roteiro = RoteiroEvento.objects.create(
+            evento=self.evento,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade,
+            saida_dt=saida_dt,
+            chegada_dt=chegada_dt,
+            retorno_saida_dt=saida_dt,
+            retorno_chegada_dt=chegada_dt,
+            valor_diarias=Decimal(valor_diarias),
+            status=RoteiroEvento.STATUS_FINALIZADO,
+            tipo=RoteiroEvento.TIPO_EVENTO,
+        )
+        RoteiroEventoDestino.objects.create(
+            roteiro=roteiro,
+            estado=self.estado,
+            cidade=self.cidade,
+            ordem=ordem_destino,
+        )
+        return roteiro
+
+    def _criar_destino_evento(self, ordem=0):
+        return EventoDestino.objects.create(
+            evento=self.evento,
+            estado=self.estado,
+            cidade=self.cidade,
+            ordem=ordem,
+        )
+
     def test_tela_plano_lista_abre(self):
         response = self.client.get(reverse('eventos:documentos-planos-trabalho'))
         self.assertEqual(response.status_code, 200)
@@ -549,6 +583,170 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
 
     def test_step2_form_expoe_campo_roteiro(self):
         self.assertIn('roteiro', PlanoTrabalhoStep2Form.base_fields)
+
+    def test_select_roteiro_mais_caro_prioriza_maior_valor(self):
+        roteiro_barato_longo = self._criar_roteiro_evento(
+            valor_diarias='150.00',
+            saida_dt=datetime(2026, 5, 1, 8, 0),
+            chegada_dt=datetime(2026, 5, 1, 14, 0),
+        )
+        roteiro_caro_curto = self._criar_roteiro_evento(
+            valor_diarias='300.00',
+            saida_dt=datetime(2026, 5, 1, 8, 0),
+            chegada_dt=datetime(2026, 5, 1, 10, 0),
+        )
+        self.assertEqual(select_roteiro_mais_caro(self.evento), roteiro_caro_curto)
+        self.assertNotEqual(roteiro_barato_longo.pk, roteiro_caro_curto.pk)
+
+    def test_select_roteiro_mais_caro_desempata_por_duracao_e_id(self):
+        roteiro_curto = self._criar_roteiro_evento(
+            valor_diarias='250.00',
+            saida_dt=datetime(2026, 5, 1, 8, 0),
+            chegada_dt=datetime(2026, 5, 1, 10, 0),
+        )
+        roteiro_longo = self._criar_roteiro_evento(
+            valor_diarias='250.00',
+            saida_dt=datetime(2026, 5, 1, 8, 0),
+            chegada_dt=datetime(2026, 5, 1, 13, 0),
+        )
+        roteiro_longo_duplicado = self._criar_roteiro_evento(
+            valor_diarias='250.00',
+            saida_dt=datetime(2026, 5, 1, 8, 0),
+            chegada_dt=datetime(2026, 5, 1, 13, 0),
+        )
+        self.assertEqual(select_roteiro_mais_caro(self.evento), roteiro_longo)
+        self.assertLess(roteiro_longo.pk, roteiro_longo_duplicado.pk)
+        self.assertNotEqual(roteiro_curto.pk, roteiro_longo.pk)
+
+    def test_etapa2_herda_evento_destino_e_roteiro_mais_caro_na_abertura(self):
+        Cidade.objects.create(nome='Maringá', estado=self.estado)
+        self._criar_destino_evento(ordem=0)
+        EventoDestino.objects.create(
+            evento=self.evento,
+            estado=self.estado,
+            cidade=Cidade.objects.get(nome='Maringá', estado=self.estado),
+            ordem=1,
+        )
+        self._criar_roteiro_evento(
+            valor_diarias='140.00',
+            saida_dt=datetime(2026, 5, 1, 8, 0),
+            chegada_dt=datetime(2026, 5, 1, 11, 0),
+        )
+        roteiro_caro = self._criar_roteiro_evento(
+            valor_diarias='320.00',
+            saida_dt=datetime(2026, 5, 2, 6, 30),
+            chegada_dt=datetime(2026, 5, 3, 18, 15),
+        )
+        pt = PlanoTrabalho.objects.create(
+            evento=self.evento,
+            quantidade_servidores=4,
+            recursos_texto='Plano com herança da etapa 2',
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+        )
+
+        response = self.client.get(
+            reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': pt.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+
+        pt.refresh_from_db()
+        self.assertEqual(pt.evento_data_inicio, self.evento.data_inicio)
+        self.assertEqual(pt.evento_data_fim, self.evento.data_fim)
+        self.assertEqual(pt.roteiro_id, roteiro_caro.pk)
+        self.assertEqual(pt.data_saida_sede, roteiro_caro.saida_dt.date())
+        self.assertEqual(pt.hora_saida_sede, roteiro_caro.saida_dt.time())
+        self.assertEqual(pt.data_chegada_sede, roteiro_caro.chegada_dt.date())
+        self.assertEqual(pt.hora_chegada_sede, roteiro_caro.chegada_dt.time())
+        self.assertEqual(len(pt.destinos_json), 2)
+        self.assertEqual(pt.destinos_json[0]['cidade_nome'], self.cidade.nome)
+        self.assertEqual(pt.step2_origem_json.get('periodo'), 'evento')
+        self.assertEqual(pt.step2_origem_json.get('destino'), 'evento')
+        self.assertEqual(pt.step2_origem_json.get('roteiro'), 'evento')
+        self.assertEqual(pt.step2_origem_json.get('calculadora'), 'roteiro_evento')
+        self.assertTrue(pt.diarias_quantidade)
+        self.assertTrue(pt.diarias_valor_total)
+        self.assertTrue(pt.valor_diarias)
+
+    def test_etapa2_manual_nao_e_sobrescrita_na_reabertura(self):
+        self._criar_destino_evento(ordem=0)
+        roteiro = self._criar_roteiro_evento(
+            valor_diarias='320.00',
+            saida_dt=datetime(2026, 5, 2, 6, 30),
+            chegada_dt=datetime(2026, 5, 3, 18, 15),
+        )
+        pt = PlanoTrabalho.objects.create(
+            evento=self.evento,
+            quantidade_servidores=4,
+            recursos_texto='Plano para edição manual',
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+        )
+
+        self.client.get(reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': pt.pk}))
+        pt.refresh_from_db()
+
+        payload = {
+            'data_criacao': pt.data_criacao.isoformat(),
+            'status': PlanoTrabalho.STATUS_RASCUNHO,
+            'evento': self.evento.pk,
+            'oficio': '',
+            'roteiro': str(roteiro.pk),
+            'destinos_payload': json.dumps(pt.destinos_json),
+            'evento_data_inicio': pt.evento_data_inicio.isoformat() if pt.evento_data_inicio else '',
+            'evento_data_fim': pt.evento_data_fim.isoformat() if pt.evento_data_fim else '',
+            'data_saida_sede': '',
+            'hora_saida_sede': '',
+            'data_chegada_sede': '',
+            'hora_chegada_sede': '',
+            'quantidade_servidores': '4',
+            'recursos_texto': pt.recursos_texto,
+            'horario_atendimento_padrao': '08:00-17:00',
+            'solicitante_escolha': '',
+            'return_to': reverse('eventos:documentos-planos-trabalho'),
+        }
+        payload.update(self._base_formset_payload())
+
+        response = self.client.post(
+            reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': pt.pk}),
+            data=payload,
+        )
+        self.assertEqual(response.status_code, 302)
+
+        pt.refresh_from_db()
+        self.assertIsNone(pt.data_saida_sede)
+        self.assertIsNone(pt.hora_saida_sede)
+        self.assertIsNone(pt.data_chegada_sede)
+        self.assertIsNone(pt.hora_chegada_sede)
+        self.assertEqual(pt.step2_origem_json.get('calculadora'), 'manual')
+
+        reopened = self.client.get(
+            reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': pt.pk})
+        )
+        self.assertEqual(reopened.status_code, 200)
+        self.assertContains(reopened, 'name="data_saida_sede"')
+        self.assertContains(reopened, 'value=""')
+
+    def test_etapa2_sem_roteiros_mostra_aviso_e_deixa_calculadora_em_branco(self):
+        self._criar_destino_evento(ordem=0)
+        pt = PlanoTrabalho.objects.create(
+            evento=self.evento,
+            quantidade_servidores=3,
+            recursos_texto='Plano sem roteiros',
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+        )
+
+        response = self.client.get(
+            reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': pt.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'roteiro com valor válido')
+
+        pt.refresh_from_db()
+        self.assertIsNone(pt.roteiro_id)
+        self.assertTrue(pt.destinos_json)
+        self.assertIsNone(pt.data_saida_sede)
+        self.assertIsNone(pt.hora_saida_sede)
+        self.assertIsNone(pt.data_chegada_sede)
+        self.assertIsNone(pt.hora_chegada_sede)
 
     def test_roteiro_manual_reidrata_hidden_fields_na_edicao(self):
         pt = PlanoTrabalho.objects.create(

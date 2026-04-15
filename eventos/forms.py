@@ -37,6 +37,11 @@ from .services.plano_trabalho_domain import (
     get_atividades_catalogo,
 )
 from .services.diarias import PeriodMarker, calculate_periodized_diarias
+from .services.plano_trabalho_step2 import (
+    STEP2_SOURCE_MANUAL,
+    build_plano_step2_defaults,
+    reconcile_plano_step2_state,
+)
 from core.utils.masks import format_placa, format_protocolo, normalize_placa
 from .utils import buscar_veiculo_finalizado_por_placa, mapear_tipo_viatura_para_oficio, normalize_protocolo
 
@@ -680,6 +685,34 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
             coord_ids = list(self.instance.coordenadores.values_list('pk', flat=True))
             self.initial['coordenadores_ids'] = ','.join(str(pk) for pk in coord_ids)
 
+        self._step2_defaults = build_plano_step2_defaults(selected_event)
+        self._step2_origin_json = dict(getattr(self.instance, 'step2_origem_json', None) or {})
+        self._step2_step2_changed = False
+        self._step2_warnings = ()
+        step2_origin = self.instance.step2_origem_json if self.instance and isinstance(getattr(self.instance, 'step2_origem_json', None), dict) else {}
+        if selected_event and not self.is_bound:
+            if step2_origin.get('periodo') != STEP2_SOURCE_MANUAL:
+                if self._step2_defaults.evento_data_inicio is not None:
+                    self.initial.setdefault('evento_data_inicio', self._step2_defaults.evento_data_inicio)
+                if self._step2_defaults.evento_data_fim is not None:
+                    self.initial.setdefault('evento_data_fim', self._step2_defaults.evento_data_fim)
+            if step2_origin.get('destino') != STEP2_SOURCE_MANUAL and self._step2_defaults.destinos_json:
+                destinos_json = list(self._step2_defaults.destinos_json)
+                self.initial.setdefault('destinos_json', destinos_json)
+                self.initial.setdefault('destinos_payload', json.dumps(destinos_json))
+                self.initial.setdefault('roteiro_json', json.dumps(destinos_json))
+            if step2_origin.get('roteiro') != STEP2_SOURCE_MANUAL and self._step2_defaults.roteiro_id:
+                self.initial.setdefault('roteiro', self._step2_defaults.roteiro_id)
+            if step2_origin.get('calculadora') != STEP2_SOURCE_MANUAL:
+                if self._step2_defaults.data_saida_sede is not None:
+                    self.initial.setdefault('data_saida_sede', self._step2_defaults.data_saida_sede)
+                if self._step2_defaults.hora_saida_sede is not None:
+                    self.initial.setdefault('hora_saida_sede', self._step2_defaults.hora_saida_sede)
+                if self._step2_defaults.data_chegada_sede is not None:
+                    self.initial.setdefault('data_chegada_sede', self._step2_defaults.data_chegada_sede)
+                if self._step2_defaults.hora_chegada_sede is not None:
+                    self.initial.setdefault('hora_chegada_sede', self._step2_defaults.hora_chegada_sede)
+
         if self.instance and self.instance.pk and self.instance.atividades_codigos:
             self.initial['atividades_codigos'] = [
                 codigo.strip()
@@ -917,29 +950,37 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         if not destinos and not (evento or roteiro or oficios_relacionados):
             self.add_error('destinos_payload', 'Adicione ao menos um destino manual quando não houver vínculo.')
 
-        cleaned_data['destinos_json'] = destinos
+        step2_defaults = build_plano_step2_defaults(evento)
+        if not self.is_bound and self._step2_defaults:
+            step2_defaults = self._step2_defaults
 
-        data_unica = bool(cleaned_data.get('evento_data_unica'))
-        data_inicio = cleaned_data.get('evento_data_inicio')
-        data_fim = cleaned_data.get('evento_data_fim')
-        if not data_inicio:
-            if evento and evento.data_inicio:
-                data_inicio = evento.data_inicio
-            elif roteiro and roteiro.saida_dt:
-                data_inicio = roteiro.saida_dt.date()
-        if not data_fim:
-            if evento and evento.data_fim:
-                data_fim = evento.data_fim
-            elif roteiro and roteiro.chegada_dt:
-                data_fim = roteiro.chegada_dt.date()
-        if not data_inicio and not (evento or roteiro or oficios_relacionados):
+        step2_result = reconcile_plano_step2_state(
+            self.instance,
+            defaults=step2_defaults,
+            incoming={
+                'roteiro': roteiro,
+                'evento_data_inicio': cleaned_data.get('evento_data_inicio'),
+                'evento_data_fim': cleaned_data.get('evento_data_fim'),
+                'destinos_json': destinos,
+                'data_saida_sede': cleaned_data.get('data_saida_sede'),
+                'hora_saida_sede': cleaned_data.get('hora_saida_sede'),
+                'data_chegada_sede': cleaned_data.get('data_chegada_sede'),
+                'hora_chegada_sede': cleaned_data.get('hora_chegada_sede'),
+            },
+            present_fields=set(self.data.keys()) if self.is_bound else set(),
+        )
+        if step2_result.get('resolved'):
+            cleaned_data.update(step2_result['resolved'])
+        cleaned_data['destinos_json'] = cleaned_data.get('destinos_json') or destinos
+        if not cleaned_data.get('evento_data_inicio') and not (evento or roteiro or oficios_relacionados):
             self.add_error('evento_data_inicio', 'Informe a data inicial do evento.')
-        if data_unica and data_inicio:
-            data_fim = data_inicio
-        elif data_inicio and data_fim and data_fim < data_inicio:
+        if cleaned_data.get('evento_data_inicio') and cleaned_data.get('evento_data_fim') and cleaned_data['evento_data_fim'] < cleaned_data['evento_data_inicio']:
             self.add_error('evento_data_fim', 'A data final não pode ser anterior à inicial.')
-        cleaned_data['evento_data_inicio'] = data_inicio
-        cleaned_data['evento_data_fim'] = data_fim
+        if cleaned_data.get('evento_data_unica') and cleaned_data.get('evento_data_inicio'):
+            cleaned_data['evento_data_fim'] = cleaned_data['evento_data_inicio']
+        self._step2_origin_json = step2_result.get('origin') or {}
+        self._step2_step2_changed = bool(step2_result.get('changed'))
+        self._step2_warnings = step2_result.get('warnings') or ()
 
         qtd = cleaned_data.get('quantidade_servidores') or 1
         markers, chegada_final = self._build_markers_for_diarias(cleaned_data)
@@ -1014,6 +1055,7 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         instance.quantidade_diarias = _to_decimal(instance.diarias_quantidade)
         instance.valor_diarias = _to_decimal(instance.diarias_valor_total)
         instance.valor_diarias_extenso = instance.diarias_valor_extenso or ''
+        instance.step2_origem_json = self._step2_origin_json or instance.step2_origem_json or {}
         instance.coordenador_municipal = ''
         instance.observacoes = ''
         # Preserve the existing status when editing; only default to RASCUNHO for new records

@@ -1046,6 +1046,9 @@
                   <h3 class="oficio-stage-section-title">Calculadora de diárias</h3>
                 </div>
               </div>
+              {% if pt_step2_warning %}
+              <div class="alert alert-warning py-2 px-3 mb-3" role="status">{{ pt_step2_warning }}</div>
+              {% endif %}
               <div class="row g-3 mb-3">
                 <div class="col-md-3">
                   <label class="form-label" for="{{ form.data_saida_sede.id_for_label }}">Saída da sede (data)</label>
@@ -1779,12 +1782,68 @@
       }
       const data = await response.json();
       if (data && data.id) planoState.id = data.id;
+      let step2Updated = false;
+      if (data && typeof data.roteiro_id !== 'undefined' && roteiroSelect) {
+        roteiroSelect.value = data.roteiro_id ? String(data.roteiro_id) : '';
+        step2Updated = true;
+      }
+      if (data && typeof data.evento_data_inicio !== 'undefined' && dataInicio) {
+        dataInicio.value = data.evento_data_inicio || '';
+        step2Updated = true;
+      }
+      if (data && typeof data.evento_data_fim !== 'undefined' && dataFim) {
+        dataFim.value = data.evento_data_fim || '';
+        step2Updated = true;
+      }
+      if (data && typeof data.data_saida_sede !== 'undefined' && dataSaidaSede) {
+        dataSaidaSede.value = data.data_saida_sede || '';
+        step2Updated = true;
+      }
+      if (data && typeof data.hora_saida_sede !== 'undefined' && horaSaidaSede) {
+        horaSaidaSede.value = data.hora_saida_sede || '';
+        step2Updated = true;
+      }
+      if (data && typeof data.data_chegada_sede !== 'undefined' && dataChegadaSede) {
+        dataChegadaSede.value = data.data_chegada_sede || '';
+        step2Updated = true;
+      }
+      if (data && typeof data.hora_chegada_sede !== 'undefined' && horaChegadaSede) {
+        horaChegadaSede.value = data.hora_chegada_sede || '';
+        step2Updated = true;
+      }
+      if (data && Array.isArray(data.destinos_json)) {
+        const serializedDestinos = JSON.stringify(data.destinos_json);
+        if (roteiroInput) roteiroInput.value = serializedDestinos;
+        if (destinosJsonInput) destinosJsonInput.value = serializedDestinos;
+        if (destinosPayload) destinosPayload.value = serializedDestinos;
+        if (roteiroJsonInput) roteiroJsonInput.value = serializedDestinos;
+        planoState.roteiro = data.destinos_json;
+        planoState.destinos = data.destinos_json;
+        step2Updated = true;
+      }
       if (data && typeof data.valor_extenso === 'string') {
         planoState.diarias.valor_extenso = data.valor_extenso;
       }
       if (data && data.valor_total) {
         const parsedTotal = parseCurrency(String(data.valor_total));
         if (Number.isFinite(parsedTotal)) planoState.diarias.total = parsedTotal;
+      }
+      if (step2Updated) {
+        syncMetaState();
+        if (data && (typeof data.evento_data_inicio !== 'undefined' || typeof data.evento_data_fim !== 'undefined')) {
+          onDatasChange();
+        }
+        if (
+          data &&
+          (
+            typeof data.data_saida_sede !== 'undefined'
+            || typeof data.hora_saida_sede !== 'undefined'
+            || typeof data.data_chegada_sede !== 'undefined'
+            || typeof data.hora_chegada_sede !== 'undefined'
+          )
+        ) {
+          onDeslocamentoChange();
+        }
       }
       updateValorTotalUI();
       updateValorExtensoUI();

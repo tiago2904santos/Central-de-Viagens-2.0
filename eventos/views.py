@@ -2959,10 +2959,11 @@ def _guiado_v2_step_visual_state(evento, etapa_key):
             evento=evento,
             viajante_id__in=viajante_ids,
         )
-        termos_documentos = TermoAutorizacao.objects.filter(evento=evento)
         if _evento_termos_ok(evento):
             return 'completed'
-        if termos_documentos.exists() or termos_status.exclude(status=EventoTermoParticipante.STATUS_PENDENTE).exists():
+        if termos_status.exists() and not termos_status.filter(status=EventoTermoParticipante.STATUS_PENDENTE).exists():
+            return 'completed'
+        if termos_status.exclude(status=EventoTermoParticipante.STATUS_PENDENTE).exists():
             return 'draft'
         return 'pending'
 

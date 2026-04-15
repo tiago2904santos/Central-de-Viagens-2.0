@@ -418,6 +418,7 @@ class PlanoTrabalho(models.Model):
     valor_diarias = models.DecimalField('Valor total de diárias', max_digits=12, decimal_places=2, null=True, blank=True)
     valor_diarias_extenso = models.TextField('Valor total de diárias por extenso', blank=True, default='')
     recursos_texto = models.TextField('Recursos (texto)', blank=True, default='')
+    step2_origem_json = models.JSONField('Origem da etapa 2', blank=True, default=dict)
     observacoes = models.TextField('Observações', blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -2009,6 +2010,24 @@ class RoteiroEvento(models.Model):
                     valor_decimal = None
         self.valor_diarias = valor_decimal
         self.valor_diarias_extenso = totais.get('valor_extenso') or ''
+
+    def periodo_total_min(self):
+        """
+        Retorna a duração total do roteiro em minutos para desempate determinístico.
+        Usa a maior chegada conhecida em relação à saída inicial.
+        """
+        if not self.saida_dt:
+            return 0
+        chegada_final = None
+        for candidato in (self.retorno_chegada_dt, self.chegada_dt):
+            if candidato and (chegada_final is None or candidato > chegada_final):
+                chegada_final = candidato
+        if not chegada_final:
+            return 0
+        delta = chegada_final - self.saida_dt
+        if delta.total_seconds() <= 0:
+            return 0
+        return int(delta.total_seconds() // 60)
 
     class Meta:
         ordering = ['-created_at']
