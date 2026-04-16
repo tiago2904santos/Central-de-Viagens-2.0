@@ -6,7 +6,7 @@ from decimal import Decimal, InvalidOperation
 
 from django import forms
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 
 from cadastros.models import Cargo, Cidade, ConfiguracaoSistema, Estado, UnidadeLotacao, Viajante, Veiculo
@@ -24,6 +24,7 @@ from .models import (
     ModeloMotivoViagem,
     OrdemServico,
     Oficio,
+    OficioEventoVinculo,
     PlanoTrabalho,
     RoteiroEvento,
     SolicitantePlanoTrabalho,
@@ -580,8 +581,8 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['data_chegada_sede'].required = False
         self.fields['hora_chegada_sede'].required = False
         self.fields['evento'].queryset = Evento.objects.order_by('-data_inicio', 'titulo')
-        self.fields['oficio'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
-        self.fields['oficios_relacionados'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
+        self.fields['oficio'].queryset = Oficio.objects.prefetch_related('eventos').order_by('-updated_at')
+        self.fields['oficios_relacionados'].queryset = Oficio.objects.prefetch_related('eventos').order_by('-updated_at')
         self.fields['roteiro'].queryset = RoteiroEvento.objects.select_related('evento').order_by('-updated_at')
         self.fields['coordenador_operacional'].queryset = CoordenadorOperacional.objects.filter(ativo=True).order_by('ordem', 'nome')
         self.fields['coordenador_administrativo'].queryset = Viajante.objects.filter(
@@ -1068,7 +1069,9 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
         if instance.oficio_id and instance.oficio not in related_oficios:
             related_oficios.append(instance.oficio)
         if not instance.evento_id:
-            related_event_ids = {oficio.evento_id for oficio in related_oficios if oficio.evento_id}
+            related_event_ids = set()
+            for oficio in related_oficios:
+                related_event_ids.update(oficio.eventos.values_list('pk', flat=True))
             if len(related_event_ids) == 1:
                 instance.evento_id = next(iter(related_event_ids))
         if related_oficios and not instance.oficio_id:
@@ -1233,7 +1236,7 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['modelo_motivo'].required = False
         self.fields['viajantes'].required = False
         self.fields['evento'].queryset = Evento.objects.order_by('-data_inicio', 'titulo')
-        self.fields['oficio'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
+        self.fields['oficio'].queryset = Oficio.objects.prefetch_related('eventos').order_by('-updated_at')
         self.fields['modelo_motivo'].queryset = ModeloMotivoViagem.objects.filter(ativo=True).order_by('nome')
         self.fields['viajantes'].queryset = Viajante.objects.select_related('cargo', 'unidade_lotacao').filter(status=Viajante.STATUS_FINALIZADO).order_by('nome')
         self.proximo_numero_preview = self._get_next_number_preview()
@@ -1255,9 +1258,15 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
             selected_event = Evento.objects.filter(pk=self.initial.get('evento')).first()
 
         if selected_event:
-            self.fields['oficio'].queryset = Oficio.objects.filter(
-                Q(evento=selected_event) | Q(evento__isnull=True)
-            ).select_related('evento').order_by('-updated_at')
+            self.fields['oficio'].queryset = (
+                Oficio.objects.filter(
+                    Q(eventos=selected_event)
+                    | ~Exists(OficioEventoVinculo.objects.filter(oficio_id=OuterRef('pk')))
+                )
+                .distinct()
+                .prefetch_related('eventos')
+                .order_by('-updated_at')
+            )
 
         if self.instance and self.instance.pk:
             self.initial.setdefault('viajantes', list(self.instance.viajantes.values_list('pk', flat=True)))
@@ -1408,12 +1417,13 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
         if not motivo_texto:
             motivo_texto = str(self.data.get('finalidade') or '').strip()
 
-        if oficio and oficio.evento_id:
-            if evento and evento.pk != oficio.evento_id:
-                self.add_error('oficio', 'O ofício selecionado pertence a outro evento.')
-            elif not evento:
-                cleaned_data['evento'] = oficio.evento
-                evento = oficio.evento
+        if oficio and evento and not oficio.esta_vinculado_a_evento(evento):
+            self.add_error('oficio', 'O ofício selecionado não está vinculado ao evento escolhido.')
+        elif oficio and not evento:
+            principal = oficio.get_evento_principal()
+            if principal:
+                cleaned_data['evento'] = principal
+                evento = principal
 
         if evento and not oficio and self.instance and self.instance.pk and self.instance.oficio_id:
             cleaned_data['oficio'] = None
@@ -1564,8 +1574,8 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['evento'].queryset = Evento.objects.order_by('-data_inicio', 'titulo')
         self.fields['roteiro'].queryset = RoteiroEvento.objects.select_related('evento').order_by('-updated_at')
         self.fields['oficios'].queryset = (
-            Oficio.objects.select_related('evento', 'roteiro_evento', 'veiculo')
-            .prefetch_related('viajantes', 'trechos__destino_cidade', 'trechos__destino_estado')
+            Oficio.objects.select_related('roteiro_evento', 'veiculo')
+            .prefetch_related('eventos', 'viajantes', 'trechos__destino_cidade', 'trechos__destino_estado')
             .order_by('-updated_at')
         )
 
@@ -1606,7 +1616,7 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
             conflitos = [
                 oficio.numero_formatado or f'#{oficio.pk}'
                 for oficio in self.cleaned_oficios
-                if oficio.evento_id and oficio.evento_id != evento.pk
+                if not oficio.esta_vinculado_a_evento(evento)
             ]
             if conflitos:
                 self.add_error(
@@ -1728,8 +1738,8 @@ class TermoAutorizacaoEdicaoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.fields['evento'].queryset = Evento.objects.order_by('-data_inicio', 'titulo')
         self.fields['roteiro'].queryset = RoteiroEvento.objects.select_related('evento').order_by('-updated_at')
         self.fields['oficios'].queryset = (
-            Oficio.objects.select_related('evento', 'veiculo', 'roteiro_evento')
-            .prefetch_related('viajantes', 'trechos__destino_cidade', 'trechos__destino_estado')
+            Oficio.objects.select_related('veiculo', 'roteiro_evento')
+            .prefetch_related('eventos', 'viajantes', 'trechos__destino_cidade', 'trechos__destino_estado')
             .order_by('-updated_at')
         )
         initial_oficios = list(self.instance.oficios.all())
@@ -1870,7 +1880,7 @@ class JustificativaForm(FormComErroInvalidMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         preselected_oficio = kwargs.pop('preselected_oficio', None)
         super().__init__(*args, **kwargs)
-        self.fields['oficio'].queryset = Oficio.objects.select_related('evento').order_by('-updated_at')
+        self.fields['oficio'].queryset = Oficio.objects.prefetch_related('eventos').order_by('-updated_at')
         self.fields['oficio'].required = False
         self.fields['modelo'].required = False
         self.fields['texto'].required = False

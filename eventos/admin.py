@@ -9,6 +9,7 @@ from .models import (
     ModeloMotivoViagem,
     OrdemServico,
     Oficio,
+    OficioEventoVinculo,
     PlanoTrabalho,
     EfetivoPlanoTrabalhoDocumento,
     HorarioAtendimentoPlanoTrabalho,
@@ -122,13 +123,24 @@ class TermoAutorizacaoAdmin(admin.ModelAdmin):
     ordering = ('-updated_at',)
 
 
+class OficioEventoVinculoInline(admin.TabularInline):
+    model = OficioEventoVinculo
+    extra = 0
+    autocomplete_fields = ('evento',)
+
+
 @admin.register(Oficio)
 class OficioAdmin(admin.ModelAdmin):
-    list_display = ('id', 'numero_formatado', 'evento', 'status', 'protocolo', 'created_at')
+    list_display = ('id', 'numero_formatado', 'evento_principal_admin', 'status', 'protocolo', 'created_at')
     list_filter = ('status',)
     search_fields = ('protocolo',)
-    raw_id_fields = ('evento',)
     ordering = ('-created_at',)
+    inlines = (OficioEventoVinculoInline,)
+
+    @admin.display(description='Evento principal')
+    def evento_principal_admin(self, obj):
+        ev = obj.get_evento_principal()
+        return ev.titulo if ev else '—'
 
 
 @admin.register(ModeloMotivoViagem)

@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.forms import inlineformset_factory
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Count, Prefetch, Q, Sum
+from django.db.models import Count, Exists, OuterRef, Prefetch, Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -35,6 +35,7 @@ from .models import (
     ModeloJustificativa,
     OrdemServico,
     Oficio,
+    OficioEventoVinculo,
     OficioTrecho,
     PlanoTrabalho,
     RoteiroEvento,
@@ -75,7 +76,8 @@ from .services.plano_trabalho_step2 import (
     build_plano_step2_defaults,
     reconcile_plano_step2_state,
 )
-from .services.documento_vinculos import resolver_vinculos_ordem_servico
+from .services.documento_presenters import build_vinculo_documental_url
+from .services.documento_vinculos import resolver_vinculos_oficio, resolver_vinculos_ordem_servico
 from .services.documento_selectors import (
     oficios_linkables,
     ordens_servico_base_queryset,
@@ -1963,7 +1965,13 @@ def _oficio_list_precomputed_meta(oficio, prazo_minimo_dias=None):
     destinos_display = _oficio_list_destinos_display(oficio)
     periodo_display = _oficio_list_period_display(oficio)
     data_evento_inicio, data_evento_fim = _oficio_list_period_bounds(oficio)
-    context_label = 'Com evento' if oficio.evento_id else 'Avulso'
+    n_ev = oficio.eventos.count()
+    if n_ev > 1:
+        context_label = f'{n_ev} eventos'
+    elif n_ev == 1:
+        context_label = 'Com evento'
+    else:
+        context_label = 'Avulso'
     vehicle_display = _oficio_list_vehicle_display(oficio)
     driver_display = _oficio_list_driver_display(oficio)
     has_termo = _oficio_list_has_terms(oficio)
@@ -1995,7 +2003,7 @@ def _oficio_list_filter_row(oficio, precomputed=None):
             oficio.numero_formatado,
             oficio.protocolo_formatado or '',
             _clean(oficio.protocolo),
-            _clean(getattr(getattr(oficio, 'evento', None), 'titulo', '')),
+            _clean(' '.join((e.titulo or '').strip() for e in oficio.eventos.all()).strip()),
             _clean(oficio.motivo),
             precomputed['destinos_display'],
             _oficio_list_viajantes_display(oficio),
@@ -2013,7 +2021,7 @@ def _oficio_list_filter_row(oficio, precomputed=None):
         'search_blob': search_blob,
         'filter_meta': {
             'status': oficio.status,
-            'contexto': 'EVENTO' if oficio.evento_id else 'AVULSO',
+            'contexto': 'EVENTO' if oficio.eventos.exists() else 'AVULSO',
             'viagem_status': viagem_status['key'],
             'is_today_trip': viagem_status['key'] == 'EM_ANDAMENTO' and viagem_status.get('relative_label') == 'acontece hoje',
             'has_justificativa': precomputed['justificativa_info']['filled'],
@@ -2058,12 +2066,13 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
     table_actions = _oficio_list_table_actions(oficio, oficio_downloads)
     footer_actions = _oficio_list_footer_actions(oficio, oficio_downloads)
     vinculos_items = []
-    if oficio.evento_id and oficio.evento:
+    for link in oficio.vinculos_evento.select_related('evento').order_by('pk'):
+        ev = link.evento
         vinculos_items.append(
             _make_vinculo_item(
-                title=oficio.evento.titulo or f'Evento #{oficio.evento_id}',
-                meta='Evento',
-                url=reverse('eventos:guiado-etapa-1', kwargs={'pk': oficio.evento_id}),
+                title=ev.titulo or f'Evento #{ev.pk}',
+                meta='Evento (direto)',
+                url=reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}),
             )
         )
     if oficio.roteiro_evento_id and oficio.roteiro_evento:
@@ -2121,6 +2130,18 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
                 meta='Vínculos extras',
             )
         )
+    resolved_v = resolver_vinculos_oficio(oficio)
+    direto_os_ids = {o.pk for o in ordens_relacionadas}
+    for v in resolved_v.get('herdados') or []:
+        if v.tipo != 'ordem_servico' or v.id in direto_os_ids:
+            continue
+        vinculos_items.append(
+            _make_vinculo_item(
+                title=v.rotulo,
+                meta='Ordem de serviço herdada via evento',
+                url=build_vinculo_documental_url(v.tipo, v.id),
+            )
+        )
     vinculos_block = _make_vinculos_block(
         vinculos_items,
         title='Vínculos',
@@ -2168,37 +2189,41 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
                 ),
             ),
         ])
-        if oficio.evento_id and oficio.evento:
-            oficio_link_actions.extend([
-                _make_vinculo_action_item(
-                    label=f'Evento: {oficio.evento.titulo or f"#{oficio.evento_id}"}',
-                    url=_append_query_params(
-                        reverse('eventos:guiado-etapa-1', kwargs={'pk': oficio.evento_id}),
-                        {'return_to': current_path},
+        for link in oficio.vinculos_evento.select_related('evento').order_by('pk'):
+            ev = link.evento
+            eid = ev.pk
+            oficio_link_actions.extend(
+                [
+                    _make_vinculo_action_item(
+                        label=f'Evento: {ev.titulo or f"#{eid}"}',
+                        url=_append_query_params(
+                            reverse('eventos:guiado-etapa-1', kwargs={'pk': eid}),
+                            {'return_to': current_path},
+                        ),
                     ),
-                ),
-                _make_vinculo_action_item(
-                    label='Planos do evento',
-                    url=_append_query_params(
-                        reverse('eventos:documentos-planos-trabalho'),
-                        {'evento_id': oficio.evento_id},
+                    _make_vinculo_action_item(
+                        label='Planos do evento',
+                        url=_append_query_params(
+                            reverse('eventos:documentos-planos-trabalho'),
+                            {'evento_id': eid},
+                        ),
                     ),
-                ),
-                _make_vinculo_action_item(
-                    label='Ordens do evento',
-                    url=_append_query_params(
-                        reverse('eventos:documentos-ordens-servico'),
-                        {'evento_id': oficio.evento_id},
+                    _make_vinculo_action_item(
+                        label='Ordens do evento',
+                        url=_append_query_params(
+                            reverse('eventos:documentos-ordens-servico'),
+                            {'evento_id': eid},
+                        ),
                     ),
-                ),
-                _make_vinculo_action_item(
-                    label='Roteiros do evento',
-                    url=_append_query_params(
-                        reverse('eventos:roteiros-global'),
-                        {'evento_id': oficio.evento_id},
+                    _make_vinculo_action_item(
+                        label='Roteiros do evento',
+                        url=_append_query_params(
+                            reverse('eventos:roteiros-global'),
+                            {'evento_id': eid},
+                        ),
                     ),
-                ),
-            ])
+                ]
+            )
     vinculos_block['link_actions'] = [item for item in oficio_link_actions if item]
     vinculos_block['link_actions_title'] = 'Vincular documentos'
     return {
@@ -2232,7 +2257,7 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
                 oficio.numero_formatado,
                 oficio.protocolo_formatado or '',
                 _clean(oficio.protocolo),
-                _clean(getattr(getattr(oficio, 'evento', None), 'titulo', '')),
+                _clean(' '.join((e.titulo or '').strip() for e in oficio.eventos.all()).strip()),
                 _clean(oficio.motivo),
                 destinos_display,
                 _oficio_list_viajantes_display(oficio),
@@ -2244,7 +2269,7 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
         ).lower(),
         'filter_meta': {
             'status': oficio.status,
-            'contexto': 'EVENTO' if oficio.evento_id else 'AVULSO',
+            'contexto': 'EVENTO' if oficio.eventos.exists() else 'AVULSO',
             'viagem_status': viagem_status['key'],
             'is_today_trip': viagem_status['key'] == 'EM_ANDAMENTO' and viagem_status.get('relative_label') == 'acontece hoje',
             'has_justificativa': justificativa_info['filled'],
@@ -2359,7 +2384,6 @@ def _render_oficio_list(
     if queryset is None:
         queryset = (
             Oficio.objects.select_related(
-                'evento',
                 'cidade_sede',
                 'estado_sede',
                 'roteiro_evento',
@@ -2368,6 +2392,7 @@ def _render_oficio_list(
                 'justificativa',
             )
             .prefetch_related(
+                'eventos',
                 Prefetch(
                     'trechos',
                     queryset=OficioTrecho.objects.select_related(
@@ -2404,9 +2429,13 @@ def _render_oficio_list(
 
     if filters['contexto'] and set(filters['contexto']) != set(dict(OFICIO_CONTEXT_CHOICES).keys()):
         if filters['contexto'] == ['EVENTO']:
-            queryset = queryset.filter(evento_id__isnull=False)
+            queryset = queryset.filter(
+                Exists(OficioEventoVinculo.objects.filter(oficio_id=OuterRef('pk')))
+            ).distinct()
         elif filters['contexto'] == ['AVULSO']:
-            queryset = queryset.filter(evento_id__isnull=True)
+            queryset = queryset.exclude(
+                Exists(OficioEventoVinculo.objects.filter(oficio_id=OuterRef('pk')))
+            )
 
     rows = []
     query_text = filters['q'].lower()
@@ -2476,7 +2505,10 @@ def roteiro_global_lista(request):
         .prefetch_related(
             'destinos__estado',
             'destinos__cidade',
-            Prefetch('oficios', queryset=Oficio.objects.select_related('evento').order_by('-updated_at', '-created_at')),
+            Prefetch(
+                'oficios',
+                queryset=Oficio.objects.prefetch_related('eventos').order_by('-updated_at', '-created_at'),
+            ),
             Prefetch(
                 'trechos',
                 queryset=RoteiroEventoTrecho.objects.select_related(
@@ -3246,7 +3278,7 @@ def _build_plano_trabalho_form_ui_context(form, *, obj=None, preselected_event=N
         else:
             query = {
                 oficio.pk: oficio
-                for oficio in Oficio.objects.select_related('evento').filter(pk__in=related_ids)
+                for oficio in Oficio.objects.prefetch_related('eventos').filter(pk__in=related_ids)
             }
             related_oficios = [query[pk] for pk in related_ids if pk in query]
 
@@ -3978,7 +4010,7 @@ def planos_trabalho_global(request):
         )
     if filters['evento_id'].isdigit():
         event_id = int(filters['evento_id'])
-        queryset = queryset.filter(Q(evento_id=event_id) | Q(oficios__evento_id=event_id))
+        queryset = queryset.filter(Q(evento_id=event_id) | Q(oficios__eventos=event_id))
     if filters['oficio_id'].isdigit():
         queryset = queryset.filter(Q(oficio_id=int(filters['oficio_id'])) | Q(oficios__id=int(filters['oficio_id'])))
     if filters['status']:
@@ -4129,12 +4161,12 @@ def plano_trabalho_editar(request, pk):
         elif initial_related:
             related_ids.append(initial_related)
         related_ids.extend(
-            Oficio.objects.filter(evento=vinculo_evento).order_by('-updated_at').values_list('pk', flat=True)
+            Oficio.objects.filter(eventos=vinculo_evento).distinct().order_by('-updated_at').values_list('pk', flat=True)
         )
         if related_ids:
             form.initial['oficios_relacionados'] = list(dict.fromkeys(int(pk) for pk in related_ids if str(pk).isdigit()))
         if not form.initial.get('oficio'):
-            primeiro_oficio = Oficio.objects.filter(evento=vinculo_evento).order_by('-updated_at').first()
+            primeiro_oficio = Oficio.objects.filter(eventos=vinculo_evento).distinct().order_by('-updated_at').first()
             if primeiro_oficio:
                 form.initial['oficio'] = primeiro_oficio.pk
     if request.method == 'GET' and vinculo_roteiro and not form.initial.get('roteiro'):
@@ -4757,20 +4789,16 @@ def justificativas_global(request):
         'order_dir': _clean(request.GET.get('order_dir')),
     }
     current_path = request.get_full_path()
-    linkable_oficios = list(Oficio.objects.select_related('evento').order_by('-updated_at')[:12])
-    queryset = (
-        Justificativa.objects.select_related(
-            'oficio',
-            'oficio__evento',
-            'modelo',
-        )
+    linkable_oficios = list(Oficio.objects.prefetch_related('eventos').order_by('-updated_at')[:12])
+    queryset = Justificativa.objects.select_related('oficio', 'modelo').prefetch_related(
+        'oficio__eventos',
     )
     if filters['q']:
         queryset = queryset.filter(
             Q(texto__icontains=filters['q'])
             | Q(oficio__protocolo__icontains=filters['q'])
             | Q(oficio__motivo__icontains=filters['q'])
-            | Q(oficio__evento__titulo__icontains=filters['q'])
+            | Q(oficio__eventos__titulo__icontains=filters['q'])
         ).distinct()
     if filters['oficio_id'].isdigit():
         queryset = queryset.filter(oficio_id=int(filters['oficio_id']))
@@ -4819,14 +4847,16 @@ def justificativas_global(request):
                     badge_label=just.oficio.get_status_display(),
                 )
             )
-        if just.oficio_id and just.oficio and just.oficio.evento_id:
-            vinculos_items.append(
-                _make_vinculo_item(
-                    title=just.oficio.evento.titulo or f'Evento #{just.oficio.evento_id}',
-                    meta='Evento',
-                    url=reverse('eventos:guiado-etapa-1', kwargs={'pk': just.oficio.evento_id}),
+        if just.oficio_id and just.oficio:
+            for link in just.oficio.vinculos_evento.select_related('evento').order_by('pk'):
+                ev = link.evento
+                vinculos_items.append(
+                    _make_vinculo_item(
+                        title=ev.titulo or f'Evento #{ev.pk}',
+                        meta='Evento',
+                        url=reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}),
+                    )
                 )
-            )
         just.vinculos_block = _make_vinculos_block(
             vinculos_items,
             title='Vínculos',
@@ -4843,16 +4873,18 @@ def justificativas_global(request):
                 css_class='btn-doc-action--primary',
             ),
         ]
-        if just.oficio_id and just.oficio and just.oficio.evento_id:
-            just_link_actions.append(
-                _make_vinculo_action_item(
-                    label='Ofícios do evento',
-                    url=_append_query_params(
-                        reverse('eventos:oficios-global'),
-                        {'evento_id': just.oficio.evento_id},
-                    ),
+        if just.oficio_id and just.oficio:
+            for link in just.oficio.vinculos_evento.select_related('evento').order_by('pk'):
+                ev = link.evento
+                just_link_actions.append(
+                    _make_vinculo_action_item(
+                        label=f'Ofícios do evento ({ev.titulo or ev.pk})',
+                        url=_append_query_params(
+                            reverse('eventos:oficios-global'),
+                            {'evento_id': ev.pk},
+                        ),
+                    )
                 )
-            )
         for oficio in linkable_oficios:
             if not getattr(oficio, 'pk', None) or oficio.pk == just.oficio_id:
                 continue
@@ -4928,7 +4960,7 @@ def justificativa_detalhe(request, pk):
 @require_http_methods(['GET', 'POST'])
 def justificativa_editar(request, pk):
     obj = get_object_or_404(
-        Justificativa.objects.select_related('oficio', 'oficio__evento', 'modelo'),
+        Justificativa.objects.select_related('oficio', 'modelo').prefetch_related('oficio__eventos'),
         pk=pk,
     )
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-justificativas'))
@@ -5454,8 +5486,8 @@ def _load_termo_context_objects(evento_id='', oficio_ids=None, roteiro_id=''):
             .first()
         )
     oficios_qs = (
-        Oficio.objects.select_related('evento', 'roteiro_evento', 'veiculo')
-        .prefetch_related('viajantes', 'trechos__destino_cidade', 'trechos__destino_estado')
+        Oficio.objects.select_related('roteiro_evento', 'veiculo')
+        .prefetch_related('eventos', 'viajantes', 'trechos__destino_cidade', 'trechos__destino_estado')
         .filter(pk__in=oficio_ids)
     )
     oficios_map = {oficio.pk: oficio for oficio in oficios_qs}
@@ -5619,7 +5651,7 @@ def termo_autorizacao_oficios_por_evento(request):
     if not evento_id or not evento_id.isdigit():
         return JsonResponse({'oficios': []})
     oficios = list(
-        Oficio.objects.filter(evento_id=int(evento_id)).order_by('-updated_at')
+        Oficio.objects.filter(eventos__pk=int(evento_id)).distinct().order_by('-updated_at')
     )
     result = [
         {'id': o.pk, 'label': f'Oficio {o.numero_formatado or f"#{o.pk}"}'}

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from django.db.models import Q
+
 from eventos.models import Evento, Oficio, OrdemServico, PlanoTrabalho
 
 
@@ -63,16 +65,18 @@ def resolver_vinculos_ordem_servico(ordem: OrdemServico) -> dict:
                 rotulo=_oficio_rotulo(ordem.oficio),
             ),
         )
-        if ordem.oficio.evento_id and not ordem.evento_id:
-            _push_unique(
-                herdados,
-                VinculoDocumento(
-                    tipo="evento",
-                    origem="herdado",
-                    id=ordem.oficio.evento.pk,
-                    rotulo=_evento_rotulo(ordem.oficio.evento),
-                ),
-            )
+        if not ordem.evento_id:
+            ev_of = ordem.oficio.get_evento_principal()
+            if ev_of:
+                _push_unique(
+                    herdados,
+                    VinculoDocumento(
+                        tipo="evento",
+                        origem="herdado",
+                        id=ev_of.pk,
+                        rotulo=_evento_rotulo(ev_of),
+                    ),
+                )
 
     oficios_herdados_ids = [v.id for v in herdados if v.tipo == "oficio"]
     oficios_diretos_ids = [v.id for v in diretos if v.tipo == "oficio"]
@@ -89,16 +93,58 @@ def resolver_vinculos_oficio(oficio: Oficio) -> dict:
     herdados: list[VinculoDocumento] = []
     legado: list[VinculoDocumento] = []
 
-    if oficio.evento_id and oficio.evento:
+    for link in oficio.vinculos_evento.select_related('evento').order_by('pk'):
+        ev = link.evento
         _push_unique(
             diretos,
             VinculoDocumento(
                 tipo="evento",
                 origem="direto",
-                id=oficio.evento.pk,
-                rotulo=_evento_rotulo(oficio.evento),
+                id=ev.pk,
+                rotulo=_evento_rotulo(ev),
             ),
         )
+
+    for plano in (
+        PlanoTrabalho.objects.filter(Q(oficio=oficio) | Q(oficios=oficio))
+        .distinct()
+        .order_by('-updated_at', '-created_at')
+    ):
+        _push_unique(
+            diretos,
+            VinculoDocumento(
+                tipo="plano_trabalho",
+                origem="direto",
+                id=plano.pk,
+                rotulo=f'PT {plano.numero_formatado or f"#{plano.pk}"}',
+            ),
+        )
+
+    for os in OrdemServico.objects.filter(oficio=oficio).order_by('-updated_at', '-created_at'):
+        _push_unique(
+            diretos,
+            VinculoDocumento(
+                tipo="ordem_servico",
+                origem="direto",
+                id=os.pk,
+                rotulo=f'OS {os.numero_formatado or f"#{os.pk}"}',
+            ),
+        )
+
+    for link in oficio.vinculos_evento.select_related('evento').order_by('pk'):
+        ev = link.evento
+        for os in ev.ordens_servico.order_by('-updated_at', '-created_at'):
+            if os.oficio_id == oficio.pk:
+                continue
+            _push_unique(
+                herdados,
+                VinculoDocumento(
+                    tipo="ordem_servico",
+                    origem="herdado",
+                    id=os.pk,
+                    rotulo=f'OS {getattr(os, "numero_formatado", "") or f"#{os.pk}"} (via evento)',
+                ),
+            )
 
     justificativa = getattr(oficio, "justificativa", None)
     if justificativa and justificativa.pk:
@@ -161,11 +207,13 @@ def resolver_vinculos_plano_trabalho(plano: PlanoTrabalho) -> dict:
             diretos,
             VinculoDocumento("oficio", "direto", oficio.pk, _oficio_rotulo(oficio)),
         )
-        if oficio.evento_id and not contexto['evento_canonico']:
-            _push_unique(
-                herdados,
-                VinculoDocumento("evento", "herdado", oficio.evento.pk, _evento_rotulo(oficio.evento)),
-            )
+        if not contexto['evento_canonico']:
+            for link in oficio.vinculos_evento.select_related('evento').order_by('pk'):
+                ev = link.evento
+                _push_unique(
+                    herdados,
+                    VinculoDocumento("evento", "herdado", ev.pk, _evento_rotulo(ev)),
+                )
 
     if contexto['roteiro_auxiliar']:
         _push_unique(

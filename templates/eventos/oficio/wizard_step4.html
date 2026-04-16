@@ -257,6 +257,16 @@
               {% else %}
                 <p class="text-muted">Sem vínculos diretos.</p>
               {% endif %}
+              <div class="small text-muted mb-2">Herdados (derivação)</div>
+              {% if vinculos_resolvidos.herdados %}
+                <ul class="mb-3">
+                  {% for vinculo in vinculos_resolvidos.herdados %}
+                    <li>{{ vinculo.rotulo }}</li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="text-muted mb-3">Sem vínculos herdados.</p>
+              {% endif %}
               {% if vinculos_resolvidos.legado %}
                 <div class="small text-muted mb-2">Legado (compatibilidade)</div>
                 <ul class="mb-0">

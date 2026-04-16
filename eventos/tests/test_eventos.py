@@ -3524,7 +3524,7 @@ class EventoFinalizadoTravasTest(TestCase):
 
 
 class EventoEtapa3OficiosTest(TestCase):
-    """Etapa 5 â€” OfÃ­cios do evento (hub): listar, criar, status OK/Pendente. URL: guiado-etapa-5."""
+    """Etapa 3 — Ofícios do evento (hub): listar, criar, status. URL canónica: guiado-etapa-3."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
@@ -3541,44 +3541,45 @@ class EventoEtapa3OficiosTest(TestCase):
 
     def test_etapa_3_exige_login(self):
         self.client.logout()
-        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
+        response = self.client.get(reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
     def test_etapa_3_lista_oficios_do_evento(self):
         oficio1 = Oficio.objects.create(evento=self.evento, status=Oficio.STATUS_RASCUNHO)
         oficio2 = Oficio.objects.create(evento=self.evento, numero=2, ano=2025, status=Oficio.STATUS_FINALIZADO)
-        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
+        response = self.client.get(reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'OfÃ­cios do evento')
+        self.assertContains(response, 'Oficios / Justificativas')
         self.assertContains(response, 'Rascunho')
         self.assertContains(response, 'Finalizado')
         self.assertContains(response, '02/2025')
-        self.assertContains(response, reverse('eventos:oficio-editar', kwargs={'pk': oficio1.pk}))
+        self.assertContains(response, reverse('eventos:oficio-step1', kwargs={'pk': oficio1.pk}))
 
     def test_etapa_3_mostra_botao_criar_oficio(self):
-        response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
+        response = self.client.get(reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Criar OfÃ­cio neste Evento')
-        url_criar = reverse('eventos:guiado-etapa-5-criar-oficio', kwargs={'evento_id': self.evento.pk})
-        self.assertContains(response, url_criar)
+        self.assertContains(response, 'Novo ofício')
+        self.assertContains(
+            response,
+            f"{reverse('eventos:oficio-novo')}?evento_id={self.evento.pk}",
+        )
 
     def test_get_criar_oficio_nao_cria_registro(self):
-        url_criar = reverse('eventos:guiado-etapa-5-criar-oficio', kwargs={'evento_id': self.evento.pk})
+        url_criar = reverse('eventos:guiado-etapa-3-criar-oficio', kwargs={'evento_id': self.evento.pk})
         response = self.client.get(url_criar)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
+        self.assertEqual(response.url, reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(self.evento.oficios.count(), 0)
 
     def test_post_criar_oficio_preserva_vinculo_com_evento(self):
-        url_criar = reverse('eventos:guiado-etapa-5-criar-oficio', kwargs={'evento_id': self.evento.pk})
+        url_criar = reverse('eventos:guiado-etapa-3-criar-oficio', kwargs={'evento_id': self.evento.pk})
         response = self.client.post(url_criar)
         self.assertEqual(response.status_code, 302)
-        self.assertIn('oficio/', response.url)
         self.assertIn('/step1/', response.url)
         self.assertEqual(self.evento.oficios.count(), 1)
         oficio = self.evento.oficios.get()
-        self.assertEqual(oficio.evento_id, self.evento.pk)
+        self.assertTrue(oficio.esta_vinculado_a_evento(self.evento))
         self.assertEqual(oficio.status, Oficio.STATUS_RASCUNHO)
 
 class OficioWizardTest(TestCase):
@@ -3755,7 +3756,7 @@ class OficioWizardTest(TestCase):
             },
         )
         cidade_destino = Cidade.objects.create(nome='Destino Wizard', estado=self.estado, codigo_ibge='4106999')
-        self.client.post(
+        step3_resp = self.client.post(
             reverse('eventos:oficio-step3', kwargs={'pk': self.oficio.pk}),
             data={
                 'roteiro_modo': Oficio.ROTEIRO_MODO_PROPRIO,
@@ -3763,6 +3764,10 @@ class OficioWizardTest(TestCase):
                 'sede_cidade': str(self.cidade.pk),
                 'destino_estado_0': str(self.estado.pk),
                 'destino_cidade_0': str(cidade_destino.pk),
+                'trecho_0_origem_estado_id': str(self.estado.pk),
+                'trecho_0_origem_cidade_id': str(self.cidade.pk),
+                'trecho_0_destino_estado_id': str(self.estado.pk),
+                'trecho_0_destino_cidade_id': str(cidade_destino.pk),
                 'trecho_0_saida_data': data_saida.strftime('%Y-%m-%d'),
                 'trecho_0_saida_hora': '08:00',
                 'trecho_0_chegada_data': data_saida.strftime('%Y-%m-%d'),
@@ -3773,6 +3778,7 @@ class OficioWizardTest(TestCase):
                 'retorno_chegada_hora': '18:00',
             },
         )
+        self.assertEqual(step3_resp.status_code, 302, msg=getattr(step3_resp, 'content', b'')[:500])
         self.oficio.refresh_from_db()
         before_update = self.oficio.updated_at
         url = reverse('eventos:oficio-step4', kwargs={'pk': self.oficio.pk})

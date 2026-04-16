@@ -472,8 +472,9 @@ class PlanoTrabalho(models.Model):
         if self.evento_id:
             return self.evento
         for oficio in self.get_oficios_relacionados():
-            if oficio.evento_id:
-                return oficio.evento
+            ev = oficio.get_evento_principal()
+            if ev:
+                return ev
         if self.roteiro_id and self.roteiro and self.roteiro.evento_id:
             return self.roteiro.evento
         return None
@@ -578,8 +579,10 @@ class PlanoTrabalho(models.Model):
 
     def _sync_context_relations(self):
         if self.oficio_id:
-            if not self.evento_id and self.oficio.evento_id:
-                self.evento = self.oficio.evento
+            if not self.evento_id:
+                ev = self.oficio.get_evento_principal()
+                if ev:
+                    self.evento = ev
             if not self.roteiro_id and self.oficio.roteiro_evento_id:
                 self.roteiro = self.oficio.roteiro_evento
         if self.roteiro_id and not self.evento_id and self.roteiro.evento_id:
@@ -695,8 +698,10 @@ class OrdemServico(models.Model):
     def get_evento_relacionado(self):
         if self.evento_id:
             return self.evento
-        if self.oficio_id and self.oficio and self.oficio.evento_id:
-            return self.oficio.evento
+        if self.oficio_id and self.oficio:
+            ev = self.oficio.get_evento_principal()
+            if ev:
+                return ev
         return None
 
     def get_oficios_herdados_evento(self):
@@ -740,9 +745,9 @@ class OrdemServico(models.Model):
             and self.data_deslocamento_fim < self.data_deslocamento
         ):
             raise ValidationError({'data_deslocamento_fim': 'A data final não pode ser anterior à data inicial.'})
-        if self.evento_id and self.oficio_id and self.oficio and self.oficio.evento_id:
-            if self.oficio.evento_id != self.evento_id:
-                raise ValidationError({'oficio': 'O ofício selecionado pertence a outro evento.'})
+        if self.evento_id and self.oficio_id and self.oficio:
+            if not self.oficio.esta_vinculado_a_evento(self.evento_id):
+                raise ValidationError({'oficio': 'O ofício selecionado não está vinculado a este evento.'})
 
     def save(self, *args, **kwargs):
         creating = self.pk is None
@@ -1190,8 +1195,10 @@ class TermoAutorizacao(models.Model):
 
     def _sync_context_relations(self):
         if self.oficio_id:
-            if not self.evento_id and self.oficio.evento_id:
-                self.evento = self.oficio.evento
+            if not self.evento_id:
+                ev = self.oficio.get_evento_principal()
+                if ev:
+                    self.evento = ev
             if not self.roteiro_id and self.oficio.roteiro_evento_id:
                 self.roteiro = self.oficio.roteiro_evento
         if self.roteiro_id and not self.evento_id and self.roteiro.evento_id:
@@ -1265,8 +1272,8 @@ class TermoAutorizacao(models.Model):
             errors['data_evento'] = 'Informe a data inicial do termo.'
         if self.data_evento and self.data_evento_fim and self.data_evento_fim < self.data_evento:
             errors['data_evento_fim'] = 'A data final nao pode ser anterior a data inicial.'
-        if self.oficio_id and self.evento_id and self.oficio.evento_id and self.oficio.evento_id != self.evento_id:
-            errors['oficio'] = 'O oficio informado pertence a outro evento.'
+        if self.oficio_id and self.evento_id and self.oficio and not self.oficio.esta_vinculado_a_evento(self.evento_id):
+            errors['oficio'] = 'O oficio informado nao esta vinculado a este evento.'
         if self.roteiro_id and self.evento_id and self.roteiro.evento_id and self.roteiro.evento_id != self.evento_id:
             errors['roteiro'] = 'O roteiro informado pertence a outro evento.'
         if self.oficio_id and self.roteiro_id:
@@ -1383,6 +1390,20 @@ class ModeloJustificativa(models.Model):
         super().save(*args, **kwargs)
 
 
+class OficioQuerySet(models.QuerySet):
+    """Permite `Oficio.objects.create(evento=...)` / `evento_id=` durante a transição de modelagem."""
+
+    def create(self, **kwargs):
+        evento = kwargs.pop('evento', None)
+        evento_id = kwargs.pop('evento_id', None)
+        obj = super().create(**kwargs)
+        if evento is not None:
+            obj.eventos.add(evento)
+        elif evento_id is not None:
+            obj.eventos.add(Evento.objects.get(pk=evento_id))
+        return obj
+
+
 class Oficio(models.Model):
     """
     Ofício, que pode ser avulso ou vinculado a um evento.
@@ -1441,15 +1462,17 @@ class Oficio(models.Model):
         (ASSUNTO_TIPO_CONVALIDACAO, 'Convalidação'),
     ]
 
-    # Vínculos
-    evento = models.ForeignKey(
+    # Vínculos — múltiplos eventos via modelo explícito (fonte canônica de vínculo ofício↔evento).
+    eventos = models.ManyToManyField(
         Evento,
-        on_delete=models.CASCADE,
+        through='OficioEventoVinculo',
         related_name='oficios',
-        verbose_name='Evento',
-        null=True,
         blank=True,
+        verbose_name='Eventos vinculados',
     )
+
+    objects = OficioQuerySet.as_manager()
+
     roteiro_evento = models.ForeignKey(
         'RoteiroEvento',
         on_delete=models.SET_NULL,
@@ -1638,10 +1661,12 @@ class Oficio(models.Model):
         first_trecho = self.trechos.order_by('ordem', 'pk').first() if self.pk else None
         if first_trecho and first_trecho.saida_data:
             data_saida = first_trecho.saida_data
-        elif self.evento_id and self.evento and self.evento.data_inicio:
-            data_saida = self.evento.data_inicio
         else:
-            return self.ASSUNTO_TIPO_AUTORIZACAO
+            ev_of = self.get_evento_principal()
+            if ev_of and ev_of.data_inicio:
+                data_saida = ev_of.data_inicio
+            else:
+                return self.ASSUNTO_TIPO_AUTORIZACAO
         if data_criacao >= data_saida:
             return self.ASSUNTO_TIPO_CONVALIDACAO
         return self.ASSUNTO_TIPO_AUTORIZACAO
@@ -1751,6 +1776,60 @@ class Oficio(models.Model):
         if not self.data_criacao:
             return EMPTY_MASK_DISPLAY
         return self.data_criacao.strftime('%d/%m/%Y')
+
+    def get_evento_principal(self):
+        """Primeiro evento vinculado (ordem estável pelo id do registro de vínculo)."""
+        link = self.vinculos_evento.select_related('evento').order_by('pk').first()
+        return link.evento if link else None
+
+    @property
+    def evento(self):
+        """Compatibilidade de leitura com o antigo FK único (primeiro evento vinculado)."""
+        return self.get_evento_principal()
+
+    @property
+    def evento_id(self):
+        """Compatibilidade com o antigo `evento_id` (sem coluna em DB): id do evento principal."""
+        ev = self.get_evento_principal()
+        return ev.pk if ev else None
+
+    def esta_vinculado_a_evento(self, evento) -> bool:
+        if evento is None:
+            return False
+        eid = getattr(evento, 'pk', evento)
+        return self.eventos.filter(pk=eid).exists()
+
+
+class OficioEventoVinculo(models.Model):
+    """
+    Vínculo explícito Ofício ↔ Evento (N:N).
+    Substitui o antigo FK único `Oficio.evento` como fonte canônica de associação.
+    """
+
+    oficio = models.ForeignKey(
+        'Oficio',
+        on_delete=models.CASCADE,
+        related_name='vinculos_evento',
+        verbose_name='Ofício',
+    )
+    evento = models.ForeignKey(
+        Evento,
+        on_delete=models.CASCADE,
+        related_name='vinculos_oficio_evento',
+        verbose_name='Evento',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Vínculo ofício com evento'
+        verbose_name_plural = 'Vínculos ofício com evento'
+        constraints = [
+            models.UniqueConstraint(fields=['oficio', 'evento'], name='eventos_oficioeventovinculo_unique'),
+        ]
+        ordering = ['pk']
+
+    def __str__(self):
+        return f'{self.oficio_id} → {self.evento_id}'
 
 
 class OficioTrecho(models.Model):

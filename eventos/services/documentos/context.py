@@ -394,7 +394,7 @@ def _build_common_context(oficio):
             'status': _text_or_empty(oficio.get_status_display()),
         },
         'evento': {
-            'vinculado': bool(oficio.evento_id),
+            'vinculado': oficio.eventos.exists(),
             'titulo': _text_or_empty(evento.titulo if evento else ''),
             'periodo': _format_event_period(evento),
         },
@@ -541,10 +541,11 @@ def _get_plano_trabalho_for_oficio(oficio):
     plano = PlanoTrabalho.objects.filter(oficio=oficio).order_by('-updated_at').first()
     if plano:
         return plano
-    if oficio.evento_id:
+    evento_ids = list(oficio.eventos.values_list('pk', flat=True))
+    if evento_ids:
         return (
             PlanoTrabalho.objects.filter(
-                models.Q(evento=oficio.evento) | models.Q(oficios__evento=oficio.evento)
+                models.Q(evento_id__in=evento_ids) | models.Q(oficios__eventos__in=evento_ids)
             )
             .distinct()
             .order_by('-updated_at')
@@ -557,8 +558,9 @@ def _get_ordem_servico_for_oficio(oficio):
     ordem = OrdemServico.objects.filter(oficio=oficio).order_by('-updated_at').first()
     if ordem:
         return ordem
-    if oficio.evento_id:
-        return OrdemServico.objects.filter(evento=oficio.evento).order_by('-updated_at').first()
+    evento_ids = list(oficio.eventos.values_list('pk', flat=True))
+    if evento_ids:
+        return OrdemServico.objects.filter(evento_id__in=evento_ids).order_by('-updated_at').first()
     return None
 
 

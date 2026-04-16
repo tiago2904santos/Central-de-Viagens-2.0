@@ -7,7 +7,7 @@ from eventos.models import Oficio, OrdemServico, PlanoTrabalho
 def planos_trabalho_base_queryset():
     return (
         PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante', 'roteiro')
-        .prefetch_related('oficios', 'oficios__evento')
+        .prefetch_related('oficios', 'oficios__eventos')
         .all()
     )
 
@@ -22,4 +22,4 @@ def ordens_servico_base_queryset():
 
 
 def oficios_linkables(limit=12):
-    return list(Oficio.objects.select_related('evento').order_by('-updated_at')[:limit])
+    return list(Oficio.objects.prefetch_related('eventos').order_by('-updated_at')[:limit])

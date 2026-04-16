@@ -787,7 +787,7 @@ def _build_evento_document_maps(eventos):
     planos = list(
         PlanoTrabalho.objects.select_related('evento', 'oficio', 'roteiro')
         .prefetch_related('oficios')
-        .filter(Q(evento_id__in=event_ids) | Q(oficios__evento_id__in=event_ids))
+        .filter(Q(evento_id__in=event_ids) | Q(oficios__eventos__in=event_ids))
         .distinct()
         .order_by('-updated_at', '-created_at')
     )
@@ -799,8 +799,7 @@ def _build_evento_document_maps(eventos):
         if plano.roteiro_id and plano.roteiro and plano.roteiro.evento_id:
             target_ids.add(plano.roteiro.evento_id)
         for oficio in related_oficios:
-            if oficio.evento_id:
-                target_ids.add(oficio.evento_id)
+            target_ids.update(oficio.eventos.values_list('pk', flat=True))
         meta_parts = []
         if plano.destinos_formatados_display:
             meta_parts.append(plano.destinos_formatados_display)
@@ -820,15 +819,15 @@ def _build_evento_document_maps(eventos):
 
     ordens = list(
         OrdemServico.objects.select_related('evento', 'oficio')
-        .filter(Q(evento_id__in=event_ids) | Q(oficio__evento_id__in=event_ids))
+        .filter(Q(evento_id__in=event_ids) | Q(oficio__eventos__in=event_ids))
         .order_by('-updated_at', '-created_at')
     )
     for ordem in ordens:
         target_ids = set()
         if ordem.evento_id:
             target_ids.add(ordem.evento_id)
-        if ordem.oficio_id and ordem.oficio and ordem.oficio.evento_id:
-            target_ids.add(ordem.oficio.evento_id)
+        if ordem.oficio_id and ordem.oficio:
+            target_ids.update(ordem.oficio.eventos.values_list('pk', flat=True))
         meta_parts = []
         if ordem.oficio_id and ordem.oficio:
             meta_parts.append(f'Oficio {ordem.oficio.numero_formatado}')
@@ -2974,7 +2973,7 @@ def _guiado_v2_step_visual_state(evento, etapa_key):
 
     if etapa_key == 'termos':
         termos_qs = TermoAutorizacao.objects.filter(
-            Q(evento_id=evento.pk) | Q(oficio__evento_id=evento.pk) | Q(oficios__evento_id=evento.pk)
+            Q(evento_id=evento.pk) | Q(oficio__eventos=evento.pk) | Q(oficios__eventos=evento.pk)
         ).distinct()
         if not termos_qs.exists():
             return 'pending'
@@ -3141,13 +3140,13 @@ def _guiado_v2_build_evento_document_counts(evento):
     roteiro_qs = RoteiroEvento.objects.filter(evento=evento)
     oficio_qs = evento.oficios.all()
     plano_qs = PlanoTrabalho.objects.filter(
-        Q(evento_id=evento.pk) | Q(oficio__evento_id=evento.pk) | Q(oficios__evento_id=evento.pk)
+        Q(evento_id=evento.pk) | Q(oficio__eventos=evento.pk) | Q(oficios__eventos=evento.pk)
     ).distinct()
     ordem_qs = OrdemServico.objects.filter(
-        Q(evento_id=evento.pk) | Q(oficio__evento_id=evento.pk)
+        Q(evento_id=evento.pk) | Q(oficio__eventos=evento.pk)
     ).distinct()
     termo_qs = TermoAutorizacao.objects.filter(
-        Q(evento_id=evento.pk) | Q(oficio__evento_id=evento.pk) | Q(oficios__evento_id=evento.pk)
+        Q(evento_id=evento.pk) | Q(oficio__eventos=evento.pk) | Q(oficios__eventos=evento.pk)
     ).distinct()
 
     counters = []
@@ -3207,7 +3206,6 @@ def guiado_etapa_3_v2(request, evento_id):
     evento_document_counts = _guiado_v2_build_evento_document_counts(evento)
     queryset = (
         Oficio.objects.select_related(
-            'evento',
             'cidade_sede',
             'estado_sede',
             'roteiro_evento',
@@ -3216,6 +3214,7 @@ def guiado_etapa_3_v2(request, evento_id):
             'justificativa',
         )
         .prefetch_related(
+            'eventos',
             Prefetch(
                 'trechos',
                 queryset=OficioTrecho.objects.select_related(
@@ -3229,7 +3228,8 @@ def guiado_etapa_3_v2(request, evento_id):
             'termos_autorizacao',
             'termos_autorizacao_relacionados',
         )
-        .filter(evento_id=evento.pk)
+        .filter(eventos=evento)
+        .distinct()
     )
     wizard_steps = _build_guiado_v2_wizard_steps(evento, current_key='oficios')
     oficios_summary = _build_evento_oficios_summary(evento)
@@ -3307,8 +3307,13 @@ def guiado_etapa_3_criar_oficio_v2(request, evento_id):
     evento = get_object_or_404(Evento, pk=evento_id)
     if request.method != 'POST':
         return redirect('eventos:guiado-etapa-3', evento_id=evento.pk)
-    novo_url = f"{reverse('eventos:oficio-novo')}?evento_id={evento.pk}"
-    return redirect(novo_url)
+    oficio = Oficio.objects.create(
+        status=Oficio.STATUS_RASCUNHO,
+        tipo_origem=Oficio.ORIGEM_EVENTO,
+        evento=evento,
+    )
+    messages.success(request, 'Ofício criado. Preencha os dados no wizard.')
+    return redirect('eventos:oficio-step1', pk=oficio.pk)
 
 
 @login_required
@@ -3373,8 +3378,8 @@ def guiado_etapa_5_v2(request, evento_id):
         .prefetch_related('oficios')
         .filter(
             Q(evento_id=evento.pk)
-            | Q(oficio__evento_id=evento.pk)
-            | Q(oficios__evento_id=evento.pk)
+            | Q(oficio__eventos=evento.pk)
+            | Q(oficios__eventos=evento.pk)
         )
         .distinct()
         .order_by('-updated_at', '-created_at')
@@ -3781,7 +3786,7 @@ def oficio_excluir(request, pk):
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
     redirect_url = _oficio_redirect_pos_exclusao(oficio)
     if request.method == 'POST':
-        if oficio.evento_id and _evento_esta_finalizado(oficio.evento):
+        if any(_evento_esta_finalizado(ev) for ev in oficio.eventos.all()):
             messages.error(
                 request,
                 'NÃ£o Ã© possÃ­vel excluir ofÃ­cio vinculado a evento finalizado.',
@@ -3808,8 +3813,11 @@ def _get_oficio_or_404_for_user(pk, user=None):
     Nesta fase, ofÃ­cios finalizados continuam editÃ¡veis e qualquer usuÃ¡rio autenticado
     pode operar o fluxo; o parÃ¢metro `user` centraliza um eventual endurecimento futuro.
     """
-    queryset = Oficio.objects.prefetch_related('viajantes', 'trechos').select_related(
-        'evento',
+    queryset = Oficio.objects.prefetch_related(
+        'viajantes',
+        'trechos',
+        'eventos',
+    ).select_related(
         'veiculo',
         'motorista_viajante',
         'modelo_motivo',
@@ -4158,9 +4166,9 @@ def _autosave_oficio_step1(oficio, request):
         ],
     )
     oficio.viajantes.set(viajantes)
-    if oficio.evento_id:
+    for ev in oficio.eventos.all():
         _evento_sincronizar_participantes(
-            oficio.evento,
+            ev,
             viajantes_ids=[viajante.pk for viajante in viajantes],
         )
 
@@ -4793,11 +4801,12 @@ def _get_step3_saved_routes(oficio, include_ids=None):
         .distinct()
     )
     routes = list(queryset)
+    oficio_event_ids = set(oficio.eventos.values_list('pk', flat=True))
     return sorted(
         routes,
         key=lambda roteiro: (
             0 if roteiro.pk == oficio.roteiro_evento_id else 1,
-            0 if oficio.evento_id and roteiro.evento_id == oficio.evento_id else 1,
+            0 if roteiro.evento_id and roteiro.evento_id in oficio_event_ids else 1,
             0 if roteiro.tipo == RoteiroEvento.TIPO_AVULSO else 1,
             -(roteiro.created_at.timestamp() if roteiro.created_at else 0),
         ),
@@ -7075,7 +7084,10 @@ def guiado_etapa_2_lista(request, evento_id):
         .prefetch_related(
             'destinos__estado',
             'destinos__cidade',
-            Prefetch('oficios', queryset=Oficio.objects.select_related('evento').order_by('-updated_at', '-created_at')),
+            Prefetch(
+                'oficios',
+                queryset=Oficio.objects.prefetch_related('eventos').order_by('-updated_at', '-created_at'),
+            ),
             Prefetch(
                 'trechos',
                 queryset=RoteiroEventoTrecho.objects.select_related(
@@ -7968,9 +7980,12 @@ def _get_plano_trabalho_preferencial(oficio):
     plano = PlanoTrabalho.objects.filter(oficio=oficio).order_by('-updated_at').first()
     if plano:
         return plano
-    if oficio.evento_id:
+    evento_ids = list(oficio.eventos.values_list('pk', flat=True))
+    if evento_ids:
         return (
-            PlanoTrabalho.objects.filter(Q(evento=oficio.evento) | Q(oficios__evento=oficio.evento))
+            PlanoTrabalho.objects.filter(
+                Q(evento_id__in=evento_ids) | Q(oficios__eventos__in=evento_ids)
+            )
             .distinct()
             .order_by('-updated_at')
             .first()
