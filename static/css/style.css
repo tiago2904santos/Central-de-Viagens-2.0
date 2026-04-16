@@ -4221,7 +4221,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .termo-doc-card__servidor-row .btn-doc-action {
-    padding: 0.26rem 0.52rem;
+    padding: 0.50rem 0.52rem;
     font-size: 0.7rem;
 }
 
