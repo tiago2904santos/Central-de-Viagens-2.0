@@ -89,6 +89,10 @@ from .services.justificativa import (
 from .services.oficio_schema import get_oficio_justificativa_schema_status
 from .services.documento_vinculos import resolver_vinculos_oficio
 from .services.documento_vinculos import resolver_vinculos_evento
+from .services.contexto_evento import (
+    build_contexto_roteiro_from_evento,
+    ensure_termo_generico_evento,
+)
 from .services.documentos import (
     DocumentoFormato,
     DocumentoOficioTipo,
@@ -3166,6 +3170,7 @@ def _persist_evento_etapa1(obj, form, destinos_post):
         obj.status = Evento.STATUS_EM_ANDAMENTO
         update_fields.append('status')
     obj.save(update_fields=update_fields)
+    ensure_termo_generico_evento(obj)
     return obj
 
 
@@ -3179,6 +3184,8 @@ def _guiado_v2_build_evento_document_counts(evento):
         Q(evento_id=evento.pk) | Q(oficio__eventos=evento.pk)
     ).distinct()
     termo_qs = TermoAutorizacao.objects.filter(
+        termo_pai__isnull=True,
+    ).filter(
         Q(evento_id=evento.pk) | Q(oficio__eventos=evento.pk) | Q(oficios__eventos=evento.pk)
     ).distinct()
 
@@ -3408,7 +3415,8 @@ def guiado_etapa_5_v2(request, evento_id):
             'veiculo',
             'veiculo__combustivel',
         )
-        .prefetch_related('oficios')
+        .prefetch_related('oficios', 'derivacoes', 'derivacoes__viajante', 'derivacoes__veiculo')
+        .filter(termo_pai__isnull=True)
         .filter(
             Q(evento_id=evento.pk)
             | Q(oficio__eventos=evento.pk)
@@ -6847,6 +6855,36 @@ def _get_or_create_termos_from_oficio(oficio, user=None):
     context = _build_termo_context_for_oficio(oficios=[oficio])
     viajantes = list(context['viajantes'])
     veiculo = context['veiculo_inferido']
+    root = None
+    root_before = None
+    if context['evento']:
+        root_before = (
+            TermoAutorizacao.objects.filter(
+                evento=context['evento'],
+                termo_pai__isnull=True,
+                derivacao_tipo=TermoAutorizacao.DERIVACAO_TIPO_GENERICA,
+            )
+            .order_by('created_at', 'pk')
+            .first()
+        )
+        root = ensure_termo_generico_evento(context['evento'], user=user)
+        if root:
+            if oficio.pk:
+                root.oficio = root.oficio or oficio
+                root.oficios.add(oficio)
+            if context['roteiro'] and not root.roteiro_id:
+                root.roteiro = context['roteiro']
+            if context['destino'] and not (root.destino or '').strip():
+                root.destino = context['destino']
+            if context['data_evento'] and not root.data_evento:
+                root.data_evento = context['data_evento']
+            if context['data_evento_fim'] and not root.data_evento_fim:
+                root.data_evento_fim = context['data_evento_fim']
+            if veiculo and not root.veiculo_id:
+                root.veiculo = veiculo
+            if user and not root.criado_por_id:
+                root.criado_por = user
+            root.save()
     modo = TermoAutorizacao.infer_modo_geracao(
         has_servidores=bool(viajantes),
         has_viatura=bool(veiculo),
@@ -6867,7 +6905,7 @@ def _get_or_create_termos_from_oficio(oficio, user=None):
     }
     existing = list(
         TermoAutorizacao.objects.filter(oficio=oficio)
-        .select_related('viajante', 'veiculo')
+        .select_related('viajante', 'veiculo', 'termo_pai')
         .order_by('created_at', 'pk')
     )
 
@@ -6875,6 +6913,11 @@ def _get_or_create_termos_from_oficio(oficio, user=None):
         for field, value in common.items():
             setattr(termo, field, value)
         termo.viajante = viajante
+        termo.termo_pai = root if root else None
+        if root and not viajante:
+            termo.derivacao_tipo = TermoAutorizacao.DERIVACAO_TIPO_GENERICA
+        elif viajante:
+            termo.derivacao_tipo = TermoAutorizacao.DERIVACAO_TIPO_SERVIDOR
         termo.lote_uuid = lote_uuid
         if user and not termo.criado_por_id:
             termo.criado_por = user
@@ -6885,18 +6928,26 @@ def _get_or_create_termos_from_oficio(oficio, user=None):
 
     termos = []
     created = False
-    if modo == TermoAutorizacao.MODO_RAPIDO:
-        termo = next((item for item in existing if not item.viajante_id), None)
-        if termo is None:
-            termo = TermoAutorizacao()
+    if root is not None:
+        termos.append(root)
+        if root_before is None:
             created = True
-        termo = sync_term(termo, viajante=None, lote_uuid=None)
-        termos.append(termo)
+    if modo == TermoAutorizacao.MODO_RAPIDO:
+        if root is None:
+            termo = next((item for item in existing if not item.viajante_id), None)
+            if termo is None:
+                termo = TermoAutorizacao()
+                created = True
+            termo = sync_term(termo, viajante=None, lote_uuid=None)
+            termos.append(termo)
     else:
         terms_by_viajante_id = {
             item.viajante_id: item for item in existing if item.viajante_id
         }
-        generic_terms = [item for item in existing if not item.viajante_id]
+        generic_terms = [
+            item for item in existing
+            if not item.viajante_id and (root is None or item.pk != root.pk)
+        ]
         for viajante in viajantes:
             termo = terms_by_viajante_id.get(viajante.pk)
             if termo is None and generic_terms:
@@ -6905,7 +6956,10 @@ def _get_or_create_termos_from_oficio(oficio, user=None):
                 termo = TermoAutorizacao()
                 created = True
             termo = sync_term(termo, viajante=viajante, lote_uuid=lote)
-            termos.append(termo)
+            if root is None:
+                termos.append(termo)
+            else:
+                termos.append(termo)
     used_term_ids = {termo.pk for termo in termos if termo.pk}
     for termo in existing:
         if not termo.pk or termo.pk in used_term_ids:
@@ -6917,7 +6971,12 @@ def _get_or_create_termos_from_oficio(oficio, user=None):
         if changed_fields:
             termo.save(update_fields=[*changed_fields, 'updated_at'])
         termo.oficios.remove(oficio)
-    termos.sort(key=lambda item: ((item.viajante is None), item.servidor_display or '', item.pk or 0))
+    if root is not None and root.pk:
+        child_terms = [item for item in termos if item.pk and item.pk != root.pk]
+        child_terms.sort(key=lambda item: ((item.viajante is None), item.servidor_display or '', item.pk or 0))
+        termos = [root, *child_terms]
+    else:
+        termos.sort(key=lambda item: ((item.viajante is None), item.servidor_display or '', item.pk or 0))
     return termos, created
 
 
@@ -7075,16 +7134,7 @@ def _build_evento_roteiro_initial(evento):
     Monta o initial da etapa 2 priorizando a configuração global, mas caindo
     para a sede do próprio evento quando não houver padrão configurado.
     """
-    initial = {}
-    config = ConfiguracaoSistema.get_singleton()
-    sede_cidade = getattr(config, 'cidade_sede_padrao', None) if config else None
-    if not sede_cidade:
-        sede_cidade = getattr(evento, 'cidade_base', None) or getattr(evento, 'cidade_principal', None)
-    if sede_cidade and sede_cidade.pk:
-        initial['origem_cidade'] = sede_cidade.pk
-        if getattr(sede_cidade, 'estado_id', None):
-            initial['origem_estado'] = sede_cidade.estado_id
-    return initial
+    return build_contexto_roteiro_from_evento(evento).get('initial', {})
 
 
 def _setup_roteiro_querysets(form, request, instance=None):

@@ -491,7 +491,8 @@ class EventoEtapa2RoteirosTest(TestCase):
         self.assertContains(response, 'oficios-view-pane--basic')
         self.assertContains(response, 'oficios-view-pane--rich')
         self.assertContains(response, 'aria-label="Alternar visualizacao dos roteiros do evento"')
-        self.assertContains(response, 'Subir lista')
+        self.assertContains(response, 'data-scroll-top')
+        self.assertContains(response, 'Subir ao topo')
         self.assertContains(response, 'Novo roteiro')
 
     def test_criar_roteiro_dentro_de_evento(self):

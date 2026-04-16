@@ -43,6 +43,11 @@ from .services.plano_trabalho_step2 import (
     build_plano_step2_defaults,
     reconcile_plano_step2_state,
 )
+from .services.contexto_evento import (
+    build_contexto_ordem_servico_from_evento,
+    build_contexto_termo_from_evento,
+    ensure_termo_generico_evento,
+)
 from core.utils.masks import format_placa, format_protocolo, normalize_placa
 from .utils import buscar_veiculo_finalizado_por_placa, mapear_tipo_viatura_para_oficio, normalize_protocolo
 
@@ -1267,6 +1272,15 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
                 .prefetch_related('eventos')
                 .order_by('-updated_at')
             )
+            if not self.is_bound and not (instance and instance.pk):
+                contexto_evento = build_contexto_ordem_servico_from_evento(selected_event)
+                if contexto_evento['viajantes_ids']:
+                    self.initial.setdefault('viajantes', contexto_evento['viajantes_ids'])
+                if contexto_evento['data_deslocamento']:
+                    self.initial.setdefault('data_deslocamento', contexto_evento['data_deslocamento'])
+                    self.initial.setdefault('data_deslocamento_fim', contexto_evento['data_deslocamento_fim'] or contexto_evento['data_deslocamento'])
+                if contexto_evento['destinos_payload']:
+                    self.initial.setdefault('destinos_payload', json.dumps(contexto_evento['destinos_payload']))
 
         if self.instance and self.instance.pk:
             self.initial.setdefault('viajantes', list(self.instance.viajantes.values_list('pk', flat=True)))
@@ -1566,7 +1580,7 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
         self.cleaned_viajantes = []
         self.cleaned_veiculo = None
         self.cleaned_oficios = []
-        self.context_data = build_termo_context()
+        self.context_data = build_contexto_termo_from_evento(None)
         self.preview_payload = build_termo_preview_payload(self.context_data)
         self.fields['evento'].required = False
         self.fields['roteiro'].required = False
@@ -1606,7 +1620,7 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
             self.add_error('oficios', 'Selecione apenas 1 ofício por termo de autorização.')
         evento = data.get('evento')
         roteiro = data.get('roteiro')
-        self.context_data = build_termo_context(
+        self.context_data = build_contexto_termo_from_evento(
             evento=evento,
             oficios=self.cleaned_oficios,
             roteiro=roteiro,
@@ -1665,28 +1679,90 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
     def save_terms(self, *, user=None):
         cleaned = self.cleaned_data
         oficio_legacy = self.cleaned_oficios[0] if self.cleaned_oficios else None
+        evento = cleaned.get('evento') or self.context_data['evento']
+        roteiro = cleaned.get('roteiro') or self.context_data['roteiro']
+        destino = cleaned.get('destino') or self.context_data['destino']
+        data_evento = cleaned.get('data_evento') or self.context_data['data_evento']
+        data_evento_fim = cleaned.get('data_evento_fim') or self.context_data['data_evento_fim']
         common_kwargs = {
-            'evento': cleaned.get('evento') or self.context_data['evento'],
-            'roteiro': cleaned.get('roteiro') or self.context_data['roteiro'],
+            'evento': evento,
+            'roteiro': roteiro,
             'oficio': oficio_legacy,
-            'destino': cleaned.get('destino') or self.context_data['destino'],
-            'data_evento': cleaned.get('data_evento') or self.context_data['data_evento'],
-            'data_evento_fim': cleaned.get('data_evento_fim') or self.context_data['data_evento_fim'],
+            'destino': destino,
+            'data_evento': data_evento,
+            'data_evento_fim': data_evento_fim,
             'criado_por': user,
             'veiculo': self.cleaned_veiculo,
         }
-        modo = self.preview_payload['modo_geracao']
-        lote_uuid = uuid.uuid4() if modo != TermoAutorizacao.MODO_RAPIDO else None
-        termos = []
 
+        if evento:
+            root = ensure_termo_generico_evento(evento, user=user)
+            if root:
+                if oficio_legacy and not root.oficio_id:
+                    root.oficio = oficio_legacy
+                if oficio_legacy:
+                    root.oficios.add(oficio_legacy)
+                if destino and not (root.destino or '').strip():
+                    root.destino = destino
+                if data_evento and not root.data_evento:
+                    root.data_evento = data_evento
+                if data_evento_fim and not root.data_evento_fim:
+                    root.data_evento_fim = data_evento_fim
+                if self.cleaned_veiculo and not root.veiculo_id:
+                    root.veiculo = self.cleaned_veiculo
+                root.save()
+
+                viajantes = self.cleaned_viajantes or list(self.context_data['viajantes'])
+                termos = [root]
+                if viajantes:
+                    lote_uuid = uuid.uuid4()
+                    for viajante in viajantes:
+                        child = (
+                            TermoAutorizacao.objects.select_related('viajante', 'veiculo')
+                            .filter(
+                                termo_pai=root,
+                                derivacao_tipo=TermoAutorizacao.DERIVACAO_TIPO_SERVIDOR,
+                                viajante=viajante,
+                            )
+                            .first()
+                        )
+                        if child is None:
+                            child = TermoAutorizacao(
+                                **common_kwargs,
+                                viajante=viajante,
+                                termo_pai=root,
+                                derivacao_tipo=TermoAutorizacao.DERIVACAO_TIPO_SERVIDOR,
+                                lote_uuid=lote_uuid,
+                            )
+                        else:
+                            child.evento = evento
+                            child.roteiro = roteiro
+                            child.oficio = oficio_legacy
+                            child.destino = destino or child.destino
+                            child.data_evento = data_evento or child.data_evento
+                            child.data_evento_fim = data_evento_fim or child.data_evento_fim
+                            child.viajante = viajante
+                            child.veiculo = self.cleaned_veiculo or child.veiculo
+                            child.termo_pai = root
+                            child.derivacao_tipo = TermoAutorizacao.DERIVACAO_TIPO_SERVIDOR
+                        child.full_clean()
+                        child.save()
+                        if oficio_legacy:
+                            child.oficios.add(oficio_legacy)
+                        termos.append(child)
+                return termos
+
+        modo = self.preview_payload['modo_geracao']
         if modo == TermoAutorizacao.MODO_RAPIDO:
             termo = TermoAutorizacao(**common_kwargs)
             termo.full_clean()
             termo.save()
             if oficio_legacy:
-                termo.oficios.set([oficio_legacy])
+                termo.oficios.add(oficio_legacy)
             return [termo]
 
+        termos = []
+        lote_uuid = uuid.uuid4()
         for viajante in self.cleaned_viajantes:
             termo = TermoAutorizacao(
                 **common_kwargs,
@@ -1696,7 +1772,7 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
             termo.full_clean()
             termo.save()
             if oficio_legacy:
-                termo.oficios.set([oficio_legacy])
+                termo.oficios.add(oficio_legacy)
             termos.append(termo)
         return termos
 

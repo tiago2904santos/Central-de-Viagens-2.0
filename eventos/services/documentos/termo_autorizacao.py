@@ -432,7 +432,7 @@ def _build_saved_termo_viajante_snapshot(termo):
 def build_saved_termo_autorizacao_template_context(termo):
     modalidade = (
         TERMO_MODALIDADE_SEMIPREENCHIDO
-        if getattr(termo, 'modo_geracao', '') == 'RAPIDO'
+        if getattr(termo, 'modo_geracao', '') in {'RAPIDO', 'GENERICA'}
         else TERMO_MODALIDADE_COMPLETO
     )
     data_do_evento = _build_data_do_evento_from_dates(

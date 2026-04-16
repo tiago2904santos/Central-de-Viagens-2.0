@@ -977,13 +977,24 @@ class EventoFinalizacao(models.Model):
 class TermoAutorizacao(models.Model):
     """Documento real de termo de autorizacao."""
 
+    MODO_GENERICO = 'GENERICA'
     MODO_RAPIDO = 'RAPIDO'
     MODO_AUTOMATICO_COM_VIATURA = 'AUTOMATICO_COM_VIATURA'
     MODO_AUTOMATICO_SEM_VIATURA = 'AUTOMATICO_SEM_VIATURA'
     MODO_CHOICES = [
+        (MODO_GENERICO, 'Termo generico do evento'),
         (MODO_RAPIDO, 'Termo rapido'),
         (MODO_AUTOMATICO_COM_VIATURA, 'Automatico com viatura'),
         (MODO_AUTOMATICO_SEM_VIATURA, 'Automatico sem viatura'),
+    ]
+
+    DERIVACAO_TIPO_GENERICA = 'GENERICA'
+    DERIVACAO_TIPO_SERVIDOR = 'SERVIDOR'
+    DERIVACAO_TIPO_VIATURA = 'VIATURA'
+    DERIVACAO_TIPO_CHOICES = [
+        (DERIVACAO_TIPO_GENERICA, 'Termo generico'),
+        (DERIVACAO_TIPO_SERVIDOR, 'Servidor'),
+        (DERIVACAO_TIPO_VIATURA, 'Viatura'),
     ]
 
     STATUS_RASCUNHO = 'RASCUNHO'
@@ -1014,6 +1025,21 @@ class TermoAutorizacao(models.Model):
         max_length=30,
         choices=TEMPLATE_VARIANT_CHOICES,
         default=TEMPLATE_SEMIPREENCHIDO,
+    )
+    termo_pai = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='derivacoes',
+        verbose_name='Termo pai',
+    )
+    derivacao_tipo = models.CharField(
+        'Tipo da derivacao',
+        max_length=20,
+        choices=DERIVACAO_TIPO_CHOICES,
+        default=DERIVACAO_TIPO_SERVIDOR,
+        db_index=True,
     )
     status = models.CharField(
         'Status',
@@ -1116,6 +1142,8 @@ class TermoAutorizacao(models.Model):
     @property
     def titulo_display(self):
         parts = ['Termo de autorizacao']
+        if self.is_termo_generico():
+            parts = ['Termo generico do evento']
         destino = (self.destino or '').strip()
         periodo = (self.periodo_display or '').strip()
         servidor = (self.servidor_display or '').strip()
@@ -1164,10 +1192,15 @@ class TermoAutorizacao(models.Model):
             return cls.MODO_AUTOMATICO_SEM_VIATURA
         return cls.MODO_RAPIDO
 
+    def is_termo_generico(self):
+        return self.termo_pai_id is None and self.derivacao_tipo == self.DERIVACAO_TIPO_GENERICA
+
     @property
     def oficios_relacionados_display(self):
         oficio_canonico = self.get_oficio_canonico()
-        oficios = [oficio_canonico] if oficio_canonico else []
+        oficios = list(self.oficios.all())
+        if not oficios and oficio_canonico:
+            oficios = [oficio_canonico]
         labels = []
         seen = set()
         for oficio in oficios:
@@ -1203,6 +1236,21 @@ class TermoAutorizacao(models.Model):
                 self.roteiro = self.oficio.roteiro_evento
         if self.roteiro_id and not self.evento_id and self.roteiro.evento_id:
             self.evento = self.roteiro.evento
+
+    def _sync_parent_context(self):
+        if self.termo_pai_id and self.termo_pai:
+            if not self.evento_id and self.termo_pai.evento_id:
+                self.evento = self.termo_pai.evento
+            if not self.roteiro_id and self.termo_pai.roteiro_id:
+                self.roteiro = self.termo_pai.roteiro
+            if not self.destino and self.termo_pai.destino:
+                self.destino = self.termo_pai.destino
+            if not self.data_evento and self.termo_pai.data_evento:
+                self.data_evento = self.termo_pai.data_evento
+            if not self.data_evento_fim and self.termo_pai.data_evento_fim:
+                self.data_evento_fim = self.termo_pai.data_evento_fim
+            if not self.veiculo_id and self.termo_pai.veiculo_id:
+                self.veiculo = self.termo_pai.veiculo
 
     def populate_snapshots_from_relations(self, force=False):
         viajante = self.viajante
@@ -1241,6 +1289,8 @@ class TermoAutorizacao(models.Model):
             return False
         if not self.data_evento:
             return False
+        if self.is_termo_generico():
+            return True
         if self.modo_geracao == self.MODO_AUTOMATICO_COM_VIATURA:
             return bool((self.servidor_display or '').strip() and (self.viatura_display or '').strip())
         if self.modo_geracao == self.MODO_AUTOMATICO_SEM_VIATURA:
@@ -1249,6 +1299,7 @@ class TermoAutorizacao(models.Model):
 
     def clean(self):
         self._sync_context_relations()
+        self._sync_parent_context()
         self.destino = (self.destino or '').strip()
         self.servidor_nome = (self.servidor_nome or '').strip()
         self.servidor_rg = (self.servidor_rg or '').strip()
@@ -1258,12 +1309,15 @@ class TermoAutorizacao(models.Model):
         self.veiculo_placa = (self.veiculo_placa or '').strip().upper()
         self.veiculo_modelo = (self.veiculo_modelo or '').strip()
         self.veiculo_combustivel = (self.veiculo_combustivel or '').strip()
-        has_servidores = bool((self.servidor_display or '').strip())
-        has_viatura = bool((self.viatura_display or '').strip())
-        self.modo_geracao = self.infer_modo_geracao(
-            has_servidores=has_servidores,
-            has_viatura=has_viatura,
-        )
+        if self.is_termo_generico():
+            self.modo_geracao = self.MODO_GENERICO
+        else:
+            has_servidores = bool((self.servidor_display or '').strip())
+            has_viatura = bool((self.viatura_display or '').strip())
+            self.modo_geracao = self.infer_modo_geracao(
+                has_servidores=has_servidores,
+                has_viatura=has_viatura,
+            )
 
         errors = {}
         if not self.destino:
@@ -1296,13 +1350,19 @@ class TermoAutorizacao(models.Model):
 
     def save(self, *args, **kwargs):
         self._sync_context_relations()
-        self.modo_geracao = self.infer_modo_geracao(
-            has_servidores=bool((self.servidor_display or '').strip() or getattr(self.viajante, 'nome', '')),
-            has_viatura=bool((self.viatura_display or '').strip() or getattr(self.veiculo, 'placa', '')),
-        )
+        self._sync_parent_context()
+        if self.is_termo_generico():
+            self.modo_geracao = self.MODO_GENERICO
+        else:
+            self.modo_geracao = self.infer_modo_geracao(
+                has_servidores=bool((self.servidor_display or '').strip() or getattr(self.viajante, 'nome', '')),
+                has_viatura=bool((self.viatura_display or '').strip() or getattr(self.veiculo, 'placa', '')),
+            )
         self.template_variant = self.template_variant_for_mode(self.modo_geracao)
         self.populate_snapshots_from_relations()
-        if self.modo_geracao != self.MODO_RAPIDO and not self.lote_uuid:
+        if self.is_termo_generico():
+            self.lote_uuid = None
+        elif self.modo_geracao != self.MODO_RAPIDO and not self.lote_uuid:
             self.lote_uuid = uuid.uuid4()
         if self.modo_geracao == self.MODO_RAPIDO:
             self.lote_uuid = None

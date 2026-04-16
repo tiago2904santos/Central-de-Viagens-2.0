@@ -2898,7 +2898,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     flex: 1 1 42rem;
     gap: 0.48rem;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .oficio-list-chip {
@@ -3083,6 +3083,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .oficio-list-transport-panel__detail {
     display: grid;
+    grid-auto-flow: column;
     gap: 0.24rem;
     padding: 0.66rem 0.74rem;
     border-radius: 1rem;
@@ -3456,7 +3457,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .termo-doc-card__transport-panel {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.56rem;
 }
 

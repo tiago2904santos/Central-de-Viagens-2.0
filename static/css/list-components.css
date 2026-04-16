@@ -571,7 +571,7 @@
 }
 
 .system-document-filter__field--search {
-    grid-column: span 4;
+    grid-column: span 40;
 }
 
 .system-document-filter__field--wide {

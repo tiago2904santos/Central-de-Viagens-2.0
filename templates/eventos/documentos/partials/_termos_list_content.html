@@ -67,7 +67,35 @@
                 </div>
             </div>
 
-            {% if termo.has_servidor_card or termo.has_viatura_card %}
+            {% if termo.derivacoes_cards %}
+            <div class="oficio-list-card__secondary">
+                <section class="oficio-list-subcard termo-doc-card__context oficio-list-surface oficio-list-surface--panel">
+                    <div class="oficio-list-subcard__body">
+                        <div class="oficio-list-transport-panel termo-doc-card__transport-panel termo-doc-card__transport-panel--multi">
+                            {% for item in termo.derivacoes_cards %}
+                            <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--{{ item.tipo|lower }}">
+                                <span class="oficio-list-transport-panel__kicker">
+                                    {% if item.tipo == 'VIATURA' %}
+                                    <i class="bi bi-truck"></i>
+                                    {% else %}
+                                    <i class="bi bi-person-badge"></i>
+                                    {% endif %}
+                                    <span>{{ item.tipo }}</span>
+                                </span>
+                                <div class="oficio-list-transport-panel__detail-value">{{ item.titulo }}</div>
+                                {% if item.detalhe %}
+                                <p class="oficio-list-transport-panel__support">{{ item.detalhe }}</p>
+                                {% endif %}
+                                {% if item.badge %}
+                                <div class="small text-muted mt-2">{{ item.badge }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </section>
+            </div>
+            {% elif termo.has_servidor_card or termo.has_viatura_card %}
             <div class="oficio-list-card__secondary">
                 <section class="oficio-list-subcard termo-doc-card__context oficio-list-surface oficio-list-surface--panel">
                     <div class="oficio-list-subcard__body">

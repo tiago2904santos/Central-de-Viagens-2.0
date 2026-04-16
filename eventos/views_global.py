@@ -87,6 +87,13 @@ from .services.documento_presenters import (
     build_ordem_vinculos_semanticos,
     build_plano_vinculos_semanticos,
 )
+from .services.contexto_evento import (
+    attach_termo_derivacoes,
+    build_contexto_ordem_servico_from_evento,
+    build_contexto_plano_trabalho_from_evento,
+    build_contexto_termo_from_evento,
+    ensure_termo_generico_evento,
+)
 from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
@@ -2765,6 +2772,7 @@ def _decorate_termo_list_items(items, *, current_path=''):
         termo.mode_meta = _termo_mode_meta(termo.modo_geracao)
         termo.context_display = _termo_context_display(termo)
         termo.title_display = termo.titulo_display
+        termo.is_root_generic = bool(getattr(termo, 'is_termo_generico', lambda: False)())
         termo.servidor_nome_card = (termo.servidor_display or '').strip()
         termo.servidor_resumo = termo.servidor_nome_card or 'Sem servidor'
         termo.servidor_lotacao_card = (termo.servidor_lotacao or '').strip()
@@ -2778,6 +2786,56 @@ def _decorate_termo_list_items(items, *, current_path=''):
         termo.veiculo_placa_card = (termo.veiculo_placa or '').strip()
         termo.veiculo_modelo_card = (termo.veiculo_modelo or '').strip()
         termo.veiculo_combustivel_card = (termo.veiculo_combustivel or '').strip()
+        termo.derivacoes_cards = []
+
+        def _append_derivacao(tipo, titulo, detalhe='', url='', badge=''):
+            titulo = _clean(titulo)
+            detalhe = _clean(detalhe)
+            if not titulo and not detalhe:
+                return
+            termo.derivacoes_cards.append(
+                {
+                    'tipo': tipo,
+                    'titulo': titulo or detalhe,
+                    'detalhe': detalhe,
+                    'url': url,
+                    'badge': badge,
+                }
+            )
+
+        if termo.is_root_generic:
+            if termo.viatura_display or termo.veiculo_id:
+                _append_derivacao(
+                    'VIATURA',
+                    'Viatura',
+                    termo.viatura_display or (termo.veiculo_modelo_card or termo.veiculo_placa_card or 'Sem viatura'),
+                )
+            derivacoes = list(getattr(termo, 'derivacoes', []).all() if hasattr(getattr(termo, 'derivacoes', None), 'all') else [])
+            for derivacao in derivacoes:
+                if derivacao.pk == termo.pk:
+                    continue
+                if derivacao.viajante_id or derivacao.servidor_display:
+                    _append_derivacao(
+                        'SERVIDOR',
+                        'Servidor',
+                        derivacao.servidor_display or (getattr(derivacao.viajante, 'nome', '') if derivacao.viajante_id else ''),
+                        url=reverse('eventos:documentos-termos-editar', kwargs={'pk': derivacao.pk}),
+                        badge=derivacao.numero_formatado,
+                    )
+                elif derivacao.veiculo_id or derivacao.viatura_display:
+                    _append_derivacao(
+                        'VIATURA',
+                        'Viatura',
+                        derivacao.viatura_display,
+                        url=reverse('eventos:documentos-termos-editar', kwargs={'pk': derivacao.pk}),
+                        badge=derivacao.numero_formatado,
+                    )
+        else:
+            derivacao_tipo = (getattr(termo, 'derivacao_tipo', '') or '').strip().upper()
+            if derivacao_tipo == TermoAutorizacao.DERIVACAO_TIPO_SERVIDOR and (termo.servidor_display or termo.viajante_id):
+                _append_derivacao('SERVIDOR', 'Servidor', termo.servidor_display or termo.servidor_nome)
+            elif derivacao_tipo == TermoAutorizacao.DERIVACAO_TIPO_VIATURA and (termo.viatura_display or termo.veiculo_id):
+                _append_derivacao('VIATURA', 'Viatura', termo.viatura_display)
 
         termo.has_servidor_card = bool(termo.servidor_nome_card)
         termo.has_viatura_card = bool(
@@ -5215,6 +5273,11 @@ def simulacao_diarias_global(request):
 
 
 TERMO_MODO_META = {
+    TermoAutorizacao.MODO_GENERICO: {
+        'label': 'Termo generico do evento',
+        'description': 'Usado como card principal do evento e agrupador dos derivados.',
+        'template_name': TERMO_TEMPLATE_NAMES[TermoAutorizacao.MODO_RAPIDO],
+    },
     TermoAutorizacao.MODO_RAPIDO: {
         'label': 'Termo simples',
         'description': 'Usado quando o contexto nao traz base suficiente para gerar um termo por servidor.',
@@ -5307,7 +5370,7 @@ def _build_saved_termo_filename(termo, formato):
 
 def _build_termo_initial(preselected_event, preselected_oficio):
     initial = {'oficios': []}
-    context = build_termo_context(
+    context = build_contexto_termo_from_evento(
         evento=preselected_event,
         oficios=[preselected_oficio] if preselected_oficio else [],
         roteiro=getattr(preselected_oficio, 'roteiro_evento', None) if preselected_oficio else None,
@@ -5508,7 +5571,15 @@ def termos_global(request):
             'veiculo',
             'veiculo__combustivel',
         )
-        .prefetch_related('oficios')
+        .prefetch_related(
+            'oficios',
+            'derivacoes',
+            'derivacoes__viajante',
+            'derivacoes__viajante__cargo',
+            'derivacoes__veiculo',
+            'derivacoes__veiculo__combustivel',
+        )
+        .filter(termo_pai__isnull=True)
     )
     if filters['q']:
         queryset = queryset.filter(
@@ -5520,6 +5591,10 @@ def termos_global(request):
             | Q(servidor_nome__icontains=filters['q'])
             | Q(veiculo_modelo__icontains=filters['q'])
             | Q(veiculo_placa__icontains=filters['q'])
+            | Q(derivacoes__viajante__nome__icontains=filters['q'])
+            | Q(derivacoes__servidor_nome__icontains=filters['q'])
+            | Q(derivacoes__veiculo_modelo__icontains=filters['q'])
+            | Q(derivacoes__veiculo_placa__icontains=filters['q'])
         ).distinct()
     if filters['evento_id'].isdigit():
         queryset = queryset.filter(evento_id=int(filters['evento_id']))
