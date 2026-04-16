@@ -164,7 +164,6 @@ class PtOsDesacopladoTest(TestCase):
         self.assertContains(response, 'oficio-stage-panel')
         self.assertContains(response, 'oficio-stage-intro')
         self.assertContains(response, 'Criação')
-        self.assertContains(response, 'Vínculos documentais')
         self.assertContains(response, 'Datas')
         self.assertContains(response, 'evento-dataunica-pill')
         self.assertContains(response, 'Oculta a data final')

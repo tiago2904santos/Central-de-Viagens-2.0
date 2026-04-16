@@ -824,7 +824,8 @@
 
             <div class="pt-step1-layout">
               <div class="pt-step1-grid-top">
-                <section class="oficio-stage-section pt-step1-card pt-step1-card--institucional">
+                {# Passo 1 — vínculos a evento/ofício/roteiro ocultos na UI; campos permanecem no DOM para não quebrar o POST. #}
+                <section class="oficio-stage-section pt-step1-card pt-step1-card--institucional d-none" aria-hidden="true">
                   <div class="oficio-expandable" data-open="true" id="pt-vinculo-expandable">
                     <div class="oficio-expandable-header">
                       <span>Dados institucionais</span>

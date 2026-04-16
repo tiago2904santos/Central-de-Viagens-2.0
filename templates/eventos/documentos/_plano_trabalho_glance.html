@@ -10,7 +10,8 @@
   <div class="oficio-glance-panel-inner">
     <div class="oficio-glance-layout plano-trabalho-glance-layout">
       <div class="oficio-glance-summary">
-        <div class="oficio-glance-row">
+        {# Resumo Evento / Ofícios oculto na UI — a recriar no novo desenho (ids pt-summary-evento / pt-summary-oficios podem voltar). #}
+        <div class="oficio-glance-row d-none" aria-hidden="true">
           <article class="oficio-glance-card">
             <span class="oficio-glance-item-label">Evento</span>
             <strong class="oficio-glance-item-value" id="pt-summary-evento" data-empty-text="Sem evento vinculado">{{ pt_glance.evento }}</strong>

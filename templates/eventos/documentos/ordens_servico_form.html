@@ -38,7 +38,7 @@
             <div class="oficio-stage-section-head">
               <div>
                 <h2 class="oficio-stage-section-title">Contexto do documento</h2>
-                <p class="oficio-stage-section-text">Número, vínculo e status acompanham a ordem sem criar uma variação visual paralela.</p>
+                <p class="oficio-stage-section-text">Número e status acompanham a ordem sem criar uma variação visual paralela.</p>
               </div>
               <span class="ordem-servico-context-pill">{% if object and object.numero_formatado %}{{ object.numero_formatado }}{% else %}{{ ordem_numero_preview|default:'A definir' }}{% endif %}</span>
             </div>
@@ -53,51 +53,14 @@
                 <strong id="ordem-servico-preview-data">{% if object and object.data_criacao %}{{ object.data_criacao|date:'d/m/Y' }}{% else %}{{ form.data_criacao.value|default:'Hoje' }}{% endif %}</strong>
               </div>
               <div class="ordem-servico-context-item">
-                <span>Vínculo</span>
-                <strong id="ordem-servico-preview-vinculo">{{ ordem_vinculo_texto|default:'Cadastro avulso' }}</strong>
-              </div>
-              <div class="ordem-servico-context-item">
                 <span>Status</span>
                 <strong id="ordem-servico-preview-status">{% if object %}{{ object.get_status_display }}{% else %}Rascunho{% endif %}</strong>
               </div>
             </div>
           </section>
 
-          <section class="oficio-stage-section">
-            <div class="oficio-stage-section-head">
-              <div>
-                <h2 class="oficio-stage-section-title">Vínculos documentais</h2>
-                <p class="oficio-stage-section-text">Vínculos diretos são definidos no formulário; vínculos herdados são resolvidos automaticamente por regra de domínio.</p>
-              </div>
-            </div>
-            <div class="row g-3">
-              <div class="col-md-6">
-                <h3 class="h6 mb-2">Diretos</h3>
-                {% if ordem_vinculos_diretos %}
-                  <ul class="mb-0">
-                    {% for vinculo in ordem_vinculos_diretos %}
-                      <li>{{ vinculo.rotulo }}</li>
-                    {% endfor %}
-                  </ul>
-                {% else %}
-                  <p class="text-muted mb-0">Sem vínculo direto.</p>
-                {% endif %}
-              </div>
-              <div class="col-md-6">
-                <h3 class="h6 mb-2">Herdados</h3>
-                {% if ordem_vinculos_herdados %}
-                  <ul class="mb-0">
-                    {% for vinculo in ordem_vinculos_herdados %}
-                      <li>{{ vinculo.rotulo }}</li>
-                    {% endfor %}
-                  </ul>
-                {% else %}
-                  <p class="text-muted mb-0">Sem vínculo herdado.</p>
-                {% endif %}
-              </div>
-            </div>
-          </section>
-          
+          {# Secção "Vínculos documentais" (lista diretos/herdados) removida da UI — reintroduzir quando necessário. #}
+
           <section class="evento-section evento-section-datas ordem-servico-section ordem-servico-section--datas">
             <div class="evento-section-head evento-section-head--datas">
               <h2 class="evento-section-title">Datas</h2>

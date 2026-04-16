@@ -234,8 +234,8 @@ class EventoDetalheTest(TestCase):
         EventoDestino.objects.create(evento=ev, estado=estado, cidade=cidade, ordem=0)
         response = self.client.get(reverse('eventos:detalhe', kwargs={'pk': ev.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Vínculos documentais')
-        self.assertContains(response, 'Ofícios (diretos)')
+        self.assertContains(response, 'Resumo consolidado do evento')
+        self.assertContains(response, 'Curitiba')
 
 
 class EventoExcluirTest(TestCase):
@@ -3166,16 +3166,18 @@ class EventoEtapa5TermosTest(TestCase):
 
         response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Termo generico do evento')
-        self.assertContains(response, 'termo-doc-card__derivacao-row--servidor', html=False)
-        self.assertContains(response, 'termo-doc-card__derivacao-row--viatura', html=False)
-        self.assertContains(response, viajante.nome)
-        self.assertContains(response, 'Viatura')
+        self.assertContains(response, 'TERMO GENÉRICO DO EVENTO')
+        self.assertContains(response, 'Derivações')
+        self.assertContains(response, 'Ações do termo genérico')
         self.assertContains(response, 'Abrir')
         self.assertContains(response, 'Visualizar')
         self.assertContains(response, 'DOCX')
         self.assertContains(response, 'PDF')
         self.assertContains(response, 'Excluir')
+        termo_renderizado = response.context['object_list'][0]
+        self.assertEqual(termo_renderizado.derivacoes_total, 2)
+        self.assertIsNotNone(termo_renderizado.viatura_card)
+        self.assertEqual(len(termo_renderizado.servidores_cards), 1)
 
     def test_etapa_5_restaura_toolbar_propria_com_toggle_sem_filtros_globais(self):
         response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))

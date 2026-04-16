@@ -3928,6 +3928,253 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     flex-wrap: wrap;
 }
 
+.termo-doc-card__derivacoes-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    gap: 0.72rem;
+    align-items: start;
+}
+
+.termo-doc-card__derivacoes-pane {
+    display: grid;
+    gap: 0.44rem;
+    min-width: 0;
+}
+
+.termo-doc-card__derivacoes-pane-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.termo-doc-card__derivacoes-pane-title {
+    margin: 0;
+    color: #16324f;
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.termo-doc-card__derivacoes-pane-subtitle {
+    margin: 0.14rem 0 0;
+    color: var(--oficios-muted);
+    font-size: 0.72rem;
+    line-height: 1.25;
+}
+
+.termo-doc-card__derivacoes-pane-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.7rem;
+    min-width: 1.7rem;
+    padding: 0.16rem 0.42rem;
+    border-radius: 999px;
+    background: #e2eefc;
+    color: #15508a;
+    border: 1px solid #c0d8f4;
+    font-size: 0.72rem;
+    font-weight: 900;
+}
+
+.termo-doc-card__viatura-card {
+    display: grid;
+    gap: 0.52rem;
+    min-height: 100%;
+    padding: 0.78rem 0.82rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(3, 105, 161, 0.14);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 249, 255, 0.88)),
+        linear-gradient(135deg, rgba(3, 105, 161, 0.08), rgba(255, 255, 255, 0.14));
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.termo-doc-card__viatura-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.62rem;
+}
+
+.termo-doc-card__viatura-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    width: fit-content;
+    min-height: 1.8rem;
+    padding: 0.2rem 0.52rem;
+    border-radius: 999px;
+    border: 1px solid rgba(3, 105, 161, 0.2);
+    background: rgba(3, 105, 161, 0.11);
+    color: #173354;
+    font-size: 0.69rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.termo-doc-card__viatura-type .bi {
+    font-size: 0.82rem;
+}
+
+.termo-doc-card__viatura-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.8rem;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1b4a7a;
+    border: 1px solid #c6ddf6;
+    font-size: 0.72rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.termo-doc-card__viatura-body {
+    display: grid;
+    gap: 0.16rem;
+    min-width: 0;
+}
+
+.termo-doc-card__viatura-title {
+    color: #10233b;
+    font-size: 1.02rem;
+    font-weight: 900;
+    line-height: 1.18;
+}
+
+.termo-doc-card__viatura-detail {
+    color: var(--oficios-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.termo-doc-card__viatura-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.34rem;
+    flex-wrap: wrap;
+    padding-top: 0.54rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.termo-doc-card__viatura-card .btn-doc-action {
+    padding: 0.3rem 0.58rem;
+    font-size: 0.72rem;
+}
+
+.termo-doc-card__servidores-list {
+    display: grid;
+    gap: 0.36rem;
+}
+
+.termo-doc-card__servidor-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.56rem;
+    align-items: center;
+    min-width: 0;
+    padding: 0.48rem 0.56rem;
+    border-radius: 0.95rem;
+    border: 1px solid rgba(33, 94, 207, 0.11);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 250, 255, 0.88)),
+        linear-gradient(135deg, rgba(33, 94, 207, 0.06), rgba(255, 255, 255, 0.1));
+}
+
+.termo-doc-card__servidor-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    width: fit-content;
+    min-height: 1.72rem;
+    padding: 0.18rem 0.48rem;
+    border-radius: 999px;
+    border: 1px solid rgba(33, 94, 207, 0.18);
+    background: rgba(33, 94, 207, 0.09);
+    color: #173354;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.termo-doc-card__servidor-type .bi {
+    font-size: 0.77rem;
+}
+
+.termo-doc-card__servidor-body {
+    min-width: 0;
+    display: grid;
+    gap: 0.08rem;
+}
+
+.termo-doc-card__servidor-title {
+    color: #122033;
+    font-size: 0.88rem;
+    font-weight: 850;
+    line-height: 1.22;
+}
+
+.termo-doc-card__servidor-detail {
+    color: var(--oficios-muted);
+    font-size: 0.74rem;
+    font-weight: 600;
+    line-height: 1.28;
+}
+
+.termo-doc-card__servidor-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-height: 1.64rem;
+    padding: 0.14rem 0.44rem;
+    margin-top: 0.2rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1b4a7a;
+    border: 1px solid #c6ddf6;
+    font-size: 0.68rem;
+    font-weight: 900;
+}
+
+.termo-doc-card__servidor-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.termo-doc-card__servidor-row .btn-doc-action {
+    padding: 0.26rem 0.52rem;
+    font-size: 0.7rem;
+}
+
+.termo-doc-card__empty-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 4.8rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.95rem;
+    border: 1px dashed rgba(15, 23, 42, 0.12);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(249, 251, 255, 0.84));
+    color: var(--oficios-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: center;
+}
+
 @media (max-width: 992px) {
     .system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__context .oficio-list-term-row {
         grid-template-columns: 1fr;
@@ -3971,12 +4218,22 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
         justify-content: flex-start;
     }
 
-    .termo-doc-card__derivacao-row {
+    .termo-doc-card__derivacoes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .termo-doc-card__viatura-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .termo-doc-card__servidor-row {
         grid-template-columns: 1fr;
         gap: 0.34rem;
     }
 
-    .termo-doc-card__derivacao-meta {
+    .termo-doc-card__viatura-actions,
+    .termo-doc-card__servidor-actions {
         justify-content: flex-start;
     }
 

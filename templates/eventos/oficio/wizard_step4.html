@@ -242,40 +242,7 @@
               </ul>
             </section>
 
-            <section class="oficio-summary-section oficio-step4-card">
-              <div class="oficio-step4-card-head">
-                <h2>Vínculos</h2>
-                <span class="oficio-step4-head-meta">Diretos e herdados</span>
-              </div>
-              <div class="small text-muted mb-2">Diretos</div>
-              {% if vinculos_resolvidos.diretos %}
-                <ul class="mb-3">
-                  {% for vinculo in vinculos_resolvidos.diretos %}
-                    <li>{{ vinculo.rotulo }}</li>
-                  {% endfor %}
-                </ul>
-              {% else %}
-                <p class="text-muted">Sem vínculos diretos.</p>
-              {% endif %}
-              <div class="small text-muted mb-2">Herdados (derivação)</div>
-              {% if vinculos_resolvidos.herdados %}
-                <ul class="mb-3">
-                  {% for vinculo in vinculos_resolvidos.herdados %}
-                    <li>{{ vinculo.rotulo }}</li>
-                  {% endfor %}
-                </ul>
-              {% else %}
-                <p class="text-muted mb-3">Sem vínculos herdados.</p>
-              {% endif %}
-              {% if vinculos_resolvidos.legado %}
-                <div class="small text-muted mb-2">Legado (compatibilidade)</div>
-                <ul class="mb-0">
-                  {% for vinculo in vinculos_resolvidos.legado %}
-                    <li>{{ vinculo.rotulo }}</li>
-                  {% endfor %}
-                </ul>
-              {% endif %}
-            </section>
+            {# Painel de vínculos documentais removido da UI do resumo — reintroduzir incrementalmente. #}
 
             <section class="oficio-summary-section oficio-step4-card oficio-step4-card--resumo-viagem">
               <div class="oficio-step4-card-head">

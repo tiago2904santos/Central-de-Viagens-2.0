@@ -130,7 +130,7 @@ class TermoAutorizacaoModuleTest(TestCase):
         response = self.client.get(reverse('eventos:documentos-termos-novo'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Novo termo de autorizacao')
+        self.assertContains(response, 'Termo de autorização')
         self.assertContains(response, 'Contexto documental')
         self.assertContains(response, 'Período e horário de atendimento')
         self.assertContains(response, 'Servidores e viatura')
@@ -182,7 +182,7 @@ class TermoAutorizacaoModuleTest(TestCase):
         response = self.client.get(reverse('eventos:documentos-termos-novo-rapido'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Novo termo de autorizacao')
+        self.assertContains(response, 'Termo de autorização')
         self.assertContains(response, 'Período e horário de atendimento')
 
     def test_preview_evento_puxa_datas_destinos_e_roteiro(self):
@@ -394,11 +394,14 @@ class TermoAutorizacaoModuleTest(TestCase):
         response = self.client.get(reverse('eventos:documentos-termos'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Termo generico do evento')
-        self.assertContains(response, 'Viatura')
-        self.assertContains(response, 'Servidor')
-        self.assertContains(response, self.viajante_a.nome)
-        self.assertContains(response, 'SPIN')
+        self.assertContains(response, 'TERMO GENÉRICO DO EVENTO')
+        self.assertContains(response, 'Derivações')
+        self.assertContains(response, 'Ações do termo genérico')
+        self.assertContains(response, 'Visualizar')
+        termo_renderizado = response.context['object_list'][0]
+        self.assertEqual(termo_renderizado.derivacoes_total, 3)
+        self.assertIsNotNone(termo_renderizado.viatura_card)
+        self.assertEqual(len(termo_renderizado.servidores_cards), 2)
 
     def test_autocomplete_de_viajantes_e_viaturas_funciona(self):
         response_viajantes = self.client.get(reverse('eventos:oficio-step1-viajantes-api'), {'q': 'Servidor'})

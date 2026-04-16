@@ -17,31 +17,7 @@
         </div>
 
         <div class="oficio-list-core-grid">
-            <section class="oficio-list-core-card oficio-list-core-card--travelers oficio-list-surface oficio-list-surface--panel">
-                <div class="oficio-list-subcard__header">
-                    <div>
-                        <h3 class="oficio-list-subcard__title">Oficios vinculados</h3>
-                        <p class="oficio-list-subcard__subtitle">{{ plano.oficios_block.count_label }}</p>
-                    </div>
-                </div>
-                <div class="oficio-list-traveler-list">
-                    {% for item in plano.oficios_block.items %}
-                    {% if item.url %}
-                    <a href="{{ item.url }}" class="text-decoration-none">
-                        <div class="oficio-list-traveler-pill oficio-list-surface oficio-list-surface--soft {{ item.css_class }}">
-                            <span class="oficio-list-traveler-pill__initials">{{ item.initials }}</span>
-                            <span class="oficio-list-traveler-pill__name">{{ item.name }}</span>
-                        </div>
-                    </a>
-                    {% else %}
-                    <div class="oficio-list-traveler-pill oficio-list-surface oficio-list-surface--soft {{ item.css_class }}">
-                        <span class="oficio-list-traveler-pill__initials">{{ item.initials }}</span>
-                        <span class="oficio-list-traveler-pill__name">{{ item.name }}</span>
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-            </section>
+            {# Secção "Oficios vinculados" removida da UI — a recriar no novo desenho. #}
 
             <section class="oficio-list-core-card oficio-list-core-card--transport oficio-list-surface oficio-list-surface--panel">
                 <div class="oficio-list-core-card__header">

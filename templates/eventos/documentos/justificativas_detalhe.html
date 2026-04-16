@@ -108,14 +108,7 @@
                     </a>
                     {% endif %}
                 </div>
-                {% if object.oficio and object.oficio.evento %}
-                <hr>
-                <div class="small text-muted text-uppercase mb-2">Evento vinculado</div>
-                <div class="fw-semibold">{{ object.oficio.evento.titulo|default:"(sem titulo)" }}</div>
-                <a href="{% url 'eventos:guiado-etapa-1' object.oficio.evento.pk %}" class="btn btn-sm btn-doc-action btn-doc-action--primary mt-2">
-                    Abrir etapa 1 do evento
-                </a>
-                {% endif %}
+                {# Bloco lateral "Evento vinculado" removido — a recriar no novo desenho. #}
             </div>
         </div>
     </div>

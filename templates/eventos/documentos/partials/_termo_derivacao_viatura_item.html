@@ -1,0 +1,22 @@
+<article class="termo-doc-card__viatura-card oficio-list-surface oficio-list-surface--soft{% if item.css_class %} {{ item.css_class }}{% endif %}">
+    <div class="termo-doc-card__viatura-head">
+        <div class="termo-doc-card__viatura-type">
+            <i class="bi {{ item.icon }}"></i>
+            <span>{{ item.tipo_label }}</span>
+        </div>
+        {% if item.badge %}
+        <span class="termo-doc-card__viatura-number">{{ item.badge }}</span>
+        {% endif %}
+    </div>
+
+    <div class="termo-doc-card__viatura-body">
+        <div class="termo-doc-card__viatura-title">{{ item.titulo }}</div>
+        {% if item.detalhe %}
+        <div class="termo-doc-card__viatura-detail">{{ item.detalhe }}</div>
+        {% endif %}
+    </div>
+
+    <div class="termo-doc-card__viatura-actions">
+        {% include 'includes/list/item_actions.html' with abrir_url=item.abrir_url abrir_aria=item.abrir_aria visualizar_url=item.visualizar_url visualizar_aria=item.visualizar_aria docx_url=item.docx_url docx_aria=item.docx_aria pdf_url=item.pdf_url pdf_aria=item.pdf_aria delete_url=item.delete_url delete_aria=item.delete_aria %}
+    </div>
+</article>

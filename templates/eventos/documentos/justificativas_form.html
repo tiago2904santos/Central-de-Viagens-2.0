@@ -35,7 +35,8 @@
 </div>
 {% endif %}
 
-<div class="mb-4">
+{# Campo de ofício (vínculo) oculto na UI — a recriar no novo desenho; permanece no POST. #}
+<div class="mb-4 d-none" aria-hidden="true">
     <label class="form-label fw-semibold" for="{{ form.oficio.id_for_label }}">Ofício</label>
     {{ form.oficio }}
     {% if form.oficio.errors %}<div class="invalid-feedback d-block">{{ form.oficio.errors.0 }}</div>{% endif %}

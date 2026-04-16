@@ -124,53 +124,7 @@
             </div>
 
             <div class="oficio-list-core-grid roteiro-list-card__line3-grid">
-                <section class="oficio-list-core-card oficio-list-core-card--travelers oficio-list-surface oficio-list-surface--panel">
-                    <div class="oficio-list-subcard__header">
-                        <div>
-                            <h3 class="oficio-list-subcard__title">Vinculos do roteiro</h3>
-                            <p class="oficio-list-subcard__subtitle">Eventos e oficios relacionados</p>
-                        </div>
-                    </div>
-                    <div class="oficio-list-subcard__body">
-                        <div class="roteiro-list-card__vinculos-grid">
-                            <div class="roteiro-list-card__vinculos-col">
-                                <span class="documento-cascade-meta-item__label">Eventos vinculados</span>
-                                <div class="oficio-list-traveler-list">
-                                    {% for evento in roteiro.eventos_linked %}
-                                    <a href="{{ evento.url }}" class="text-decoration-none">
-                                        <div class="oficio-list-traveler-pill oficio-list-surface oficio-list-surface--soft">
-                                            <span class="oficio-list-traveler-pill__name">{{ evento.label }}</span>
-                                        </div>
-                                    </a>
-                                    {% empty %}
-                                    <div class="documento-cascade-empty">Sem eventos vinculados</div>
-                                    {% endfor %}
-                                    {% if roteiro.eventos_linked_extra %}
-                                    <div class="documento-cascade-empty documento-cascade-empty--pt">+{{ roteiro.eventos_linked_extra }} evento(s) adicional(is)</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="roteiro-list-card__vinculos-col">
-                                <span class="documento-cascade-meta-item__label">Oficios vinculados</span>
-                                <div class="oficio-list-traveler-list">
-                                    {% for oficio in roteiro.oficios_preview %}
-                                    <a href="{{ oficio.url }}" class="text-decoration-none">
-                                        <div class="oficio-list-traveler-pill oficio-list-surface oficio-list-surface--soft">
-                                            <span class="oficio-list-traveler-pill__name">{{ oficio.label }}</span>
-                                        </div>
-                                    </a>
-                                    {% empty %}
-                                    <div class="documento-cascade-empty">Sem oficios vinculados</div>
-                                    {% endfor %}
-                                    {% if roteiro.extra_oficios_count %}
-                                    <div class="documento-cascade-empty documento-cascade-empty--pt">+{{ roteiro.extra_oficios_count }} oficio(s) adicional(is)</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                {# Card "Vinculos do roteiro" removido da UI — a recriar no novo desenho. #}
 
                 <section class="oficio-list-core-card oficio-list-core-card--transport oficio-list-surface oficio-list-surface--panel roteiro-list-card__valor-col">
                     <div class="oficio-list-core-card__header">

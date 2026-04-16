@@ -270,7 +270,7 @@ def _termo_document_action_bundle(termo):
     }
 
 
-def _build_termo_document_card_item(termo, *, tipo, titulo, detalhe='', badge='', css_class=''):
+def _build_termo_document_card_item(termo, *, tipo, titulo, detalhe='', badge='', css_class='', layout='row'):
     tipo = (tipo or '').strip().upper()
     tipo_label = 'Servidor' if tipo == 'SERVIDOR' else 'Viatura'
     titulo = _clean(titulo)
@@ -282,6 +282,7 @@ def _build_termo_document_card_item(termo, *, tipo, titulo, detalhe='', badge=''
     item = {
         'tipo': tipo,
         'tipo_label': tipo_label,
+        'layout': (layout or 'row').strip().lower(),
         'titulo': titulo or detalhe or tipo_label,
         'detalhe': detalhe,
         'badge': badge,
@@ -297,92 +298,95 @@ def _build_termo_document_card_item(termo, *, tipo, titulo, detalhe='', badge=''
     return item
 
 
-def _build_termo_derivacoes_cards(termo):
-    cards = []
+def _build_termo_viatura_card(termo, *, css_class='is-root'):
+    titulo = (termo.viatura_display or termo.veiculo_modelo_card or termo.veiculo_placa_card or '').strip()
+    detalhe = ' • '.join(
+        part
+        for part in [
+            _clean(getattr(termo, 'veiculo_placa_card', '')),
+            _clean(getattr(termo, 'veiculo_modelo_card', '')),
+            _clean(getattr(termo, 'veiculo_combustivel_card', '')),
+        ]
+        if part
+    )
+    return _build_termo_document_card_item(
+        termo,
+        tipo='VIATURA',
+        titulo=titulo,
+        detalhe=detalhe,
+        badge=termo.numero_formatado,
+        css_class=css_class,
+        layout='viatura',
+    )
 
-    def _append(tipo, titulo, detalhe='', badge='', css_class=''):
-        item = _build_termo_document_card_item(
-            termo,
-            tipo=tipo,
-            titulo=titulo,
-            detalhe=detalhe,
-            badge=badge,
-            css_class=css_class,
-        )
-        if item:
-            cards.append(item)
 
-    if getattr(termo, 'is_root_generic', False):
-        if termo.viatura_display or termo.veiculo_id:
-            _append(
-                'VIATURA',
-                termo.viatura_display or termo.veiculo_modelo_card or termo.veiculo_placa_card,
-                detalhe=' - '.join(
-                    part for part in [
-                        termo.veiculo_modelo_card or '',
-                        termo.veiculo_placa_card or '',
-                        termo.veiculo_combustivel_card or '',
-                    ]
-                    if part
-                ),
-                badge=termo.numero_formatado,
-                css_class='is-root',
-            )
+def _build_termo_servidor_card(termo, *, css_class=''):
+    cargo = (
+        (getattr(getattr(termo, 'viajante', None), 'cargo', None) and getattr(termo.viajante.cargo, 'nome', ''))
+        or _clean(getattr(termo, 'servidor_cargo', ''))
+    )
+    lotacao = (
+        (getattr(getattr(termo, 'viajante', None), 'unidade_lotacao', None) and getattr(termo.viajante.unidade_lotacao, 'nome', ''))
+        or _clean(getattr(termo, 'servidor_lotacao', ''))
+    )
+    return _build_termo_document_card_item(
+        termo,
+        tipo='SERVIDOR',
+        titulo=termo.servidor_display or termo.servidor_nome,
+        detalhe=' • '.join(part for part in [cargo.strip(), lotacao.strip()] if part),
+        badge=termo.numero_formatado,
+        css_class=css_class,
+        layout='servidor',
+    )
 
-        derivacoes = list(getattr(termo, 'derivacoes', []).all() if hasattr(getattr(termo, 'derivacoes', None), 'all') else [])
+
+def _build_termo_derivacoes_layout(termo):
+    layout = {
+        'viatura': None,
+        'servidores': [],
+        'total': 0,
+    }
+
+    if not getattr(termo, 'is_root_generic', False):
+        derivacao_tipo = (getattr(termo, 'derivacao_tipo', '') or '').strip().upper()
+        if derivacao_tipo == TermoAutorizacao.DERIVACAO_TIPO_SERVIDOR and (termo.servidor_display or termo.viajante_id):
+            layout['servidores'].append(_build_termo_servidor_card(termo))
+        elif derivacao_tipo == TermoAutorizacao.DERIVACAO_TIPO_VIATURA and (termo.viatura_display or termo.veiculo_id):
+            layout['viatura'] = _build_termo_viatura_card(termo)
+        layout['total'] = int(bool(layout['viatura'])) + len(layout['servidores'])
+        return layout
+
+    derivacoes = list(getattr(termo, 'derivacoes', []).all() if hasattr(getattr(termo, 'derivacoes', None), 'all') else [])
+    viatura_source = None
+    if termo.viatura_display or termo.veiculo_id:
+        viatura_source = termo
+    else:
         for derivacao in derivacoes:
             if derivacao.pk == termo.pk:
                 continue
-            if derivacao.viajante_id or derivacao.servidor_display:
-                cargo = (getattr(getattr(derivacao, 'viajante', None), 'cargo', None) and getattr(derivacao.viajante.cargo, 'nome', '')) or _clean(getattr(derivacao, 'servidor_cargo', ''))
-                lotacao = (getattr(getattr(derivacao, 'viajante', None), 'unidade_lotacao', None) and getattr(derivacao.viajante.unidade_lotacao, 'nome', '')) or _clean(getattr(derivacao, 'servidor_lotacao', ''))
-                _append(
-                    'SERVIDOR',
-                    derivacao.servidor_display or (getattr(derivacao.viajante, 'nome', '') if derivacao.viajante_id else ''),
-                    detalhe=' - '.join(part for part in [cargo.strip(), lotacao.strip()] if part),
-                    badge=derivacao.numero_formatado,
-                )
-            elif derivacao.veiculo_id or derivacao.viatura_display:
-                _append(
-                    'VIATURA',
-                    derivacao.viatura_display or _clean(getattr(derivacao, 'veiculo_modelo', '')) or _clean(getattr(derivacao, 'veiculo_placa', '')),
-                    detalhe=' - '.join(
-                        part for part in [
-                            _clean(getattr(derivacao, 'veiculo_modelo', '')),
-                            _clean(getattr(derivacao, 'veiculo_placa', '')),
-                            _clean(getattr(derivacao, 'veiculo_combustivel', '')),
-                        ]
-                        if part
-                    ),
-                    badge=derivacao.numero_formatado,
-                )
-    else:
-        derivacao_tipo = (getattr(termo, 'derivacao_tipo', '') or '').strip().upper()
-        if derivacao_tipo == TermoAutorizacao.DERIVACAO_TIPO_SERVIDOR and (termo.servidor_display or termo.viajante_id):
-            cargo = (getattr(getattr(termo, 'viajante', None), 'cargo', None) and getattr(termo.viajante.cargo, 'nome', '')) or _clean(getattr(termo, 'servidor_cargo', ''))
-            lotacao = (getattr(getattr(termo, 'viajante', None), 'unidade_lotacao', None) and getattr(termo.viajante.unidade_lotacao, 'nome', '')) or _clean(getattr(termo, 'servidor_lotacao', ''))
-            _append(
-                'SERVIDOR',
-                termo.servidor_display or termo.servidor_nome,
-                detalhe=' - '.join(part for part in [cargo.strip(), lotacao.strip()] if part),
-                badge=termo.numero_formatado,
-            )
-        elif derivacao_tipo == TermoAutorizacao.DERIVACAO_TIPO_VIATURA and (termo.viatura_display or termo.veiculo_id):
-            _append(
-                'VIATURA',
-                termo.viatura_display or _clean(getattr(termo, 'veiculo_modelo', '')) or _clean(getattr(termo, 'veiculo_placa', '')),
-                detalhe=' - '.join(
-                    part for part in [
-                        _clean(getattr(termo, 'veiculo_modelo', '')),
-                        _clean(getattr(termo, 'veiculo_placa', '')),
-                        _clean(getattr(termo, 'veiculo_combustivel', '')),
-                    ]
-                    if part
-                ),
-                badge=termo.numero_formatado,
-            )
+            if derivacao.veiculo_id or derivacao.viatura_display:
+                viatura_source = derivacao
+                break
 
-    return cards
+    if viatura_source:
+        layout['viatura'] = _build_termo_viatura_card(viatura_source)
+
+    for derivacao in derivacoes:
+        if derivacao.pk == termo.pk:
+            continue
+        if viatura_source and derivacao.pk == viatura_source.pk:
+            continue
+        if derivacao.viajante_id or derivacao.servidor_display:
+            layout['servidores'].append(_build_termo_servidor_card(derivacao))
+
+    layout['total'] = int(bool(layout['viatura'])) + len(layout['servidores'])
+    return layout
+
+
+def _build_termo_derivacoes_cards(termo):
+    """Compat layer for older call sites that still expect a flat card list."""
+    layout = _build_termo_derivacoes_layout(termo)
+    return [item for item in [layout['viatura'], *layout['servidores']] if item]
 
 
 def _unique_by_pk(items):
@@ -2921,7 +2925,11 @@ def _decorate_termo_list_items(items, *, current_path=''):
         termo.veiculo_placa_card = (termo.veiculo_placa or '').strip()
         termo.veiculo_modelo_card = (termo.veiculo_modelo or '').strip()
         termo.veiculo_combustivel_card = (termo.veiculo_combustivel or '').strip()
-        termo.derivacoes_cards = _build_termo_derivacoes_cards(termo)
+        termo.derivacoes_layout = _build_termo_derivacoes_layout(termo)
+        termo.viatura_card = termo.derivacoes_layout['viatura']
+        termo.servidores_cards = termo.derivacoes_layout['servidores']
+        termo.derivacoes_cards = [item for item in [termo.viatura_card, *termo.servidores_cards] if item]
+        termo.derivacoes_total = termo.derivacoes_layout['total']
 
         vinculos_items = []
         if termo.evento_id and termo.evento:
