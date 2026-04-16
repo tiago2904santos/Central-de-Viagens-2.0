@@ -40,19 +40,12 @@
         <div class="oficio-list-rich-layout">
             <header class="termo-doc-card__hero">
                 <div class="termo-doc-card__hero-copy">
-                    <span class="termo-doc-card__eyebrow">TERMO GENÉRICO DO EVENTO</span>
                     <div class="termo-doc-card__hero-title-row">
-                        <div class="termo-doc-card__number">{{ termo.numero_formatado }}</div>
-                        <div class="termo-doc-card__context">{{ termo.context_display }}</div>
-                    </div>
-                    <div class="termo-doc-card__summary-list">
-                        <span class="termo-doc-card__summary-item">
-                            <span>Destino</span>
-                            <strong>{{ termo.destino_resumo }}</strong>
+                        <span class="oficio-list-badge termo-doc-card__hero-badge {{ termo.status_badge_css_class }}">
+                            <span>{{ termo.numero_formatado }}</span>
                         </span>
-                        <span class="termo-doc-card__summary-item">
-                            <span>Período</span>
-                            <strong>{{ termo.periodo_resumo }}</strong>
+                        <span class="oficio-list-badge termo-doc-card__hero-badge is-info">
+                            <span>{{ termo.context_display }}</span>
                         </span>
                     </div>
                 </div>
@@ -68,61 +61,19 @@
             </header>
 
             {% with derivacoes=termo.derivacoes_layout %}
-            <section class="termo-doc-card__section" aria-label="Derivações do termo">
-                <div class="termo-doc-card__section-head">
-                    <div>
-                        <h3 class="termo-doc-card__section-title">Derivações</h3>
-                        <p class="termo-doc-card__section-subtitle">Documentos vinculados ao termo genérico</p>
-                    </div>
-                    <span class="termo-doc-card__section-count">{{ derivacoes.total|default:0 }}</span>
-                </div>
-
-                {% if derivacoes.total %}
-                <div class="termo-doc-card__derivacoes-grid">
-                    <div class="termo-doc-card__derivacoes-pane">
-                        <div class="termo-doc-card__derivacoes-pane-head">
-                            <div>
-                                <h4 class="termo-doc-card__derivacoes-pane-title">Viatura</h4>
-                                <p class="termo-doc-card__derivacoes-pane-subtitle">Derivação principal do deslocamento</p>
-                            </div>
-                            <span class="termo-doc-card__derivacoes-pane-count">1</span>
-                        </div>
-
-                        {% if derivacoes.viatura %}
-                        {% include 'eventos/documentos/partials/_termo_derivacao_viatura_item.html' with item=derivacoes.viatura only %}
-                        {% else %}
-                        <div class="termo-doc-card__empty-block oficio-list-surface oficio-list-surface--soft">
-                            <span class="termo-doc-card__empty">Nenhuma viatura vinculada.</span>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="termo-doc-card__derivacoes-pane">
-                        <div class="termo-doc-card__derivacoes-pane-head">
-                            <div>
-                                <h4 class="termo-doc-card__derivacoes-pane-title">Servidores</h4>
-                                <p class="termo-doc-card__derivacoes-pane-subtitle">Participantes derivados do termo genérico</p>
-                            </div>
-                            <span class="termo-doc-card__derivacoes-pane-count">{{ derivacoes.servidores|length }}</span>
-                        </div>
-
-                        <div class="termo-doc-card__servidores-list">
-                            {% for item in derivacoes.servidores %}
-                            {% include 'eventos/documentos/partials/_termo_derivacao_item.html' with item=item only %}
-                            {% empty %}
-                            <div class="termo-doc-card__empty-block oficio-list-surface oficio-list-surface--soft">
-                                <span class="termo-doc-card__empty">Nenhum servidor vinculado.</span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="termo-doc-card__empty-block oficio-list-surface oficio-list-surface--soft">
-                    <span class="termo-doc-card__empty">Nenhuma derivação vinculada a este termo.</span>
-                </div>
-                {% endif %}
-            </section>
+            {% if derivacoes.total %}
+            {% if derivacoes.viatura %}
+            {% include 'eventos/documentos/partials/_termo_derivacao_viatura_item.html' with item=derivacoes.viatura servidores=derivacoes.servidores only %}
+            {% else %}
+            <div class="termo-doc-card__empty-block oficio-list-surface oficio-list-surface--soft">
+                <span class="termo-doc-card__empty">Nenhuma viatura vinculada.</span>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="termo-doc-card__empty-block oficio-list-surface oficio-list-surface--soft">
+                <span class="termo-doc-card__empty">Nenhuma derivação vinculada a este termo.</span>
+            </div>
+            {% endif %}
             {% endwith %}
 
             <footer class="termo-doc-card__footer">

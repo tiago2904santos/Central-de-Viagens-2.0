@@ -3166,8 +3166,7 @@ class EventoEtapa5TermosTest(TestCase):
 
         response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'TERMO GENÉRICO DO EVENTO')
-        self.assertContains(response, 'Derivações')
+        self.assertContains(response, 'Servidores vinculados')
         self.assertContains(response, 'Ações do termo genérico')
         self.assertContains(response, 'Abrir')
         self.assertContains(response, 'Visualizar')

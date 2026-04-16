@@ -4,9 +4,6 @@
             <i class="bi {{ item.icon }}"></i>
             <span>{{ item.tipo_label }}</span>
         </div>
-        {% if item.badge %}
-        <span class="termo-doc-card__viatura-number">{{ item.badge }}</span>
-        {% endif %}
     </div>
 
     <div class="termo-doc-card__viatura-body">
@@ -15,6 +12,24 @@
         <div class="termo-doc-card__viatura-detail">{{ item.detalhe }}</div>
         {% endif %}
     </div>
+
+    {% if servidores %}
+    <div class="termo-doc-card__viatura-servers">
+        <div class="termo-doc-card__viatura-servers-head">
+            <span class="termo-doc-card__viatura-servers-title">Servidores vinculados</span>
+            <span class="termo-doc-card__viatura-servers-count">{{ servidores|length }}</span>
+        </div>
+        <div class="termo-doc-card__servidores-list termo-doc-card__servidores-list--nested">
+            {% for item in servidores %}
+            {% include 'eventos/documentos/partials/_termo_derivacao_item.html' with item=item only %}
+            {% empty %}
+            <div class="termo-doc-card__empty-block oficio-list-surface oficio-list-surface--soft">
+                <span class="termo-doc-card__empty">Nenhum servidor vinculado.</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <div class="termo-doc-card__viatura-actions">
         {% include 'includes/list/item_actions.html' with abrir_url=item.abrir_url abrir_aria=item.abrir_aria visualizar_url=item.visualizar_url visualizar_aria=item.visualizar_aria docx_url=item.docx_url docx_aria=item.docx_aria pdf_url=item.pdf_url pdf_aria=item.pdf_aria delete_url=item.delete_url delete_aria=item.delete_aria %}

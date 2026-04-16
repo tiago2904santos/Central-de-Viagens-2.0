@@ -3603,7 +3603,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     min-width: 0;
     flex: 1 1 auto;
     display: grid;
-    gap: 0.38rem;
+    gap: 0.28rem;
 }
 
 .termo-doc-card__eyebrow {
@@ -3624,9 +3624,24 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .termo-doc-card__hero-title-row {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     flex-wrap: wrap;
-    gap: 0.42rem 0.72rem;
+    gap: 0.38rem 0.54rem;
+}
+
+.termo-doc-card__hero-badge {
+    max-width: 100%;
+    padding-inline: 0.62rem;
+    white-space: nowrap;
+}
+
+.termo-doc-card__hero-badge.is-info {
+    white-space: normal;
+}
+
+.termo-doc-card__hero-badge span {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .termo-doc-card__number {
@@ -4065,6 +4080,44 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     border-top: 1px solid rgba(15, 23, 42, 0.08);
 }
 
+.termo-doc-card__viatura-servers {
+    display: grid;
+    gap: 0.42rem;
+    margin-top: 0.16rem;
+    padding-top: 0.72rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.termo-doc-card__viatura-servers-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.termo-doc-card__viatura-servers-title {
+    color: #16324f;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.termo-doc-card__viatura-servers-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.62rem;
+    min-width: 1.62rem;
+    padding: 0.14rem 0.38rem;
+    border-radius: 999px;
+    background: #e7f0fb;
+    color: #1b4a7a;
+    font-size: 0.7rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
 .termo-doc-card__viatura-card .btn-doc-action {
     padding: 0.3rem 0.58rem;
     font-size: 0.72rem;
@@ -4073,6 +4126,10 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 .termo-doc-card__servidores-list {
     display: grid;
     gap: 0.36rem;
+}
+
+.termo-doc-card__servidores-list--nested {
+    gap: 0.3rem;
 }
 
 .termo-doc-card__servidor-row {

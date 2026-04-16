@@ -394,8 +394,7 @@ class TermoAutorizacaoModuleTest(TestCase):
         response = self.client.get(reverse('eventos:documentos-termos'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'TERMO GENÉRICO DO EVENTO')
-        self.assertContains(response, 'Derivações')
+        self.assertContains(response, 'Servidores vinculados')
         self.assertContains(response, 'Ações do termo genérico')
         self.assertContains(response, 'Visualizar')
         termo_renderizado = response.context['object_list'][0]
