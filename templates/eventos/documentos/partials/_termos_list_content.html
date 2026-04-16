@@ -109,6 +109,8 @@
             </div>
             {% endif %}
 
+            {% include 'includes/list/document_links_block.html' with block=termo.vinculos_block %}
+
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
                 <div class="oficio-list-card__footer-actions">
                     {% include 'includes/list/item_actions.html' with abrir_url=termo.abrir_url abrir_aria='Abrir termo de autorizacao' docx_url=termo.docx_url docx_aria='Baixar DOCX do termo de autorizacao' pdf_url=termo.pdf_url pdf_aria='Baixar PDF do termo de autorizacao' delete_url=termo.delete_url delete_aria='Excluir termo de autorizacao' %}

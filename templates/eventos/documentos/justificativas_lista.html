@@ -149,44 +149,7 @@
                     </div>
                 </section>
 
-                <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">
-                    <div class="oficio-list-subcard__header">
-                        <div>
-                            <h3 class="oficio-list-subcard__title">Referencias</h3>
-                            <p class="oficio-list-subcard__subtitle">Oficio e evento relacionados</p>
-                        </div>
-                    </div>
-                    <div class="oficio-list-subcard__body">
-                        <div class="oficio-list-term-list">
-                            <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
-                                <span class="oficio-list-term-row__name">Oficio</span>
-                                <div class="oficio-list-term-row__actions">
-                                    {% if just.oficio_id and just.oficio_url %}
-                                    <a href="{{ just.oficio_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                                        <i class="bi bi-journal-text"></i>
-                                        <span>{{ just.oficio.numero_formatado }}</span>
-                                    </a>
-                                    {% else %}
-                                    <span class="text-muted small">Sem oficio vinculado</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft">
-                                <span class="oficio-list-term-row__name">Evento</span>
-                                <div class="oficio-list-term-row__actions">
-                                    {% if just.evento_url %}
-                                    <a href="{{ just.evento_url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
-                                        <i class="bi bi-calendar-event"></i>
-                                        <span>{{ just.oficio.evento.titulo|default:'Evento' }}</span>
-                                    </a>
-                                    {% else %}
-                                    <span class="text-muted small">Sem evento vinculado</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                {% include 'includes/list/document_links_block.html' with block=just.vinculos_block %}
             </div>
 
             <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">

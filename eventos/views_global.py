@@ -179,6 +179,70 @@ def _get_horarios_manager_url():
         return ''
 
 
+def _make_vinculo_item(*, title, meta='', url='', badge_label='', badge_css_class='is-muted', css_class=''):
+    title = _clean(title)
+    meta = _clean(meta)
+    if not title and not meta:
+        return None
+    return {
+        'title': title or meta or 'Documento',
+        'meta': meta,
+        'url': url,
+        'badge_label': _clean(badge_label),
+        'badge_css_class': badge_css_class or 'is-muted',
+        'css_class': css_class,
+    }
+
+
+def _make_vinculos_block(items, *, title='Vínculos', count_label='', empty_text='Sem vínculos registrados.'):
+    clean_items = [item for item in items if item and _clean(item.get('title') or item.get('meta'))]
+    return {
+        'title': title,
+        'count_label': count_label or (f'{len(clean_items)} vínculo(s)' if clean_items else 'Nenhum vínculo registrado'),
+        'items': clean_items,
+        'empty_text': empty_text,
+    }
+
+
+def _append_query_params(url, params=None, **kwargs):
+    if not url:
+        return ''
+    merged = {}
+    if isinstance(params, dict):
+        merged.update(params)
+    elif params not in (None, ''):
+        merged['value'] = params
+    merged.update(kwargs)
+    filtered = {key: value for key, value in merged.items() if value not in (None, '')}
+    if not filtered:
+        return url
+    return f"{url}{'&' if '?' in url else '?'}{urlencode(filtered)}"
+
+
+def _make_vinculo_action_item(*, label, url, css_class='btn-doc-action--secondary'):
+    label = _clean(label)
+    url = _clean(url)
+    if not label or not url:
+        return None
+    return {
+        'label': label,
+        'url': url,
+        'css_class': css_class or 'btn-doc-action--secondary',
+    }
+
+
+def _unique_by_pk(items):
+    result = []
+    seen = set()
+    for item in items or []:
+        pk = getattr(item, 'pk', None)
+        if pk in seen:
+            continue
+        seen.add(pk)
+        result.append(item)
+    return result
+
+
 @require_http_methods(['GET'])
 def plano_trabalho_coordenadores_api(request):
     """API de busca de coordenadores operacionais para o Plano de Trabalho."""
@@ -650,12 +714,16 @@ def _append_next(url, next_url):
     return f'{url}{separator}{urlencode({"next": next_url})}'
 
 
-def _append_query_params(url, **params):
-    filtered = {
-        key: str(value).strip()
-        for key, value in params.items()
-        if str(value).strip()
-    }
+def _append_query_params(url, params=None, **kwargs):
+    if not url:
+        return ''
+    merged = {}
+    if isinstance(params, dict):
+        merged.update(params)
+    elif params not in (None, ''):
+        merged['value'] = params
+    merged.update(kwargs)
+    filtered = {key: value for key, value in merged.items() if value not in (None, '')}
     if not filtered:
         return url
     separator = '&' if '?' in url else '?'
@@ -1957,7 +2025,7 @@ def _oficio_list_filter_row(oficio, precomputed=None):
     }
 
 
-def _oficio_list_card(oficio, precomputed=None):
+def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
     precomputed = precomputed or _oficio_list_precomputed_meta(oficio)
     justificativa_info = precomputed['justificativa_info']
     viagem_status = precomputed['viagem_status']
@@ -1965,6 +2033,10 @@ def _oficio_list_card(oficio, precomputed=None):
     oficio_downloads = _build_oficio_document_actions(oficio, DocumentoOficioTipo.OFICIO, lightweight=True)
     justificativa = _oficio_list_justificativa_block(oficio, justificativa_info)
     termos = _oficio_list_term_block(oficio)
+    planos_relacionados = _unique_by_pk(
+        list(oficio.planos_trabalho.all()) + list(oficio.planos_trabalho_relacionados.all())
+    )
+    ordens_relacionadas = _unique_by_pk(list(oficio.ordens_servico.all()))
     destinos_display = precomputed['destinos_display']
     periodo_display = precomputed['periodo_display']
     data_evento_inicio = precomputed['data_evento_inicio']
@@ -1975,6 +2047,150 @@ def _oficio_list_card(oficio, precomputed=None):
     oficio_status = _oficio_process_status_meta(oficio)
     table_actions = _oficio_list_table_actions(oficio, oficio_downloads)
     footer_actions = _oficio_list_footer_actions(oficio, oficio_downloads)
+    vinculos_items = []
+    if oficio.evento_id and oficio.evento:
+        vinculos_items.append(
+            _make_vinculo_item(
+                title=oficio.evento.titulo or f'Evento #{oficio.evento_id}',
+                meta='Evento',
+                url=reverse('eventos:guiado-etapa-1', kwargs={'pk': oficio.evento_id}),
+            )
+        )
+    if oficio.roteiro_evento_id and oficio.roteiro_evento:
+        roteiro = oficio.roteiro_evento
+        roteiro_url = (
+            reverse('eventos:guiado-etapa-2', kwargs={'evento_id': roteiro.evento_id})
+            if roteiro.evento_id
+            else reverse('eventos:roteiro-avulso-editar', kwargs={'pk': roteiro.pk})
+        )
+        vinculos_items.append(
+            _make_vinculo_item(
+                title=f'Roteiro #{roteiro.pk}',
+                meta='Roteiro',
+                url=roteiro_url,
+            )
+        )
+    if justificativa:
+        vinculos_items.append(
+            _make_vinculo_item(
+                title=f'Justificativa JT-{oficio.pk:04d}',
+                meta=justificativa['status_label'],
+                url=reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
+                badge_label=justificativa['status_label'],
+            )
+        )
+    for plano in planos_relacionados[:4]:
+        vinculos_items.append(
+            _make_vinculo_item(
+                title=f'PT {plano.numero_formatado or f"#{plano.pk}"}',
+                meta=plano.get_status_display(),
+                url=reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk}),
+                badge_label=plano.get_status_display(),
+            )
+        )
+    if len(planos_relacionados) > 4:
+        vinculos_items.append(
+            _make_vinculo_item(
+                title=f'+{len(planos_relacionados) - 4} plano(s) adicional(is)',
+                meta='Vínculos extras',
+            )
+        )
+    for ordem in ordens_relacionadas[:4]:
+        vinculos_items.append(
+            _make_vinculo_item(
+                title=f'OS {ordem.numero_formatado or f"#{ordem.pk}"}',
+                meta=ordem.get_status_display(),
+                url=reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}),
+                badge_label=ordem.get_status_display(),
+            )
+        )
+    if len(ordens_relacionadas) > 4:
+        vinculos_items.append(
+            _make_vinculo_item(
+                title=f'+{len(ordens_relacionadas) - 4} ordem(ns) adicional(is)',
+                meta='Vínculos extras',
+            )
+        )
+    vinculos_block = _make_vinculos_block(
+        vinculos_items,
+        title='Vínculos',
+        count_label=f'{len(vinculos_items)} vínculo(s) documentais' if vinculos_items else 'Sem vínculos documentais',
+        empty_text='Nenhum vínculo documental registrado.',
+    )
+    oficio_link_actions = []
+    if oficio.pk:
+        oficio_link_actions.extend([
+            _make_vinculo_action_item(
+                label=f'Ofício: {oficio.numero_formatado or f"#{oficio.pk}"}',
+                url=_append_query_params(
+                    reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+                    {'return_to': current_path},
+                ),
+                css_class='btn-doc-action--primary',
+            ),
+            _make_vinculo_action_item(
+                label='Novo plano',
+                url=_append_query_params(
+                    reverse('eventos:documentos-planos-trabalho-novo'),
+                    {'preselected_oficio_id': oficio.pk, 'return_to': current_path},
+                ),
+                css_class='btn-doc-action--primary',
+            ),
+            _make_vinculo_action_item(
+                label='Nova OS',
+                url=_append_query_params(
+                    reverse('eventos:documentos-ordens-servico-novo'),
+                    {'preselected_oficio_id': oficio.pk, 'return_to': current_path},
+                ),
+            ),
+            _make_vinculo_action_item(
+                label='Nova justificativa',
+                url=_append_query_params(
+                    reverse('eventos:documentos-justificativas-nova'),
+                    {'preselected_oficio_id': oficio.pk, 'return_to': current_path},
+                ),
+            ),
+            _make_vinculo_action_item(
+                label='Novo termo',
+                url=_append_query_params(
+                    reverse('eventos:documentos-termos-novo'),
+                    {'preselected_oficio_id': oficio.pk, 'return_to': current_path},
+                ),
+            ),
+        ])
+        if oficio.evento_id and oficio.evento:
+            oficio_link_actions.extend([
+                _make_vinculo_action_item(
+                    label=f'Evento: {oficio.evento.titulo or f"#{oficio.evento_id}"}',
+                    url=_append_query_params(
+                        reverse('eventos:guiado-etapa-1', kwargs={'pk': oficio.evento_id}),
+                        {'return_to': current_path},
+                    ),
+                ),
+                _make_vinculo_action_item(
+                    label='Planos do evento',
+                    url=_append_query_params(
+                        reverse('eventos:documentos-planos-trabalho'),
+                        {'evento_id': oficio.evento_id},
+                    ),
+                ),
+                _make_vinculo_action_item(
+                    label='Ordens do evento',
+                    url=_append_query_params(
+                        reverse('eventos:documentos-ordens-servico'),
+                        {'evento_id': oficio.evento_id},
+                    ),
+                ),
+                _make_vinculo_action_item(
+                    label='Roteiros do evento',
+                    url=_append_query_params(
+                        reverse('eventos:roteiros-global'),
+                        {'evento_id': oficio.evento_id},
+                    ),
+                ),
+            ])
+    vinculos_block['link_actions'] = [item for item in oficio_link_actions if item]
+    vinculos_block['link_actions_title'] = 'Vincular documentos'
     return {
         'pk': oficio.pk,
         'numero_display': _oficio_list_display_or_default(oficio.numero_formatado, 'A definir'),
@@ -1997,7 +2213,8 @@ def _oficio_list_card(oficio, precomputed=None):
         'transport_block': _oficio_list_transport_block(oficio),
         'justificativa': justificativa,
         'termos': termos,
-            'evento_url': reverse('eventos:guiado-etapa-1', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
+        'vinculos_block': vinculos_block,
+        'evento_url': reverse('eventos:guiado-etapa-1', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
         'wizard_url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
         'search_blob': ' '.join(
             value
@@ -2128,6 +2345,7 @@ def _render_oficio_list(
 ):
     filters = _build_oficio_list_filters(request)
     prazo_minimo_dias = _oficio_list_prazo_justificativa_dias()
+    current_path = request.get_full_path()
     if queryset is None:
         queryset = (
             Oficio.objects.select_related(
@@ -2150,6 +2368,18 @@ def _render_oficio_list(
                     ),
                 ),
                 Prefetch('viajantes', queryset=Viajante.objects.only('id', 'nome')),
+                Prefetch(
+                    'planos_trabalho',
+                    queryset=PlanoTrabalho.objects.select_related('evento', 'roteiro').prefetch_related('oficios'),
+                ),
+                Prefetch(
+                    'planos_trabalho_relacionados',
+                    queryset=PlanoTrabalho.objects.select_related('evento', 'roteiro').prefetch_related('oficios'),
+                ),
+                Prefetch(
+                    'ordens_servico',
+                    queryset=OrdemServico.objects.select_related('evento', 'oficio'),
+                ),
                 'termos_autorizacao',
                 'termos_autorizacao_relacionados',
             )
@@ -2192,7 +2422,7 @@ def _render_oficio_list(
     rows = _sort_oficio_list_cards(rows, filters['order_by'], filters['order_dir'])
     page_obj = _paginate(rows, request.GET.get('page'))
     object_list = [
-        _oficio_list_card(row['oficio'], precomputed=row['precomputed'])
+        _oficio_list_card(row['oficio'], precomputed=row['precomputed'], current_path=current_path)
         for row in page_obj.object_list
     ]
     context = {
@@ -2484,7 +2714,7 @@ def _build_termo_card_theme_meta(termo):
     return mapping.get(css, {'badge_css_class': 'is-muted', 'theme_class': 'is-tone-gray'})
 
 
-def _decorate_termo_list_items(items):
+def _decorate_termo_list_items(items, *, current_path=''):
     for termo in items:
         termo.process_status = _termo_status_meta(termo)
         termo.card_theme_meta = _build_termo_card_theme_meta(termo)
@@ -2514,6 +2744,95 @@ def _decorate_termo_list_items(items):
             or termo.veiculo_combustivel_card
             or termo.veiculo_id
         )
+
+        vinculos_items = []
+        if termo.evento_id and termo.evento:
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=termo.evento.titulo or f'Evento #{termo.evento_id}',
+                    meta='Evento',
+                    url=reverse('eventos:guiado-etapa-1', kwargs={'pk': termo.evento_id}),
+                )
+            )
+        if termo.roteiro_id:
+            roteiro_url = (
+                reverse('eventos:guiado-etapa-2', kwargs={'evento_id': termo.roteiro.evento_id})
+                if termo.roteiro and termo.roteiro.evento_id
+                else reverse('eventos:roteiro-avulso-editar', kwargs={'pk': termo.roteiro_id})
+            )
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=f'Roteiro #{termo.roteiro_id}',
+                    meta='Roteiro',
+                    url=roteiro_url,
+                )
+            )
+
+        oficios_relacionados = list(termo.oficios.all())
+        if not oficios_relacionados and termo.oficio_id and termo.oficio:
+            oficios_relacionados = [termo.oficio]
+        oficios_relacionados = _unique_by_pk(oficios_relacionados)
+        for oficio in oficios_relacionados[:4]:
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=f'Ofício {oficio.numero_formatado or f"#{oficio.pk}"}',
+                    meta=oficio.get_status_display(),
+                    url=reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+                    badge_label=oficio.get_status_display(),
+                )
+            )
+        if len(oficios_relacionados) > 4:
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=f'+{len(oficios_relacionados) - 4} ofício(s) adicional(is)',
+                    meta='Vínculos extras',
+                )
+            )
+
+        termo.vinculos_block = _make_vinculos_block(
+            vinculos_items,
+            title='Vínculos',
+            count_label=f'{len(oficios_relacionados)} ofício(s) relacionados',
+            empty_text='Nenhum vínculo documental registrado.',
+        )
+        termo_link_actions = [
+            _make_vinculo_action_item(
+                label='Abrir editor completo',
+                url=_append_query_params(
+                    reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk}),
+                    {'return_to': current_path},
+                ),
+                css_class='btn-doc-action--primary',
+            ),
+        ]
+        if termo.evento_id and termo.evento:
+            termo_link_actions.append(
+                _make_vinculo_action_item(
+                    label='Ofícios do evento',
+                    url=_append_query_params(
+                        reverse('eventos:oficios-global'),
+                        {'evento_id': termo.evento_id},
+                    ),
+                )
+            )
+            available_oficios = _unique_by_pk(list(termo.evento.oficios.all()))
+            linked_ids = {oficio.pk for oficio in oficios_relacionados if getattr(oficio, 'pk', None)}
+            for oficio in available_oficios:
+                if not getattr(oficio, 'pk', None) or oficio.pk in linked_ids:
+                    continue
+                termo_link_actions.append(
+                    _make_vinculo_action_item(
+                        label=f'Ofício {oficio.numero_formatado or f"#{oficio.pk}"}',
+                        url=_append_query_params(
+                            reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk}),
+                            {'return_to': current_path, 'vincular_oficio_id': oficio.pk},
+                    ),
+                )
+            )
+                if len(termo_link_actions) >= 8:
+                    break
+        termo.vinculos_block['link_actions'] = [item for item in termo_link_actions if item]
+        termo.vinculos_block['link_actions_title'] = 'Vincular documentos'
 
         has_oficio_link = bool(termo.oficio_id or (termo.oficios_resumo and termo.oficios_resumo != 'Sem oficio'))
         if termo.evento_id and has_oficio_link:
@@ -2556,8 +2875,9 @@ def _resolve_plano_trabalho_periodo(plano, related_event):
     return 'Periodo a definir'
 
 
-def _decorate_plano_trabalho_list_items(items):
+def _decorate_plano_trabalho_list_items(items, *, current_path='', linkable_oficios=None):
     atividades_catalogo = get_atividades_catalogo()
+    linkable_oficios = list(linkable_oficios or [])
 
     def _build_initials(value):
         parts = [chunk for chunk in str(value or '').strip().split() if chunk]
@@ -2695,6 +3015,114 @@ def _decorate_plano_trabalho_list_items(items):
                 }
             ],
         }
+        vinculos_items = []
+        if related_event:
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=related_event.titulo or f'Evento #{related_event.pk}',
+                    meta='Evento',
+                    url=reverse('eventos:guiado-etapa-1', kwargs={'pk': related_event.pk}),
+                )
+            )
+        if plano.roteiro_id and plano.roteiro:
+            roteiro_url = (
+                reverse('eventos:guiado-etapa-2', kwargs={'evento_id': plano.roteiro.evento_id})
+                if plano.roteiro.evento_id
+                else reverse('eventos:roteiro-avulso-editar', kwargs={'pk': plano.roteiro_id})
+            )
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=f'Roteiro #{plano.roteiro_id}',
+                    meta='Roteiro',
+                    url=roteiro_url,
+                )
+            )
+        for oficio in related_oficios[:4]:
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=f'Ofício {oficio.numero_formatado or f"#{oficio.pk}"}',
+                    meta=oficio.get_status_display(),
+                    url=reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+                    badge_label=oficio.get_status_display(),
+                )
+            )
+        if len(related_oficios) > 4:
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=f'+{len(related_oficios) - 4} ofício(s) adicional(is)',
+                    meta='Vínculos extras',
+                )
+            )
+        plano.vinculos_block = _make_vinculos_block(
+            vinculos_items,
+            title='Vínculos',
+            count_label=oficios_count_label,
+            empty_text='Nenhum vínculo documental registrado.',
+        )
+        plano_link_actions = [
+            _make_vinculo_action_item(
+                label='Abrir editor completo',
+                url=_append_query_params(
+                    reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk}),
+                    {'return_to': current_path},
+                ),
+                css_class='btn-doc-action--primary',
+            ),
+        ]
+        if related_event:
+            plano_link_actions.append(
+                _make_vinculo_action_item(
+                    label=f'Evento: {related_event.titulo or f"#{related_event.pk}"}',
+                    url=_append_query_params(
+                        reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk}),
+                        {'return_to': current_path, 'vincular_evento_id': related_event.pk},
+                    ),
+                )
+            )
+            plano_link_actions.append(
+                _make_vinculo_action_item(
+                    label='Ofícios do evento',
+                    url=_append_query_params(
+                        reverse('eventos:oficios-global'),
+                        {'evento_id': related_event.pk},
+                    ),
+                )
+            )
+            plano_link_actions.append(
+                _make_vinculo_action_item(
+                    label='Roteiros do evento',
+                    url=_append_query_params(
+                        reverse('eventos:roteiros-global'),
+                        {'evento_id': related_event.pk},
+                    ),
+                )
+            )
+            plano_link_actions.append(
+                _make_vinculo_action_item(
+                    label='Ordens de serviço do evento',
+                    url=_append_query_params(
+                        reverse('eventos:documentos-ordens-servico'),
+                        {'evento_id': related_event.pk},
+                    ),
+                )
+            )
+        related_ids = {getattr(oficio, 'pk', None) for oficio in related_oficios if getattr(oficio, 'pk', None)}
+        for oficio in linkable_oficios:
+            if not getattr(oficio, 'pk', None) or oficio.pk in related_ids:
+                continue
+            plano_link_actions.append(
+                _make_vinculo_action_item(
+                    label=f'Ofício {oficio.numero_formatado or f"#{oficio.pk}"}',
+                    url=_append_query_params(
+                        reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk}),
+                        {'return_to': current_path, 'vincular_oficio_id': oficio.pk},
+                    ),
+                )
+            )
+            if len(plano_link_actions) >= 12:
+                break
+        plano.vinculos_block['link_actions'] = [item for item in plano_link_actions if item]
+        plano.vinculos_block['link_actions_title'] = 'Vincular documentos'
         plano.calculadora_block = {
             'valor_total': valor_plano_display,
             'diarias': diarias_display,
@@ -2912,11 +3340,36 @@ def _build_plano_trabalho_form_ui_context(form, *, obj=None, preselected_event=N
 
 
 def _resolve_preselected_context(request):
-    preselected_event_id = _parse_int(request.GET.get('preselected_event_id') or request.POST.get('preselected_event_id'))
-    preselected_oficio_id = _parse_int(request.GET.get('preselected_oficio_id') or request.POST.get('preselected_oficio_id'))
+    preselected_event_id = _parse_int(
+        request.GET.get('preselected_event_id')
+        or request.POST.get('preselected_event_id')
+        or request.GET.get('vincular_evento_id')
+        or request.POST.get('vincular_evento_id')
+    )
+    preselected_oficio_id = _parse_int(
+        request.GET.get('preselected_oficio_id')
+        or request.POST.get('preselected_oficio_id')
+        or request.GET.get('vincular_oficio_id')
+        or request.POST.get('vincular_oficio_id')
+    )
     preselected_event = Evento.objects.filter(pk=preselected_event_id).first() if preselected_event_id else None
     preselected_oficio = Oficio.objects.filter(pk=preselected_oficio_id).first() if preselected_oficio_id else None
     return preselected_event, preselected_oficio
+
+
+def _resolve_vinculo_evento(request):
+    vinculo_evento_id = _parse_int(request.GET.get('vincular_evento_id') or request.POST.get('vincular_evento_id'))
+    return Evento.objects.filter(pk=vinculo_evento_id).first() if vinculo_evento_id else None
+
+
+def _resolve_vinculo_oficio(request):
+    vinculo_oficio_id = _parse_int(request.GET.get('vincular_oficio_id') or request.POST.get('vincular_oficio_id'))
+    return Oficio.objects.filter(pk=vinculo_oficio_id).first() if vinculo_oficio_id else None
+
+
+def _resolve_vinculo_roteiro(request):
+    vinculo_roteiro_id = _parse_int(request.GET.get('vincular_roteiro_id') or request.POST.get('vincular_roteiro_id'))
+    return RoteiroEvento.objects.filter(pk=vinculo_roteiro_id).first() if vinculo_roteiro_id else None
 
 
 def _is_form_autosave_request(request):
@@ -3501,6 +3954,8 @@ def plano_trabalho_calcular_diarias_api(request):
 
 def planos_trabalho_global(request):
     filters = _base_documento_filters(request)
+    current_path = request.get_full_path()
+    linkable_oficios = list(Oficio.objects.select_related('evento').order_by('-updated_at')[:12])
     queryset = (
         PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante', 'roteiro')
         .prefetch_related('oficios', 'oficios__evento')
@@ -3535,7 +3990,7 @@ def planos_trabalho_global(request):
     queryset = queryset.distinct()
     page_obj = _paginate(queryset.order_by(ordering, '-created_at'), request.GET.get('page'))
     object_list = list(page_obj.object_list)
-    _decorate_plano_trabalho_list_items(object_list)
+    _decorate_plano_trabalho_list_items(object_list, current_path=current_path, linkable_oficios=linkable_oficios)
     return render(
         request,
         'eventos/documentos/planos_trabalho_lista.html',
@@ -3653,8 +4108,43 @@ def plano_trabalho_editar(request, pk):
     _, step2_defaults = _ensure_plano_step2_defaults(obj)
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-planos-trabalho'))
     context_source = _get_context_source(request)
+    vinculo_evento = _resolve_vinculo_evento(request)
+    vinculo_oficio = _resolve_vinculo_oficio(request)
+    vinculo_roteiro = _resolve_vinculo_roteiro(request)
     bound_data = _normalize_plano_trabalho_post_data(request.POST) if request.method == 'POST' else None
     form = PlanoTrabalhoForm(bound_data or None, instance=obj)
+    if request.method == 'GET' and vinculo_evento:
+        form.initial['evento'] = vinculo_evento.pk
+        related_ids = []
+        initial_related = form.initial.get('oficios_relacionados')
+        if isinstance(initial_related, (list, tuple, set)):
+            related_ids.extend(initial_related)
+        elif initial_related:
+            related_ids.append(initial_related)
+        related_ids.extend(
+            Oficio.objects.filter(evento=vinculo_evento).order_by('-updated_at').values_list('pk', flat=True)
+        )
+        if related_ids:
+            form.initial['oficios_relacionados'] = list(dict.fromkeys(int(pk) for pk in related_ids if str(pk).isdigit()))
+        if not form.initial.get('oficio'):
+            primeiro_oficio = Oficio.objects.filter(evento=vinculo_evento).order_by('-updated_at').first()
+            if primeiro_oficio:
+                form.initial['oficio'] = primeiro_oficio.pk
+    if request.method == 'GET' and vinculo_roteiro and not form.initial.get('roteiro'):
+        form.initial['roteiro'] = vinculo_roteiro.pk
+    if request.method == 'GET' and vinculo_oficio:
+        related_ids = []
+        initial_related = form.initial.get('oficios_relacionados')
+        if isinstance(initial_related, (list, tuple, set)):
+            related_ids.extend(initial_related)
+        elif initial_related:
+            related_ids.append(initial_related)
+        if obj.oficio_id:
+            related_ids.append(obj.oficio_id)
+        related_ids.append(vinculo_oficio.pk)
+        form.initial['oficios_relacionados'] = list(dict.fromkeys(int(pk) for pk in related_ids if str(pk).isdigit()))
+        if not form.initial.get('oficio'):
+            form.initial['oficio'] = vinculo_oficio.pk
     formset, has_efetivo_payload, default_cargo = _build_plano_trabalho_efetivo_formset(request, instance=obj)
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
@@ -3859,6 +4349,8 @@ def _ordem_servico_viajantes_items(ordem, limit=4):
 
 def ordens_servico_global(request):
     filters = _base_documento_filters(request)
+    current_path = request.get_full_path()
+    linkable_oficios = list(Oficio.objects.select_related('evento').order_by('-updated_at')[:12])
     queryset = OrdemServico.objects.select_related('evento', 'oficio').prefetch_related(
         Prefetch('viajantes', queryset=Viajante.objects.select_related('cargo', 'unidade_lotacao')),
         Prefetch('oficio__viajantes', queryset=Viajante.objects.select_related('cargo', 'unidade_lotacao')),
@@ -3940,6 +4432,89 @@ def ordens_servico_global(request):
             'chefia_nome': chefia_contexto['nome'],
             'chefia_cargo': chefia_contexto['cargo'],
         }
+        vinculos_items = []
+        if ordem.evento_id and ordem.evento:
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=ordem.evento.titulo or f'Evento #{ordem.evento_id}',
+                    meta='Evento',
+                    url=reverse('eventos:guiado-etapa-1', kwargs={'pk': ordem.evento_id}),
+                )
+            )
+        if ordem.oficio_id and ordem.oficio:
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=f'Ofício {ordem.oficio.numero_formatado or f"#{ordem.oficio.pk}"}',
+                    meta=ordem.oficio.get_status_display(),
+                    url=reverse('eventos:oficio-step1', kwargs={'pk': ordem.oficio.pk}),
+                    badge_label=ordem.oficio.get_status_display(),
+                )
+            )
+            if ordem.oficio.roteiro_evento_id and ordem.oficio.roteiro_evento:
+                roteiro = ordem.oficio.roteiro_evento
+                roteiro_url = (
+                    reverse('eventos:guiado-etapa-2', kwargs={'evento_id': roteiro.evento_id})
+                    if roteiro.evento_id
+                    else reverse('eventos:roteiro-avulso-editar', kwargs={'pk': roteiro.pk})
+                )
+                vinculos_items.append(
+                    _make_vinculo_item(
+                        title=f'Roteiro #{roteiro.pk}',
+                        meta='Roteiro',
+                        url=roteiro_url,
+                    )
+                )
+        ordem.vinculos_block = _make_vinculos_block(
+            vinculos_items,
+            title='Vínculos',
+            count_label=f'{len(vinculos_items)} vínculo(s) documentais' if vinculos_items else 'Sem vínculos documentais',
+            empty_text='Nenhum vínculo documental registrado.',
+        )
+        ordem_link_actions = [
+            _make_vinculo_action_item(
+                label='Abrir editor completo',
+                url=_append_query_params(
+                    reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}),
+                    {'return_to': current_path},
+                ),
+                css_class='btn-doc-action--primary',
+            ),
+        ]
+        if ordem.evento_id and ordem.evento:
+            ordem_link_actions.append(
+                _make_vinculo_action_item(
+                    label=f'Evento: {ordem.evento.titulo or f"#{ordem.evento_id}"}',
+                    url=_append_query_params(
+                        reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}),
+                        {'return_to': current_path, 'vincular_evento_id': ordem.evento_id},
+                    ),
+                )
+            )
+            ordem_link_actions.append(
+                _make_vinculo_action_item(
+                    label='Planos de trabalho do evento',
+                    url=_append_query_params(
+                        reverse('eventos:documentos-planos-trabalho'),
+                        {'evento_id': ordem.evento_id},
+                    ),
+                )
+            )
+        for oficio in linkable_oficios:
+            if not getattr(oficio, 'pk', None) or oficio.pk == ordem.oficio_id:
+                continue
+            ordem_link_actions.append(
+                _make_vinculo_action_item(
+                    label=f'Ofício {oficio.numero_formatado or f"#{oficio.pk}"}',
+                    url=_append_query_params(
+                        reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}),
+                        {'return_to': current_path, 'vincular_oficio_id': oficio.pk},
+                    ),
+                )
+            )
+            if len(ordem_link_actions) >= 10:
+                break
+        ordem.vinculos_block['link_actions'] = [item for item in ordem_link_actions if item]
+        ordem.vinculos_block['link_actions_title'] = 'Vincular documentos'
     return render(
         request,
         'eventos/documentos/ordens_servico_lista.html',
@@ -4016,7 +4591,13 @@ def ordem_servico_editar(request, pk):
     obj = get_object_or_404(OrdemServico.objects.select_related('evento', 'oficio'), pk=pk)
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-ordens-servico'))
     context_source = _get_context_source(request)
+    vinculo_evento = _resolve_vinculo_evento(request)
+    vinculo_oficio = _resolve_vinculo_oficio(request)
     form = OrdemServicoForm(request.POST or None, instance=obj)
+    if request.method == 'GET' and vinculo_evento:
+        form.initial['evento'] = vinculo_evento.pk
+    if request.method == 'GET' and vinculo_oficio:
+        form.initial['oficio'] = vinculo_oficio.pk
     if request.method == 'POST' and _is_form_autosave_request(request):
         if not form.is_valid():
             errors = form.non_field_errors() or [err for errs in form.errors.values() for err in errs]
@@ -4187,6 +4768,8 @@ def justificativas_global(request):
         'order_by': _clean(request.GET.get('order_by')),
         'order_dir': _clean(request.GET.get('order_dir')),
     }
+    current_path = request.get_full_path()
+    linkable_oficios = list(Oficio.objects.select_related('evento').order_by('-updated_at')[:12])
     queryset = (
         Justificativa.objects.select_related(
             'oficio',
@@ -4238,6 +4821,66 @@ def justificativas_global(request):
         just.status_badge_label = 'Preenchida' if has_text else 'Pendente'
         just.status_badge_css_class = 'is-info' if has_text else 'is-pending'
         just.modelo_display = just.modelo.nome if just.modelo_id else 'Sem modelo'
+        vinculos_items = []
+        if just.oficio_id and just.oficio:
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=f'Ofício {just.oficio.numero_formatado or f"#{just.oficio.pk}"}',
+                    meta=just.oficio.get_status_display(),
+                    url=reverse('eventos:oficio-step4', kwargs={'pk': just.oficio.pk}),
+                    badge_label=just.oficio.get_status_display(),
+                )
+            )
+        if just.oficio_id and just.oficio and just.oficio.evento_id:
+            vinculos_items.append(
+                _make_vinculo_item(
+                    title=just.oficio.evento.titulo or f'Evento #{just.oficio.evento_id}',
+                    meta='Evento',
+                    url=reverse('eventos:guiado-etapa-1', kwargs={'pk': just.oficio.evento_id}),
+                )
+            )
+        just.vinculos_block = _make_vinculos_block(
+            vinculos_items,
+            title='Vínculos',
+            count_label=f'{len(vinculos_items)} vínculo(s)' if vinculos_items else 'Sem vínculos',
+            empty_text='Nenhum vínculo documental registrado.',
+        )
+        just_link_actions = [
+            _make_vinculo_action_item(
+                label='Abrir editor completo',
+                url=_append_query_params(
+                    reverse('eventos:documentos-justificativas-editar', kwargs={'pk': just.pk}),
+                    {'return_to': current_path},
+                ),
+                css_class='btn-doc-action--primary',
+            ),
+        ]
+        if just.oficio_id and just.oficio and just.oficio.evento_id:
+            just_link_actions.append(
+                _make_vinculo_action_item(
+                    label='Ofícios do evento',
+                    url=_append_query_params(
+                        reverse('eventos:oficios-global'),
+                        {'evento_id': just.oficio.evento_id},
+                    ),
+                )
+            )
+        for oficio in linkable_oficios:
+            if not getattr(oficio, 'pk', None) or oficio.pk == just.oficio_id:
+                continue
+            just_link_actions.append(
+                _make_vinculo_action_item(
+                    label=f'Ofício {oficio.numero_formatado or f"#{oficio.pk}"}',
+                    url=_append_query_params(
+                        reverse('eventos:documentos-justificativas-editar', kwargs={'pk': just.pk}),
+                        {'return_to': current_path, 'vincular_oficio_id': oficio.pk},
+                    ),
+                )
+            )
+            if len(just_link_actions) >= 8:
+                break
+        just.vinculos_block['link_actions'] = [item for item in just_link_actions if item]
+        just.vinculos_block['link_actions_title'] = 'Vincular documentos'
         object_list.append(just)
 
     return render(
@@ -4301,7 +4944,10 @@ def justificativa_editar(request, pk):
         pk=pk,
     )
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-justificativas'))
+    vinculo_oficio = _resolve_vinculo_oficio(request)
     form = JustificativaForm(request.POST or None, instance=obj)
+    if request.method == 'GET' and vinculo_oficio:
+        form.initial['oficio'] = vinculo_oficio.pk
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Justificativa atualizada com sucesso.')
@@ -5066,7 +5712,13 @@ def termo_autorizacao_editar(request, pk):
     )
     return_to = _get_safe_return_to(request, reverse('eventos:documentos-termos'))
     context_source = _get_context_source(request)
+    vinculo_oficio = _resolve_vinculo_oficio(request)
     form = TermoAutorizacaoEdicaoForm(request.POST or None, instance=obj)
+    if request.method == 'GET' and vinculo_oficio:
+        initial_oficios = list(form.initial.get('oficios') or [])
+        if vinculo_oficio.pk not in initial_oficios:
+            initial_oficios.append(vinculo_oficio.pk)
+        form.initial['oficios'] = initial_oficios
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Termo atualizado com sucesso.')

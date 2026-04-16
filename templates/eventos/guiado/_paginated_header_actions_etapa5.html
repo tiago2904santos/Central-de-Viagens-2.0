@@ -1,7 +1,7 @@
-<a href="{% url 'eventos:guiado-etapa-4' evento.pk %}" class="btn btn-outline-secondary btn-sm">
-    <span>Etapa 4 - PT / OS</span>
-</a>
 <a href="{% url 'eventos:guiado-etapa-1' evento.pk %}" class="btn btn-outline-secondary btn-sm">
     <i class="bi bi-arrow-left"></i>
     <span>Dados do evento</span>
 </a>
+<div class="guiado-etapa3-header-toggle">
+    {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualizacao dos termos do evento' %}
+</div>

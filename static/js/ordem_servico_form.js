@@ -6,6 +6,7 @@
 
   var autosaveIdInput = document.getElementById('id_autosave_obj_id');
   var autosaveStatus = document.getElementById('ordem-servico-autosave-status');
+  var dataCriacaoInput = document.getElementById('id_data_criacao');
   var dataUnicaInput = document.getElementById('id_data_unica');
   var dataDeslocamentoInput = document.getElementById('id_data_deslocamento');
   var dataFimInput = document.getElementById('id_data_deslocamento_fim');
@@ -156,22 +157,11 @@
     return !!(dataUnicaInput && dataUnicaInput.checked);
   }
 
-  function buildPeriodoLabel() {
-    if (!dataDeslocamentoInput || !dataDeslocamentoInput.value) {
-      return 'Período a definir';
+  function buildDataCriacaoLabel() {
+    if (!dataCriacaoInput || !dataCriacaoInput.value) {
+      return 'Hoje';
     }
-    var inicio = parseDateParts(dataDeslocamentoInput.value);
-    if (!inicio) {
-      return 'Período a definir';
-    }
-    var fim = dataFimInput && dataFimInput.value ? parseDateParts(dataFimInput.value) : '';
-    if (isDataUnica()) {
-      return inicio;
-    }
-    if (fim && fim !== inicio) {
-      return inicio + ' a ' + fim;
-    }
-    return inicio;
+    return String(dataCriacaoInput.value || '').trim() || 'Hoje';
   }
 
   function updateDataUnica() {
@@ -570,7 +560,7 @@
 
   function updateContextPreview() {
     if (preview.data) {
-      preview.data.textContent = buildPeriodoLabel();
+      preview.data.textContent = buildDataCriacaoLabel();
     }
     if (preview.vinculo) {
       var vinculo = 'Cadastro avulso';

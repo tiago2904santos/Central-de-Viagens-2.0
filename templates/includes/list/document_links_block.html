@@ -1,0 +1,65 @@
+<section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel{% if block.css_class %} {{ block.css_class }}{% endif %}">
+    <div class="oficio-list-subcard__header">
+        <div>
+            <h3 class="oficio-list-subcard__title">{{ block.title|default:'Vínculos' }}</h3>
+            {% if block.count_label %}
+            <p class="oficio-list-subcard__subtitle">{{ block.count_label }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="oficio-list-subcard__body">
+        <div class="oficio-list-term-list">
+            {% for item in block.items %}
+            <div class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft{% if item.css_class %} {{ item.css_class }}{% endif %}">
+                <span class="oficio-list-term-row__name">{{ item.title }}</span>
+                <div class="oficio-list-term-row__actions">
+                    {% if item.meta %}
+                    <span class="text-muted small">{{ item.meta }}</span>
+                    {% endif %}
+                    {% if item.badge_label %}
+                    <span class="oficio-list-badge {{ item.badge_css_class|default:'is-muted' }}"><span>{{ item.badge_label }}</span></span>
+                    {% endif %}
+                    {% if item.url %}
+                    <a href="{{ item.url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Abrir</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="documento-cascade-empty">{{ block.empty_text|default:'Sem vínculos registrados.' }}</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if block.link_actions %}
+    <details class="oficio-list-subcard__link-actions">
+        <summary class="oficio-list-subcard__link-actions-summary">
+            <span>
+                {% if block.items %}
+                    {{ block.link_actions_title|default:'Vincular documentos' }}
+                {% else %}
+                    {{ block.empty_text|default:'Nenhum vínculo documental registrado.' }}
+                {% endif %}
+            </span>
+            <span class="oficio-list-badge is-info"><span>{{ block.link_actions|length }}</span></span>
+        </summary>
+        <div class="oficio-list-subcard__link-actions-body">
+            <label class="form-label small mb-2">{{ block.link_actions_help|default:'Escolha um documento disponível' }}</label>
+            <select
+                class="form-select"
+                data-oficio-picker-search="always"
+                data-oficio-picker-search-placeholder="{{ block.link_actions_search_placeholder|default:'Filtrar documento...' }}"
+                onchange="if (this.value) { window.location.href = this.value; }"
+            >
+                <option value="">{{ block.link_actions_placeholder|default:'Selecione uma opção...' }}</option>
+                {% for action in block.link_actions %}
+                <option value="{{ action.url }}">{{ action.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </details>
+    {% endif %}
+</section>

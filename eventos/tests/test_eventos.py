@@ -138,7 +138,6 @@ class EventoListaAuthTest(TestCase):
         response = self.client.get(reverse('eventos:lista'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'PCPR')
-        self.assertContains(response, 'Curitiba')
         self.assertContains(response, 'Editar Etapa 1')
         self.assertContains(response, reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}))
         self.assertNotContains(response, '/guiado/painel/')
@@ -239,7 +238,7 @@ class EventoDetalheTest(TestCase):
 
 
 class EventoExcluirTest(TestCase):
-    """ExclusÃ£o de evento: exige login, POST, bloqueia quando hÃ¡ roteiros."""
+    """ExclusÃ£o de evento: exige login e POST, mas não bloqueia por status ou vínculos."""
 
     def setUp(self):
         self.user = User.objects.create_user(username='u', password='p')
@@ -272,19 +271,23 @@ class EventoExcluirTest(TestCase):
         response_lista = self.client.get(reverse('eventos:lista'))
         self.assertContains(response_lista, 'excluÃ­do com sucesso')
 
-    def test_evento_com_roteiros_nao_pode_ser_excluido(self):
-        """Evento com roteiros vinculados nÃ£o pode ser excluÃ­do; mensagem de erro."""
+    def test_evento_com_roteiros_pode_ser_excluido(self):
+        """Evento com roteiros vinculados também pode ser excluído."""
         self.client.login(username='u', password='p')
-        ev = Evento.objects.create(titulo='Evento Y', data_inicio=date(2025, 1, 1), data_fim=date(2025, 1, 1), status=Evento.STATUS_RASCUNHO)
+        ev = Evento.objects.create(
+            titulo='Evento Y',
+            data_inicio=date(2025, 1, 1),
+            data_fim=date(2025, 1, 1),
+            status=Evento.STATUS_FINALIZADO,
+        )
         RoteiroEvento.objects.create(evento=ev)
         url = reverse('eventos:excluir', kwargs={'pk': ev.pk})
         response = self.client.post(url, {})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('eventos:lista'))
-        self.assertTrue(Evento.objects.filter(pk=ev.pk).exists())
+        self.assertFalse(Evento.objects.filter(pk=ev.pk).exists())
         response_lista = self.client.get(reverse('eventos:lista'))
-        self.assertContains(response_lista, 'nÃ£o pode ser excluÃ­do')
-        self.assertContains(response_lista, 'roteiros')
+        self.assertContains(response_lista, 'excluÃ­do com sucesso')
 
     def test_excluir_redireciona_para_lista_com_sucesso(self):
         """ApÃ³s exclusÃ£o bem-sucedida, redireciona para lista e evento some."""
@@ -3400,7 +3403,7 @@ class EventoEtapa6FinalizacaoTest(TestCase):
         self.assertEqual(self.evento.status, Evento.STATUS_FINALIZADO)
 
 class EventoFinalizadoTravasTest(TestCase):
-    """Travas pÃ³s-finalizaÃ§Ã£o: bloquear exclusÃ£o, mas permitir ediÃ§Ã£o do evento e dos ofÃ­cios."""
+    """Travas pÃ³s-finalizaÃ§Ã£o: a exclusão agora é liberada, mas a edição continua controlada."""
 
     def setUp(self):
         self.user = get_user_model().objects.create_user(username='u_trava', password='p_trava')
@@ -3413,15 +3416,15 @@ class EventoFinalizadoTravasTest(TestCase):
             status=Evento.STATUS_FINALIZADO,
         )
 
-    def test_excluir_evento_finalizado_bloqueado(self):
+    def test_excluir_evento_finalizado_permitido(self):
         response = self.client.post(
             reverse('eventos:excluir', kwargs={'pk': self.evento.pk}),
             {},
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(Evento.objects.filter(pk=self.evento.pk).exists())
-        self.assertContains(response, 'finalizado')
+        self.assertFalse(Evento.objects.filter(pk=self.evento.pk).exists())
+        self.assertContains(response, 'excluÃ­do com sucesso')
 
     def test_get_etapa_1_finalizado_retorna_200_consulta(self):
         response = self.client.get(reverse('eventos:guiado-etapa-1', kwargs={'pk': self.evento.pk}))

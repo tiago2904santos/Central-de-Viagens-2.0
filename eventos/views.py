@@ -1001,22 +1001,9 @@ def evento_detalhe(request, pk):
 @require_http_methods(['POST'])
 def evento_excluir(request, pk):
     """
-    Exclui o evento somente se nÃ£o houver vÃ­nculos impeditivos (roteiros).
-    Evento finalizado nÃ£o pode ser excluÃ­do.
+    Exclui o evento sem bloquear por status ou vínculos.
     """
     evento = get_object_or_404(Evento, pk=pk)
-    if _evento_esta_finalizado(evento):
-        messages.error(
-            request,
-            'Evento finalizado nÃ£o pode ser excluÃ­do. Apenas consulta Ã© permitida.',
-        )
-        return redirect('eventos:guiado-etapa-1', pk=evento.pk)
-    if evento.roteiros.exists():
-        messages.error(
-            request,
-            'Este evento nÃ£o pode ser excluÃ­do porque jÃ¡ possui dados vinculados (roteiros).'
-        )
-        return redirect('eventos:lista')
     evento.delete()
     messages.success(request, 'Evento excluÃ­do com sucesso.')
     return redirect('eventos:lista')
@@ -2949,22 +2936,15 @@ def _guiado_v2_step_visual_state(evento, etapa_key):
         return 'completed'
 
     if etapa_key == 'termos':
-        _evento_sincronizar_participantes(evento)
-        viajante_ids = list(
-            EventoParticipante.objects.filter(evento=evento).values_list('viajante_id', flat=True)
-        )
-        if not viajante_ids:
+        termos_qs = TermoAutorizacao.objects.filter(
+            Q(evento_id=evento.pk) | Q(oficio__evento_id=evento.pk) | Q(oficios__evento_id=evento.pk)
+        ).distinct()
+        if not termos_qs.exists():
             return 'pending'
-        termos_status = EventoTermoParticipante.objects.filter(
-            evento=evento,
-            viajante_id__in=viajante_ids,
-        )
-        if _evento_termos_ok(evento):
-            return 'completed'
-        if termos_status.exists() and not termos_status.filter(status=EventoTermoParticipante.STATUS_PENDENTE).exists():
-            return 'completed'
-        if termos_status.exclude(status=EventoTermoParticipante.STATUS_PENDENTE).exists():
+        if termos_qs.exclude(status=TermoAutorizacao.STATUS_GERADO).exists():
             return 'draft'
+        if termos_qs.exists():
+            return 'completed'
         return 'pending'
 
     return 'pending'
@@ -3364,7 +3344,10 @@ def guiado_etapa_5_v2(request, evento_id):
     )
 
     page_obj = views_global._paginate(queryset, request.GET.get('page'))
-    object_list = views_global._decorate_termo_list_items(list(page_obj.object_list))
+    object_list = views_global._decorate_termo_list_items(
+        list(page_obj.object_list),
+        current_path=request.get_full_path(),
+    )
     return_to = reverse('eventos:guiado-etapa-5', kwargs={'evento_id': evento.pk})
     termo_novo_url = (
         f"{reverse('eventos:documentos-termos-novo')}?"

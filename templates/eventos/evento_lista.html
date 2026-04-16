@@ -91,22 +91,6 @@
                     </span>
                 </div>
             </div>
-
-            <div class="documento-cascade-meta-grid">
-                <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
-                    <span class="documento-cascade-meta-item__label">Destino</span>
-                    <strong class="documento-cascade-meta-item__value">{{ obj.destinos_display }}</strong>
-                </div>
-                <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
-                    <span class="documento-cascade-meta-item__label">Periodo</span>
-                    <strong class="documento-cascade-meta-item__value">{{ obj.periodo_display }}</strong>
-                </div>
-                <div class="documento-cascade-meta-item oficio-list-surface oficio-list-surface--soft">
-                    <span class="documento-cascade-meta-item__label">Cascata documental</span>
-                    <strong class="documento-cascade-meta-item__value">{{ obj.document_counts_display }}</strong>
-                </div>
-            </div>
-
             <div class="documento-cascade-block-grid documento-cascade-block-grid--triple">
                 {% for block in obj.document_blocks %}
                 <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel">

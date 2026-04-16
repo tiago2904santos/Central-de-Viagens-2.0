@@ -145,8 +145,10 @@ class PtOsDesacopladoTest(TestCase):
     def test_formulario_os_usa_padrao_visual_e_blocos_reaproveitados(self):
         response = self.client.get(reverse('eventos:documentos-ordens-servico-novo'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'app-page-header')
-        self.assertContains(response, 'system-form-header')
+        self.assertContains(response, 'oficio-stage-panel')
+        self.assertContains(response, 'oficio-stage-intro')
+        self.assertContains(response, 'Data de criação')
+        self.assertContains(response, 'ordem-servico-section--criacao')
         self.assertContains(response, 'Datas')
         self.assertContains(response, 'evento-dataunica-pill')
         self.assertContains(response, 'Oculta a data final')
@@ -271,6 +273,7 @@ class PtOsDesacopladoTest(TestCase):
             data={
                 'data_criacao': '2026-03-10',
                 'status': OrdemServico.STATUS_RASCUNHO,
+                'data_unica': '1',
                 'data_deslocamento': '2026-03-12',
                 'modelo_motivo': modelo.pk,
                 'motivo_texto': 'Apoio operacional em ação integrada.',
@@ -293,13 +296,12 @@ class PtOsDesacopladoTest(TestCase):
         self.assertEqual(ordem.viajantes.first(), viajante)
         self.assertEqual(ordem.destinos_json[0]['cidade_nome'], 'Curitiba')
         self.assertEqual(ordem.status, OrdemServico.STATUS_FINALIZADO)
-        self.assertEqual(ordem.data_criacao, timezone.localdate())
+        self.assertEqual(ordem.data_criacao, date(2026, 3, 10))
 
     def test_criar_os_incompleta_fica_rascunho_com_data_automatica(self):
         response = self.client.post(
             reverse('eventos:documentos-ordens-servico-novo'),
             data={
-                'data_criacao': '2000-01-01',
                 'status': OrdemServico.STATUS_FINALIZADO,
                 'motivo_texto': 'Teste de rascunho automático',
                 'destinos_payload': '[]',
@@ -404,7 +406,6 @@ class PtOsDesacopladoTest(TestCase):
         response = self.client.post(
             reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}),
             data={
-                'data_criacao': '2026-03-10',
                 'status': OrdemServico.STATUS_FINALIZADO,
                 'motivo_texto': 'Motivo atualizado',
                 'destinos_payload': '[]',
@@ -414,6 +415,7 @@ class PtOsDesacopladoTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
         ordem.refresh_from_db()
+        self.assertEqual(ordem.data_criacao, date(2026, 3, 10))
         self.assertEqual(ordem.data_deslocamento, date(2026, 3, 12))
         self.assertEqual(ordem.viajantes.count(), 1)
         self.assertEqual(ordem.viajantes.first(), viajante)
@@ -505,8 +507,7 @@ class PtOsDesacopladoTest(TestCase):
         )
         self.assertEqual(context['equipe_deslocamento'], esperado)
 
-    @patch('eventos.services.documentos.ordem_servico.timezone.localdate', return_value=date(2026, 4, 9))
-    def test_contexto_template_os_usa_data_atual(self, mock_localdate):
+    def test_contexto_template_os_usa_data_criacao(self):
         ordem = OrdemServico.objects.create(
             data_criacao=date(2026, 4, 3),
             data_deslocamento=date(2026, 4, 3),
@@ -516,8 +517,7 @@ class PtOsDesacopladoTest(TestCase):
 
         context = build_ordem_servico_model_template_context(ordem)
 
-        self.assertEqual(context['data_atual_extenso'], '09 de abril de 2026')
-        mock_localdate.assert_called_once()
+        self.assertEqual(context['data_atual_extenso'], '03 de abril de 2026')
 
     def _novo_modelo_motivo(self, texto):
         from eventos.models import ModeloMotivoViagem

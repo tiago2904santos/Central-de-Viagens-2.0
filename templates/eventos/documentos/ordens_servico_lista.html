@@ -192,6 +192,8 @@
             </div>
 
             <div class="oficio-list-card__secondary">
+                {% include 'includes/list/document_links_block.html' with block=object.vinculos_block %}
+
                 <section class="oficio-list-subcard oficio-list-subcard--justificativa oficio-list-surface oficio-list-surface--panel">
                     <div class="oficio-list-subcard__header">
                         <div>

@@ -1151,7 +1151,7 @@ class GlobalViewsTest(TestCase):
         self.assertContains(response, f'id="plano-card-{plano.pk}"', html=False)
         self.assertIn(self.oficio_pt.numero_formatado, content)
         self.assertIn(oficio_extra.numero_formatado, content)
-        self.assertIn('Oficios vinculados', content)
+        self.assertIn('Vínculos', content)
         self.assertIn('Contexto do plano', content)
         self.assertIn('Valor por servidor', content)
         self.assertIn('Diarias', content)

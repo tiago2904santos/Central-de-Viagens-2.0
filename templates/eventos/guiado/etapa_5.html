@@ -24,16 +24,6 @@
         <div class="alert alert-info mb-0">{{ pdf_backend_message }}</div>
         {% endif %}
 
-        <section class="app-page-card app-page-card--spacious">
-            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
-                <div>
-                    <h2 class="h6 mb-1">Termos de Autorizacao vinculados ao evento</h2>
-                    <p class="text-muted mb-0">A listagem abaixo considera somente os documentos ligados a {{ evento.titulo|default:"este evento" }}.</p>
-                </div>
-                
-            </div>
-        </section>
-
         {% include 'eventos/documentos/partials/_termos_list_content.html' with basic_aria_label='Lista simples dos termos do evento' rich_aria_label='Cards dos termos do evento' empty_state_text='Nenhum termo de autorizacao vinculado a este evento.' rich_container_class='guiado-etapa5-termos-stack' empty_state_class='guiado-etapa5-termos-empty' %}
 
         {% if page_obj %}
