@@ -802,8 +802,19 @@ class EventoEtapa2RoteirosTest(TestCase):
         response = self.client.get(reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['destinos_atuais']), 2)
-        self.assertContains(response, 'destino_estado_0')
-        self.assertContains(response, 'destino_estado_1')
+        html = response.content.decode('utf-8')
+        self.assertIn('id="step3-state-data"', html)
+        self.assertIn('id="destinos-container"', html)
+        prefix = 'id="step3-state-data" type="application/json">'
+        start = html.index(prefix) + len(prefix)
+        end = html.index('</script>', start)
+        state = json.loads(html[start:end])
+        destinos_json = state.get('destinos_atuais') or []
+        self.assertEqual(len(destinos_json), 2)
+        self.assertEqual(
+            {d.get('cidade_id') for d in destinos_json},
+            {self.cidade_a.pk, self.cidade_b.pk},
+        )
 
     def test_bloco_duracao_apoio_removido(self):
         """O bloco '3) DuraÃ§Ã£o (apoio)' e o campo DuraÃ§Ã£o (HH:MM) foram removidos da Etapa 2."""

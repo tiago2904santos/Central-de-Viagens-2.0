@@ -623,10 +623,14 @@ def _parse_trechos_times_post(request, num_trechos):
     return result
 
 
-def _parse_retorno_from_post(request):
+def _parse_retorno_from_post(request, ida_trecho_count=None):
     """
     Parses retorno_* POST fields (from static retorno block) into a trechos_times
     dict compatible with _salvar_trechos_roteiro expectations.
+
+    ida_trecho_count: quando informado, preenche lacunas a partir do padrão legado em
+    que a perna de retorno vinha como trecho_{ida_trecho_count}_saida_dt / _chegada_dt
+    (N igual ao número de destinos / trechos de ida).
     """
     from datetime import datetime
     from decimal import Decimal, InvalidOperation
@@ -645,6 +649,25 @@ def _parse_retorno_from_post(request):
             dt = timezone.make_aware(dt)
         return dt
 
+    def _parse_combined_dt(val):
+        val = (val or '').strip()
+        if not val:
+            return None
+        dt = None
+        if 'T' in val:
+            try:
+                dt = datetime.strptime(val[:16], '%Y-%m-%dT%H:%M')
+            except ValueError:
+                pass
+        if dt is None and len(val) >= 10:
+            try:
+                dt = datetime.strptime(val[:10] + ' 00:00', '%Y-%m-%d %H:%M')
+            except ValueError:
+                pass
+        if dt is not None and timezone.is_naive(dt):
+            dt = timezone.make_aware(dt)
+        return dt
+
     saida_dt = _parse_dt(
         request.POST.get('retorno_saida_data', ''),
         request.POST.get('retorno_saida_hora', ''),
@@ -653,6 +676,16 @@ def _parse_retorno_from_post(request):
         request.POST.get('retorno_chegada_data', ''),
         request.POST.get('retorno_chegada_hora', ''),
     )
+    if saida_dt is None:
+        saida_dt = _parse_combined_dt(request.POST.get('retorno_saida_dt', ''))
+    if chegada_dt is None:
+        chegada_dt = _parse_combined_dt(request.POST.get('retorno_chegada_dt', ''))
+    if ida_trecho_count is not None:
+        idx = int(ida_trecho_count)
+        if saida_dt is None:
+            saida_dt = _parse_combined_dt(request.POST.get(f'trecho_{idx}_saida_dt', ''))
+        if chegada_dt is None:
+            chegada_dt = _parse_combined_dt(request.POST.get(f'trecho_{idx}_chegada_dt', ''))
     dist_km_raw = request.POST.get('retorno_distancia_km', '').strip()
     distancia_km = None
     if dist_km_raw:
@@ -3892,7 +3925,7 @@ def _autosave_save_roteiro(roteiro, request):
     roteiro = form.save()
     num_trechos = len(destinos_post)
     trechos_times = _parse_trechos_times_post(request, num_trechos)
-    retorno_data = _parse_retorno_from_post(request)
+    retorno_data = _parse_retorno_from_post(request, ida_trecho_count=num_trechos)
     trechos_times.append(retorno_data)
     _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times, diarias_resultado=diarias_resultado)
     return roteiro, None
@@ -4801,7 +4834,16 @@ def _get_step3_saved_routes(oficio, include_ids=None):
         .distinct()
     )
     routes = list(queryset)
-    oficio_event_ids = set(oficio.eventos.values_list('pk', flat=True))
+    oficio_event_ids = set()
+    eventos_rel = getattr(oficio, 'eventos', None)
+    if eventos_rel is not None and hasattr(eventos_rel, 'values_list'):
+        oficio_event_ids.update(eventos_rel.values_list('pk', flat=True))
+    evento_id = getattr(oficio, 'evento_id', None)
+    if evento_id:
+        oficio_event_ids.add(int(evento_id))
+    evento_obj = getattr(oficio, 'evento', None)
+    if evento_obj is not None:
+        oficio_event_ids.add(int(evento_obj.pk))
     return sorted(
         routes,
         key=lambda roteiro: (
@@ -7484,7 +7526,7 @@ def guiado_etapa_2_cadastrar(request, evento_id):
             _, _, _, diarias_resultado = _build_roteiro_diarias_from_request(request, evento=evento, roteiro=roteiro)
             num_trechos = len(destinos_post)
             trechos_times = _parse_trechos_times_post(request, num_trechos)
-            retorno_data = _parse_retorno_from_post(request)
+            retorno_data = _parse_retorno_from_post(request, ida_trecho_count=num_trechos)
             trechos_times.append(retorno_data)
             _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times, diarias_resultado=diarias_resultado)
             return redirect('eventos:guiado-etapa-2', evento_id=evento.pk)
@@ -7545,7 +7587,7 @@ def guiado_etapa_2_editar(request, evento_id, pk):
             _, _, _, diarias_resultado = _build_roteiro_diarias_from_request(request, evento=evento, roteiro=roteiro)
             num_trechos = len(destinos_post)
             trechos_times = _parse_trechos_times_post(request, num_trechos)
-            retorno_data = _parse_retorno_from_post(request)
+            retorno_data = _parse_retorno_from_post(request, ida_trecho_count=num_trechos)
             trechos_times.append(retorno_data)
             _salvar_roteiro_com_destinos_e_trechos(roteiro, destinos_post, trechos_times, diarias_resultado=diarias_resultado)
             return redirect('eventos:guiado-etapa-2', evento_id=evento.pk)
