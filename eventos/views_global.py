@@ -2950,7 +2950,8 @@ def _decorate_termo_list_items(items, *, current_path=''):
 
         termo.evento_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
         termo.abrir_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
-        termo.detail_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
+        termo.visualizar_url = reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk})
+        termo.detail_url = termo.visualizar_url
         termo.edicao_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
         termo.delete_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
         termo.excluir_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
@@ -5677,7 +5678,8 @@ def termos_global(request):
 
         termo.evento_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
         termo.abrir_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
-        termo.detail_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
+        termo.visualizar_url = reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk})
+        termo.detail_url = termo.visualizar_url
         termo.edicao_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
         termo.delete_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
         termo.excluir_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})

@@ -1,3 +1,4 @@
+{% firstof visualizar_url detail_url '' as visualizar_url_resolved %}
 {% if abrir_url %}
 <a href="{{ abrir_url }}" class="btn btn-sm btn-doc-action btn-doc-action--primary" data-essential-open-action="true" aria-label="{{ abrir_aria|default:'Abrir documento' }}" title="{{ abrir_aria|default:'Abrir documento' }}">
     <i class="bi bi-box-arrow-up-right"></i>
@@ -8,6 +9,13 @@
     <i class="bi bi-box-arrow-up-right"></i>
     <span>Abrir</span>
 </span>
+{% endif %}
+
+{% if visualizar_url_resolved %}
+<a href="{{ visualizar_url_resolved }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="{{ visualizar_aria|default:'Visualizar documento' }}" title="{{ visualizar_aria|default:'Visualizar documento' }}">
+    <i class="bi bi-eye"></i>
+    <span>Visualizar</span>
+</a>
 {% endif %}
 
 {% if docx_url %}

@@ -3521,6 +3521,44 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     font-weight: 700;
 }
 
+.termo-doc-card__compact-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.54rem 0.68rem;
+    min-height: 0;
+}
+
+.termo-doc-card__compact-copy {
+    display: grid;
+    gap: 0.06rem;
+    min-width: 0;
+}
+
+.termo-doc-card__transport-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.38rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
+.termo-doc-card__actions-card {
+    margin-top: 0.7rem;
+}
+
+.termo-doc-card__compact-row .btn-doc-action {
+    padding: 0.34rem 0.62rem;
+}
+
+.termo-doc-card__compact-row .btn-doc-action.is-icon-only {
+    width: 2.25rem;
+    min-width: 2.25rem;
+    height: 2.25rem;
+}
+
 .termo-doc-card__empty {
     color: #5f6b7a;
     font-size: 0.84rem;
@@ -3563,6 +3601,16 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     .termo-doc-card__chip-list,
     .termo-doc-card__transport-panel {
         grid-template-columns: 1fr;
+    }
+
+    .termo-doc-card__compact-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .termo-doc-card__transport-actions {
+        width: 100%;
+        justify-content: flex-start;
     }
 
     .termo-doc-card__servidor-row {

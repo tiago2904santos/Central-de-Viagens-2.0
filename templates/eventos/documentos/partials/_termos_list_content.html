@@ -144,10 +144,20 @@
 
             {% include 'includes/list/document_links_block.html' with block=termo.vinculos_block %}
 
-            <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
-                <div class="oficio-list-card__footer-actions">
-                    {% include 'includes/list/item_actions.html' with abrir_url=termo.abrir_url abrir_aria='Abrir termo de autorizacao' docx_url=termo.docx_url docx_aria='Baixar DOCX do termo de autorizacao' pdf_url=termo.pdf_url pdf_aria='Baixar PDF do termo de autorizacao' delete_url=termo.delete_url delete_aria='Excluir termo de autorizacao' %}
-                </div>
+            <div class="oficio-list-card__secondary">
+                <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel termo-doc-card__actions-card">
+                    <div class="oficio-list-subcard__body">
+                        <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor termo-doc-card__compact-row">
+                            <div class="termo-doc-card__compact-copy">
+                                <span class="oficio-list-transport-panel__kicker">Termo</span>
+                                <div class="oficio-list-transport-panel__detail-value">{{ termo.numero_formatado|default:termo.pk }}</div>
+                            </div>
+                            <div class="termo-doc-card__transport-actions">
+                                {% include 'includes/list/item_actions.html' with abrir_url=termo.abrir_url abrir_aria='Abrir termo de autorizacao' visualizar_url=termo.visualizar_url visualizar_aria='Visualizar termo de autorizacao' docx_url=termo.docx_url docx_aria='Baixar DOCX do termo de autorizacao' pdf_url=termo.pdf_url pdf_aria='Baixar PDF do termo de autorizacao' delete_url=termo.delete_url delete_aria='Excluir termo de autorizacao' %}
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </article>
