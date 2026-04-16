@@ -1,24 +1,19 @@
 <article class="termo-doc-card__viatura-card oficio-list-surface oficio-list-surface--soft{% if item.css_class %} {{ item.css_class }}{% endif %}">
     <div class="termo-doc-card__viatura-head">
+        <div class="termo-doc-card__viatura-head-copy">
+            <div class="termo-doc-card__viatura-title">{{ item.titulo }}</div>
+            {% if item.detalhe %}
+            <div class="termo-doc-card__viatura-detail">{{ item.detalhe }}</div>
+            {% endif %}
+        </div>
         <div class="termo-doc-card__viatura-type">
             <i class="bi {{ item.icon }}"></i>
             <span>{{ item.tipo_label }}</span>
         </div>
     </div>
 
-    <div class="termo-doc-card__viatura-body">
-        <div class="termo-doc-card__viatura-title">{{ item.titulo }}</div>
-        {% if item.detalhe %}
-        <div class="termo-doc-card__viatura-detail">{{ item.detalhe }}</div>
-        {% endif %}
-    </div>
-
     {% if servidores %}
     <div class="termo-doc-card__viatura-servers">
-        <div class="termo-doc-card__viatura-servers-head">
-            <span class="termo-doc-card__viatura-servers-title">Servidores vinculados</span>
-            <span class="termo-doc-card__viatura-servers-count">{{ servidores|length }}</span>
-        </div>
         <div class="termo-doc-card__servidores-list termo-doc-card__servidores-list--nested">
             {% for item in servidores %}
             {% include 'eventos/documentos/partials/_termo_derivacao_item.html' with item=item only %}

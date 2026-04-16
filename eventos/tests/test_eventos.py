@@ -3166,16 +3166,16 @@ class EventoEtapa5TermosTest(TestCase):
 
         response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Servidores vinculados')
+        termo_renderizado = response.context['object_list'][0]
+        self.assertIsNotNone(termo_renderizado.viatura_card)
+        self.assertContains(response, termo_renderizado.viatura_card['titulo'])
         self.assertContains(response, 'Ações do termo genérico')
         self.assertContains(response, 'Abrir')
         self.assertContains(response, 'Visualizar')
         self.assertContains(response, 'DOCX')
         self.assertContains(response, 'PDF')
         self.assertContains(response, 'Excluir')
-        termo_renderizado = response.context['object_list'][0]
         self.assertEqual(termo_renderizado.derivacoes_total, 2)
-        self.assertIsNotNone(termo_renderizado.viatura_card)
         self.assertEqual(len(termo_renderizado.servidores_cards), 1)
 
     def test_etapa_5_restaura_toolbar_propria_com_toggle_sem_filtros_globais(self):
