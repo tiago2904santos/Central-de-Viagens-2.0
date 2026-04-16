@@ -62,24 +62,7 @@
               </div>
             </div>
           </section>
-
-          <section class="oficio-stage-section ordem-servico-section ordem-servico-section--criacao">
-            <div class="oficio-stage-section-head">
-              <div>
-                <h2 class="oficio-stage-section-title">Data de criação</h2>
-                <p class="oficio-stage-section-text">A data-base segue o mesmo padrão do ofício e alimenta o documento gerado.</p>
-              </div>
-            </div>
-
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label" for="{{ form.data_criacao.id_for_label }}">{{ form.data_criacao.label }}</label>
-                {{ form.data_criacao }}
-                {% if form.data_criacao.errors %}<div class="invalid-feedback d-block mt-2">{{ form.data_criacao.errors.0 }}</div>{% endif %}
-              </div>
-            </div>
-          </section>
-
+          
           <section class="evento-section evento-section-datas ordem-servico-section ordem-servico-section--datas">
             <div class="evento-section-head evento-section-head--datas">
               <h2 class="evento-section-title">Datas</h2>
