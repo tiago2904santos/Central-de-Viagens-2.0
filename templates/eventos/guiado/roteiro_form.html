@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if object %}Editar roteiro{% else %}Cadastrar roteiro{% endif %} — Etapa 4 — Central de Viagens{% endblock %}
-{% block page_title %}Etapa 4 — {% if object %}Editar roteiro{% else %}Cadastrar roteiro{% endif %}{% endblock %}
+{% block title %}{% if object %}Editar roteiro{% else %}Cadastrar roteiro{% endif %} — Etapa 2 — Central de Viagens{% endblock %}
+{% block page_title %}Etapa 2 — {% if object %}Editar roteiro{% else %}Cadastrar roteiro{% endif %}{% endblock %}
 
 {% block content %}
+{{ initial_trechos_data|json_script:"initialTrechosData" }}
 {% include 'eventos/partials/roteiro_step3_clone_form.html' with is_avulso=False %}
 {% endblock %}

@@ -4,5 +4,6 @@
 {% block page_title %}Roteiros — {% if object %}Editar roteiro avulso{% else %}Cadastrar roteiro avulso{% endif %}{% endblock %}
 
 {% block content %}
+{{ initial_trechos_data|json_script:"initialTrechosData" }}
 {% include 'eventos/partials/roteiro_step3_clone_form.html' with is_avulso=True %}
 {% endblock %}

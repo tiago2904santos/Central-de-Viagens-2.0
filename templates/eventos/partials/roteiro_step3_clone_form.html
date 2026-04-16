@@ -4,7 +4,7 @@
   <div class="app-page-shell__inner oficio-wizard-shell">
     <header class="app-page-header oficio-route-header">
       <div class="app-page-header__copy">
-        <h1 class="app-page-header__title">{% if is_avulso %}Roteiro avulso{% else %}Etapa 4 — Roteiro{% endif %}</h1>
+        <h1 class="app-page-header__title">{% if is_avulso %}Roteiro avulso{% else %}Etapa 2 — Roteiro{% endif %}</h1>
         <p class="app-page-header__subtitle">Monte sede, destinos e trechos com o mesmo contrato espacial usado nos demais fluxos autenticados.</p>
       </div>
     </header>
@@ -12,7 +12,7 @@
       <div class="card-body">
         <div class="oficio-stage-intro">
           <div>
-            <span class="oficio-stage-kicker">{% if is_avulso %}Cadastro avulso{% else %}Etapa 4{% endif %}</span>
+            <span class="oficio-stage-kicker">{% if is_avulso %}Cadastro avulso{% else %}Etapa 2{% endif %}</span>
             <h2 class="oficio-stage-title">Roteiro e trechos</h2>
             <p class="oficio-stage-description">Monte o deslocamento com sede, destinos e trechos de ida e retorno com o mesmo padrão da Etapa 3 do Ofício.</p>
           </div>
@@ -250,6 +250,7 @@
   var apiCidades = '{{ api_cidades_por_estado_url|escapejs }}';
   var apiDiarias = '{{ api_calcular_diarias_url|escapejs }}';
   var csrf = (form.querySelector('input[name="csrfmiddlewaretoken"]') || {}).value || '';
+  var urlTrechosEstimar = '{% url "eventos:trechos-estimar" %}';
   var autosaveIdInput = $('id_autosave_obj_id');
   var autosaveStatus = $('roteiro-autosave-status');
   var autosave = window.OficioWizard ? window.OficioWizard.createAutosave({
@@ -607,6 +608,9 @@
         '<input type="hidden" name="trecho_'+o+'_distancia_km" value="'+esc(dist)+'">' +
         '<input type="hidden" name="trecho_'+o+'_duracao_estimada_min" value="'+esc(value.duracao_estimada_min||'')+'">' +
         '<input type="hidden" name="trecho_'+o+'_rota_fonte" value="'+esc(fonte)+'">' +
+        '<div class="col-12 mt-2">' +
+          '<button type="button" class="btn btn-outline-primary btn-sm btn-calcular-km">Estimar km/tempo</button>' +
+        '</div>' +
       '</div></div>';
   }
   function getDestinoRows() { return Array.from($('destinos-container').querySelectorAll('.destino-row')); }
@@ -967,6 +971,50 @@
   $('btn-adicionar-destino').addEventListener('click', function() { addDestinoRow({ estado_id: destinoEstadoDefaultId||null, cidade_id: null }).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); }); });
   $('id_origem_estado').addEventListener('change', function() { if (applyingState) return; loadCities($('id_origem_cidade'), $('id_origem_estado').value, null).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); }); });
   $('id_origem_cidade').addEventListener('change', function() { if (applyingState) return; renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); });
+  $('trechos-gerados-container').addEventListener('click', function (e) {
+    var btn = e.target.closest('.btn-calcular-km');
+    if (!btn || applyingState) return;
+    e.preventDefault();
+    var card = btn.closest('.card[data-key]');
+    if (!card) return;
+    var ord = card.dataset.ordem;
+    var ocid = card.dataset.origemCidadeId;
+    var dcid = card.dataset.destinoCidadeId;
+    var err = card.querySelector('.trecho-erro');
+    if (err) { err.classList.add('d-none'); err.textContent = ''; }
+    if (!urlTrechosEstimar || !ocid || !dcid) {
+      if (err) { err.textContent = 'Defina origem e destino do trecho para estimar.'; err.classList.remove('d-none'); }
+      return;
+    }
+    btn.disabled = true;
+    fetch(urlTrechosEstimar, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+      body: JSON.stringify({ origem_cidade_id: parseInt(ocid, 10), destino_cidade_id: parseInt(dcid, 10) })
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      btn.disabled = false;
+      if (!data || !data.ok) {
+        if (err) { err.textContent = (data && data.erro) ? data.erro : 'Não foi possível estimar.'; err.classList.remove('d-none'); }
+        return;
+      }
+      var distInp = card.querySelector('[name="trecho_' + ord + '_distancia_km"]');
+      if (distInp && data.distancia_km != null) distInp.value = String(data.distancia_km);
+      var cruInp = card.querySelector('[name="trecho_' + ord + '_tempo_cru_estimado_min"]');
+      if (cruInp && data.tempo_cru_estimado_min != null) cruInp.value = String(data.tempo_cru_estimado_min);
+      var fonteInp = card.querySelector('[name="trecho_' + ord + '_rota_fonte"]');
+      if (fonteInp && data.rota_fonte) fonteInp.value = data.rota_fonte;
+      var durInp = card.querySelector('[name="trecho_' + ord + '_duracao_estimada_min"]');
+      if (durInp && data.duracao_estimada_min != null) durInp.value = String(data.duracao_estimada_min);
+      var addInp = card.querySelector('[name="trecho_' + ord + '_tempo_adicional_min"]');
+      if (addInp && data.tempo_adicional_sugerido_min != null) addInp.value = String(data.tempo_adicional_sugerido_min);
+      recalcCard(card, false);
+      scheduleRealtimeDiarias();
+      scheduleAutosave();
+    }).catch(function () {
+      btn.disabled = false;
+      if (err) { err.textContent = 'Falha na requisição.'; err.classList.remove('d-none'); }
+    });
+  });
   $('trechos-gerados-container').addEventListener('input', function(e) {
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';

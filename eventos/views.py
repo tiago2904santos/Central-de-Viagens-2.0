@@ -1,6 +1,7 @@
 import uuid
 import hashlib
 from copy import deepcopy
+import json
 from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
@@ -399,6 +400,24 @@ def _estrutura_trechos(roteiro, destinos_list=None):
         'rota_fonte': (getattr(t_db, 'rota_fonte', '') or '') if t_db else '',
     })
     return out
+
+
+def _trechos_list_json_compat(trechos_list):
+    """Serializa trechos para trechos_json (string) e para json_script no template."""
+    rows = []
+    for row in trechos_list or []:
+        item = {}
+        for k, v in row.items():
+            if v is None:
+                item[k] = None
+            elif hasattr(v, 'isoformat'):
+                item[k] = v.isoformat()
+            elif isinstance(v, Decimal):
+                item[k] = float(v)
+            else:
+                item[k] = v
+        rows.append(item)
+    return rows, json.dumps(rows)
 
 
 def _salvar_trechos_roteiro(roteiro, destinos_list, trechos_data):
@@ -7377,6 +7396,12 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
     if diarias_resultado is None:
         diarias_resultado = _build_roteiro_diarias_fallback(obj or form.instance)
     destino_estado_fixo = _get_parana_estado()
+    rows_src = list(trechos_list or [])
+    if not rows_src:
+        ts = (step3_state or {}).get('trechos') or []
+        if ts:
+            rows_src = list(ts)
+    initial_trechos_data, trechos_json = _trechos_list_json_compat(rows_src)
     return {
         'evento': evento,
         'object': obj,
@@ -7385,6 +7410,8 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         'estados': estados_qs,
         'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
         'trechos': trechos_list,
+        'trechos_json': trechos_json,
+        'initial_trechos_data': initial_trechos_data,
         'step3_state_json': _serialize_step3_state(step3_state),
         'step3_diarias_resultado': diarias_resultado,
         'step3_seed_source_label': step3_state.get('seed_source_label', ''),

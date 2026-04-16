@@ -840,7 +840,7 @@ class EventoEtapa2RoteirosTest(TestCase):
         RoteiroEventoDestino.objects.create(roteiro=r, estado=self.estado, cidade=self.cidade_b, ordem=0)
         response = self.client.get(reverse('eventos:guiado-etapa-2-editar', kwargs={'evento_id': self.evento.pk, 'pk': r.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '3) Trechos')
+        self.assertContains(response, '5. Trechos')
         self.assertContains(response, 'trechos-gerados-container')
 
     def test_script_trechos_tem_campos_por_trecho(self):
@@ -1235,22 +1235,26 @@ class EventoEtapa2RoteirosTest(TestCase):
             reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk})
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '3) Trechos')
+        self.assertContains(response, '5. Trechos')
         self.assertContains(response, 'trechos-gerados-container')
 
     def test_cadastro_novo_persistir_trechos_conforme_formulario(self):
         """Cadastro novo deve salvar imediatamente os trechos de acordo com o que foi montado no formulÃ¡rio."""
         from eventos.models import RoteiroEventoTrecho
+        # Retorno usa o bloco estático retorno_* (mesmo contrato do step3), não trecho_1_*.
         data = {
             'origem_estado': self.estado.pk,
             'origem_cidade': self.cidade_a.pk,
             'destino_estado_0': self.estado.pk,
             'destino_cidade_0': self.cidade_b.pk,
             'observacoes': '',
+            'roteiro_modo': 'ROTEIRO_PROPRIO',
             'trecho_0_saida_dt': '2025-02-10T09:00',
             'trecho_0_chegada_dt': '2025-02-10T10:00',
-            'trecho_1_saida_dt': '2025-02-12T14:00',
-            'trecho_1_chegada_dt': '2025-02-12T15:00',
+            'retorno_saida_data': '2025-02-12',
+            'retorno_saida_hora': '14:00',
+            'retorno_chegada_data': '2025-02-12',
+            'retorno_chegada_hora': '15:00',
         }
         response = self.client.post(
             reverse('eventos:guiado-etapa-2-cadastrar', kwargs={'evento_id': self.evento.pk}),
@@ -2581,22 +2585,23 @@ class EstimativaParanaProviderClassificacaoTest(TestCase):
     def test_benchmark_oficial_contem_rotas_minimas_do_parana(self):
         from scripts.analisar_estimativa_pr import load_benchmark
 
+        # Nomes como no JSON UTF-8 do benchmark (evita divergência por encoding do arquivo de teste).
         destinos_esperados = {
-            'Pontal do ParanÃ¡',
-            'ParanaguÃ¡',
+            'Pontal do Paran\u00e1',
+            'Paranagu\u00e1',
             'Ponta Grossa',
-            'TelÃªmaco Borba',
+            'Tel\u00eamaco Borba',
             'Guarapuava',
             'Londrina',
             'Apucarana',
-            'MaringÃ¡',
+            'Maring\u00e1',
             'Cianorte',
             'Umuarama',
             'Cruzeiro do Sul',
             'Cascavel',
             'Palotina',
-            'Foz do IguaÃ§u',
-            'Francisco BeltrÃ£o',
+            'Foz do Igua\u00e7u',
+            'Francisco Beltr\u00e3o',
         }
 
         destinos = {item['destino_nome'] for item in load_benchmark()}
