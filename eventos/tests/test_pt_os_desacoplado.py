@@ -8,7 +8,9 @@ from django.utils import timezone
 
 from cadastros.models import AssinaturaConfiguracao, Cargo, Cidade, ConfiguracaoSistema, Estado, Viajante
 from eventos.forms import OrdemServicoForm
-from eventos.models import Evento, Oficio, OrdemServico, PlanoTrabalho
+from eventos.forms import TermoAutorizacaoEdicaoForm
+from eventos.models import Evento, Justificativa, Oficio, OrdemServico, PlanoTrabalho, TermoAutorizacao
+from eventos.services.documento_vinculos import resolver_vinculos_ordem_servico
 from eventos.services.documentos.ordem_servico import build_ordem_servico_model_template_context
 
 
@@ -523,3 +525,47 @@ class PtOsDesacopladoTest(TestCase):
         from eventos.models import ModeloMotivoViagem
 
         return ModeloMotivoViagem.objects.create(codigo='motivo_os', nome='Motivo OS', texto=texto, ativo=True)
+
+    def test_justificativa_unica_por_oficio(self):
+        Justificativa.objects.create(oficio=self.oficio, texto='Primeira')
+        with self.assertRaises(Exception):
+            Justificativa.objects.create(oficio=self.oficio, texto='Duplicada')
+
+    def test_ordem_servico_herda_oficios_do_evento(self):
+        oficio_extra = Oficio.objects.create(
+            evento=self.evento,
+            protocolo='987650123',
+            data_criacao=date(2026, 3, 2),
+            status=Oficio.STATUS_RASCUNHO,
+        )
+        ordem = OrdemServico.objects.create(
+            evento=self.evento,
+            data_criacao=date(2026, 3, 10),
+            data_deslocamento=date(2026, 3, 10),
+            motivo_texto='Teste herança',
+            status=OrdemServico.STATUS_RASCUNHO,
+        )
+        vinculos = resolver_vinculos_ordem_servico(ordem)
+        herdados_ids = set(vinculos['oficios_herdados_ids'])
+        self.assertIn(self.oficio.pk, herdados_ids)
+        self.assertIn(oficio_extra.pk, herdados_ids)
+
+    def test_termo_edicao_restringe_a_um_unico_oficio(self):
+        termo = TermoAutorizacao.objects.create(destino='Curitiba/PR', data_evento=date(2026, 3, 10))
+        oficio_2 = Oficio.objects.create(
+            evento=self.evento,
+            protocolo='111222333',
+            data_criacao=date(2026, 3, 3),
+            status=Oficio.STATUS_RASCUNHO,
+        )
+        form = TermoAutorizacaoEdicaoForm(
+            data={
+                'evento': self.evento.pk,
+                'destino': 'Curitiba/PR',
+                'data_evento': '2026-03-10',
+                'oficios': [str(self.oficio.pk), str(oficio_2.pk)],
+            },
+            instance=termo,
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('oficios', form.errors)
