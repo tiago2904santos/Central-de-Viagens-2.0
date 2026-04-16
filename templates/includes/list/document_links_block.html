@@ -1,4 +1,4 @@
-<section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel{% if block.css_class %} {{ block.css_class }}{% endif %}">
+<section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel{% if block.css_class %} {{ block.css_class }}{% endif %}{% if block.compact %} is-compact{% endif %}">
     <div class="oficio-list-subcard__header">
         <div>
             <h3 class="oficio-list-subcard__title">{{ block.title|default:'Vínculos' }}</h3>

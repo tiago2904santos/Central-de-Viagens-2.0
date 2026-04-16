@@ -3114,21 +3114,68 @@ class EventoEtapa5TermosTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
-    def test_etapa_5_get_sem_oficios_exibe_mensagem(self):
+    def test_etapa_5_get_sem_termos_exibe_estado_vazio(self):
         response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Nenhum participante no evento')
+        self.assertContains(response, 'Nenhum termo de autorizacao vinculado a este evento.')
 
-    def test_etapa_5_get_com_oficio_e_viajante_exibe_tabela(self):
-        viajante = self._criar_viajante(nome='Viajante A')
-        self._vincular_viajante_em_oficio(viajante)
+    def test_etapa_5_get_com_termo_generico_e_derivacoes_exibe_cards_compactos(self):
+        viajante = self._criar_viajante(nome='Viajante A', completo=True)
+        veiculo = self._criar_veiculo_finalizado()
+        oficio = Oficio.objects.create(
+            evento=self.evento,
+            numero=1,
+            status=Oficio.STATUS_FINALIZADO,
+            veiculo=veiculo,
+        )
+        oficio.viajantes.add(viajante)
+
+        root = TermoAutorizacao.objects.create(
+            evento=self.evento,
+            oficio=oficio,
+            derivacao_tipo=TermoAutorizacao.DERIVACAO_TIPO_GENERICA,
+            modo_geracao=TermoAutorizacao.MODO_GENERICO,
+            status=TermoAutorizacao.STATUS_GERADO,
+            destino='Curitiba/PR',
+            data_evento=self.evento.data_inicio,
+            data_evento_fim=self.evento.data_fim,
+        )
+        root.oficios.add(oficio)
+        TermoAutorizacao.objects.create(
+            evento=self.evento,
+            oficio=oficio,
+            termo_pai=root,
+            derivacao_tipo=TermoAutorizacao.DERIVACAO_TIPO_SERVIDOR,
+            viajante=viajante,
+            status=TermoAutorizacao.STATUS_GERADO,
+            destino='Curitiba/PR',
+            data_evento=self.evento.data_inicio,
+            data_evento_fim=self.evento.data_fim,
+        )
+        TermoAutorizacao.objects.create(
+            evento=self.evento,
+            oficio=oficio,
+            termo_pai=root,
+            derivacao_tipo=TermoAutorizacao.DERIVACAO_TIPO_VIATURA,
+            veiculo=veiculo,
+            status=TermoAutorizacao.STATUS_GERADO,
+            destino='Curitiba/PR',
+            data_evento=self.evento.data_inicio,
+            data_evento_fim=self.evento.data_fim,
+        )
+
         response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Termo generico do evento')
+        self.assertContains(response, 'termo-doc-card__derivacao-row--servidor', html=False)
+        self.assertContains(response, 'termo-doc-card__derivacao-row--viatura', html=False)
         self.assertContains(response, viajante.nome)
-        self.assertContains(response, 'value="PENDENTE"')
-        self.assertContains(response, 'value="GERADO"')
-        self.assertContains(response, 'value="COMPLETO"')
-        self.assertContains(response, 'value="SEMIPREENCHIDO"')
+        self.assertContains(response, 'Viatura')
+        self.assertContains(response, 'Abrir')
+        self.assertContains(response, 'Visualizar')
+        self.assertContains(response, 'DOCX')
+        self.assertContains(response, 'PDF')
+        self.assertContains(response, 'Excluir')
 
     def test_etapa_5_restaura_toolbar_propria_com_toggle_sem_filtros_globais(self):
         response = self.client.get(reverse('eventos:guiado-etapa-5', kwargs={'evento_id': self.evento.pk}))

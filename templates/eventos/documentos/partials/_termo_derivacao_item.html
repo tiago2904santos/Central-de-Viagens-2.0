@@ -1,0 +1,22 @@
+<article class="termo-doc-card__derivacao-row termo-doc-card__derivacao-row--{{ item.tipo|lower }} oficio-list-surface oficio-list-surface--soft {% if item.css_class %}{{ item.css_class }}{% endif %}">
+    <div class="termo-doc-card__derivacao-type termo-doc-card__derivacao-type--{{ item.tipo|lower }}">
+        <i class="bi {{ item.icon }}"></i>
+        <span>{{ item.tipo_label }}</span>
+    </div>
+
+    <div class="termo-doc-card__derivacao-body">
+        <div class="termo-doc-card__derivacao-title">{{ item.titulo }}</div>
+        {% if item.detalhe %}
+        <div class="termo-doc-card__derivacao-detail">{{ item.detalhe }}</div>
+        {% endif %}
+    </div>
+
+    <div class="termo-doc-card__derivacao-meta">
+        {% if item.badge %}
+        <span class="termo-doc-card__derivacao-number">{{ item.badge }}</span>
+        {% endif %}
+        <div class="termo-doc-card__derivacao-actions">
+            {% include 'includes/list/item_actions.html' with abrir_url=item.abrir_url abrir_aria=item.abrir_aria visualizar_url=item.visualizar_url visualizar_aria=item.visualizar_aria docx_url=item.docx_url docx_aria=item.docx_aria pdf_url=item.pdf_url pdf_aria=item.pdf_aria delete_url=item.delete_url delete_aria=item.delete_aria %}
+        </div>
+    </div>
+</article>

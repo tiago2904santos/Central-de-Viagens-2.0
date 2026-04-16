@@ -250,6 +250,141 @@ def _make_vinculo_action_item(*, label, url, css_class='btn-doc-action--secondar
     }
 
 
+def _termo_document_action_bundle(termo):
+    pk = getattr(termo, 'pk', None)
+    if not pk:
+        return {}
+    return {
+        'abrir_url': reverse('eventos:documentos-termos-editar', kwargs={'pk': pk}),
+        'visualizar_url': reverse('eventos:documentos-termos-detalhe', kwargs={'pk': pk}),
+        'detail_url': reverse('eventos:documentos-termos-detalhe', kwargs={'pk': pk}),
+        'docx_url': reverse(
+            'eventos:documentos-termos-download',
+            kwargs={'pk': pk, 'formato': DocumentoFormato.DOCX.value},
+        ),
+        'pdf_url': reverse(
+            'eventos:documentos-termos-download',
+            kwargs={'pk': pk, 'formato': DocumentoFormato.PDF.value},
+        ),
+        'delete_url': reverse('eventos:documentos-termos-excluir', kwargs={'pk': pk}),
+    }
+
+
+def _build_termo_document_card_item(termo, *, tipo, titulo, detalhe='', badge='', css_class=''):
+    tipo = (tipo or '').strip().upper()
+    tipo_label = 'Servidor' if tipo == 'SERVIDOR' else 'Viatura'
+    titulo = _clean(titulo)
+    detalhe = _clean(detalhe)
+    badge = _clean(badge)
+    if not titulo and not detalhe:
+        return None
+
+    item = {
+        'tipo': tipo,
+        'tipo_label': tipo_label,
+        'titulo': titulo or detalhe or tipo_label,
+        'detalhe': detalhe,
+        'badge': badge,
+        'css_class': css_class,
+        'icon': 'bi-person-badge' if tipo == 'SERVIDOR' else 'bi-truck',
+        'abrir_aria': f'Abrir termo de autorizacao {titulo or tipo_label}'.strip(),
+        'visualizar_aria': f'Visualizar termo de autorizacao {titulo or tipo_label}'.strip(),
+        'docx_aria': f'Baixar DOCX do termo de autorizacao {titulo or tipo_label}'.strip(),
+        'pdf_aria': f'Baixar PDF do termo de autorizacao {titulo or tipo_label}'.strip(),
+        'delete_aria': f'Excluir termo de autorizacao {titulo or tipo_label}'.strip(),
+    }
+    item.update(_termo_document_action_bundle(termo))
+    return item
+
+
+def _build_termo_derivacoes_cards(termo):
+    cards = []
+
+    def _append(tipo, titulo, detalhe='', badge='', css_class=''):
+        item = _build_termo_document_card_item(
+            termo,
+            tipo=tipo,
+            titulo=titulo,
+            detalhe=detalhe,
+            badge=badge,
+            css_class=css_class,
+        )
+        if item:
+            cards.append(item)
+
+    if getattr(termo, 'is_root_generic', False):
+        if termo.viatura_display or termo.veiculo_id:
+            _append(
+                'VIATURA',
+                termo.viatura_display or termo.veiculo_modelo_card or termo.veiculo_placa_card,
+                detalhe=' - '.join(
+                    part for part in [
+                        termo.veiculo_modelo_card or '',
+                        termo.veiculo_placa_card or '',
+                        termo.veiculo_combustivel_card or '',
+                    ]
+                    if part
+                ),
+                badge=termo.numero_formatado,
+                css_class='is-root',
+            )
+
+        derivacoes = list(getattr(termo, 'derivacoes', []).all() if hasattr(getattr(termo, 'derivacoes', None), 'all') else [])
+        for derivacao in derivacoes:
+            if derivacao.pk == termo.pk:
+                continue
+            if derivacao.viajante_id or derivacao.servidor_display:
+                cargo = (getattr(getattr(derivacao, 'viajante', None), 'cargo', None) and getattr(derivacao.viajante.cargo, 'nome', '')) or _clean(getattr(derivacao, 'servidor_cargo', ''))
+                lotacao = (getattr(getattr(derivacao, 'viajante', None), 'unidade_lotacao', None) and getattr(derivacao.viajante.unidade_lotacao, 'nome', '')) or _clean(getattr(derivacao, 'servidor_lotacao', ''))
+                _append(
+                    'SERVIDOR',
+                    derivacao.servidor_display or (getattr(derivacao.viajante, 'nome', '') if derivacao.viajante_id else ''),
+                    detalhe=' - '.join(part for part in [cargo.strip(), lotacao.strip()] if part),
+                    badge=derivacao.numero_formatado,
+                )
+            elif derivacao.veiculo_id or derivacao.viatura_display:
+                _append(
+                    'VIATURA',
+                    derivacao.viatura_display or _clean(getattr(derivacao, 'veiculo_modelo', '')) or _clean(getattr(derivacao, 'veiculo_placa', '')),
+                    detalhe=' - '.join(
+                        part for part in [
+                            _clean(getattr(derivacao, 'veiculo_modelo', '')),
+                            _clean(getattr(derivacao, 'veiculo_placa', '')),
+                            _clean(getattr(derivacao, 'veiculo_combustivel', '')),
+                        ]
+                        if part
+                    ),
+                    badge=derivacao.numero_formatado,
+                )
+    else:
+        derivacao_tipo = (getattr(termo, 'derivacao_tipo', '') or '').strip().upper()
+        if derivacao_tipo == TermoAutorizacao.DERIVACAO_TIPO_SERVIDOR and (termo.servidor_display or termo.viajante_id):
+            cargo = (getattr(getattr(termo, 'viajante', None), 'cargo', None) and getattr(termo.viajante.cargo, 'nome', '')) or _clean(getattr(termo, 'servidor_cargo', ''))
+            lotacao = (getattr(getattr(termo, 'viajante', None), 'unidade_lotacao', None) and getattr(termo.viajante.unidade_lotacao, 'nome', '')) or _clean(getattr(termo, 'servidor_lotacao', ''))
+            _append(
+                'SERVIDOR',
+                termo.servidor_display or termo.servidor_nome,
+                detalhe=' - '.join(part for part in [cargo.strip(), lotacao.strip()] if part),
+                badge=termo.numero_formatado,
+            )
+        elif derivacao_tipo == TermoAutorizacao.DERIVACAO_TIPO_VIATURA and (termo.viatura_display or termo.veiculo_id):
+            _append(
+                'VIATURA',
+                termo.viatura_display or _clean(getattr(termo, 'veiculo_modelo', '')) or _clean(getattr(termo, 'veiculo_placa', '')),
+                detalhe=' - '.join(
+                    part for part in [
+                        _clean(getattr(termo, 'veiculo_modelo', '')),
+                        _clean(getattr(termo, 'veiculo_placa', '')),
+                        _clean(getattr(termo, 'veiculo_combustivel', '')),
+                    ]
+                    if part
+                ),
+                badge=termo.numero_formatado,
+            )
+
+    return cards
+
+
 def _unique_by_pk(items):
     result = []
     seen = set()
@@ -2786,64 +2921,7 @@ def _decorate_termo_list_items(items, *, current_path=''):
         termo.veiculo_placa_card = (termo.veiculo_placa or '').strip()
         termo.veiculo_modelo_card = (termo.veiculo_modelo or '').strip()
         termo.veiculo_combustivel_card = (termo.veiculo_combustivel or '').strip()
-        termo.derivacoes_cards = []
-
-        def _append_derivacao(tipo, titulo, detalhe='', url='', badge=''):
-            titulo = _clean(titulo)
-            detalhe = _clean(detalhe)
-            if not titulo and not detalhe:
-                return
-            termo.derivacoes_cards.append(
-                {
-                    'tipo': tipo,
-                    'titulo': titulo or detalhe,
-                    'detalhe': detalhe,
-                    'url': url,
-                    'badge': badge,
-                }
-            )
-
-        if termo.is_root_generic:
-            if termo.viatura_display or termo.veiculo_id:
-                _append_derivacao(
-                    'VIATURA',
-                    'Viatura',
-                    termo.viatura_display or (termo.veiculo_modelo_card or termo.veiculo_placa_card or 'Sem viatura'),
-                )
-            derivacoes = list(getattr(termo, 'derivacoes', []).all() if hasattr(getattr(termo, 'derivacoes', None), 'all') else [])
-            for derivacao in derivacoes:
-                if derivacao.pk == termo.pk:
-                    continue
-                if derivacao.viajante_id or derivacao.servidor_display:
-                    _append_derivacao(
-                        'SERVIDOR',
-                        'Servidor',
-                        derivacao.servidor_display or (getattr(derivacao.viajante, 'nome', '') if derivacao.viajante_id else ''),
-                        url=reverse('eventos:documentos-termos-editar', kwargs={'pk': derivacao.pk}),
-                        badge=derivacao.numero_formatado,
-                    )
-                elif derivacao.veiculo_id or derivacao.viatura_display:
-                    _append_derivacao(
-                        'VIATURA',
-                        'Viatura',
-                        derivacao.viatura_display,
-                        url=reverse('eventos:documentos-termos-editar', kwargs={'pk': derivacao.pk}),
-                        badge=derivacao.numero_formatado,
-                    )
-        else:
-            derivacao_tipo = (getattr(termo, 'derivacao_tipo', '') or '').strip().upper()
-            if derivacao_tipo == TermoAutorizacao.DERIVACAO_TIPO_SERVIDOR and (termo.servidor_display or termo.viajante_id):
-                _append_derivacao('SERVIDOR', 'Servidor', termo.servidor_display or termo.servidor_nome)
-            elif derivacao_tipo == TermoAutorizacao.DERIVACAO_TIPO_VIATURA and (termo.viatura_display or termo.veiculo_id):
-                _append_derivacao('VIATURA', 'Viatura', termo.viatura_display)
-
-        termo.has_servidor_card = bool(termo.servidor_nome_card)
-        termo.has_viatura_card = bool(
-            termo.veiculo_placa_card
-            or termo.veiculo_modelo_card
-            or termo.veiculo_combustivel_card
-            or termo.veiculo_id
-        )
+        termo.derivacoes_cards = _build_termo_derivacoes_cards(termo)
 
         vinculos_items = []
         if termo.evento_id and termo.evento:
@@ -2895,6 +2973,8 @@ def _decorate_termo_list_items(items, *, current_path=''):
             count_label=f'{len(oficios_relacionados)} ofício(s) relacionados',
             empty_text='Nenhum vínculo documental registrado.',
         )
+        termo.vinculos_block['css_class'] = 'termo-doc-card__vinculos-block'
+        termo.vinculos_block['compact'] = True
         termo_link_actions = [
             _make_vinculo_action_item(
                 label='Abrir editor completo',
@@ -2949,20 +3029,15 @@ def _decorate_termo_list_items(items, *, current_path=''):
             termo.vinculo_badge_detail = ''
 
         termo.evento_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
-        termo.abrir_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
-        termo.visualizar_url = reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk})
-        termo.detail_url = termo.visualizar_url
-        termo.edicao_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
-        termo.delete_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
-        termo.excluir_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
-        termo.docx_url = reverse(
-            'eventos:documentos-termos-download',
-            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value},
-        )
-        termo.pdf_url = reverse(
-            'eventos:documentos-termos-download',
-            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.PDF.value},
-        )
+        termo_action_bundle = _termo_document_action_bundle(termo)
+        termo.abrir_url = termo_action_bundle['abrir_url']
+        termo.visualizar_url = termo_action_bundle['visualizar_url']
+        termo.detail_url = termo_action_bundle['detail_url']
+        termo.edicao_url = termo_action_bundle['abrir_url']
+        termo.delete_url = termo_action_bundle['delete_url']
+        termo.excluir_url = termo_action_bundle['delete_url']
+        termo.docx_url = termo_action_bundle['docx_url']
+        termo.pdf_url = termo_action_bundle['pdf_url']
         termo.download_docx_url = termo.docx_url
         termo.download_pdf_url = termo.pdf_url
     return items
@@ -5677,20 +5752,15 @@ def termos_global(request):
             termo.vinculo_badge_detail = ''
 
         termo.evento_url = reverse('eventos:guiado-etapa-1', kwargs={'pk': termo.evento_id}) if termo.evento_id else ''
-        termo.abrir_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
-        termo.visualizar_url = reverse('eventos:documentos-termos-detalhe', kwargs={'pk': termo.pk})
-        termo.detail_url = termo.visualizar_url
-        termo.edicao_url = reverse('eventos:documentos-termos-editar', kwargs={'pk': termo.pk})
-        termo.delete_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
-        termo.excluir_url = reverse('eventos:documentos-termos-excluir', kwargs={'pk': termo.pk})
-        termo.docx_url = reverse(
-            'eventos:documentos-termos-download',
-            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.DOCX.value},
-        )
-        termo.pdf_url = reverse(
-            'eventos:documentos-termos-download',
-            kwargs={'pk': termo.pk, 'formato': DocumentoFormato.PDF.value},
-        )
+        termo_action_bundle = _termo_document_action_bundle(termo)
+        termo.abrir_url = termo_action_bundle['abrir_url']
+        termo.visualizar_url = termo_action_bundle['visualizar_url']
+        termo.detail_url = termo_action_bundle['detail_url']
+        termo.edicao_url = termo_action_bundle['abrir_url']
+        termo.delete_url = termo_action_bundle['delete_url']
+        termo.excluir_url = termo_action_bundle['delete_url']
+        termo.docx_url = termo_action_bundle['docx_url']
+        termo.pdf_url = termo_action_bundle['pdf_url']
         termo.download_docx_url = termo.docx_url
         termo.download_pdf_url = termo.pdf_url
 

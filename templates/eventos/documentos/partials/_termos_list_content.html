@@ -38,127 +38,67 @@
     {% for termo in object_list %}
     <article class="oficio-list-card termo-doc-card termo-list-card {{ termo.card_theme_class }}">
         <div class="oficio-list-rich-layout">
-            <div class="oficio-list-card__header termo-doc-card__header">
-                <div class="oficio-list-chip-list oficio-list-chip-list--meta termo-doc-card__chip-list">
-                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
-                        <span class="oficio-list-chip__label">Termo</span>
-                        <span class="oficio-list-chip__value">{{ termo.numero_formatado }}</span>
-                    </span>
-                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
-                        <span class="oficio-list-chip__label">Destino</span>
-                        <span class="oficio-list-chip__value">{{ termo.destino_resumo }}</span>
-                    </span>
-                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
-                        <span class="oficio-list-chip__label">Periodo</span>
-                        <span class="oficio-list-chip__value">{{ termo.periodo_resumo }}</span>
-                    </span>
+            <header class="termo-doc-card__hero">
+                <div class="termo-doc-card__hero-copy">
+                    <span class="termo-doc-card__eyebrow">Termo genérico do evento</span>
+                    <div class="termo-doc-card__hero-title-row">
+                        <div class="termo-doc-card__number">{{ termo.numero_formatado }}</div>
+                        <div class="termo-doc-card__context">{{ termo.context_display }}</div>
+                    </div>
+                    <div class="termo-doc-card__summary-list">
+                        <span class="termo-doc-card__summary-item">
+                            <span>Destino</span>
+                            <strong>{{ termo.destino_resumo }}</strong>
+                        </span>
+                        <span class="termo-doc-card__summary-item">
+                            <span>Período</span>
+                            <strong>{{ termo.periodo_resumo }}</strong>
+                        </span>
+                        <span class="termo-doc-card__summary-item">
+                            <span>Contexto</span>
+                            <strong>{{ termo.oficios_resumo }}</strong>
+                        </span>
+                    </div>
                 </div>
 
-                <div class="oficio-list-card__header-status">
+                <div class="termo-doc-card__hero-status">
                     <span class="oficio-list-badge termo-doc-card__status-badge {{ termo.status_badge_css_class }}">
                         <span>{{ termo.process_status.label }}</span>
                     </span>
                     <span class="oficio-list-badge termo-doc-card__status-badge is-info">
                         <span>{{ termo.mode_meta.label }}</span>
                     </span>
-                    {% if termo.vinculo_badge_detail %}
-                    <span class="termo-doc-card__vinculo-badge" title="{{ termo.vinculo_badge_label }}">{{ termo.vinculo_badge_detail }}</span>
-                    {% endif %}
                 </div>
-            </div>
+            </header>
 
             {% if termo.derivacoes_cards %}
-            <div class="oficio-list-card__secondary">
-                <section class="oficio-list-subcard termo-doc-card__context oficio-list-surface oficio-list-surface--panel">
-                    <div class="oficio-list-subcard__body">
-                        <div class="oficio-list-transport-panel termo-doc-card__transport-panel termo-doc-card__transport-panel--multi">
-                            {% for item in termo.derivacoes_cards %}
-                            <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--{{ item.tipo|lower }}">
-                                <span class="oficio-list-transport-panel__kicker">
-                                    {% if item.tipo == 'VIATURA' %}
-                                    <i class="bi bi-truck"></i>
-                                    {% else %}
-                                    <i class="bi bi-person-badge"></i>
-                                    {% endif %}
-                                    <span>{% if item.tipo == 'VIATURA' %}Viatura{% else %}Servidor{% endif %}</span>
-                                </span>
-                                {% if item.detalhe %}
-                                <p class="oficio-list-transport-panel__support">{{ item.detalhe }}</p>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
+            <section class="termo-doc-card__section termo-doc-card__section--derivacoes">
+                <div class="termo-doc-card__section-head">
+                    <div>
+                        <h3 class="termo-doc-card__section-title">Derivações</h3>
+                        <p class="termo-doc-card__section-subtitle">Documentos vinculados ao termo genérico.</p>
                     </div>
-                </section>
-            </div>
-            {% elif termo.has_servidor_card or termo.has_viatura_card %}
-            <div class="oficio-list-card__secondary">
-                <section class="oficio-list-subcard termo-doc-card__context oficio-list-surface oficio-list-surface--panel">
-                    <div class="oficio-list-subcard__body">
-                        {% if termo.has_viatura_card %}
-                        <div class="oficio-list-transport-panel termo-doc-card__transport-panel">
-                            <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--termo">
-                                <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Termo</span></span>
-                                <div class="oficio-list-transport-panel__detail-value">{{ termo.termo_nome|default:'Sem termo vinculado' }}</div>
-                                {% if termo.servidor_cargo_card or termo.servidor_lotacao_card %}
-                                <p class="oficio-list-transport-panel__support">
-                                    {% if termo.servidor_cargo_card %}{{ termo.servidor_cargo_card }}{% endif %}{% if termo.servidor_cargo_card and termo.servidor_lotacao_card %} - {% endif %}{% if termo.servidor_lotacao_card %}{{ termo.servidor_lotacao_card }}{% endif %}
-                                </p>
-                                {% endif %}
-                            </div>
-                            <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor">
-                                <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Servidor</span></span>
-                                <div class="oficio-list-transport-panel__detail-value">{{ termo.servidor_nome_card|default:'Sem servidor vinculado' }}</div>
-                                {% if termo.servidor_cargo_card or termo.servidor_lotacao_card %}
-                                <p class="oficio-list-transport-panel__support">
-                                    {% if termo.servidor_cargo_card %}{{ termo.servidor_cargo_card }}{% endif %}{% if termo.servidor_cargo_card and termo.servidor_lotacao_card %} - {% endif %}{% if termo.servidor_lotacao_card %}{{ termo.servidor_lotacao_card }}{% endif %}
-                                </p>
-                                {% endif %}
-                            </div>
-
-                            <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--viatura">
-                                <span class="oficio-list-transport-panel__kicker"><i class="bi bi-truck"></i><span>Viatura</span></span>
-                                <div class="oficio-list-transport-panel__detail-value">{{ termo.veiculo_placa_card|default:'Sem placa' }}</div>
-                                <p class="oficio-list-transport-panel__support">
-                                    {% if termo.veiculo_modelo_card %}{{ termo.veiculo_modelo_card }}{% else %}Sem modelo{% endif %}{% if termo.veiculo_combustivel_card %} - {{ termo.veiculo_combustivel_card }}{% endif %}
-                                </p>
-                            </div>
-                        </div>
-                        {% elif termo.has_servidor_card %}
-                        <div class="oficio-list-transport-panel termo-doc-card__transport-panel termo-doc-card__transport-panel--single">
-                            <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor">
-                                <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Servidor</span></span>
-                                <div class="oficio-list-transport-panel__detail-value">{{ termo.servidor_nome_card }}</div>
-                                {% if termo.servidor_cargo_card or termo.servidor_lotacao_card %}
-                                <p class="oficio-list-transport-panel__support">
-                                    {% if termo.servidor_cargo_card %}{{ termo.servidor_cargo_card }}{% endif %}{% if termo.servidor_cargo_card and termo.servidor_lotacao_card %} - {% endif %}{% if termo.servidor_lotacao_card %}{{ termo.servidor_lotacao_card }}{% endif %}
-                                </p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </section>
-            </div>
+                    <span class="termo-doc-card__section-count">{{ termo.derivacoes_cards|length }}</span>
+                </div>
+                <div class="termo-doc-card__derivacoes-list">
+                    {% for item in termo.derivacoes_cards %}
+                    {% include 'eventos/documentos/partials/_termo_derivacao_item.html' with item=item %}
+                    {% endfor %}
+                </div>
+            </section>
             {% endif %}
 
             {% include 'includes/list/document_links_block.html' with block=termo.vinculos_block %}
 
-            <div class="oficio-list-card__secondary">
-                <section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel termo-doc-card__actions-card">
-                    <div class="oficio-list-subcard__body">
-                        <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor termo-doc-card__compact-row">
-                            <div class="termo-doc-card__compact-copy">
-                                <span class="oficio-list-transport-panel__kicker">Termo</span>
-                                <div class="oficio-list-transport-panel__detail-value">{{ termo.numero_formatado|default:termo.pk }}</div>
-                            </div>
-                            <div class="termo-doc-card__transport-actions">
-                                {% include 'includes/list/item_actions.html' with abrir_url=termo.abrir_url abrir_aria='Abrir termo de autorizacao' visualizar_url=termo.visualizar_url visualizar_aria='Visualizar termo de autorizacao' docx_url=termo.docx_url docx_aria='Baixar DOCX do termo de autorizacao' pdf_url=termo.pdf_url pdf_aria='Baixar PDF do termo de autorizacao' delete_url=termo.delete_url delete_aria='Excluir termo de autorizacao' %}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
+            <footer class="termo-doc-card__footer">
+                <div class="termo-doc-card__footer-copy">
+                    <span class="termo-doc-card__footer-label">Ações do termo genérico</span>
+                    <span class="termo-doc-card__footer-subtitle">Abrir, visualizar, exportar ou excluir o documento agrupador.</span>
+                </div>
+                <div class="termo-doc-card__footer-actions">
+                    {% include 'includes/list/item_actions.html' with abrir_url=termo.abrir_url abrir_aria='Abrir termo de autorizacao' visualizar_url=termo.visualizar_url visualizar_aria='Visualizar termo de autorizacao' docx_url=termo.docx_url docx_aria='Baixar DOCX do termo de autorizacao' pdf_url=termo.pdf_url pdf_aria='Baixar PDF do termo de autorizacao' delete_url=termo.delete_url delete_aria='Excluir termo de autorizacao' %}
+                </div>
+            </footer>
         </div>
     </article>
     {% empty %}

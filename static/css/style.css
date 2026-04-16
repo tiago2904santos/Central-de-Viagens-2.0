@@ -3584,6 +3584,350 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     font-size: 0.75rem;
 }
 
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-list-card {
+    padding: 0.76rem 0.84rem 0.84rem;
+}
+
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card {
+    padding: 0.8rem 0.86rem 0.88rem;
+}
+
+.termo-doc-card__hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
+}
+
+.termo-doc-card__hero-copy {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: grid;
+    gap: 0.38rem;
+}
+
+.termo-doc-card__eyebrow {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    min-height: 1.5rem;
+    padding: 0.16rem 0.48rem;
+    border-radius: 999px;
+    background: rgba(var(--oficio-card-accent-rgb), 0.1);
+    color: #18416f;
+    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.16);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.termo-doc-card__hero-title-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.42rem 0.72rem;
+}
+
+.termo-doc-card__number {
+    color: #10233b;
+    font-size: 1.18rem;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+}
+
+.termo-doc-card__context {
+    min-width: 0;
+    color: var(--oficios-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.termo-doc-card__summary-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.termo-doc-card__summary-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    min-height: 1.76rem;
+    padding: 0.2rem 0.52rem;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.14);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 251, 255, 0.82)),
+        linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), 0.06), rgba(255, 255, 255, 0.08));
+    color: #24384e;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.termo-doc-card__summary-item span {
+    color: var(--oficios-muted);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.termo-doc-card__summary-item strong {
+    min-width: 0;
+    font-weight: 800;
+}
+
+.termo-doc-card__hero-status {
+    display: inline-flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 0.38rem;
+    flex-wrap: wrap;
+}
+
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__status-badge {
+    min-height: 1.9rem;
+    padding: 0.32rem 0.64rem;
+    font-size: 0.74rem;
+    line-height: 1;
+}
+
+.termo-doc-card__section {
+    margin-top: 0.68rem;
+    padding-top: 0.68rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    display: grid;
+    gap: 0.48rem;
+}
+
+.termo-doc-card__section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.termo-doc-card__section-title {
+    margin: 0;
+    color: #16324f;
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.termo-doc-card__section-subtitle {
+    margin: 0.15rem 0 0;
+    color: var(--oficios-muted);
+    font-size: 0.74rem;
+    line-height: 1.25;
+}
+
+.termo-doc-card__section-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.7rem;
+    min-width: 1.7rem;
+    padding: 0.16rem 0.42rem;
+    border-radius: 999px;
+    background: #e2eefc;
+    color: #15508a;
+    border: 1px solid #c0d8f4;
+    font-size: 0.72rem;
+    font-weight: 900;
+}
+
+.termo-doc-card__derivacoes-list {
+    display: grid;
+    gap: 0.42rem;
+}
+
+.termo-doc-card__derivacao-row {
+    --termo-derivacao-rgb: var(--oficio-card-accent-rgb);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.72rem;
+    align-items: center;
+    padding: 0.54rem 0.6rem;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(var(--termo-derivacao-rgb), 0.12);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(246, 250, 255, 0.84)),
+        linear-gradient(135deg, rgba(var(--termo-derivacao-rgb), 0.07), rgba(255, 255, 255, 0.12));
+}
+
+.termo-doc-card__derivacao-row.is-root {
+    border-style: dashed;
+}
+
+.termo-doc-card__derivacao-row--servidor {
+    --termo-derivacao-rgb: 33, 94, 207;
+}
+
+.termo-doc-card__derivacao-row--viatura {
+    --termo-derivacao-rgb: 3, 105, 161;
+}
+
+.termo-doc-card__derivacao-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    width: fit-content;
+    min-height: 1.72rem;
+    padding: 0.18rem 0.48rem;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--termo-derivacao-rgb), 0.18);
+    background: rgba(var(--termo-derivacao-rgb), 0.1);
+    color: #173354;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.termo-doc-card__derivacao-type .bi {
+    font-size: 0.76rem;
+}
+
+.termo-doc-card__derivacao-body {
+    min-width: 0;
+    display: grid;
+    gap: 0.1rem;
+}
+
+.termo-doc-card__derivacao-title {
+    color: #122033;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.22;
+}
+
+.termo-doc-card__derivacao-detail {
+    color: var(--oficios-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.termo-doc-card__derivacao-meta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.34rem;
+    flex-wrap: wrap;
+}
+
+.termo-doc-card__derivacao-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.7rem;
+    padding: 0.16rem 0.46rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1b4a7a;
+    border: 1px solid #c6ddf6;
+    font-size: 0.72rem;
+    font-weight: 900;
+}
+
+.termo-doc-card__derivacao-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.34rem;
+    flex-wrap: wrap;
+}
+
+.termo-doc-card__derivacao-row .btn-doc-action {
+    padding: 0.3rem 0.55rem;
+    font-size: 0.72rem;
+}
+
+.termo-doc-card__derivacao-row .btn-doc-action.is-icon-only {
+    width: 2.12rem;
+    min-width: 2.12rem;
+    height: 2.12rem;
+}
+
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__vinculos-block {
+    margin-top: 0.68rem;
+    padding: 0.62rem 0.68rem;
+}
+
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__vinculos-block .oficio-list-subcard__title {
+    font-size: 0.78rem;
+}
+
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__vinculos-block .oficio-list-subcard__subtitle {
+    font-size: 0.72rem;
+}
+
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__vinculos-block .oficio-list-term-row {
+    padding: 0.42rem 0.5rem;
+}
+
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__vinculos-block .oficio-list-term-row__actions {
+    gap: 0.28rem;
+}
+
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__vinculos-block .oficio-list-term-row .btn-doc-action {
+    padding: 0.24rem 0.46rem;
+    font-size: 0.68rem;
+}
+
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__vinculos-block.is-compact .oficio-list-subcard__link-actions-summary {
+    padding: 0.18rem 0;
+    font-size: 0.78rem;
+}
+
+.system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__vinculos-block.is-compact .oficio-list-subcard__link-actions-body {
+    padding-top: 0.36rem;
+}
+
+.termo-doc-card__footer {
+    margin-top: 0.68rem;
+    padding-top: 0.68rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.termo-doc-card__footer-copy {
+    min-width: 0;
+    display: grid;
+    gap: 0.1rem;
+}
+
+.termo-doc-card__footer-label {
+    color: #16324f;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.termo-doc-card__footer-subtitle {
+    color: var(--oficios-muted);
+    font-size: 0.76rem;
+    line-height: 1.25;
+}
+
+.termo-doc-card__footer-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.34rem;
+    flex-wrap: wrap;
+}
+
 @media (max-width: 992px) {
     .system-list-page[data-view-storage-key="central-viagens.termos.documentos.view-mode"] .termo-doc-card__context .oficio-list-term-row {
         grid-template-columns: 1fr;
@@ -3616,6 +3960,33 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     .termo-doc-card__servidor-row {
         grid-template-columns: 1fr;
         gap: 0.34rem;
+    }
+
+    .termo-doc-card__hero {
+        flex-direction: column;
+    }
+
+    .termo-doc-card__hero-status {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .termo-doc-card__derivacao-row {
+        grid-template-columns: 1fr;
+        gap: 0.34rem;
+    }
+
+    .termo-doc-card__derivacao-meta {
+        justify-content: flex-start;
+    }
+
+    .termo-doc-card__footer {
+        align-items: flex-start;
+    }
+
+    .termo-doc-card__footer-actions {
+        width: 100%;
+        justify-content: flex-start;
     }
 }
 
