@@ -75,6 +75,7 @@ from .services.plano_trabalho_step2 import (
     build_plano_step2_defaults,
     reconcile_plano_step2_state,
 )
+from .services.documento_vinculos import resolver_vinculos_ordem_servico
 from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
@@ -4633,6 +4634,8 @@ def _render_ordem_servico_form(
     preselected_event=None,
     preselected_oficio=None,
 ):
+    ordem_ref = object_instance or form.instance
+    vinculos_resolvidos = resolver_vinculos_ordem_servico(ordem_ref)
     selected_viajantes = []
     if object_instance:
         selected_viajantes = object_instance.get_viajantes_relacionados()
@@ -4654,30 +4657,9 @@ def _render_ordem_servico_form(
         )
 
     vinculo_texto = 'Cadastro avulso'
-    if object_instance:
-        if object_instance.oficio_id and object_instance.oficio:
-            vinculo_texto = f'Ofício {object_instance.oficio.numero_formatado}'
-        elif object_instance.evento_id and object_instance.evento:
-            vinculo_texto = f'Evento {object_instance.evento.titulo or "sem título"}'
-    elif getattr(form, 'is_bound', False):
-        raw_oficio = (form.data.get('oficio') or '').strip() if hasattr(form.data, 'get') else ''
-        raw_evento = (form.data.get('evento') or '').strip() if hasattr(form.data, 'get') else ''
-        if raw_oficio.isdigit():
-            oficio = Oficio.objects.select_related('evento').filter(pk=int(raw_oficio)).first()
-            if oficio:
-                vinculo_texto = f'Ofício {oficio.numero_formatado}'
-        elif raw_evento.isdigit():
-            evento = Evento.objects.filter(pk=int(raw_evento)).first()
-            if evento:
-                vinculo_texto = f'Evento {evento.titulo or "sem título"}'
-    elif form.initial.get('oficio'):
-        oficio = Oficio.objects.select_related('evento').filter(pk=form.initial.get('oficio')).first()
-        if oficio:
-            vinculo_texto = f'Ofício {oficio.numero_formatado}'
-    elif form.initial.get('evento'):
-        evento = Evento.objects.filter(pk=form.initial.get('evento')).first()
-        if evento:
-            vinculo_texto = f'Evento {evento.titulo or "sem título"}'
+    diretos = vinculos_resolvidos.get('diretos') or []
+    if diretos:
+        vinculo_texto = ' / '.join(v.rotulo for v in diretos[:2])
 
     numero_preview = object_instance.numero_formatado if object_instance and object_instance.pk else getattr(form, 'proximo_numero_preview', '')
     destino_estado_fixo = Estado.objects.filter(sigla__iexact='PR', ativo=True).first()
@@ -4714,6 +4696,8 @@ def _render_ordem_servico_form(
             ],
             'ordem_numero_preview': numero_preview,
             'ordem_vinculo_texto': vinculo_texto,
+            'ordem_vinculos_diretos': vinculos_resolvidos.get('diretos') or [],
+            'ordem_vinculos_herdados': vinculos_resolvidos.get('herdados') or [],
             'ordens_servico_lista_url': reverse('eventos:documentos-ordens-servico'),
             'hide_page_header': True,
         },

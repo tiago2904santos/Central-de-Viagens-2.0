@@ -1,4 +1,4 @@
-﻿import uuid
+import uuid
 import hashlib
 from copy import deepcopy
 from datetime import datetime, time
@@ -86,6 +86,7 @@ from .services.justificativa import (
     oficio_tem_justificativa,
 )
 from .services.oficio_schema import get_oficio_justificativa_schema_status
+from .services.documento_vinculos import resolver_vinculos_oficio
 from .services.documentos import (
     DocumentoFormato,
     DocumentoOficioTipo,
@@ -6243,6 +6244,7 @@ def _build_oficio_step4_context(oficio, finalize_validation=None):
     step2_form = OficioStep2Form(initial=_build_oficio_step2_initial(oficio), oficio=oficio)
     step2_preview = _build_step2_preview_data(oficio, step2_form)
     step3_preview = _build_oficio_step3_preview(oficio, saved_state, diarias_resultado=diarias_resultado)
+    vinculos_resolvidos = resolver_vinculos_oficio(oficio)
     return {
         'oficio': oficio,
         'evento': oficio.evento,
@@ -6255,6 +6257,7 @@ def _build_oficio_step4_context(oficio, finalize_validation=None):
         'justificativa_info': justificativa_info,
         'oficio_downloads': _build_oficio_document_download_context(oficio, DocumentoOficioTipo.OFICIO),
         'termo_autorizacao': _build_oficio_termo_autorizacao_context(oficio),
+        'vinculos_resolvidos': vinculos_resolvidos,
         'justificativa_url': _oficio_justificativa_url(
             oficio,
             next_url=reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),

@@ -1415,6 +1415,9 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
                 cleaned_data['evento'] = oficio.evento
                 evento = oficio.evento
 
+        if evento and not oficio and self.instance and self.instance.pk and self.instance.oficio_id:
+            cleaned_data['oficio'] = None
+
         destinos = []
         try:
             destinos = self._parse_destinos_payload((cleaned_data.get('destinos_payload') or '').strip())
@@ -1451,6 +1454,14 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
         instance.finalidade = instance.motivo_texto
         instance.data_unica = bool(self.cleaned_data.get('data_unica')) if self.cleaned_data.get('data_unica') is not None else bool(data_unica_anterior)
         selecionados = list(self.cleaned_data.get('viajantes') or [])
+        if not selecionados and instance.evento_id:
+            selecionados = list(
+                Viajante.objects.filter(
+                    pk__in=instance.evento.oficios.values_list('viajantes__pk', flat=True)
+                )
+                .distinct()
+                .order_by('nome')
+            )
         instance.responsaveis = '\n'.join(viajante.nome for viajante in selecionados if getattr(viajante, 'nome', ''))
         data_deslocamento_limpa = self.cleaned_data.get('data_deslocamento')
         data_deslocamento_fim_limpa = self.cleaned_data.get('data_deslocamento_fim')
@@ -1478,6 +1489,8 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
         if commit:
             instance.save()
             self.save_m2m()
+            if not self.cleaned_data.get('viajantes') and selecionados:
+                instance.viajantes.set(selecionados)
             if instance.pk and 'viajantes' not in self.data and viajantes_anteriores_ids:
                 instance.viajantes.set(viajantes_anteriores_ids)
                 instance.responsaveis = '\n'.join(
@@ -1579,6 +1592,8 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
     def clean(self):
         data = super().clean()
         self.cleaned_oficios = list(data.get('oficios') or [])
+        if len(self.cleaned_oficios) > 1:
+            self.add_error('oficios', 'Selecione apenas 1 ofício por termo de autorização.')
         evento = data.get('evento')
         roteiro = data.get('roteiro')
         self.context_data = build_termo_context(
@@ -1639,7 +1654,7 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
 
     def save_terms(self, *, user=None):
         cleaned = self.cleaned_data
-        oficio_legacy = self.cleaned_oficios[0] if len(self.cleaned_oficios) == 1 else None
+        oficio_legacy = self.cleaned_oficios[0] if self.cleaned_oficios else None
         common_kwargs = {
             'evento': cleaned.get('evento') or self.context_data['evento'],
             'roteiro': cleaned.get('roteiro') or self.context_data['roteiro'],
@@ -1658,8 +1673,8 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
             termo = TermoAutorizacao(**common_kwargs)
             termo.full_clean()
             termo.save()
-            if self.cleaned_oficios:
-                termo.oficios.set(self.cleaned_oficios)
+            if oficio_legacy:
+                termo.oficios.set([oficio_legacy])
             return [termo]
 
         for viajante in self.cleaned_viajantes:
@@ -1670,8 +1685,8 @@ class TermoAutorizacaoForm(FormComErroInvalidMixin, forms.ModelForm):
             )
             termo.full_clean()
             termo.save()
-            if self.cleaned_oficios:
-                termo.oficios.set(self.cleaned_oficios)
+            if oficio_legacy:
+                termo.oficios.set([oficio_legacy])
             termos.append(termo)
         return termos
 
@@ -1724,6 +1739,9 @@ class TermoAutorizacaoEdicaoForm(FormComErroInvalidMixin, forms.ModelForm):
 
     def clean(self):
         data = super().clean()
+        oficios = list(data.get('oficios') or [])
+        if len(oficios) > 1:
+            self.add_error('oficios', 'Selecione apenas 1 ofício por termo de autorização.')
         data_unica = bool(data.get('data_evento_unica'))
         if data_unica and data.get('data_evento'):
             data['data_evento_fim'] = data['data_evento']
@@ -1738,11 +1756,11 @@ class TermoAutorizacaoEdicaoForm(FormComErroInvalidMixin, forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         oficios = list(self.cleaned_data.get('oficios') or [])
-        instance.oficio = oficios[0] if len(oficios) == 1 else None
+        instance.oficio = oficios[0] if oficios else None
         if commit:
             instance.full_clean()
             instance.save()
-            instance.oficios.set(oficios)
+            instance.oficios.set(oficios[:1])
         return instance
 
 class TipoDemandaEventoForm(FormComErroInvalidMixin, forms.ModelForm):

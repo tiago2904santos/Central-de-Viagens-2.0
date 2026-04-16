@@ -674,6 +674,24 @@ class OrdemServico(models.Model):
             return self.oficio.evento
         return None
 
+    def get_oficios_herdados_evento(self):
+        if not self.evento_id:
+            return []
+        return list(self.evento.oficios.order_by('-updated_at', '-created_at'))
+
+    def get_oficios_vinculados(self):
+        oficios = []
+        seen = set()
+        if self.oficio_id and self.oficio and self.oficio.pk not in seen:
+            seen.add(self.oficio.pk)
+            oficios.append(self.oficio)
+        for oficio in self.get_oficios_herdados_evento():
+            if oficio.pk in seen:
+                continue
+            seen.add(oficio.pk)
+            oficios.append(oficio)
+        return oficios
+
     def get_viajantes_relacionados(self):
         vinculados = list(self.viajantes.select_related('cargo').order_by('nome')) if self.pk else []
         if vinculados:
