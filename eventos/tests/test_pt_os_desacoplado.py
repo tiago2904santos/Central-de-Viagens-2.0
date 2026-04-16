@@ -10,6 +10,7 @@ from cadastros.models import AssinaturaConfiguracao, Cargo, Cidade, Configuracao
 from eventos.forms import OrdemServicoForm
 from eventos.forms import TermoAutorizacaoEdicaoForm
 from eventos.models import Evento, Justificativa, Oficio, OrdemServico, PlanoTrabalho, TermoAutorizacao
+from eventos.services.contexto_evento import build_contexto_ordem_servico_from_evento
 from eventos.services.documento_vinculos import resolver_vinculos_evento, resolver_vinculos_oficio, resolver_vinculos_ordem_servico
 from eventos.services.documentos.ordem_servico import build_ordem_servico_model_template_context
 
@@ -109,6 +110,35 @@ class PtOsDesacopladoTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['form'].initial.get('evento'), self.evento.pk)
+
+    def test_preselected_event_id_os_consolida_viajantes_dos_oficios_sem_duplicar(self):
+        cargo = Cargo.objects.create(nome='Agente de Polícia Civil')
+        viajante_a = Viajante.objects.create(
+            nome='ANA SILVA',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=cargo,
+            cpf='12345678901',
+            telefone='41999998888',
+        )
+        viajante_b = Viajante.objects.create(
+            nome='BRUNO LIMA',
+            status=Viajante.STATUS_FINALIZADO,
+            cargo=cargo,
+            cpf='98765432100',
+            telefone='41999997777',
+        )
+        oficio_a = Oficio.objects.create(evento=self.evento, status=Oficio.STATUS_RASCUNHO)
+        oficio_a.viajantes.set([viajante_a])
+        oficio_b = Oficio.objects.create(evento=self.evento, status=Oficio.STATUS_RASCUNHO)
+        oficio_b.viajantes.set([viajante_a, viajante_b])
+
+        contexto = build_contexto_ordem_servico_from_evento(self.evento)
+
+        self.assertEqual(contexto['viajantes_ids'], [viajante_a.pk, viajante_b.pk])
+        self.assertEqual(
+            set(Oficio.objects.filter(eventos=self.evento).values_list('pk', flat=True)),
+            {self.oficio.pk, oficio_a.pk, oficio_b.pk},
+        )
 
     def test_preselected_oficio_id_pt(self):
         response = self.client.get(

@@ -80,14 +80,10 @@
                                     {% else %}
                                     <i class="bi bi-person-badge"></i>
                                     {% endif %}
-                                    <span>{{ item.tipo }}</span>
+                                    <span>{% if item.tipo == 'VIATURA' %}Viatura{% else %}Servidor{% endif %}</span>
                                 </span>
-                                <div class="oficio-list-transport-panel__detail-value">{{ item.titulo }}</div>
                                 {% if item.detalhe %}
                                 <p class="oficio-list-transport-panel__support">{{ item.detalhe }}</p>
-                                {% endif %}
-                                {% if item.badge %}
-                                <div class="small text-muted mt-2">{{ item.badge }}</div>
                                 {% endif %}
                             </div>
                             {% endfor %}
@@ -101,6 +97,15 @@
                     <div class="oficio-list-subcard__body">
                         {% if termo.has_viatura_card %}
                         <div class="oficio-list-transport-panel termo-doc-card__transport-panel">
+                            <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--termo">
+                                <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Termo</span></span>
+                                <div class="oficio-list-transport-panel__detail-value">{{ termo.termo_nome|default:'Sem termo vinculado' }}</div>
+                                {% if termo.servidor_cargo_card or termo.servidor_lotacao_card %}
+                                <p class="oficio-list-transport-panel__support">
+                                    {% if termo.servidor_cargo_card %}{{ termo.servidor_cargo_card }}{% endif %}{% if termo.servidor_cargo_card and termo.servidor_lotacao_card %} - {% endif %}{% if termo.servidor_lotacao_card %}{{ termo.servidor_lotacao_card }}{% endif %}
+                                </p>
+                                {% endif %}
+                            </div>
                             <div class="oficio-list-transport-panel__detail oficio-list-surface oficio-list-surface--soft termo-doc-card__transport-col termo-doc-card__transport-col--servidor">
                                 <span class="oficio-list-transport-panel__kicker"><i class="bi bi-person-badge"></i><span>Servidor</span></span>
                                 <div class="oficio-list-transport-panel__detail-value">{{ termo.servidor_nome_card|default:'Sem servidor vinculado' }}</div>

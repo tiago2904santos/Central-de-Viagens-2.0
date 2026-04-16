@@ -381,6 +381,25 @@ class TermoAutorizacaoModuleTest(TestCase):
         self.assertContains(response, 'Modelo')
         self.assertNotContains(response, 'oficio-document-card')
 
+    def test_lista_renderiza_termo_generico_com_derivacoes_de_servidor_e_viatura(self):
+        TermoAutorizacao.objects.filter(oficio=self.oficio_a).delete()
+        self.client.get(
+            reverse('eventos:oficio-documento-download', kwargs={
+                'pk': self.oficio_a.pk,
+                'tipo_documento': 'termo-autorizacao',
+                'formato': 'docx',
+            })
+        )
+
+        response = self.client.get(reverse('eventos:documentos-termos'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Termo generico do evento')
+        self.assertContains(response, 'Viatura')
+        self.assertContains(response, 'Servidor')
+        self.assertContains(response, self.viajante_a.nome)
+        self.assertContains(response, 'SPIN')
+
     def test_autocomplete_de_viajantes_e_viaturas_funciona(self):
         response_viajantes = self.client.get(reverse('eventos:oficio-step1-viajantes-api'), {'q': 'Servidor'})
         response_viaturas = self.client.get(reverse('eventos:oficio-step2-veiculos-busca-api'), {'q': 'ABC'})
@@ -415,6 +434,27 @@ class TermoAutorizacaoModuleTest(TestCase):
             )
         self.assertEqual(response_pdf.status_code, 200)
         self.assertEqual(response_pdf['Content-Type'], 'application/pdf')
+
+    def test_edicao_de_termo_salvo_nao_sobrescreve_campos_manualmente_editados(self):
+        termo = TermoAutorizacao.objects.create(
+            evento=self.evento,
+            oficio=self.oficio_a,
+            viajante=self.viajante_a,
+            veiculo=self.veiculo,
+            destino='Curitiba/PR',
+            data_evento=date(2026, 3, 18),
+            data_evento_fim=date(2026, 3, 19),
+            status=TermoAutorizacao.STATUS_GERADO,
+        )
+        termo.servidor_nome = 'Servidor manual'
+        termo.servidor_lotacao = 'Lotação manual'
+        termo.veiculo_modelo = 'Modelo manual'
+        termo.save()
+        termo.refresh_from_db()
+
+        self.assertEqual(termo.servidor_nome, 'Servidor manual')
+        self.assertEqual(termo.servidor_lotacao, 'Lotação manual')
+        self.assertEqual(termo.veiculo_modelo, 'Modelo manual')
 
     # --- Testes: Termo criado pelo Ofício persiste em TermoAutorizacao ---
 

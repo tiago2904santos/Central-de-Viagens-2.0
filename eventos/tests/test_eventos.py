@@ -1726,6 +1726,33 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertIn('CURITIBA', ev.titulo)
         self.assertIn('12/03/2026', ev.titulo)
 
+    def test_etapa_1_finalizada_cria_termo_generico_do_evento(self):
+        tipo = self.tipos[0] if self.tipos else None
+        self.assertIsNotNone(tipo)
+        ev = Evento.objects.create(titulo='', data_inicio=date(2026, 3, 12), data_fim=date(2026, 3, 12), status=Evento.STATUS_RASCUNHO)
+        data = {
+            'tipos_demanda': [tipo.pk],
+            'data_unica': True,
+            'data_inicio': '2026-03-12',
+            'data_fim': '2026-03-12',
+            'descricao': 'Evento com termo generico',
+            'tem_convite_ou_oficio_evento': False,
+            'destino_estado_0': self.estado.pk,
+            'destino_cidade_0': self.cidade_a.pk,
+        }
+        response = self.client.post(reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}), data)
+
+        self.assertEqual(response.status_code, 302)
+        termo = TermoAutorizacao.objects.get(
+            evento=ev,
+            termo_pai__isnull=True,
+            derivacao_tipo=TermoAutorizacao.DERIVACAO_TIPO_GENERICA,
+        )
+        self.assertEqual(termo.modo_geracao, TermoAutorizacao.MODO_GENERICO)
+        self.assertEqual(termo.destino, 'Curitiba/PR')
+        self.assertEqual(termo.data_evento, date(2026, 3, 12))
+        self.assertEqual(termo.status, TermoAutorizacao.STATUS_GERADO)
+
     def test_etapa_1_data_unica_ignora_data_fim(self):
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)

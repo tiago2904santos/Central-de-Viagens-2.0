@@ -3087,6 +3087,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     gap: 0.24rem;
     padding: 0.66rem 0.74rem;
     border-radius: 1rem;
+    align-items: center;
 }
 
 .oficio-list-transport-panel__kicker {

@@ -158,7 +158,9 @@ def _evento_viajantes(evento):
     if not participante_ids:
         participante_ids = [
             viajante_id
-            for viajante_id in evento.oficios.values_list('viajantes', flat=True)
+            for viajante_id in Oficio.viajantes.through.objects.filter(
+                oficio_id__in=Oficio.objects.filter(eventos=evento).values_list('pk', flat=True)
+            ).values_list('viajante_id', flat=True)
             if viajante_id
         ]
     if not participante_ids:

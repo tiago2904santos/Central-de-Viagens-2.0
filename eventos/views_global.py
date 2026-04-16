@@ -5630,6 +5630,7 @@ def termos_global(request):
 
     page_obj = _paginate(queryset.order_by(ordering, '-created_at'), request.GET.get('page'))
     object_list = list(page_obj.object_list)
+    _decorate_termo_list_items(object_list)
     for termo in object_list:
         termo.process_status = _termo_status_meta(termo)
         termo.card_theme_meta = _build_termo_card_theme_meta(termo)

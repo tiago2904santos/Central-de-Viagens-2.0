@@ -106,19 +106,25 @@ def _roteiro_period_bounds(roteiro):
 
 def _evento_viajantes(evento, oficios=None):
     participante_ids = []
+    selected_oficios = _ordered_unique_models(oficios or [])
     if evento is not None:
         participante_ids.extend(
             EventoParticipante.objects.filter(evento=evento).values_list('viajante_id', flat=True)
         )
-        if oficios is None:
-            oficio_qs = evento.oficios.all()
+        if selected_oficios:
+            oficio_ids = [oficio.pk for oficio in selected_oficios if getattr(oficio, 'pk', None)]
         else:
-            oficio_qs = oficios
-        for oficio in oficio_qs:
-            participante_ids.extend(oficio.viajantes.values_list('pk', flat=True))
+            oficio_ids = list(Oficio.objects.filter(eventos=evento).values_list('pk', flat=True))
+        if oficio_ids:
+            participante_ids.extend(
+                Oficio.viajantes.through.objects.filter(oficio_id__in=oficio_ids).values_list('viajante_id', flat=True)
+            )
     else:
-        for oficio in oficios or []:
-            participante_ids.extend(oficio.viajantes.values_list('pk', flat=True))
+        oficio_ids = [oficio.pk for oficio in selected_oficios if getattr(oficio, 'pk', None)]
+        if oficio_ids:
+            participante_ids.extend(
+                Oficio.viajantes.through.objects.filter(oficio_id__in=oficio_ids).values_list('viajante_id', flat=True)
+            )
     participante_ids = list(dict.fromkeys(participante_ids))
     if not participante_ids:
         return []
