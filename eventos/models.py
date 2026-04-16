@@ -1136,9 +1136,8 @@ class TermoAutorizacao(models.Model):
 
     @property
     def oficios_relacionados_display(self):
-        oficios = list(self.oficios.all())
-        if not oficios and self.oficio_id:
-            oficios = [self.oficio]
+        oficio_canonico = self.get_oficio_canonico()
+        oficios = [oficio_canonico] if oficio_canonico else []
         labels = []
         seen = set()
         for oficio in oficios:
@@ -1148,6 +1147,12 @@ class TermoAutorizacao(models.Model):
             seen.add(label)
             labels.append(label)
         return ', '.join(labels)
+
+    def get_oficio_canonico(self):
+        if self.oficio_id:
+            return self.oficio
+        primeiro_legado = self.oficios.order_by('pk').first()
+        return primeiro_legado
 
     @classmethod
     def template_variant_for_mode(cls, modo):
@@ -1243,6 +1248,12 @@ class TermoAutorizacao(models.Model):
             roteiro_oficio_id = getattr(self.oficio, 'roteiro_evento_id', None)
             if roteiro_oficio_id and roteiro_oficio_id != self.roteiro_id:
                 errors['roteiro'] = 'O roteiro informado nao corresponde ao roteiro do oficio.'
+        if self.pk:
+            legado_ids = list(self.oficios.values_list('pk', flat=True))
+            if len(legado_ids) > 1:
+                errors['oficio'] = 'Termo permite somente um ofício canônico.'
+            if self.oficio_id and legado_ids and any(pk != self.oficio_id for pk in legado_ids):
+                errors['oficio'] = 'Ofício canônico divergente do legado. Execute saneamento do vínculo.'
         if self.modo_geracao in {
             self.MODO_AUTOMATICO_COM_VIATURA,
             self.MODO_AUTOMATICO_SEM_VIATURA,
@@ -1265,6 +1276,12 @@ class TermoAutorizacao(models.Model):
             self.lote_uuid = None
         self.status = self.STATUS_GERADO if self.is_ready_for_generation() else self.STATUS_RASCUNHO
         super().save(*args, **kwargs)
+        oficio_canonico = self.get_oficio_canonico()
+        if oficio_canonico and self.oficio_id != oficio_canonico.pk:
+            self.oficio = oficio_canonico
+            super().save(update_fields=['oficio', 'updated_at'])
+        if self.oficio_id:
+            self.oficios.set([self.oficio_id])
 
 
 class ModeloMotivoViagem(models.Model):

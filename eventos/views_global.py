@@ -76,6 +76,11 @@ from .services.plano_trabalho_step2 import (
     reconcile_plano_step2_state,
 )
 from .services.documento_vinculos import resolver_vinculos_ordem_servico
+from .services.documento_selectors import (
+    oficios_linkables,
+    ordens_servico_base_queryset,
+    planos_trabalho_base_queryset,
+)
 from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
@@ -3956,12 +3961,8 @@ def plano_trabalho_calcular_diarias_api(request):
 def planos_trabalho_global(request):
     filters = _base_documento_filters(request)
     current_path = request.get_full_path()
-    linkable_oficios = list(Oficio.objects.select_related('evento').order_by('-updated_at')[:12])
-    queryset = (
-        PlanoTrabalho.objects.select_related('evento', 'oficio', 'solicitante', 'roteiro')
-        .prefetch_related('oficios', 'oficios__evento')
-        .all()
-    )
+    linkable_oficios = oficios_linkables(limit=12)
+    queryset = planos_trabalho_base_queryset()
     if filters['q']:
         queryset = queryset.filter(
             Q(recursos_texto__icontains=filters['q'])
@@ -4351,11 +4352,8 @@ def _ordem_servico_viajantes_items(ordem, limit=4):
 def ordens_servico_global(request):
     filters = _base_documento_filters(request)
     current_path = request.get_full_path()
-    linkable_oficios = list(Oficio.objects.select_related('evento').order_by('-updated_at')[:12])
-    queryset = OrdemServico.objects.select_related('evento', 'oficio').prefetch_related(
-        Prefetch('viajantes', queryset=Viajante.objects.select_related('cargo', 'unidade_lotacao')),
-        Prefetch('oficio__viajantes', queryset=Viajante.objects.select_related('cargo', 'unidade_lotacao')),
-    ).all()
+    linkable_oficios = oficios_linkables(limit=12)
+    queryset = ordens_servico_base_queryset()
     chefia_contexto = _ordem_servico_chefia_contexto()
     if filters['q']:
         queryset = queryset.filter(

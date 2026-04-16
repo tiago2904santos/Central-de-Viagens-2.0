@@ -10,7 +10,7 @@ from cadastros.models import AssinaturaConfiguracao, Cargo, Cidade, Configuracao
 from eventos.forms import OrdemServicoForm
 from eventos.forms import TermoAutorizacaoEdicaoForm
 from eventos.models import Evento, Justificativa, Oficio, OrdemServico, PlanoTrabalho, TermoAutorizacao
-from eventos.services.documento_vinculos import resolver_vinculos_ordem_servico
+from eventos.services.documento_vinculos import resolver_vinculos_evento, resolver_vinculos_oficio, resolver_vinculos_ordem_servico
 from eventos.services.documentos.ordem_servico import build_ordem_servico_model_template_context
 
 
@@ -569,3 +569,16 @@ class PtOsDesacopladoTest(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn('oficios', form.errors)
+
+    def test_resolver_vinculos_oficio_e_evento(self):
+        Justificativa.objects.create(oficio=self.oficio, texto='Base')
+        TermoAutorizacao.objects.create(oficio=self.oficio, destino='Curitiba/PR', data_evento=date(2026, 3, 10))
+
+        vinculos_oficio = resolver_vinculos_oficio(self.oficio)
+        tipos_oficio = {item.tipo for item in vinculos_oficio['diretos']}
+        self.assertIn('evento', tipos_oficio)
+        self.assertIn('justificativa', tipos_oficio)
+        self.assertIn('termo', tipos_oficio)
+
+        vinculos_evento = resolver_vinculos_evento(self.evento)
+        self.assertTrue(any(of.pk == self.oficio.pk for of in vinculos_evento['oficios']))

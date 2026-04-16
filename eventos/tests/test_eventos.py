@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import sys
 from io import BytesIO
@@ -218,7 +218,7 @@ class EventoDetalheTest(TestCase):
         self.assertIn('login', response.url)
 
     def test_detalhe_ok_mostra_dados_do_modelo_novo(self):
-        """Detalhe redireciona para ediÃ§Ã£o do evento (Etapa 1)."""
+        """Detalhe renderiza painel consolidado do evento."""
         self.client.login(username='u', password='p')
         tipo = TipoDemandaEvento.objects.filter(ativo=True).first()
         estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR', codigo_ibge='41')
@@ -233,8 +233,9 @@ class EventoDetalheTest(TestCase):
         ev.tipos_demanda.add(tipo)
         EventoDestino.objects.create(evento=ev, estado=estado, cidade=cidade, ordem=0)
         response = self.client.get(reverse('eventos:detalhe', kwargs={'pk': ev.pk}))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('eventos:editar', kwargs={'pk': ev.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Vínculos documentais')
+        self.assertContains(response, 'Ofícios (diretos)')
 
 
 class EventoExcluirTest(TestCase):
@@ -1914,7 +1915,7 @@ class EventoEtapa1RefatoradoTest(TestCase):
         self.assertContains(response, 'value="2025-11-05"')
 
     def test_detalhe_evento_mostra_datas_corretas(self):
-        """Rota de detalhe redireciona para ediÃ§Ã£o e mantÃ©m datas persistidas na Etapa 1."""
+        """Rota de detalhe mostra datas persistidas no resumo do evento."""
         tipo = self.tipos[0] if self.tipos else None
         self.assertIsNotNone(tipo)
         ev = Evento.objects.create(titulo='', data_inicio=date(2025, 12, 1), data_fim=date(2025, 12, 10), status=Evento.STATUS_RASCUNHO)
@@ -1931,8 +1932,9 @@ class EventoEtapa1RefatoradoTest(TestCase):
         }
         self.client.post(reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}), data)
         response = self.client.get(reverse('eventos:detalhe', kwargs={'pk': ev.pk}))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('eventos:editar', kwargs={'pk': ev.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '01/12/2025')
+        self.assertContains(response, '10/12/2025')
 
         etapa1 = self.client.get(reverse('eventos:guiado-etapa-1', kwargs={'pk': ev.pk}))
         self.assertEqual(etapa1.status_code, 200)

@@ -87,6 +87,7 @@ from .services.justificativa import (
 )
 from .services.oficio_schema import get_oficio_justificativa_schema_status
 from .services.documento_vinculos import resolver_vinculos_oficio
+from .services.documento_vinculos import resolver_vinculos_evento
 from .services.documentos import (
     DocumentoFormato,
     DocumentoOficioTipo,
@@ -994,8 +995,24 @@ def evento_editar(request, pk):
 
 @login_required
 def evento_detalhe(request, pk):
-    get_object_or_404(Evento, pk=pk)
-    return redirect('eventos:editar', pk=pk)
+    evento = get_object_or_404(
+        Evento.objects.prefetch_related(
+            'tipos_demanda',
+            'destinos__estado',
+            'destinos__cidade',
+            'anexos_solicitante',
+        ),
+        pk=pk,
+    )
+    vinculos = resolver_vinculos_evento(evento)
+    return render(
+        request,
+        'eventos/evento_detalhe.html',
+        {
+            'object': evento,
+            'vinculos': vinculos,
+        },
+    )
 
 
 @login_required
