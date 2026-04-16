@@ -4,6 +4,12 @@
             <i class="bi {{ item.icon }}"></i>
             <span>{{ item.tipo_label }}</span>
         </div>
+        {% if item.abrir_url %}
+        <a href="{{ item.abrir_url }}" class="termo-doc-card__viatura-cta oficio-list-badge is-info" aria-label="{{ item.abrir_aria|default:'Abrir termo da viatura' }}" title="{{ item.abrir_aria|default:'Abrir termo da viatura' }}">
+            <i class="bi bi-box-arrow-up-right"></i>
+            <span>{{ item.badge|default:'Abrir termo' }}</span>
+        </a>
+        {% endif %}
     </div>
 
     <div class="termo-doc-card__viatura-body">
