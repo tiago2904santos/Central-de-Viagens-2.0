@@ -655,32 +655,6 @@
     justify-content: flex-end;
 }
 
-.system-document-filter-form--oficios {
-    gap: 0.68rem;
-}
-
-.system-document-filter__grid--oficios {
-    grid-template-columns: repeat(16, minmax(0, 1fr));
-    grid-auto-flow: dense;
-}
-
-.system-document-filter__field--oficios-search {
-    grid-column: span 6;
-}
-
-.system-document-filter__field--oficios-medium {
-    grid-column: span 2;
-}
-
-.system-document-filter__field--oficios-wide {
-    grid-column: span 4;
-}
-
-.system-document-filter__field--oficios-actions {
-    grid-column: span 4;
-    align-self: end;
-}
-
 .system-document-filter__actions-grid-label {
     opacity: 0;
     pointer-events: none;
@@ -954,10 +928,6 @@
         grid-template-columns: repeat(6, minmax(0, 1fr));
     }
 
-    .system-document-filter__grid--oficios {
-        grid-template-columns: repeat(8, minmax(0, 1fr));
-    }
-
     .system-document-filter__field--search-xl,
     .system-document-filter__field--search,
     .system-document-filter__field--wide,
@@ -974,18 +944,8 @@
         grid-column: span 3;
     }
 
-    .system-document-filter__field--oficios-search,
-    .system-document-filter__field--oficios-wide,
-    .system-document-filter__field--oficios-actions {
-        grid-column: 1 / -1;
-    }
-
     .system-document-filter__field--medium {
         grid-column: span 3;
-    }
-
-    .system-document-filter__field--oficios-medium {
-        grid-column: span 4;
     }
 
     .system-document-filter__field--compact,
@@ -1070,16 +1030,7 @@
     .system-document-filter,
     .system-list-top--complete .system-filter-card,
     .system-list-top--complete .card.filter-card,
-    .system-list-top--complete .oficios-quick-filter {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
     .system-document-filter__grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .system-document-filter__grid--oficios {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -1099,16 +1050,6 @@
     .system-document-filter__field--compact,
     .system-document-filter__field--narrow,
     .system-document-filter__field--micro {
-        grid-column: span 1;
-    }
-
-    .system-document-filter__field--oficios-search,
-    .system-document-filter__field--oficios-wide,
-    .system-document-filter__field--oficios-actions {
-        grid-column: 1 / -1;
-    }
-
-    .system-document-filter__field--oficios-medium {
         grid-column: span 1;
     }
 
@@ -1145,10 +1086,6 @@
         grid-template-columns: 1fr;
     }
 
-    .system-document-filter__grid--oficios {
-        grid-template-columns: 1fr;
-    }
-
     .system-document-filter__field--compact,
     .system-document-filter__field--narrow,
     .system-document-filter__field--micro,
@@ -1158,10 +1095,6 @@
     .system-document-filter__field--span-6,
     .system-document-filter__field--span-8,
     .system-document-filter__field--actions {
-        grid-column: 1 / -1;
-    }
-
-    .system-document-filter__field--oficios-medium {
         grid-column: 1 / -1;
     }
 

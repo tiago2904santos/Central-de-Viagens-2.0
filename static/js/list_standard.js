@@ -56,15 +56,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     var roots = Array.prototype.slice.call(
-        document.querySelectorAll('[data-list-view-root], [data-oficios-view-root]')
+        document.querySelectorAll('[data-list-view-root]')
     );
 
     roots.forEach(function(root, index) {
         var storageKey = root.getAttribute('data-view-storage-key') || ('central-viagens.list.view-mode.' + index);
         var allowedModes = { rich: true, basic: true };
-        var toggleButtons = Array.prototype.slice.call(
-            root.querySelectorAll('[data-list-view-toggle], [data-oficios-view-toggle]')
-        );
+        var toggleButtons = Array.prototype.slice.call(root.querySelectorAll('[data-list-view-toggle]'));
 
         function getStoredMode() {
             try {
@@ -75,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function getButtonMode(button) {
-            return button.getAttribute('data-list-view-toggle') || button.getAttribute('data-oficios-view-toggle');
+            return button.getAttribute('data-list-view-toggle');
         }
 
         function applyMode(mode, persist) {
@@ -106,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        var form = root.querySelector('[data-list-autosubmit-form], [data-oficios-filters-form]');
+        var form = root.querySelector('[data-list-autosubmit-form]');
         if (!form) {
             return;
         }
@@ -119,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
             defaultSearchDelay = 500;
         }
         var fields = Array.prototype.slice.call(
-            form.querySelectorAll('[data-list-autosubmit], [data-oficios-autosubmit]')
+            form.querySelectorAll('[data-list-autosubmit]')
         );
 
         function rehydrateUi() {
