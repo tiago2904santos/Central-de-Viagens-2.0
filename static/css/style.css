@@ -3673,10 +3673,10 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     padding: 0.2rem 0.52rem;
     border-radius: 999px;
     border: 1px solid rgba(var(--oficio-card-accent-rgb), 0.14);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 251, 255, 0.82)),
-        linear-gradient(135deg, rgba(var(--oficio-card-accent-rgb), 0.06), rgba(255, 255, 255, 0.08));
-    color: #24384e;
+    --oficio-badge-rgb: var(--oficio-card-accent-rgb);
+    color: var(--oficio-card-ink);
+    background: rgba(var(--oficio-badge-rgb), 0.12);
+    border-color: rgba(var(--oficio-badge-rgb), 0.18);
     font-size: 0.75rem;
     font-weight: 700;
     line-height: 1.2;
