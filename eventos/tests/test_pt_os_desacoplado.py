@@ -37,43 +37,23 @@ class PtOsDesacopladoTest(TestCase):
         )
 
     def test_criar_pt_sem_evento(self):
-        response = self.client.post(
-            reverse('eventos:documentos-planos-trabalho-novo'),
-            data={
-                'numero': '1',
-                'ano': '2026',
-                'data_criacao': '2026-03-10',
-                'status': PlanoTrabalho.STATUS_RASCUNHO,
-                'recursos_texto': 'PT sem evento',
-                'destinos_payload': '[]',
-                'return_to': reverse('eventos:documentos-planos-trabalho'),
-            },
-        )
+        response = self.client.get(reverse('eventos:documentos-planos-trabalho-novo'))
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(PlanoTrabalho.objects.filter(recursos_texto='PT sem evento', evento__isnull=True).exists())
+        plano = PlanoTrabalho.objects.order_by('-pk').first()
+        self.assertIsNotNone(plano)
+        self.assertIsNone(plano.evento_id)
+        self.assertEqual(plano.status, PlanoTrabalho.STATUS_RASCUNHO)
 
     def test_criar_pt_sem_oficio(self):
-        response = self.client.post(
+        response = self.client.get(
             reverse('eventos:documentos-planos-trabalho-novo'),
-            data={
-                'numero': '2',
-                'ano': '2026',
-                'data_criacao': '2026-03-10',
-                'status': PlanoTrabalho.STATUS_RASCUNHO,
-                'evento': self.evento.pk,
-                'recursos_texto': 'PT sem oficio',
-                'destinos_payload': '[]',
-                'return_to': reverse('eventos:documentos-planos-trabalho'),
-            },
+            {'preselected_event_id': self.evento.pk},
         )
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(
-            PlanoTrabalho.objects.filter(
-                recursos_texto='PT sem oficio',
-                evento=self.evento,
-                oficio__isnull=True,
-            ).exists()
-        )
+        plano = PlanoTrabalho.objects.order_by('-pk').first()
+        self.assertIsNotNone(plano)
+        self.assertEqual(plano.evento_id, self.evento.pk)
+        self.assertIsNone(plano.oficio_id)
 
     def test_criar_os_sem_evento(self):
         response = self.client.post(
@@ -117,8 +97,10 @@ class PtOsDesacopladoTest(TestCase):
             reverse('eventos:documentos-planos-trabalho-novo'),
             {'preselected_event_id': self.evento.pk},
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['form'].initial.get('evento'), self.evento.pk)
+        self.assertEqual(response.status_code, 302)
+        plano = PlanoTrabalho.objects.order_by('-pk').first()
+        self.assertIsNotNone(plano)
+        self.assertEqual(plano.evento_id, self.evento.pk)
 
     def test_preselected_event_id_os(self):
         response = self.client.get(
@@ -133,8 +115,10 @@ class PtOsDesacopladoTest(TestCase):
             reverse('eventos:documentos-planos-trabalho-novo'),
             {'preselected_oficio_id': self.oficio.pk},
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['form'].initial.get('oficio'), self.oficio.pk)
+        self.assertEqual(response.status_code, 302)
+        plano = PlanoTrabalho.objects.order_by('-pk').first()
+        self.assertIsNotNone(plano)
+        self.assertEqual(plano.oficio_id, self.oficio.pk)
 
     def test_preselected_oficio_id_os(self):
         response = self.client.get(
@@ -149,8 +133,8 @@ class PtOsDesacopladoTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'oficio-stage-panel')
         self.assertContains(response, 'oficio-stage-intro')
-        self.assertContains(response, 'Data de criação')
-        self.assertContains(response, 'ordem-servico-section--criacao')
+        self.assertContains(response, 'Criação')
+        self.assertContains(response, 'Vínculos documentais')
         self.assertContains(response, 'Datas')
         self.assertContains(response, 'evento-dataunica-pill')
         self.assertContains(response, 'Oculta a data final')

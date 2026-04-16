@@ -478,6 +478,31 @@ class PlanoTrabalho(models.Model):
             return self.roteiro.evento
         return None
 
+    def get_evento_canonico(self):
+        return self.evento if self.evento_id else None
+
+    def get_evento_herdado(self):
+        if self.evento_id:
+            return None
+        return self.get_evento_relacionado()
+
+    def get_contexto_vinculo(self):
+        """
+        Explicita os papéis do híbrido do plano:
+        - canônico: vínculo estrutural persistido no próprio plano.
+        - herdado: contexto derivado de ofício/roteiro quando o canônico não existe.
+        - auxiliar: referências adicionais que não são fonte primária.
+        """
+        evento_canonico = self.get_evento_canonico()
+        evento_herdado = self.get_evento_herdado()
+        oficios = self.get_oficios_relacionados()
+        return {
+            'evento_canonico': evento_canonico,
+            'evento_herdado': evento_herdado,
+            'oficios_auxiliares': oficios,
+            'roteiro_auxiliar': self.roteiro if self.roteiro_id else None,
+        }
+
     @property
     def oficios_relacionados_display(self):
         labels = []

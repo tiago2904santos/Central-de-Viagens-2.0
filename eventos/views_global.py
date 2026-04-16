@@ -81,6 +81,10 @@ from .services.documento_selectors import (
     ordens_servico_base_queryset,
     planos_trabalho_base_queryset,
 )
+from .services.documento_presenters import (
+    build_ordem_vinculos_semanticos,
+    build_plano_vinculos_semanticos,
+)
 from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
@@ -3065,6 +3069,7 @@ def _decorate_plano_trabalho_list_items(items, *, current_path='', linkable_ofic
             count_label=oficios_count_label,
             empty_text='Nenhum vínculo documental registrado.',
         )
+        plano.vinculos_semanticos = build_plano_vinculos_semanticos(plano)
         plano_link_actions = [
             _make_vinculo_action_item(
                 label='Abrir editor completo',
@@ -4469,6 +4474,7 @@ def ordens_servico_global(request):
             count_label=f'{len(vinculos_items)} vínculo(s) documentais' if vinculos_items else 'Sem vínculos documentais',
             empty_text='Nenhum vínculo documental registrado.',
         )
+        ordem.vinculos_semanticos = build_ordem_vinculos_semanticos(ordem)
         ordem_link_actions = [
             _make_vinculo_action_item(
                 label='Abrir editor completo',

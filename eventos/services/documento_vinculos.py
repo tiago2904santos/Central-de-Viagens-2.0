@@ -142,12 +142,18 @@ def resolver_vinculos_oficio(oficio: Oficio) -> dict:
 def resolver_vinculos_plano_trabalho(plano: PlanoTrabalho) -> dict:
     diretos: list[VinculoDocumento] = []
     herdados: list[VinculoDocumento] = []
-    oficios = plano.get_oficios_relacionados()
+    contexto = plano.get_contexto_vinculo()
+    oficios = contexto['oficios_auxiliares']
 
-    if plano.evento_id and plano.evento:
+    if contexto['evento_canonico']:
         _push_unique(
             diretos,
-            VinculoDocumento("evento", "direto", plano.evento.pk, _evento_rotulo(plano.evento)),
+            VinculoDocumento(
+                "evento",
+                "direto",
+                contexto['evento_canonico'].pk,
+                _evento_rotulo(contexto['evento_canonico']),
+            ),
         )
 
     for oficio in oficios:
@@ -155,11 +161,22 @@ def resolver_vinculos_plano_trabalho(plano: PlanoTrabalho) -> dict:
             diretos,
             VinculoDocumento("oficio", "direto", oficio.pk, _oficio_rotulo(oficio)),
         )
-        if oficio.evento_id and not plano.evento_id:
+        if oficio.evento_id and not contexto['evento_canonico']:
             _push_unique(
                 herdados,
                 VinculoDocumento("evento", "herdado", oficio.evento.pk, _evento_rotulo(oficio.evento)),
             )
+
+    if contexto['roteiro_auxiliar']:
+        _push_unique(
+            diretos,
+            VinculoDocumento(
+                "roteiro",
+                "direto",
+                contexto['roteiro_auxiliar'].pk,
+                f"Roteiro #{contexto['roteiro_auxiliar'].pk}",
+            ),
+        )
 
     return {"diretos": diretos, "herdados": herdados}
 

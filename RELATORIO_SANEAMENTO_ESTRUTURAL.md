@@ -11,3 +11,14 @@
 - Extração de selectors documentais de `views_global.py` para `eventos/services/documento_selectors.py`.
 - Tela de detalhe de evento voltou a ser página real com bloco de vínculos documentais, usando resolver central.
 - Cobertura de testes ampliada para resolver de vínculos de ofício e evento.
+
+## Fase 3
+
+- Suite impactada de vínculo documental estabilizada:
+  - `eventos.tests.test_pt_os_desacoplado` em verde após atualização de expectativas para o fluxo canônico atual.
+  - novos testes de selectors e explicitação do contexto híbrido do Plano em `eventos/tests/test_documento_selectors.py`.
+- `views_global.py` reduzido com extração adicional para `eventos/services/documento_presenters.py` (vínculos semânticos de OS/PT).
+- Plano de Trabalho ganhou semântica explícita em model:
+  - `get_evento_canonico()`
+  - `get_evento_herdado()`
+  - `get_contexto_vinculo()`
