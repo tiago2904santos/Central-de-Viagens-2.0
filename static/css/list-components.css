@@ -833,6 +833,8 @@
     text-transform: uppercase;
 }
 
+.system-document-filter__field--search .form-control,
+.system-document-filter__field--search-xl .form-control,
 .system-document-top .form-control,
 .system-document-top .form-select,
 .system-document-top select,
@@ -841,7 +843,7 @@
 .system-list-top--complete select,
 .system-list-top--complete .oficio-custeio-picker-trigger {
     width: 100%;
-    min-height: 2.18rem;
+    min-height: 2.5rem;
     border-radius: 0.78rem;
     border: 1px solid rgba(147, 164, 186, 0.28);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(245, 249, 253, 0.965));
@@ -860,12 +862,6 @@
     background: #fff;
 }
 
-.system-document-filter__field--search .form-control,
-.system-document-filter__field--search-xl .form-control {
-    min-height: 2.26rem;
-    padding-inline: 0.84rem;
-    font-size: 0.9rem;
-}
 
 .system-list-view-toggle,
 .oficios-view-toggle {

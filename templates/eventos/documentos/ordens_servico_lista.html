@@ -23,7 +23,7 @@
     <input class="form-control" type="text" name="q" placeholder="Finalidade, observacoes ou evento" value="{{ filters.q }}" data-list-autosubmit>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--span-3">
+<div class="system-document-filter__field system-document-filter__field--span-4">
     <label class="form-label">Evento</label>
     <select name="evento_id" data-list-autosubmit>
         <option value="">Todos</option>
@@ -33,7 +33,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--span-3">
+<div class="system-document-filter__field system-document-filter__field--span-2">
     <label class="form-label">Oficio</label>
     <select name="oficio_id" data-list-autosubmit>
         <option value="">Todos</option>
@@ -43,7 +43,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--medium">
+<div class="system-document-filter__field system-document-filter__field--span-2">
     <label class="form-label">Status</label>
     <select name="status" data-list-autosubmit>
         <option value="">Todos</option>
@@ -65,7 +65,7 @@
     <input type="date" class="form-control" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--span-4">
+<div class="system-document-filter__field system-document-filter__field--span-2">
     <label class="form-label">Ordenar por</label>
     <select name="order_by" data-list-autosubmit>
         {% for key, label in order_by_choices %}
@@ -74,7 +74,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--micro">
+<div class="system-document-filter__field system-document-filter__field--span-2">
     <label class="form-label">Direcao</label>
     <select name="order_dir" data-list-autosubmit>
         {% for key, label in order_dir_choices %}

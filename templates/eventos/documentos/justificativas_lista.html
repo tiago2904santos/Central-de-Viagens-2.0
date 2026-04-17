@@ -35,17 +35,17 @@
 {% endblock %}
 
 {% block list_filter_secondary_fields %}
-<div class="system-document-filter__field system-document-filter__field--compact">
+<div class="system-document-filter__field system-document-filter__field--span-2">
     <label class="form-label">Data inicial</label>
     <input type="date" class="form-control" name="date_from" value="{{ filters.date_from }}" data-list-autosubmit>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--compact">
+<div class="system-document-filter__field system-document-filter__field--span-2">
     <label class="form-label">Data final</label>
     <input type="date" class="form-control" name="date_to" value="{{ filters.date_to }}" data-list-autosubmit>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--span-4">
+<div class="system-document-filter__field system-document-filter__field--span-2">
     <label class="form-label">Ordenar por</label>
     <select name="order_by" data-list-autosubmit>
         {% for key, label in order_by_choices %}
@@ -54,7 +54,7 @@
     </select>
 </div>
 
-<div class="system-document-filter__field system-document-filter__field--micro">
+<div class="system-document-filter__field system-document-filter__field--span-2">
     <label class="form-label">Direcao</label>
     <select name="order_dir" data-list-autosubmit>
         {% for key, label in order_dir_choices %}
