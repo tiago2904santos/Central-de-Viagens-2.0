@@ -276,6 +276,7 @@
               </div>
               <form method="post" id="oficio-step4-form" class="oficio-step4-choice-form">
                 {% csrf_token %}
+                <input type="hidden" name="return_to" value="{{ return_to_url }}">
                 <div class="oficio-step4-choice-heading">Gerar termos?</div>
                 <div class="oficio-step4-choice-group">
                   <label class="oficio-step4-choice-option" for="id_gerar_termo_sim">
@@ -308,7 +309,7 @@
         </div>
         <div class="app-summary-actions oficio-summary-actions oficio-step4-footer" data-oficio-footer-actions="1">
           <div class="app-summary-actions-group oficio-summary-actions-group">
-            <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary" data-autosave-link="1">
+            <a href="{{ return_to_url }}" class="btn btn-outline-secondary" data-autosave-link="1">
               <span>Voltar para lista</span>
             </a>
             {% if oficio.pk %}

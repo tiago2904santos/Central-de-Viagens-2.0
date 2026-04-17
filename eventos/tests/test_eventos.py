@@ -3651,6 +3651,7 @@ class EventoEtapa3OficiosTest(TestCase):
             response,
             f"{reverse('eventos:oficio-novo')}?evento_id={self.evento.pk}",
         )
+        self.assertContains(response, 'return_to=')
 
     def test_get_criar_oficio_nao_cria_registro(self):
         url_criar = reverse('eventos:guiado-etapa-3-criar-oficio', kwargs={'evento_id': self.evento.pk})
@@ -3668,6 +3669,16 @@ class EventoEtapa3OficiosTest(TestCase):
         oficio = self.evento.oficios.get()
         self.assertTrue(oficio.esta_vinculado_a_evento(self.evento))
         self.assertEqual(oficio.status, Oficio.STATUS_RASCUNHO)
+
+    def test_oficio_novo_preserva_return_to_da_lista_guiada(self):
+        return_to = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk})
+        response = self.client.get(
+            f"{reverse('eventos:oficio-novo')}?evento_id={self.evento.pk}&return_to={return_to}"
+        )
+        self.assertEqual(response.status_code, 302)
+        oficio = self.evento.oficios.get()
+        self.assertIn(reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}), response.url)
+        self.assertIn('return_to=', response.url)
 
 class OficioWizardTest(TestCase):
     """Wizard do OfÃ­cio: Step 1 (viajantes), Step 2 (transporte/motorista), fluxo."""
@@ -5874,6 +5885,21 @@ class OficioStep1AcceptanceTest(TestCase):
         oficio.refresh_from_db()
         self.assertEqual(oficio.status, Oficio.STATUS_FINALIZADO)
         self.assertGreater(oficio.updated_at, before_update)
+
+    def test_step4_finaliza_retornando_para_lista_guiada(self):
+        oficio = self._criar_oficio(ano=2026)
+        self._salvar_oficio_finalizavel(oficio, destino=self._criar_destino('Destino Retorno Guiado'))
+        return_to = reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk})
+
+        response = self.client.post(
+            reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+            data={'finalizar': '1', 'return_to': return_to},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, return_to)
+        oficio.refresh_from_db()
+        self.assertEqual(oficio.status, Oficio.STATUS_FINALIZADO)
 
     def test_step4_finalizar_com_termo_sim_gera_um_termo_por_viajante(self):
         oficio = self._criar_oficio(ano=2026)
