@@ -10,6 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import Max, Prefetch, Q
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
@@ -31,6 +32,7 @@ from .models import (
     CoordenadorOperacional,
     Evento,
     EventoAnexoSolicitante,
+    EventoDocumentoSugestao,
     EventoDestino,
     EventoFinalizacao,
     EventoParticipante,
@@ -87,14 +89,10 @@ from .services.justificativa import (
     oficio_tem_justificativa,
 )
 from .services.oficio_schema import get_oficio_justificativa_schema_status
-from .services.documento_vinculos import resolver_vinculos_oficio
 from .services.documento_vinculos import resolver_vinculos_evento
-from .services.documentos.vinculos import (
-    documentos_vinculados_oficio,
-    listar_documentos_compativeis_para_oficio,
-    reconciliar_vinculos_oficio,
-    vincular_documento_ao_oficio,
-)
+from .services.documento_vinculos import resolver_vinculos_oficio
+from .services.evento_pacote import build_evento_document_pacote
+from .services.evento_resgate import resgatar_documentos_orfaos_para_evento
 from .services.contexto_evento import (
     build_contexto_roteiro_from_evento,
     ensure_termo_generico_evento,
@@ -1066,12 +1064,14 @@ def evento_detalhe(request, pk):
         pk=pk,
     )
     vinculos = resolver_vinculos_evento(evento)
+    pacote = build_evento_document_pacote(evento)
     return render(
         request,
         'eventos/evento_detalhe.html',
         {
             'object': evento,
             'vinculos': vinculos,
+            'pacote': pacote,
         },
     )
 
@@ -3177,6 +3177,10 @@ def _persist_evento_etapa1(obj, form, destinos_post):
         update_fields.append('status')
     obj.save(update_fields=update_fields)
     ensure_termo_generico_evento(obj)
+    try:
+        resgatar_documentos_orfaos_para_evento(obj)
+    except Exception:
+        pass
     return obj
 
 
@@ -3880,7 +3884,6 @@ def _save_oficio_preserving_status(oficio, update_fields):
     """
     fields = [field for field in update_fields if field != 'status']
     oficio.save(update_fields=list(dict.fromkeys([*fields, 'updated_at'])))
-    reconciliar_vinculos_oficio(oficio)
 
 
 def _is_autosave_request(request):
@@ -4142,27 +4145,19 @@ def _build_oficio_step1_preview(oficio):
     }
 
 
-def _build_oficio_documentos_vinculados_block(oficio, *, current_path=''):
-    vinculados = documentos_vinculados_oficio(oficio)
-    candidatos = listar_documentos_compativeis_para_oficio(oficio)
+def _build_oficio_evento_context_block(oficio):
+    eventos = list(oficio.vinculos_evento.select_related('evento').order_by('pk'))
+    ct_oficio = ContentType.objects.get_for_model(Oficio)
+    sugestao = (
+        EventoDocumentoSugestao.objects.filter(content_type=ct_oficio, object_id=oficio.pk)
+        .order_by('-updated_at')
+        .first()
+    )
     return {
-        'title': 'Documentos vinculados',
-        'count_label': (
-            f'{len(vinculados)} documento(s) vinculado(s)'
-            if vinculados
-            else 'Nenhum documento vinculado'
-        ),
-        'empty_text': 'Nenhum documento vinculado ao ofício.',
-        'items': vinculados,
-        'candidate_items': candidatos,
-        'candidate_count_label': (
-            f'{len(candidatos)} documento(s) compatível(is)'
-            if candidatos
-            else 'Nenhum documento compatível encontrado'
-        ),
-        'candidate_empty_text': 'Não há documentos compatíveis para vincular neste momento.',
-        'vincular_url': reverse('eventos:oficio-documento-vincular', kwargs={'pk': oficio.pk}),
-        'return_to': current_path or reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+        'title': 'Pertencimento ao evento',
+        'eventos': [{'id': link.evento.pk, 'titulo': link.evento.titulo or f'Evento #{link.evento.pk}'} for link in eventos],
+        'sem_evento': not eventos,
+        'sugestao': sugestao,
     }
 
 
@@ -4377,10 +4372,7 @@ def oficio_step1(request, pk):
         'buscar_viajantes_url': reverse('eventos:oficio-step1-viajantes-api'),
         'selected_viajantes': selected_viajantes,
         'selected_viajantes_payload': selected_viajantes_payload,
-        'documentos_vinculados_block': _build_oficio_documentos_vinculados_block(
-            oficio,
-            current_path=request.get_full_path(),
-        ),
+        'oficio_evento_context_block': _build_oficio_evento_context_block(oficio),
     }
     return render(
         request,
@@ -6882,61 +6874,6 @@ def oficio_documentos(request, pk):
     return redirect('eventos:oficio-step4', pk=oficio.pk)
 
 
-@login_required
-@require_http_methods(['POST'])
-def oficio_documento_vincular(request, pk):
-    oficio = _get_oficio_or_404_for_user(pk, user=request.user)
-    tipo_documento = (request.POST.get('tipo_documento') or '').strip()
-    documento_id = _parse_int(request.POST.get('documento_id'))
-    return_to = _safe_return_to(request, reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}))
-
-    model_map = {
-        'roteiro': RoteiroEvento,
-        'justificativa': Justificativa,
-        'termo_autorizacao': TermoAutorizacao,
-        'plano_trabalho': PlanoTrabalho,
-        'ordem_servico': OrdemServico,
-    }
-    model = model_map.get(tipo_documento)
-    if model is None or not documento_id:
-        messages.error(request, 'Informe um documento válido para vincular.')
-        return redirect(return_to)
-
-    documento = model.objects.filter(pk=documento_id).first()
-    if documento is None:
-        messages.error(request, 'O documento selecionado não foi encontrado.')
-        return redirect(return_to)
-
-    resultado = vincular_documento_ao_oficio(oficio, documento)
-    if not resultado.get('ok'):
-        conflitos = resultado.get('compatibilidade', {}).get('conflitos') or []
-        if conflitos:
-            detalhes = []
-            for conflito in conflitos:
-                campo = conflito.get('campo') or 'campo'
-                mensagem = conflito.get('mensagem') or 'Conflito detectado.'
-                detalhes.append(f'{campo}: {mensagem}')
-            messages.error(
-                request,
-                'Não foi possível vincular o documento. ' + ' | '.join(detalhes),
-            )
-        else:
-            messages.error(request, 'Não foi possível vincular o documento por incompatibilidade.')
-        return redirect(return_to)
-
-    sync = resultado.get('sync') or {}
-    herdados_oficio = sync.get('campos_herdados_oficio') or []
-    herdados_documento = sync.get('campos_herdados_documento') or []
-    titulo = resultado.get('compatibilidade', {}).get('documento_label') or documento
-    partes = [f'Vínculo salvo para {titulo}.']
-    if herdados_oficio:
-        partes.append(f'Campos herdados para o ofício: {", ".join(herdados_oficio)}.')
-    if herdados_documento:
-        partes.append(f'Campos herdados para o documento: {", ".join(herdados_documento)}.')
-    messages.success(request, ' '.join(partes))
-    return redirect(return_to)
-
-
 def _get_or_create_termos_from_oficio(oficio, user=None):
     """
     ObtÃ©m ou cria registros TermoAutorizacao vinculados a este OfÃ­cio.
@@ -7156,10 +7093,7 @@ def oficio_step4(request, pk):
                     return redirect(_oficio_justificativa_url(oficio, next_url=step4_url))
                 messages.error(request, 'O ofÃ­cio nÃ£o pode ser finalizado enquanto houver pendÃªncias.')
                 context = _build_oficio_step4_context(oficio, finalize_validation=finalize_validation)
-                context['documentos_vinculados_block'] = _build_oficio_documentos_vinculados_block(
-                    oficio,
-                    current_path=request.get_full_path(),
-                )
+                context['oficio_evento_context_block'] = _build_oficio_evento_context_block(oficio)
                 return render(
                     request,
                     'eventos/oficio/wizard_step4.html',
@@ -7200,10 +7134,7 @@ def oficio_step4(request, pk):
                     )
         return redirect('eventos:oficios-global')
     context = _build_oficio_step4_context(oficio)
-    context['documentos_vinculados_block'] = _build_oficio_documentos_vinculados_block(
-        oficio,
-        current_path=request.get_full_path(),
-    )
+    context['oficio_evento_context_block'] = _build_oficio_evento_context_block(oficio)
     return render(
         request,
         'eventos/oficio/wizard_step4.html',

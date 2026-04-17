@@ -213,7 +213,7 @@ def _make_vinculo_item(*, title, meta='', url='', badge_label='', badge_css_clas
     }
 
 
-def _make_vinculos_block(items, *, title='Vínculos', count_label='', empty_text='Sem vínculos registrados.'):
+def _make_vinculos_block(items, *, title='Contexto documental', count_label='', empty_text='Sem contexto de evento ou ofício registrado.'):
     clean_items = [item for item in items if item and _clean(item.get('title') or item.get('meta'))]
     return {
         'title': title,
@@ -2290,7 +2290,7 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
         )
     vinculos_block = _make_vinculos_block(
         vinculos_items,
-        title='Vínculos',
+        title='Contexto documental',
         count_label=f'{len(vinculos_items)} vínculo(s) documentais' if vinculos_items else 'Sem vínculos documentais',
         empty_text='Nenhum vínculo documental registrado.',
     )
@@ -2371,7 +2371,7 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
                 ]
             )
     vinculos_block['link_actions'] = [item for item in oficio_link_actions if item]
-    vinculos_block['link_actions_title'] = 'Vincular documentos'
+    vinculos_block['link_actions_title'] = 'Atalhos (evento e ofícios)'
     return {
         'pk': oficio.pk,
         'numero_display': _oficio_list_display_or_default(oficio.numero_formatado, 'A definir'),
@@ -2977,7 +2977,7 @@ def _decorate_termo_list_items(items, *, current_path=''):
 
         termo.vinculos_block = _make_vinculos_block(
             vinculos_items,
-            title='Vínculos',
+            title='Contexto documental',
             count_label=f'{len(oficios_relacionados)} ofício(s) relacionados',
             empty_text='Nenhum vínculo documental registrado.',
         )
@@ -3020,7 +3020,7 @@ def _decorate_termo_list_items(items, *, current_path=''):
                 if len(termo_link_actions) >= 8:
                     break
         termo.vinculos_block['link_actions'] = [item for item in termo_link_actions if item]
-        termo.vinculos_block['link_actions_title'] = 'Vincular documentos'
+        termo.vinculos_block['link_actions_title'] = 'Atalhos (evento e ofícios)'
 
         has_oficio_link = bool(termo.oficio_id or (termo.oficios_resumo and termo.oficios_resumo != 'Sem oficio'))
         if termo.evento_id and has_oficio_link:
@@ -3239,7 +3239,7 @@ def _decorate_plano_trabalho_list_items(items, *, current_path='', linkable_ofic
             )
         plano.vinculos_block = _make_vinculos_block(
             vinculos_items,
-            title='Vínculos',
+            title='Contexto documental',
             count_label=oficios_count_label,
             empty_text='Nenhum vínculo documental registrado.',
         )
@@ -3307,7 +3307,7 @@ def _decorate_plano_trabalho_list_items(items, *, current_path='', linkable_ofic
             if len(plano_link_actions) >= 12:
                 break
         plano.vinculos_block['link_actions'] = [item for item in plano_link_actions if item]
-        plano.vinculos_block['link_actions_title'] = 'Vincular documentos'
+        plano.vinculos_block['link_actions_title'] = 'Atalhos (evento e ofícios)'
         plano.calculadora_block = {
             'valor_total': valor_plano_display,
             'diarias': diarias_display,
@@ -4644,7 +4644,7 @@ def ordens_servico_global(request):
                 )
         ordem.vinculos_block = _make_vinculos_block(
             vinculos_items,
-            title='Vínculos',
+            title='Contexto documental',
             count_label=f'{len(vinculos_items)} vínculo(s) documentais' if vinculos_items else 'Sem vínculos documentais',
             empty_text='Nenhum vínculo documental registrado.',
         )
@@ -4693,7 +4693,7 @@ def ordens_servico_global(request):
             if len(ordem_link_actions) >= 10:
                 break
         ordem.vinculos_block['link_actions'] = [item for item in ordem_link_actions if item]
-        ordem.vinculos_block['link_actions_title'] = 'Vincular documentos'
+        ordem.vinculos_block['link_actions_title'] = 'Atalhos (evento e ofícios)'
     return render(
         request,
         'eventos/documentos/ordens_servico_lista.html',
@@ -5001,7 +5001,7 @@ def justificativas_global(request):
                 )
         just.vinculos_block = _make_vinculos_block(
             vinculos_items,
-            title='Vínculos',
+            title='Contexto documental',
             count_label=f'{len(vinculos_items)} vínculo(s)' if vinculos_items else 'Sem vínculos',
             empty_text='Nenhum vínculo documental registrado.',
         )
@@ -5042,7 +5042,7 @@ def justificativas_global(request):
             if len(just_link_actions) >= 8:
                 break
         just.vinculos_block['link_actions'] = [item for item in just_link_actions if item]
-        just.vinculos_block['link_actions_title'] = 'Vincular documentos'
+        just.vinculos_block['link_actions_title'] = 'Atalhos (evento e ofícios)'
         object_list.append(just)
 
     return render(

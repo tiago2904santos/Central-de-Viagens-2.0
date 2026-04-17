@@ -1,0 +1,38 @@
+{% if block %}
+<section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel oficio-vinculos-panel">
+    <div class="oficio-list-subcard__header">
+        <div>
+            <h3 class="oficio-list-subcard__title">{{ block.title|default:'Pertencimento ao evento' }}</h3>
+            <p class="oficio-list-subcard__subtitle">
+                {% if block.sem_evento %}
+                Sem evento associado — o ofício permanece avulso até ser incluído em um evento.
+                {% else %}
+                Este ofício faz parte do(s) evento(s) abaixo; demais documentos do mesmo evento aparecem no pacote do evento.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    <div class="oficio-list-subcard__body">
+        {% if block.eventos %}
+        <ul class="list-unstyled mb-0 d-grid gap-2">
+            {% for ev in block.eventos %}
+            <li class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <span><strong>{{ ev.titulo }}</strong></span>
+                <a href="{% url 'eventos:guiado-etapa-1' ev.id %}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                    <i class="bi bi-box-arrow-up-right"></i> Abrir evento
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted mb-0">Nenhum evento associado a este ofício.</p>
+        {% endif %}
+    </div>
+    {% if block.sugestao and block.sugestao.status == 'PENDENTE' %}
+    <div class="oficio-list-subcard__body border-top pt-3 mt-3">
+        <p class="mb-1"><span class="badge bg-warning text-dark">Sugestão pendente</span></p>
+        <p class="text-muted small mb-0">Há mais de um evento compatível com este ofício. Revise no painel do evento ou associe manualmente pelo fluxo guiado.</p>
+    </div>
+    {% endif %}
+</section>
+{% endif %}

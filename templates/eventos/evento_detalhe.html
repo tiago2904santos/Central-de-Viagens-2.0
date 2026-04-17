@@ -77,5 +77,32 @@
     </div>
 </div>
 
-{# Card "Vínculos documentais" removido — a recriar quando o novo desenho estiver definido. #}
+{% if pacote %}
+<div class="card app-page-card mt-3">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Pacote documental do evento</h2>
+        <p class="text-muted small">Documentos reunidos pelo evento (direto, via ofício ou resgate automático).</p>
+        {% for sec in pacote.sections %}
+        <div class="mb-4">
+            <h3 class="h6 text-uppercase text-muted">{{ sec.title }}</h3>
+            {% if sec.items %}
+            <ul class="list-unstyled mb-0 d-grid gap-2">
+                {% for it in sec.items %}
+                <li class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                    <span>
+                        <a href="{{ it.url }}">{{ it.titulo }}</a>
+                        <span class="badge bg-light text-dark ms-1">{{ it.badge_label }}</span>
+                        <span class="badge bg-secondary ms-1">{{ it.origem }}</span>
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted mb-0">Nenhum item nesta categoria.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 {% endblock %}

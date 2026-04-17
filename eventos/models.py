@@ -1861,10 +1861,6 @@ class Oficio(models.Model):
         eid = getattr(evento, 'pk', evento)
         return self.eventos.filter(pk=eid).exists()
 
-    def get_documentos_vinculados(self):
-        return self.documentos_vinculados.select_related('content_type').order_by('pk')
-
-
 class OficioEventoVinculo(models.Model):
     """
     Vínculo explícito Ofício ↔ Evento (N:N).
@@ -1897,65 +1893,87 @@ class OficioEventoVinculo(models.Model):
         return f'{self.oficio_id} → {self.evento_id}'
 
 
-class OficioDocumentoVinculo(models.Model):
-    """
-    Vínculo documental auditável do Ofício com outro documento do sistema.
-    Usa GenericForeignKey para permitir reutilização incremental em outros tipos.
-    """
+class EventoResgateAuditoria(models.Model):
+    """Registro mínimo de decisões do serviço de resgate documento → evento."""
 
-    STATUS_COMPATIVEL = 'COMPATIVEL'
-    STATUS_CONFLITO = 'CONFLITO'
-    STATUS_CHOICES = [
-        (STATUS_COMPATIVEL, 'Compatível'),
-        (STATUS_CONFLITO, 'Conflito'),
+    ACAO_AUTO_ANEXOU = 'AUTO_ANEXOU'
+    ACAO_SUGESTAO = 'SUGESTAO'
+    ACAO_IGNOROU_BAIXA_CONFIANCA = 'IGNOROU_BAIXA_CONFIANCA'
+    ACAO_SEM_CANDIDATO = 'SEM_CANDIDATO'
+    ACAO_CHOICES = [
+        (ACAO_AUTO_ANEXOU, 'Anexado automaticamente'),
+        (ACAO_SUGESTAO, 'Sugestão / ambiguidade'),
+        (ACAO_IGNOROU_BAIXA_CONFIANCA, 'Ignorado (baixa confiança)'),
+        (ACAO_SEM_CANDIDATO, 'Sem candidato compatível'),
     ]
 
-    oficio = models.ForeignKey(
-        'Oficio',
-        on_delete=models.CASCADE,
-        related_name='documentos_vinculados',
-        verbose_name='Ofício',
+    acao = models.CharField('Ação', max_length=40, choices=ACAO_CHOICES, db_index=True)
+    evento = models.ForeignKey(
+        Evento,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='resgates_auditoria',
+        verbose_name='Evento',
     )
-    tipo_documento = models.CharField('Tipo de documento', max_length=40, db_index=True)
     content_type = models.ForeignKey(
         ContentType,
-        on_delete=models.PROTECT,
-        related_name='eventos_oficio_documento_vinculos',
-        verbose_name='Tipo de conteúdo',
+        on_delete=models.CASCADE,
+        related_name='evento_resgates_documento',
+        verbose_name='Tipo do documento',
     )
     object_id = models.PositiveIntegerField('ID do documento', db_index=True)
     documento = GenericForeignKey('content_type', 'object_id')
-    documento_rotulo = models.CharField('Rótulo do documento', max_length=255, blank=True, default='')
-    status_compatibilidade = models.CharField(
-        'Status de compatibilidade',
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default=STATUS_COMPATIVEL,
-        db_index=True,
+    detalhes = models.JSONField('Detalhes', blank=True, default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at', '-pk']
+        verbose_name = 'Auditoria de resgate (evento)'
+        verbose_name_plural = 'Auditorias de resgate (evento)'
+
+    def __str__(self):
+        return f'{self.get_acao_display()} — {self.content_type_id}:{self.object_id}'
+
+
+class EventoDocumentoSugestao(models.Model):
+    """Pendência quando há mais de um evento plausível para um documento avulso."""
+
+    STATUS_PENDENTE = 'PENDENTE'
+    STATUS_RESOLVIDA = 'RESOLVIDA'
+    STATUS_DESCARTADA = 'DESCARTADA'
+    STATUS_CHOICES = [
+        (STATUS_PENDENTE, 'Pendente'),
+        (STATUS_RESOLVIDA, 'Resolvida'),
+        (STATUS_DESCARTADA, 'Descartada'),
+    ]
+
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        related_name='evento_documento_sugestoes',
+        verbose_name='Tipo do documento',
     )
-    snapshot_oficio = models.JSONField('Snapshot do ofício', blank=True, default=dict)
-    snapshot_documento = models.JSONField('Snapshot do documento', blank=True, default=dict)
-    campos_herdados_oficio = models.JSONField('Campos herdados do ofício', blank=True, default=list)
-    campos_herdados_documento = models.JSONField('Campos herdados do documento', blank=True, default=list)
-    conflitos = models.JSONField('Conflitos', blank=True, default=list)
-    observacoes = models.JSONField('Observações', blank=True, default=list)
+    object_id = models.PositiveIntegerField('ID do documento', db_index=True)
+    documento = GenericForeignKey('content_type', 'object_id')
+    status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDENTE)
+    payload = models.JSONField('Candidatos e motivos', blank=True, default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Vínculo documental do ofício'
-        verbose_name_plural = 'Vínculos documentais do ofício'
-        ordering = ['pk']
+        ordering = ['-updated_at', '-pk']
+        verbose_name = 'Sugestão de evento para documento'
+        verbose_name_plural = 'Sugestões de evento para documentos'
         constraints = [
             models.UniqueConstraint(
-                fields=['oficio', 'content_type', 'object_id'],
-                name='eventos_oficiodocumentovinculo_unique',
+                fields=['content_type', 'object_id'],
+                name='eventos_eventodocumentosugestao_ct_object_unique',
             ),
         ]
 
     def __str__(self):
-        rotulo = self.documento_rotulo or f'{self.content_type_id}:{self.object_id}'
-        return f'{self.oficio_id} → {rotulo}'
+        return f'Sugestão {self.content_type_id}:{self.object_id} ({self.status})'
 
 
 class OficioTrecho(models.Model):

@@ -165,7 +165,7 @@
               {% if form.viajantes.errors %}<div class="invalid-feedback d-block">{{ form.viajantes.errors.0 }}</div>{% endif %}
             </section>
 
-            {% include 'includes/list/document_links_block.html' with block=documentos_vinculados_block %}
+            {% include 'includes/list/oficio_evento_context_block.html' with block=oficio_evento_context_block %}
 
             <div class="oficio-wizard-footer-actions" data-oficio-footer-actions="1">
               <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar para lista</a>
