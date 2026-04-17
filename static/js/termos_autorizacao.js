@@ -345,23 +345,23 @@
       if (viajantesChipEmpty) viajantesChipEmpty.style.display = travelerSelected.size ? 'none' : '';
       travelerSelected.forEach(function(item, id) {
         var chip = document.createElement('div');
-        chip.className = 'oficio-glance-chip oficio-selection-chip';
+        chip.className = 'app-selection-chip app-selection-chip--removable oficio-glance-chip oficio-selection-chip';
         chip.setAttribute('data-viajante-chip', id);
         var nomeEl = document.createElement('span');
-        nomeEl.className = 'oficio-glance-chip-nome';
+        nomeEl.className = 'oficio-glance-chip-nome app-selection-chip__name';
         nomeEl.textContent = item.nome || item.label || 'Servidor';
         chip.appendChild(nomeEl);
         var unidade = item.lotacao || item.unidade_lotacao || item.unidade_lotacao_nome;
         if (unidade) {
           var subEl = document.createElement('span');
-          subEl.className = 'oficio-glance-chip-sub';
+          subEl.className = 'oficio-glance-chip-sub app-selection-chip__sub';
           subEl.textContent = typeof unidade === 'string' ? unidade : (unidade.nome || '');
           chip.appendChild(subEl);
         }
         if (!readOnly) {
           var removeBtn = document.createElement('button');
           removeBtn.type = 'button';
-          removeBtn.className = 'oficio-selection-chip-remove';
+          removeBtn.className = 'app-selection-chip__remove oficio-selection-chip-remove';
           removeBtn.setAttribute('aria-label', 'Remover viajante');
           removeBtn.innerHTML = '&times;';
           (function(capturedId) {
@@ -397,16 +397,17 @@
 
       selected.forEach(function(item) {
         var chip = document.createElement('span');
-        chip.className = 'termo-selection-chip';
+        chip.className = 'app-selection-chip app-selection-chip--removable termo-selection-chip';
 
         var label = document.createElement('span');
+        label.className = 'app-selection-chip__name';
         label.textContent = item.label || 'Oficio';
         chip.appendChild(label);
 
         if (!readOnly) {
           var removeButton = document.createElement('button');
           removeButton.type = 'button';
-          removeButton.className = 'btn btn-sm border-0 bg-transparent text-danger p-0';
+          removeButton.className = 'app-selection-chip__remove btn btn-sm border-0 bg-transparent text-danger p-0';
           removeButton.innerHTML = '&times;';
           removeButton.addEventListener('click', function() {
             Array.prototype.slice.call(oficiosSelect.options).forEach(function(option) {
@@ -437,21 +438,21 @@
       if (veiculoCount) veiculoCount.textContent = hasVehicle ? '1' : '0';
       if (hasVehicle) {
         var chip = document.createElement('div');
-        chip.className = 'oficio-glance-chip oficio-selection-chip';
+        chip.className = 'app-selection-chip app-selection-chip--removable oficio-glance-chip oficio-selection-chip';
         var nomeEl = document.createElement('span');
-        nomeEl.className = 'oficio-glance-chip-nome';
+        nomeEl.className = 'oficio-glance-chip-nome app-selection-chip__name';
         nomeEl.textContent = selectedVehicle.label || selectedVehicle.placa_formatada || selectedVehicle.modelo || 'Viatura';
         chip.appendChild(nomeEl);
         if (selectedVehicle.combustivel) {
           var subEl = document.createElement('span');
-          subEl.className = 'oficio-glance-chip-sub';
+          subEl.className = 'oficio-glance-chip-sub app-selection-chip__sub';
           subEl.textContent = [selectedVehicle.combustivel, selectedVehicle.tipo_viatura_label].filter(Boolean).join(' • ');
           chip.appendChild(subEl);
         }
         if (!readOnly) {
           var removeBtn = document.createElement('button');
           removeBtn.type = 'button';
-          removeBtn.className = 'oficio-selection-chip-remove';
+          removeBtn.className = 'app-selection-chip__remove oficio-selection-chip-remove';
           removeBtn.setAttribute('aria-label', 'Remover viatura');
           removeBtn.innerHTML = '&times;';
           removeBtn.addEventListener('click', function() {

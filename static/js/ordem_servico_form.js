@@ -511,25 +511,25 @@
     } else {
       selectedMap.forEach(function(item, id) {
         var chip = document.createElement('div');
-        chip.className = 'oficio-glance-chip oficio-selection-chip ordem-servico-selection-chip';
+        chip.className = 'app-selection-chip app-selection-chip--removable oficio-glance-chip oficio-selection-chip ordem-servico-selection-chip';
         chip.setAttribute('data-viajante-chip', id);
 
         var nomeEl = document.createElement('span');
-        nomeEl.className = 'oficio-glance-chip-nome';
+        nomeEl.className = 'oficio-glance-chip-nome app-selection-chip__name';
         nomeEl.textContent = item.nome || item.label || 'Viajante';
         chip.appendChild(nomeEl);
 
         var lotacao = String(item.lotacao || '').trim();
         if (lotacao) {
           var lotacaoEl = document.createElement('span');
-          lotacaoEl.className = 'oficio-glance-chip-sub';
+          lotacaoEl.className = 'oficio-glance-chip-sub app-selection-chip__sub';
           lotacaoEl.textContent = lotacao;
           chip.appendChild(lotacaoEl);
         } else {
           var cargo = String(item.cargo || '').trim();
           if (cargo) {
             var cargoEl = document.createElement('span');
-            cargoEl.className = 'oficio-glance-chip-sub';
+            cargoEl.className = 'oficio-glance-chip-sub app-selection-chip__sub';
             cargoEl.textContent = cargo;
             chip.appendChild(cargoEl);
           }
@@ -537,7 +537,7 @@
 
         var removeButton = document.createElement('button');
         removeButton.type = 'button';
-        removeButton.className = 'oficio-selection-chip-remove';
+        removeButton.className = 'app-selection-chip__remove oficio-selection-chip-remove';
         removeButton.setAttribute('data-remove-viajante', id);
         removeButton.setAttribute('aria-label', 'Remover viajante ' + (item.nome || ''));
         removeButton.innerHTML = '&times;';

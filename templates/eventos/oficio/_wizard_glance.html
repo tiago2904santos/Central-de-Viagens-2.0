@@ -47,10 +47,10 @@
         </div>
         <div class="oficio-glance-travelers-list" id="summary-viajantes-list">
           {% for viajante in wizard_glance.viajantes %}
-          <div class="oficio-glance-chip">
-            <span class="oficio-glance-chip-nome">{{ viajante.nome }}</span>
+          <div class="app-selection-chip oficio-glance-chip">
+            <span class="oficio-glance-chip-nome app-selection-chip__name">{{ viajante.nome }}</span>
             {% if viajante.lotacao %}
-            <span class="oficio-glance-chip-sub">{{ viajante.lotacao }}</span>
+            <span class="oficio-glance-chip-sub app-selection-chip__sub">{{ viajante.lotacao }}</span>
             {% endif %}
           </div>
           {% empty %}

@@ -82,16 +82,16 @@
         return;
       }
       var chip = document.createElement('div');
-      chip.className = 'oficio-glance-chip';
+      chip.className = 'app-selection-chip oficio-glance-chip';
       var nomeSpan = document.createElement('span');
-      nomeSpan.className = 'oficio-glance-chip-nome';
+      nomeSpan.className = 'oficio-glance-chip-nome app-selection-chip__name';
       nomeSpan.textContent = name;
       chip.appendChild(nomeSpan);
       if (typeof item !== 'string') {
         var lotacao = String((item && item.lotacao) || '').trim();
         if (lotacao) {
           var lotacaoSpan = document.createElement('span');
-          lotacaoSpan.className = 'oficio-glance-chip-sub';
+          lotacaoSpan.className = 'oficio-glance-chip-sub app-selection-chip__sub';
           lotacaoSpan.textContent = lotacao;
           chip.appendChild(lotacaoSpan);
         }

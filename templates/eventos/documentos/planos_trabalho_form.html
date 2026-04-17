@@ -530,7 +530,7 @@
   .pt-review-value{ color:#163a5f; font-weight:700; text-align:right; }
 
   /* ── Destination row ── */
-  .pt-dest-row{ border:1px solid #e6edf4; border-radius:10px; padding:.65rem; background:#fbfdff; }
+  .app-destination-row, .pt-dest-row{ border:1px solid #e6edf4; border-radius:10px; padding:.65rem; background:#fbfdff; }
 
   /* ── Better visual breathing ── */
   .oficio-stage-section { margin-bottom: 0; }
@@ -1270,12 +1270,12 @@
 
           {# ════ FOOTER ════ #}
           <div class="oficio-wizard-footer-actions">
-            <div class="oficio-summary-actions-inline">
+            <div class="app-summary-actions-group oficio-summary-actions-inline">
               <button type="button" class="btn btn-outline-secondary" id="pt-prev" disabled>← Voltar</button>
               <button type="button" class="btn btn-outline-primary" id="pt-next">Avançar →</button>
               <span class="badge text-bg-light text-muted" id="pt-progress-chip">1 / 4</span>
             </div>
-            <div class="oficio-summary-actions-group">
+            <div class="app-summary-actions-group oficio-summary-actions-group">
               <a href="{{ return_to|default:'/eventos/documentos/planos-trabalho/' }}" class="btn btn-outline-secondary">
                 <span>Voltar para lista</span>
               </a>
@@ -2525,7 +2525,7 @@
   }
   async function addDestinoRow(dest) {
     const row = document.createElement('div');
-    row.className = 'pt-dest-row';
+    row.className = 'app-destination-row pt-dest-row';
     row.innerHTML =
       '<div class="row g-2 align-items-end">' +
         '<div class="col-md-5"><label class="form-label">Estado</label>' +
@@ -2698,11 +2698,11 @@
     if (coordEmpty) coordEmpty.style.display = 'none';
     planoState.coordenadores.forEach((item) => {
       const chip = document.createElement('div');
-      chip.className = 'oficio-glance-chip oficio-selection-chip pt-chip-anim';
+      chip.className = 'app-selection-chip app-selection-chip--removable oficio-glance-chip oficio-selection-chip pt-chip-anim';
       chip.setAttribute('data-coord-chip', item.id);
 
       const nome = document.createElement('span');
-      nome.className = 'oficio-glance-chip-nome';
+      nome.className = 'oficio-glance-chip-nome app-selection-chip__name';
       nome.textContent = item.nome;
       chip.appendChild(nome);
 
@@ -2723,14 +2723,14 @@
 
       if (item.cargo) {
         const cargo = document.createElement('span');
-        cargo.className = 'oficio-glance-chip-sub';
+        cargo.className = 'oficio-glance-chip-sub app-selection-chip__sub';
         cargo.textContent = item.cargo;
         chip.appendChild(cargo);
       }
 
       const rmBtn = document.createElement('button');
       rmBtn.type = 'button';
-      rmBtn.className = 'oficio-selection-chip-remove';
+      rmBtn.className = 'app-selection-chip__remove oficio-selection-chip-remove';
       rmBtn.setAttribute('data-remove-coord', item.id);
       rmBtn.setAttribute('aria-label', 'Remover ' + item.nome);
       rmBtn.textContent = '\u00d7';

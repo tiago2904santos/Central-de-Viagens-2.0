@@ -45,7 +45,7 @@
     if (select.hasAttribute('data-oficio-picker-skip') || select.closest('[data-oficio-picker-skip]')) {
       return true;
     }
-    if (select.classList.contains('d-none') && !select.closest('.oficio-custeio-picker')) {
+    if (select.classList.contains('d-none') && !select.closest('.oficio-custeio-picker, .app-select-picker')) {
       return true;
     }
     return false;
@@ -140,9 +140,13 @@
 
     if (!wrapper) {
       wrapper = document.createElement('div');
-      wrapper.className = 'oficio-custeio-picker';
+      wrapper.className = 'app-select-picker oficio-custeio-picker';
+      wrapper.setAttribute('data-select-picker', '1');
       this.select.parentNode.insertBefore(wrapper, this.select);
       wrapper.appendChild(this.select);
+    } else {
+      wrapper.classList.add('app-select-picker');
+      wrapper.setAttribute('data-select-picker', '1');
     }
 
     toArray(wrapper.children).forEach(function(child) {
@@ -153,41 +157,41 @@
 
     var trigger = document.createElement('button');
     trigger.type = 'button';
-    trigger.className = 'oficio-custeio-picker-trigger';
+    trigger.className = 'app-select-picker__trigger oficio-custeio-picker-trigger';
     trigger.setAttribute('aria-haspopup', 'listbox');
     trigger.setAttribute('aria-expanded', 'false');
 
     var label = document.createElement('span');
-    label.className = 'oficio-custeio-picker-label';
+    label.className = 'app-select-picker__label oficio-custeio-picker-label';
     label.textContent = getSelectPlaceholder(this.select);
 
     var icon = document.createElement('span');
-    icon.className = 'oficio-custeio-picker-icon';
+    icon.className = 'app-select-picker__icon oficio-custeio-picker-icon';
     icon.setAttribute('aria-hidden', 'true');
     icon.textContent = '▾';
 
     var list = document.createElement('div');
-    list.className = 'oficio-custeio-picker-list';
+    list.className = 'app-select-picker__list oficio-custeio-picker-list';
     list.setAttribute('role', 'listbox');
     list.hidden = true;
 
     var portal = document.createElement('div');
-    portal.className = 'oficio-custeio-picker-portal';
+    portal.className = 'app-select-picker__portal oficio-custeio-picker-portal';
     portal.hidden = true;
 
     var searchContainer = document.createElement('div');
-    searchContainer.className = 'oficio-custeio-picker-search';
+    searchContainer.className = 'app-select-picker__search oficio-custeio-picker-search';
     searchContainer.hidden = true;
 
     var searchInput = document.createElement('input');
     searchInput.type = 'search';
-    searchInput.className = 'oficio-custeio-picker-search-input';
+    searchInput.className = 'app-select-picker__search-input oficio-custeio-picker-search-input';
     searchInput.autocomplete = 'off';
     searchInput.spellcheck = false;
     searchInput.placeholder = getSearchPlaceholder(this.select);
 
     var optionsHost = document.createElement('div');
-    optionsHost.className = 'oficio-custeio-picker-options';
+    optionsHost.className = 'app-select-picker__options oficio-custeio-picker-options';
 
     searchContainer.appendChild(searchInput);
     list.appendChild(searchContainer);
@@ -432,6 +436,7 @@
       var button = document.createElement('button');
       button.type = 'button';
       button.setAttribute('role', 'option');
+      button.className = 'app-select-picker__option';
       button.setAttribute('data-oficio-picker-option', String(optionIndex));
       button.setAttribute('aria-selected', option.selected ? 'true' : 'false');
       button.disabled = !!option.disabled;
@@ -784,6 +789,11 @@
   });
 
   window.OficioSelectPicker = {
+    enhance: enhanceSelect,
+    enhanceWithin: enhanceWithin,
+    refresh: refreshWithin
+  };
+  window.AppSelectPicker = {
     enhance: enhanceSelect,
     enhanceWithin: enhanceWithin,
     refresh: refreshWithin

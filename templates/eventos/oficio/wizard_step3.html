@@ -878,7 +878,7 @@
   async function addDestinoRow(destino) {
     const idx = getDestinoRows().length;
     const row = document.createElement('div');
-    row.className = 'destino-row row g-2 align-items-end';
+    row.className = 'app-destination-row destino-row row g-2 align-items-end';
     row.draggable = true;
     row.dataset.index = String(idx);
     const selectedEstadoId = destino && destino.estado_id ? destino.estado_id : (destinoEstadoDefaultId || '');

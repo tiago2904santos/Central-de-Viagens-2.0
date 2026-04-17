@@ -81,7 +81,7 @@
                                                     <strong class="small text-uppercase text-muted">Oficios vinculados</strong>
                                                     <span class="badge text-bg-secondary" data-count-badge-oficios>{{ preview_payload.oficios|length }}</span>
                                                 </div>
-                                                <div class="termo-selection-list" data-oficios-selection-list></div>
+                                                <div class="app-selection-chip-list termo-selection-list" data-oficios-selection-list></div>
                                                 <div class="text-muted small" data-oficios-empty-text>Nenhum oficio selecionado.</div>
                                             </div>
                                         </div>
@@ -127,7 +127,7 @@
 
                                 {# Hidden row template rendered server-side so Django vars are available #}
                                 <template id="destino-row-tpl">
-                                    <div class="pt-dest-row">
+                                    <div class="app-destination-row pt-dest-row">
                                         <div class="row g-2 align-items-end">
                                             <div class="col-md-5">
                                                 <label class="form-label">Estado</label>
@@ -195,7 +195,7 @@
                                                     <div class="oficio-selection-panel-head">
                                                         <span class="oficio-selection-panel-title">Viajantes selecionados</span>
                                                     </div>
-                                                    <div id="viajantes-chip-list" class="oficio-selection-chip-list">
+                                                    <div id="viajantes-chip-list" class="app-selection-chip-list oficio-selection-chip-list">
                                                         <span class="oficio-glance-empty" id="viajantes-chip-empty">Nenhum viajante selecionado.</span>
                                                     </div>
                                                 </div>
@@ -232,7 +232,7 @@
                                                     <div class="oficio-selection-panel-head">
                                                         <span class="oficio-selection-panel-title">Viatura selecionada</span>
                                                     </div>
-                                                    <div id="termo-veiculo-chip" class="oficio-selection-chip-list">
+                                                    <div id="termo-veiculo-chip" class="app-selection-chip-list oficio-selection-chip-list">
                                                         <span class="oficio-glance-empty" id="termo-veiculo-empty">Nenhuma viatura selecionada.</span>
                                                     </div>
                                                 </div>

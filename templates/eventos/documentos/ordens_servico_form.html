@@ -5,7 +5,7 @@
 {% block page_title %}{% if object %}Editar{% else %}Nova{% endif %} ordem de serviço{% endblock %}
 
 {% block content %}
-<div class="app-page-shell app-page-shell--document system-form-page ordem-servico-page">
+<div class="app-page-shell app-page-shell--document system-form-page oficio-wizard-page ordem-servico-page">
   <div class="app-page-shell__inner system-form-shell ordem-servico-shell">
     {% if form.non_field_errors %}
     <div class="alert alert-danger" role="alert">
@@ -126,16 +126,16 @@
                 <span class="oficio-selection-panel-title">Viajantes selecionados</span>
                 <span class="oficio-selection-panel-count" id="viajantes-chip-count">{{ selected_viajantes|length }}</span>
               </div>
-              <div id="viajantes-chip-list" class="oficio-selection-chip-list">
+              <div id="viajantes-chip-list" class="app-selection-chip-list oficio-selection-chip-list ordem-servico-selection-chip-list">
                 {% for viajante in selected_viajantes %}
-                <div class="oficio-glance-chip oficio-selection-chip" data-viajante-chip="{{ viajante.pk }}">
-                  <span class="oficio-glance-chip-nome">{{ viajante.nome }}</span>
+                <div class="app-selection-chip app-selection-chip--removable oficio-glance-chip oficio-selection-chip ordem-servico-selection-chip" data-viajante-chip="{{ viajante.pk }}">
+                  <span class="oficio-glance-chip-nome app-selection-chip__name">{{ viajante.nome }}</span>
                   {% if viajante.unidade_lotacao %}
-                  <span class="oficio-glance-chip-sub">{{ viajante.unidade_lotacao.nome }}</span>
+                  <span class="oficio-glance-chip-sub app-selection-chip__sub">{{ viajante.unidade_lotacao.nome }}</span>
                   {% endif %}
                   <button
                     type="button"
-                    class="oficio-selection-chip-remove"
+                    class="app-selection-chip__remove oficio-selection-chip-remove"
                     data-remove-viajante="{{ viajante.pk }}"
                     aria-label="Remover viajante {{ viajante.nome }}"
                   >&times;</button>
@@ -200,7 +200,7 @@
 {{ estados_choices_payload|json_script:"ordem-servico-estados-data" }}
 
 <template id="ordem-servico-destino-row-template">
-  <div class="destino-row row g-2 align-items-end" data-destino-row>
+  <div class="app-destination-row destino-row row g-2 align-items-end" data-destino-row>
     <div class="col-md-1 destino-drag-col">
       <button type="button" class="btn btn-sm btn-outline-secondary destino-drag-handle" aria-label="Arrastar destino 1">&#9776;</button>
     </div>
