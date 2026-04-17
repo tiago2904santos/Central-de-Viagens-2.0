@@ -6937,6 +6937,7 @@ def oficio_justificativa(request, pk):
             'justificativa',
             'Justificativa',
             justificativa_info=context.get('justificativa_info'),
+            return_to=return_to,
         ),
     )
 
@@ -7187,6 +7188,7 @@ def oficio_step4(request, pk):
                         'summary',
                         'Resumo',
                         justificativa_info=context.get('justificativa_info'),
+                        return_to=return_to,
                     ),
                 )
             termos = []
