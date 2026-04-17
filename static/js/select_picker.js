@@ -273,6 +273,10 @@
     });
 
     this.list.addEventListener('keydown', function(event) {
+      if (self.searchContainer && self.searchContainer.contains(event.target)) {
+        return;
+      }
+
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault();
         self.moveActive(event.key === 'ArrowDown' ? 1 : -1);

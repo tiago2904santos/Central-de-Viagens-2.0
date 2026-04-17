@@ -4886,6 +4886,20 @@ class OficioStep1AcceptanceTest(TestCase):
         self.assertEqual(response.context['retorno_state']['tempo_cru_estimado_min'], 210)
         self.assertEqual(response.context['retorno_state']['rota_fonte'], 'ESTIMATIVA_LOCAL')
 
+    def test_step3_get_seed_do_roteiro_do_evento_autosalva_no_oficio(self):
+        oficio = self._criar_oficio(ano=2026)
+        cidade_destino = Cidade.objects.create(nome='Cambé Autosave', estado=self.estado, codigo_ibge='4103701')
+        roteiro = self._criar_roteiro_evento_base([cidade_destino])
+
+        response = self.client.get(reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        oficio.refresh_from_db()
+        self.assertEqual(oficio.roteiro_modo, Oficio.ROTEIRO_MODO_EVENTO)
+        self.assertEqual(oficio.roteiro_evento_id, roteiro.pk)
+        self.assertEqual(OficioTrecho.objects.filter(oficio=oficio).count(), 1)
+        self.assertEqual(OficioTrecho.objects.get(oficio=oficio).destino_cidade_id, cidade_destino.pk)
+
     def test_step3_permite_escolher_qualquer_roteiro_salvo_do_banco(self):
         oficio = self._criar_oficio(ano=2026)
         cidade_a = Cidade.objects.create(nome='Destino A Step3', estado=self.estado, codigo_ibge='4113703')

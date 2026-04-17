@@ -4,6 +4,28 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+def limpar_dados_orfaos_eventos(apps, schema_editor):
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(
+            """
+            DELETE FROM eventos_eventoparticipante
+            WHERE evento_id NOT IN (SELECT id FROM eventos_evento)
+            """
+        )
+        cursor.execute(
+            """
+            DELETE FROM eventos_evento_tipos_demanda
+            WHERE evento_id NOT IN (SELECT id FROM eventos_evento)
+            """
+        )
+        cursor.execute(
+            """
+            DELETE FROM eventos_efetivoplanotrabalhodocumento
+            WHERE plano_trabalho_id NOT IN (SELECT id FROM eventos_planotrabalho)
+            """
+        )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -12,6 +34,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(limpar_dados_orfaos_eventos, migrations.RunPython.noop),
         migrations.CreateModel(
             name='EventoDocumentoSugestao',
             fields=[

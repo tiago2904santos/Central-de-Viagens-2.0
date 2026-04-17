@@ -3335,7 +3335,11 @@ def guiado_etapa_3_v2(request, evento_id):
         request,
         queryset=queryset,
         template_name='eventos/guiado/etapa_3.html',
-        oficio_novo_url=f"{reverse('eventos:oficio-novo')}?evento_id={evento.pk}",
+        oficio_novo_url=_append_query_params(
+            reverse('eventos:oficio-novo'),
+            evento_id=evento.pk,
+            return_to=request.get_full_path(),
+        ),
         clear_filters_url=reverse('eventos:guiado-etapa-3', kwargs={'evento_id': evento.pk}),
         forced_contexto='EVENTO',
         extra_context={
@@ -3808,6 +3812,7 @@ def oficio_novo(request):
             evento = Evento.objects.get(pk=int(evento_id_raw))
         except (ValueError, Evento.DoesNotExist):
             evento = None
+    return_to = _safe_return_to(request, reverse('eventos:oficios-global'))
 
     if evento:
         oficio = Oficio.objects.create(
@@ -3822,7 +3827,12 @@ def oficio_novo(request):
             tipo_origem=Oficio.ORIGEM_AVULSO,
         )
     messages.success(request, 'OfÃ­cio criado. Preencha os dados no wizard.')
-    return redirect('eventos:oficio-step1', pk=oficio.pk)
+    return redirect(
+        _append_query_params(
+            reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            return_to=return_to,
+        )
+    )
 
 
 def _oficio_redirect_pos_exclusao(oficio):
@@ -3970,9 +3980,16 @@ def _autosave_termos_participantes(participantes, request):
     return updated
 
 
-def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None):
+def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None, return_to=''):
     justificativa_info = justificativa_info or _build_oficio_justificativa_info(oficio)
-    resumo_url = reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk})
+    resumo_url = _append_query_params(
+        reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
+    justificativa_url = _append_query_params(
+        reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
+        next=resumo_url,
+    )
     justificativa_required = bool(justificativa_info.get('required'))
     justificativa_text = str(justificativa_info.get('texto') or '').strip()
     steps = [
@@ -3980,25 +3997,34 @@ def _build_oficio_wizard_steps(oficio, current_key, justificativa_info=None):
             'key': 'step1',
             'number': 1,
             'label': 'Dados e viajantes',
-            'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            'url': _append_query_params(
+                reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+                return_to=return_to,
+            ),
         },
         {
             'key': 'step2',
             'number': 2,
             'label': 'Transporte',
-            'url': reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}),
+            'url': _append_query_params(
+                reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}),
+                return_to=return_to,
+            ),
         },
         {
             'key': 'step3',
             'number': 3,
             'label': 'Roteiro e diÃ¡rias',
-            'url': reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
+            'url': _append_query_params(
+                reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
+                return_to=return_to,
+            ),
         },
         {
             'key': 'justificativa',
             'number': 4,
             'label': 'Justificativa',
-            'url': reverse('eventos:oficio-justificativa', kwargs={'pk': oficio.pk}),
+            'url': justificativa_url,
         },
         {
             'key': 'summary',
@@ -4070,7 +4096,7 @@ def _build_oficio_wizard_glance_data(oficio, step1_preview=None, step2_preview=N
     }
 
 
-def _apply_oficio_wizard_context(context, oficio, current_key, page_title, justificativa_info=None):
+def _apply_oficio_wizard_context(context, oficio, current_key, page_title, justificativa_info=None, return_to=''):
     step1_preview = context.get('step1_preview')
     step2_preview = context.get('step2_preview')
     step3_preview = context.get('step3_preview')
@@ -4084,6 +4110,7 @@ def _apply_oficio_wizard_context(context, oficio, current_key, page_title, justi
                 oficio,
                 current_key,
                 justificativa_info=justificativa_info,
+                return_to=return_to,
             ),
             'wizard_glance': _build_oficio_wizard_glance_data(
                 oficio,
@@ -4091,6 +4118,7 @@ def _apply_oficio_wizard_context(context, oficio, current_key, page_title, justi
                 step2_preview=step2_preview,
                 step3_preview=step3_preview,
             ),
+            'return_to_url': return_to or reverse('eventos:oficios-global'),
         }
     )
     return context
@@ -4273,8 +4301,22 @@ def _bloquear_edicao_oficio_se_evento_finalizado(request, oficio):
 def oficio_step1(request, pk):
     """Wizard Step 1 â€” Dados gerais + viajantes (fiel ao legado)."""
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
+    return_to = _safe_return_to(request, reverse('eventos:oficios-global'))
+    step1_url = _append_query_params(
+        reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
+    step2_url = _append_query_params(
+        reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
     if _bloquear_edicao_oficio_se_evento_finalizado(request, oficio):
-        return redirect('eventos:oficio-step4', pk=oficio.pk)
+        return redirect(
+            _append_query_params(
+                reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+                return_to=return_to,
+            )
+        )
     evento = oficio.evento
     if _is_autosave_request(request):
         _autosave_oficio_step1(oficio, request)
@@ -4321,7 +4363,7 @@ def oficio_step1(request, pk):
             texto_atual = (oficio.motivo or '').strip()
             if not texto_atual:
                 messages.error(request, 'Informe o motivo da viagem antes de salvar como modelo.')
-                return redirect('eventos:oficio-step1', pk=oficio.pk)
+                return redirect(step1_url)
             nome_modelo = (request.POST.get('novo_modelo_nome') or '').strip()
             if not nome_modelo:
                 nome_modelo = f'Modelo {timezone.localtime().strftime("%d/%m/%Y %H:%M")}'
@@ -4332,12 +4374,12 @@ def oficio_step1(request, pk):
             oficio.modelo_motivo = novo_modelo
             _save_oficio_preserving_status(oficio, ['modelo_motivo'])
             messages.success(request, 'Motivo salvo como novo modelo.')
-            return redirect('eventos:oficio-step1', pk=oficio.pk)
+            return redirect(step1_url)
 
         messages.success(request, 'Dados do Step 1 salvos.')
         if request.POST.get('avancar'):
-            return redirect('eventos:oficio-step2', pk=oficio.pk)
-        return redirect('eventos:oficio-step1', pk=oficio.pk)
+            return redirect(step2_url)
+        return redirect(step1_url)
     custeio_atual = (
         form.data.get('custeio_tipo')
         if form.is_bound
@@ -4358,13 +4400,13 @@ def oficio_step1(request, pk):
         'evento': evento,
         'form': form,
         'step': 1,
-        'next_step_url': reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}),
+        'next_step_url': step2_url,
         'gerenciar_modelos_motivo_url': (
             f"{reverse('eventos:modelos-motivo-lista')}?volta_step1={oficio.pk}"
         ),
         'cadastrar_viajante_url': (
             f"{reverse('cadastros:viajante-cadastrar')}?next="
-            f"{quote(reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}))}"
+            f"{quote(step1_url)}"
         ),
         'modelo_texto_api_pattern': reverse('eventos:modelos-motivo-texto-api', kwargs={'pk': 0}),
         'mostrar_nome_instituicao': mostrar_nome_instituicao,
@@ -4377,7 +4419,7 @@ def oficio_step1(request, pk):
     return render(
         request,
         'eventos/oficio/wizard_step1.html',
-        _apply_oficio_wizard_context(context, oficio, 'step1', 'Dados e viajantes'),
+        _apply_oficio_wizard_context(context, oficio, 'step1', 'Dados e viajantes', return_to=return_to),
     )
 
 
@@ -4423,14 +4465,15 @@ def _legacy_oficio_step2(request, pk):
         ])
         messages.success(request, 'Transporte e motorista salvos.')
         if request.POST.get('avancar'):
-            return redirect('eventos:oficio-step3', pk=oficio.pk)
-        return redirect('eventos:oficio-step2', pk=oficio.pk)
+            return redirect(step3_url)
+        return redirect(step2_url)
     context = {
         'oficio': oficio,
         'evento': evento,
         'form': form,
         'step': 2,
-        'next_step_url': reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
+        'step1_url': step1_url,
+        'next_step_url': step3_url,
     }
     return render(request, 'eventos/oficio/wizard_step2.html', context)
 
@@ -6615,8 +6658,21 @@ def _build_oficio_documentos_context(oficio):
 @require_http_methods(['GET', 'POST'])
 def oficio_step3(request, pk):
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
+    return_to = _safe_return_to(request, reverse('eventos:oficios-global'))
+    step2_url = _append_query_params(
+        reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
+    step3_url = _append_query_params(
+        reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
+    step4_url = _append_query_params(
+        reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
     if _bloquear_edicao_oficio_se_evento_finalizado(request, oficio):
-        return redirect('eventos:oficio-step4', pk=oficio.pk)
+        return redirect(step4_url)
     evento = oficio.evento
     validation_errors = []
     route_options, route_state_map = _build_step3_route_options(oficio)
@@ -6648,18 +6704,22 @@ def oficio_step3(request, pk):
                     return redirect(
                         _oficio_justificativa_url(
                             oficio,
-                            next_url=reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+                            next_url=step4_url,
                         )
                     )
-                return redirect('eventos:oficio-step4', pk=oficio.pk)
+                return redirect(step4_url)
             _salvar_step3_oficio(oficio, step3_state, validated)
             messages.success(request, 'Step 3 do ofÃ­cio salvo.')
             if request.POST.get('avancar'):
-                return redirect('eventos:oficio-step4', pk=oficio.pk)
-            return redirect('eventos:oficio-step3', pk=oficio.pk)
+                return redirect(step4_url)
+            return redirect(step3_url)
         validation_errors = validated['errors']
     else:
         step3_state = _get_oficio_step3_seed_state(oficio, route_options, route_state_map)
+        if step3_state.get('seed_source_label') and step3_state.get('trechos'):
+            # Quando a tela nasce de um seed do evento, o roteiro precisa entrar no ofício
+            # sem depender de ação manual do usuário.
+            _autosave_oficio_step3(oficio, step3_state)
 
     try:
         diarias_resultado = _calculate_step3_diarias_from_state(oficio, step3_state)
@@ -6682,7 +6742,8 @@ def oficio_step3(request, pk):
         'oficio': oficio,
         'evento': evento,
         'step': 3,
-        'next_step_url': reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+        'step2_url': step2_url,
+        'next_step_url': step4_url,
         'estados': estados_qs,
         'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
         'api_calcular_diarias_url': reverse('eventos:oficio-step3-calcular-diarias', kwargs={'pk': oficio.pk}),
@@ -6724,6 +6785,7 @@ def oficio_step3(request, pk):
             wizard_key,
             wizard_title,
             justificativa_info=justificativa_info,
+            return_to=return_to,
         ),
     )
 
@@ -6756,6 +6818,15 @@ def _autosave_oficio_step4(oficio, request):
 @require_http_methods(['POST'])
 def oficio_step3_calcular_diarias(request, pk):
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
+    return_to = _safe_return_to(request, reverse('eventos:oficios-global'))
+    step3_url = _append_query_params(
+        reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
+    step4_url = _append_query_params(
+        reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
     _, route_state_map = _build_step3_route_options(oficio)
     step3_state = _build_step3_state_from_post(
         request,
@@ -6793,12 +6864,12 @@ def oficio_step3_calcular_diarias(request, pk):
             'justificativa_url': (
                 _oficio_justificativa_url(
                     oficio,
-                    next_url=reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+                    next_url=step4_url,
                 )
                 if justificativa_info['required'] and not justificativa_info['filled']
                 else ''
             ),
-            'step3_url': reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
+            'step3_url': step3_url,
         }
     )
     return JsonResponse(payload)
@@ -6838,7 +6909,11 @@ def _legacy_oficio_step4(request, pk):
 @require_http_methods(['GET', 'POST'])
 def oficio_justificativa(request, pk):
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
-    default_next_url = reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk})
+    return_to = _safe_return_to(request, reverse('eventos:oficios-global'))
+    default_next_url = _append_query_params(
+        reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
     next_url = _get_safe_next_url(request, default_next_url)
     if _is_autosave_request(request):
         _autosave_oficio_justificativa(oficio, request)
@@ -7062,10 +7137,14 @@ def oficio_documento_download(request, pk, tipo_documento, formato):
 @require_http_methods(['GET', 'POST'])
 def oficio_step4(request, pk):
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
+    return_to = _safe_return_to(request, reverse('eventos:oficios-global'))
+    step4_url = _append_query_params(
+        reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
     if _bloquear_edicao_oficio_se_evento_finalizado(request, oficio):
-        return redirect('eventos:oficios-global')
+        return redirect(return_to)
     evento = oficio.evento
-    step4_url = reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk})
     if _is_autosave_request(request):
         _autosave_oficio_step4(oficio, request)
         return _autosave_success_response()
@@ -7081,7 +7160,12 @@ def oficio_step4(request, pk):
         if termo_changed:
             _save_oficio_preserving_status(oficio, ['gerar_termo_preenchido'])
         if request.POST.get('voltar_etapa3') and evento:
-            return redirect('eventos:guiado-etapa-3', evento_id=evento.pk)
+            return redirect(
+                _append_query_params(
+                    reverse('eventos:guiado-etapa-3', kwargs={'evento_id': evento.pk}),
+                    return_to=return_to,
+                )
+            )
         if request.POST.get('finalizar'):
             finalize_validation = _validate_oficio_for_finalize(oficio)
             if not finalize_validation['ok']:
@@ -7132,7 +7216,7 @@ def oficio_step4(request, pk):
                         request,
                         'NÃ£o foi possÃ­vel gerar termos de autorizaÃ§Ã£o para este ofÃ­cio.',
                     )
-        return redirect('eventos:oficios-global')
+        return redirect(return_to)
     context = _build_oficio_step4_context(oficio)
     context['oficio_evento_context_block'] = _build_oficio_evento_context_block(oficio)
     return render(
@@ -7144,6 +7228,7 @@ def oficio_step4(request, pk):
             'summary',
             'Resumo',
             justificativa_info=context.get('justificativa_info'),
+            return_to=return_to,
         ),
     )
 
@@ -8298,8 +8383,26 @@ def oficio_step2(request, pk):
     from cadastros.models import CombustivelVeiculo
 
     oficio = _get_oficio_or_404_for_user(pk, user=request.user)
+    return_to = _safe_return_to(request, reverse('eventos:oficios-global'))
+    step1_url = _append_query_params(
+        reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
+    step2_url = _append_query_params(
+        reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
+    step3_url = _append_query_params(
+        reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
+        return_to=return_to,
+    )
     if _bloquear_edicao_oficio_se_evento_finalizado(request, oficio):
-        return redirect('eventos:oficio-step4', pk=oficio.pk)
+        return redirect(
+            _append_query_params(
+                reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
+                return_to=return_to,
+            )
+        )
     evento = oficio.evento
     if _is_autosave_request(request):
         _autosave_oficio_step2(oficio, request)
@@ -8352,17 +8455,18 @@ def oficio_step2(request, pk):
         'evento': evento,
         'form': form,
         'step': 2,
-        'next_step_url': reverse('eventos:oficio-step3', kwargs={'pk': oficio.pk}),
+        'step1_url': step1_url,
+        'next_step_url': step3_url,
         'buscar_veiculos_url': reverse('eventos:oficio-step2-veiculos-busca-api'),
         'buscar_veiculo_url': reverse('eventos:oficio-step2-veiculo-api'),
         'buscar_motoristas_url': reverse('eventos:oficio-step2-motoristas-api'),
         'cadastrar_veiculo_url': (
             f"{reverse('cadastros:veiculo-cadastrar')}?next="
-            f"{quote(reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}))}"
+            f"{quote(step2_url)}"
         ),
         'cadastrar_viajante_url': (
             f"{reverse('cadastros:viajante-cadastrar')}?next="
-            f"{quote(reverse('eventos:oficio-step2', kwargs={'pk': oficio.pk}))}"
+            f"{quote(step2_url)}"
         ),
         'combustivel_opcoes': combustivel_opcoes,
         'motorista_selected_value': getattr(form, 'selected_motorista_value', ''),
@@ -8379,7 +8483,7 @@ def oficio_step2(request, pk):
     return render(
         request,
         'eventos/oficio/wizard_step2.html',
-        _apply_oficio_wizard_context(context, oficio, 'step2', 'Transporte'),
+        _apply_oficio_wizard_context(context, oficio, 'step2', 'Transporte', return_to=return_to),
     )
 
 

@@ -21,6 +21,7 @@
 
           <form method="post" id="oficio-step1-form" class="oficio-stage-form">
             {% csrf_token %}
+            <input type="hidden" name="return_to" value="{{ return_to_url }}">
             {% if form.non_field_errors %}
               <div class="alert alert-danger py-2">
                 {% for e in form.non_field_errors %}
@@ -168,7 +169,7 @@
             {% include 'includes/list/oficio_evento_context_block.html' with block=oficio_evento_context_block %}
 
             <div class="oficio-wizard-footer-actions" data-oficio-footer-actions="1">
-              <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar para lista</a>
+              <a href="{{ return_to_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar para lista</a>
               {% if oficio.pk %}
               <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger" data-autosave-link="1">Excluir</a>
               {% endif %}

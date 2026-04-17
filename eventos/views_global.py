@@ -1374,14 +1374,17 @@ def _oficio_list_download_action(actions, label):
     return None
 
 
-def _oficio_list_table_actions(oficio, oficio_downloads):
+def _oficio_list_table_actions(oficio, oficio_downloads, *, return_to=''):
     actions = []
 
     actions.append(
         {
             'label': 'Abrir',
             'aria_label': 'Abrir cadastro do oficio',
-            'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            'url': _append_query_params(
+                reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+                {'return_to': return_to},
+            ),
             'css_class': 'btn-doc-action--primary',
             'icon': 'bi-box-arrow-up-right',
             'download': False,
@@ -1431,13 +1434,16 @@ def _oficio_list_table_actions(oficio, oficio_downloads):
     return actions
 
 
-def _oficio_list_footer_actions(oficio, oficio_downloads):
+def _oficio_list_footer_actions(oficio, oficio_downloads, *, return_to=''):
     actions = []
     actions.append(
         {
             'label': 'Abrir',
             'aria_label': 'Abrir cadastro do oficio',
-            'url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            'url': _append_query_params(
+                reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+                {'return_to': return_to},
+            ),
             'css_class': 'btn-doc-action--primary',
             'icon': 'bi-box-arrow-up-right',
             'download': False,
@@ -2209,8 +2215,8 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
     vehicle_display = precomputed['vehicle_display']
     driver_display = precomputed['driver_display']
     oficio_status = _oficio_process_status_meta(oficio)
-    table_actions = _oficio_list_table_actions(oficio, oficio_downloads)
-    footer_actions = _oficio_list_footer_actions(oficio, oficio_downloads)
+    table_actions = _oficio_list_table_actions(oficio, oficio_downloads, return_to=current_path)
+    footer_actions = _oficio_list_footer_actions(oficio, oficio_downloads, return_to=current_path)
     vinculos_items = []
     for link in oficio.vinculos_evento.select_related('evento').order_by('pk'):
         ev = link.evento
@@ -2396,7 +2402,10 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
         'termos': termos,
         'vinculos_block': vinculos_block,
         'evento_url': reverse('eventos:guiado-etapa-1', kwargs={'pk': oficio.evento_id}) if oficio.evento_id else '',
-        'wizard_url': reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+        'wizard_url': _append_query_params(
+            reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
+            {'return_to': current_path},
+        ),
         'search_blob': ' '.join(
             value
             for value in [

@@ -868,7 +868,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
-    padding: 0.18rem;
+    padding: 0.1rem;
     border-radius: 999px;
     border: 1px solid rgba(15, 23, 42, 0.08);
     background: rgba(255, 255, 255, 0.94);
@@ -878,8 +878,8 @@
 .system-list-view-toggle__button,
 .oficios-view-toggle__button {
     appearance: none;
+    min-height: 2.26rem;
     border: 0;
-    min-height: 2.04rem;
     padding: 0.42rem 0.8rem;
     border-radius: 999px;
     background: transparent;

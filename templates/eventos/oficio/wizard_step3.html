@@ -21,6 +21,7 @@
 
           <form method="post" id="oficio-step3-form" novalidate class="oficio-stage-form">
             {% csrf_token %}
+            <input type="hidden" name="return_to" value="{{ return_to_url }}">
             <input type="hidden" name="tipo_destino" id="id_tipo_destino" value="{{ step3_preview.tipo_destino|default:'' }}">
             <input type="hidden" name="quantidade_diarias" id="id_quantidade_diarias" value="{{ step3_preview.diarias.quantidade|default:'' }}">
             <input type="hidden" name="valor_diarias" id="id_valor_diarias" value="{{ step3_preview.diarias.valor_total|default:'' }}">
@@ -301,8 +302,8 @@
             </section>
 
             <div class="oficio-wizard-footer-actions" data-oficio-footer-actions="1">
-              <a href="{% url 'eventos:oficio-step2' oficio.pk %}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar</a>
-              <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar para lista</a>
+              <a href="{{ step2_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar</a>
+              <a href="{{ return_to_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Voltar para lista</a>
               {% if oficio.pk %}
               <a href="{% url 'eventos:oficio-excluir' oficio.pk %}" class="btn btn-outline-danger" data-autosave-link="1">Excluir</a>
               {% endif %}
