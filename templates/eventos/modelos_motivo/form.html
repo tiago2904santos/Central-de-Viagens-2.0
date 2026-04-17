@@ -31,8 +31,8 @@
 
 {% block form_actions %}
 <button type="submit" class="btn btn-primary">Salvar</button>
-<a href="{% url 'eventos:modelos-motivo-lista' %}{% if volta_step1 %}?volta_step1={{ volta_step1 }}{% endif %}" class="btn btn-outline-secondary">Cancelar</a>
+<a href="{% url 'eventos:modelos-motivo-lista' %}{% if volta_step1 %}?volta_step1={{ volta_step1|urlencode }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}{% elif return_to %}?return_to={{ return_to|urlencode }}{% endif %}" class="btn btn-outline-secondary">Cancelar</a>
 {% if object %}
-<a href="{% url 'eventos:modelos-motivo-excluir' object.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1 }}{% endif %}" class="btn btn-outline-danger">Excluir</a>
+<a href="{% url 'eventos:modelos-motivo-excluir' object.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1|urlencode }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}{% elif return_to %}?return_to={{ return_to|urlencode }}{% endif %}" class="btn btn-outline-danger">Excluir</a>
 {% endif %}
 {% endblock %}

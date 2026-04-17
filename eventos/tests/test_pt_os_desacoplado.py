@@ -12,7 +12,10 @@ from eventos.forms import TermoAutorizacaoEdicaoForm
 from eventos.models import Evento, Justificativa, Oficio, OrdemServico, PlanoTrabalho, TermoAutorizacao
 from eventos.services.contexto_evento import build_contexto_ordem_servico_from_evento
 from eventos.services.documento_vinculos import resolver_vinculos_evento, resolver_vinculos_oficio, resolver_vinculos_ordem_servico
-from eventos.services.documentos.ordem_servico import build_ordem_servico_model_template_context
+from eventos.services.documentos.ordem_servico import (
+    build_ordem_servico_model_template_context,
+    build_ordem_servico_template_context,
+)
 
 
 User = get_user_model()
@@ -111,6 +114,21 @@ class PtOsDesacopladoTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['form'].initial.get('evento'), self.evento.pk)
 
+    def test_preselected_oficio_id_os_puxa_destinos_do_evento_quando_oficio_nao_tem_trechos(self):
+        estado = Estado.objects.create(nome='Paraná', sigla='PR')
+        cidade = Cidade.objects.create(nome='Curitiba', estado=estado)
+        self.evento.destinos.create(estado=estado, cidade=cidade, ordem=0)
+
+        response = self.client.get(
+            reverse('eventos:documentos-ordens-servico-novo'),
+            {'preselected_oficio_id': self.oficio.pk},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['form'].initial.get('evento'), self.evento.pk)
+        destinos_payload = response.context['form'].initial.get('destinos_payload') or '[]'
+        self.assertIn('Curitiba', destinos_payload)
+
     def test_preselected_event_id_os_consolida_viajantes_dos_oficios_sem_duplicar(self):
         cargo = Cargo.objects.create(nome='Agente de Polícia Civil')
         viajante_a = Viajante.objects.create(
@@ -139,6 +157,48 @@ class PtOsDesacopladoTest(TestCase):
             set(Oficio.objects.filter(eventos=self.evento).values_list('pk', flat=True)),
             {self.oficio.pk, oficio_a.pk, oficio_b.pk},
         )
+
+    def test_edicao_os_sem_evento_proprio_puxa_destinos_do_evento_relacionado_pelo_oficio(self):
+        estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR')
+        cidade = Cidade.objects.create(nome='Curitiba', estado=estado)
+        self.evento.destinos.create(estado=estado, cidade=cidade, ordem=0)
+
+        ordem = OrdemServico.objects.create(
+            oficio=self.oficio,
+            data_criacao=date(2026, 3, 10),
+            data_deslocamento=date(2026, 3, 12),
+            motivo_texto='Ordem vinculada pelo oficio.',
+            status=OrdemServico.STATUS_RASCUNHO,
+        )
+
+        response = self.client.get(
+            reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Curitiba', response.context['form'].initial.get('destinos_payload') or '[]')
+
+    def test_edicao_os_renderiza_destino_inicial_no_html(self):
+        estado = Estado.objects.create(nome='ParanÃ¡', sigla='PR')
+        cidade = Cidade.objects.create(nome='Curitiba', estado=estado)
+        self.evento.destinos.create(estado=estado, cidade=cidade, ordem=0)
+
+        ordem = OrdemServico.objects.create(
+            oficio=self.oficio,
+            data_criacao=date(2026, 3, 10),
+            data_deslocamento=date(2026, 3, 12),
+            motivo_texto='Ordem vinculada pelo oficio.',
+            status=OrdemServico.STATUS_RASCUNHO,
+        )
+
+        response = self.client.get(
+            reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk})
+        )
+
+        html = response.content.decode('utf-8', errors='replace')
+        self.assertContains(response, 'Curitiba')
+        self.assertContains(response, 'data-destino-row', html=False)
+        self.assertContains(response, 'destino_cidade_0', html=False)
 
     def test_preselected_oficio_id_pt(self):
         response = self.client.get(
@@ -175,6 +235,25 @@ class PtOsDesacopladoTest(TestCase):
         self.assertNotContains(response, 'Leitura documental')
         self.assertNotContains(response, 'Texto institucional')
         self.assertContains(response, 'js/ordem_servico_form.js')
+        self.assertContains(response, 'data-autosave-bypass="1"')
+
+    def test_edicao_os_exibe_rodape_com_acoes_de_resumo(self):
+        ordem = OrdemServico.objects.create(
+            data_criacao=date(2026, 3, 10),
+            data_deslocamento=date(2026, 3, 12),
+            motivo_texto='Ordem em rascunho.',
+            status=OrdemServico.STATUS_RASCUNHO,
+        )
+
+        response = self.client.get(reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-oficio-footer-actions="1"')
+        self.assertContains(response, 'Voltar para lista')
+        self.assertContains(response, 'Finalizar Ordem de Serviço')
+        self.assertContains(response, 'DOCX')
+        self.assertContains(response, 'PDF')
+        self.assertContains(response, 'Lixeira')
 
     def test_os_data_unica_permite_periodo_completo(self):
         cargo = Cargo.objects.create(nome='Agente de Polícia Civil')
@@ -533,6 +612,26 @@ class PtOsDesacopladoTest(TestCase):
         context = build_ordem_servico_model_template_context(ordem)
 
         self.assertEqual(context['data_atual_extenso'], '03 de abril de 2026')
+
+    def test_contexto_template_os_puxa_destinos_do_evento_quando_ordem_nao_tem_destinos_json(self):
+        estado = Estado.objects.create(nome='Paraná', sigla='PR')
+        cidade = Cidade.objects.create(nome='Curitiba', estado=estado)
+        self.evento.destinos.create(estado=estado, cidade=cidade, ordem=0)
+
+        ordem = OrdemServico.objects.create(
+            evento=self.evento,
+            oficio=self.oficio,
+            data_criacao=date(2026, 4, 3),
+            data_deslocamento=date(2026, 4, 3),
+            motivo_texto='OS sem destinos próprios.',
+            status=OrdemServico.STATUS_RASCUNHO,
+        )
+
+        model_context = build_ordem_servico_model_template_context(ordem)
+        oficio_context = build_ordem_servico_template_context(self.oficio)
+
+        self.assertEqual(model_context['destino'], 'Curitiba/PR')
+        self.assertEqual(oficio_context['destino'], 'Curitiba/PR')
 
     def _novo_modelo_motivo(self, texto):
         from eventos.models import ModeloMotivoViagem

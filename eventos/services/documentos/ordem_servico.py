@@ -1,8 +1,10 @@
 from eventos.services.justificativa import get_primeira_saida_oficio
 from django.utils import timezone
 
+from ..contexto_evento import build_contexto_ordem_servico_from_evento
 from .context import (
     build_ordem_servico_document_context,
+    _get_ordem_servico_for_oficio,
     format_document_display,
     format_document_header_display,
     get_assinaturas_documento,
@@ -187,6 +189,21 @@ def _build_destino_ordem(ordem_servico, context=None):
             destinos.append(cidade)
     if destinos:
         return ', '.join(destinos)
+    evento = getattr(ordem_servico, 'evento', None)
+    if evento:
+        contexto_evento = build_contexto_ordem_servico_from_evento(evento)
+        destinos_evento = []
+        for item in contexto_evento.get('destinos_payload') or []:
+            if not isinstance(item, dict):
+                continue
+            cidade = format_document_display(item.get('cidade_nome', ''))
+            uf = str(item.get('estado_sigla') or '').strip().upper()
+            if cidade and uf:
+                destinos_evento.append(f'{cidade}/{uf}')
+            elif cidade:
+                destinos_evento.append(cidade)
+        if destinos_evento:
+            return ', '.join(destinos_evento)
     if context:
         return format_document_display(context['ordem_servico']['destinos_texto'])
     return ''
@@ -273,12 +290,16 @@ def build_ordem_servico_model_template_context(ordem_servico):
 
 def build_ordem_servico_template_context(oficio):
     context = build_ordem_servico_document_context(oficio)
+    ordem = _get_ordem_servico_for_oficio(oficio)
     assinatura = _get_primary_signature(context)
     unidade = context['institucional']['unidade'] or context['institucional']['orgao'] or context['institucional']['sigla_orgao']
+    destino = format_document_display(context['ordem_servico']['destinos_texto'])
+    if ordem:
+        destino = _build_destino_ordem(ordem, context)
     return {
         'cargo_chefia': format_document_display(assinatura.get('cargo', '')),
         'data_extenso': _format_data_extenso(oficio),
-        'destino': format_document_display(context['ordem_servico']['destinos_texto']),
+        'destino': destino,
         'divisao': format_document_header_display(context['institucional']['divisao'] or unidade),
         'equipe_deslocamento': _build_equipe_deslocamento(context),
         'motivo': context['ordem_servico']['finalidade'].rstrip('.'),

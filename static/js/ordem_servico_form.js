@@ -350,10 +350,11 @@
       return;
     }
 
+    row.draggable = true;
     var estadoSelect = row.querySelector('.destino-estado');
     var cidadeSelect = row.querySelector('.destino-cidade');
 
-    if (estadoSelect && cidadeSelect) {
+    if (estadoSelect && cidadeSelect && row.dataset.skipInitialPopulate !== '1') {
       if (estadoSelect.value) {
         populateCities(cidadeSelect, estadoSelect.value, cidadeSelect.getAttribute('data-cidade-id'));
       }
@@ -407,6 +408,18 @@
   }
 
   async function hydrateDestinos() {
+    var existingRows = getDestinoRows();
+    if (existingRows.length) {
+      existingRows.forEach(function(row) {
+        row.dataset.skipInitialPopulate = '1';
+        bindDestinoRow(row);
+      });
+      reindexDestinoRows();
+      refreshDestinoButtons();
+      syncDestinosPayload();
+      return;
+    }
+
     var payload = parseJsonValue(destinosInput, []);
     if (!Array.isArray(payload) || !payload.length) {
       await addDestinoRow({ estado_id: destinoEstadoDefaultId || null, cidade_id: null });

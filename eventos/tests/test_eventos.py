@@ -3057,6 +3057,32 @@ class EventoEtapa4PtOsTest(TestCase):
             ['os', 'pt'],
         )
 
+    def test_etapa_4_fica_concluida_ao_salvar_convite_ou_oficio_solicitante(self):
+        arquivo = SimpleUploadedFile(
+            'convite.pdf',
+            b'%PDF-1.4\n%etapa4\n',
+            content_type='application/pdf',
+        )
+        response = self.client.post(
+            reverse('eventos:guiado-etapa-4', kwargs={'evento_id': self.evento.pk}),
+            data={
+                'tem_convite_ou_oficio_evento': 'on',
+                'convite_documentos': arquivo,
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('ok'))
+
+        self.evento.refresh_from_db()
+        self.assertTrue(self.evento.tem_convite_ou_oficio_evento)
+        self.assertEqual(self.evento.anexos_solicitante.count(), 1)
+
+        response = self.client.get(reverse('eventos:guiado-etapa-3', kwargs={'evento_id': self.evento.pk}))
+        self.assertEqual(response.status_code, 200)
+        etapa_4 = next(step for step in response.context['wizard_steps'] if step['key'] == 'pt-os')
+        self.assertEqual(etapa_4['state'], 'completed')
+
 class EventoEtapa5TermosTest(TestCase):
     """Etapa 3 ? Termos no n?vel do evento: status, modalidade e gera??o por participante."""
 
@@ -3988,11 +4014,18 @@ class OficioStep1AcceptanceTest(TestCase):
             'sede_estado': str(self.estado.pk),
             'sede_cidade': str(self.cidade.pk),
         }
+        route_points = [self.cidade] + list(destinos) + [self.cidade]
         for idx, cidade in enumerate(destinos):
             data[f'destino_estado_{idx}'] = str(cidade.estado_id)
             data[f'destino_cidade_{idx}'] = str(cidade.pk)
         trechos = trechos or []
         for idx, trecho in enumerate(trechos):
+            origem = route_points[idx] if idx < len(route_points) else route_points[-1]
+            destino = route_points[idx + 1] if idx + 1 < len(route_points) else route_points[-1]
+            data[f'trecho_{idx}_origem_estado_id'] = str(getattr(origem, 'estado_id', '') or '')
+            data[f'trecho_{idx}_origem_cidade_id'] = str(getattr(origem, 'pk', '') or '')
+            data[f'trecho_{idx}_destino_estado_id'] = str(getattr(destino, 'estado_id', '') or '')
+            data[f'trecho_{idx}_destino_cidade_id'] = str(getattr(destino, 'pk', '') or '')
             for key, value in trecho.items():
                 data[f'trecho_{idx}_{key}'] = value
         retorno = retorno or {}

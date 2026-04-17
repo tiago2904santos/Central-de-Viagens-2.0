@@ -10,7 +10,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from cadastros.models import Cargo, Cidade, ConfiguracaoSistema, Estado, Viajante
-from eventos.forms import PlanoTrabalhoStep2Form
+from eventos.forms import PlanoTrabalhoForm, PlanoTrabalhoStep2Form
 from eventos.models import (
     CoordenadorOperacional,
     EfetivoPlanoTrabalho,
@@ -423,6 +423,21 @@ class PlanoTrabalhoFormPersistenciaTest(TestCase):
     def test_tela_plano_novo_abre(self):
         response = self.client.get(reverse('eventos:documentos-planos-trabalho-novo'))
         self.assertEqual(response.status_code, 200)
+
+    def test_formulario_edicao_inicializa_com_evento_relacionado(self):
+        self.oficio.eventos.add(self.evento)
+        pt = PlanoTrabalho.objects.create(
+            evento=self.evento,
+            oficio=self.oficio,
+            numero=1,
+            ano=2026,
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+        )
+
+        form = PlanoTrabalhoForm(instance=pt)
+
+        self.assertIn(self.oficio, form.fields['oficio'].queryset)
+        self.assertIn(self.oficio, form.fields['oficios_relacionados'].queryset)
 
     def test_formulario_salva_campos_corretamente(self):
         payload = {

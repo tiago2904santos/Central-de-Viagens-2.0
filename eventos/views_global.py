@@ -4848,6 +4848,15 @@ def _render_ordem_servico_form(
     if diretos:
         vinculo_texto = ' / '.join(v.rotulo for v in diretos[:2])
 
+    destinos_iniciais = []
+    try:
+        raw_destinos = form.initial.get('destinos_payload') or '[]'
+        destinos_iniciais = json.loads(raw_destinos) if isinstance(raw_destinos, str) else list(raw_destinos or [])
+        if not isinstance(destinos_iniciais, list):
+            destinos_iniciais = []
+    except (TypeError, ValueError):
+        destinos_iniciais = []
+
     numero_preview = object_instance.numero_formatado if object_instance and object_instance.pk else getattr(form, 'proximo_numero_preview', '')
     destino_estado_fixo = Estado.objects.filter(sigla__iexact='PR', ativo=True).first()
     estados_payload = [
@@ -4881,6 +4890,7 @@ def _render_ordem_servico_form(
             'selected_viajantes_payload': [
                 serializar_viajante_para_autocomplete(viajante) for viajante in selected_viajantes
             ],
+            'destinos_iniciais': destinos_iniciais,
             'ordem_numero_preview': numero_preview,
             'ordem_vinculo_texto': vinculo_texto,
             'ordem_vinculos_diretos': vinculos_resolvidos.get('diretos') or [],

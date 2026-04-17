@@ -1274,6 +1274,17 @@ def _evento_pt_os_ok(evento):
     )
 
 
+def _evento_etapa4_concluida(evento):
+    """True quando a etapa 4 foi registrada via convite/oficio solicitante ou via PT/OS concluido."""
+    if evento is None:
+        return False
+    if evento.tem_convite_ou_oficio_evento:
+        return True
+    if evento.anexos_solicitante.exists():
+        return True
+    return _evento_pt_os_ok(evento)
+
+
 def _evento_pt_os_em_andamento(evento):
     """True quando hÃ¡ PT/OS em rascunho vinculados ao evento."""
     return (
@@ -1517,11 +1528,13 @@ def _evento_etapa3_ok(evento):
 
 def _evento_etapa4_ok(evento):
     """Compat: etapa antiga 4 = PT/OS documentais."""
-    return _evento_pt_os_ok(evento)
+    return _evento_etapa4_concluida(evento)
 
 
 def _evento_etapa4_em_andamento(evento):
     """Compat: etapa antiga 4 = PT/OS documentais."""
+    if _evento_etapa4_concluida(evento):
+        return False
     return _evento_pt_os_em_andamento(evento)
 
 
@@ -1884,8 +1897,8 @@ def plano_trabalho_horarios_excluir(request, pk):
 def _modelos_motivo_lista_url(volta_step1='', return_to=''):
     url = reverse('eventos:modelos-motivo-lista')
     params = {}
-    volta = (volta_step1 or '').strip()
-    retorno = (return_to or '').strip()
+    volta = str(volta_step1).strip() if volta_step1 not in (None, '') else ''
+    retorno = str(return_to).strip() if return_to not in (None, '') else ''
     if volta:
         params['volta_step1'] = volta
     if retorno:
@@ -1991,6 +2004,11 @@ def modelos_motivo_lista(request):
     context = {
         'object_list': lista,
         'volta_step1': volta_step1,
+        'cadastrar_modelo_url': _append_query_params(
+            reverse('eventos:modelos-motivo-cadastrar'),
+            volta_step1=volta_step1,
+            return_to=return_to,
+        ),
         'filters': {
             'q': q,
             'date_from': date_from,
@@ -2933,7 +2951,7 @@ def guiado_etapa_6(request, evento_id):
     etapa1_ok = _evento_etapa1_completa(evento)
     etapa2_ok = _evento_roteiros_ok(evento)
     etapa3_ok = _evento_termos_ok(evento)
-    etapa4_ok = _evento_pt_os_ok(evento)
+    etapa4_ok = _evento_etapa4_concluida(evento)
     etapa5_ok = _evento_oficios_ok(evento)
     etapa6_ok = _evento_justificativa_ok(evento)
     oficios_count = evento.oficios.count()
@@ -3018,6 +3036,8 @@ def _guiado_v2_step_visual_state(evento, etapa_key):
         return 'draft' if evento.oficios.exists() else 'pending'
 
     if etapa_key == 'pt-os':
+        if _evento_etapa4_concluida(evento):
+            return 'completed'
         planos = PlanoTrabalho.objects.filter(evento=evento)
         ordens = OrdemServico.objects.filter(evento=evento)
         total = planos.count() + ordens.count()
@@ -3742,7 +3762,7 @@ def guiado_finalizacao_v2(request, evento_id):
     etapa1_ok = _evento_etapa1_completa(evento)
     etapa2_ok = _evento_roteiros_ok(evento)
     etapa3_ok = _guiado_v2_oficios_justificativas_ok(evento)
-    etapa4_ok = _evento_pt_os_ok(evento)
+    etapa4_ok = _evento_etapa4_concluida(evento)
     etapa5_ok = _evento_termos_ok(evento)
     oficios_count = evento.oficios.count()
     roteiros_count = evento.roteiros.count()

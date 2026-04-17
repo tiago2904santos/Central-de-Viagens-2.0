@@ -153,7 +153,36 @@
               <h3 class="oficio-step3-section-title">3. Destinos</h3>
               <p class="oficio-step3-section-text">Reordene por arrastar e soltar para atualizar automaticamente a sequência dos trechos.</p>
             </div>
-            <div id="destinos-container" class="oficio-step3-destinos-stack" data-destino-estado-fixo-id="{{ destino_estado_fixo_id|default:'' }}" data-destino-estado-fixo-nome="{{ destino_estado_fixo_nome|default:'Paraná (PR)' }}"></div>
+            <div id="destinos-container" class="oficio-step3-destinos-stack" data-destino-estado-fixo-id="{{ destino_estado_fixo_id|default:'' }}" data-destino-estado-fixo-nome="{{ destino_estado_fixo_nome|default:'Paraná (PR)' }}">
+              {% for destino in destinos_iniciais %}
+              <div class="app-destination-row destino-row row g-2 align-items-end" data-destino-row>
+                <div class="col-md-1 destino-drag-col">
+                  <button type="button" class="btn btn-sm btn-outline-secondary destino-drag-handle" aria-label="Arrastar destino {{ forloop.counter }}">&#9776;</button>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small">UF</label>
+                  <select name="destino_estado_{{ forloop.counter0 }}" class="destino-estado" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">
+                    <option value="">Selecione...</option>
+                    {% for estado in estados_choices_payload %}
+                    <option value="{{ estado.id }}" data-sigla="{{ estado.sigla|upper }}"{% if destino.estado_id == estado.id %} selected{% endif %}>{{ estado.nome }} ({{ estado.sigla }})</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small">Cidade</label>
+                  <select name="destino_cidade_{{ forloop.counter0 }}" class="destino-cidade" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..." data-cidade-id="{{ destino.cidade_id }}">
+                    <option value="">Selecione...</option>
+                    {% if destino.cidade_id %}
+                    <option value="{{ destino.cidade_id }}" selected>{{ destino.cidade_nome }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+                <div class="col-md-2 destino-remove-col">
+                  <button type="button" class="btn btn-outline-danger btn-remover-destino">Remover</button>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
             <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary mt-2 w-100">Adicionar destino</button>
             {% if form.destinos_payload.errors %}<div class="invalid-feedback d-block mt-1">{{ form.destinos_payload.errors.0 }}</div>{% endif %}
           </section>
@@ -181,16 +210,34 @@
             </div>
           </section>
 
-          <div class="form-actions system-form-actions ordem-servico-form-actions">
-            <div class="system-form-actions__group system-form-actions__group--secondary">
-              <a href="{{ return_to|default:ordens_servico_lista_url }}" class="btn btn-outline-secondary" data-autosave-link="1">Cancelar</a>
-            </div>
-            <p class="oficio-autosave-status ordem-servico-autosave-status small text-muted mb-0" id="ordem-servico-autosave-status" aria-live="polite"></p>
-            <div class="system-form-actions__group system-form-actions__group--primary">
-              <button type="submit" class="btn btn-primary">{% if object %}Salvar alterações{% else %}Salvar ordem de serviço{% endif %}</button>
-            </div>
-          </div>
         </form>
+
+        <div class="app-summary-actions oficio-summary-actions oficio-step4-footer ordem-servico-footer" data-oficio-footer-actions="1">
+          <div class="app-summary-actions-group oficio-summary-actions-group">
+            <a href="{{ return_to|default:ordens_servico_lista_url }}" class="btn btn-outline-secondary" data-autosave-link="1">
+              <span>Voltar para lista</span>
+            </a>
+            {% if object and object.pk %}
+            <a href="{% url 'eventos:documentos-ordens-servico-excluir' object.pk %}" class="btn btn-outline-danger" data-autosave-link="1">
+              <span>Lixeira</span>
+            </a>
+            <a href="{% url 'eventos:documentos-ordens-servico-download' object.pk 'docx' %}" class="btn btn-doc-action btn-doc-action--secondary" data-autosave-link="1">
+              <i class="bi bi-filetype-docx"></i>
+              <span>DOCX</span>
+            </a>
+            <a href="{% url 'eventos:documentos-ordens-servico-download' object.pk 'pdf' %}" class="btn btn-doc-action btn-doc-action--pdf" data-autosave-link="1">
+              <i class="bi bi-filetype-pdf"></i>
+              <span>PDF</span>
+            </a>
+            {% endif %}
+            {% if not object or object.status != 'FINALIZADO' %}
+            <button type="submit" form="ordem-servico-form" name="finalizar" value="1" class="btn btn-doc-action btn-doc-action--primary" data-autosave-bypass="1">
+              <i class="bi bi-check2-circle"></i>
+              <span>Finalizar Ordem de Serviço</span>
+            </button>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
   </div>

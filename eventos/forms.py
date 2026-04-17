@@ -659,10 +659,10 @@ class PlanoTrabalhoForm(FormComErroInvalidMixin, forms.ModelForm):
 
         if selected_event:
             self.fields['oficio'].queryset = Oficio.objects.filter(
-                Q(evento=selected_event) | Q(evento__isnull=True)
+                Q(eventos=selected_event) | Q(eventos__isnull=True)
             ).order_by('-updated_at')
             self.fields['oficios_relacionados'].queryset = Oficio.objects.filter(
-                Q(evento=selected_event) | Q(evento__isnull=True)
+                Q(eventos=selected_event) | Q(eventos__isnull=True)
             ).order_by('-updated_at')
             self.fields['roteiro'].queryset = RoteiroEvento.objects.filter(
                 Q(evento=selected_event) | Q(evento__isnull=True)
@@ -1252,6 +1252,15 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
         if data_val and hasattr(data_val, 'strftime'):
             self.initial['data_criacao'] = data_val.strftime('%d/%m/%Y')
 
+        oficio_inicial = None
+        raw_oficio = ''
+        if self.is_bound:
+            raw_oficio = (self.data.get('oficio') or '').strip()
+        else:
+            raw_oficio = str(self.initial.get('oficio') or '').strip()
+        if raw_oficio.isdigit():
+            oficio_inicial = Oficio.objects.filter(pk=int(raw_oficio)).prefetch_related('viajantes', 'trechos__destino_cidade', 'trechos__destino_estado').first()
+
         selected_event = None
         if self.is_bound:
             raw_event = (self.data.get('evento') or '').strip()
@@ -1259,8 +1268,15 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
                 selected_event = Evento.objects.filter(pk=int(raw_event)).first()
         elif self.instance and self.instance.evento_id:
             selected_event = self.instance.evento
+        elif self.instance and self.instance.oficio_id:
+            selected_event = self.instance.get_evento_relacionado()
         elif self.initial.get('evento'):
             selected_event = Evento.objects.filter(pk=self.initial.get('evento')).first()
+        elif oficio_inicial:
+            selected_event = oficio_inicial.get_evento_principal() or oficio_inicial.evento
+
+        if selected_event:
+            self.initial.setdefault('evento', selected_event.pk)
 
         if selected_event:
             self.fields['oficio'].queryset = (
@@ -1284,7 +1300,11 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
 
         if self.instance and self.instance.pk:
             self.initial.setdefault('viajantes', list(self.instance.viajantes.values_list('pk', flat=True)))
-            self.initial.setdefault('destinos_payload', json.dumps(self.instance.destinos_json or []))
+            destinos_iniciais = self.instance.destinos_json or []
+            evento_relacionado = self.instance.get_evento_relacionado()
+            if not destinos_iniciais and evento_relacionado:
+                destinos_iniciais = self._build_destinos_from_evento(evento_relacionado)
+            self.initial.setdefault('destinos_payload', json.dumps(destinos_iniciais))
             self.initial.setdefault('data_unica', bool(self.instance.data_unica))
             if self.instance.data_deslocamento_fim:
                 self.initial.setdefault('data_deslocamento_fim', self.instance.data_deslocamento_fim)
@@ -1293,19 +1313,14 @@ class OrdemServicoForm(FormComErroInvalidMixin, forms.ModelForm):
             if self.instance.modelo_motivo_id and not self.initial.get('modelo_motivo'):
                 self.initial['modelo_motivo'] = self.instance.modelo_motivo_id
         else:
-            oficio_inicial = None
-            raw_oficio = None
-            if self.is_bound:
-                raw_oficio = (self.data.get('oficio') or '').strip()
-            else:
-                raw_oficio = str(self.initial.get('oficio') or '').strip()
-            if raw_oficio.isdigit():
-                oficio_inicial = Oficio.objects.filter(pk=int(raw_oficio)).prefetch_related('viajantes', 'trechos__destino_cidade', 'trechos__destino_estado').first()
             if oficio_inicial:
                 self.initial.setdefault('viajantes', list(oficio_inicial.viajantes.values_list('pk', flat=True)))
                 self.initial.setdefault('data_deslocamento', self._infer_data_deslocamento(oficio=oficio_inicial, evento=selected_event))
                 self.initial.setdefault('data_deslocamento_fim', self.initial.get('data_deslocamento'))
-                self.initial.setdefault('destinos_payload', json.dumps(self._build_destinos_from_oficio(oficio_inicial)))
+                destinos_iniciais = self._build_destinos_from_oficio(oficio_inicial)
+                if not destinos_iniciais and selected_event:
+                    destinos_iniciais = self._build_destinos_from_evento(selected_event)
+                self.initial.setdefault('destinos_payload', json.dumps(destinos_iniciais))
             elif selected_event:
                 self.initial.setdefault('data_deslocamento', self._infer_data_deslocamento(evento=selected_event))
                 self.initial.setdefault('data_deslocamento_fim', self.initial.get('data_deslocamento'))
