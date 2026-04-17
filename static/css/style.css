@@ -2898,7 +2898,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     flex: 1 1 42rem;
     gap: 0.48rem;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .oficio-list-chip {
@@ -4023,6 +4023,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.7rem;
+    align-items: center;
 }
 
 .termo-doc-card__viatura-head-copy {

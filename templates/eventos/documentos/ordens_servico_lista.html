@@ -137,13 +137,6 @@
                     </span>
                     {% endfor %}
                 </div>
-                {% if object.corner_badges %}
-                <div class="oficio-list-card__header-status">
-                    {% for badge in object.corner_badges %}
-                    <span class="oficio-list-badge {{ badge.css_class }}"><span>{{ badge.value }}</span></span>
-                    {% endfor %}
-                </div>
-                {% endif %}
             </div>
 
             <div class="oficio-list-core-grid">
