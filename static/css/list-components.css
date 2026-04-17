@@ -612,7 +612,7 @@
 }
 
 .system-document-filter__field--actions {
-    grid-column: span 3;
+    grid-column: span 4;
     align-self: end;
 }
 
@@ -644,7 +644,7 @@
 }
 
 .system-document-filter__actions .btn {
-    min-height: 2.5rem;
+    grid-column: span 2;
     padding-inline: 1rem;
     border-radius: 0.78rem;
     font-weight: 700;
