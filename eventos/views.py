@@ -1881,11 +1881,17 @@ def plano_trabalho_horarios_excluir(request, pk):
 
 # ---------- Modelos de motivo (CRUD) ----------
 
-def _modelos_motivo_lista_url(volta_step1=''):
+def _modelos_motivo_lista_url(volta_step1='', return_to=''):
     url = reverse('eventos:modelos-motivo-lista')
+    params = {}
     volta = (volta_step1 or '').strip()
+    retorno = (return_to or '').strip()
     if volta:
-        return f'{url}?{urlencode({"volta_step1": volta})}'
+        params['volta_step1'] = volta
+    if retorno:
+        params['return_to'] = retorno
+    if params:
+        return f'{url}?{urlencode(params)}'
     return url
 
 
@@ -1951,6 +1957,7 @@ def _get_safe_next_url(request, default_url=''):
 def modelos_motivo_lista(request):
     """Lista de modelos de motivo para uso no Step 1 do OfÃ­cio."""
     volta_step1 = request.GET.get('volta_step1', '')
+    return_to = _safe_return_to(request, '')
     q = (request.GET.get('q') or '').strip()
     date_from = (request.GET.get('date_from') or '').strip()
     date_to = (request.GET.get('date_to') or '').strip()
@@ -1998,7 +2005,8 @@ def modelos_motivo_lista(request):
             ('padrao', 'Padrao'),
         ],
         'order_dir_choices': DOCUMENT_LIST_ORDER_DIR_CHOICES,
-        'clear_filters_url': _modelos_motivo_lista_url(volta_step1),
+        'return_to': return_to,
+        'clear_filters_url': _modelos_motivo_lista_url(volta_step1, return_to=return_to),
         'hide_page_header': True,
     }
     return render(request, 'eventos/modelos_motivo/lista.html', context)
