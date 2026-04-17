@@ -9,14 +9,15 @@
 
 {% block list_header_actions %}
 {% if volta_step1 %}
-<a href="{% url 'eventos:oficio-step1' volta_step1 %}" class="btn btn-outline-secondary system-list-action-btn">Voltar ao oficio</a>
+<a href="{% url 'eventos:oficio-step1' volta_step1 %}{% if return_to %}?return_to={{ return_to|urlencode }}{% endif %}" class="btn btn-outline-secondary system-list-action-btn">Voltar ao oficio</a>
 {% endif %}
-<a href="{% url 'eventos:modelos-motivo-cadastrar' %}{% if volta_step1 %}?volta_step1={{ volta_step1|urlencode }}{% endif %}" class="btn btn-primary system-list-action-btn">Cadastrar modelo</a>
+<a href="{% url 'eventos:modelos-motivo-cadastrar' %}{% if volta_step1 %}?volta_step1={{ volta_step1|urlencode }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}{% elif return_to %}?return_to={{ return_to|urlencode }}{% endif %}" class="btn btn-primary system-list-action-btn">Cadastrar modelo</a>
 {% endblock %}
 {% block list_filter_actions_field_class %}system-document-filter__field--span-3{% endblock %}
 
 {% block list_filter_hidden_fields %}
 {% if volta_step1 %}<input type="hidden" name="volta_step1" value="{{ volta_step1 }}">{% endif %}
+{% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
 {% endblock %}
 
 {% block list_filter_primary_fields %}
@@ -74,13 +75,13 @@
                     <td>{% if obj.padrao %}<span class="badge bg-primary">Padrao</span>{% else %}-{% endif %}</td>
                     <td class="text-end">
                         {% if not obj.padrao %}
-                        <form method="post" action="{% url 'eventos:modelos-motivo-definir-padrao' obj.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1|urlencode }}{% endif %}" class="d-inline">
+                        <form method="post" action="{% url 'eventos:modelos-motivo-definir-padrao' obj.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1|urlencode }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}{% elif return_to %}?return_to={{ return_to|urlencode }}{% endif %}" class="d-inline">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-outline-secondary">Definir como padrao</button>
                         </form>
                         {% endif %}
-                        <a href="{% url 'eventos:modelos-motivo-editar' obj.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary">Editar</a>
-                        <a href="{% url 'eventos:modelos-motivo-excluir' obj.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1|urlencode }}{% endif %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                        <a href="{% url 'eventos:modelos-motivo-editar' obj.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1|urlencode }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}{% elif return_to %}?return_to={{ return_to|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <a href="{% url 'eventos:modelos-motivo-excluir' obj.pk %}{% if volta_step1 %}?volta_step1={{ volta_step1|urlencode }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}{% elif return_to %}?return_to={{ return_to|urlencode }}{% endif %}" class="btn btn-sm btn-outline-danger">Excluir</a>
                     </td>
                 </tr>
                 {% empty %}
@@ -93,7 +94,7 @@
 {% endblock %}
 
 {% block list_floating_actions %}
-{% include 'includes/list/floating_new_button.html' with url='/eventos/modelos-motivo/cadastrar/'|add:'' label='Cadastrar modelo' icon='bi-plus-lg' %}
+{% include 'includes/list/floating_new_button.html' with url=('/eventos/modelos-motivo/cadastrar/'|add:'')|add:'' label='Cadastrar modelo' icon='bi-plus-lg' %}
 {% endblock %}
 
 {% block extra_js %}

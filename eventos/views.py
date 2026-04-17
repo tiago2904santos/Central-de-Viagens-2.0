@@ -2016,15 +2016,17 @@ def modelos_motivo_lista(request):
 def modelos_motivo_cadastrar(request):
     """Cadastro de modelo de motivo."""
     volta_step1 = request.GET.get('volta_step1', '')
+    return_to = _safe_return_to(request, '')
     form = ModeloMotivoViagemForm(request.POST or None)
     if form.is_valid():
         form.save()
         messages.success(request, 'Modelo de motivo salvo com sucesso.')
-        return redirect(_modelos_motivo_lista_url(volta_step1))
+        return redirect(_modelos_motivo_lista_url(volta_step1, return_to=return_to))
     context = {
         'form': form,
         'object': None,
         'volta_step1': volta_step1,
+        'return_to': return_to,
         'hide_page_header': True,
     }
     return render(request, 'eventos/modelos_motivo/form.html', context)
@@ -2034,16 +2036,18 @@ def modelos_motivo_cadastrar(request):
 def modelos_motivo_editar(request, pk):
     """EdiÃ§Ã£o de modelo de motivo."""
     volta_step1 = request.GET.get('volta_step1', '')
+    return_to = _safe_return_to(request, '')
     obj = get_object_or_404(ModeloMotivoViagem, pk=pk)
     form = ModeloMotivoViagemForm(request.POST or None, instance=obj)
     if form.is_valid():
         form.save()
         messages.success(request, 'Modelo de motivo atualizado com sucesso.')
-        return redirect(_modelos_motivo_lista_url(volta_step1))
+        return redirect(_modelos_motivo_lista_url(volta_step1, return_to=return_to))
     context = {
         'form': form,
         'object': obj,
         'volta_step1': volta_step1,
+        'return_to': return_to,
         'hide_page_header': True,
     }
     return render(request, 'eventos/modelos_motivo/form.html', context)
@@ -2053,15 +2057,17 @@ def modelos_motivo_editar(request, pk):
 def modelos_motivo_excluir(request, pk):
     """ExclusÃ£o de modelo de motivo."""
     volta_step1 = request.GET.get('volta_step1', '')
+    return_to = _safe_return_to(request, '')
     obj = get_object_or_404(ModeloMotivoViagem, pk=pk)
     if request.method == 'POST':
         nome = obj.nome
         obj.delete()
         messages.success(request, f'Modelo "{nome}" excluÃ­do com sucesso.')
-        return redirect(_modelos_motivo_lista_url(volta_step1))
+        return redirect(_modelos_motivo_lista_url(volta_step1, return_to=return_to))
     context = {
         'object': obj,
         'volta_step1': volta_step1,
+        'return_to': return_to,
         'hide_page_header': True,
     }
     return render(request, 'eventos/modelos_motivo/excluir_confirm.html', context)
@@ -2072,12 +2078,13 @@ def modelos_motivo_excluir(request, pk):
 def modelos_motivo_definir_padrao(request, pk):
     """Define modelo de motivo padrÃ£o para preseleÃ§Ã£o no Step 1 do OfÃ­cio."""
     volta_step1 = request.GET.get('volta_step1', '')
+    return_to = _safe_return_to(request, '')
     obj = get_object_or_404(ModeloMotivoViagem, pk=pk)
     ModeloMotivoViagem.objects.exclude(pk=obj.pk).update(padrao=False)
     obj.padrao = True
     obj.save()
     messages.success(request, f'Modelo "{obj.nome}" definido como padrÃ£o.')
-    return redirect(_modelos_motivo_lista_url(volta_step1))
+    return redirect(_modelos_motivo_lista_url(volta_step1, return_to=return_to))
 
 
 @login_required
@@ -4409,8 +4416,9 @@ def oficio_step1(request, pk):
         'form': form,
         'step': 1,
         'next_step_url': step2_url,
-        'gerenciar_modelos_motivo_url': (
-            f"{reverse('eventos:modelos-motivo-lista')}?volta_step1={oficio.pk}"
+        'gerenciar_modelos_motivo_url': _modelos_motivo_lista_url(
+            oficio.pk,
+            return_to=return_to,
         ),
         'cadastrar_viajante_url': (
             f"{reverse('cadastros:viajante-cadastrar')}?next="
