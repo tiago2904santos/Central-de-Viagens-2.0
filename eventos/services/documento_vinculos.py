@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from django.db.models import Q
 
 from eventos.models import Evento, Oficio, OrdemServico, PlanoTrabalho
+from eventos.services.documentos.vinculos import documentos_vinculados_oficio
 
 
 @dataclass(frozen=True)
@@ -105,29 +106,17 @@ def resolver_vinculos_oficio(oficio: Oficio) -> dict:
             ),
         )
 
-    for plano in (
-        PlanoTrabalho.objects.filter(Q(oficio=oficio) | Q(oficios=oficio))
-        .distinct()
-        .order_by('-updated_at', '-created_at')
-    ):
+    for item in documentos_vinculados_oficio(oficio):
+        tipo_documento = item.get('tipo_documento') or 'documento'
+        if tipo_documento == 'termo_autorizacao':
+            tipo_documento = 'termo'
         _push_unique(
             diretos,
             VinculoDocumento(
-                tipo="plano_trabalho",
-                origem="direto",
-                id=plano.pk,
-                rotulo=f'PT {plano.numero_formatado or f"#{plano.pk}"}',
-            ),
-        )
-
-    for os in OrdemServico.objects.filter(oficio=oficio).order_by('-updated_at', '-created_at'):
-        _push_unique(
-            diretos,
-            VinculoDocumento(
-                tipo="ordem_servico",
-                origem="direto",
-                id=os.pk,
-                rotulo=f'OS {os.numero_formatado or f"#{os.pk}"}',
+                tipo=tipo_documento,
+                origem=item.get('origem') or 'direto',
+                id=item.get('documento_id'),
+                rotulo=item.get('titulo') or 'Documento',
             ),
         )
 
@@ -145,42 +134,6 @@ def resolver_vinculos_oficio(oficio: Oficio) -> dict:
                     rotulo=f'OS {getattr(os, "numero_formatado", "") or f"#{os.pk}"} (via evento)',
                 ),
             )
-
-    justificativa = getattr(oficio, "justificativa", None)
-    if justificativa and justificativa.pk:
-        _push_unique(
-            diretos,
-            VinculoDocumento(
-                tipo="justificativa",
-                origem="direto",
-                id=justificativa.pk,
-                rotulo=f"Justificativa #{justificativa.pk}",
-            ),
-        )
-
-    termos_diretos = list(oficio.termos_autorizacao.order_by("-updated_at", "-created_at"))
-    for termo in termos_diretos:
-        _push_unique(
-            diretos,
-            VinculoDocumento(
-                tipo="termo",
-                origem="direto",
-                id=termo.pk,
-                rotulo=termo.numero_formatado,
-            ),
-        )
-
-    termos_legado = list(oficio.termos_autorizacao_relacionados.exclude(oficio_id=oficio.pk).order_by("-updated_at", "-created_at"))
-    for termo in termos_legado:
-        _push_unique(
-            legado,
-            VinculoDocumento(
-                tipo="termo",
-                origem="legado",
-                id=termo.pk,
-                rotulo=termo.numero_formatado,
-            ),
-        )
 
     return {"diretos": diretos, "herdados": herdados, "legado": legado}
 

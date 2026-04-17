@@ -1,1 +1,139 @@
-{# Bloco de vínculos documentais oculto — a reintroduzir incrementalmente (ver document_links_block legado no histórico Git). #}
+{% if block %}
+<section class="oficio-list-subcard oficio-list-surface oficio-list-surface--panel oficio-vinculos-panel">
+    <div class="oficio-list-subcard__header">
+        <div>
+            <h3 class="oficio-list-subcard__title">{{ block.title|default:'Documentos vinculados' }}</h3>
+            <p class="oficio-list-subcard__subtitle">{{ block.count_label|default:'Sem vínculos registrados.' }}</p>
+        </div>
+    </div>
+
+    <div class="oficio-list-subcard__body">
+        {% if block.items %}
+        <div class="oficio-list-term-list oficio-vinculos-list">
+            {% for item in block.items %}
+            <article class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft oficio-vinculo-row{% if item.status_compatibilidade == 'CONFLITO' %} is-conflict{% endif %}">
+                <div class="oficio-list-term-row__name">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <strong>
+                            {% if item.titulo %}{{ item.titulo }}{% elif item.title %}{{ item.title }}{% else %}Documento{% endif %}
+                        </strong>
+                        <span class="oficio-list-badge {% if item.badge_css_class %}{{ item.badge_css_class }}{% else %}is-muted{% endif %}">
+                            <span>
+                                {% if item.badge_label %}{{ item.badge_label }}{% elif item.status_label %}{{ item.status_label }}{% else %}Compatível{% endif %}
+                            </span>
+                        </span>
+                        {% if item.origem %}
+                        <span class="oficio-list-badge is-muted">
+                            <span>
+                                {% if item.origem == 'vinculo' %}vínculo explícito{% elif item.origem == 'legado' %}legado{% else %}{{ item.origem }}{% endif %}
+                            </span>
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if item.campos_herdados_oficio or item.campos_herdados_documento %}
+                    <div class="text-muted small mt-1">
+                        {% if item.campos_herdados_oficio %}
+                        <span>Herdado para o ofício: {{ item.campos_herdados_oficio|join:', ' }}</span>
+                        {% endif %}
+                        {% if item.campos_herdados_documento %}
+                        {% if item.campos_herdados_oficio %}<span class="mx-1">•</span>{% endif %}
+                        <span>Herdado para o documento: {{ item.campos_herdados_documento|join:', ' }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if item.conflitos %}
+                    <div class="mt-2">
+                        {% for conflito in item.conflitos %}
+                        <div class="small text-danger">
+                            <strong>{{ conflito.campo|default:'Campo' }}:</strong> {{ conflito.mensagem|default:'Conflito detectado.' }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if item.observacoes %}
+                    <div class="mt-1">
+                        {% for observacao in item.observacoes %}
+                        <div class="small text-muted">{{ observacao }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="oficio-list-term-row__actions">
+                    {% if item.url %}
+                    <a href="{{ item.url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Abrir</span>
+                    </a>
+                    {% endif %}
+                    {% if item.status_compatibilidade == 'CONFLITO' %}
+                    <span class="oficio-list-badge is-danger"><span>Conflito</span></span>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">{{ block.empty_text|default:'Nenhum documento vinculado.' }}</p>
+        {% endif %}
+    </div>
+
+    {% if block.candidate_items %}
+    <div class="oficio-list-subcard__body border-top pt-3 mt-3">
+        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-3">
+            <div>
+                <h4 class="oficio-list-subcard__title mb-0">Documentos compatíveis</h4>
+                <p class="oficio-list-subcard__subtitle mb-0">{{ block.candidate_count_label|default:'Documentos disponíveis para vínculo.' }}</p>
+            </div>
+        </div>
+        <div class="oficio-list-term-list oficio-vinculos-list">
+            {% for item in block.candidate_items %}
+            <article class="oficio-list-term-row oficio-list-surface oficio-list-surface--soft oficio-vinculo-row">
+                <div class="oficio-list-term-row__name">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <strong>
+                            {% if item.titulo %}{{ item.titulo }}{% elif item.title %}{{ item.title }}{% else %}Documento{% endif %}
+                        </strong>
+                        <span class="oficio-list-badge {% if item.badge_css_class %}{{ item.badge_css_class }}{% else %}is-success{% endif %}">
+                            <span>
+                                {% if item.badge_label %}{{ item.badge_label }}{% elif item.status_label %}{{ item.status_label }}{% else %}Compatível{% endif %}
+                            </span>
+                        </span>
+                    </div>
+                    {% if item.observacoes %}
+                    <div class="mt-1">
+                        {% for observacao in item.observacoes %}
+                        <div class="small text-muted">{{ observacao }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="oficio-list-term-row__actions">
+                    {% if block.vincular_url %}
+                    <form method="post" action="{{ block.vincular_url }}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="tipo_documento" value="{{ item.tipo_documento }}">
+                        <input type="hidden" name="documento_id" value="{{ item.documento_id }}">
+                        <input type="hidden" name="return_to" value="{{ block.return_to }}">
+                        <button type="submit" class="btn btn-sm btn-doc-action btn-doc-action--primary">
+                            <i class="bi bi-link-45deg"></i>
+                            <span>Vincular</span>
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if item.url %}
+                    <a href="{{ item.url }}" class="btn btn-sm btn-doc-action btn-doc-action--secondary">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+    {% elif block.candidate_empty_text %}
+    <div class="oficio-list-subcard__body border-top pt-3 mt-3">
+        <p class="text-muted mb-0">{{ block.candidate_empty_text }}</p>
+    </div>
+    {% endif %}
+</section>
+{% endif %}

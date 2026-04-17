@@ -56,7 +56,7 @@ def build_vinculo_documental_url(tipo, pk, *, oficio_pk=None):
         if oficio_pk:
             return reverse('eventos:oficio-justificativa', kwargs={'pk': oficio_pk})
         return reverse('eventos:documentos-justificativas-detalhe', kwargs={'pk': pk})
-    if tipo == 'termo':
+    if tipo in {'termo', 'termo_autorizacao'}:
         return reverse('eventos:documentos-termos-detalhe', kwargs={'pk': pk})
     return ''
 

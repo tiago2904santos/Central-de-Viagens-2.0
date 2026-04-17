@@ -242,7 +242,7 @@
               </ul>
             </section>
 
-            {# Painel de vínculos documentais removido da UI do resumo — reintroduzir incrementalmente. #}
+            {% include 'includes/list/document_links_block.html' with block=documentos_vinculados_block %}
 
             <section class="oficio-summary-section oficio-step4-card oficio-step4-card--resumo-viagem">
               <div class="oficio-step4-card-head">

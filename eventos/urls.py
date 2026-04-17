@@ -123,6 +123,7 @@ urlpatterns = [
     path('oficio/<int:pk>/step3/calcular-diarias/', login_required(views.oficio_step3_calcular_diarias), name='oficio-step3-calcular-diarias'),
     path('oficio/<int:pk>/justificativa/', login_required(views.oficio_justificativa), name='oficio-justificativa'),
     path('oficio/<int:pk>/documentos/', login_required(views.oficio_documentos), name='oficio-documentos'),
+    path('oficio/<int:pk>/documentos/vincular/', login_required(views.oficio_documento_vincular), name='oficio-documento-vincular'),
     path('oficio/<int:pk>/documentos/<str:tipo_documento>/<str:formato>/', login_required(views.oficio_documento_download), name='oficio-documento-download'),
     path('oficio/<int:pk>/step4/', login_required(views.oficio_step4), name='oficio-step4'),
     path('trechos/<int:pk>/calcular-km/', login_required(views.trecho_calcular_km), name='trecho-calcular-km'),

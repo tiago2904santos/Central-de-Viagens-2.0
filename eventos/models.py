@@ -4,6 +4,8 @@ from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 from django.utils.text import slugify
@@ -1859,6 +1861,9 @@ class Oficio(models.Model):
         eid = getattr(evento, 'pk', evento)
         return self.eventos.filter(pk=eid).exists()
 
+    def get_documentos_vinculados(self):
+        return self.documentos_vinculados.select_related('content_type').order_by('pk')
+
 
 class OficioEventoVinculo(models.Model):
     """
@@ -1890,6 +1895,67 @@ class OficioEventoVinculo(models.Model):
 
     def __str__(self):
         return f'{self.oficio_id} → {self.evento_id}'
+
+
+class OficioDocumentoVinculo(models.Model):
+    """
+    Vínculo documental auditável do Ofício com outro documento do sistema.
+    Usa GenericForeignKey para permitir reutilização incremental em outros tipos.
+    """
+
+    STATUS_COMPATIVEL = 'COMPATIVEL'
+    STATUS_CONFLITO = 'CONFLITO'
+    STATUS_CHOICES = [
+        (STATUS_COMPATIVEL, 'Compatível'),
+        (STATUS_CONFLITO, 'Conflito'),
+    ]
+
+    oficio = models.ForeignKey(
+        'Oficio',
+        on_delete=models.CASCADE,
+        related_name='documentos_vinculados',
+        verbose_name='Ofício',
+    )
+    tipo_documento = models.CharField('Tipo de documento', max_length=40, db_index=True)
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.PROTECT,
+        related_name='eventos_oficio_documento_vinculos',
+        verbose_name='Tipo de conteúdo',
+    )
+    object_id = models.PositiveIntegerField('ID do documento', db_index=True)
+    documento = GenericForeignKey('content_type', 'object_id')
+    documento_rotulo = models.CharField('Rótulo do documento', max_length=255, blank=True, default='')
+    status_compatibilidade = models.CharField(
+        'Status de compatibilidade',
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_COMPATIVEL,
+        db_index=True,
+    )
+    snapshot_oficio = models.JSONField('Snapshot do ofício', blank=True, default=dict)
+    snapshot_documento = models.JSONField('Snapshot do documento', blank=True, default=dict)
+    campos_herdados_oficio = models.JSONField('Campos herdados do ofício', blank=True, default=list)
+    campos_herdados_documento = models.JSONField('Campos herdados do documento', blank=True, default=list)
+    conflitos = models.JSONField('Conflitos', blank=True, default=list)
+    observacoes = models.JSONField('Observações', blank=True, default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Vínculo documental do ofício'
+        verbose_name_plural = 'Vínculos documentais do ofício'
+        ordering = ['pk']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['oficio', 'content_type', 'object_id'],
+                name='eventos_oficiodocumentovinculo_unique',
+            ),
+        ]
+
+    def __str__(self):
+        rotulo = self.documento_rotulo or f'{self.content_type_id}:{self.object_id}'
+        return f'{self.oficio_id} → {rotulo}'
 
 
 class OficioTrecho(models.Model):
