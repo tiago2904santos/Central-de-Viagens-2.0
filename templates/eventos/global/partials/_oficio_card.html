@@ -100,6 +100,19 @@
                     </a>
                     {% for action in oficio.justificativa.downloads %}
                     {% if action.available %}
+                    {% if action.label == 'PDF' %}
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-doc-action btn-doc-action--secondary"
+                        data-pdf-preview-trigger="true"
+                        data-pdf-url="{{ action.url }}"
+                        aria-label="Visualizar PDF da justificativa"
+                        title="Visualizar PDF da justificativa"
+                    >
+                        <i class="bi bi-eye"></i>
+                        <span>Visualizar</span>
+                    </button>
+                    {% endif %}
                     <a
                         href="{{ action.url }}"
                         class="btn btn-sm btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}"
@@ -140,6 +153,17 @@
                                 </a>
                                 {% endif %}
                                 {% if termo.download_pdf_url %}
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-doc-action btn-doc-action--secondary"
+                                    data-pdf-preview-trigger="true"
+                                    data-pdf-url="{{ termo.download_pdf_url }}"
+                                    aria-label="Visualizar PDF do termo"
+                                    title="Visualizar PDF do termo"
+                                >
+                                    <i class="bi bi-eye"></i>
+                                    <span>Visualizar</span>
+                                </button>
                                 <a href="{{ termo.download_pdf_url }}" class="btn btn-sm btn-doc-action btn-doc-action--pdf" data-direct-download="true">
                                     <i class="bi bi-filetype-pdf"></i>
                                 </a>
@@ -168,6 +192,19 @@
                 </a>
                 {% for action in oficio.footer_actions %}
                 {% if action.label != 'Abrir' %}
+                {% if action.label == 'PDF' and action.url %}
+                <button
+                    type="button"
+                    class="btn btn-sm btn-doc-action btn-doc-action--secondary"
+                    data-pdf-preview-trigger="true"
+                    data-pdf-url="{{ action.url }}"
+                    aria-label="Visualizar PDF do oficio"
+                    title="Visualizar PDF do oficio"
+                >
+                    <i class="bi bi-eye"></i>
+                    <span>Visualizar</span>
+                </button>
+                {% endif %}
                 <a
                     href="{{ action.url }}"
                     class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}"

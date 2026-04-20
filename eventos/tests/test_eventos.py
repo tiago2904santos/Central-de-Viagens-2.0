@@ -6844,8 +6844,49 @@ class OficioDocumentosTest(TestCase):
 
         mapping = build_oficio_template_context(oficio)
 
-        self.assertEqual(mapping['col_volta_saida'], f'SaÃ­da {destino.nome}/{self.estado.sigla}: 10/10/2026 17:30')
-        self.assertEqual(mapping['col_volta_chegada'], f'Chegada {self.cidade.nome}/{self.estado.sigla}: 10/10/2026 18:10')
+        self.assertNotIn('\u2014', mapping['col_volta_saida'])
+        self.assertNotIn('\u2014', mapping['col_volta_chegada'])
+        self.assertIn(destino.nome, mapping['col_volta_saida'])
+        self.assertIn(self.cidade.nome, mapping['col_volta_chegada'])
+        self.assertIn('10/10/2026 17:30', mapping['col_volta_saida'])
+        self.assertIn('10/10/2026 18:10', mapping['col_volta_chegada'])
+
+    def test_template_oficio_retorno_sem_cidade_explicita_usa_ultimo_destino_da_ida(self):
+        self._criar_configuracao()
+        oficio = self._criar_oficio(data_criacao=date(2026, 9, 20))
+        destino = Cidade.objects.create(nome='Cascavel Documento', estado=self.estado, codigo_ibge='4104808')
+
+        oficio.estado_sede = self.estado
+        oficio.cidade_sede = self.cidade
+        oficio.retorno_saida_cidade = ''
+        oficio.retorno_chegada_cidade = ''
+        oficio.retorno_saida_data = date(2026, 10, 10)
+        oficio.retorno_saida_hora = datetime.strptime('17:30', '%H:%M').time()
+        oficio.retorno_chegada_data = date(2026, 10, 10)
+        oficio.retorno_chegada_hora = datetime.strptime('18:10', '%H:%M').time()
+        oficio.save()
+
+        OficioTrecho.objects.create(
+            oficio=oficio,
+            ordem=0,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade,
+            destino_estado=self.estado,
+            destino_cidade=destino,
+            saida_data=date(2026, 10, 10),
+            saida_hora=datetime.strptime('08:00', '%H:%M').time(),
+            chegada_data=date(2026, 10, 10),
+            chegada_hora=datetime.strptime('08:40', '%H:%M').time(),
+        )
+
+        mapping = build_oficio_template_context(oficio)
+
+        self.assertNotIn('\u2014', mapping['col_volta_saida'])
+        self.assertNotIn('\u2014', mapping['col_volta_chegada'])
+        self.assertIn(destino.nome, mapping['col_volta_saida'])
+        self.assertIn(self.cidade.nome, mapping['col_volta_chegada'])
+        self.assertIn('10/10/2026 17:30', mapping['col_volta_saida'])
+        self.assertIn('10/10/2026 18:10', mapping['col_volta_chegada'])
 
     def test_contexto_documental_da_justificativa(self):
         self._criar_configuracao()

@@ -36,6 +36,19 @@
                     <td data-label="ACOES" class="text-end">
                         <div class="oficios-table__actions">
                             {% for action in oficio.table_actions %}
+                            {% if action.label == 'PDF' and action.url %}
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-doc-action btn-doc-action--secondary"
+                                data-pdf-preview-trigger="true"
+                                data-pdf-url="{{ action.url }}"
+                                aria-label="Visualizar PDF do oficio"
+                                title="Visualizar PDF do oficio"
+                            >
+                                <i class="bi bi-eye"></i>
+                                <span>Visualizar</span>
+                            </button>
+                            {% endif %}
                             <a
                                 href="{{ action.url }}"
                                 class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}"

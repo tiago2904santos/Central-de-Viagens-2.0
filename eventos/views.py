@@ -7159,7 +7159,12 @@ def _download_oficio_documento(request, oficio, tipo_documento, formato):
     if formato == DocumentoFormato.PDF:
         content_type = 'application/pdf'
     response = HttpResponse(payload, content_type=content_type)
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    preview_mode = (
+        formato == DocumentoFormato.PDF
+        and request.GET.get('preview') in {'1', 'true', 'yes'}
+    )
+    disposition = 'inline' if preview_mode else 'attachment'
+    response['Content-Disposition'] = f'{disposition}; filename="{filename}"'
     return response
 
 

@@ -17,6 +17,11 @@
 {% block simple_page_actions %}
 <a href="{% url 'eventos:documentos-justificativas' %}" class="btn btn-outline-secondary">Voltar</a>
 <a href="{% url 'eventos:documentos-justificativas-editar' object.pk %}" class="btn btn-outline-primary">Editar</a>
+{% if object.oficio %}
+<a href="{% url 'eventos:oficio-documento-download' object.oficio.pk 'justificativa' 'docx' %}" class="btn btn-outline-secondary">DOCX</a>
+<a href="{% url 'eventos:oficio-documento-download' object.oficio.pk 'justificativa' 'pdf' %}" class="btn btn-outline-secondary">PDF</a>
+<button type="button" class="btn btn-outline-secondary" data-pdf-preview-trigger="true" data-pdf-url="{% url 'eventos:oficio-documento-download' object.oficio.pk 'justificativa' 'pdf' %}">Visualizar PDF</button>
+{% endif %}
 <a href="{% url 'eventos:documentos-justificativas-excluir' object.pk %}" class="btn btn-outline-danger">Excluir</a>
 {% endblock %}
 

@@ -65,5 +65,10 @@
 <button type="submit" class="btn btn-primary">
     {% if object %}Salvar alterações{% else %}Criar justificativa{% endif %}
 </button>
+{% if object and object.oficio %}
+<a href="{% url 'eventos:oficio-documento-download' object.oficio.pk 'justificativa' 'docx' %}" class="btn btn-outline-secondary">DOCX</a>
+<a href="{% url 'eventos:oficio-documento-download' object.oficio.pk 'justificativa' 'pdf' %}" class="btn btn-outline-secondary">PDF</a>
+<button type="button" class="btn btn-outline-secondary" data-pdf-preview-trigger="true" data-pdf-url="{% url 'eventos:oficio-documento-download' object.oficio.pk 'justificativa' 'pdf' %}">Visualizar PDF</button>
+{% endif %}
 <a href="{{ return_to|default:'/eventos/documentos/justificativas/' }}" class="btn btn-outline-secondary">Cancelar</a>
 {% endblock %}

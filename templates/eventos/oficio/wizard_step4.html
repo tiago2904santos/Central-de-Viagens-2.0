@@ -318,6 +318,18 @@
             </a>
             {% endif %}
             {% for action in oficio_downloads.actions %}
+            {% if action.label == 'PDF' and action.url %}
+            <button
+              type="button"
+              class="btn btn-doc-action btn-doc-action--secondary"
+              data-pdf-preview-trigger="true"
+              data-pdf-url="{{ action.url }}"
+              data-autosave-bypass="1"
+            >
+              <i class="bi bi-eye"></i>
+              <span>Visualizar</span>
+            </button>
+            {% endif %}
             <a
               href="{{ action.url }}"
               class="btn btn-doc-action {% if action.label == 'PDF' %}btn-doc-action--pdf{% else %}btn-doc-action--secondary{% endif %}"

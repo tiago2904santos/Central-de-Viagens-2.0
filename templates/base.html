@@ -107,6 +107,168 @@
     <script src="{% static 'js/masks.js' %}" defer></script>
     <script src="{% static 'js/select_picker.js' %}" defer></script>
     {% endif %}
+    <div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-labelledby="pdfPreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl pdf-preview-modal-dialog">
+            <div class="modal-content pdf-preview-modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="pdfPreviewModalLabel">Visualizacao do PDF</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <iframe
+                        id="pdfPreviewFrame"
+                        title="Preview de PDF"
+                        class="pdf-preview-frame"
+                        loading="lazy"
+                        src="about:blank"
+                    ></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        .pdf-preview-modal-dialog {
+            max-width: 90vw;
+            width: 90vw;
+        }
+
+        .pdf-preview-modal-content {
+            min-height: 80vh;
+        }
+
+        .pdf-preview-frame {
+            width: 100%;
+            min-height: calc(80vh - 56px);
+            border: 0;
+        }
+
+        @media (max-width: 767.98px) {
+            .pdf-preview-modal-dialog {
+                width: 96vw;
+                max-width: 96vw;
+                margin: 0.5rem auto;
+            }
+
+            .pdf-preview-modal-content {
+                min-height: 88vh;
+            }
+
+            .pdf-preview-frame {
+                min-height: calc(88vh - 56px);
+            }
+        }
+    </style>
+    <script>
+        (function () {
+            function isPdfUrl(url) {
+                if (!url) {
+                    return false;
+                }
+                var normalized = String(url).toLowerCase();
+                var cleanUrl = normalized.split('?')[0].split('#')[0];
+                if (cleanUrl.endsWith('.pdf')) {
+                    return true;
+                }
+                if (/\/pdf\/?$/.test(cleanUrl)) {
+                    return true;
+                }
+                if (/[?&](format|tipo|extensao)=pdf(?:[&#]|$)/.test(normalized)) {
+                    return true;
+                }
+                return false;
+            }
+
+            function buildPreviewUrl(url) {
+                var normalized = String(url || '').trim();
+                if (!normalized) {
+                    return '';
+                }
+                try {
+                    var parsed = new URL(normalized, window.location.origin);
+                    var hashlessPath = parsed.pathname + parsed.search;
+                    var separator = hashlessPath.indexOf('?') >= 0 ? '&' : '?';
+                    return hashlessPath + separator + 'preview=1';
+                } catch (error) {
+                    var hashIndex = normalized.indexOf('#');
+                    var baseWithoutHash = hashIndex >= 0 ? normalized.slice(0, hashIndex) : normalized;
+                    var separatorFallback = baseWithoutHash.indexOf('?') >= 0 ? '&' : '?';
+                    return baseWithoutHash + separatorFallback + 'preview=1';
+                }
+            }
+
+            function setupPdfPreview() {
+                var modalElement = document.getElementById('pdfPreviewModal');
+                var frameElement = document.getElementById('pdfPreviewFrame');
+                if (!modalElement || !frameElement || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+                    return;
+                }
+
+                var modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+                var currentBlobUrl = null;
+
+                document.addEventListener('click', function (event) {
+                    var trigger = event.target.closest('[data-pdf-preview-trigger]');
+                    if (!trigger) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    var pdfUrl = trigger.getAttribute('data-pdf-url') || '';
+                    if (!isPdfUrl(pdfUrl)) {
+                        window.alert('Visualizacao disponivel apenas para arquivos PDF.');
+                        return;
+                    }
+
+                    frameElement.setAttribute('src', 'about:blank');
+                    modalInstance.show();
+
+                    fetch(buildPreviewUrl(pdfUrl), {
+                        method: 'GET',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Accept': 'application/pdf'
+                        }
+                    })
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('Falha ao carregar o PDF para preview.');
+                            }
+                            return response.blob();
+                        })
+                        .then(function (blob) {
+                            if (!blob || (blob.type && blob.type.toLowerCase().indexOf('pdf') === -1)) {
+                                throw new Error('O arquivo retornado nao e um PDF valido para preview.');
+                            }
+                            if (currentBlobUrl) {
+                                URL.revokeObjectURL(currentBlobUrl);
+                                currentBlobUrl = null;
+                            }
+                            currentBlobUrl = URL.createObjectURL(blob);
+                            frameElement.setAttribute('src', currentBlobUrl + '#toolbar=0');
+                        })
+                        .catch(function (error) {
+                            frameElement.setAttribute('src', 'about:blank');
+                            modalInstance.hide();
+                            window.alert(error && error.message ? error.message : 'Nao foi possivel abrir o preview do PDF.');
+                        });
+                });
+
+                modalElement.addEventListener('hidden.bs.modal', function () {
+                    frameElement.setAttribute('src', 'about:blank');
+                    if (currentBlobUrl) {
+                        URL.revokeObjectURL(currentBlobUrl);
+                        currentBlobUrl = null;
+                    }
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupPdfPreview);
+            } else {
+                setupPdfPreview();
+            }
+        })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

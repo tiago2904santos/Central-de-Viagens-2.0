@@ -229,6 +229,15 @@
               <i class="bi bi-filetype-pdf"></i>
               <span>PDF</span>
             </a>
+            <button
+              type="button"
+              class="btn btn-doc-action btn-doc-action--secondary"
+              data-pdf-preview-trigger="true"
+              data-pdf-url="{% url 'eventos:documentos-ordens-servico-download' object.pk 'pdf' %}"
+            >
+              <i class="bi bi-eye"></i>
+              <span>Visualizar</span>
+            </button>
             {% endif %}
             {% if not object or object.status != 'FINALIZADO' %}
             <button type="submit" form="ordem-servico-form" name="finalizar" value="1" class="btn btn-doc-action btn-doc-action--primary" data-autosave-bypass="1">

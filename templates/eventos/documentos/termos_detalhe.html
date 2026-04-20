@@ -12,6 +12,7 @@
 <a href="{% url 'eventos:documentos-termos-editar' object.pk %}" class="btn btn-outline-primary">Editar</a>
 <a href="{% url 'eventos:documentos-termos-download' object.pk 'docx' %}" class="btn btn-outline-secondary">DOCX</a>
 <a href="{% url 'eventos:documentos-termos-download' object.pk 'pdf' %}" class="btn btn-outline-secondary">PDF</a>
+<button type="button" class="btn btn-outline-secondary" data-pdf-preview-trigger="true" data-pdf-url="{% url 'eventos:documentos-termos-download' object.pk 'pdf' %}">Visualizar PDF</button>
 {% endblock %}
 
 {% block simple_page_body %}

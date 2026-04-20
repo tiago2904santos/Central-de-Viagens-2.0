@@ -11,6 +11,7 @@
 <a class="btn btn-outline-primary" href="{% url 'eventos:documentos-planos-trabalho-editar' object.pk %}">Editar</a>
 <a class="btn btn-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}">Baixar DOCX</a>
 <a class="btn btn-outline-success" href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">Baixar PDF</a>
+<button type="button" class="btn btn-outline-secondary" data-pdf-preview-trigger="true" data-pdf-url="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}">Visualizar PDF</button>
 <a class="btn btn-outline-danger" href="{% url 'eventos:documentos-planos-trabalho-excluir' object.pk %}">Excluir</a>
 <a class="btn btn-outline-secondary" href="{% url 'eventos:documentos-planos-trabalho' %}">Voltar</a>
 {% endblock %}

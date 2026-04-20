@@ -119,6 +119,17 @@ def _build_route_columns(items):
     return '\n'.join(saida_lines), '\n'.join(chegada_lines)
 
 
+def _build_retorno_fallback(context):
+    trechos = context['roteiro'].get('trechos') or []
+    sede = context['roteiro'].get('sede') or ''
+    if not trechos and not sede:
+        return {'origem': '', 'destino': ''}
+    return {
+        'origem': trechos[-1].get('destino') or '',
+        'destino': sede,
+    }
+
+
 def _build_retorno_items(context):
     sede = context['roteiro'].get('sede') or ''
     retorno_items = [
@@ -141,6 +152,12 @@ def _build_retorno_items(context):
             # the last retorno trecho before deduplicating to avoid duplicate trailing rows.
             retorno_explicit['origem'] = retorno_explicit['origem'] or retorno_items[-1].get('origem') or ''
             retorno_explicit['destino'] = retorno_explicit['destino'] or retorno_items[-1].get('destino') or ''
+        else:
+            # When the return was saved only in the separate block, reuse the last outbound
+            # destination as origin and the configured sede as arrival.
+            fallback = _build_retorno_fallback(context)
+            retorno_explicit['origem'] = retorno_explicit['origem'] or fallback['origem']
+            retorno_explicit['destino'] = retorno_explicit['destino'] or fallback['destino']
         duplicated = bool(retorno_items and _route_items_equivalent(retorno_items[-1], retorno_explicit))
         if not duplicated:
             retorno_items.append(retorno_explicit)
