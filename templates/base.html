@@ -107,57 +107,6 @@
     <script src="{% static 'js/masks.js' %}" defer></script>
     <script src="{% static 'js/select_picker.js' %}" defer></script>
     {% endif %}
-    <div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-labelledby="pdfPreviewModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl pdf-preview-modal-dialog">
-            <div class="modal-content pdf-preview-modal-content">
-                <div class="modal-header">
-                    <h2 class="modal-title fs-5" id="pdfPreviewModalLabel">Visualizacao do PDF</h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <iframe
-                        id="pdfPreviewFrame"
-                        title="Preview de PDF"
-                        class="pdf-preview-frame"
-                        loading="lazy"
-                        src="about:blank"
-                    ></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
-    <style>
-        .pdf-preview-modal-dialog {
-            max-width: 90vw;
-            width: 90vw;
-        }
-
-        .pdf-preview-modal-content {
-            min-height: 80vh;
-        }
-
-        .pdf-preview-frame {
-            width: 100%;
-            min-height: calc(80vh - 56px);
-            border: 0;
-        }
-
-        @media (max-width: 767.98px) {
-            .pdf-preview-modal-dialog {
-                width: 96vw;
-                max-width: 96vw;
-                margin: 0.5rem auto;
-            }
-
-            .pdf-preview-modal-content {
-                min-height: 88vh;
-            }
-
-            .pdf-preview-frame {
-                min-height: calc(88vh - 56px);
-            }
-        }
-    </style>
     <script>
         (function () {
             function isPdfUrl(url) {
@@ -197,15 +146,6 @@
             }
 
             function setupPdfPreview() {
-                var modalElement = document.getElementById('pdfPreviewModal');
-                var frameElement = document.getElementById('pdfPreviewFrame');
-                if (!modalElement || !frameElement || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
-                    return;
-                }
-
-                var modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
-                var currentBlobUrl = null;
-
                 document.addEventListener('click', function (event) {
                     var trigger = event.target.closest('[data-pdf-preview-trigger]');
                     if (!trigger) {
@@ -218,9 +158,13 @@
                         window.alert('Visualizacao disponivel apenas para arquivos PDF.');
                         return;
                     }
-
-                    frameElement.setAttribute('src', 'about:blank');
-                    modalInstance.show();
+                    var previewWindow = window.open('about:blank', '_blank');
+                    if (!previewWindow) {
+                        window.alert('Nao foi possivel abrir nova guia. Verifique o bloqueador de pop-ups.');
+                        return;
+                    }
+                    previewWindow.document.title = 'Carregando PDF...';
+                    previewWindow.document.body.innerHTML = '<p style="font-family:Arial,sans-serif;padding:16px;">Carregando visualizacao do PDF...</p>';
 
                     fetch(buildPreviewUrl(pdfUrl), {
                         method: 'GET',
@@ -239,26 +183,16 @@
                             if (!blob || (blob.type && blob.type.toLowerCase().indexOf('pdf') === -1)) {
                                 throw new Error('O arquivo retornado nao e um PDF valido para preview.');
                             }
-                            if (currentBlobUrl) {
-                                URL.revokeObjectURL(currentBlobUrl);
-                                currentBlobUrl = null;
-                            }
-                            currentBlobUrl = URL.createObjectURL(blob);
-                            frameElement.setAttribute('src', currentBlobUrl + '#toolbar=0');
+                            var blobUrl = URL.createObjectURL(blob);
+                            previewWindow.location.replace(blobUrl + '#toolbar=0');
                         })
                         .catch(function (error) {
-                            frameElement.setAttribute('src', 'about:blank');
-                            modalInstance.hide();
+                            try {
+                                previewWindow.close();
+                            } catch (closeError) {
+                            }
                             window.alert(error && error.message ? error.message : 'Nao foi possivel abrir o preview do PDF.');
                         });
-                });
-
-                modalElement.addEventListener('hidden.bs.modal', function () {
-                    frameElement.setAttribute('src', 'about:blank');
-                    if (currentBlobUrl) {
-                        URL.revokeObjectURL(currentBlobUrl);
-                        currentBlobUrl = null;
-                    }
                 });
             }
 
