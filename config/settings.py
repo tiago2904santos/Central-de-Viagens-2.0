@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'cadastros',
     'eventos',
     'documentos',
+    'integracoes',
 ]
 
 MIDDLEWARE = [
@@ -129,3 +130,8 @@ def _osrm_timeout():
 
 
 OSRM_TIMEOUT_SECONDS = _osrm_timeout()
+
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "").strip()
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
+GOOGLE_OAUTH_REDIRECT_URI = os.getenv("GOOGLE_OAUTH_REDIRECT_URI", "").strip()
+GOOGLE_TOKEN_ENCRYPTION_KEY = os.getenv("GOOGLE_TOKEN_ENCRYPTION_KEY", "").strip()
