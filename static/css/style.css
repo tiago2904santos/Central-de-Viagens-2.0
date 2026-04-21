@@ -2938,6 +2938,13 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.ordem-de-servico-list-chip-list--meta {
+    flex: 1 1 42rem;
+    gap: 0.48rem;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .oficio-list-chip {
     display: inline-flex;
     flex-direction: column;
@@ -3120,7 +3127,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .oficio-list-transport-panel__detail {
-    display: flex;
+    display: grid;
     flex-wrap: wrap;
     gap: 0.24rem;
     padding: 0.66rem 0.74rem;
@@ -4937,7 +4944,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
         justify-content: center;
     }
 
-    .oficio-list-chip-list--meta {
+    .oficio-list-chip-list--meta, .ordem-de-servico-list-chip-list--meta {
         grid-template-columns: 1fr;
     }
 

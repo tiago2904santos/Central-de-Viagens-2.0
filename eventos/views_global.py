@@ -97,6 +97,7 @@ from .services.contexto_evento import (
 from .termos import TERMO_TEMPLATE_NAMES, build_termo_context, build_termo_preview_payload
 from .utils import serializar_viajante_para_autocomplete, serializar_veiculo_para_oficio
 from .views import _build_oficio_justificativa_info
+from integracoes.models import GoogleDriveIntegration
 from utils.valor_extenso import valor_por_extenso_ptbr
 
 
@@ -5624,6 +5625,11 @@ def documentos_hub(request):
             'url': reverse('eventos:documentos-termos'),
         },
     ]
+    drive_integration = (
+        GoogleDriveIntegration.objects.filter(user=request.user)
+        .order_by("-updated_at")
+        .first()
+    )
     return render(
         request,
         'eventos/global/documentos_hub.html',
@@ -5634,6 +5640,7 @@ def documentos_hub(request):
             'termos_concluidos': termos_concluidos,
             'justificativas_pendentes': justificativas_pendentes,
             'justificativas_preenchidas': justificativas_preenchidas,
+            'drive_integration': drive_integration,
         },
     )
 

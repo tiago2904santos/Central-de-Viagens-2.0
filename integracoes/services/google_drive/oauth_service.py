@@ -69,12 +69,23 @@ class GoogleOAuthService:
 
     @classmethod
     def persist_state_in_session(cls, request, state: str) -> None:
-        request.session[cls.session_state_key] = state
+        request.session[cls.session_state_key] = {
+            "state": state,
+            "user_id": getattr(request.user, "pk", None),
+        }
 
     @classmethod
     def pop_and_validate_state(cls, request, received_state: str | None) -> None:
-        stored_state = request.session.pop(cls.session_state_key, None)
-        if not stored_state or not received_state or stored_state != received_state:
+        payload = request.session.pop(cls.session_state_key, None) or {}
+        stored_state = payload.get("state")
+        stored_user_id = payload.get("user_id")
+        current_user_id = getattr(request.user, "pk", None)
+        if (
+            not stored_state
+            or not received_state
+            or stored_state != received_state
+            or stored_user_id != current_user_id
+        ):
             raise OAuthStateError("State OAuth invalido ou ausente.")
 
     @classmethod

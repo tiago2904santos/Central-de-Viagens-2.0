@@ -810,6 +810,7 @@ class GlobalViewsTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         content = response.content.decode('utf-8')
+        self.assertNotIn('Contexto documental', content)
         self.assertIn(reverse('eventos:oficio-documento-download', kwargs={
             'pk': self.oficio_pt.pk,
             'tipo_documento': 'oficio',
@@ -1113,9 +1114,11 @@ class GlobalViewsTest(TestCase):
             self.assertContains(response, 'system-document-filter__action-btn--clear', html=False)
             self.assertContains(response, 'oficios-view-pane--basic', html=False)
             self.assertContains(response, 'oficios-view-pane--rich', html=False)
+            self.assertNotContains(response, 'Contexto documental')
+            self.assertNotContains(response, 'Documentos vinculados')
             self.assertNotContains(response, 'A lista e atualizada automaticamente', html=False)
 
-    def test_lista_de_planos_de_trabalho_exibe_oficios_vinculados_em_card_mesmo_quando_evento_veio_pelos_oficios(self):
+    def test_lista_de_planos_de_trabalho_nao_exibe_bloco_de_vinculos_no_card(self):
         oficio_extra = Oficio.objects.create(
             evento=self.evento_pt,
             protocolo='333444555',
@@ -1151,11 +1154,11 @@ class GlobalViewsTest(TestCase):
         self.assertContains(response, f'id="plano-card-{plano.pk}"', html=False)
         self.assertIn(self.oficio_pt.numero_formatado, content)
         self.assertIn(oficio_extra.numero_formatado, content)
-        self.assertIn('Vínculos', content)
         self.assertIn('Contexto do plano', content)
         self.assertIn('Valor por servidor', content)
         self.assertIn('Diarias', content)
-        self.assertIn('2 oficios vinculados', content)
+        self.assertNotIn('Contexto documental', content)
+        self.assertNotIn('Vínculos', content)
 
     def test_lista_de_eventos_exibe_cascata_documental_com_pt_vinculado_por_oficios(self):
         oficio_extra = Oficio.objects.create(

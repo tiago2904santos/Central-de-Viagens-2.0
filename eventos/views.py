@@ -1,5 +1,6 @@
 import uuid
 import hashlib
+import logging
 from copy import deepcopy
 import json
 from datetime import datetime, time
@@ -26,6 +27,9 @@ from urllib.parse import quote, urlencode
 
 from cadastros.models import ConfiguracaoSistema, Cidade, Estado, Veiculo, Viajante
 from core.utils.masks import format_placa, format_protocolo, normalize_placa, only_digits
+from documentos.services.exportacao_google_drive import ExportacaoEventoGoogleDriveService
+from integracoes.services.google_drive.drive_service import GoogleDriveServiceError
+from integracoes.models import GoogleDriveIntegration
 
 from .models import (
     AtividadePlanoTrabalho,
@@ -130,6 +134,8 @@ from .utils import (
     serializar_viajante_para_autocomplete,
     serializar_veiculo_para_oficio,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _evento_etapa1_completa(evento):
@@ -1065,6 +1071,11 @@ def evento_detalhe(request, pk):
     )
     vinculos = resolver_vinculos_evento(evento)
     pacote = build_evento_document_pacote(evento)
+    drive_integration = (
+        GoogleDriveIntegration.objects.filter(user=request.user)
+        .order_by("-updated_at")
+        .first()
+    )
     return render(
         request,
         'eventos/evento_detalhe.html',
@@ -1072,8 +1083,55 @@ def evento_detalhe(request, pk):
             'object': evento,
             'vinculos': vinculos,
             'pacote': pacote,
+            'drive_integration': drive_integration,
         },
     )
+
+
+@login_required
+@require_http_methods(['POST'])
+def evento_exportar_google_drive(request, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+    formatos = [item for item in request.POST.getlist('formatos') if item in {'docx', 'pdf'}]
+    if not formatos:
+        messages.error(request, 'Selecione ao menos um formato para exportacao (DOCX/PDF).')
+        return redirect('eventos:detalhe', pk=pk)
+    try:
+        resultado = ExportacaoEventoGoogleDriveService().exportar_evento(
+            user=request.user,
+            evento=evento,
+            formatos=tuple(formatos),
+        )
+    except GoogleDriveServiceError as exc:
+        messages.error(request, str(exc))
+        logger.warning(
+            "Erro de integracao Drive na exportacao de evento",
+            extra={"evento_id": evento.pk, "user_id": request.user.pk},
+        )
+        return redirect('eventos:detalhe', pk=pk)
+    except Exception:
+        messages.error(request, 'Falha ao exportar evento para Google Drive.')
+        logger.exception(
+            "Erro inesperado na exportacao de evento para Drive",
+            extra={"evento_id": evento.pk, "user_id": request.user.pk},
+        )
+        return redirect('eventos:detalhe', pk=pk)
+
+    if resultado.success:
+        messages.success(
+            request,
+            f'Exportacao concluida: {resultado.oficios_processados} oficio(s), {resultado.folders_created} pasta(s) e {resultado.files_uploaded} arquivo(s) enviados.',
+        )
+    else:
+        messages.warning(
+            request,
+            f'Exportacao parcial: {resultado.oficios_processados} oficio(s), {resultado.files_uploaded} arquivo(s) enviados com {len(resultado.partial_errors)} erro(s).',
+        )
+    for item in resultado.missing_documents[:5]:
+        messages.info(request, item)
+    for item in resultado.partial_errors[:5]:
+        messages.error(request, item)
+    return redirect('eventos:detalhe', pk=pk)
 
 
 @login_required

@@ -44,6 +44,7 @@ urlpatterns = [
     path('simulacao-diarias/', login_required(views_global.simulacao_diarias_global), name='simulacao-diarias'),
     path('cadastrar/', login_required(views.evento_cadastrar), name='cadastrar'),
     path('<int:pk>/', login_required(views.evento_detalhe), name='detalhe'),
+    path('<int:pk>/exportar-google-drive/', login_required(views.evento_exportar_google_drive), name='exportar-google-drive'),
     path('<int:pk>/editar/', login_required(views.evento_editar), name='editar'),
     path('<int:pk>/excluir/', login_required(views.evento_excluir), name='excluir'),
     path('tipos-demanda/', login_required(views.tipos_demanda_lista), name='tipos-demanda-lista'),

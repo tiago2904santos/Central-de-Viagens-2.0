@@ -63,4 +63,45 @@
     </div>
     {% endfor %}
 </div>
+
+<div class="card app-page-card mt-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h2 class="h5 mb-1">Integração Google Drive</h2>
+                {% if drive_integration and drive_integration.is_active %}
+                <p class="text-muted small mb-0">
+                    Conectado{% if drive_integration.google_email %} como <strong>{{ drive_integration.google_email }}</strong>{% endif %}.
+                    {% if drive_integration.root_folder_name %}
+                    Pasta raiz atual: <strong>{{ drive_integration.root_folder_name }}</strong>.
+                    {% else %}
+                    Pasta raiz ainda não configurada.
+                    {% endif %}
+                </p>
+                {% else %}
+                <p class="text-muted small mb-0">Nenhuma conta Google Drive conectada no momento.</p>
+                {% endif %}
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'integracoes:google-drive-connect' %}" class="btn btn-sm btn-doc-action btn-doc-action--primary">Conectar Google Drive</a>
+                {% if drive_integration and drive_integration.is_active %}
+                <form method="post" action="{% url 'integracoes:google-drive-disconnect' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Desconectar</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        <form method="post" action="{% url 'integracoes:google-drive-root-folder' %}" class="row g-2 align-items-end mt-3">
+            {% csrf_token %}
+            <div class="col-12 col-md-8">
+                <label for="root_folder_name" class="form-label mb-1">Pasta raiz no Drive</label>
+                <input type="text" class="form-control" id="root_folder_name" name="root_folder_name" maxlength="255" value="{% if drive_integration %}{{ drive_integration.root_folder_name }}{% endif %}" placeholder="Ex.: EVENTOS 2026">
+            </div>
+            <div class="col-12 col-md-4">
+                <button type="submit" class="btn btn-outline-secondary w-100">Salvar pasta raiz</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

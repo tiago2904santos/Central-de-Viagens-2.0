@@ -164,7 +164,20 @@
                         return;
                     }
                     previewWindow.document.title = 'Carregando PDF...';
-                    previewWindow.document.body.innerHTML = '<p style="font-family:Arial,sans-serif;padding:16px;">Carregando visualizacao do PDF...</p>';
+                    previewWindow.document.body.innerHTML = [
+                        '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f8f9fa;">',
+                        '  <div style="text-align:center;font-family:Arial,sans-serif;color:#1f2937;">',
+                        '    <img',
+                        '      src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQv///wAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUm2qvuk2kFADs="',
+                        '      alt="Carregando..."',
+                        '      width="48"',
+                        '      height="48"',
+                        '      style="image-rendering:auto;display:block;margin:0 auto 14px auto;"',
+                        '    >',
+                        '    <p style="margin:0;font-size:16px;">Carregando visualizacao do PDF...</p>',
+                        '  </div>',
+                        '</div>'
+                    ].join('');
 
                     fetch(buildPreviewUrl(pdfUrl), {
                         method: 'GET',

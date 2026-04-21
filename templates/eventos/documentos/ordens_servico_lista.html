@@ -129,7 +129,7 @@
     <article class="oficio-list-card {{ object.card_theme_class }}">
         <div class="oficio-list-rich-layout">
             <div class="oficio-list-card__header">
-                <div class="oficio-list-chip-list oficio-list-chip-list--meta">
+                <div class="oficio-list-chip-list ordem-de-servico-list-chip-list--meta">
                     {% for chip in object.header_chips %}
                     <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature {{ chip.css_class }}">
                         <span class="oficio-list-chip__label">{{ chip.label }}</span>
@@ -185,8 +185,6 @@
             </div>
 
             <div class="oficio-list-card__secondary">
-                {% include 'includes/list/document_links_block.html' with block=object.vinculos_block %}
-
                 <section class="oficio-list-subcard oficio-list-subcard--justificativa oficio-list-surface oficio-list-surface--panel">
                     <div class="oficio-list-subcard__header">
                         <div>
