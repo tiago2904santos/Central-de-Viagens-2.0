@@ -56,7 +56,7 @@
 
 {% if delete_url %}
     {% if delete_method == 'post' %}
-    <form method="post" action="{{ delete_url }}" style="display:inline" {% if delete_confirm %}onsubmit="return confirm('{{ delete_confirm|escapejs }}')"{% endif %}>
+    <form method="post" action="{{ delete_url }}" class="d-inline"{% if delete_confirm %} data-confirm-message="{{ delete_confirm }}"{% endif %}>
         {% csrf_token %}
         <button type="submit" class="btn btn-sm btn-doc-action btn-doc-action--danger is-icon-only" aria-label="{{ delete_aria|default:'Excluir documento' }}" title="{{ delete_aria|default:'Excluir documento' }}">
             <i class="bi bi-trash3"></i>

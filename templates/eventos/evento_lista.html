@@ -143,7 +143,7 @@
                     </a>
                     {% endif %}
                     {% endfor %}
-                    <form method="post" action="{{ obj.delete_url }}" class="d-inline" onsubmit="return confirm('Excluir este evento?');">
+                    <form method="post" action="{{ obj.delete_url }}" class="d-inline" data-confirm-message="Excluir este evento?">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-sm btn-doc-action btn-doc-action--danger">
                             <i class="bi bi-trash"></i>
@@ -162,6 +162,3 @@
 
 {% block list_floating_actions %}{% include 'includes/list/floating_new_button.html' with url=evento_novo_url label='Novo evento' icon='bi-plus-lg' post_action=True %}{% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'js/list_standard.js' %}"></script>
-{% endblock %}

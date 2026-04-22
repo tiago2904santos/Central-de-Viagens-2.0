@@ -25,25 +25,6 @@
 
 {% block content %}
 <div class="app-page-shell app-page-shell--list system-list-page {% block list_page_class %}system-list-page--standard{% endblock %}" data-list-view-root>
-    <script>
-        (function() {
-            var root = document.currentScript && document.currentScript.parentElement;
-            if (!root) {
-                return;
-            }
-            var storageKey = root.getAttribute('data-view-storage-key');
-            if (!storageKey) {
-                return;
-            }
-            try {
-                var savedMode = window.localStorage.getItem(storageKey);
-                if (savedMode === 'basic' || savedMode === 'rich') {
-                    root.setAttribute('data-view-mode', savedMode);
-                }
-            } catch (error) {
-            }
-        })();
-    </script>
     <div class="app-page-shell__inner system-list-shell">
         <section class="system-document-top">
             <div class="page-header-cadastro system-list-header system-list-header--standard">

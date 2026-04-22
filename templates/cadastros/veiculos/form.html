@@ -61,18 +61,3 @@
 <button type="submit" formaction="{% url 'cadastros:veiculo-rascunho-ir-combustiveis' %}" class="btn btn-link text-muted">Gerenciar Combustiveis</button>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-(function() {
-    var modeloInput = document.getElementById('id_modelo');
-    if (modeloInput) {
-        modeloInput.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() { if (modeloInput.value) modeloInput.value = modeloInput.value.toUpperCase(); });
-        } else if (modeloInput.value) {
-            modeloInput.value = modeloInput.value.toUpperCase();
-        }
-    }
-})();
-</script>
-{% endblock %}

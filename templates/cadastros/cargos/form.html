@@ -37,20 +37,3 @@
 <a href="{% url 'cadastros:cargo-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-(function() {
-    var nomeInput = document.getElementById('id_nome');
-    if (!nomeInput) return;
-    function toUpper() {
-        nomeInput.value = nomeInput.value.toUpperCase();
-    }
-    nomeInput.addEventListener('input', toUpper);
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', toUpper);
-    } else {
-        toUpper();
-    }
-})();
-</script>
-{% endblock %}

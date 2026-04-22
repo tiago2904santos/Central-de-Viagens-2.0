@@ -38,7 +38,7 @@
                             <div class="oficios-table__actions justify-content-end">
                                 {% for action in roteiro.table_actions %}
                                 {% if action.delete_method == 'post' %}
-                                <form method="post" action="{{ action.url }}" style="display:inline" {% if action.delete_confirm %}onsubmit="return confirm('{{ action.delete_confirm|escapejs }}')"{% endif %}>
+                                <form method="post" action="{{ action.url }}" class="d-inline"{% if action.delete_confirm %} data-confirm-message="{{ action.delete_confirm }}"{% endif %}>
                                     {% csrf_token %}
                                     <button
                                         type="submit"
@@ -148,7 +148,7 @@
                 <div class="oficio-list-card__footer-actions roteiro-list-card__footer-actions">
                     {% for action in roteiro.footer_actions %}
                     {% if action.delete_method == 'post' %}
-                    <form method="post" action="{{ action.url }}" style="display:inline" {% if action.delete_confirm %}onsubmit="return confirm('{{ action.delete_confirm|escapejs }}')"{% endif %}>
+                    <form method="post" action="{{ action.url }}" class="d-inline"{% if action.delete_confirm %} data-confirm-message="{{ action.delete_confirm }}"{% endif %}>
                         {% csrf_token %}
                         <button
                             type="submit"

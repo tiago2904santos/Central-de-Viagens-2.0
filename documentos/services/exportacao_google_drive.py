@@ -18,6 +18,7 @@ from eventos.services.documentos import (
 from eventos.services.documentos.plano_trabalho import render_plano_trabalho_docx, render_plano_trabalho_model_docx
 from eventos.services.documentos.renderer import convert_docx_bytes_to_pdf_bytes
 from eventos.services.documentos.termo_autorizacao import render_saved_termo_autorizacao_docx
+from eventos.services.oficio_assinatura import assinatura_foi_invalidada_por_alteracao
 from integracoes.services.google_drive.drive_service import (
     GoogleDriveIntegrationNotConfigured,
     GoogleDriveService,
@@ -60,6 +61,13 @@ class ExportacaoEventoGoogleDriveService:
         )
 
     def _render_oficio_documento(self, oficio: Oficio, tipo, formato: str) -> bytes:
+        if (
+            tipo == DocumentoOficioTipo.OFICIO
+            and DocumentoFormato(formato).value == DocumentoFormato.PDF.value
+        ):
+            pedido = oficio.assinaturas_oficio.filter(status='ASSINADO').order_by('-assinado_em', '-created_at').first()
+            if pedido and pedido.pdf_assinado_final and not assinatura_foi_invalidada_por_alteracao(oficio, pedido):
+                return pedido.pdf_assinado_final.read()
         return render_document_bytes(oficio, tipo, formato)
 
     @staticmethod

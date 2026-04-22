@@ -101,21 +101,5 @@
 
 {% block extra_js %}
 <script src="{% static 'js/oficio_wizard.js' %}"></script>
-<script>
-(function() {
-  var form = document.getElementById('form-finalizacao');
-  if (!form || !window.OficioWizard) return;
-  var autosave = window.OficioWizard.createAutosave({
-    form: form,
-    statusElement: document.getElementById('guiado-finalizacao-autosave-status'),
-    captureSubmit: false
-  });
-  var textarea = document.getElementById('id_observacoes_finais');
-  if (textarea) {
-    textarea.addEventListener('input', function() {
-      autosave.schedule();
-    });
-  }
-})();
-</script>
+<script src="{% static 'js/guiado_etapa6.js' %}" defer></script>
 {% endblock %}

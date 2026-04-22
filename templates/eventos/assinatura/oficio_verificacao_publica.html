@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Verificação da Assinatura{% endblock %}
+
+{% block content %}
+<div class="container py-5 oficio-publico-shell oficio-publico-shell--760">
+    <h1 class="h3 mb-4">Verificação de documento assinado</h1>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Tipo</dt><dd class="col-sm-8">Ofício</dd>
+                <dt class="col-sm-4">Identificador</dt><dd class="col-sm-8">{{ pedido.oficio.numero_formatado|default:pedido.oficio.pk }}</dd>
+                <dt class="col-sm-4">Status</dt><dd class="col-sm-8">{{ pedido.get_status_display }}</dd>
+                <dt class="col-sm-4">Assinante</dt><dd class="col-sm-8">{{ nome_assinatura }}</dd>
+                <dt class="col-sm-4">Data/hora</dt><dd class="col-sm-8">{{ pedido.assinado_em|date:'d/m/Y H:i' }}</dd>
+                <dt class="col-sm-4">Hash do documento</dt><dd class="col-sm-8"><code>{{ pedido.hash_pdf_assinado }}</code></dd>
+                <dt class="col-sm-4">Fonte escolhida</dt><dd class="col-sm-8">{{ pedido.get_fonte_escolhida_display }}</dd>
+            </dl>
+            {% if pedido.pdf_assinado_final %}
+            <a href="{% url 'eventos:assinatura-oficio-pdf' pedido.token %}" class="btn btn-primary mt-3" target="_blank" rel="noopener">Visualizar PDF assinado</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

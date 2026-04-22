@@ -250,7 +250,7 @@ class CoordenadorOperacionalForm(FormComErroInvalidMixin, forms.ModelForm):
         model = CoordenadorOperacional
         fields = ['nome', 'ativo', 'ordem']
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 200}),
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 200, 'data-auto-uppercase': '1'}),
             'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'ordem': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
         }

@@ -43,7 +43,7 @@
                 <div class="evento-convite-file-actions">
                     <a href="{% url 'eventos:evento-anexo-visualizar' anexo.id %}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">Visualizar</a>
                     <a href="{% url 'eventos:evento-anexo-baixar' anexo.id %}" class="btn btn-sm btn-outline-secondary">Baixar</a>
-                    <form method="post" action="{% url 'eventos:evento-anexo-remover' anexo.id %}" onsubmit="return confirm('Remover este anexo?');">
+                    <form method="post" action="{% url 'eventos:evento-anexo-remover' anexo.id %}" data-confirm-message="Remover este anexo?">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ convite_next_url }}">
                         <button type="submit" class="btn btn-sm btn-outline-danger">Remover</button>

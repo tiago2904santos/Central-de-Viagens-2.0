@@ -87,6 +87,7 @@ from .services.documento_presenters import (
     build_ordem_vinculos_semanticos,
     build_plano_vinculos_semanticos,
 )
+from .services.oficio_assinatura import status_assinatura_oficio
 from .services.contexto_evento import (
     attach_termo_derivacoes,
     build_contexto_ordem_servico_from_evento,
@@ -2216,8 +2217,49 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
     vehicle_display = precomputed['vehicle_display']
     driver_display = precomputed['driver_display']
     oficio_status = _oficio_process_status_meta(oficio)
+    assinatura_status = status_assinatura_oficio(oficio)
     table_actions = _oficio_list_table_actions(oficio, oficio_downloads, return_to=current_path)
     footer_actions = _oficio_list_footer_actions(oficio, oficio_downloads, return_to=current_path)
+    pedido_assinatura = oficio.assinaturas_oficio.order_by('-created_at').first()
+    assinatura_public_url = ''
+    if pedido_assinatura:
+        assinatura_link = reverse('eventos:assinatura-oficio-identidade', kwargs={'token': pedido_assinatura.token})
+        assinatura_public_url = assinatura_link
+        table_actions.append(
+            {
+                'label': 'Abrir link',
+                'aria_label': 'Abrir link de assinatura',
+                'url': assinatura_link,
+                'css_class': 'btn-doc-action--secondary',
+                'icon': 'bi-box-arrow-up-right',
+                'download': False,
+                'icon_only': False,
+            }
+        )
+    else:
+        gerar_link_url = reverse('eventos:oficio-assinatura-gerar-link', kwargs={'pk': oficio.pk})
+        table_actions.append(
+            {
+                'label': 'Gerar link de assinatura',
+                'aria_label': 'Gerar link de assinatura',
+                'url': gerar_link_url,
+                'css_class': 'btn-doc-action--secondary',
+                'icon': 'bi-pen',
+                'download': False,
+                'icon_only': False,
+            }
+        )
+        footer_actions.append(
+            {
+                'label': 'Gerar link de assinatura',
+                'aria_label': 'Gerar link de assinatura',
+                'url': gerar_link_url,
+                'css_class': 'btn-doc-action--secondary',
+                'icon': 'bi-pen',
+                'download': False,
+                'icon_only': False,
+            }
+        )
     vinculos_items = []
     for link in oficio.vinculos_evento.select_related('evento').order_by('pk'):
         ev = link.evento
@@ -2388,6 +2430,10 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
         'servidores_display': _oficio_list_basic_viajantes_summary(oficio),
         'veiculo_display': vehicle_display,
         'status_badge': oficio_status,
+        'assinatura_status_badge': {
+            'label': assinatura_status.label,
+            'css_class': assinatura_status.css_class,
+        },
         'table_actions': table_actions,
         'footer_actions': footer_actions,
         'theme': theme,
@@ -2407,6 +2453,7 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
             reverse('eventos:oficio-step1', kwargs={'pk': oficio.pk}),
             {'return_to': current_path},
         ),
+        'assinatura_public_url': assinatura_public_url,
         'search_blob': ' '.join(
             value
             for value in [

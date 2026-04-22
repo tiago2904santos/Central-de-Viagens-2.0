@@ -6,6 +6,163 @@ document.addEventListener('DOMContentLoaded', function() {
     var sidebarStorageKey = 'central-viagens.sidebar.open-group';
     var syncingGroups = false;
 
+    function isPdfUrl(url) {
+        if (!url) {
+            return false;
+        }
+        var normalized = String(url).toLowerCase();
+        var cleanUrl = normalized.split('?')[0].split('#')[0];
+        if (cleanUrl.endsWith('.pdf')) {
+            return true;
+        }
+        if (/\/pdf\/?$/.test(cleanUrl)) {
+            return true;
+        }
+        if (/[?&](format|tipo|extensao)=pdf(?:[&#]|$)/.test(normalized)) {
+            return true;
+        }
+        return false;
+    }
+
+    function buildPreviewUrl(url) {
+        var normalized = String(url || '').trim();
+        if (!normalized) {
+            return '';
+        }
+        try {
+            var parsed = new URL(normalized, window.location.origin);
+            var hashlessPath = parsed.pathname + parsed.search;
+            var separator = hashlessPath.indexOf('?') >= 0 ? '&' : '?';
+            return hashlessPath + separator + 'preview=1';
+        } catch (error) {
+            var hashIndex = normalized.indexOf('#');
+            var baseWithoutHash = hashIndex >= 0 ? normalized.slice(0, hashIndex) : normalized;
+            var separatorFallback = baseWithoutHash.indexOf('?') >= 0 ? '&' : '?';
+            return baseWithoutHash + separatorFallback + 'preview=1';
+        }
+    }
+
+    function openPdfPreview(pdfUrl) {
+        if (!isPdfUrl(pdfUrl)) {
+            window.alert('Visualizacao disponivel apenas para arquivos PDF.');
+            return;
+        }
+
+        var previewWindow = window.open('about:blank', '_blank');
+        if (!previewWindow) {
+            window.alert('Nao foi possivel abrir nova guia. Verifique o bloqueador de pop-ups.');
+            return;
+        }
+
+        previewWindow.document.title = 'Carregando PDF...';
+        previewWindow.document.body.innerHTML = [
+            '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f8f9fa;">',
+            '  <div style="text-align:center;font-family:Arial,sans-serif;color:#1f2937;">',
+            '    <img',
+            '      src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQv///wAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUm2qvuk2kFADs="',
+            '      alt="Carregando..."',
+            '      width="48"',
+            '      height="48"',
+            '      style="image-rendering:auto;display:block;margin:0 auto 14px auto;"',
+            '    >',
+            '    <p style="margin:0;font-size:16px;">Carregando visualizacao do PDF...</p>',
+            '  </div>',
+            '</div>'
+        ].join('');
+
+        fetch(buildPreviewUrl(pdfUrl), {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/pdf'
+            }
+        })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Falha ao carregar o PDF para preview.');
+                }
+                return response.blob();
+            })
+            .then(function(blob) {
+                if (!blob || (blob.type && blob.type.toLowerCase().indexOf('pdf') === -1)) {
+                    throw new Error('O arquivo retornado nao e um PDF valido para preview.');
+                }
+                var blobUrl = URL.createObjectURL(blob);
+                previewWindow.location.replace(blobUrl + '#toolbar=0');
+            })
+            .catch(function(error) {
+                try {
+                    previewWindow.close();
+                } catch (closeError) {
+                }
+                window.alert(error && error.message ? error.message : 'Nao foi possivel abrir o preview do PDF.');
+            });
+    }
+
+    function copyTextToClipboard(text) {
+        var value = String(text || '').trim();
+        if (!value) {
+            return Promise.resolve(false);
+        }
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            return navigator.clipboard.writeText(value).then(function() {
+                return true;
+            });
+        }
+
+        return new Promise(function(resolve) {
+            var textarea = document.createElement('textarea');
+            textarea.value = value;
+            textarea.setAttribute('readonly', 'readonly');
+            textarea.style.position = 'fixed';
+            textarea.style.top = '-9999px';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            var success = false;
+            try {
+                success = document.execCommand('copy');
+            } catch (error) {
+                success = false;
+            }
+
+            if (textarea.parentNode) {
+                textarea.parentNode.removeChild(textarea);
+            }
+            resolve(success);
+        });
+    }
+
+    function bindSharedActionHandlers() {
+        document.addEventListener('click', function(event) {
+            var copyTrigger = event.target.closest('[data-copy-text]');
+            if (copyTrigger) {
+                event.preventDefault();
+                copyTextToClipboard(copyTrigger.getAttribute('data-copy-text') || '');
+                return;
+            }
+
+            var previewTrigger = event.target.closest('[data-pdf-preview-trigger]');
+            if (previewTrigger) {
+                event.preventDefault();
+                openPdfPreview(previewTrigger.getAttribute('data-pdf-url') || '');
+            }
+        });
+
+        document.addEventListener('submit', function(event) {
+            var confirmForm = event.target.closest('form[data-confirm-message]');
+            if (!confirmForm) {
+                return;
+            }
+
+            var message = confirmForm.getAttribute('data-confirm-message') || '';
+            if (message && !window.confirm(message)) {
+                event.preventDefault();
+            }
+        });
+    }
+
     function removeTopRightCreateButtons() {
         var createTerms = ['novo', 'nova', 'cadastrar', 'criar'];
         var topRightContainers = [
@@ -202,4 +359,5 @@ document.addEventListener('DOMContentLoaded', function() {
     removeTopRightCreateButtons();
     removeAllEditButtons();
     observeAndRemoveEditButtons();
+    bindSharedActionHandlers();
 });

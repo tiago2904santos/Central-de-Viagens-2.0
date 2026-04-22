@@ -125,6 +125,7 @@ from .services.documentos.termo_autorizacao import (
     render_evento_participante_termo_docx,
     validate_evento_participante_termo_data,
 )
+from .services.oficio_assinatura import assinatura_foi_invalidada_por_alteracao
 from .termos import build_termo_context as _build_termo_context_for_oficio
 from .utils import (
     buscar_viajantes_finalizados,
@@ -7209,6 +7210,18 @@ def _download_oficio_documento(request, oficio, tipo_documento, formato):
         return redirect('eventos:oficio-step4', pk=oficio.pk)
     try:
         payload = render_document_bytes(oficio, meta.tipo, formato)
+        if meta.tipo == DocumentoOficioTipo.OFICIO and formato == DocumentoFormato.PDF:
+            pedido_assinado = (
+                oficio.assinaturas_oficio.filter(status='ASSINADO')
+                .order_by('-assinado_em', '-created_at')
+                .first()
+            )
+            if (
+                pedido_assinado
+                and pedido_assinado.pdf_assinado_final
+                and not assinatura_foi_invalidada_por_alteracao(oficio, pedido_assinado)
+            ):
+                payload = pedido_assinado.pdf_assinado_final.read()
     except (DocumentGenerationError, DocumentRendererUnavailable) as exc:
         messages.error(request, str(exc))
         return redirect('eventos:oficio-step4', pk=oficio.pk)

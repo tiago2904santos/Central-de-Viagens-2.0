@@ -1,11 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-oficio-picker-js="1">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Central de Viagens{% endblock %}</title>
-    <script>document.documentElement.setAttribute('data-oficio-picker-js', '1');</script>
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
     <link rel="shortcut icon" href="{% static 'favicon.svg' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +13,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
-    <link href="{% static 'css/list-components.css' %}" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="d-flex {% if not user.is_authenticated %}login-page{% endif %}">
@@ -103,119 +101,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="{% static 'js/base_layout.js' %}" defer></script>
+    <script src="{% static 'js/form_enhancements.js' %}" defer></script>
     {% if user.is_authenticated %}
     <script src="{% static 'js/masks.js' %}" defer></script>
     <script src="{% static 'js/select_picker.js' %}" defer></script>
+    <script src="{% static 'js/list_standard.js' %}" defer></script>
     {% endif %}
-    <script>
-        (function () {
-            function isPdfUrl(url) {
-                if (!url) {
-                    return false;
-                }
-                var normalized = String(url).toLowerCase();
-                var cleanUrl = normalized.split('?')[0].split('#')[0];
-                if (cleanUrl.endsWith('.pdf')) {
-                    return true;
-                }
-                if (/\/pdf\/?$/.test(cleanUrl)) {
-                    return true;
-                }
-                if (/[?&](format|tipo|extensao)=pdf(?:[&#]|$)/.test(normalized)) {
-                    return true;
-                }
-                return false;
-            }
-
-            function buildPreviewUrl(url) {
-                var normalized = String(url || '').trim();
-                if (!normalized) {
-                    return '';
-                }
-                try {
-                    var parsed = new URL(normalized, window.location.origin);
-                    var hashlessPath = parsed.pathname + parsed.search;
-                    var separator = hashlessPath.indexOf('?') >= 0 ? '&' : '?';
-                    return hashlessPath + separator + 'preview=1';
-                } catch (error) {
-                    var hashIndex = normalized.indexOf('#');
-                    var baseWithoutHash = hashIndex >= 0 ? normalized.slice(0, hashIndex) : normalized;
-                    var separatorFallback = baseWithoutHash.indexOf('?') >= 0 ? '&' : '?';
-                    return baseWithoutHash + separatorFallback + 'preview=1';
-                }
-            }
-
-            function setupPdfPreview() {
-                document.addEventListener('click', function (event) {
-                    var trigger = event.target.closest('[data-pdf-preview-trigger]');
-                    if (!trigger) {
-                        return;
-                    }
-
-                    event.preventDefault();
-                    var pdfUrl = trigger.getAttribute('data-pdf-url') || '';
-                    if (!isPdfUrl(pdfUrl)) {
-                        window.alert('Visualizacao disponivel apenas para arquivos PDF.');
-                        return;
-                    }
-                    var previewWindow = window.open('about:blank', '_blank');
-                    if (!previewWindow) {
-                        window.alert('Nao foi possivel abrir nova guia. Verifique o bloqueador de pop-ups.');
-                        return;
-                    }
-                    previewWindow.document.title = 'Carregando PDF...';
-                    previewWindow.document.body.innerHTML = [
-                        '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f8f9fa;">',
-                        '  <div style="text-align:center;font-family:Arial,sans-serif;color:#1f2937;">',
-                        '    <img',
-                        '      src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQv///wAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUm2qvuk2kFADs="',
-                        '      alt="Carregando..."',
-                        '      width="48"',
-                        '      height="48"',
-                        '      style="image-rendering:auto;display:block;margin:0 auto 14px auto;"',
-                        '    >',
-                        '    <p style="margin:0;font-size:16px;">Carregando visualizacao do PDF...</p>',
-                        '  </div>',
-                        '</div>'
-                    ].join('');
-
-                    fetch(buildPreviewUrl(pdfUrl), {
-                        method: 'GET',
-                        credentials: 'same-origin',
-                        headers: {
-                            'Accept': 'application/pdf'
-                        }
-                    })
-                        .then(function (response) {
-                            if (!response.ok) {
-                                throw new Error('Falha ao carregar o PDF para preview.');
-                            }
-                            return response.blob();
-                        })
-                        .then(function (blob) {
-                            if (!blob || (blob.type && blob.type.toLowerCase().indexOf('pdf') === -1)) {
-                                throw new Error('O arquivo retornado nao e um PDF valido para preview.');
-                            }
-                            var blobUrl = URL.createObjectURL(blob);
-                            previewWindow.location.replace(blobUrl + '#toolbar=0');
-                        })
-                        .catch(function (error) {
-                            try {
-                                previewWindow.close();
-                            } catch (closeError) {
-                            }
-                            window.alert(error && error.message ? error.message : 'Nao foi possivel abrir o preview do PDF.');
-                        });
-                });
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', setupPdfPreview);
-            } else {
-                setupPdfPreview();
-            }
-        })();
-    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

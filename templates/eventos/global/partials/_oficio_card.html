@@ -11,6 +11,9 @@
             </div>
             {% if oficio.corner_badges %}
             <div class="oficio-list-card__header-status">
+                <span class="oficio-list-badge {{ oficio.assinatura_status_badge.css_class }}">
+                    <span>{{ oficio.assinatura_status_badge.label }}</span>
+                </span>
                 {% for badge in oficio.corner_badges %}
                 <span class="oficio-list-badge {{ badge.css_class }}">
                     <span>{{ badge.value }}</span>
@@ -177,6 +180,17 @@
 
         <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
             <div class="oficio-list-card__footer-actions">
+                {% if oficio.assinatura_public_url %}
+                <button
+                    type="button"
+                    class="btn btn-sm btn-doc-action btn-doc-action--secondary"
+                    data-copy-text="{{ oficio.assinatura_public_url }}"
+                    aria-label="Copiar link de assinatura"
+                >
+                    <i class="bi bi-clipboard"></i>
+                    <span>Copiar link</span>
+                </button>
+                {% endif %}
                 <a
                     href="{{ oficio.wizard_url }}"
                     class="btn btn-sm btn-doc-action btn-doc-action--primary"

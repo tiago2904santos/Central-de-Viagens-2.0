@@ -725,11 +725,24 @@ class OrdemServico(models.Model):
         return oficios
 
     def get_viajantes_relacionados(self):
-        vinculados = list(self.viajantes.select_related('cargo').order_by('nome')) if self.pk else []
+        if self.pk:
+            modelo_viajante = self.viajantes.model
+            vinculados = list(
+                modelo_viajante.objects.filter(pk__in=self.viajantes.values_list('pk', flat=True))
+                .select_related('cargo')
+                .order_by('nome')
+            )
+        else:
+            vinculados = []
         if vinculados:
             return vinculados
         if self.oficio_id and self.oficio:
-            return list(self.oficio.viajantes.select_related('cargo').order_by('nome'))
+            modelo_viajante = self.oficio.viajantes.model
+            return list(
+                modelo_viajante.objects.filter(pk__in=self.oficio.viajantes.values_list('pk', flat=True))
+                .select_related('cargo')
+                .order_by('nome')
+            )
         return []
 
     def clean(self):
@@ -1891,6 +1904,107 @@ class OficioEventoVinculo(models.Model):
 
     def __str__(self):
         return f'{self.oficio_id} → {self.evento_id}'
+
+
+def oficio_assinatura_upload_to(instance, filename):
+    base = Path(filename or '').name.strip() or 'documento.pdf'
+    safe_name = slugify(Path(base).stem) or 'documento'
+    ext = Path(base).suffix.lower() or '.pdf'
+    return f'oficios/assinaturas/{instance.oficio_id}/{safe_name}-{uuid.uuid4().hex[:10]}{ext}'
+
+
+class OficioAssinaturaPedido(models.Model):
+    STATUS_PENDENTE = 'PENDENTE'
+    STATUS_ASSINADO = 'ASSINADO'
+    STATUS_INVALIDADO = 'INVALIDADO'
+    STATUS_EXPIRADO = 'EXPIRADO'
+    STATUS_CHOICES = [
+        (STATUS_PENDENTE, 'Pendente'),
+        (STATUS_ASSINADO, 'Assinado'),
+        (STATUS_INVALIDADO, 'Invalidado'),
+        (STATUS_EXPIRADO, 'Expirado'),
+    ]
+
+    FONTE_GREAT_VIBES = 'great_vibes'
+    FONTE_ALEX_BRUSH = 'alex_brush'
+    FONTE_PINYON_SCRIPT = 'pinyon_script'
+    FONTE_ALLURA = 'allura'
+    FONTE_ARIZONIA = 'arizonia'
+    FONTE_MONSIEUR = 'monsieur_la_doulaise'
+    FONTE_CHOICES = [
+        (FONTE_GREAT_VIBES, 'Great Vibes'),
+        (FONTE_ALEX_BRUSH, 'Alex Brush'),
+        (FONTE_PINYON_SCRIPT, 'Pinyon Script'),
+        (FONTE_ALLURA, 'Allura'),
+        (FONTE_ARIZONIA, 'Arizonia'),
+        (FONTE_MONSIEUR, 'Monsieur La Doulaise'),
+    ]
+
+    oficio = models.ForeignKey(
+        Oficio,
+        on_delete=models.CASCADE,
+        related_name='assinaturas_oficio',
+        verbose_name='Ofício',
+    )
+    token = models.CharField('Token público', max_length=64, unique=True, db_index=True)
+    status = models.CharField(
+        'Status da assinatura',
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDENTE,
+        db_index=True,
+    )
+    assinante_esperado = models.ForeignKey(
+        'cadastros.Viajante',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pedidos_assinatura_oficio',
+        verbose_name='Assinante esperado',
+    )
+    nome_assinante_esperado = models.CharField('Nome do assinante esperado', max_length=160, blank=True, default='')
+    cpf_esperado = models.CharField('CPF esperado', max_length=14, blank=True, default='')
+    telefone_esperado = models.CharField('Telefone esperado', max_length=20, blank=True, default='')
+    telefone_mascarado_exibido = models.CharField('Telefone mascarado exibido', max_length=30, blank=True, default='')
+    cpf_prefixo_confirmado = models.CharField('Prefixo de CPF confirmado', max_length=5, blank=True, default='')
+    cpf_confirmado_em = models.DateTimeField('CPF confirmado em', null=True, blank=True)
+    telefone_confirmado_em = models.DateTimeField('Telefone confirmado em', null=True, blank=True)
+    fonte_escolhida = models.CharField(
+        'Fonte escolhida',
+        max_length=40,
+        choices=FONTE_CHOICES,
+        blank=True,
+        default='',
+    )
+    pdf_original_congelado = models.FileField(
+        'PDF original congelado',
+        upload_to=oficio_assinatura_upload_to,
+        blank=True,
+        null=True,
+    )
+    hash_pdf_original = models.CharField('Hash SHA-256 do PDF original', max_length=64, blank=True, default='')
+    pdf_assinado_final = models.FileField(
+        'PDF assinado final',
+        upload_to=oficio_assinatura_upload_to,
+        blank=True,
+        null=True,
+    )
+    hash_pdf_assinado = models.CharField('Hash SHA-256 do PDF assinado', max_length=64, blank=True, default='')
+    assinado_em = models.DateTimeField('Assinado em', null=True, blank=True)
+    assinado_ip = models.GenericIPAddressField('IP da assinatura', null=True, blank=True)
+    assinado_user_agent = models.TextField('User agent da assinatura', blank=True, default='')
+    auditoria = models.JSONField('Auditoria', blank=True, default=dict)
+    expira_em = models.DateTimeField('Expira em', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at', '-pk']
+        verbose_name = 'Pedido de assinatura de ofício'
+        verbose_name_plural = 'Pedidos de assinatura de ofício'
+
+    def __str__(self):
+        return f'Assinatura Ofício #{self.oficio_id} ({self.get_status_display()})'
 
 
 class EventoResgateAuditoria(models.Model):

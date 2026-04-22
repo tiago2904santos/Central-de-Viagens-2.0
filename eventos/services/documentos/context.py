@@ -2,7 +2,7 @@ from datetime import datetime
 import re
 from django.db import models
 
-from cadastros.models import AssinaturaConfiguracao, ConfiguracaoSistema
+from cadastros.models import AssinaturaConfiguracao, ConfiguracaoSistema, Viajante
 
 from eventos.models import (
     EfetivoPlanoTrabalho,
@@ -195,7 +195,8 @@ def _format_motorista_oficio(oficio):
 
 def _build_viajantes_context(oficio):
     viajantes = []
-    queryset = oficio.viajantes.select_related('cargo').order_by('nome')
+    viajante_ids = list(oficio.viajantes.values_list('pk', flat=True))
+    queryset = Viajante.objects.filter(pk__in=viajante_ids).select_related('cargo').order_by('nome')
     for viajante in queryset:
         viajantes.append(
             {

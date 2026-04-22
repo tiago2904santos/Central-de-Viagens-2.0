@@ -81,7 +81,7 @@ class CargoForm(FormComErroInvalidMixin, forms.ModelForm):
         model = Cargo
         fields = ['nome', 'is_padrao']
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 120}),
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 120, 'data-auto-uppercase': '1'}),
             'is_padrao': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
@@ -103,7 +103,7 @@ class UnidadeLotacaoForm(FormComErroInvalidMixin, forms.ModelForm):
         model = UnidadeLotacao
         fields = ['nome']
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 160}),
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 160, 'data-auto-uppercase': '1'}),
         }
 
     def clean_nome(self):
@@ -127,7 +127,7 @@ class ViajanteForm(FormComErroInvalidMixin, forms.ModelForm):
             'unidade_lotacao',
         ]
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 160}),
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 160, 'data-auto-uppercase': '1'}),
             'cargo': forms.Select(attrs={'class': ''}),
             'rg': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 30, 'placeholder': 'Número do RG'}),
             'sem_rg': forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_sem_rg'}),
@@ -239,7 +239,7 @@ class CombustivelVeiculoForm(FormComErroInvalidMixin, forms.ModelForm):
         model = CombustivelVeiculo
         fields = ['nome', 'is_padrao']
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 60}),
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 60, 'data-auto-uppercase': '1'}),
             'is_padrao': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
@@ -261,8 +261,8 @@ class VeiculoForm(FormComErroInvalidMixin, forms.ModelForm):
         model = Veiculo
         fields = ['placa', 'modelo', 'combustivel', 'tipo']
         widgets = {
-            'placa': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 7, 'placeholder': 'ABC1234 ou ABC1D23'}),
-            'modelo': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 120}),
+            'placa': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 7, 'placeholder': 'ABC1234 ou ABC1D23', 'data-auto-uppercase': '1'}),
+            'modelo': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 120, 'data-auto-uppercase': '1'}),
             'combustivel': forms.Select(attrs={'class': ''}),
             'tipo': forms.Select(attrs={'class': ''}),
         }
@@ -364,9 +364,9 @@ class ConfiguracaoSistemaForm(FormComErroInvalidMixin, forms.ModelForm):
             'telefone', 'email',
         ]
         widgets = {
-            'divisao': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_divisao', 'maxlength': 120}),
-            'unidade': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_unidade', 'maxlength': 120}),
-            'sigla_orgao': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_sigla_orgao', 'maxlength': 20}),
+            'divisao': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_divisao', 'maxlength': 120, 'data-auto-uppercase': '1'}),
+            'unidade': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_unidade', 'maxlength': 120, 'data-auto-uppercase': '1'}),
+            'sigla_orgao': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_sigla_orgao', 'maxlength': 20, 'data-auto-uppercase': '1'}),
             'sede': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_sede', 'maxlength': 200, 'placeholder': 'Ex.: Curitiba/PR'}),
             'nome_chefia': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_nome_chefia', 'maxlength': 120}),
             'cargo_chefia': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_cargo_chefia', 'maxlength': 120}),
@@ -375,7 +375,7 @@ class ConfiguracaoSistemaForm(FormComErroInvalidMixin, forms.ModelForm):
             'logradouro': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_logradouro'}),
             'bairro': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_bairro'}),
             'cidade_endereco': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_cidade_endereco'}),
-            'uf': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_uf', 'maxlength': 2, 'placeholder': 'PR'}),
+            'uf': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_uf', 'maxlength': 2, 'placeholder': 'PR', 'data-auto-uppercase': '1'}),
             'numero': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_numero'}),
             'telefone': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_telefone', 'data-mask': 'telefone', 'inputmode': 'numeric'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'id': 'id_email'}),

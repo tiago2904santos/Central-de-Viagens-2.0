@@ -35,15 +35,3 @@
 <a href="{% url 'cadastros:combustivel-lista' %}" class="btn btn-outline-secondary">Cancelar</a>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-(function() {
-    var nomeInput = document.getElementById('id_nome');
-    if (!nomeInput) return;
-    nomeInput.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { if (nomeInput.value) nomeInput.value = nomeInput.value.toUpperCase(); });
-    } else if (nomeInput.value) nomeInput.value = nomeInput.value.toUpperCase();
-})();
-</script>
-{% endblock %}

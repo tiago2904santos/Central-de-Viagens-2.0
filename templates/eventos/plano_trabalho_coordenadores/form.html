@@ -5,6 +5,7 @@
 {% block form_header_title %}{% if object %}Editar coordenador{% else %}Novo coordenador{% endif %}{% endblock %}
 {% block form_card_title %}{% if object %}Editar coordenador{% else %}Novo coordenador{% endif %}{% endblock %}
 {% block form_header_icon %}bi-person-vcard{% endblock %}
+{% block form_attrs %}data-dependent-select="1" data-dependent-select-url="{{ api_cidades_por_estado_url }}" data-dependent-select-parent="#id_estado_base" data-dependent-select-target="#id_cidade_base" data-dependent-select-default="{{ estado_parana_id }}"{% endblock %}
 
 {% block form_header_subtitle %}
 <p class="text-muted mb-0">Informe nome completo, cargo, lotação opcional e a cidade vinculada ao estado selecionado.</p>
@@ -66,58 +67,3 @@
 {% endif %}
 {% endblock %}
 
-{% block form_after %}
-<script>
-(function () {
-  const estadoEl = document.getElementById('id_estado_base');
-  const cidadeEl = document.getElementById('id_cidade_base');
-  if (!estadoEl || !cidadeEl) return;
-
-  const cidadesApiBase = '{{ api_cidades_por_estado_url|escapejs }}';
-  const defaultEstadoId = '{{ estado_parana_id }}';
-
-  async function fetchCidades(estadoId) {
-    if (!estadoId) return [];
-    const url = cidadesApiBase.replace('/0/', '/' + estadoId + '/');
-    const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-    if (!response.ok) return [];
-    return response.json();
-  }
-
-  async function mountCidadeOptions(estadoId, selectedCidadeId) {
-    cidadeEl.innerHTML = '<option value="">Selecione...</option>';
-    const cidades = await fetchCidades(estadoId);
-    cidades.forEach((cidade) => {
-      const option = document.createElement('option');
-      option.value = String(cidade.id);
-      option.textContent = cidade.nome;
-      if (selectedCidadeId && String(selectedCidadeId) === String(cidade.id)) {
-        option.selected = true;
-      }
-      cidadeEl.appendChild(option);
-    });
-  }
-
-  async function ensureEstadoPadrao() {
-    const hasEstado = String(estadoEl.value || '').trim();
-    if (!hasEstado && defaultEstadoId) {
-      estadoEl.value = String(defaultEstadoId);
-    }
-  }
-
-  estadoEl.addEventListener('change', async function () {
-    const estadoId = String(estadoEl.value || '').trim();
-    await mountCidadeOptions(estadoId, '');
-  });
-
-  (async function bootstrap() {
-    await ensureEstadoPadrao();
-    const estadoId = String(estadoEl.value || '').trim();
-    const selectedCidadeId = String(cidadeEl.value || '').trim();
-    if (estadoId) {
-      await mountCidadeOptions(estadoId, selectedCidadeId);
-    }
-  })();
-})();
-</script>
-{% endblock %}

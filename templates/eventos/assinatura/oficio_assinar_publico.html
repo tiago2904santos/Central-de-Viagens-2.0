@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Assinar Ofício{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Alex+Brush&family=Pinyon+Script&family=Allura&family=Arizonia&family=Monsieur+La+Doulaise&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="h3">Assinatura de Ofício</h1>
+    <p class="text-muted">Selecione o estilo da assinatura textual para {{ nome_assinatura }}.</p>
+    {% if erro %}<div class="alert alert-danger">{{ erro }}</div>{% endif %}
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header">Preview do PDF</div>
+                <div class="card-body p-0">
+                    <iframe src="{% url 'eventos:assinatura-oficio-pdf' pedido.token %}" class="assinatura-preview-frame" title="Preview PDF"></iframe>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <form method="post" class="card card-body shadow-sm">
+                {% csrf_token %}
+                {% for key, label in fontes %}
+                <label class="assinatura-opcao">
+                    <input type="radio" name="fonte_escolhida" value="{{ key }}" required>
+                    <div class="small text-muted mb-1">{{ label }}</div>
+                    <div class="assinatura-preview font-{{ key }}">{{ nome_assinatura }}</div>
+                </label>
+                {% endfor %}
+                <button type="submit" class="btn btn-success mt-2">Concluir assinatura</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

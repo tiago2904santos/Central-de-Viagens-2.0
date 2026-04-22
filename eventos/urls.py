@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.urls import path
 
-from . import views, views_global
+from . import views, views_assinatura, views_global
 
 app_name = 'eventos'
 
@@ -125,7 +125,12 @@ urlpatterns = [
     path('oficio/<int:pk>/justificativa/', login_required(views.oficio_justificativa), name='oficio-justificativa'),
     path('oficio/<int:pk>/documentos/', login_required(views.oficio_documentos), name='oficio-documentos'),
     path('oficio/<int:pk>/documentos/<str:tipo_documento>/<str:formato>/', login_required(views.oficio_documento_download), name='oficio-documento-download'),
+    path('oficio/<int:pk>/assinatura/gerar-link/', login_required(views_assinatura.oficio_gerar_link_assinatura), name='oficio-assinatura-gerar-link'),
     path('oficio/<int:pk>/step4/', login_required(views.oficio_step4), name='oficio-step4'),
+    path('assinatura/oficio/<str:token>/', views_assinatura.assinatura_oficio_identidade, name='assinatura-oficio-identidade'),
+    path('assinatura/oficio/<str:token>/assinar/', views_assinatura.assinatura_oficio_assinar, name='assinatura-oficio-assinar'),
+    path('assinatura/oficio/<str:token>/verificacao/', views_assinatura.assinatura_oficio_verificacao, name='assinatura-oficio-verificacao'),
+    path('assinatura/oficio/<str:token>/pdf/', views_assinatura.assinatura_oficio_pdf_assinado, name='assinatura-oficio-pdf'),
     path('trechos/<int:pk>/calcular-km/', login_required(views.trecho_calcular_km), name='trecho-calcular-km'),
     path('trechos/estimar/', login_required(views.estimar_km_por_cidades), name='trechos-estimar'),
     path('roteiros/avulso/novo/', login_required(views.roteiro_avulso_cadastrar), name='roteiro-avulso-cadastrar'),

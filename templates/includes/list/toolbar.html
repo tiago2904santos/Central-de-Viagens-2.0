@@ -47,7 +47,6 @@
                 <button 
                     type="{{ action.type|default:'submit' }}"
                     class="btn btn-{{ action.variant|default:'outline-primary' }} btn-sm system-list-toolbar__action"
-                    {% if action.onclick %}onclick="{{ action.onclick }}"{% endif %}
                 >
                     {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}
                     {{ action.label }}

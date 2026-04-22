@@ -1,4 +1,29 @@
+function hydrateStoredViewMode(root, index) {
+    if (!root) {
+        return;
+    }
+
+    var storageKey = root.getAttribute('data-view-storage-key') || ('central-viagens.list.view-mode.' + index);
+    try {
+        var savedMode = window.localStorage.getItem(storageKey);
+        if (savedMode === 'basic' || savedMode === 'rich') {
+            root.setAttribute('data-view-mode', savedMode);
+        }
+    } catch (error) {
+    }
+}
+
+function hydrateStoredViewModes() {
+    Array.prototype.slice.call(document.querySelectorAll('[data-list-view-root]')).forEach(function(root, index) {
+        hydrateStoredViewMode(root, index);
+    });
+}
+
+hydrateStoredViewModes();
+
 document.addEventListener('DOMContentLoaded', function() {
+    hydrateStoredViewModes();
+
     var scrollTopButtons = Array.prototype.slice.call(
         document.querySelectorAll('[data-scroll-top]')
     );
@@ -121,6 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
         );
 
         function rehydrateUi() {
+            hydrateStoredViewModes();
             applyMode(root.getAttribute('data-view-mode') || getStoredMode(), false);
             if (window.OficioSelectPicker && typeof window.OficioSelectPicker.refresh === 'function') {
                 window.OficioSelectPicker.refresh(root);
