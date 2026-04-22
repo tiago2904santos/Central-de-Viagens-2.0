@@ -1,0 +1,93 @@
+{% if assinatura_admin %}
+{% if assinatura_admin.pedido and assinatura_admin.pedido.status == 'invalidado_alteracao' %}
+<div class="alert alert-warning py-2 small mb-2">A assinatura anterior foi invalidada por alteração no documento. Gere um novo link para colher nova assinatura.</div>
+{% endif %}
+<div class="card mb-4 border-secondary-subtle">
+  <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <strong>Assinatura eletrónica</strong>
+    {% if assinatura_admin.pedido %}
+    <span class="badge text-bg-secondary">{{ assinatura_admin.estado_pedido_label }}</span>
+    {% endif %}
+  </div>
+  <div class="card-body small">
+    {% if not assinatura_admin.pedido %}
+    <p class="text-muted mb-2">Crie um pedido para gerar o PDF e obter o link de assinatura (servidor definido nas configurações do sistema, ou fluxo em duas etapas no termo).</p>
+    <form method="post" action="{{ assinatura_admin.criar_pedido_url }}" class="d-inline-block">
+      {% csrf_token %}
+      <input type="hidden" name="documento_tipo" value="{{ assinatura_admin.documento_tipo }}">
+      <input type="hidden" name="documento_id" value="{{ assinatura_admin.documento_id }}">
+      <input type="hidden" name="next" value="{{ assinatura_admin.next_url }}">
+      {% if 'termoautorizacao' in assinatura_admin.documento_tipo|lower %}
+      <div class="mb-2" style="max-width: 280px;">
+        <label class="form-label small mb-0" for="id-cpf-chefia-{{ assinatura_admin.documento_id }}">CPF esperado da chefia (2.ª etapa)</label>
+        <input class="form-control form-control-sm" id="id-cpf-chefia-{{ assinatura_admin.documento_id }}" name="cpf_esperado_chefia" type="text" maxlength="14" placeholder="000.000.000-00" autocomplete="off">
+        <div class="form-text">Obrigatório se não estiver nas configurações do sistema.</div>
+      </div>
+      {% endif %}
+      <button type="submit" class="btn btn-outline-primary btn-sm">Criar pedido de assinatura</button>
+    </form>
+    {% else %}
+    {% if assinatura_admin.url_verificacao %}
+    <p class="small mb-2"><a href="{{ assinatura_admin.url_verificacao }}" target="_blank" rel="noopener">Página pública de verificação</a></p>
+    {% endif %}
+    <ul class="list-unstyled mb-0">
+      {% for row in assinatura_admin.etapas_rows %}
+      <li class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <span class="badge bg-light text-dark me-1">Etapa {{ row.etapa.ordem }}</span>
+            <strong>{{ row.etapa.nome_previsto|default:"Assinante" }}</strong>
+            <div class="text-muted">{{ row.etapa.get_tipo_assinante_display }}</div>
+            <div class="mt-1"><small>Estado da etapa: {{ row.etapa.get_status_display }}</small></div>
+            {% if row.estado_link == 'invalido' and row.etapa.status != 'assinado' %}
+            <div class="text-warning mt-1"><small>Link indisponível até a etapa anterior ser concluída.</small></div>
+            {% endif %}
+          </div>
+          <div class="flex-grow-1" style="min-width: 200px; max-width: 100%;">
+            {% if row.link_assinar %}
+            <label class="form-label mb-0 small">Link para assinar</label>
+            <div class="input-group input-group-sm">
+              <input type="text" class="form-control font-monospace small" readonly value="{{ row.link_assinar }}" id="assin-link-{{ row.etapa.pk }}">
+              <button type="button" class="btn btn-outline-secondary" data-copy-target="assin-link-{{ row.etapa.pk }}">Copiar</button>
+            </div>
+            {% endif %}
+            {% if row.link_resultado %}
+            <a class="btn btn-link btn-sm px-0 mt-1" href="{{ row.link_resultado }}">Comprovativo desta etapa</a>
+            {% endif %}
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    <p class="text-muted mb-2 mt-2">Para renovar o fluxo (novo PDF), crie outro pedido após ajustar o documento.</p>
+    <form method="post" action="{{ assinatura_admin.criar_pedido_url }}" class="d-inline-block">
+      {% csrf_token %}
+      <input type="hidden" name="documento_tipo" value="{{ assinatura_admin.documento_tipo }}">
+      <input type="hidden" name="documento_id" value="{{ assinatura_admin.documento_id }}">
+      <input type="hidden" name="next" value="{{ assinatura_admin.next_url }}">
+      {% if 'termoautorizacao' in assinatura_admin.documento_tipo|lower %}
+      <div class="mb-2" style="max-width: 280px;">
+        <label class="form-label small mb-0" for="id-cpf-chefia-novo-{{ assinatura_admin.documento_id }}">CPF esperado da chefia (2.ª etapa)</label>
+        <input class="form-control form-control-sm" id="id-cpf-chefia-novo-{{ assinatura_admin.documento_id }}" name="cpf_esperado_chefia" type="text" maxlength="14" placeholder="000.000.000-00" autocomplete="off">
+      </div>
+      {% endif %}
+      <button type="submit" class="btn btn-outline-secondary btn-sm">Novo pedido</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+<script>
+(function() {
+  document.querySelectorAll('[data-copy-target]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = btn.getAttribute('data-copy-target');
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.select();
+      el.setSelectionRange(0, 99999);
+      try { navigator.clipboard.writeText(el.value); } catch (e) {}
+    });
+  });
+})();
+</script>
+{% endif %}

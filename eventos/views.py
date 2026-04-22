@@ -31,6 +31,8 @@ from documentos.services.exportacao_google_drive import ExportacaoEventoGoogleDr
 from integracoes.services.google_drive.drive_service import GoogleDriveServiceError
 from integracoes.models import GoogleDriveIntegration
 
+from assinaturas.services.ui_context import merge_assinatura_admin
+
 from .models import (
     AtividadePlanoTrabalho,
     CoordenadorOperacional,
@@ -1027,6 +1029,16 @@ def evento_lista(request):
             pass
     object_list = list(qs.distinct().order_by(order_field, '-created_at'))
     _decorate_evento_list_items(object_list)
+    drive_integration = (
+        GoogleDriveIntegration.objects.filter(user=request.user)
+        .order_by('-updated_at')
+        .first()
+    )
+    drive_export_ready = bool(
+        drive_integration
+        and drive_integration.is_active
+        and (drive_integration.root_folder_name or '').strip()
+    )
     context = {
         'object_list': object_list,
         'filters': filters,
@@ -1041,6 +1053,8 @@ def evento_lista(request):
         'order_dir_choices': DOCUMENT_LIST_ORDER_DIR_CHOICES,
         'evento_novo_url': reverse('eventos:guiado-novo'),
         'clear_filters_url': reverse('eventos:lista'),
+        'drive_integration': drive_integration,
+        'drive_export_ready': drive_export_ready,
     }
     return render(request, 'eventos/evento_lista.html', context)
 
@@ -1117,7 +1131,9 @@ def evento_exportar_google_drive(request, pk):
         )
         return redirect('eventos:detalhe', pk=pk)
 
-    if resultado.success:
+    has_missing = bool(resultado.missing_documents)
+    has_partial_errors = bool(resultado.partial_errors)
+    if resultado.success and not has_missing:
         messages.success(
             request,
             f'Exportacao concluida: {resultado.oficios_processados} oficio(s), {resultado.folders_created} pasta(s) e {resultado.files_uploaded} arquivo(s) enviados.',
@@ -1125,7 +1141,7 @@ def evento_exportar_google_drive(request, pk):
     else:
         messages.warning(
             request,
-            f'Exportacao parcial: {resultado.oficios_processados} oficio(s), {resultado.files_uploaded} arquivo(s) enviados com {len(resultado.partial_errors)} erro(s).',
+            f'Exportacao parcial: {resultado.oficios_processados} oficio(s), {resultado.files_uploaded} arquivo(s) enviados, {len(resultado.missing_documents)} ausencia(s) e {len(resultado.partial_errors)} erro(s).',
         )
     for item in resultado.missing_documents[:5]:
         messages.info(request, item)
@@ -2584,13 +2600,15 @@ def guiado_etapa_4(request, evento_id):
     wizard_steps = _build_guiado_v2_wizard_steps(evento, current_key='pt-os')
     convite_next_url = return_to
 
+    anexos_convite = list(
+        EventoAnexoSolicitante.objects.filter(evento=evento).order_by('ordem', '-uploaded_at', 'id')
+    )
+
     context = {
         'evento': evento,
         'object': evento,
         'oficios': oficios,
-        'anexos_convite': list(
-            EventoAnexoSolicitante.objects.filter(evento=evento).order_by('ordem', '-uploaded_at', 'id')
-        ),
+        'anexos_convite': anexos_convite,
         'convite_checked': evento.tem_convite_ou_oficio_evento,
         'convite_next_url': convite_next_url,
         'planos_trabalho': planos,
@@ -3985,6 +4003,10 @@ def _save_oficio_preserving_status(oficio, update_fields):
     """
     Steps 1â€“3 podem editar um ofÃ­cio finalizado sem rebaixar o status nesta fase.
     """
+    if getattr(oficio, "pk", None):
+        from assinaturas.services.documento_bloqueio import garantir_documento_editavel
+
+        garantir_documento_editavel("eventos.oficio", oficio.pk)
     fields = [field for field in update_fields if field != 'status']
     oficio.save(update_fields=list(dict.fromkeys([*fields, 'updated_at'])))
 
@@ -4553,6 +4575,9 @@ def _legacy_oficio_step2(request, pk):
             oficio.motorista_oficio = f'{oficio.motorista_oficio_numero}/{oficio.motorista_oficio_ano}'
         else:
             oficio.motorista_oficio = ''
+        from assinaturas.services.documento_bloqueio import garantir_documento_editavel
+
+        garantir_documento_editavel("eventos.oficio", oficio.pk)
         oficio.save(update_fields=[
             'placa', 'modelo', 'combustivel', 'tipo_viatura', 'porte_transporte_armas', 'motorista_viajante_id', 'motorista',
             'motorista_carona', 'motorista_oficio', 'motorista_oficio_numero', 'motorista_oficio_ano', 'motorista_protocolo', 'updated_at'
@@ -6889,6 +6914,9 @@ def _autosave_oficio_justificativa(oficio, request):
     modelo = ModeloJustificativa.objects.filter(pk=modelo_id).first() if modelo_id else None
     texto = (request.POST.get('justificativa_texto') or '').strip()
     justificativa, _ = Justificativa.objects.get_or_create(oficio=oficio)
+    from assinaturas.services.documento_bloqueio import garantir_documento_editavel
+
+    garantir_documento_editavel("eventos.justificativa", justificativa.pk)
     justificativa.modelo = modelo
     justificativa.texto = texto
     justificativa.save(update_fields=['modelo', 'texto', 'updated_at'])
@@ -6976,6 +7004,9 @@ def _legacy_oficio_step4(request, pk):
     evento = oficio.evento
     if request.method == 'POST':
         if request.POST.get('finalizar'):
+            from assinaturas.services.documento_bloqueio import garantir_documento_editavel
+
+            garantir_documento_editavel("eventos.oficio", oficio.pk)
             oficio.status = Oficio.STATUS_FINALIZADO
             oficio.save(update_fields=['status', 'updated_at'])
             messages.success(request, 'OfÃ­cio finalizado.')
@@ -7015,6 +7046,9 @@ def oficio_justificativa(request, pk):
     form = OficioJustificativaForm(request.POST or None, oficio=oficio)
     if request.method == 'POST' and form.is_valid():
         justificativa, _ = Justificativa.objects.get_or_create(oficio=oficio)
+        from assinaturas.services.documento_bloqueio import garantir_documento_editavel
+
+        garantir_documento_editavel("eventos.justificativa", justificativa.pk)
         justificativa.modelo = form.cleaned_data.get('modelo_justificativa')
         justificativa.texto = form.cleaned_data.get('justificativa_texto') or ''
         justificativa.save(update_fields=['modelo', 'texto', 'updated_at'])
@@ -7022,6 +7056,12 @@ def oficio_justificativa(request, pk):
         return redirect(next_url)
     context = _build_oficio_justificativa_context(oficio, next_url=next_url)
     context['form'] = form
+    justificativa_row = Justificativa.objects.filter(oficio=oficio).first()
+    if justificativa_row:
+        context = merge_assinatura_admin(request, context, 'eventos.justificativa', justificativa_row.pk)
+    else:
+        context = dict(context)
+        context['assinatura_admin'] = None
     return render(
         request,
         'eventos/oficio/justificativa.html',
@@ -7278,6 +7318,7 @@ def oficio_step4(request, pk):
                 messages.error(request, 'O ofÃ­cio nÃ£o pode ser finalizado enquanto houver pendÃªncias.')
                 context = _build_oficio_step4_context(oficio, finalize_validation=finalize_validation)
                 context['oficio_evento_context_block'] = _build_oficio_evento_context_block(oficio)
+                context = merge_assinatura_admin(request, context, 'eventos.oficio', oficio.pk)
                 return render(
                     request,
                     'eventos/oficio/wizard_step4.html',
@@ -7295,6 +7336,9 @@ def oficio_step4(request, pk):
             with transaction.atomic():
                 if termo_changed:
                     _save_oficio_preserving_status(oficio, ['gerar_termo_preenchido'])
+                from assinaturas.services.documento_bloqueio import garantir_documento_editavel
+
+                garantir_documento_editavel("eventos.oficio", oficio.pk)
                 oficio.status = Oficio.STATUS_FINALIZADO
                 oficio.save(update_fields=['status', 'updated_at'])
                 if gerar_termo_preenchido:
@@ -7320,6 +7364,7 @@ def oficio_step4(request, pk):
         return redirect(return_to)
     context = _build_oficio_step4_context(oficio)
     context['oficio_evento_context_block'] = _build_oficio_evento_context_block(oficio)
+    context = merge_assinatura_admin(request, context, 'eventos.oficio', oficio.pk)
     return render(
         request,
         'eventos/oficio/wizard_step4.html',

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 from django.contrib.auth import get_user_model
@@ -11,6 +12,8 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
 from integracoes.models import GoogleDriveIntegration
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleDriveServiceError(Exception):
@@ -133,6 +136,90 @@ class GoogleDriveService:
             return existing
         return self.create_folder(service, parent_id, folder_name)
 
+    @staticmethod
+    def _file_in_parent_query(parent_id: str, file_name: str) -> str:
+        escaped_name = file_name.replace("'", "\\'")
+        return (
+            f"name = '{escaped_name}' and "
+            f"mimeType != '{GoogleDriveService.FOLDER_MIME_TYPE}' and "
+            f"'{parent_id}' in parents and trashed = false"
+        )
+
+    def find_file_by_name(self, service, parent_id: str, file_name: str) -> dict | None:
+        """Retorna o primeiro arquivo (nao-pasta) com o nome exato dentro da pasta pai."""
+        files = self.find_files_by_name(service, parent_id, file_name)
+        return files[0] if files else None
+
+    def find_files_by_name(self, service, parent_id: str, file_name: str) -> list[dict]:
+        """Lista arquivos com o mesmo nome na mesma pasta (util para deduplicar legado)."""
+        query = self._file_in_parent_query(parent_id, file_name)
+        try:
+            response = (
+                service.files()
+                .list(
+                    q=query,
+                    spaces="drive",
+                    pageSize=100,
+                    fields="files(id, name)",
+                    supportsAllDrives=False,
+                )
+                .execute()
+            )
+        except HttpError as exc:
+            raise GoogleDriveApiError("Falha ao consultar arquivo no Google Drive.") from exc
+        return response.get("files", [])
+
+    def upload_or_replace_file(
+        self,
+        service,
+        parent_id: str,
+        local_path: str,
+        mime_type: str,
+        target_name: str,
+    ) -> dict:
+        """
+        Idempotente por nome na pasta pai: atualiza o primeiro arquivo existente com o mesmo
+        nome ou cria um novo. Remove duplicatas extras com o mesmo nome (reexportacoes antigas).
+        """
+        media = MediaFileUpload(local_path, mimetype=mime_type, resumable=False)
+        existing = self.find_files_by_name(service, parent_id, target_name)
+        try:
+            if not existing:
+                metadata = {"name": target_name, "parents": [parent_id]}
+                return (
+                    service.files()
+                    .create(
+                        body=metadata,
+                        media_body=media,
+                        fields="id, name, webViewLink",
+                        supportsAllDrives=False,
+                    )
+                    .execute()
+                )
+            file_id = existing[0]["id"]
+            result = (
+                service.files()
+                .update(
+                    fileId=file_id,
+                    media_body=media,
+                    fields="id, name, webViewLink",
+                    supportsAllDrives=False,
+                )
+                .execute()
+            )
+            for dup in existing[1:]:
+                try:
+                    service.files().delete(fileId=dup["id"], supportsAllDrives=False).execute()
+                except HttpError:
+                    logger.warning(
+                        "Falha ao remover arquivo duplicado no Drive (mesmo nome na pasta)",
+                        extra={"parent_id": parent_id, "file_name": target_name, "dup_id": dup["id"]},
+                        exc_info=True,
+                    )
+            return result
+        except HttpError as exc:
+            raise GoogleDriveApiError("Falha ao enviar ou atualizar arquivo no Google Drive.") from exc
+
     def upload_file(
         self,
         service,
@@ -141,21 +228,10 @@ class GoogleDriveService:
         mime_type: str,
         target_name: str,
     ) -> dict:
-        media = MediaFileUpload(local_path, mimetype=mime_type, resumable=False)
-        metadata = {"name": target_name, "parents": [parent_id]}
-        try:
-            return (
-                service.files()
-                .create(
-                    body=metadata,
-                    media_body=media,
-                    fields="id, name, webViewLink",
-                    supportsAllDrives=False,
-                )
-                .execute()
-            )
-        except HttpError as exc:
-            raise GoogleDriveApiError("Falha ao enviar arquivo para o Google Drive.") from exc
+        """Compatibilidade: mesmo comportamento que upload_or_replace_file."""
+        return self.upload_or_replace_file(
+            service, parent_id, local_path, mime_type, target_name
+        )
 
     def ensure_user_root_folder(
         self, user: get_user_model(), root_folder_name: str | None = None

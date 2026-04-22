@@ -143,6 +143,22 @@
                     </a>
                     {% endif %}
                     {% endfor %}
+                    {% if drive_export_ready %}
+                    <form method="post" action="{% url 'eventos:exportar-google-drive' obj.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="formatos" value="docx">
+                        <input type="hidden" name="formatos" value="pdf">
+                        <button type="submit" class="btn btn-sm btn-doc-action btn-doc-action--secondary" title="Exporta DOCX e PDF para a pasta raiz configurada no Google Drive">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            <span>Google Drive</span>
+                        </button>
+                    </form>
+                    {% else %}
+                    <a href="{% url 'eventos:documentos-hub' %}" class="btn btn-sm btn-doc-action btn-doc-action--secondary" title="Conecte o Google Drive e defina a pasta raiz no hub de documentos">
+                        <i class="bi bi-cloud-slash"></i>
+                        <span>Drive</span>
+                    </a>
+                    {% endif %}
                     <form method="post" action="{{ obj.delete_url }}" class="d-inline" onsubmit="return confirm('Excluir este evento?');">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-sm btn-doc-action btn-doc-action--danger">

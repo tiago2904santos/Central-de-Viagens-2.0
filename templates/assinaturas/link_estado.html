@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}
+  {% if estado == "expirado" %}Link expirado{% elif estado == "ja_assinado" %}Ja assinado{% elif estado == "invalido" %}Link indisponivel{% else %}Assinatura{% endif %}
+{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 640px;">
+  {% if estado == "expirado" %}
+  <h1 class="h4 text-warning mb-3"><i class="bi bi-clock-history me-2"></i>Link expirado</h1>
+  <p class="text-muted mb-0">Este pedido de assinatura ja nao e valido. Solicite um novo link ao responsavel pelo documento.</p>
+  {% elif estado == "ja_assinado" %}
+  <h1 class="h4 text-secondary mb-3"><i class="bi bi-pen-fill me-2"></i>Assinatura ja concluida</h1>
+  <p class="text-muted mb-2">Este documento ja foi assinado. O link nao pode ser reutilizado.</p>
+  {% if assin and assin.nome_assinante %}
+  <p class="mb-0"><strong>Assinante:</strong> {{ assin.nome_assinante }}{% if assin.signed_at %} &middot; <strong>Data:</strong> {{ assin.signed_at|date:"d/m/Y H:i" }}{% endif %}</p>
+  {% endif %}
+  {% if assin %}
+  <p class="mt-3 mb-0">
+    {% for e in assin.etapas.all %}
+      {% if forloop.first %}<a href="{% url 'assinaturas:resultado' e.token %}">Ver comprovativo</a>{% endif %}
+    {% empty %}
+      {% if assin.token %}<a href="{% url 'assinaturas:resultado' assin.token %}">Ver comprovativo</a>{% endif %}
+    {% endfor %}
+  </p>
+  {% endif %}
+  {% elif estado == "invalido" %}
+  <h1 class="h4 text-danger mb-3"><i class="bi bi-slash-circle me-2"></i>Link indisponivel</h1>
+  {% if assin and assin.status == "invalidado_alteracao" %}
+  <p class="text-muted mb-0">Este link ficou inválido porque o documento foi alterado após a geração do pedido. Gere um novo link para assinar a versão atual.</p>
+  {% else %}
+  <p class="text-muted mb-0">O endereco nao corresponde a um pedido de assinatura valido.</p>
+  {% endif %}
+  {% else %}
+  <h1 class="h4 text-secondary mb-3">Estado desconhecido</h1>
+  <p class="text-muted mb-0">Nao foi possivel processar o pedido.</p>
+  {% endif %}
+</div>
+{% endblock %}

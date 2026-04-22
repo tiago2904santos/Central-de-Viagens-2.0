@@ -358,7 +358,7 @@ class ConfiguracaoSistemaForm(FormComErroInvalidMixin, forms.ModelForm):
         model = ConfiguracaoSistema
         fields = [
             'divisao', 'unidade', 'sigla_orgao',
-            'sede', 'nome_chefia', 'cargo_chefia',
+            'sede', 'nome_chefia', 'cargo_chefia', 'cpf_chefia_assinatura',
             'coordenador_adm_plano_trabalho',
             'cep', 'logradouro', 'bairro', 'cidade_endereco', 'uf', 'numero',
             'telefone', 'email',
@@ -370,6 +370,15 @@ class ConfiguracaoSistemaForm(FormComErroInvalidMixin, forms.ModelForm):
             'sede': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_sede', 'maxlength': 200, 'placeholder': 'Ex.: Curitiba/PR'}),
             'nome_chefia': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_nome_chefia', 'maxlength': 120}),
             'cargo_chefia': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_cargo_chefia', 'maxlength': 120}),
+            'cpf_chefia_assinatura': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'id': 'id_cpf_chefia_assinatura',
+                    'maxlength': 14,
+                    'placeholder': 'CPF esperado na 2.ª etapa do termo (opcional)',
+                    'inputmode': 'numeric',
+                }
+            ),
             'coordenador_adm_plano_trabalho': forms.Select(attrs={'class': '', 'id': 'id_coordenador_adm_plano_trabalho'}),
             'cep': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_cep', 'maxlength': 9, 'placeholder': '00000-000', 'data-mask': 'cep', 'inputmode': 'numeric'}),
             'logradouro': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_logradouro'}),

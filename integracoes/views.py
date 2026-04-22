@@ -6,6 +6,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import redirect
 from django.urls import reverse
+from oauthlib.oauth2.rfc6749.errors import InsecureTransportError, OAuth2Error
 
 from integracoes.services.google_drive.drive_service import (
     GoogleDriveIntegrationNotConfigured,
@@ -22,14 +23,19 @@ logger = logging.getLogger(__name__)
 def google_drive_connect(request):
     try:
         oauth_data = GoogleOAuthService.build_authorization_url()
-    except ImproperlyConfigured:
+    except ImproperlyConfigured as exc:
         messages.error(
             request,
-            "Integracao Google Drive nao configurada no servidor. Defina GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET e GOOGLE_OAUTH_REDIRECT_URI no .env.",
+            "Integracao Google Drive indisponivel no momento. Revise configuracao OAuth no servidor.",
         )
-        logger.warning("OAuth Google Drive sem configuracao", extra={"user_id": request.user.pk})
+        logger.warning(
+            "Falha ao iniciar OAuth Google Drive",
+            extra={"user_id": request.user.pk, "oauth_setup_error": str(exc)},
+        )
         return redirect(reverse("eventos:documentos-hub"))
-    GoogleOAuthService.persist_state_in_session(request, oauth_data.state)
+    GoogleOAuthService.persist_state_in_session(
+        request, oauth_data.state, oauth_data.code_verifier
+    )
     return redirect(oauth_data.authorization_url)
 
 
@@ -38,10 +44,11 @@ def google_drive_connect(request):
 def google_drive_callback(request):
     state = request.GET.get("state")
     try:
-        GoogleOAuthService.pop_and_validate_state(request, state)
+        code_verifier = GoogleOAuthService.pop_and_validate_state(request, state)
         credentials = GoogleOAuthService.exchange_code_for_credentials(
             authorization_response=request.build_absolute_uri(),
             state=state or "",
+            code_verifier=code_verifier,
         )
         GoogleOAuthService.save_user_credentials(request.user, credentials)
         messages.success(request, "Google Drive conectado com sucesso.")
@@ -54,6 +61,25 @@ def google_drive_callback(request):
             "Integracao Google Drive nao configurada no servidor. Revise as variaveis GOOGLE_OAUTH_* no .env.",
         )
         logger.warning("OAuth callback sem configuracao valida", extra={"user_id": request.user.pk})
+    except InsecureTransportError:
+        messages.error(
+            request,
+            "Nao foi possivel concluir a conexao OAuth no ambiente atual. Verifique configuracao local de callback HTTP.",
+        )
+        logger.exception("OAuth callback bloqueado por transporte inseguro", extra={"user_id": request.user.pk})
+    except OAuth2Error as exc:
+        messages.error(
+            request,
+            "Nao foi possivel trocar o codigo de autorizacao com o Google. Revise credenciais e redirect URI.",
+        )
+        logger.exception(
+            "Falha OAuth2 no callback Google Drive",
+            extra={
+                "user_id": request.user.pk,
+                "oauth_error_type": type(exc).__name__,
+                "oauth_error_message": str(exc),
+            },
+        )
     except Exception:
         messages.error(request, "Nao foi possivel concluir a conexao com o Google Drive.")
         logger.exception("Falha no callback OAuth Google Drive", extra={"user_id": request.user.pk})

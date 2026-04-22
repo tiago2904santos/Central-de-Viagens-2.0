@@ -343,6 +343,13 @@ class ConfiguracaoSistema(models.Model):
     sede = models.CharField('Sede', max_length=200, blank=True, default='')
     nome_chefia = models.CharField('Nome da chefia', max_length=120, blank=True, default='')
     cargo_chefia = models.CharField('Cargo da chefia', max_length=120, blank=True, default='')
+    cpf_chefia_assinatura = models.CharField(
+        'CPF esperado da chefia (assinatura eletrónica)',
+        max_length=14,
+        blank=True,
+        default='',
+        help_text='Opcional: usado quando o pedido de assinatura do termo nao envia CPF manualmente.',
+    )
 
     # Plano de Trabalho: coordenador administrativo padrão
     coordenador_adm_plano_trabalho = models.ForeignKey(

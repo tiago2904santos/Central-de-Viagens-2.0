@@ -11,6 +11,7 @@
             </div>
             {% if oficio.corner_badges %}
             <div class="oficio-list-card__header-status">
+                <span class="badge {{ oficio.assinatura_status.css_class }}">{{ oficio.assinatura_status.label }}</span>
                 {% for badge in oficio.corner_badges %}
                 <span class="oficio-list-badge {{ badge.css_class }}">
                     <span>{{ badge.value }}</span>
@@ -177,6 +178,16 @@
 
         <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
             <div class="oficio-list-card__footer-actions">
+                <form method="post" action="{% url 'assinaturas:pedido_criar' %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="documento_tipo" value="eventos.oficio">
+                    <input type="hidden" name="documento_id" value="{{ oficio.pk }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn btn-sm btn-doc-action btn-doc-action--secondary" title="Gerar link de assinatura">
+                        <i class="bi bi-link-45deg"></i>
+                        <span>Gerar link</span>
+                    </button>
+                </form>
                 <a
                     href="{{ oficio.wizard_url }}"
                     class="btn btn-sm btn-doc-action btn-doc-action--primary"

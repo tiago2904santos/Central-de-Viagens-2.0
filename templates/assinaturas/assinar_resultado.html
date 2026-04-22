@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Assinatura registada{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 640px;">
+  {% if etapa %}
+    {% if assin.status == 'parcial' %}
+    <h1 class="h4 text-success mb-3"><i class="bi bi-check2-circle me-2"></i>Etapa {{ etapa.ordem }} concluida</h1>
+    <p class="mb-3">A assinatura desta etapa foi registada. O documento segue para a proxima etapa (outro link sera enviado ao proximo assinante).</p>
+    {% else %}
+    <h1 class="h4 text-success mb-3"><i class="bi bi-check-circle-fill me-2"></i>Assinatura concluida</h1>
+    <p class="mb-3">Todas as etapas foram concluidas e o documento final foi gravado.</p>
+    {% endif %}
+  {% else %}
+  <h1 class="h4 text-success mb-3"><i class="bi bi-check-circle-fill me-2"></i>Assinatura concluida</h1>
+  <p class="mb-3">O documento foi registado com sucesso.</p>
+  {% endif %}
+
+  <dl class="row small mb-0">
+    <dt class="col-sm-4">Assinante</dt>
+    <dd class="col-sm-8">{% if etapa %}{{ etapa.nome_assinante }}{% else %}{{ assin.nome_assinante }}{% endif %}</dd>
+    <dt class="col-sm-4">Data e hora</dt>
+    <dd class="col-sm-8">{% if etapa and etapa.signed_at %}{{ etapa.signed_at|date:"d/m/Y H:i" }}{% elif assin.signed_at %}{{ assin.signed_at|date:"d/m/Y H:i" }}{% else %}—{% endif %}</dd>
+    <dt class="col-sm-4">Documento</dt>
+    <dd class="col-sm-8"><code>{{ assin.documento_tipo }}</code> #{{ assin.documento_id }}</dd>
+    <dt class="col-sm-4">Estado do pedido</dt>
+    <dd class="col-sm-8">{{ assin.get_status_display }}</dd>
+    {% if assin.status == 'concluido' %}
+    <dt class="col-sm-4">SHA-256 (assinado)</dt>
+    <dd class="col-sm-8 text-break font-monospace">{% if assin.arquivo_assinado_sha256 %}{{ assin.arquivo_assinado_sha256|slice:":16" }}…{{ assin.arquivo_assinado_sha256|slice:"-8:" }}{% else %}—{% endif %}</dd>
+    {% endif %}
+    {% if assin.drive_sync_error %}
+    <dt class="col-sm-4 text-warning">Drive</dt>
+    <dd class="col-sm-8 text-warning">Sincronizacao com o Google Drive falhou; o ficheiro foi gravado no sistema. Detalhe tecnico registado.</dd>
+    {% endif %}
+  </dl>
+</div>
+{% endblock %}

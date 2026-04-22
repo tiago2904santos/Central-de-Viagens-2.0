@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Assinar documento{% endblock %}
+{% block extra_css %}
+<style>
+  .signature-wrap { border: 1px solid #dee2e6; border-radius: 8px; background: #fafafa; }
+  canvas.signature-canvas { width: 100%; height: 220px; touch-action: none; display: block; }
+  .pdf-frame { width: 100%; min-height: 480px; border: 1px solid #dee2e6; border-radius: 8px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+  <h1 class="h4 mb-3">Assinatura eletrónica</h1>
+  <p class="text-muted small mb-1"><strong>{{ titulo_documento|default:"Documento" }}</strong> — PDF congelado neste pedido; a assinatura aplica-se apenas a esta versão.</p>
+  <p class="text-muted small">Leia o documento, confirme o <strong>CPF</strong> do assinante esperado, indique o nome completo e assine no quadro.</p>
+  {% if etapa %}
+  <p class="small mb-2"><strong>Etapa {{ etapa.ordem }}</strong> — assinante esperado: <em>{{ etapa.nome_previsto|default:"—" }}</em></p>
+  {% endif %}
+
+  <iframe class="pdf-frame mb-4" src="{{ preview_url }}" title="Pre-visualizacao PDF"></iframe>
+
+  <form method="post" action="{% url 'assinaturas:assinar_enviar' link_token %}" id="form-assinar">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label" for="nome_assinante">Nome completo</label>
+      <input type="text" class="form-control" name="nome_assinante" id="nome_assinante" required minlength="3" maxlength="200" autocomplete="name">
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="cpf_assinante">CPF (11 dígitos)</label>
+      <input type="text" class="form-control" name="cpf_assinante" id="cpf_assinante" required inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00">
+      <div class="form-text">Deve coincidir com o CPF esperado para esta etapa (cadastro ou valor definido no pedido).</div>
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Assinatura</label>
+      <div class="signature-wrap">
+        <canvas class="signature-canvas" id="signature-pad"></canvas>
+      </div>
+      <div class="d-flex gap-2 mt-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-limpar">Limpar assinatura</button>
+      </div>
+    </div>
+    <input type="hidden" name="signature" id="signature-input" value="">
+    <button type="submit" class="btn btn-primary" id="btn-assinar">Assinar</button>
+  </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+<script>
+(function() {
+  const canvas = document.getElementById('signature-pad');
+  const pad = new SignaturePad(canvas, { penColor: 'rgb(0,0,80)' });
+  function resize() {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = canvas.offsetWidth * ratio;
+    canvas.height = canvas.offsetHeight * ratio;
+    canvas.getContext('2d').scale(ratio, ratio);
+    pad.clear();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  document.getElementById('btn-limpar').addEventListener('click', function() { pad.clear(); });
+  document.getElementById('form-assinar').addEventListener('submit', function(e) {
+    var cpf = (document.getElementById('cpf_assinante').value || '').replace(/\D/g, '');
+    if (cpf.length !== 11) {
+      e.preventDefault();
+      alert('Indique um CPF com 11 dígitos.');
+      return;
+    }
+    if (pad.isEmpty()) {
+      e.preventDefault();
+      alert('Desenhe a sua assinatura antes de enviar.');
+      return;
+    }
+    document.getElementById('signature-input').value = pad.toDataURL('image/png');
+  });
+})();
+</script>
+{% endblock %}

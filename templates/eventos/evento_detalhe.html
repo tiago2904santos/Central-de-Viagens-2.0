@@ -112,6 +112,11 @@
             <button type="submit" class="btn btn-doc-action btn-doc-action--primary">
                 <i class="bi bi-cloud-arrow-up"></i> Exportar estrutura completa
             </button>
+            {% if not drive_integration or not drive_integration.is_active %}
+            <p class="text-muted small mt-2 mb-0">A exportacao requer conta Google conectada.</p>
+            {% elif not drive_integration.root_folder_name %}
+            <p class="text-muted small mt-2 mb-0">Defina a pasta raiz no hub de documentos antes de exportar.</p>
+            {% endif %}
         </form>
     </div>
 </div>

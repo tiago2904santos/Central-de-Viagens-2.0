@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Verificar assinatura{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 720px;">
+  <h1 class="h4 mb-3">Verificação de assinatura</h1>
+  <p class="text-muted small">Consulta pública com o código de verificação. Não solicite dados adicionais por esta página.</p>
+
+  <dl class="row small mb-0">
+    <dt class="col-sm-4">Documento</dt>
+    <dd class="col-sm-8">{{ titulo_documento }} · ID interno {{ pedido.documento_id }}</dd>
+    <dt class="col-sm-4">Estado do pedido</dt>
+    <dd class="col-sm-8">
+      {% if estado_publico == "concluido" %}
+      <span class="badge text-bg-success">Concluído</span>
+      {% elif estado_publico == "parcial" %}
+      <span class="badge text-bg-warning text-dark">Parcial</span>
+      {% elif estado_publico == "pendente" %}
+      <span class="badge text-bg-secondary">Pendente</span>
+      {% elif estado_publico == "invalidado_alteracao" %}
+      <span class="badge text-bg-warning">Invalidado por alteração</span>
+      {% else %}
+      <span class="badge text-bg-danger">Indefinido</span>
+      {% endif %}
+      {% if expirado %}<span class="text-warning ms-2">Prazo do link de assinatura expirado (se aplicável)</span>{% endif %}
+    </dd>
+    <dt class="col-sm-4">Hash PDF original</dt>
+    <dd class="col-sm-8 font-monospace text-break">{{ pedido.arquivo_original_sha256|default:"—" }}</dd>
+    <dt class="col-sm-4">Hash PDF assinado</dt>
+    <dd class="col-sm-8 font-monospace text-break">{{ pedido.arquivo_assinado_sha256|default:"—" }}</dd>
+  </dl>
+
+  <h2 class="h6 mt-4 mb-2">Assinantes (etapas)</h2>
+  <ul class="list-group list-group-flush border rounded mb-3">
+    {% for e in etapas %}
+    <li class="list-group-item small">
+      <strong>Etapa {{ e.ordem }}</strong> — {{ e.nome_previsto|default:"—" }}<br>
+      {% if e.status == "assinado" %}
+      <span class="text-success">Assinado</span>
+      {% if e.signed_at %}<span class="text-muted">· {{ e.signed_at|date:"d/m/Y H:i" }}</span>{% endif %}<br>
+      Nome declarado: {{ e.nome_assinante|default:"—" }}<br>
+      CPF (registo interno): {{ e.cpf_informado|default:"—" }}<br>
+      CPF confirmado: {% if e.cpf_confere %}sim{% else %}não{% endif %}
+      {% else %}
+      <span class="text-muted">Pendente</span>
+      {% endif %}
+    </li>
+    {% empty %}
+    <li class="list-group-item text-muted">Sem etapas registadas.</li>
+    {% endfor %}
+  </ul>
+
+  {% if estado_publico == "concluido" and pedido.arquivo_assinado %}
+  <p class="mb-0"><a class="btn btn-outline-primary btn-sm" href="{{ url_pdf_assinado }}" target="_blank" rel="noopener">Abrir PDF assinado</a></p>
+  {% endif %}
+</div>
+{% endblock %}

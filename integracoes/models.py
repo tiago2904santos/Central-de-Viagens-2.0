@@ -1,4 +1,5 @@
 import json
+from datetime import timezone as dt_timezone
 
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
@@ -102,6 +103,10 @@ class GoogleDriveIntegration(models.Model):
         expiry = self.expiry
         if timezone.is_naive(expiry) if expiry else False:
             expiry = timezone.make_aware(expiry, timezone.get_current_timezone())
+        expiry_str = None
+        if expiry:
+            expiry_utc = timezone.localtime(expiry, dt_timezone.utc)
+            expiry_str = expiry_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
         return {
             "token": self.access_token,
             "refresh_token": self.refresh_token,
@@ -109,7 +114,7 @@ class GoogleDriveIntegration(models.Model):
             "client_id": self.client_id,
             "client_secret": settings.GOOGLE_OAUTH_CLIENT_SECRET,
             "scopes": list(self.scopes or []),
-            "expiry": expiry.isoformat() if expiry else None,
+            "expiry": expiry_str,
         }
 
     def credentials_payload_json(self) -> str:

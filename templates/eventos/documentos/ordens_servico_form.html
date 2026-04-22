@@ -7,6 +7,7 @@
 {% block content %}
 <div class="app-page-shell app-page-shell--document system-form-page oficio-wizard-page ordem-servico-page">
   <div class="app-page-shell__inner system-form-shell ordem-servico-shell">
+    {% include 'assinaturas/_bloco_assinatura_admin.html' %}
     {% if form.non_field_errors %}
     <div class="alert alert-danger" role="alert">
       {% for error in form.non_field_errors %}

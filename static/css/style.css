@@ -2986,7 +2986,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .oficio-list-core-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 0.7rem;
 }
 
@@ -6222,10 +6222,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     justify-content: flex-end;
 }
 
-.roteiro-list-card__line3-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.72rem;
-}
 
 .roteiro-list-card__vinculos-grid {
     display: flex;
@@ -6249,8 +6245,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .roteiro-list-card__valor-blocks {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
     height: 100%;
 }
@@ -6268,8 +6264,8 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 .roteiro-list-card .diaria-block--total, .roteiro-list-card .diaria-block--qtd-diaria {
-    flex: 1 1 calc(50% - 0.375rem);
-    min-width: min(18rem, 100%);
+    min-width: 0;
+    width: 100%;
     border-color: rgba(var(--oficio-card-accent-rgb), 0.22);
     background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.9)),
@@ -6277,9 +6273,13 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 }
 
 @media (max-width: 640px) {
+    .roteiro-list-card__valor-blocks {
+        grid-template-columns: 1fr;
+    }
+
     .roteiro-list-card .diaria-block--total,
     .roteiro-list-card .diaria-block--qtd-diaria {
-        flex-basis: 100%;
+        width: 100%;
     }
 }
 
@@ -8079,7 +8079,7 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
 
 .oficio-stepper {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 0.46rem;
     overflow: visible;
     padding: 0.12rem 0.08rem;
@@ -8158,7 +8158,6 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     font-size: 0.8rem;
     font-weight: 700;
     line-height: 1;
-    white-space: nowrap;
 }
 
 .oficio-stepper-state {
@@ -10968,6 +10967,99 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     padding: 0.8rem;
     color: #5f748a;
     font-size: 0.84rem;
+}
+
+.evento-convite-file-item--stacked {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.evento-convite-file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.anexo-solicitante-stack {
+    border: 1px solid rgba(16, 36, 63, 0.08) !important;
+    border-radius: 0.8rem;
+    background: #fff;
+}
+
+.assinatura-doc-card {
+    margin-top: 0.5rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(16, 36, 63, 0.08);
+}
+
+.assinatura-doc-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.35rem;
+}
+
+.assinatura-doc-card__kicker {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7a8ca3;
+}
+
+.assinatura-doc-card__meta dt {
+    font-size: 0.7rem;
+    margin-bottom: 0.05rem;
+}
+
+.assinatura-doc-card__meta dd {
+    font-size: 0.82rem;
+}
+
+.assinatura-doc-card__linkfield {
+    font-size: 0.78rem;
+}
+
+.assinatura-doc-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border-radius: 999px;
+    padding: 0.25rem 0.55rem;
+}
+
+.badge-assinatura--sem {
+    background: rgba(100, 116, 139, 0.12);
+    color: #475569;
+}
+
+.badge-assinatura--pendente {
+    background: rgba(251, 191, 36, 0.2);
+    color: #92400e;
+}
+
+.badge-assinatura--expirado {
+    background: rgba(248, 113, 113, 0.18);
+    color: #991b1b;
+}
+
+.badge-assinatura--assinado {
+    background: rgba(34, 197, 94, 0.16);
+    color: #166534;
+}
+
+.badge-assinatura--parcial {
+    background: rgba(59, 130, 246, 0.15);
+    color: #1e40af;
+}
+
+.badge-assinatura--invalido {
+    background: rgba(15, 23, 42, 0.08);
+    color: #334155;
 }
 
 .ordem-servico-page .ordem-servico-shell {

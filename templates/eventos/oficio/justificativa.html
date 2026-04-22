@@ -19,6 +19,8 @@
             </div>
           </div>
 
+          {% include 'assinaturas/_bloco_assinatura_admin.html' %}
+
           <form method="post" id="oficio-justificativa-form" class="oficio-stage-form">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next_url }}">

@@ -20,6 +20,7 @@ urlpatterns = [
     path('cadastros/', include('cadastros.urls')),
     path('eventos/', include('eventos.urls')),
     path('integracoes/', include('integracoes.urls')),
+    path('', include('assinaturas.urls')),
     path('', include('core.urls')),
 ]
 

@@ -20,6 +20,9 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods
 from cadastros.models import AssinaturaConfiguracao, Cargo, ConfiguracaoSistema, Estado, Viajante
 
+from assinaturas.services.ui_context import merge_assinatura_admin
+from assinaturas.models import AssinaturaDocumento
+
 from .forms import (
     JustificativaForm,
     OrdemServicoForm,
@@ -2196,7 +2199,24 @@ def _oficio_list_filter_row(oficio, precomputed=None):
     }
 
 
-def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
+def _mapear_status_assinatura_oficio(pedido: AssinaturaDocumento | None) -> dict:
+    if not pedido:
+        return {
+            'codigo': 'sem_assinatura',
+            'label': 'SEM ASSINATURA',
+            'css_class': 'text-bg-secondary',
+        }
+    st = (pedido.status or '').strip().lower()
+    if st == AssinaturaDocumento.Status.CONCLUIDO:
+        return {'codigo': st, 'label': 'ASSINADO', 'css_class': 'text-bg-success'}
+    if st == AssinaturaDocumento.Status.INVALIDADO_ALTERACAO:
+        return {'codigo': st, 'label': 'INVALIDADO POR ALTERACAO', 'css_class': 'text-bg-warning'}
+    if st in (AssinaturaDocumento.Status.PENDENTE, AssinaturaDocumento.Status.PARCIAL):
+        return {'codigo': st, 'label': 'PENDENTE', 'css_class': 'text-bg-info'}
+    return {'codigo': st or 'invalido', 'label': 'SEM ASSINATURA', 'css_class': 'text-bg-secondary'}
+
+
+def _oficio_list_card(oficio, precomputed=None, *, current_path='', assinatura_info=None):
     precomputed = precomputed or _oficio_list_precomputed_meta(oficio)
     justificativa_info = precomputed['justificativa_info']
     viagem_status = precomputed['viagem_status']
@@ -2216,6 +2236,8 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
     vehicle_display = precomputed['vehicle_display']
     driver_display = precomputed['driver_display']
     oficio_status = _oficio_process_status_meta(oficio)
+    assinatura_info = assinatura_info or {}
+    assinatura_status = _mapear_status_assinatura_oficio(assinatura_info.get('pedido'))
     table_actions = _oficio_list_table_actions(oficio, oficio_downloads, return_to=current_path)
     footer_actions = _oficio_list_footer_actions(oficio, oficio_downloads, return_to=current_path)
     vinculos_items = []
@@ -2388,6 +2410,9 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
         'servidores_display': _oficio_list_basic_viajantes_summary(oficio),
         'veiculo_display': vehicle_display,
         'status_badge': oficio_status,
+        'assinatura_status': assinatura_status,
+        'assinatura_link': assinatura_info.get('link_assinatura', ''),
+        'assinatura_verificacao_url': assinatura_info.get('url_verificacao', ''),
         'table_actions': table_actions,
         'footer_actions': footer_actions,
         'theme': theme,
@@ -2616,8 +2641,47 @@ def _render_oficio_list(
 
     rows = _sort_oficio_list_cards(rows, filters['order_by'], filters['order_dir'])
     page_obj = _paginate(rows, request.GET.get('page'))
+    page_oficios = [row['oficio'] for row in page_obj.object_list]
+    assinatura_por_oficio = {}
+    if page_oficios:
+        oficio_ids = [oficio.pk for oficio in page_oficios]
+        pedidos = (
+            AssinaturaDocumento.objects.filter(
+                documento_tipo__iexact="eventos.oficio",
+                documento_id__in=oficio_ids,
+            )
+            .order_by("documento_id", "-id")
+        )
+        latest_by_doc: dict[int, AssinaturaDocumento] = {}
+        for pedido in pedidos:
+            latest_by_doc.setdefault(pedido.documento_id, pedido)
+        for oficio in page_oficios:
+            pedido = latest_by_doc.get(oficio.pk)
+            link_assinatura = ""
+            if pedido:
+                etapa = pedido.etapas.filter(status="pendente").order_by("ordem").first()
+                if etapa:
+                    link_assinatura = request.build_absolute_uri(
+                        reverse("assinaturas:assinar", kwargs={"token": str(etapa.token)})
+                    )
+            assinatura_por_oficio[oficio.pk] = {
+                "pedido": pedido,
+                "link_assinatura": link_assinatura,
+                "url_verificacao": (
+                    request.build_absolute_uri(
+                        reverse("assinaturas:verificar", kwargs={"token": str(pedido.verificacao_token)})
+                    )
+                    if pedido and pedido.verificacao_token
+                    else ""
+                ),
+            }
     object_list = [
-        _oficio_list_card(row['oficio'], precomputed=row['precomputed'], current_path=current_path)
+        _oficio_list_card(
+            row['oficio'],
+            precomputed=row['precomputed'],
+            current_path=current_path,
+            assinatura_info=assinatura_por_oficio.get(row['oficio'].pk, {}),
+        )
         for row in page_obj.object_list
     ]
     context = {
@@ -4338,6 +4402,9 @@ def plano_trabalho_editar(request, pk):
             form.initial['oficio'] = vinculo_oficio.pk
     formset, has_efetivo_payload, default_cargo = _build_plano_trabalho_efetivo_formset(request, instance=obj)
     if request.method == 'POST' and form.is_valid():
+        from assinaturas.services.documento_bloqueio import garantir_documento_editavel
+
+        garantir_documento_editavel("eventos.planotrabalho", obj.pk)
         obj = form.save()
         if has_efetivo_payload:
             rows = _extract_efetivo_rows(request.POST, prefix='efetivo')
@@ -4356,39 +4423,37 @@ def plano_trabalho_editar(request, pk):
         obj=obj,
         data_preview=obj.data_criacao,
     )
-    return render(
-        request,
-        'eventos/documentos/planos_trabalho_form.html',
-        {
-            'form': form,
-            'efetivo_formset': formset,
-            'object': obj,
-            'return_to': return_to,
-            'context_source': context_source,
-            'preselected_event_id': obj.evento_id or '',
-            'preselected_oficio_id': obj.oficio_id or '',
-            'estados_choices': Estado.objects.filter(ativo=True).order_by('nome'),
-            'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
-            'proximo_numero_pt': obj.numero_formatado,
-            'data_geracao_preview': obj.data_criacao,
-            'pt_header_badges': ui_context['header_badges'],
-            'pt_glance': ui_context['glance'],
-            'pt_selected_activity_codes': ui_context['selected_codes'],
-            'plano_trabalho_atividades_catalogo': get_atividades_catalogo(),
-            'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrão',
-            'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
-            'pt_solicitantes_manager_url': _get_solicitantes_manager_url(),
-            'pt_horarios_manager_url': _get_horarios_manager_url(),
-            'pt_step2_warning': step2_defaults.warnings[0] if step2_defaults.warnings else '',
-            'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
-            'selected_coordenadores_payload': [
-                {'id': c.pk, 'nome': c.nome, 'cargo': c.cargo or '', 'display': f'{c.cargo} — {c.nome}' if c.cargo else c.nome}
-                for c in obj.coordenadores.filter(ativo=True)
-            ],
-            'hide_page_header': True,
-            'plano_id': obj.pk,
-        },
-    )
+    ctx = {
+        'form': form,
+        'efetivo_formset': formset,
+        'object': obj,
+        'return_to': return_to,
+        'context_source': context_source,
+        'preselected_event_id': obj.evento_id or '',
+        'preselected_oficio_id': obj.oficio_id or '',
+        'estados_choices': Estado.objects.filter(ativo=True).order_by('nome'),
+        'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
+        'proximo_numero_pt': obj.numero_formatado,
+        'data_geracao_preview': obj.data_criacao,
+        'pt_header_badges': ui_context['header_badges'],
+        'pt_glance': ui_context['glance'],
+        'pt_selected_activity_codes': ui_context['selected_codes'],
+        'plano_trabalho_atividades_catalogo': get_atividades_catalogo(),
+        'pt_default_cargo_label': default_cargo.nome if default_cargo else 'Cargo padrão',
+        'pt_coordenador_operacional_create_url': _get_coordenador_operacional_create_url(),
+        'pt_solicitantes_manager_url': _get_solicitantes_manager_url(),
+        'pt_horarios_manager_url': _get_horarios_manager_url(),
+        'pt_step2_warning': step2_defaults.warnings[0] if step2_defaults.warnings else '',
+        'buscar_coordenadores_url': reverse('eventos:documentos-planos-trabalho-coordenadores-api'),
+        'selected_coordenadores_payload': [
+            {'id': c.pk, 'nome': c.nome, 'cargo': c.cargo or '', 'display': f'{c.cargo} — {c.nome}' if c.cargo else c.nome}
+            for c in obj.coordenadores.filter(ativo=True)
+        ],
+        'hide_page_header': True,
+        'plano_id': obj.pk,
+    }
+    ctx = merge_assinatura_admin(request, ctx, 'eventos.planotrabalho', obj.pk)
+    return render(request, 'eventos/documentos/planos_trabalho_form.html', ctx)
 
 
 @require_http_methods(['GET'])
@@ -4791,6 +4856,9 @@ def ordem_servico_editar(request, pk):
         if not form.is_valid():
             errors = form.non_field_errors() or [err for errs in form.errors.values() for err in errs]
             return _autosave_form_error_response(errors[0] if errors else 'Falha ao salvar a ordem de serviço automaticamente.')
+        from assinaturas.services.documento_bloqueio import garantir_documento_editavel
+
+        garantir_documento_editavel("eventos.ordemservico", obj.pk)
         obj = form.save()
         return _autosave_form_success_response({
             'id': obj.pk,
@@ -4800,6 +4868,9 @@ def ordem_servico_editar(request, pk):
             'data_criacao_display': obj.data_criacao.strftime('%d/%m/%Y') if obj.data_criacao else '',
         })
     if request.method == 'POST' and form.is_valid():
+        from assinaturas.services.documento_bloqueio import garantir_documento_editavel
+
+        garantir_documento_editavel("eventos.ordemservico", obj.pk)
         form.save()
         messages.success(request, 'Ordem de serviÃ§o atualizada.')
         return redirect(return_to or reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': obj.pk}))
@@ -4865,41 +4936,40 @@ def _render_ordem_servico_form(
         for estado in Estado.objects.filter(ativo=True).order_by('nome')
     ]
     current_path = request.get_full_path()
-    return render(
-        request,
-        'eventos/documentos/ordens_servico_form.html',
-        {
-            'form': form,
-            'object': object_instance,
-            'return_to': return_to,
-            'context_source': context_source,
-            'preselected_event_id': preselected_event.pk if preselected_event else (object_instance.evento_id if object_instance else ''),
-            'preselected_oficio_id': preselected_oficio.pk if preselected_oficio else (object_instance.oficio_id if object_instance else ''),
-            'estados_choices_payload': estados_payload,
-            'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
-            'motivos_manager_url': reverse('eventos:modelos-motivo-lista'),
-            'motivo_texto_api_base_url': reverse('eventos:modelos-motivo-texto-api', kwargs={'pk': 0}),
-            'buscar_viajantes_url': reverse('eventos:oficio-step1-viajantes-api'),
-            'cadastrar_viajante_url': f"{reverse('cadastros:viajante-cadastrar')}?next={quote(current_path)}",
-            'destino_estado_fixo_id': getattr(destino_estado_fixo, 'pk', None),
-            'destino_estado_fixo_nome': (
-                f'{destino_estado_fixo.nome} ({destino_estado_fixo.sigla})'
-                if destino_estado_fixo
-                else 'Paraná (PR)'
-            ),
-            'selected_viajantes': selected_viajantes,
-            'selected_viajantes_payload': [
-                serializar_viajante_para_autocomplete(viajante) for viajante in selected_viajantes
-            ],
-            'destinos_iniciais': destinos_iniciais,
-            'ordem_numero_preview': numero_preview,
-            'ordem_vinculo_texto': vinculo_texto,
-            'ordem_vinculos_diretos': vinculos_resolvidos.get('diretos') or [],
-            'ordem_vinculos_herdados': vinculos_resolvidos.get('herdados') or [],
-            'ordens_servico_lista_url': reverse('eventos:documentos-ordens-servico'),
-            'hide_page_header': True,
-        },
-    )
+    ctx = {
+        'form': form,
+        'object': object_instance,
+        'return_to': return_to,
+        'context_source': context_source,
+        'preselected_event_id': preselected_event.pk if preselected_event else (object_instance.evento_id if object_instance else ''),
+        'preselected_oficio_id': preselected_oficio.pk if preselected_oficio else (object_instance.oficio_id if object_instance else ''),
+        'estados_choices_payload': estados_payload,
+        'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
+        'motivos_manager_url': reverse('eventos:modelos-motivo-lista'),
+        'motivo_texto_api_base_url': reverse('eventos:modelos-motivo-texto-api', kwargs={'pk': 0}),
+        'buscar_viajantes_url': reverse('eventos:oficio-step1-viajantes-api'),
+        'cadastrar_viajante_url': f"{reverse('cadastros:viajante-cadastrar')}?next={quote(current_path)}",
+        'destino_estado_fixo_id': getattr(destino_estado_fixo, 'pk', None),
+        'destino_estado_fixo_nome': (
+            f'{destino_estado_fixo.nome} ({destino_estado_fixo.sigla})'
+            if destino_estado_fixo
+            else 'Paraná (PR)'
+        ),
+        'selected_viajantes': selected_viajantes,
+        'selected_viajantes_payload': [
+            serializar_viajante_para_autocomplete(viajante) for viajante in selected_viajantes
+        ],
+        'destinos_iniciais': destinos_iniciais,
+        'ordem_numero_preview': numero_preview,
+        'ordem_vinculo_texto': vinculo_texto,
+        'ordem_vinculos_diretos': vinculos_resolvidos.get('diretos') or [],
+        'ordem_vinculos_herdados': vinculos_resolvidos.get('herdados') or [],
+        'ordens_servico_lista_url': reverse('eventos:documentos-ordens-servico'),
+        'hide_page_header': True,
+    }
+    if object_instance and getattr(object_instance, 'pk', None):
+        ctx = merge_assinatura_admin(request, ctx, 'eventos.ordemservico', object_instance.pk)
+    return render(request, 'eventos/documentos/ordens_servico_form.html', ctx)
 
 
 @require_http_methods(['GET'])
@@ -5550,33 +5620,32 @@ def _render_termo_form(
         ]
     if preview_payload is None:
         preview_payload = build_termo_preview_payload(build_termo_context())
-    return render(
-        request,
-        'eventos/documentos/termos_form.html',
-        {
-            'form': form,
-            'object': object_instance,
-            'return_to': return_to,
-            'context_source': context_source,
-            'preselected_event_id': preselected_event.pk if preselected_event else '',
-            'preselected_oficio_id': preselected_oficio.pk if preselected_oficio else '',
-            'buscar_viajantes_url': reverse('eventos:oficio-step1-viajantes-api'),
-            'buscar_veiculos_url': reverse('eventos:oficio-step2-veiculos-busca-api'),
-            'preview_url': reverse('eventos:documentos-termos-preview'),
-            'api_oficios_por_evento_url': reverse('eventos:documentos-termos-api-oficios-por-evento'),
-            'selected_viajantes_payload': [
-                serializar_viajante_para_autocomplete(viajante) for viajante in selected_viajantes
-            ],
-            'selected_veiculo_payload': selected_veiculo_payload,
-            'selected_oficios_payload': selected_oficios_payload,
-            'preview_payload': preview_payload,
-            'read_only_context': read_only_context,
-            'show_viajantes_selector': object_instance is None,
-            'show_veiculo_selector': object_instance is None,
-            'estados_choices': Estado.objects.filter(ativo=True).order_by('nome'),
-            'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
-        },
-    )
+    ctx = {
+        'form': form,
+        'object': object_instance,
+        'return_to': return_to,
+        'context_source': context_source,
+        'preselected_event_id': preselected_event.pk if preselected_event else '',
+        'preselected_oficio_id': preselected_oficio.pk if preselected_oficio else '',
+        'buscar_viajantes_url': reverse('eventos:oficio-step1-viajantes-api'),
+        'buscar_veiculos_url': reverse('eventos:oficio-step2-veiculos-busca-api'),
+        'preview_url': reverse('eventos:documentos-termos-preview'),
+        'api_oficios_por_evento_url': reverse('eventos:documentos-termos-api-oficios-por-evento'),
+        'selected_viajantes_payload': [
+            serializar_viajante_para_autocomplete(viajante) for viajante in selected_viajantes
+        ],
+        'selected_veiculo_payload': selected_veiculo_payload,
+        'selected_oficios_payload': selected_oficios_payload,
+        'preview_payload': preview_payload,
+        'read_only_context': read_only_context,
+        'show_viajantes_selector': object_instance is None,
+        'show_veiculo_selector': object_instance is None,
+        'estados_choices': Estado.objects.filter(ativo=True).order_by('nome'),
+        'api_cidades_por_estado_url': reverse('cadastros:api-cidades-por-estado', kwargs={'estado_id': 0}),
+    }
+    if object_instance and getattr(object_instance, 'pk', None):
+        ctx = merge_assinatura_admin(request, ctx, 'eventos.termoautorizacao', object_instance.pk)
+    return render(request, 'eventos/documentos/termos_form.html', ctx)
 
 
 def documentos_hub(request):
@@ -5922,6 +5991,9 @@ def termo_autorizacao_editar(request, pk):
             initial_oficios.append(vinculo_oficio.pk)
         form.initial['oficios'] = initial_oficios
     if request.method == 'POST' and form.is_valid():
+        from assinaturas.services.documento_bloqueio import garantir_documento_editavel
+
+        garantir_documento_editavel("eventos.termoautorizacao", obj.pk)
         form.save()
         messages.success(request, 'Termo atualizado com sucesso.')
         return redirect(return_to or reverse('eventos:documentos-termos-editar', kwargs={'pk': obj.pk}))
