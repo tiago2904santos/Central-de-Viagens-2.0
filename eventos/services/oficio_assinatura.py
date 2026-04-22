@@ -10,6 +10,8 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
+from pypdf import PdfReader
+from io import BytesIO
 
 from cadastros.models import AssinaturaConfiguracao, ConfiguracaoSistema
 from core.utils.masks import format_masked_display
@@ -21,8 +23,44 @@ def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload or b'').hexdigest()
 
 
+def hash_conteudo_pdf_bytes(pdf_bytes: bytes) -> str:
+    """Hash canônico do conteúdo textual do PDF (ignora metadados binários voláteis)."""
+    if not pdf_bytes:
+        return sha256_bytes(b'')
+    if not bytes(pdf_bytes[:5]).startswith(b'%PDF-'):
+        return sha256_bytes(pdf_bytes)
+    try:
+        reader = PdfReader(BytesIO(pdf_bytes))
+        partes = []
+        for page in reader.pages:
+            texto = page.extract_text() or ''
+            texto_norm = re.sub(r'\s+', ' ', texto).strip()
+            if texto_norm:
+                partes.append(texto_norm)
+        if partes:
+            payload = '\n'.join(partes).encode('utf-8')
+            return sha256_bytes(payload)
+    except Exception:
+        # fallback seguro para não quebrar fluxo em PDFs não textuais
+        pass
+    return sha256_bytes(pdf_bytes)
+
+
 def _only_digits(value: str) -> str:
     return ''.join(ch for ch in str(value or '') if ch.isdigit())
+
+
+TEXTO_CONFIRMACAO_IDENTIDADE_ASSINATURA_OFICIO = (
+    'Confirmação de identidade por CPF (5 dígitos) e telefone.'
+)
+
+
+def formatar_cpf_exibicao_auditoria(cpf: str) -> str:
+    """Máscara de privacidade para CPF em telas de assinatura e consulta pública."""
+    digits = _only_digits(cpf)
+    if len(digits) != 11:
+        return '—' if not digits else digits
+    return f'***.{digits[3:6]}.{digits[6:9]}-**'
 
 
 def _resolve_assinante_oficio():
@@ -99,7 +137,7 @@ def gerar_pdf_canonico_oficio(oficio: Oficio) -> bytes:
     return render_document_bytes(oficio, DocumentoOficioTipo.OFICIO, DocumentoFormato.PDF)
 
 
-def criar_ou_obter_pedido_assinatura(oficio: Oficio) -> OficioAssinaturaPedido:
+def criar_ou_obter_pedido_assinatura(oficio: Oficio, *, criado_por=None) -> OficioAssinaturaPedido:
     existente = (
         oficio.assinaturas_oficio.filter(status=OficioAssinaturaPedido.STATUS_PENDENTE)
         .order_by('-created_at')
@@ -128,7 +166,13 @@ def criar_ou_obter_pedido_assinatura(oficio: Oficio) -> OficioAssinaturaPedido:
             cpf_esperado=cpf,
             telefone_esperado=telefone,
             telefone_mascarado_exibido=_mask_phone(telefone),
-            hash_pdf_original=sha256_bytes(pdf_original),
+            criado_por_usuario=criado_por if getattr(criado_por, 'is_authenticated', False) else None,
+            criado_por_nome=(
+                (criado_por.get_full_name() or criado_por.get_username() or '').strip()
+                if getattr(criado_por, 'is_authenticated', False)
+                else ''
+            ),
+            hash_pdf_original=hash_conteudo_pdf_bytes(pdf_original),
             expira_em=now + timedelta(days=7),
             auditoria={
                 'nome_assinante_esperado': (viajante.nome or '').strip(),
@@ -142,6 +186,13 @@ def criar_ou_obter_pedido_assinatura(oficio: Oficio) -> OficioAssinaturaPedido:
         )
         pedido.save(update_fields=['pdf_original_congelado', 'updated_at'])
     return pedido
+
+
+def invalidar_pedidos_pendentes_oficio(oficio: Oficio):
+    oficio.assinaturas_oficio.filter(status=OficioAssinaturaPedido.STATUS_PENDENTE).update(
+        status=OficioAssinaturaPedido.STATUS_INVALIDADO,
+        updated_at=timezone.now(),
+    )
 
 
 def status_assinatura_oficio(oficio: Oficio) -> AssinaturaStatus:
@@ -167,7 +218,7 @@ def assinatura_foi_invalidada_por_alteracao(oficio: Oficio, pedido: OficioAssina
     if not pedido.hash_pdf_original:
         return False
     atual = gerar_pdf_canonico_oficio(oficio)
-    return sha256_bytes(atual) != pedido.hash_pdf_original
+    return hash_conteudo_pdf_bytes(atual) != pedido.hash_pdf_original
 
 
 def validar_prefixo_cpf(pedido: OficioAssinaturaPedido, prefixo: str) -> bool:
@@ -188,3 +239,20 @@ def confirmar_telefone(pedido: OficioAssinaturaPedido):
 
 def url_publica_assinatura(request, pedido: OficioAssinaturaPedido) -> str:
     return _public_link(request, pedido)
+
+
+def codigo_validacao_assinatura(token: str) -> str:
+    raw = (token or '').replace('-', '').replace('_', '').upper()
+    if not raw:
+        return ''
+    base = raw[:20]
+    grupos = [base[i : i + 4] for i in range(0, len(base), 4)]
+    return '-'.join([g for g in grupos if g])
+
+
+def local_assinatura_oficio(oficio: Oficio) -> str:
+    cidade = getattr(getattr(oficio, 'cidade_sede', None), 'nome', '') or ''
+    estado = getattr(getattr(oficio, 'estado_sede', None), 'sigla', '') or ''
+    if cidade and estado:
+        return f'{cidade}/{estado}'
+    return cidade or estado or 'Não informado'

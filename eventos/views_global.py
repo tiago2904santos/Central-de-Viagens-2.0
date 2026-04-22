@@ -2220,10 +2220,35 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
     assinatura_status = status_assinatura_oficio(oficio)
     table_actions = _oficio_list_table_actions(oficio, oficio_downloads, return_to=current_path)
     footer_actions = _oficio_list_footer_actions(oficio, oficio_downloads, return_to=current_path)
+    gestao_assinatura_url = reverse('eventos:oficio-assinatura-gestao', kwargs={'pk': oficio.pk})
+    table_actions.append(
+        {
+            'label': 'Gerir assinatura',
+            'aria_label': 'Gerir assinatura do ofício',
+            'url': gestao_assinatura_url,
+            'css_class': 'btn-doc-action--secondary',
+            'icon': 'bi-shield-check',
+            'download': False,
+            'icon_only': False,
+        }
+    )
+    footer_actions.append(
+        {
+            'label': 'Gerir assinatura',
+            'aria_label': 'Gerir assinatura do ofício',
+            'url': gestao_assinatura_url,
+            'css_class': 'btn-doc-action--secondary',
+            'icon': 'bi-shield-check',
+            'download': False,
+            'icon_only': False,
+        }
+    )
     pedido_assinatura = oficio.assinaturas_oficio.order_by('-created_at').first()
+    pedido_pendente = oficio.assinaturas_oficio.filter(status='PENDENTE').order_by('-created_at').first()
     assinatura_public_url = ''
-    if pedido_assinatura:
-        assinatura_link = reverse('eventos:assinatura-oficio-identidade', kwargs={'token': pedido_assinatura.token})
+    gerar_link_url = reverse('eventos:oficio-assinatura-gerar-link', kwargs={'pk': oficio.pk})
+    if pedido_pendente:
+        assinatura_link = reverse('eventos:assinatura-oficio-identidade', kwargs={'token': pedido_pendente.token})
         assinatura_public_url = assinatura_link
         table_actions.append(
             {
@@ -2236,30 +2261,32 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
                 'icon_only': False,
             }
         )
-    else:
-        gerar_link_url = reverse('eventos:oficio-assinatura-gerar-link', kwargs={'pk': oficio.pk})
         table_actions.append(
             {
-                'label': 'Gerar link de assinatura',
-                'aria_label': 'Gerar link de assinatura',
-                'url': gerar_link_url,
+                'label': 'Gerar novo link',
+                'aria_label': 'Gerar novo link de assinatura',
+                'url': f'{gerar_link_url}?novo=1',
                 'css_class': 'btn-doc-action--secondary',
-                'icon': 'bi-pen',
+                'icon': 'bi-arrow-clockwise',
                 'download': False,
                 'icon_only': False,
             }
         )
         footer_actions.append(
             {
-                'label': 'Gerar link de assinatura',
-                'aria_label': 'Gerar link de assinatura',
-                'url': gerar_link_url,
+                'label': 'Gerar novo link',
+                'aria_label': 'Gerar novo link de assinatura',
+                'url': f'{gerar_link_url}?novo=1',
                 'css_class': 'btn-doc-action--secondary',
-                'icon': 'bi-pen',
+                'icon': 'bi-arrow-clockwise',
                 'download': False,
                 'icon_only': False,
             }
         )
+    else:
+        if pedido_assinatura:
+            assinatura_link = reverse('eventos:assinatura-oficio-identidade', kwargs={'token': pedido_assinatura.token})
+            assinatura_public_url = assinatura_link
     vinculos_items = []
     for link in oficio.vinculos_evento.select_related('evento').order_by('pk'):
         ev = link.evento

@@ -36,17 +36,6 @@
                     </td>
                     <td data-label="ACOES" class="text-end">
                         <div class="oficios-table__actions">
-                            {% if oficio.assinatura_public_url %}
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-doc-action btn-doc-action--secondary"
-                                data-copy-text="{{ oficio.assinatura_public_url }}"
-                                title="Copiar link de assinatura"
-                            >
-                                <i class="bi bi-clipboard"></i>
-                                <span>Copiar link</span>
-                            </button>
-                            {% endif %}
                             {% for action in oficio.table_actions %}
                             {% if action.label == 'PDF' and action.url %}
                             <button

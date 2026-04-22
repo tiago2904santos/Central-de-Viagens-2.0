@@ -1006,8 +1006,236 @@ a:hover {
 
 .assinatura-preview-frame {
     width: 100%;
-    height: 520px;
+    height: min(82vh, 1120px);
     border: 0;
+}
+
+.assinatura-editor-scroller {
+    max-height: min(82vh, 1120px);
+    overflow: auto;
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+}
+
+.assinatura-pages-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1rem 0.75rem 1.5rem;
+}
+
+.assinatura-page-wrap {
+    position: relative;
+    display: inline-block;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+    border-radius: 6px;
+    background: #fff;
+}
+
+.assinatura-page-wrap canvas {
+    display: block;
+    vertical-align: top;
+}
+
+.assinatura-doc-placeholder {
+    position: absolute;
+    box-sizing: border-box;
+    z-index: 4;
+    touch-action: none;
+}
+
+.assinatura-doc-placeholder__chrome {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    border: 1px solid #2563eb;
+    border-radius: 3px;
+    background: rgba(219, 234, 254, 0.4);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+.assinatura-doc-placeholder__chrome:active {
+    cursor: grabbing;
+}
+
+.assinatura-doc-placeholder__text {
+    white-space: nowrap;
+    text-align: center;
+    font-size: clamp(0.78rem, 2vw, 1.2rem);
+    line-height: 1.05;
+    color: #0f172a;
+    padding: 0.12rem 0.35rem 0.2rem;
+    pointer-events: none;
+}
+
+.assinatura-preview-shell {
+    position: relative;
+    min-height: min(82vh, 1120px);
+}
+
+.assinatura-position-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.assinatura-drag-handle {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border: 1px dashed #334155;
+    background: rgba(248, 250, 252, 0.85);
+    color: #0f172a;
+    font-size: 1.8rem;
+    line-height: 1.15;
+    padding: 0.2rem 0.55rem;
+    border-radius: 8px;
+    cursor: grab;
+    pointer-events: auto;
+    user-select: none;
+    white-space: nowrap;
+    max-width: 92%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.assinatura-drag-handle:active {
+    cursor: grabbing;
+}
+
+.oficio-pdf-inline-frame {
+    width: 100%;
+    height: min(72vh, 980px);
+    border: 1px solid #d6dce6;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.oficio-doc-panels {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.oficio-doc-panel {
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.oficio-doc-panel[open] {
+    border-color: #bcd0ee;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.oficio-doc-panel__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    list-style: none;
+    cursor: pointer;
+    padding: 0.75rem 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.oficio-doc-panel__summary::-webkit-details-marker {
+    display: none;
+}
+
+.oficio-doc-panel__body {
+    padding: 0.9rem;
+    border-top: 1px solid #e2e8f0;
+    background: #fbfdff;
+}
+
+.oficio-assinatura-gestao__header {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+}
+
+.oficio-assinatura-gestao__resumo {
+    max-width: 78ch;
+}
+
+.oficio-assinatura-gestao__control .card-body {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+}
+
+.assinatura-page-header {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 0.95rem 1rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.assinatura-page-header__desc {
+    max-width: 80ch;
+}
+
+.assinatura-doc-editor .card-header {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.assinatura-form-panel {
+    position: sticky;
+    top: 0.8rem;
+    align-self: flex-start;
+}
+
+.oficio-verificacao-meta code {
+    background: #fff;
+    border: 1px solid #dbe4f0;
+    border-radius: 8px;
+    padding: 0.25rem 0.4rem;
+}
+
+.oficio-assinatura-gestao__badge--assinado {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.oficio-assinatura-gestao__badge--pendente {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.oficio-assinatura-gestao__badge--invalidado,
+.oficio-assinatura-gestao__badge--sem_assinatura {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+}
+
+.oficio-assinatura-gestao__dl dt {
+    color: #64748b;
+    font-weight: 600;
+}
+
+.oficio-assinatura-gestao__dl dd {
+    color: #0f172a;
+}
+
+.oficio-verificacao-meta {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 0.95rem;
+}
+
+.oficio-publico-shell--1200 {
+    max-width: 1200px;
 }
 
 .oficio-publico-shell {

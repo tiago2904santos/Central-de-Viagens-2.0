@@ -180,17 +180,6 @@
 
         <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
             <div class="oficio-list-card__footer-actions">
-                {% if oficio.assinatura_public_url %}
-                <button
-                    type="button"
-                    class="btn btn-sm btn-doc-action btn-doc-action--secondary"
-                    data-copy-text="{{ oficio.assinatura_public_url }}"
-                    aria-label="Copiar link de assinatura"
-                >
-                    <i class="bi bi-clipboard"></i>
-                    <span>Copiar link</span>
-                </button>
-                {% endif %}
                 <a
                     href="{{ oficio.wizard_url }}"
                     class="btn btn-sm btn-doc-action btn-doc-action--primary"

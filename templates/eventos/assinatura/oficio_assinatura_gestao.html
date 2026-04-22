@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestão de Assinatura do Ofício{% endblock %}
+
+{% block content %}
+<div class="container py-4 oficio-assinatura-gestao">
+    <header class="oficio-assinatura-gestao__header mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <p class="text-uppercase text-muted small mb-1 letter-spacing-tight">Assinatura eletrônica · Ofício</p>
+                <h1 class="h3 mb-2">Gestão da assinatura</h1>
+                <p class="mb-0 text-secondary">
+                    Ofício <strong>{{ oficio.numero_formatado|default:oficio.pk }}</strong>
+                    {% if oficio.protocolo_formatado %}
+                        <span class="text-muted">·</span> Protocolo {{ oficio.protocolo_formatado }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="badge rounded-pill oficio-assinatura-gestao__badge oficio-assinatura-gestao__badge--{{ status_assinatura.key|default:'OUTRO'|lower }}">
+                    {{ status_assinatura.label }}
+                </span>
+                <a href="{% url 'eventos:oficios-global' %}" class="btn btn-outline-secondary btn-sm">Voltar à lista</a>
+            </div>
+        </div>
+        <p class="oficio-assinatura-gestao__resumo mt-3 mb-0 small text-secondary">
+            {% if pedido %}
+                {% if pedido.status == 'ASSINADO' %}
+                    O ofício já foi assinado. Os PDFs e o código de validação permanecem disponíveis para consulta.
+                {% elif pedido.status == 'PENDENTE' %}
+                    Há um pedido pendente. Envie o link ao assinante ou gere um novo link se precisar invalidar o anterior.
+                {% elif pedido.status == 'INVALIDADO' %}
+                    O último pedido foi invalidado. Gere um novo link para reiniciar o fluxo.
+                {% else %}
+                    Situação do pedido: {{ pedido.get_status_display }}.
+                {% endif %}
+            {% else %}
+                Ainda não existe pedido de assinatura. Gere um link para congelar o PDF e iniciar o fluxo público.
+            {% endif %}
+        </p>
+    </header>
+
+    <div class="card shadow-sm border-0 oficio-assinatura-gestao__control mb-4">
+        <div class="card-body p-4">
+            <h2 class="h6 text-uppercase text-muted mb-3">Informações do pedido</h2>
+            <dl class="row mb-0 oficio-assinatura-gestao__dl">
+                <dt class="col-md-3">Assinante esperado</dt>
+                <dd class="col-md-9">{% if pedido %}{{ pedido.nome_assinante_esperado|default:"Não definido" }}{% else %}—{% endif %}</dd>
+                {% if pedido %}
+                <dt class="col-md-3">CPF esperado</dt>
+                <dd class="col-md-9 font-monospace">{{ cpf_esperado_mascarado }}</dd>
+                {% endif %}
+                <dt class="col-md-3">Pedido criado em</dt>
+                <dd class="col-md-9">{% if pedido %}{{ pedido.created_at|date:'d/m/Y H:i' }}{% else %}—{% endif %}</dd>
+                {% if pedido %}
+                <dt class="col-md-3">Assinado em</dt>
+                <dd class="col-md-9">{{ pedido.assinado_em|date:'d/m/Y H:i'|default:"—" }}</dd>
+                {% endif %}
+                {% if pedido and pedido.status == 'ASSINADO' %}
+                <dt class="col-md-3">Código de validação</dt>
+                <dd class="col-md-9"><code class="user-select-all">{{ codigo_validacao }}</code></dd>
+                <dt class="col-md-3">Hash (assinado)</dt>
+                <dd class="col-md-9"><code class="small user-select-all text-break">{{ pedido.hash_pdf_assinado|default:"—" }}</code></dd>
+                {% endif %}
+            </dl>
+            {% if pedido and url_publica %}
+            <div class="oficio-assinatura-gestao__link-row mt-4 pt-3 border-top">
+                <label class="form-label small text-muted mb-1">Link público de assinatura</label>
+                <div class="input-group input-group-sm oficio-assinatura-gestao__url-group">
+                    <input type="text" class="form-control font-monospace small" readonly value="{{ url_publica }}" id="gestao-url-publica">
+                    <button type="button" class="btn btn-primary" id="gestao-copiar-link" data-testid="copiar-link-assinatura" aria-label="Copiar link de assinatura">
+                        Copiar link
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+            <div class="d-flex flex-wrap gap-2 mt-4 oficio-assinatura-gestao__acoes-principais" data-testid="gestao-acoes-principais">
+                <a
+                    href="{% url 'eventos:oficio-assinatura-gerar-link' oficio.pk %}?{% if pedido %}novo=1&amp;{% endif %}next={{ request.path|urlencode }}"
+                    class="btn btn-primary btn-sm"
+                    data-testid="criar-novo-link-assinatura"
+                >
+                    Criar novo link de assinatura
+                </a>
+                {% if pedido and pedido.status != 'ASSINADO' and url_publica %}
+                <a href="{{ url_publica }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener" data-testid="abrir-link-assinatura">
+                    Abrir link
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if pedido %}
+    <section class="oficio-assinatura-gestao__main card shadow-sm border-0 mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+            <h2 class="h6 mb-0">Visualização documental</h2>
+            <p class="small text-muted mb-0">Abra os PDFs sob demanda para manter a tela mais limpa.</p>
+        </div>
+        <div class="card-body p-4">
+            <div class="oficio-doc-panels" data-testid="oficio-doc-panels-gestao">
+                <details class="oficio-doc-panel">
+                    <summary class="oficio-doc-panel__summary">
+                        <span>Documento original congelado</span>
+                        <span class="badge text-bg-light border">Inline</span>
+                    </summary>
+                    <div class="oficio-doc-panel__body">
+                        <iframe
+                            class="oficio-pdf-inline-frame oficio-lazy-frame"
+                            title="PDF original"
+                            data-src="{% url 'eventos:assinatura-oficio-pdf-original' pedido.token %}"
+                        ></iframe>
+                    </div>
+                </details>
+                <details class="oficio-doc-panel">
+                    <summary class="oficio-doc-panel__summary">
+                        <span>{% if pedido.status == 'ASSINADO' %}Documento assinado{% else %}Documento assinado (pendente){% endif %}</span>
+                        <span class="badge text-bg-light border">{% if pedido.status == 'ASSINADO' %}Disponível{% else %}Aguardando assinatura{% endif %}</span>
+                    </summary>
+                    <div class="oficio-doc-panel__body">
+                        {% if pedido.status == 'ASSINADO' %}
+                        <iframe
+                            class="oficio-pdf-inline-frame oficio-lazy-frame"
+                            title="PDF assinado"
+                            data-src="{% url 'eventos:assinatura-oficio-pdf-final' pedido.token %}"
+                        ></iframe>
+                        {% else %}
+                        <p class="small text-muted mb-0">Após a assinatura, o PDF final ficará disponível aqui para consulta inline.</p>
+                        {% endif %}
+                    </div>
+                </details>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <footer class="oficio-assinatura-gestao__footer text-muted small">
+        {% if pedido and pedido.status == 'ASSINADO' %}
+        <a href="{% url 'eventos:assinatura-oficio-verificacao' pedido.token %}" target="_blank" rel="noopener" class="link-secondary">Página pública de verificação</a>
+        {% endif %}
+    </footer>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.oficio-lazy-frame').forEach(function (frame) {
+        const panel = frame.closest('details');
+        if (!panel) return;
+        panel.addEventListener('toggle', function () {
+            if (!panel.open) return;
+            if (frame.getAttribute('src')) return;
+            const src = frame.getAttribute('data-src');
+            if (src) frame.setAttribute('src', src);
+        });
+    });
+
+    {% if pedido and url_publica %}
+    const btn = document.getElementById('gestao-copiar-link');
+    const input = document.getElementById('gestao-url-publica');
+    if (btn && input) {
+        btn.addEventListener('click', async function () {
+            const text = input.value;
+            try {
+                await navigator.clipboard.writeText(text);
+                btn.textContent = 'Copiado';
+                setTimeout(function () { btn.textContent = 'Copiar link'; }, 2000);
+            } catch (e) {
+                input.select();
+                document.execCommand('copy');
+                btn.textContent = 'Copiado';
+                setTimeout(function () { btn.textContent = 'Copiar link'; }, 2000);
+            }
+        });
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

@@ -1966,6 +1966,15 @@ class OficioAssinaturaPedido(models.Model):
     cpf_esperado = models.CharField('CPF esperado', max_length=14, blank=True, default='')
     telefone_esperado = models.CharField('Telefone esperado', max_length=20, blank=True, default='')
     telefone_mascarado_exibido = models.CharField('Telefone mascarado exibido', max_length=30, blank=True, default='')
+    criado_por_usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='oficios_assinatura_pedidos_criados',
+        verbose_name='Criado por',
+    )
+    criado_por_nome = models.CharField('Nome do usuário criador', max_length=160, blank=True, default='')
     cpf_prefixo_confirmado = models.CharField('Prefixo de CPF confirmado', max_length=5, blank=True, default='')
     cpf_confirmado_em = models.DateTimeField('CPF confirmado em', null=True, blank=True)
     telefone_confirmado_em = models.DateTimeField('Telefone confirmado em', null=True, blank=True)

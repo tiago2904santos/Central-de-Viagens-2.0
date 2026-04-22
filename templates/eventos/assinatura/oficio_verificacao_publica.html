@@ -1,25 +1,114 @@
 {% extends 'base.html' %}
 
-{% block title %}Verificação da Assinatura{% endblock %}
+{% block title %}Consulta de assinatura do ofício{% endblock %}
 
 {% block content %}
-<div class="container py-5 oficio-publico-shell oficio-publico-shell--760">
-    <h1 class="h3 mb-4">Verificação de documento assinado</h1>
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <dl class="row mb-0">
-                <dt class="col-sm-4">Tipo</dt><dd class="col-sm-8">Ofício</dd>
-                <dt class="col-sm-4">Identificador</dt><dd class="col-sm-8">{{ pedido.oficio.numero_formatado|default:pedido.oficio.pk }}</dd>
-                <dt class="col-sm-4">Status</dt><dd class="col-sm-8">{{ pedido.get_status_display }}</dd>
-                <dt class="col-sm-4">Assinante</dt><dd class="col-sm-8">{{ nome_assinatura }}</dd>
-                <dt class="col-sm-4">Data/hora</dt><dd class="col-sm-8">{{ pedido.assinado_em|date:'d/m/Y H:i' }}</dd>
-                <dt class="col-sm-4">Hash do documento</dt><dd class="col-sm-8"><code>{{ pedido.hash_pdf_assinado }}</code></dd>
-                <dt class="col-sm-4">Fonte escolhida</dt><dd class="col-sm-8">{{ pedido.get_fonte_escolhida_display }}</dd>
-            </dl>
-            {% if pedido.pdf_assinado_final %}
-            <a href="{% url 'eventos:assinatura-oficio-pdf' pedido.token %}" class="btn btn-primary mt-3" target="_blank" rel="noopener">Visualizar PDF assinado</a>
-            {% endif %}
+<div class="container py-4 oficio-publico-shell oficio-publico-shell--1200">
+    <header class="mb-4 oficio-verificacao-hero">
+        <p class="text-uppercase text-muted small mb-1">Assinatura eletrônica · Ofício</p>
+        <h1 class="h3 mb-2">Consulta e verificação do documento</h1>
+        <p class="text-secondary mb-0">
+            Esta página serve para <strong>consultar</strong> o documento assinado e para <strong>verificar</strong> a autenticidade
+            por meio do código <code>{{ codigo_validacao }}</code> e do hash do PDF assinado.
+        </p>
+    </header>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <h2 class="h6 text-uppercase text-muted mb-3">Dados da assinatura</h2>
+                    <dl class="row mb-0 oficio-verificacao-dl">
+                        <dt class="col-sm-4">Status</dt><dd class="col-sm-8"><span class="badge text-bg-light border">{{ pedido.get_status_display }}</span></dd>
+                        <dt class="col-sm-4">Documento</dt><dd class="col-sm-8">Ofício {{ identificador_oficio }}</dd>
+                        <dt class="col-sm-4">Protocolo</dt><dd class="col-sm-8">{{ protocolo_oficio }}</dd>
+                        <dt class="col-sm-4">Assinante</dt><dd class="col-sm-8">{{ nome_assinatura }}</dd>
+                        <dt class="col-sm-4">CPF</dt><dd class="col-sm-8 font-monospace">{{ cpf_mascarado }}</dd>
+                        <dt class="col-sm-4">Local</dt><dd class="col-sm-8">{{ local_assinatura }}</dd>
+                        <dt class="col-sm-4">Confirmação</dt><dd class="col-sm-8">{{ confirmacao_identidade }}</dd>
+                        <dt class="col-sm-4">Data/hora da assinatura</dt>
+                        <dd class="col-sm-8">{% if pedido.status == 'ASSINADO' and pedido.assinado_em %}{{ pedido.assinado_em|date:'d/m/Y H:i' }}{% else %}—{% endif %}</dd>
+                        <dt class="col-sm-4">Inserido por</dt><dd class="col-sm-8">{{ inserido_por }}</dd>
+                    </dl>
+                </div>
+                <div class="col-lg-5">
+                    <div class="oficio-verificacao-meta">
+                        <p class="small text-muted mb-1">Hash do documento assinado</p>
+                        <code class="small text-break d-block mb-3">{% if pedido.hash_pdf_assinado %}{{ pedido.hash_pdf_assinado }}{% else %}—{% endif %}</code>
+                        <p class="small text-muted mb-1">Código de validação</p>
+                        <code class="d-block mb-3">{{ codigo_validacao }}</code>
+                        <p class="small text-muted mb-1">URL de verificação</p>
+                        <a href="{{ url_verificacao }}" class="small text-break d-block">{{ url_verificacao }}</a>
+                        <hr class="my-3">
+                        <p class="small mb-0 text-secondary">
+                            {% if pedido.status == 'ASSINADO' %}
+                            Documento íntegro no fluxo interno. O hash e o código de validação podem ser usados para auditoria externa.
+                            {% else %}
+                            Documento disponível para consulta, mas sem status final de assinatura.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <section class="card shadow-sm border-0">
+        <div class="card-header bg-transparent border-0 px-4 pt-4 pb-0">
+            <h2 class="h5 mb-1">Visualização inline dos arquivos</h2>
+            <p class="small text-muted mb-0">Abra os arquivos sob demanda para consulta e comparação.</p>
+        </div>
+        <div class="card-body p-4">
+            <div class="oficio-doc-panels" data-testid="oficio-doc-panels-publico">
+                <details class="oficio-doc-panel">
+                    <summary class="oficio-doc-panel__summary">
+                        <span>Documento original</span>
+                        <span class="badge text-bg-light border">Inline</span>
+                    </summary>
+                    <div class="oficio-doc-panel__body">
+                        <iframe
+                            class="oficio-pdf-inline-frame oficio-lazy-frame"
+                            title="PDF original"
+                            data-src="{% url 'eventos:assinatura-oficio-pdf-original' pedido.token %}"
+                        ></iframe>
+                    </div>
+                </details>
+                <details class="oficio-doc-panel">
+                    <summary class="oficio-doc-panel__summary">
+                        <span>Documento assinado</span>
+                        <span class="badge text-bg-light border">{% if pedido.status == 'ASSINADO' %}Inline{% else %}Após assinatura{% endif %}</span>
+                    </summary>
+                    <div class="oficio-doc-panel__body">
+                        {% if pedido.status == 'ASSINADO' %}
+                        <iframe
+                            class="oficio-pdf-inline-frame oficio-lazy-frame"
+                            title="PDF assinado"
+                            data-src="{% url 'eventos:assinatura-oficio-pdf-final' pedido.token %}"
+                        ></iframe>
+                        {% else %}
+                        <p class="small text-muted mb-0">O PDF assinado ficará disponível aqui após a conclusão da assinatura.</p>
+                        {% endif %}
+                    </div>
+                </details>
+            </div>
+        </div>
+    </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.oficio-lazy-frame').forEach(function (frame) {
+        const panel = frame.closest('details');
+        if (!panel) return;
+        panel.addEventListener('toggle', function () {
+            if (!panel.open) return;
+            if (frame.getAttribute('src')) return;
+            const src = frame.getAttribute('data-src');
+            if (src) frame.setAttribute('src', src);
+        });
+    });
+});
+</script>
 {% endblock %}
