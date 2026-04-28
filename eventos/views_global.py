@@ -35,6 +35,7 @@ from .models import (
     ModeloJustificativa,
     OrdemServico,
     Oficio,
+    OficioAssinaturaPedido,
     OficioEventoVinculo,
     OficioTrecho,
     PlanoTrabalho,
@@ -64,7 +65,7 @@ from .services.documentos.renderer import (
     get_termo_autorizacao_template_path,
 )
 from .services.documentos.ordem_servico import render_ordem_servico_docx, render_ordem_servico_model_docx
-from .services.documentos.plano_trabalho import render_plano_trabalho_docx, render_plano_trabalho_model_docx
+from .services.documentos.plano_trabalho import render_plano_trabalho_model_docx
 from .services.documentos.termo_autorizacao import render_saved_termo_autorizacao_docx
 from .services.plano_trabalho_domain import (
     build_metas_formatada,
@@ -76,8 +77,7 @@ from .services.plano_trabalho_step2 import (
     build_plano_step2_defaults,
     reconcile_plano_step2_state,
 )
-from .services.documento_presenters import build_vinculo_documental_url
-from .services.documento_vinculos import resolver_vinculos_oficio, resolver_vinculos_ordem_servico
+from .services.documento_vinculos import resolver_vinculos_ordem_servico
 from .services.documento_selectors import (
     oficios_linkables,
     ordens_servico_base_queryset,
@@ -2243,8 +2243,11 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
             'icon_only': False,
         }
     )
-    pedido_assinatura = oficio.assinaturas_oficio.order_by('-created_at').first()
-    pedido_pendente = oficio.assinaturas_oficio.filter(status='PENDENTE').order_by('-created_at').first()
+    pedidos_assinatura = list(getattr(oficio, '_prefetched_objects_cache', {}).get('assinaturas_oficio', []))
+    if not pedidos_assinatura:
+        pedidos_assinatura = list(oficio.assinaturas_oficio.order_by('-created_at'))
+    pedido_assinatura = pedidos_assinatura[0] if pedidos_assinatura else None
+    pedido_pendente = next((item for item in pedidos_assinatura if item.status == 'PENDENTE'), None)
     assinatura_public_url = ''
     gerar_link_url = reverse('eventos:oficio-assinatura-gerar-link', kwargs={'pk': oficio.pk})
     if pedido_pendente:
@@ -2350,18 +2353,6 @@ def _oficio_list_card(oficio, precomputed=None, *, current_path=''):
             _make_vinculo_item(
                 title=f'+{len(ordens_relacionadas) - 4} ordem(ns) adicional(is)',
                 meta='Vínculos extras',
-            )
-        )
-    resolved_v = resolver_vinculos_oficio(oficio)
-    direto_os_ids = {o.pk for o in ordens_relacionadas}
-    for v in resolved_v.get('herdados') or []:
-        if v.tipo != 'ordem_servico' or v.id in direto_os_ids:
-            continue
-        vinculos_items.append(
-            _make_vinculo_item(
-                title=v.rotulo,
-                meta='Ordem de serviço herdada via evento',
-                url=build_vinculo_documental_url(v.tipo, v.id),
             )
         )
     vinculos_block = _make_vinculos_block(
@@ -2559,6 +2550,32 @@ def _matches_oficio_list_date(card, filters, today=None):
     return True
 
 
+def _oficio_list_can_use_db_pagination(filters):
+    if filters['q']:
+        return False
+    if filters['viagem_status'] and set(filters['viagem_status']) != set(dict(OFICIO_VIAGEM_STATUS_CHOICES).keys()):
+        return False
+    if filters['justificativa'] and set(filters['justificativa']) != {'COM', 'SEM'}:
+        return False
+    if filters['termo'] and set(filters['termo']) != {'COM', 'SEM'}:
+        return False
+    if filters['date_start'] or filters['date_end'] or filters['date_scope'] != 'all':
+        return False
+    return filters['order_by'] in {'numero', 'data_criacao', 'updated_at'}
+
+
+def _oficio_list_queryset_ordering(filters):
+    order_by = filters['order_by']
+    order_dir = filters['order_dir']
+    if order_by == 'numero':
+        return ['-ano', '-numero', '-pk'] if order_dir == 'desc' else ['ano', 'numero', 'pk']
+    if order_by == 'data_criacao':
+        return ['-data_criacao', '-pk'] if order_dir == 'desc' else ['data_criacao', 'pk']
+    if order_by == 'updated_at':
+        return ['-updated_at', '-pk'] if order_dir == 'desc' else ['updated_at', 'pk']
+    return ['-updated_at', '-created_at']
+
+
 def _is_missing_oficio_sort_value(value):
     if value is None:
         return True
@@ -2645,6 +2662,26 @@ def _render_oficio_list(
                     'ordens_servico',
                     queryset=OrdemServico.objects.select_related('evento', 'oficio'),
                 ),
+                Prefetch(
+                    'vinculos_evento',
+                    queryset=OficioEventoVinculo.objects.select_related('evento').order_by('pk'),
+                ),
+                Prefetch(
+                    'assinaturas_oficio',
+                    queryset=(
+                        OficioAssinaturaPedido.objects.only(
+                            'id',
+                            'oficio_id',
+                            'token',
+                            'status',
+                            'hash_pdf_original',
+                            'assinado_em',
+                            'expira_em',
+                            'created_at',
+                            'updated_at',
+                        ).order_by('-created_at')
+                    ),
+                ),
                 'termos_autorizacao',
                 'termos_autorizacao_relacionados',
             )
@@ -2666,6 +2703,37 @@ def _render_oficio_list(
             queryset = queryset.exclude(
                 Exists(OficioEventoVinculo.objects.filter(oficio_id=OuterRef('pk')))
             )
+
+    if _oficio_list_can_use_db_pagination(filters):
+        ordered_queryset = queryset.distinct().order_by(*_oficio_list_queryset_ordering(filters))
+        page_obj = _paginate(ordered_queryset, request.GET.get('page'))
+        object_list = [
+            _oficio_list_card(
+                oficio,
+                precomputed=_oficio_list_precomputed_meta(oficio, prazo_minimo_dias=prazo_minimo_dias),
+                current_path=current_path,
+            )
+            for oficio in page_obj.object_list
+        ]
+        context = {
+            'object_list': object_list,
+            'page_obj': page_obj,
+            'pagination_query': _query_without_page(request),
+            'filters': filters,
+            'status_choices': Oficio.STATUS_CHOICES,
+            'contexto_choices': OFICIO_CONTEXT_CHOICES,
+            'viagem_status_choices': OFICIO_VIAGEM_STATUS_CHOICES,
+            'presence_choices': OFICIO_PRESENCE_CHOICES,
+            'order_by_choices': OFICIO_ORDER_BY_CHOICES,
+            'order_dir_choices': OFICIO_ORDER_DIR_CHOICES,
+            'date_scope_choices': OFICIO_DATE_SCOPE_CHOICES,
+            'oficio_novo_url': oficio_novo_url or reverse('eventos:oficio-novo'),
+            'clear_filters_url': clear_filters_url or reverse('eventos:oficios-global'),
+            'hide_page_header': True,
+        }
+        if extra_context:
+            context.update(extra_context)
+        return render(request, template_name, context)
 
     rows = []
     query_text = filters['q'].lower()
@@ -4488,13 +4556,14 @@ def plano_trabalho_excluir(request, pk):
 
 @require_http_methods(['GET'])
 def plano_trabalho_download(request, pk, formato):
-    obj = get_object_or_404(PlanoTrabalho.objects.select_related('oficio').prefetch_related('oficios'), pk=pk)
+    obj = get_object_or_404(
+        PlanoTrabalho.objects.select_related('evento', 'oficio', 'roteiro').prefetch_related('oficios', 'coordenadores'),
+        pk=pk,
+    )
     formato = _clean(formato).lower()
     if formato not in {DocumentoFormato.DOCX.value, DocumentoFormato.PDF.value}:
         raise Http404('Formato inválido.')
-    related_oficios = obj.get_oficios_relacionados() if hasattr(obj, 'get_oficios_relacionados') else list(obj.oficios.all())
-    oficio_ref = related_oficios[0] if len(related_oficios) == 1 else None
-    docx_bytes = render_plano_trabalho_docx(oficio_ref) if oficio_ref else render_plano_trabalho_model_docx(obj)
+    docx_bytes = render_plano_trabalho_model_docx(obj)
     payload = docx_bytes
     content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     if formato == DocumentoFormato.PDF.value:
@@ -4502,7 +4571,9 @@ def plano_trabalho_download(request, pk, formato):
         content_type = 'application/pdf'
     response = HttpResponse(payload, content_type=content_type)
     ext = 'docx' if formato == DocumentoFormato.DOCX.value else 'pdf'
-    response['Content-Disposition'] = f'attachment; filename="plano_trabalho_{obj.pk}.{ext}"'
+    preview_mode = formato == DocumentoFormato.PDF.value and request.GET.get('preview') in {'1', 'true', 'yes'}
+    disposition = 'inline' if preview_mode else 'attachment'
+    response['Content-Disposition'] = f'{disposition}; filename="plano_trabalho_{obj.pk}.{ext}"'
     return response
 
 

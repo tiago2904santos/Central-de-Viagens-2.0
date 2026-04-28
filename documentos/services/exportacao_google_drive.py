@@ -15,7 +15,7 @@ from eventos.services.documentos import (
     build_document_filename,
     render_document_bytes,
 )
-from eventos.services.documentos.plano_trabalho import render_plano_trabalho_docx, render_plano_trabalho_model_docx
+from eventos.services.documentos.plano_trabalho import render_plano_trabalho_model_docx
 from eventos.services.documentos.renderer import convert_docx_bytes_to_pdf_bytes
 from eventos.services.documentos.termo_autorizacao import render_saved_termo_autorizacao_docx
 from eventos.services.oficio_assinatura import assinatura_foi_invalidada_por_alteracao
@@ -88,8 +88,7 @@ class ExportacaoEventoGoogleDriveService:
 
     @staticmethod
     def _render_plano_documento(plano: PlanoTrabalho, formato: str) -> bytes:
-        oficio_ref = plano.oficio or plano.oficios.order_by("-updated_at", "-created_at").first()
-        docx_bytes = render_plano_trabalho_docx(oficio_ref) if oficio_ref else render_plano_trabalho_model_docx(plano)
+        docx_bytes = render_plano_trabalho_model_docx(plano)
         if DocumentoFormato(formato).value == DocumentoFormato.PDF.value:
             return convert_docx_bytes_to_pdf_bytes(docx_bytes)
         return docx_bytes

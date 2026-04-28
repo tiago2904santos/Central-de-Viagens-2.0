@@ -1202,6 +1202,53 @@ class GlobalViewsTest(TestCase):
         self.assertIn(reverse('eventos:documentos-planos-trabalho-editar', kwargs={'pk': plano.pk}), card_html)
         self.assertIn(reverse('eventos:documentos-ordens-servico-editar', kwargs={'pk': ordem.pk}), card_html)
 
+    def test_lista_de_eventos_exibe_acao_exportar_drive_no_card(self):
+        response = self.client.get(reverse('eventos:lista'))
+        self.assertEqual(response.status_code, 200)
+
+        card_html = self._extract_evento_card_html(response, self.evento_pt.pk)
+        self.assertIn('Exportar Drive', card_html)
+        self.assertIn(
+            reverse('eventos:exportar-google-drive', kwargs={'pk': self.evento_pt.pk}),
+            card_html,
+        )
+        self.assertIn('name="formatos" value="docx"', card_html)
+        self.assertIn('name="formatos" value="pdf"', card_html)
+        self.assertIn('name="return_to"', card_html)
+
+    @patch('eventos.views.ExportacaoEventoGoogleDriveService.exportar_evento')
+    def test_exportacao_google_drive_da_lista_redireciona_para_lista(self, mocked_exportar):
+        mocked_exportar.return_value = type(
+            'ResultadoExportacao',
+            (),
+            {
+                'success': True,
+                'folders_created': 2,
+                'files_uploaded': 4,
+                'missing_documents': [],
+                'partial_errors': [],
+                'oficios_processados': 1,
+            },
+        )()
+
+        response = self.client.post(
+            reverse('eventos:exportar-google-drive', kwargs={'pk': self.evento_pt.pk}),
+            data={
+                'formatos': ['docx', 'pdf'],
+                'return_to': reverse('eventos:lista'),
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('eventos:lista'), fetch_redirect_response=False)
+
+    def test_detalhe_evento_nao_exibe_bloco_de_exportacao_google_drive(self):
+        response = self.client.get(reverse('eventos:detalhe', kwargs={'pk': self.evento_pt.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Exportação para Google Drive')
+        self.assertNotContains(response, 'Exportar estrutura completa')
+
     def test_simulacao_global_calcula_valor(self):
         response = self.client.post(
             reverse('eventos:simulacao-diarias'),

@@ -135,6 +135,16 @@
                         <i class="bi bi-box-arrow-up-right"></i>
                         <span>Abrir</span>
                     </a>
+                    <form method="post" action="{% url 'eventos:exportar-google-drive' obj.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="formatos" value="docx">
+                        <input type="hidden" name="formatos" value="pdf">
+                        <input type="hidden" name="return_to" value="{{ request.get_full_path }}">
+                        <button type="submit" class="btn btn-sm btn-doc-action btn-doc-action--secondary" aria-label="Exportar evento para Google Drive">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            <span>Exportar Drive</span>
+                        </button>
+                    </form>
                     {% for action in obj.quick_actions %}
                     {% if action.label != 'Abrir fluxo guiado' %}
                     <a href="{{ action.url }}" class="btn btn-sm btn-doc-action {{ action.css_class }}">

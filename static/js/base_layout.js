@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.alert(error && error.message ? error.message : 'Nao foi possivel abrir o preview do PDF.');
             });
     }
+    window.openPdfPreview = openPdfPreview;
 
     function copyTextToClipboard(text) {
         var value = String(text || '').trim();

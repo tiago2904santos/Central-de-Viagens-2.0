@@ -1072,11 +1072,6 @@ def evento_detalhe(request, pk):
     )
     vinculos = resolver_vinculos_evento(evento)
     pacote = build_evento_document_pacote(evento)
-    drive_integration = (
-        GoogleDriveIntegration.objects.filter(user=request.user)
-        .order_by("-updated_at")
-        .first()
-    )
     return render(
         request,
         'eventos/evento_detalhe.html',
@@ -1084,7 +1079,6 @@ def evento_detalhe(request, pk):
             'object': evento,
             'vinculos': vinculos,
             'pacote': pacote,
-            'drive_integration': drive_integration,
         },
     )
 
@@ -1093,10 +1087,11 @@ def evento_detalhe(request, pk):
 @require_http_methods(['POST'])
 def evento_exportar_google_drive(request, pk):
     evento = get_object_or_404(Evento, pk=pk)
+    return_to = _safe_return_to(request, reverse('eventos:lista'))
     formatos = [item for item in request.POST.getlist('formatos') if item in {'docx', 'pdf'}]
     if not formatos:
         messages.error(request, 'Selecione ao menos um formato para exportacao (DOCX/PDF).')
-        return redirect('eventos:detalhe', pk=pk)
+        return redirect(return_to)
     try:
         resultado = ExportacaoEventoGoogleDriveService().exportar_evento(
             user=request.user,
@@ -1109,14 +1104,14 @@ def evento_exportar_google_drive(request, pk):
             "Erro de integracao Drive na exportacao de evento",
             extra={"evento_id": evento.pk, "user_id": request.user.pk},
         )
-        return redirect('eventos:detalhe', pk=pk)
+        return redirect(return_to)
     except Exception:
         messages.error(request, 'Falha ao exportar evento para Google Drive.')
         logger.exception(
             "Erro inesperado na exportacao de evento para Drive",
             extra={"evento_id": evento.pk, "user_id": request.user.pk},
         )
-        return redirect('eventos:detalhe', pk=pk)
+        return redirect(return_to)
 
     if resultado.success:
         messages.success(
@@ -1132,7 +1127,7 @@ def evento_exportar_google_drive(request, pk):
         messages.info(request, item)
     for item in resultado.partial_errors[:5]:
         messages.error(request, item)
-    return redirect('eventos:detalhe', pk=pk)
+    return redirect(return_to)
 
 
 @login_required

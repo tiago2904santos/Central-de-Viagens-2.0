@@ -1284,11 +1284,15 @@
                 <i class="bi bi-trash"></i>
                 <span>Excluir</span>
               </a>
-              <a href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}" class="btn btn-doc-action btn-doc-action--secondary">
+              <button type="button" class="btn btn-doc-action btn-doc-action--primary" id="pt-save-draft">
+                <i class="bi bi-save"></i>
+                <span>Salvar alterações</span>
+              </button>
+              <a href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'docx' %}" class="btn btn-doc-action btn-doc-action--secondary" data-save-before-document="true">
                 <i class="bi bi-filetype-docx"></i>
                 <span>DOCX</span>
               </a>
-              <a href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}" class="btn btn-doc-action btn-doc-action--pdf">
+              <a href="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}" class="btn btn-doc-action btn-doc-action--pdf" data-save-before-document="true">
                 <i class="bi bi-filetype-pdf"></i>
                 <span>PDF</span>
               </a>
@@ -1296,6 +1300,7 @@
                 type="button"
                 class="btn btn-doc-action btn-doc-action--secondary"
                 data-pdf-preview-trigger="true"
+                data-save-before-document="true"
                 data-pdf-url="{% url 'eventos:documentos-planos-trabalho-download' object.pk 'pdf' %}"
               >
                 <i class="bi bi-eye"></i>
@@ -1711,11 +1716,12 @@
     }
     return Number((planoState.equipe && planoState.equipe.total) || 0);
   }
-  function buildPayloadFromState() {
+  function buildPayloadFromState(options) {
+    const opts = options || {};
     return {
       id: planoState.id,
       expected_updated_at: autosaveExpectedUpdatedAt,
-      _dirty_fields: Array.from(ptDirtyFields),
+      _dirty_fields: opts.forceAll ? [] : Array.from(ptDirtyFields),
       data_criacao: planoState.meta.data_criacao,
       evento_id: planoState.meta.evento_id,
       oficio_id: planoState.meta.oficio_id,
@@ -1755,9 +1761,17 @@
       },
     };
   }
-  async function saveDraft() {
+  async function saveDraft(options) {
+    const opts = options || {};
     if (autosaveInFlight) {
       autosavePending = true;
+      if (opts.forceAll) {
+        await new Promise((resolve) => {
+          const wait = () => autosaveInFlight ? setTimeout(wait, 100) : resolve();
+          wait();
+        });
+        return saveDraft(opts);
+      }
       return;
     }
     autosaveInFlight = true;
@@ -1767,7 +1781,7 @@
     reindexEfetivoRows();
     syncEfetivoTotal({ skipRecalculateDiarias: true, silentNotify: true });
     const dirtySnapshot = Array.from(ptDirtyFields);
-    const payload = buildPayloadFromState();
+    const payload = buildPayloadFromState({ forceAll: !!opts.forceAll });
     setAutosaveStatus('saving');
     try {
       const response = await fetch(autosaveUrl, {
@@ -1859,10 +1873,16 @@
       updateValorExtensoUI();
       if (data && data.updated_at) autosaveExpectedUpdatedAt = data.updated_at;
       autosaveLastSavedAt = data && data.updated_at ? new Date(data.updated_at) : new Date();
-      dirtySnapshot.forEach((key) => ptDirtyFields.delete(key));
+      if (opts.forceAll) {
+        ptDirtyFields.clear();
+      } else {
+        dirtySnapshot.forEach((key) => ptDirtyFields.delete(key));
+      }
       setAutosaveStatus('saved');
+      return data;
     } catch (error) {
       setAutosaveStatus('error', error && error.message ? error.message : undefined);
+      if (opts.throwOnError) throw error;
     } finally {
       autosaveInFlight = false;
       if (autosavePending) {
@@ -2680,9 +2700,18 @@
     reindexEfetivoRows();
     syncEfetivoTotal();
   }
-  document.getElementById('btn-add-efetivo').addEventListener('click', addEfetivoRow);
-  efetivoRows.addEventListener('change', syncEfetivoTotal);
-  efetivoRows.addEventListener('input',  syncEfetivoTotal);
+  document.getElementById('btn-add-efetivo').addEventListener('click', () => {
+    addEfetivoRow();
+    triggerAutosave();
+  });
+  efetivoRows.addEventListener('change', () => {
+    syncEfetivoTotal();
+    triggerAutosave();
+  });
+  efetivoRows.addEventListener('input', () => {
+    syncEfetivoTotal();
+    triggerAutosave();
+  });
 
   // ══════════════════════════════════════════════════════════
   //  COORDENADORES — principal is ONLY set explicitly
@@ -2759,6 +2788,7 @@
       id: strId, nome: item.nome || '', cargo: item.cargo || '', unidade: item.unidade || '', isPrincipal,
     });
     renderCoordChips();
+    triggerAutosave();
   }
 
   function removeCoordenador(id) {
@@ -2768,12 +2798,14 @@
     // No automatic principal transfer — user must choose explicitly
     planoState.coordenadores.splice(idx, 1);
     renderCoordChips();
+    triggerAutosave();
   }
 
   function setPrincipalCoordenador(id) {
     const strId = String(id);
     planoState.coordenadores.forEach((c) => { c.isPrincipal = c.id === strId; });
     renderCoordChips();
+    triggerAutosave();
   }
 
   if (coordChips) {
@@ -3067,9 +3099,26 @@
   });
   if (saveDraftBtn) {
     saveDraftBtn.addEventListener('click', async () => {
-      await saveDraft();
+      await saveDraft({ forceAll: true });
     });
   }
+  document.querySelectorAll('[data-save-before-document="true"]').forEach((el) => {
+    el.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      try {
+        await saveDraft({ forceAll: true, throwOnError: true });
+      } catch (_) {
+        return;
+      }
+      const url = el.getAttribute('href') || el.getAttribute('data-pdf-url');
+      if (el.hasAttribute('data-pdf-preview-trigger') && typeof window.openPdfPreview === 'function') {
+        window.openPdfPreview(url);
+        return;
+      }
+      if (url) window.location.href = url;
+    });
+  });
   form.addEventListener('submit', () => {
     collectDestinos({ skipDirty: true });
     syncRoteiroToForm({ skipDirty: true });

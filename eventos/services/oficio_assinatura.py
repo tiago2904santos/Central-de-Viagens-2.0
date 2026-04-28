@@ -17,6 +17,8 @@ from cadastros.models import AssinaturaConfiguracao, ConfiguracaoSistema
 from core.utils.masks import format_masked_display
 from eventos.models import Oficio, OficioAssinaturaPedido
 from eventos.services.documentos import DocumentoFormato, DocumentoOficioTipo, render_document_bytes
+from eventos.services.documentos.backends import get_pdf_backend_availability
+from eventos.services.documentos.types import DocumentRendererUnavailable
 
 
 def sha256_bytes(payload: bytes) -> str:
@@ -196,7 +198,7 @@ def invalidar_pedidos_pendentes_oficio(oficio: Oficio):
 
 
 def status_assinatura_oficio(oficio: Oficio) -> AssinaturaStatus:
-    pedido = oficio.assinaturas_oficio.order_by('-created_at').first()
+    pedido = _latest_pedido_assinatura(oficio)
     if not pedido:
         return STATUS_META['SEM_ASSINATURA']
     if pedido.status == OficioAssinaturaPedido.STATUS_ASSINADO:
@@ -217,8 +219,24 @@ def status_assinatura_oficio(oficio: Oficio) -> AssinaturaStatus:
 def assinatura_foi_invalidada_por_alteracao(oficio: Oficio, pedido: OficioAssinaturaPedido) -> bool:
     if not pedido.hash_pdf_original:
         return False
-    atual = gerar_pdf_canonico_oficio(oficio)
+    if not get_pdf_backend_availability().get('available'):
+        return False
+    if pedido.assinado_em and getattr(oficio, 'updated_at', None) and oficio.updated_at <= pedido.assinado_em:
+        return False
+    try:
+        atual = gerar_pdf_canonico_oficio(oficio)
+    except DocumentRendererUnavailable:
+        # Sem backend DOCX->PDF disponível, não é possível revalidar neste ambiente.
+        # Falha segura: preserva status atual sem quebrar a listagem.
+        return False
     return hash_conteudo_pdf_bytes(atual) != pedido.hash_pdf_original
+
+
+def _latest_pedido_assinatura(oficio: Oficio):
+    prefetched = getattr(oficio, '_prefetched_objects_cache', {}).get('assinaturas_oficio')
+    if prefetched is not None:
+        return prefetched[0] if prefetched else None
+    return oficio.assinaturas_oficio.order_by('-created_at').first()
 
 
 def validar_prefixo_cpf(pedido: OficioAssinaturaPedido, prefixo: str) -> bool:

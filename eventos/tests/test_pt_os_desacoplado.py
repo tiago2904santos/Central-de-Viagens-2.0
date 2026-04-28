@@ -305,13 +305,27 @@ class PtOsDesacopladoTest(TestCase):
     def test_download_pt_usa_model_quando_sem_oficio(self):
         pt = PlanoTrabalho.objects.create(recursos_texto='PT download', status=PlanoTrabalho.STATUS_RASCUNHO)
         with patch('eventos.views_global.render_plano_trabalho_model_docx', return_value=b'docx') as mock_model:
-            with patch('eventos.views_global.render_plano_trabalho_docx', return_value=b'oficio-docx') as mock_oficio:
-                response = self.client.get(
-                    reverse('eventos:documentos-planos-trabalho-download', kwargs={'pk': pt.pk, 'formato': 'docx'})
-                )
+            response = self.client.get(
+                reverse('eventos:documentos-planos-trabalho-download', kwargs={'pk': pt.pk, 'formato': 'docx'})
+            )
         self.assertEqual(response.status_code, 200)
         mock_model.assert_called_once()
-        mock_oficio.assert_not_called()
+
+    def test_download_pt_usa_model_mesmo_com_oficio_vinculado(self):
+        pt = PlanoTrabalho.objects.create(
+            oficio=self.oficio,
+            recursos_texto='PT download com edicao propria',
+            status=PlanoTrabalho.STATUS_RASCUNHO,
+        )
+        pt.oficios.add(self.oficio)
+
+        with patch('eventos.views_global.render_plano_trabalho_model_docx', return_value=b'docx') as mock_model:
+            response = self.client.get(
+                reverse('eventos:documentos-planos-trabalho-download', kwargs={'pk': pt.pk, 'formato': 'docx'})
+            )
+
+        self.assertEqual(response.status_code, 200)
+        mock_model.assert_called_once_with(pt)
 
     def test_download_pt_pdf_funciona(self):
         pt = PlanoTrabalho.objects.create(recursos_texto='PT download PDF', status=PlanoTrabalho.STATUS_RASCUNHO)
@@ -322,6 +336,18 @@ class PtOsDesacopladoTest(TestCase):
                 )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_preview_pt_pdf_usa_disposition_inline(self):
+        pt = PlanoTrabalho.objects.create(recursos_texto='PT preview PDF', status=PlanoTrabalho.STATUS_RASCUNHO)
+        with patch('eventos.views_global.render_plano_trabalho_model_docx', return_value=b'docx'):
+            with patch('eventos.views_global.convert_docx_bytes_to_pdf_bytes', return_value=b'pdf'):
+                response = self.client.get(
+                    reverse('eventos:documentos-planos-trabalho-download', kwargs={'pk': pt.pk, 'formato': 'pdf'}),
+                    {'preview': '1'},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Disposition'].startswith('inline;'))
 
     def test_download_os_usa_model_quando_sem_oficio(self):
         os_obj = OrdemServico.objects.create(finalidade='OS download', status=OrdemServico.STATUS_RASCUNHO)
