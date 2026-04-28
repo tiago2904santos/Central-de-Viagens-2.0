@@ -4,12 +4,14 @@ import hashlib
 import os
 import re
 import secrets
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta, UTC
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlparse
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -24,10 +26,11 @@ from pypdf import PdfReader, PdfWriter
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
 from pyhanko.pdf_utils.reader import PdfFileReader
 from pyhanko.sign import fields, signers, validation
+from pyhanko.stamp import StaticStampStyle
 from reportlab.graphics import renderPDF
 from reportlab.graphics.barcode import qr
 from reportlab.graphics.shapes import Drawing
-from reportlab.lib.colors import HexColor
+from reportlab.lib.colors import HexColor, white
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfgen import canvas
@@ -62,6 +65,16 @@ class SignatureStampData:
     data_hora_linha: str
     codigo_linha: str
     url_linha: str
+
+
+@dataclass(frozen=True)
+class AparenciaAssinaturaLayout:
+    width: float
+    height: float
+    padding: float
+    logo_box: tuple[float, float, float, float]
+    text_box: tuple[float, float, float, float]
+    qr_box: tuple[float, float, float, float]
 
 
 PARTICULAS_NOME = {'de', 'da', 'do', 'dos', 'das', 'e'}
@@ -103,6 +116,10 @@ def mascarar_cpf(cpf: str) -> str:
     return f'***.{digits[3:6]}.{digits[6:9]}-**'
 
 
+def mascarar_cpf_assinatura(cpf: str) -> str:
+    return mascarar_cpf(cpf)
+
+
 def gerar_codigo_verificacao() -> str:
     ano = timezone.localdate().year
     while True:
@@ -118,6 +135,16 @@ def gerar_url_validacao(assinatura, request=None) -> str:
     return url
 
 
+def montar_dados_assinatura(assinatura, request=None) -> DadosCarimbo:
+    return DadosCarimbo(
+        nome_assinante=assinatura.nome_assinante,
+        cpf_mascarado=mascarar_cpf_assinatura(assinatura.cpf_assinante),
+        data_hora_assinatura=assinatura.data_hora_assinatura,
+        codigo_verificacao=assinatura.codigo_verificacao,
+        url_validacao=gerar_url_validacao(assinatura, request=request),
+    )
+
+
 def _normalizar_posicao(posicao: dict | None, total_paginas: int) -> dict:
     raw = posicao or {}
     page_index = int(raw.get('page_index', raw.get('pagina', total_paginas - 1)) or 0)
@@ -126,10 +153,10 @@ def _normalizar_posicao(posicao: dict | None, total_paginas: int) -> dict:
     page_index = min(max(page_index, 0), max(total_paginas - 1, 0))
     return {
         'page_index': page_index,
-        'box_x': min(max(float(raw.get('box_x', raw.get('x_ratio', 0.15))), 0.01), 0.95),
-        'box_y': min(max(float(raw.get('box_y', raw.get('y_ratio', 0.78))), 0.01), 0.95),
-        'box_w': min(max(float(raw.get('box_w', 0.42)), 0.18), 0.95),
-        'box_h': min(max(float(raw.get('box_h', 0.14)), 0.10), 0.35),
+        'box_x': min(max(float(raw.get('box_x', raw.get('x_ratio', 0.16))), 0.01), 0.95),
+        'box_y': min(max(float(raw.get('box_y', raw.get('y_ratio', 0.77))), 0.01), 0.95),
+        'box_w': min(max(float(raw.get('box_w', 0.68)), 0.42), 0.95),
+        'box_h': min(max(float(raw.get('box_h', 0.125)), 0.095), 0.22),
         'qr': bool(raw.get('qr', True)),
     }
 
@@ -147,24 +174,34 @@ def _short_url(raw_url: str) -> str:
 def fit_text_single_or_two_lines(text: str, max_width: float, font_name: str) -> tuple[float, str, str]:
     clean = re.sub(r'\s+', ' ', str(text or '').strip()) or 'Assinante'
     words = clean.split(' ')
-    for font_size in (8.8, 8.4, 8.0, 7.6):
+    for font_size in (11.8, 11.2, 10.6, 10.0, 9.4, 8.8):
         if pdfmetrics.stringWidth(clean, font_name, font_size) <= max_width:
             return font_size, clean, ''
-    for font_size in (8.0, 7.6, 7.2):
-        for idx in range(1, len(words)):
+    for font_size in (9.8, 9.2, 8.6, 8.0):
+        candidates = []
+        for idx in range(2, len(words) - 1):
             left_words = words[:idx]
             right_words = words[idx:]
             if left_words[-1].lower() in PARTICULAS_NOME or right_words[0].lower() in PARTICULAS_NOME:
                 continue
             left = ' '.join(left_words)
             right = ' '.join(right_words)
-            if (
-                pdfmetrics.stringWidth(left, font_name, font_size) <= max_width
-                and pdfmetrics.stringWidth(right, font_name, font_size) <= max_width
-            ):
-                return font_size, left, right
-    clipped = clean[:54].rstrip()
-    return 7.0, clipped, ''
+            left_w = pdfmetrics.stringWidth(left, font_name, font_size)
+            right_w = pdfmetrics.stringWidth(right, font_name, font_size)
+            if left_w <= max_width and right_w <= max_width:
+                balance = abs(left_w - right_w)
+                # Avoid awkward first lines that are too short for institutional names.
+                short_penalty = 1000 if len(left_words) < 2 or len(right_words) < 2 else 0
+                candidates.append((short_penalty + balance, left, right))
+        if candidates:
+            _score, left, right = sorted(candidates, key=lambda item: item[0])[0]
+            return font_size, left, right
+    clipped = clean[:64].rstrip()
+    return 7.6, clipped, ''
+
+
+def ajustar_quebra_nome_assinante(text: str, max_width: float, font_name: str = 'Helvetica-Bold') -> tuple[float, str, str]:
+    return fit_text_single_or_two_lines(text, max_width=max_width, font_name=font_name)
 
 
 def build_signature_stamp_data(dados_carimbo: DadosCarimbo, text_width: float) -> SignatureStampData:
@@ -187,13 +224,141 @@ def build_signature_stamp_data(dados_carimbo: DadosCarimbo, text_width: float) -
 
 
 def _resolve_logo_path() -> Path | None:
-    custom = (os.getenv('ASSINATURA_LOGO_PATH') or '').strip()
+    custom = (os.getenv('ASSINATURA_LOGO_PATH') or getattr(settings, 'ASSINATURA_LOGO_PATH', '') or '').strip()
     if custom:
         path = Path(custom)
         if path.exists():
             return path
-    fallback = Path('static') / 'favicon.svg'
+    fallback = Path(settings.BASE_DIR) / 'static' / 'favicon.svg'
     return fallback if fallback.exists() else None
+
+
+def _draw_fallback_logo(c: canvas.Canvas, left: float, bottom: float, width: float, height: float):
+    size = min(width, height)
+    cx = left + width / 2
+    cy = bottom + height / 2
+    c.saveState()
+    c.setFillColor(HexColor('#0f4c81'))
+    c.circle(cx, cy, size / 2, stroke=0, fill=1)
+    c.setFillColor(white)
+    c.setFont('Helvetica-Bold', max(8, size * 0.28))
+    c.drawCentredString(cx, cy + size * 0.03, 'CV')
+    c.setFont('Helvetica-Bold', max(3.8, size * 0.075))
+    c.drawCentredString(cx, cy - size * 0.22, 'ASSINATURA')
+    c.restoreState()
+
+
+def _draw_logo_profissional(c: canvas.Canvas, left: float, bottom: float, width: float, height: float):
+    logo_path = _resolve_logo_path()
+    if logo_path and logo_path.suffix.lower() not in {'.svg', '.svgz'}:
+        try:
+            c.drawImage(
+                ImageReader(str(logo_path)),
+                left,
+                bottom,
+                width=width,
+                height=height,
+                preserveAspectRatio=True,
+                anchor='c',
+                mask='auto',
+            )
+            return
+        except Exception:
+            pass
+    _draw_fallback_logo(c, left, bottom, width, height)
+
+
+def _calcular_layout_aparencia(width: float, height: float) -> AparenciaAssinaturaLayout:
+    padding = max(9, min(15, height * 0.14))
+    qr_size = min(height - padding * 2, width * 0.16, 58)
+    logo_size = min(height - padding * 2, width * 0.13, 54)
+    logo_box = (padding, (height - logo_size) / 2, logo_size, logo_size)
+    qr_box = (width - padding - qr_size, (height - qr_size) / 2, qr_size, qr_size)
+    text_left = padding + logo_size + max(10, width * 0.025)
+    text_right = qr_box[0] - max(12, width * 0.03)
+    text_box = (text_left, padding, max(72, text_right - text_left), height - padding * 2)
+    return AparenciaAssinaturaLayout(
+        width=width,
+        height=height,
+        padding=padding,
+        logo_box=logo_box,
+        text_box=text_box,
+        qr_box=qr_box,
+    )
+
+
+def calcular_layout_aparencia_assinatura(width: float, height: float) -> AparenciaAssinaturaLayout:
+    return _calcular_layout_aparencia(width, height)
+
+
+def _draw_qrcode_profissional(c: canvas.Canvas, box: tuple[float, float, float, float], url_validacao: str):
+    left, bottom, width, height = box
+    qr_size = min(width, height)
+    c.saveState()
+    c.setFillColor(white)
+    c.roundRect(left - 3, bottom - 3, qr_size + 6, qr_size + 6, 4, stroke=0, fill=1)
+    qr_code = qr.QrCodeWidget(url_validacao or 'assinatura')
+    bounds = qr_code.getBounds()
+    scale = qr_size / max(bounds[2] - bounds[0], bounds[3] - bounds[1])
+    drawing = Drawing(qr_size, qr_size, transform=[scale, 0, 0, scale, 0, 0])
+    drawing.add(qr_code)
+    renderPDF.draw(drawing, c, left, bottom)
+    c.restoreState()
+
+
+def renderizar_aparencia_assinatura(dados_carimbo: DadosCarimbo, width: float, height: float) -> bytes:
+    stream = BytesIO()
+    c = canvas.Canvas(stream, pagesize=(width, height), pageCompression=1)
+    layout = _calcular_layout_aparencia(width, height)
+    padding = layout.padding
+
+    c.setFillColor(HexColor('#ffffff'))
+    c.roundRect(0.5, 0.5, width - 1, height - 1, 8, stroke=0, fill=1)
+    c.setFillColor(HexColor('#f8fafc'))
+    c.roundRect(3, 3, width - 6, height - 6, 7, stroke=0, fill=1)
+    c.setStrokeColor(HexColor('#cbd5e1'))
+    c.setLineWidth(0.85)
+    c.roundRect(3, 3, width - 6, height - 6, 7, stroke=1, fill=0)
+    c.setFillColor(HexColor('#0f4c81'))
+    c.roundRect(3, height - 8, width - 6, 5, 3, stroke=0, fill=1)
+
+    _draw_logo_profissional(c, *layout.logo_box)
+    _draw_qrcode_profissional(c, layout.qr_box, dados_carimbo.url_validacao)
+
+    text_left, _text_bottom, text_width, _text_height = layout.text_box
+    stamp = build_signature_stamp_data(dados_carimbo, text_width)
+    y = height - padding - 3
+    c.setFillColor(HexColor('#0f4c81'))
+    c.setFont('Helvetica-Bold', 8.6)
+    c.drawString(text_left, y, 'DOCUMENTO ASSINADO ELETRONICAMENTE')
+
+    y -= 14
+    c.setFillColor(HexColor('#111827'))
+    c.setFont('Helvetica-Bold', stamp.fonte_nome)
+    c.drawString(text_left, y, stamp.linha_nome_1)
+    if stamp.linha_nome_2:
+        y -= stamp.fonte_nome + 1.5
+        c.drawString(text_left, y, stamp.linha_nome_2)
+
+    y -= 11
+    c.setFont('Helvetica', 7.4)
+    c.setFillColor(HexColor('#475569'))
+    dt = timezone.localtime(dados_carimbo.data_hora_assinatura).strftime('%d/%m/%Y as %H:%M')
+    details = [
+        f'CPF: {dados_carimbo.cpf_mascarado}',
+        f'Assinado em {dt}',
+        f'Codigo verificador: {dados_carimbo.codigo_verificacao}',
+        f'Validar em: {_short_url(dados_carimbo.url_validacao)}',
+    ]
+    for line in details:
+        c.drawString(text_left, y, line)
+        y -= 8.7
+
+    c.setFillColor(HexColor('#64748b'))
+    c.setFont('Helvetica', 5.6)
+    c.drawCentredString(layout.qr_box[0] + layout.qr_box[2] / 2, layout.qr_box[1] - 7, 'VALIDACAO')
+    c.save()
+    return stream.getvalue()
 
 
 def draw_signature_logo(c: canvas.Canvas, left: float, bottom: float, logo_size: float) -> float:
@@ -388,19 +553,118 @@ def diagnosticar_estrutura_assinatura_pdf(pdf_bytes: bytes) -> dict:
     has_ft_sig = b'/FT /Sig' in raw or b'/FT/Sig' in raw
     has_contents = b'/Contents' in raw
     has_acroform = b'/AcroForm' in raw
+    has_appearance = b'/AP' in raw
     try:
         reader = PdfFileReader(BytesIO(raw))
         embedded_count = len(reader.embedded_signatures)
     except Exception:
         embedded_count = 0
+    try:
+        pypdf_reader = PdfReader(BytesIO(raw))
+        page_count = len(pypdf_reader.pages)
+        page_text = '\n'.join((page.extract_text() or '') for page in pypdf_reader.pages)
+        metadata = pypdf_reader.metadata or {}
+        codigo_metadata = metadata.get('/assinatura_codigo') or metadata.get('assinatura_codigo') or ''
+    except Exception:
+        page_count = 0
+        page_text = ''
+        codigo_metadata = ''
     return {
         'has_byterange': has_byterange,
         'has_sig': has_sig,
         'has_ft_sig': has_ft_sig,
         'has_contents': has_contents,
         'has_acroform': has_acroform,
+        'has_appearance': has_appearance,
         'embedded_signatures_count': embedded_count,
+        'page_count': page_count,
+        'codigo_metadata': codigo_metadata,
+        'page_text_has_signature_visual': 'ASSINADO ELETRONICAMENTE' in page_text.upper(),
         'apenas_carimbo_visual': not (has_byterange and has_sig and has_acroform and has_contents),
+    }
+
+
+def _preparar_pdf_base_assinatura(pdf_original: bytes, dados_carimbo: DadosCarimbo) -> bytes:
+    reader = PdfReader(BytesIO(pdf_original))
+    writer = PdfWriter()
+    for page in reader.pages:
+        writer.add_page(page)
+    existing_metadata = dict(reader.metadata or {})
+    existing_metadata.update(
+        {
+            '/assinatura_codigo': dados_carimbo.codigo_verificacao,
+            '/assinatura_sistema': SISTEMA_ASSINATURA,
+            '/assinatura_data_hora': dados_carimbo.data_hora_assinatura.isoformat(),
+            '/assinatura_tipo': 'assinatura_pdf_real_com_aparencia_de_campo',
+        }
+    )
+    writer.add_metadata(existing_metadata)
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+def calcular_posicao_assinatura(page_width: float, page_height: float, posicao: dict) -> tuple[int, int, int, int]:
+    left, bottom, box_w, box_h = calculate_signature_stamp_box(page_width, page_height, posicao)
+    return int(left), int(bottom), int(left + box_w), int(bottom + box_h)
+
+
+def _criar_arquivo_aparencia_temporario(dados_carimbo: DadosCarimbo, width: float, height: float) -> str:
+    appearance_pdf = renderizar_aparencia_assinatura(dados_carimbo, width=width, height=height)
+    temp = tempfile.NamedTemporaryFile(prefix='assinatura-aparencia-', suffix='.pdf', delete=False)
+    try:
+        temp.write(appearance_pdf)
+        return temp.name
+    finally:
+        temp.close()
+
+
+def aplicar_assinatura_pdf_real(pdf_base: bytes, dados_carimbo: DadosCarimbo, posicao: dict) -> tuple[bytes, dict]:
+    cert_file, password = _ensure_dev_pkcs12_certificate()
+    signer = signers.SimpleSigner.load_pkcs12(cert_file, passphrase=password)
+    reader = PdfReader(BytesIO(pdf_base))
+    page = reader.pages[posicao['page_index']]
+    sig_box = calcular_posicao_assinatura(float(page.mediabox.width), float(page.mediabox.height), posicao)
+    appearance_path = _criar_arquivo_aparencia_temporario(
+        dados_carimbo,
+        width=sig_box[2] - sig_box[0],
+        height=sig_box[3] - sig_box[1],
+    )
+    meta = signers.PdfSignatureMetadata(
+        field_name=f'Signature_{dados_carimbo.codigo_verificacao}',
+        md_algorithm='sha256',
+        reason=(os.getenv('PDF_SIGNING_REASON') or 'Assinatura eletronica interna').strip(),
+        location=(os.getenv('PDF_SIGNING_LOCATION') or 'Central de Viagens').strip(),
+    )
+    writer = IncrementalPdfFileWriter(BytesIO(pdf_base))
+    out = BytesIO()
+    stamp_style = StaticStampStyle.from_pdf_file(appearance_path, border_width=0, background_opacity=1)
+    pdf_signer = signers.PdfSigner(
+        meta,
+        signer=signer,
+        stamp_style=stamp_style,
+        new_field_spec=fields.SigFieldSpec(
+            sig_field_name=meta.field_name,
+            on_page=posicao['page_index'],
+            box=sig_box,
+        ),
+    )
+    try:
+        pdf_signer.sign_pdf(writer, output=out)
+    finally:
+        try:
+            os.unlink(appearance_path)
+        except OSError:
+            pass
+    cert = signer.signing_cert
+    return out.getvalue(), {
+        'assinatura_pdf_tecnica_status': STATUS_PDF_INTEGRA,
+        'certificado_subject': cert.subject.human_friendly,
+        'certificado_issuer': cert.issuer.human_friendly,
+        'certificado_serial': hex(cert.serial_number),
+        'signature_field_name': meta.field_name,
+        'signature_position': {**posicao, 'box_pdf': sig_box},
+        'appearance_bound_to_signature_field': True,
     }
 
 
@@ -463,6 +727,19 @@ def _validar_assinatura_pdf_tecnica(pdf_bytes: bytes) -> tuple[str, str]:
         return STATUS_PDF_AUSENTE, 'Não foi possível validar tecnicamente a assinatura PDF.'
 
 
+def validar_assinatura_pdf(pdf_bytes: bytes) -> tuple[str, str]:
+    return _validar_assinatura_pdf_tecnica(pdf_bytes)
+
+
+def validar_hash_assinatura(pdf_bytes: bytes, assinatura: AssinaturaDocumento) -> bool:
+    return calcular_sha256_bytes(pdf_bytes) == (assinatura.hash_pdf_assinado_sha256 or '')
+
+
+def otimizar_pdf_assinado(pdf_bytes: bytes) -> bytes:
+    # A assinatura cobre os bytes do documento; qualquer otimizacao posterior invalidaria o ByteRange.
+    return pdf_bytes
+
+
 @transaction.atomic
 def assinar_documento_pdf(
     documento,
@@ -497,19 +774,18 @@ def assinar_documento_pdf(
         hash_pdf_original_sha256=calcular_sha256_bytes(pdf_original_bytes),
         metadata_json={'nome_documento': nome_documento, **(metadata or {})},
     )
-    dados = DadosCarimbo(
-        nome_assinante=assinatura.nome_assinante,
-        cpf_mascarado=mascarar_cpf(assinatura.cpf_assinante),
-        data_hora_assinatura=assinatura.data_hora_assinatura,
-        codigo_verificacao=assinatura.codigo_verificacao,
-        url_validacao=gerar_url_validacao(assinatura, request=request),
-    )
-    pdf_carimbado, posicao_final = aplicar_carimbo_pdf(pdf_original_bytes, dados, posicao)
-    pdf_assinado, cert_meta = _assinar_pdf_real(pdf_carimbado, posicao_final, assinatura.codigo_verificacao)
+    dados = montar_dados_assinatura(assinatura, request=request)
+    reader_original = PdfReader(BytesIO(pdf_original_bytes))
+    if not reader_original.pages:
+        raise ValueError('PDF sem páginas para assinatura.')
+    posicao_final = _normalizar_posicao(posicao, len(reader_original.pages))
+    pdf_base = _preparar_pdf_base_assinatura(pdf_original_bytes, dados)
+    pdf_assinado, cert_meta = aplicar_assinatura_pdf_real(pdf_base, dados, posicao_final)
+    pdf_assinado = otimizar_pdf_assinado(pdf_assinado)
     diagnostico = diagnosticar_estrutura_assinatura_pdf(pdf_assinado)
     assinatura.hash_pdf_assinado_sha256 = calcular_sha256_bytes(pdf_assinado)
-    assinatura.pagina_carimbo = posicao_final['page_number']
-    assinatura.posicao_carimbo_json = posicao_final
+    assinatura.pagina_carimbo = posicao_final['page_index'] + 1
+    assinatura.posicao_carimbo_json = cert_meta.get('signature_position') or {**posicao_final, 'page_number': posicao_final['page_index'] + 1}
     assinatura.assinatura_pdf_tecnica_status = cert_meta['assinatura_pdf_tecnica_status']
     assinatura.certificado_subject = cert_meta['certificado_subject'][:255]
     assinatura.certificado_issuer = cert_meta['certificado_issuer'][:255]
@@ -517,7 +793,14 @@ def assinar_documento_pdf(
     assinatura.metadata_json = {
         **assinatura.metadata_json,
         'assinatura_hash_pdf_assinado': assinatura.hash_pdf_assinado_sha256,
-        'assinatura_tipo': 'assinatura_eletronica_interna',
+        'assinatura_tipo': 'assinatura_pdf_real_com_aparencia_de_campo',
+        'assinatura_visual': {
+            'layout': 'bloco_autenticacao_horizontal',
+            'logo': 'ASSINATURA_LOGO_PATH' if _resolve_logo_path() else 'fallback_central_de_viagens',
+            'qr_code': True,
+            'aparencia_vinculada_ao_campo_pdf': True,
+            'sem_overlay_na_pagina': not diagnostico.get('page_text_has_signature_visual'),
+        },
         'diagnostico_pdf': diagnostico,
     }
     filename = f'{nome_documento.lower().replace(" ", "-")}-{documento.pk}-{assinatura.codigo_verificacao}.pdf'
@@ -583,7 +866,7 @@ def validar_pdf_por_upload(arquivo_pdf, *, codigo_manual='', request=None) -> di
     elif assinatura.status != AssinaturaDocumento.STATUS_VALIDA:
         resultado = ValidacaoAssinaturaDocumento.RESULTADO_INVALIDO
         mensagem = 'A assinatura registrada não está ativa.'
-    elif hash_pdf == assinatura.hash_pdf_assinado_sha256:
+    elif validar_hash_assinatura(pdf_bytes, assinatura) and status_assinatura_pdf in {STATUS_PDF_INTEGRA, STATUS_PDF_CERT_NAO_CONFIAVEL}:
         resultado = ValidacaoAssinaturaDocumento.RESULTADO_VALIDO
         mensagem = 'O arquivo enviado corresponde exatamente ao PDF assinado originalmente.'
     else:

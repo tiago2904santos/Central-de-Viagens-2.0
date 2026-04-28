@@ -1,15 +1,19 @@
 from io import BytesIO
 
 from django.test import TestCase
+from django.utils import timezone
 from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 
 from documentos.models import AssinaturaDocumento, ValidacaoAssinaturaDocumento
 from documentos.services.assinaturas import (
+    DadosCarimbo,
     assinar_documento_pdf,
+    calcular_layout_aparencia_assinatura,
     fit_text_single_or_two_lines,
     diagnosticar_estrutura_assinatura_pdf,
     mascarar_cpf,
+    renderizar_aparencia_assinatura,
     validar_codigo,
     validar_pdf_por_upload,
 )
@@ -26,7 +30,7 @@ class AssinaturaDocumentoServiceTest(TestCase):
         c.save()
         return stream.getvalue()
 
-    def test_assinar_documento_gera_pdf_hash_carimbo_sem_segunda_pagina(self):
+    def test_assinar_documento_gera_pdf_hash_assinatura_real_sem_segunda_pagina(self):
         oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)
         original = self._pdf()
 
@@ -48,16 +52,46 @@ class AssinaturaDocumentoServiceTest(TestCase):
         reader = PdfReader(BytesIO(pdf_assinado))
         self.assertEqual(len(reader.pages), 1)
         texto = reader.pages[0].extract_text()
-        self.assertIn('ASSINADO ELETRONICAMENTE', texto)
-        self.assertIn(f'Código verificador: {assinatura.codigo_verificacao}', texto)
-        self.assertIn('***.456.789-**', texto)
-        self.assertIn('Verifique em:', texto)
+        self.assertNotIn('ASSINADO ELETRONICAMENTE', texto)
+        self.assertEqual(reader.metadata.get('/assinatura_codigo'), assinatura.codigo_verificacao)
         diag = diagnosticar_estrutura_assinatura_pdf(pdf_assinado)
         self.assertTrue(diag['has_byterange'])
         self.assertTrue(diag['has_sig'])
         self.assertTrue(diag['has_contents'])
         self.assertTrue(diag['has_acroform'])
+        self.assertTrue(diag['has_appearance'])
         self.assertGreaterEqual(diag['embedded_signatures_count'], 1)
+        self.assertFalse(diag['page_text_has_signature_visual'])
+        self.assertTrue(assinatura.metadata_json['assinatura_visual']['aparencia_vinculada_ao_campo_pdf'])
+        self.assertTrue(assinatura.metadata_json['assinatura_visual']['qr_code'])
+
+    def test_aparencia_visual_contem_logo_qr_nome_cpf_data_codigo(self):
+        dados = DadosCarimbo(
+            nome_assinante='JOAO MARIO DE GOES',
+            cpf_mascarado='***.858.369-**',
+            data_hora_assinatura=timezone.now(),
+            codigo_verificacao='CV-2026-2892A7-326F',
+            url_validacao='https://centraldeviagens.local/assinaturas/CV-2026-2892A7-326F',
+        )
+        appearance = renderizar_aparencia_assinatura(dados, 410, 92)
+        reader = PdfReader(BytesIO(appearance))
+        text = reader.pages[0].extract_text()
+        self.assertIn('DOCUMENTO ASSINADO ELETRONICAMENTE', text)
+        self.assertIn('JOAO MARIO DE GOES', text)
+        self.assertIn('***.858.369-**', text)
+        self.assertIn('CV-2026-2892A7-326F', text)
+        self.assertIn('VALIDACAO', text)
+        self.assertGreater(len(reader.pages[0].get_contents().get_data()), 3000)
+
+    def test_layout_qr_nao_invade_texto_e_fica_dentro_da_area(self):
+        layout = calcular_layout_aparencia_assinatura(410, 92)
+        text_left, _text_bottom, text_width, _text_height = layout.text_box
+        qr_left, _qr_bottom, qr_width, _qr_height = layout.qr_box
+        logo_left, _logo_bottom, logo_width, _logo_height = layout.logo_box
+        self.assertGreater(text_left, logo_left + logo_width)
+        self.assertLess(text_left + text_width, qr_left)
+        self.assertLessEqual(qr_left + qr_width, layout.width - layout.padding + 0.1)
+        self.assertGreaterEqual(qr_left, 0)
 
     def test_validacao_por_upload_mesmo_pdf_valido_e_pdf_editado_invalido(self):
         oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)

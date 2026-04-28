@@ -1,19 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Assinar Ofício{% endblock %}
-
-{% block extra_css %}
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Alex+Brush&family=Pinyon+Script&family=Allura&family=Arizonia&family=Monsieur+La+Doulaise&display=swap" rel="stylesheet">
-{% endblock %}
+{% block title %}Assinar Oficio{% endblock %}
 
 {% block content %}
 <div class="container py-4 assinatura-ws">
     <header class="mb-4 assinatura-page-header">
-        <h1 class="h3 mb-2">Assinatura do Ofício</h1>
+        <h1 class="h3 mb-2">Assinatura do Oficio</h1>
         <p class="text-muted mb-0 assinatura-page-header__desc">
-            Arraste a assinatura para a posição desejada sobre o documento <strong>original</strong>.
-            A delimitação acompanha o tamanho do nome; não é possível alterar o tamanho manualmente.
-            A assinatura só será gravada no PDF após <strong>Concluir assinatura</strong>.
+            Posicione o bloco de autenticacao no documento original. A aparencia final sera vinculada ao campo de assinatura PDF real quando voce concluir a assinatura.
         </p>
     </header>
     {% if erro %}<div class="alert alert-danger">{{ erro }}</div>{% endif %}
@@ -28,12 +22,12 @@
                 <div class="card-header bg-transparent py-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div>
                         <h2 class="h6 mb-1">Documento original</h2>
-                        <p class="small text-muted mb-0">Preview sem assinatura aplicada — arraste o contorno junto ao nome.</p>
+                        <p class="small text-muted mb-0">Arraste o bloco institucional para a area de assinatura textual.</p>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge text-bg-light border" id="assinatura-editor-meta">—</span>
+                        <span class="badge text-bg-light border" id="assinatura-editor-meta">-</span>
                         <div class="btn-group btn-group-sm" role="group" aria-label="Zoom do preview">
-                            <button type="button" class="btn btn-outline-secondary" id="assinatura-zoom-out" title="Reduzir">−</button>
+                            <button type="button" class="btn btn-outline-secondary" id="assinatura-zoom-out" title="Reduzir">-</button>
                             <button type="button" class="btn btn-outline-secondary" id="assinatura-zoom-reset" title="100%">100%</button>
                             <button type="button" class="btn btn-outline-secondary" id="assinatura-zoom-in" title="Ampliar">+</button>
                         </div>
@@ -49,19 +43,26 @@
         <div class="col-xl-3 col-lg-4">
             <form method="post" class="card card-body shadow-sm border-0 h-100 assinatura-form-panel" id="assinatura-oficio-form">
                 {% csrf_token %}
-                <input type="hidden" name="sig_x" id="sig-x" value="0.28">
-                <input type="hidden" name="sig_y" id="sig-y" value="0.82">
-                <input type="hidden" name="sig_w" id="sig-w" value="0.32">
-                <input type="hidden" name="sig_h" id="sig-h" value="0.055">
+                <input type="hidden" name="sig_x" id="sig-x" value="0.16">
+                <input type="hidden" name="sig_y" id="sig-y" value="0.77">
+                <input type="hidden" name="sig_w" id="sig-w" value="0.68">
+                <input type="hidden" name="sig_h" id="sig-h" value="0.125">
                 <input type="hidden" name="sig_page" id="sig-page" value="-1">
-                <h2 class="h6 mb-3">Fonte da assinatura</h2>
-                {% for key, label in fontes %}
-                <label class="assinatura-opcao">
-                    <input type="radio" name="fonte_escolhida" value="{{ key }}" {% if forloop.first %}checked{% endif %} required>
-                    <div class="small text-muted mb-1">{{ label }}</div>
-                    <div class="assinatura-preview font-{{ key }}">{{ nome_assinatura }}</div>
-                </label>
-                {% endfor %}
+                <input type="hidden" name="fonte_escolhida" value="{{ fontes.0.0 }}" required>
+
+                <h2 class="h6 mb-3">Bloco de autenticacao</h2>
+                <div class="assinatura-professional-preview">
+                    <div class="assinatura-professional-preview__logo">CV</div>
+                    <div class="assinatura-professional-preview__body">
+                        <strong>DOCUMENTO ASSINADO ELETRONICAMENTE</strong>
+                        <span>{{ nome_assinatura }}</span>
+                        <small>CPF mascarado, data/hora, codigo verificador e QR Code.</small>
+                    </div>
+                    <div class="assinatura-professional-preview__qr"></div>
+                </div>
+                <p class="small text-muted mt-3 mb-0">
+                    A aparencia nao sera desenhada solta na pagina. Ela sera gravada como aparencia do campo de assinatura PDF.
+                </p>
                 <button type="submit" class="btn btn-success mt-3 w-100">Concluir assinatura</button>
             </form>
         </div>
@@ -74,10 +75,8 @@
 <script type="module">
 document.addEventListener('DOMContentLoaded', function () {
     const editor = document.getElementById('assinatura-doc-editor');
-    const scrollEl = document.getElementById('assinatura-editor-scroll');
     const column = document.getElementById('assinatura-pages-column');
     const meta = document.getElementById('assinatura-editor-meta');
-    const radios = document.querySelectorAll('input[name="fonte_escolhida"]');
     const sigX = document.getElementById('sig-x');
     const sigY = document.getElementById('sig-y');
     const sigW = document.getElementById('sig-w');
@@ -86,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const zoomIn = document.getElementById('assinatura-zoom-in');
     const zoomOut = document.getElementById('assinatura-zoom-out');
     const zoomReset = document.getElementById('assinatura-zoom-reset');
-    if (!editor || !scrollEl || !column || !sigX || !sigY || !sigW || !sigH || !sigPage) return;
+    if (!editor || !column || !sigX || !sigY || !sigW || !sigH || !sigPage) return;
 
     const originalUrl = editor.getAttribute('data-assinatura-original-pdf');
     const nomeAssinatura = "{{ nome_assinatura|escapejs }}";
@@ -107,17 +106,17 @@ document.addEventListener('DOMContentLoaded', function () {
     let captureEl = null;
 
     const readBox = () => ({
-        x: clamp(parseFloat(sigX.value || '0.28'), 0, 1),
-        y: clamp(parseFloat(sigY.value || '0.82'), 0, 1),
-        w: clamp(parseFloat(sigW.value || '0.32'), 0.04, 1),
-        h: clamp(parseFloat(sigH.value || '0.055'), 0.02, 1),
+        x: clamp(parseFloat(sigX.value || '0.16'), 0, 1),
+        y: clamp(parseFloat(sigY.value || '0.77'), 0, 1),
+        w: clamp(parseFloat(sigW.value || '0.68'), 0.42, 0.95),
+        h: clamp(parseFloat(sigH.value || '0.125'), 0.095, 0.22),
     });
 
     const writeBox = (b) => {
-        const bx = clamp(b.x, 0.001, 0.999 - b.w);
-        const by = clamp(b.y, 0.001, 0.999 - b.h);
-        const bw = clamp(b.w, 0.04, 0.95);
-        const bh = clamp(b.h, 0.02, 0.4);
+        const bw = clamp(b.w, 0.42, 0.95);
+        const bh = clamp(b.h, 0.095, 0.22);
+        const bx = clamp(b.x, 0.001, 0.999 - bw);
+        const by = clamp(b.y, 0.001, 0.999 - bh);
         sigX.value = bx.toFixed(4);
         sigY.value = by.toFixed(4);
         sigW.value = bw.toFixed(4);
@@ -128,13 +127,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const raw = parseInt(sigPage.value, 10);
         if (Number.isNaN(raw) || raw < 0) return numPages - 1;
         return clamp(raw, 0, numPages - 1);
-    };
-
-    const applyFontToPlaceholder = () => {
-        const selected = document.querySelector('input[name="fonte_escolhida"]:checked');
-        const key = selected ? selected.value : '{{ fontes.0.0 }}';
-        const body = placeholder && placeholder.querySelector('.assinatura-doc-placeholder__text');
-        if (body) body.className = `assinatura-doc-placeholder__text font-${key}`;
     };
 
     const syncPlaceholderDom = () => {
@@ -152,46 +144,23 @@ document.addEventListener('DOMContentLoaded', function () {
         el.id = 'assinatura-doc-placeholder';
         el.innerHTML = `
             <div class="assinatura-doc-placeholder__chrome" title="Arrastar para posicionar a assinatura">
-                <div class="assinatura-doc-placeholder__text font-{{ fontes.0.0 }}"></div>
+                <div class="assinatura-doc-placeholder__logo">CV</div>
+                <div class="assinatura-doc-placeholder__text">
+                    <strong>DOCUMENTO ASSINADO ELETRONICAMENTE</strong>
+                    <span></span>
+                    <small>Codigo verificador e QR Code no PDF assinado</small>
+                </div>
+                <div class="assinatura-doc-placeholder__qr"></div>
             </div>
         `;
-        const txt = el.querySelector('.assinatura-doc-placeholder__text');
+        const txt = el.querySelector('.assinatura-doc-placeholder__text span');
         if (txt) txt.textContent = nomeAssinatura;
         return el;
     };
 
-    /** Ajusta sig_w/sig_h ao tamanho real do texto (preview alinhado ao PDF). */
-    const fitSignatureBoxToText = () => {
-        if (!placeholder) return;
-        const wrap = placeholder.parentElement;
-        const textEl = placeholder.querySelector('.assinatura-doc-placeholder__text');
-        if (!wrap || !textEl) return;
-        const rw = wrap.clientWidth;
-        const rh = wrap.clientHeight;
-        if (!rw || !rh) return;
-
+    const fitSignatureBox = () => {
         const b0 = readBox();
-        placeholder.style.width = '96%';
-        placeholder.style.height = '35%';
-        placeholder.style.left = `${(b0.x * 100).toFixed(4)}%`;
-        placeholder.style.top = `${(b0.y * 100).toFixed(4)}%`;
-
-        const tw = textEl.scrollWidth + 10;
-        const th = textEl.scrollHeight + 10;
-        let w = tw / rw;
-        let h = th / rh;
-        w = clamp(w, 0.04, 0.95);
-        h = clamp(h, 0.02, 0.4);
-
-        const cx = b0.x + b0.w / 2;
-        const cy = b0.y + b0.h / 2;
-        let nx = cx - w / 2;
-        let ny = cy - h / 2;
-        nx = clamp(nx, 0.001, 0.999 - w);
-        ny = clamp(ny, 0.001, 0.999 - h);
-        writeBox({ x: nx, y: ny, w, h });
-        placeholder.style.width = '';
-        placeholder.style.height = '';
+        writeBox({ x: b0.x, y: b0.y, w: b0.w || 0.68, h: b0.h || 0.125 });
         syncPlaceholderDom();
     };
 
@@ -204,9 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const rw = wrap.clientWidth;
         const rh = wrap.clientHeight;
         if (dragMode === 'move') {
-            let nx = startBox.x + dx / rw;
-            let ny = startBox.y + dy / rh;
-            writeBox({ x: nx, y: ny, w: startBox.w, h: startBox.h });
+            writeBox({ x: startBox.x + dx / rw, y: startBox.y + dy / rh, w: startBox.w, h: startBox.h });
             syncPlaceholderDom();
         }
     };
@@ -267,12 +234,9 @@ document.addEventListener('DOMContentLoaded', function () {
         placeholder = buildPlaceholder();
         bindPlaceholder(placeholder);
         pageWraps[activePageIndex].appendChild(placeholder);
-        applyFontToPlaceholder();
         syncPlaceholderDom();
-        requestAnimationFrame(() => {
-            fitSignatureBoxToText();
-        });
-        if (meta) meta.textContent = `Página ${activePageIndex + 1} de ${numPages} · zoom ${Math.round(zoomFactor * 100)}%`;
+        requestAnimationFrame(fitSignatureBox);
+        if (meta) meta.textContent = `Pagina ${activePageIndex + 1} de ${numPages} - zoom ${Math.round(zoomFactor * 100)}%`;
     };
 
     let resizeTimer = null;
@@ -281,19 +245,10 @@ document.addEventListener('DOMContentLoaded', function () {
         resizeTimer = setTimeout(() => { renderPdf().catch(console.error); }, 160);
     };
 
-    zoomIn && zoomIn.addEventListener('click', () => { zoomFactor = clamp(zoomFactor + 0.1, 0.6, 2.0); renderPdf().catch(console.error); });
-    zoomOut && zoomOut.addEventListener('click', () => { zoomFactor = clamp(zoomFactor - 0.1, 0.6, 2.0); renderPdf().catch(console.error); });
-    zoomReset && zoomReset.addEventListener('click', () => { zoomFactor = 1.0; renderPdf().catch(console.error); });
+    if (zoomIn) zoomIn.addEventListener('click', () => { zoomFactor = clamp(zoomFactor + 0.1, 0.6, 2.0); renderPdf().catch(console.error); });
+    if (zoomOut) zoomOut.addEventListener('click', () => { zoomFactor = clamp(zoomFactor - 0.1, 0.6, 2.0); renderPdf().catch(console.error); });
+    if (zoomReset) zoomReset.addEventListener('click', () => { zoomFactor = 1.0; renderPdf().catch(console.error); });
     window.addEventListener('resize', scheduleRender);
-
-    radios.forEach((radio) => {
-        radio.addEventListener('change', () => {
-            if (!radio.checked) return;
-            applyFontToPlaceholder();
-            syncPlaceholderDom();
-            requestAnimationFrame(() => fitSignatureBoxToText());
-        });
-    });
 
     renderPdf().catch(console.error);
 });

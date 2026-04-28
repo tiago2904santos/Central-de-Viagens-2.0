@@ -10,7 +10,7 @@ from reportlab.pdfgen import canvas
 
 from cadastros.models import AssinaturaConfiguracao, Cargo, Cidade, ConfiguracaoSistema, Estado, UnidadeLotacao, Viajante
 from documentos.models import AssinaturaDocumento, ValidacaoAssinaturaDocumento
-from documentos.services.assinaturas import validar_pdf_por_upload
+from documentos.services.assinaturas import diagnosticar_estrutura_assinatura_pdf, validar_pdf_por_upload
 from eventos.models import Oficio, OficioAssinaturaPedido
 from eventos.services.oficio_assinatura import (
     TEXTO_CONFIRMACAO_IDENTIDADE_ASSINATURA_OFICIO,
@@ -343,7 +343,7 @@ class OficioAssinaturaFlowTest(TestCase):
         pos = pedido.auditoria.get('assinatura_posicao', {})
         self.assertEqual(pos['box_x'], 0.81)
         self.assertEqual(pos['box_y'], 0.27)
-        self.assertEqual(pos['box_w'], 0.32)
+        self.assertEqual(pos['box_w'], 0.42)
         self.assertEqual(pos['box_h'], 0.1)
         self.assertEqual(pos['page_index'], 0)
         self.assertTrue(pedido.auditoria.get('codigo_validacao', '').startswith('CV-'))
@@ -352,8 +352,11 @@ class OficioAssinaturaFlowTest(TestCase):
         self.assertEqual(assinatura.hash_pdf_assinado_sha256, pedido.hash_pdf_assinado)
         pdf_assinado = pedido.pdf_assinado_final.read()
         self.assertEqual(len(PdfReader(BytesIO(pdf_assinado)).pages), 1)
-        self.assertIn('ASSINADO ELETRONICAMENTE', PdfReader(BytesIO(pdf_assinado)).pages[0].extract_text())
-        self.assertIn('***.456.789-**', PdfReader(BytesIO(pdf_assinado)).pages[0].extract_text())
+        diagnostico_pdf = diagnosticar_estrutura_assinatura_pdf(pdf_assinado)
+        self.assertTrue(diagnostico_pdf['has_byterange'])
+        self.assertTrue(diagnostico_pdf['has_acroform'])
+        self.assertTrue(diagnostico_pdf['has_appearance'])
+        self.assertFalse(diagnostico_pdf['page_text_has_signature_visual'])
 
         resultado_valido = validar_pdf_por_upload(BytesIO(pdf_assinado))
         self.assertTrue(resultado_valido['valido'])

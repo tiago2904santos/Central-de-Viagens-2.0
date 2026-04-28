@@ -158,10 +158,10 @@ def _extract_signature_position(request):
             return default
 
     page_index = _parse_int(request.POST.get('sig_page', request.GET.get('sig_page')), -1)
-    box_x = _parse_float(request.POST.get('sig_x', request.GET.get('sig_x')), 0.28)
-    box_y = _parse_float(request.POST.get('sig_y', request.GET.get('sig_y')), 0.82)
-    box_w = _parse_float(request.POST.get('sig_w', request.GET.get('sig_w')), 0.32)
-    box_h = _parse_float(request.POST.get('sig_h', request.GET.get('sig_h')), 0.055)
+    box_x = _parse_float(request.POST.get('sig_x', request.GET.get('sig_x')), 0.16)
+    box_y = _parse_float(request.POST.get('sig_y', request.GET.get('sig_y')), 0.77)
+    box_w = _parse_float(request.POST.get('sig_w', request.GET.get('sig_w')), 0.68)
+    box_h = _parse_float(request.POST.get('sig_h', request.GET.get('sig_h')), 0.125)
     return {
         'page_index': page_index,
         'box_x': box_x,
