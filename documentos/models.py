@@ -66,6 +66,10 @@ class AssinaturaDocumento(models.Model):
     arquivo_pdf_assinado = models.FileField(upload_to=assinatura_documento_upload_to, blank=True, null=True)
     pagina_carimbo = models.PositiveIntegerField(default=1)
     posicao_carimbo_json = models.JSONField(blank=True, default=dict)
+    assinatura_pdf_tecnica_status = models.CharField(max_length=40, blank=True, default='')
+    certificado_subject = models.CharField(max_length=255, blank=True, default='')
+    certificado_issuer = models.CharField(max_length=255, blank=True, default='')
+    certificado_serial = models.CharField(max_length=128, blank=True, default='')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_VALIDA, db_index=True)
     motivo_revogacao = models.TextField(blank=True, default='')
     metadata_json = models.JSONField(blank=True, default=dict)
@@ -108,6 +112,7 @@ class ValidacaoAssinaturaDocumento(models.Model):
     user_agent = models.TextField(blank=True, default='')
     hash_pdf_enviado = models.CharField(max_length=64, blank=True, default='')
     resultado = models.CharField(max_length=40, choices=RESULTADO_CHOICES)
+    status_assinatura_pdf = models.CharField(max_length=40, blank=True, default='')
     observacao = models.TextField(blank=True, default='')
 
     class Meta:

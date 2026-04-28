@@ -7,6 +7,7 @@ from reportlab.pdfgen import canvas
 from documentos.models import AssinaturaDocumento, ValidacaoAssinaturaDocumento
 from documentos.services.assinaturas import (
     assinar_documento_pdf,
+    diagnosticar_estrutura_assinatura_pdf,
     mascarar_cpf,
     validar_codigo,
     validar_pdf_por_upload,
@@ -49,6 +50,12 @@ class AssinaturaDocumentoServiceTest(TestCase):
         self.assertIn('ASSINADO ELETRONICAMENTE', texto)
         self.assertIn(assinatura.codigo_verificacao, texto)
         self.assertIn('***.456.789-**', texto)
+        diag = diagnosticar_estrutura_assinatura_pdf(pdf_assinado)
+        self.assertTrue(diag['has_byterange'])
+        self.assertTrue(diag['has_sig'])
+        self.assertTrue(diag['has_contents'])
+        self.assertTrue(diag['has_acroform'])
+        self.assertGreaterEqual(diag['embedded_signatures_count'], 1)
 
     def test_validacao_por_upload_mesmo_pdf_valido_e_pdf_editado_invalido(self):
         oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)
@@ -68,6 +75,10 @@ class AssinaturaDocumentoServiceTest(TestCase):
         alterado.append(10)
         invalido = validar_pdf_por_upload(BytesIO(bytes(alterado)), codigo_manual=assinatura.codigo_verificacao)
         self.assertFalse(invalido['valido'])
+        self.assertIn(
+            invalido['status_assinatura_pdf'],
+            ('assinatura_pdf_invalida', 'assinatura_pdf_ausente', 'certificado_nao_confiavel'),
+        )
         self.assertEqual(ValidacaoAssinaturaDocumento.objects.count(), 2)
 
     def test_pdf_reexportado_com_mesmo_visual_falha_por_hash(self):
