@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Validação de PDF assinado{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <header class="mb-4">
+        <p class="text-uppercase text-muted small mb-1">Assinatura eletrônica</p>
+        <h1 class="h3 mb-2">Validação por upload do PDF</h1>
+        <p class="text-secondary mb-0">
+            Envie o PDF assinado para recalcular o SHA-256 do arquivo inteiro e comparar com o hash salvo no sistema.
+        </p>
+    </header>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data" class="row g-3">
+                {% csrf_token %}
+                <div class="col-lg-7">
+                    <label for="arquivo_pdf" class="form-label">PDF assinado</label>
+                    <input type="file" class="form-control" id="arquivo_pdf" name="arquivo_pdf" accept="application/pdf,.pdf" required>
+                </div>
+                <div class="col-lg-5">
+                    <label for="codigo_verificacao" class="form-label">Código, se o PDF não permitir leitura automática</label>
+                    <input type="text" class="form-control" id="codigo_verificacao" name="codigo_verificacao" placeholder="CV-2026-ABC123-A7F9">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Validar PDF</button>
+                </div>
+            </form>
+            {% if erro %}
+            <div class="alert alert-danger mt-3 mb-0">{{ erro }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if resultado %}
+    <section class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            {% if resultado.valido %}
+            <h2 class="h5 text-success mb-2">VÁLIDO</h2>
+            {% else %}
+            <h2 class="h5 text-danger mb-2">INVÁLIDO</h2>
+            {% endif %}
+            <p class="mb-3">{{ resultado.mensagem }}</p>
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Código identificado</dt>
+                <dd class="col-sm-8"><code>{{ resultado.codigo|default:'—' }}</code></dd>
+                <dt class="col-sm-4">Hash do PDF enviado</dt>
+                <dd class="col-sm-8"><code class="small text-break">{{ resultado.hash_pdf_enviado }}</code></dd>
+                {% if resultado.assinatura %}
+                <dt class="col-sm-4">Hash original assinado</dt>
+                <dd class="col-sm-8"><code class="small text-break">{{ resultado.assinatura.hash_pdf_assinado_sha256 }}</code></dd>
+                <dt class="col-sm-4">Assinante</dt>
+                <dd class="col-sm-8">{{ resultado.assinatura.nome_assinante }}</dd>
+                <dt class="col-sm-4">Data/hora</dt>
+                <dd class="col-sm-8">{{ resultado.assinatura.data_hora_assinatura|date:'d/m/Y H:i' }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Verificação de assinatura{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <header class="mb-4">
+        <p class="text-uppercase text-muted small mb-1">Assinatura eletrônica</p>
+        <h1 class="h3 mb-2">Verificação por código</h1>
+        <p class="text-secondary mb-0">
+            O código confirma que existe uma assinatura registrada. Para confirmar a integridade do arquivo,
+            envie o PDF assinado na validação por upload.
+        </p>
+    </header>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Status da assinatura</dt>
+                <dd class="col-sm-8">
+                    {% if status_valido %}
+                    <span class="badge text-bg-success">Registrada</span>
+                    {% else %}
+                    <span class="badge text-bg-warning">Não ativa</span>
+                    {% endif %}
+                </dd>
+                <dt class="col-sm-4">Documento vinculado</dt>
+                <dd class="col-sm-8">{{ assinatura.metadata_json.nome_documento|default:assinatura.content_type.name }} #{{ assinatura.object_id }}</dd>
+                <dt class="col-sm-4">Assinante</dt>
+                <dd class="col-sm-8">{{ assinatura.nome_assinante }}</dd>
+                <dt class="col-sm-4">Data/hora</dt>
+                <dd class="col-sm-8">{{ assinatura.data_hora_assinatura|date:'d/m/Y H:i' }}</dd>
+                <dt class="col-sm-4">Método de autenticação</dt>
+                <dd class="col-sm-8">{{ assinatura.get_metodo_autenticacao_display }}</dd>
+                <dt class="col-sm-4">Código de verificação</dt>
+                <dd class="col-sm-8"><code>{{ assinatura.codigo_verificacao }}</code></dd>
+                <dt class="col-sm-4">Hash do PDF assinado</dt>
+                <dd class="col-sm-8"><code class="small text-break">{{ assinatura.hash_pdf_assinado_sha256 }}</code></dd>
+            </dl>
+
+            <div class="alert alert-info mt-4 mb-0">
+                A validade integral depende do hash do arquivo. Um PDF reexportado, editado ou com carimbo removido
+                será marcado como inválido na validação por upload.
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <a href="{% url 'documentos:assinatura-verificar-upload' %}" class="btn btn-primary btn-sm">Validar PDF por upload</a>
+                {% if assinatura.arquivo_pdf_assinado %}
+                <a href="{{ assinatura.arquivo_pdf_assinado.url }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">Baixar PDF assinado</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

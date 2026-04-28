@@ -12,6 +12,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.clickjacking import xframe_options_exempt
 
+from documentos.models import AssinaturaDocumento
+from documentos.services.assinaturas import assinar_documento_pdf
 from eventos.models import Oficio, OficioAssinaturaPedido
 from eventos.services.oficio_assinatura import (
     TEXTO_CONFIRMACAO_IDENTIDADE_ASSINATURA_OFICIO,
@@ -47,6 +49,9 @@ def _resolve_pedido_por_codigo(codigo: str):
     if not clean:
         return None
     for pedido in OficioAssinaturaPedido.objects.select_related('oficio').order_by('-created_at')[:500]:
+        codigo_documento = str((pedido.auditoria or {}).get('assinatura_documento_codigo') or '')
+        if codigo_documento and codigo_documento.replace('-', '').upper() == clean:
+            return pedido
         codigo_pedido = codigo_validacao_assinatura(pedido.token).replace('-', '').upper()
         if codigo_pedido == clean:
             return pedido
@@ -54,10 +59,15 @@ def _resolve_pedido_por_codigo(codigo: str):
 
 
 def _build_public_doc_context(request, pedido: OficioAssinaturaPedido):
-    codigo_validacao = codigo_validacao_assinatura(pedido.token)
-    url_verificacao = request.build_absolute_uri(
-        reverse('eventos:assinatura-oficio-verificacao', kwargs={'token': pedido.token})
-    )
+    codigo_validacao = (pedido.auditoria or {}).get('assinatura_documento_codigo') or codigo_validacao_assinatura(pedido.token)
+    if (pedido.auditoria or {}).get('assinatura_documento_codigo'):
+        url_verificacao = request.build_absolute_uri(
+            reverse('documentos:assinatura-verificar-codigo', kwargs={'codigo': codigo_validacao})
+        )
+    else:
+        url_verificacao = request.build_absolute_uri(
+            reverse('eventos:assinatura-oficio-verificacao', kwargs={'token': pedido.token})
+        )
     cpf_mascarado = formatar_cpf_exibicao_auditoria(pedido.cpf_esperado)
     return {
         'pedido': pedido,
@@ -93,7 +103,7 @@ def oficio_assinatura_gestao(request, pk):
     status = status_assinatura_oficio(oficio)
     codigo_validacao = ''
     if pedido and pedido.status == OficioAssinaturaPedido.STATUS_ASSINADO:
-        codigo_validacao = codigo_validacao_assinatura(pedido.token)
+        codigo_validacao = (pedido.auditoria or {}).get('assinatura_documento_codigo') or codigo_validacao_assinatura(pedido.token)
     context = {
         'oficio': oficio,
         'pedido': pedido,
@@ -106,9 +116,15 @@ def oficio_assinatura_gestao(request, pk):
 
 
 def _build_validation_block_payload(request, pedido: OficioAssinaturaPedido, nome_assinatura: str, assinado_em_dt):
-    validacao_url = request.build_absolute_uri(
-        reverse('eventos:assinatura-oficio-verificacao', kwargs={'token': pedido.token})
-    )
+    codigo_validacao = (pedido.auditoria or {}).get('assinatura_documento_codigo') or codigo_validacao_assinatura(pedido.token)
+    if (pedido.auditoria or {}).get('assinatura_documento_codigo'):
+        validacao_url = request.build_absolute_uri(
+            reverse('documentos:assinatura-verificar-codigo', kwargs={'codigo': codigo_validacao})
+        )
+    else:
+        validacao_url = request.build_absolute_uri(
+            reverse('eventos:assinatura-oficio-verificacao', kwargs={'token': pedido.token})
+        )
     cpf_mascarado = formatar_cpf_exibicao_auditoria(pedido.cpf_esperado)
     return {
         'nome_documento': 'Ofício',
@@ -122,7 +138,7 @@ def _build_validation_block_payload(request, pedido: OficioAssinaturaPedido, nom
         'criado_por_nome': (pedido.criado_por_nome or 'Não informado'),
         'pedido_criado_em': timezone.localtime(pedido.created_at).strftime('%d/%m/%Y %H:%M:%S'),
         'hash_documento': pedido.hash_pdf_original,
-        'codigo_validacao': codigo_validacao_assinatura(pedido.token),
+        'codigo_validacao': codigo_validacao,
         'url_verificacao': validacao_url,
         'texto_assinatura': 'Documento assinado eletronicamente no fluxo interno do sistema.',
     }
@@ -258,9 +274,43 @@ def assinatura_oficio_assinar(request, token):
             erro = 'PDF original não encontrado para assinatura.'
         else:
             try:
-                assinado_bytes, assinatura_meta, nome_assinatura, bloco_validacao = _render_signed_pdf_bytes(
-                    request, pedido, fonte
+                nome_assinatura = formatar_nome_assinatura(pedido.nome_assinante_esperado)
+                assinatura_documento = assinar_documento_pdf(
+                    pedido.oficio,
+                    usuario=None,
+                    metodo_autenticacao=AssinaturaDocumento.METODO_VALIDACAO_CPF,
+                    pdf_original=pedido.pdf_original_congelado,
+                    nome_documento='Ofício',
+                    nome_assinante=nome_assinatura,
+                    cpf_assinante=pedido.cpf_esperado,
+                    request=request,
+                    posicao=_extract_signature_position(request),
+                    metadata={
+                        'pedido_oficio_assinatura_id': pedido.pk,
+                        'oficio_id': pedido.oficio_id,
+                        'protocolo': (pedido.oficio.protocolo_formatado or '').strip(),
+                    },
                 )
+                assinatura_documento.arquivo_pdf_assinado.open('rb')
+                try:
+                    assinado_bytes = assinatura_documento.arquivo_pdf_assinado.read()
+                finally:
+                    assinatura_documento.arquivo_pdf_assinado.close()
+                assinatura_meta = {
+                    'resolved_font_name': 'Helvetica',
+                    'used_fallback': False,
+                    'font_detail': 'carimbo institucional',
+                    'signature_position': assinatura_documento.posicao_carimbo_json,
+                }
+                bloco_validacao = {
+                    'codigo_validacao': assinatura_documento.codigo_verificacao,
+                    'url_verificacao': request.build_absolute_uri(
+                        reverse(
+                            'documentos:assinatura-verificar-codigo',
+                            kwargs={'codigo': assinatura_documento.codigo_verificacao},
+                        )
+                    ),
+                }
             except ValueError as exc:
                 logger.error('Falha ao aplicar fonte real no PDF do pedido %s: %s', pedido.pk, exc)
                 erro = str(exc)
@@ -295,6 +345,8 @@ def assinatura_oficio_assinar(request, token):
                 'assinatura_posicao': assinatura_meta.get('signature_position'),
                 'codigo_validacao': bloco_validacao.get('codigo_validacao'),
                 'url_verificacao': bloco_validacao.get('url_verificacao'),
+                'assinatura_documento_id': str(assinatura_documento.pk),
+                'assinatura_documento_codigo': assinatura_documento.codigo_verificacao,
                 'assinado_em': pedido.assinado_em.isoformat(),
                 'status': pedido.status,
             }

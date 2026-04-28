@@ -15,6 +15,7 @@ from io import BytesIO
 
 from cadastros.models import AssinaturaConfiguracao, ConfiguracaoSistema
 from core.utils.masks import format_masked_display
+from documentos.models import AssinaturaDocumento
 from eventos.models import Oficio, OficioAssinaturaPedido
 from eventos.services.documentos import DocumentoFormato, DocumentoOficioTipo, render_document_bytes
 from eventos.services.documentos.backends import get_pdf_backend_availability
@@ -131,6 +132,7 @@ STATUS_META = {
     'SEM_ASSINATURA': AssinaturaStatus('SEM_ASSINATURA', 'Sem assinatura', 'is-muted'),
     'PENDENTE': AssinaturaStatus('PENDENTE', 'Pendente', 'is-warning'),
     'ASSINADO': AssinaturaStatus('ASSINADO', 'Assinado', 'is-finalizado'),
+    'DESATUALIZADA': AssinaturaStatus('DESATUALIZADA', 'Assinatura desatualizada', 'is-warning'),
     'INVALIDADO': AssinaturaStatus('INVALIDADO', 'Invalidado', 'is-rascunho'),
 }
 
@@ -203,9 +205,14 @@ def status_assinatura_oficio(oficio: Oficio) -> AssinaturaStatus:
         return STATUS_META['SEM_ASSINATURA']
     if pedido.status == OficioAssinaturaPedido.STATUS_ASSINADO:
         if assinatura_foi_invalidada_por_alteracao(oficio, pedido):
-            pedido.status = OficioAssinaturaPedido.STATUS_INVALIDADO
-            pedido.save(update_fields=['status', 'updated_at'])
-            return STATUS_META['INVALIDADO']
+            assinatura_id = (pedido.auditoria or {}).get('assinatura_documento_id')
+            if assinatura_id:
+                AssinaturaDocumento.objects.filter(pk=assinatura_id, status=AssinaturaDocumento.STATUS_VALIDA).update(
+                    status=AssinaturaDocumento.STATUS_SUBSTITUIDA,
+                    motivo_revogacao='Documento fonte alterado após a assinatura.',
+                    updated_at=timezone.now(),
+                )
+            return STATUS_META['DESATUALIZADA']
         return STATUS_META['ASSINADO']
     if pedido.status == OficioAssinaturaPedido.STATUS_PENDENTE:
         if pedido.expira_em and pedido.expira_em < timezone.now():

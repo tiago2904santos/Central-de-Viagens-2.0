@@ -40,11 +40,19 @@ def _item(
 def get_sidebar_config():
     """Retorna a lista plana de itens do menu, na ordem final.
 
-    - Itens diretos: Eventos, Roteiros, Simulacao de diarias, Configuracoes.
+    - Itens diretos: Central de documentos, Eventos, Roteiros, Simulacao de diarias, Configuracoes.
     - Itens com submenu: Documentos, Viajantes, Veiculos.
-    - Central de documentos é acessível via clique em "Central de Viagens" (sidebar-brand).
     """
     return [
+        # 1. Central de documentos
+        _item(
+            'central-documentos',
+            'Central de documentos',
+            'bi bi-house-door',
+            'eventos:documentos-hub',
+            order=-1,
+            active_route_names=['eventos:documentos-hub'],
+        ),
         # 1. Eventos
         _item(
             'eventos',

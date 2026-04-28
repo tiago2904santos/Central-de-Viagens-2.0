@@ -9,6 +9,8 @@ from pypdf import PdfReader
 from reportlab.pdfgen import canvas
 
 from cadastros.models import AssinaturaConfiguracao, Cargo, Cidade, ConfiguracaoSistema, Estado, UnidadeLotacao, Viajante
+from documentos.models import AssinaturaDocumento, ValidacaoAssinaturaDocumento
+from documentos.services.assinaturas import validar_pdf_por_upload
 from eventos.models import Oficio, OficioAssinaturaPedido
 from eventos.services.oficio_assinatura import (
     TEXTO_CONFIRMACAO_IDENTIDADE_ASSINATURA_OFICIO,
@@ -300,14 +302,9 @@ class OficioAssinaturaFlowTest(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn(reverse('eventos:assinatura-oficio-verificacao', kwargs={'token': pedido.token}), resp.url)
 
-    @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio', return_value=b'PDF_ORIGINAL')
-    @patch('eventos.views_assinatura.apply_text_signature_on_pdf', return_value=(b'PDF_ASSINADO', {
-        'resolved_font_name': 'SignGreatVibes',
-        'used_fallback': False,
-        'font_detail': 'ok',
-        'signature_position': {'box_x': 0.81, 'box_y': 0.27, 'box_w': 0.32, 'box_h': 0.1, 'page_index': 0},
-    }))
-    def test_fluxo_publico_confirma_cpf_telefone_e_assina(self, sign_mock, _render_mock):
+    @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio')
+    def test_fluxo_publico_confirma_cpf_telefone_e_assina(self, render_mock):
+        render_mock.return_value = self._build_pdf_with_text('PDF ORIGINAL')
         self.client.get(reverse('eventos:oficio-assinatura-gerar-link', kwargs={'pk': self.oficio.pk}), follow=True)
         pedido = OficioAssinaturaPedido.objects.get(oficio=self.oficio)
         identidade_url = reverse('eventos:assinatura-oficio-identidade', kwargs={'token': pedido.token})
@@ -340,33 +337,35 @@ class OficioAssinaturaFlowTest(TestCase):
         self.assertEqual(pedido.fonte_escolhida, OficioAssinaturaPedido.FONTE_GREAT_VIBES)
         self.assertTrue(bool(pedido.hash_pdf_assinado))
         self.assertTrue(bool(pedido.pdf_assinado_final))
-        self.assertEqual(pedido.auditoria.get('fonte_pdf_resolvida'), 'SignGreatVibes')
+        self.assertTrue(AssinaturaDocumento.objects.filter(codigo_verificacao=pedido.auditoria['assinatura_documento_codigo']).exists())
+        self.assertEqual(pedido.auditoria.get('fonte_pdf_resolvida'), 'Helvetica')
         self.assertFalse(bool(pedido.auditoria.get('fonte_pdf_fallback')))
-        sign_mock.assert_called_once()
-        self.assertEqual(sign_mock.call_args.kwargs['signer_name'], 'Joao Mario de Goes')
-        self.assertTrue(sign_mock.call_args.kwargs['strict_font'])
-        pos = sign_mock.call_args.kwargs['signature_position']
+        pos = pedido.auditoria.get('assinatura_posicao', {})
         self.assertEqual(pos['box_x'], 0.81)
         self.assertEqual(pos['box_y'], 0.27)
         self.assertEqual(pos['box_w'], 0.32)
         self.assertEqual(pos['box_h'], 0.1)
         self.assertEqual(pos['page_index'], 0)
-        self.assertIn('validation_payload', sign_mock.call_args.kwargs)
-        payload = sign_mock.call_args.kwargs['validation_payload']
-        self.assertEqual(payload['codigo_validacao'], codigo_validacao_assinatura(pedido.token))
-        self.assertIn('/assinatura/oficio/', payload['url_verificacao'])
-        self.assertEqual(pedido.auditoria.get('codigo_validacao'), codigo_validacao_assinatura(pedido.token))
-        self.assertIn('/assinatura/oficio/', pedido.auditoria.get('url_verificacao', ''))
-        self.assertEqual(pedido.auditoria.get('assinatura_posicao', {}).get('box_x'), 0.81)
+        self.assertTrue(pedido.auditoria.get('codigo_validacao', '').startswith('CV-'))
+        self.assertIn('/assinaturas/verificar/', pedido.auditoria.get('url_verificacao', ''))
+        assinatura = AssinaturaDocumento.objects.get(pk=pedido.auditoria['assinatura_documento_id'])
+        self.assertEqual(assinatura.hash_pdf_assinado_sha256, pedido.hash_pdf_assinado)
+        pdf_assinado = pedido.pdf_assinado_final.read()
+        self.assertEqual(len(PdfReader(BytesIO(pdf_assinado)).pages), 1)
+        self.assertIn('ASSINADO ELETRONICAMENTE', PdfReader(BytesIO(pdf_assinado)).pages[0].extract_text())
+        self.assertIn('***.456.789-**', PdfReader(BytesIO(pdf_assinado)).pages[0].extract_text())
 
-    @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio', return_value=b'PDF_ORIGINAL')
-    @patch('eventos.views_assinatura.apply_text_signature_on_pdf', return_value=(b'PDF_ASSINADO', {
-        'resolved_font_name': 'SignGreatVibes',
-        'used_fallback': False,
-        'font_detail': 'ok',
-        'signature_position': {'box_x': 0.2, 'box_y': 0.5, 'box_w': 0.44, 'box_h': 0.14, 'page_index': 0},
-    }))
-    def test_dimensoes_customizadas_da_caixa_vao_para_o_pdf(self, sign_mock, _render_mock):
+        resultado_valido = validar_pdf_por_upload(BytesIO(pdf_assinado))
+        self.assertTrue(resultado_valido['valido'])
+        alterado = bytearray(pdf_assinado)
+        alterado.append(10)
+        resultado_invalido = validar_pdf_por_upload(BytesIO(bytes(alterado)), codigo_manual=assinatura.codigo_verificacao)
+        self.assertFalse(resultado_invalido['valido'])
+        self.assertEqual(ValidacaoAssinaturaDocumento.objects.count(), 2)
+
+    @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio')
+    def test_dimensoes_customizadas_da_caixa_vao_para_o_pdf(self, render_mock):
+        render_mock.return_value = self._build_pdf_with_text('PDF ORIGINAL')
         self.client.get(reverse('eventos:oficio-assinatura-gerar-link', kwargs={'pk': self.oficio.pk}), follow=True)
         pedido = OficioAssinaturaPedido.objects.get(oficio=self.oficio)
         identidade_url = reverse('eventos:assinatura-oficio-identidade', kwargs={'token': pedido.token})
@@ -384,7 +383,8 @@ class OficioAssinaturaFlowTest(TestCase):
                 'sig_page': '0',
             },
         )
-        pos = sign_mock.call_args.kwargs['signature_position']
+        pedido.refresh_from_db()
+        pos = pedido.auditoria.get('assinatura_posicao', {})
         self.assertEqual(pos['box_w'], 0.44)
         self.assertEqual(pos['box_h'], 0.14)
 
@@ -401,7 +401,7 @@ class OficioAssinaturaFlowTest(TestCase):
         self.assertNotContains(resp, 'data-testid="abrir-link-assinatura"', html=False)
 
     @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio')
-    def test_alteracao_real_do_oficio_invalida_assinatura(self, render_mock):
+    def test_alteracao_real_do_oficio_marca_assinatura_desatualizada(self, render_mock):
         render_mock.return_value = self._build_pdf_with_text('VERSAO A', titulo='A')
         self.client.get(reverse('eventos:oficio-assinatura-gerar-link', kwargs={'pk': self.oficio.pk}), follow=True)
         pedido = OficioAssinaturaPedido.objects.get(oficio=self.oficio)
@@ -413,7 +413,8 @@ class OficioAssinaturaFlowTest(TestCase):
         lista_url = reverse('eventos:oficios-global')
         self.client.get(lista_url)
         pedido.refresh_from_db()
-        self.assertEqual(pedido.status, OficioAssinaturaPedido.STATUS_INVALIDADO)
+        self.assertEqual(pedido.status, OficioAssinaturaPedido.STATUS_ASSINADO)
+        self.assertEqual(status_assinatura_oficio(self.oficio).key, 'DESATUALIZADA')
 
     @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio')
     def test_mesmo_conteudo_documental_nao_invalida_assinatura(self, render_mock):
@@ -491,7 +492,7 @@ class PdfSignatureFontResolutionTest(TestCase):
         self.assertIn('fonte desconhecida', detail)
 
     @patch('eventos.services.pdf_signature.resolve_signature_font', return_value=('Helvetica', False, 'ok'))
-    def test_pdf_final_ganha_pagina_extra_de_validacao(self, _font_mock):
+    def test_pdf_final_recebe_carimbo_sem_pagina_extra(self, _font_mock):
         stream = BytesIO()
         c = canvas.Canvas(stream)
         c.drawString(72, 740, 'Oficio base')
@@ -510,7 +511,7 @@ class PdfSignatureFontResolutionTest(TestCase):
             'criado_por_nome': 'assinatura-admin',
             'pedido_criado_em': '22/04/2026 14:59:00',
             'hash_documento': 'abc123',
-            'codigo_validacao': 'ABCD-EFGH-IJKL-MNOP',
+            'codigo_validacao': 'CV-2026-ABC123-A7F9',
             'url_verificacao': 'https://exemplo.local/assinatura/oficio/token/verificacao/',
             'texto_assinatura': 'Documento assinado eletronicamente.',
         }
@@ -522,13 +523,11 @@ class PdfSignatureFontResolutionTest(TestCase):
             strict_font=True,
         )
         pages = PdfReader(BytesIO(final_pdf)).pages
-        self.assertEqual(len(pages), 2)
-        self.assertTrue(meta.get('has_validation_page'))
+        self.assertEqual(len(pages), 1)
+        self.assertFalse(meta.get('has_validation_page'))
         texto_primeira = pages[0].extract_text()
-        self.assertNotIn('Validação de assinatura eletrônica', texto_primeira)
-        texto_validacao = pages[1].extract_text()
-        self.assertIn('Validação de assinatura eletrônica', texto_validacao)
-        self.assertIn('ABCD-EFGH-IJKL-MNOP', texto_validacao)
+        self.assertIn('ASSINADO ELETRONICAMENTE', texto_primeira)
+        self.assertIn('CV-2026-ABC123-A7F9', texto_primeira)
 
     @patch('eventos.services.pdf_signature.resolve_signature_font', return_value=('Helvetica', False, 'ok'))
     def test_page_index_menos_um_usa_ultima_pagina(self, _font_mock):
