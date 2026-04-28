@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, UTC
 from io import BytesIO
 from pathlib import Path
+from urllib.parse import urlparse
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
@@ -27,6 +28,7 @@ from reportlab.graphics import renderPDF
 from reportlab.graphics.barcode import qr
 from reportlab.graphics.shapes import Drawing
 from reportlab.lib.colors import HexColor
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfgen import canvas
 
@@ -48,6 +50,21 @@ class DadosCarimbo:
     data_hora_assinatura: timezone.datetime
     codigo_verificacao: str
     url_validacao: str
+
+
+@dataclass(frozen=True)
+class SignatureStampData:
+    titulo: str
+    linha_nome_1: str
+    linha_nome_2: str
+    fonte_nome: float
+    cpf_linha: str
+    data_hora_linha: str
+    codigo_linha: str
+    url_linha: str
+
+
+PARTICULAS_NOME = {'de', 'da', 'do', 'dos', 'das', 'e'}
 
 
 def calcular_sha256_bytes(file_bytes: bytes) -> str:
@@ -109,108 +126,164 @@ def _normalizar_posicao(posicao: dict | None, total_paginas: int) -> dict:
     page_index = min(max(page_index, 0), max(total_paginas - 1, 0))
     return {
         'page_index': page_index,
-        'box_x': min(max(float(raw.get('box_x', raw.get('x_ratio', 0.53))), 0.01), 0.95),
-        'box_y': min(max(float(raw.get('box_y', raw.get('y_ratio', 0.82))), 0.01), 0.95),
+        'box_x': min(max(float(raw.get('box_x', raw.get('x_ratio', 0.15))), 0.01), 0.95),
+        'box_y': min(max(float(raw.get('box_y', raw.get('y_ratio', 0.78))), 0.01), 0.95),
         'box_w': min(max(float(raw.get('box_w', 0.42)), 0.18), 0.95),
-        'box_h': min(max(float(raw.get('box_h', 0.13)), 0.08), 0.35),
+        'box_h': min(max(float(raw.get('box_h', 0.14)), 0.10), 0.35),
         'qr': bool(raw.get('qr', True)),
     }
 
 
-def _draw_wrapped(c, text: str, x: float, y: float, max_width: float, *, font='Helvetica', size=7.2, leading=9):
-    words = str(text or '').split()
-    lines = []
-    current = ''
-    for word in words:
-        candidate = f'{current} {word}'.strip()
-        if pdfmetrics.stringWidth(candidate, font, size) <= max_width or not current:
-            current = candidate
-        else:
-            lines.append(current)
-            current = word
-    if current:
-        lines.append(current)
-    c.setFont(font, size)
-    for line in lines[:2]:
-        c.drawString(x, y, line)
-        y -= leading
-    return y
+def _short_url(raw_url: str) -> str:
+    parsed = urlparse(str(raw_url or '').strip())
+    if not parsed.netloc:
+        return str(raw_url or '')[:70]
+    path = parsed.path or '/'
+    if len(path) > 36:
+        path = f'{path[:33]}...'
+    return f'{parsed.netloc}{path}'
 
 
-def _resolve_name_font_size(name: str, max_width: float) -> tuple[float, list[str]]:
-    text = str(name or '').strip() or 'Assinante'
-    for size in (7.2, 6.9, 6.6, 6.3):
-        words = text.split()
-        lines: list[str] = []
-        current = ''
-        for word in words:
-            candidate = f'{current} {word}'.strip()
-            if pdfmetrics.stringWidth(candidate, 'Helvetica', size) <= max_width or not current:
-                current = candidate
-            else:
-                lines.append(current)
-                current = word
-        if current:
-            lines.append(current)
-        if len(lines) <= 2:
-            return size, lines
-    return 6.0, [text[:65]]
+def fit_text_single_or_two_lines(text: str, max_width: float, font_name: str) -> tuple[float, str, str]:
+    clean = re.sub(r'\s+', ' ', str(text or '').strip()) or 'Assinante'
+    words = clean.split(' ')
+    for font_size in (8.8, 8.4, 8.0, 7.6):
+        if pdfmetrics.stringWidth(clean, font_name, font_size) <= max_width:
+            return font_size, clean, ''
+    for font_size in (8.0, 7.6, 7.2):
+        for idx in range(1, len(words)):
+            left_words = words[:idx]
+            right_words = words[idx:]
+            if left_words[-1].lower() in PARTICULAS_NOME or right_words[0].lower() in PARTICULAS_NOME:
+                continue
+            left = ' '.join(left_words)
+            right = ' '.join(right_words)
+            if (
+                pdfmetrics.stringWidth(left, font_name, font_size) <= max_width
+                and pdfmetrics.stringWidth(right, font_name, font_size) <= max_width
+            ):
+                return font_size, left, right
+    clipped = clean[:54].rstrip()
+    return 7.0, clipped, ''
 
 
-def gerar_overlay_carimbo(page_width: float, page_height: float, dados_carimbo: DadosCarimbo, posicao: dict) -> bytes:
-    stream = BytesIO()
-    c = canvas.Canvas(stream, pagesize=(page_width, page_height))
+def build_signature_stamp_data(dados_carimbo: DadosCarimbo, text_width: float) -> SignatureStampData:
+    fonte_nome, linha_nome_1, linha_nome_2 = fit_text_single_or_two_lines(
+        dados_carimbo.nome_assinante,
+        text_width,
+        'Helvetica-Bold',
+    )
+    dt = timezone.localtime(dados_carimbo.data_hora_assinatura).strftime('%d/%m/%Y às %H:%M')
+    return SignatureStampData(
+        titulo='ASSINADO ELETRONICAMENTE',
+        linha_nome_1=linha_nome_1,
+        linha_nome_2=linha_nome_2,
+        fonte_nome=fonte_nome,
+        cpf_linha=f'CPF: {dados_carimbo.cpf_mascarado}',
+        data_hora_linha=f'Assinado em {dt}',
+        codigo_linha=f'Código verificador: {dados_carimbo.codigo_verificacao}',
+        url_linha=f'Verifique em: {_short_url(dados_carimbo.url_validacao)}',
+    )
 
+
+def _resolve_logo_path() -> Path | None:
+    custom = (os.getenv('ASSINATURA_LOGO_PATH') or '').strip()
+    if custom:
+        path = Path(custom)
+        if path.exists():
+            return path
+    fallback = Path('static') / 'favicon.svg'
+    return fallback if fallback.exists() else None
+
+
+def draw_signature_logo(c: canvas.Canvas, left: float, bottom: float, logo_size: float) -> float:
+    logo_path = _resolve_logo_path()
+    if not logo_path:
+        return left
+    try:
+        c.drawImage(ImageReader(str(logo_path)), left, bottom, width=logo_size, height=logo_size, preserveAspectRatio=True, anchor='sw', mask='auto')
+    except Exception:
+        c.setFillColor(HexColor('#334155'))
+        c.setFont('Helvetica-Bold', 9)
+        c.drawString(left, bottom + (logo_size / 2), 'CV')
+    return left + logo_size + 8
+
+
+def draw_signature_qrcode(c: canvas.Canvas, right: float, bottom: float, qr_size: float, url_validacao: str) -> float:
+    qr_left = right - qr_size
+    qr_code = qr.QrCodeWidget(url_validacao)
+    bounds = qr_code.getBounds()
+    scale = qr_size / max(bounds[2] - bounds[0], bounds[3] - bounds[1])
+    drawing = Drawing(qr_size, qr_size, transform=[scale, 0, 0, scale, 0, 0])
+    drawing.add(qr_code)
+    renderPDF.draw(drawing, c, qr_left, bottom)
+    return qr_left - 8
+
+
+def draw_signature_text(c: canvas.Canvas, x: float, y_top: float, stamp: SignatureStampData):
+    c.setFillColor(HexColor('#1f2933'))
+    c.setFont('Helvetica-Bold', 8.2)
+    c.drawString(x, y_top, stamp.titulo)
+    y = y_top - 10
+    c.setFont('Helvetica-Bold', stamp.fonte_nome)
+    c.drawString(x, y, stamp.linha_nome_1)
+    if stamp.linha_nome_2:
+        y -= 8.3
+        c.drawString(x, y, stamp.linha_nome_2)
+    y -= 8.6
+    c.setFont('Helvetica', 6.7)
+    c.setFillColor(HexColor('#4b5563'))
+    c.drawString(x, y, stamp.cpf_linha)
+    y -= 7.8
+    c.drawString(x, y, stamp.data_hora_linha)
+    y -= 7.8
+    c.drawString(x, y, stamp.codigo_linha)
+    y -= 7.8
+    c.drawString(x, y, stamp.url_linha[:88])
+
+
+def calculate_signature_stamp_box(page_width: float, page_height: float, posicao: dict) -> tuple[float, float, float, float]:
     box_w = page_width * posicao['box_w']
     box_h = page_height * posicao['box_h']
     left = page_width * posicao['box_x']
     bottom = page_height - (page_height * posicao['box_y']) - box_h
     left = min(max(left, 8), page_width - box_w - 8)
     bottom = min(max(bottom, 8), page_height - box_h - 8)
+    return left, bottom, box_w, box_h
 
-    c.setStrokeColor(HexColor('#64748b'))
-    c.setFillColor(HexColor('#ffffff'))
+
+def get_signature_stamp_position(page_width: float, page_height: float, posicao: dict) -> dict:
+    left, bottom, box_w, box_h = calculate_signature_stamp_box(page_width, page_height, posicao)
+    return {'left': left, 'bottom': bottom, 'box_w': box_w, 'box_h': box_h}
+
+
+def draw_signature_stamp(c: canvas.Canvas, dados_carimbo: DadosCarimbo, stamp_pos: dict, with_qr: bool):
+    left = stamp_pos['left']
+    bottom = stamp_pos['bottom']
+    box_w = stamp_pos['box_w']
+    box_h = stamp_pos['box_h']
+    padding = 8
+    logo_size = min(34, box_h - 14)
+    qr_size = min(44, box_h - 14)
+
+    c.setStrokeColor(HexColor('#cbd5e1'))
+    c.setFillColor(HexColor('#f8fafc'))
     c.roundRect(left, bottom, box_w, box_h, 4, stroke=1, fill=1)
 
-    padding = 7
-    text_x = left + padding
-    text_y = bottom + box_h - 13
-    qr_size = min(38, max(24, box_h - 16))
-    text_width = box_w - (padding * 2)
-    if posicao.get('qr') and dados_carimbo.url_validacao:
-        text_width -= qr_size + 8
+    text_left = draw_signature_logo(c, left + padding, bottom + (box_h - logo_size) / 2, logo_size)
+    text_right = left + box_w - padding
+    if with_qr and dados_carimbo.url_validacao:
+        text_right = draw_signature_qrcode(c, text_right, bottom + (box_h - qr_size) / 2, qr_size, dados_carimbo.url_validacao)
+    text_width = max(70, text_right - text_left)
+    stamp = build_signature_stamp_data(dados_carimbo, text_width)
+    draw_signature_text(c, text_left, bottom + box_h - 11, stamp)
 
-    c.setFillColor(HexColor('#0f172a'))
-    c.setFont('Helvetica-Bold', 7.8)
-    c.drawString(text_x, text_y, 'ASSINADO ELETRONICAMENTE')
-    text_y -= 10
-    name_font_size, name_lines = _resolve_name_font_size(f'por {dados_carimbo.nome_assinante}', text_width)
-    c.setFont('Helvetica', name_font_size)
-    for line in name_lines[:2]:
-        c.drawString(text_x, text_y, line)
-        text_y -= 8
-    c.setFont('Helvetica', 6.8)
-    data_local = timezone.localtime(dados_carimbo.data_hora_assinatura).strftime('%d/%m/%Y %H:%M')
-    linhas = [
-        f'CPF: {dados_carimbo.cpf_mascarado}',
-        f'Data/hora: {data_local}',
-        f'Código: {dados_carimbo.codigo_verificacao}',
-        f'Verifique em: {dados_carimbo.url_validacao}',
-    ]
-    for linha in linhas:
-        if text_y < bottom + 7:
-            break
-        c.drawString(text_x, text_y, str(linha)[:92])
-        text_y -= 8.2
 
-    if posicao.get('qr') and dados_carimbo.url_validacao and qr_size > 22:
-        qr_code = qr.QrCodeWidget(dados_carimbo.url_validacao)
-        bounds = qr_code.getBounds()
-        scale = qr_size / max(bounds[2] - bounds[0], bounds[3] - bounds[1])
-        drawing = Drawing(qr_size, qr_size, transform=[scale, 0, 0, scale, 0, 0])
-        drawing.add(qr_code)
-        renderPDF.draw(drawing, c, left + box_w - qr_size - padding, bottom + box_h - qr_size - padding)
-
+def gerar_overlay_carimbo(page_width: float, page_height: float, dados_carimbo: DadosCarimbo, posicao: dict) -> bytes:
+    stream = BytesIO()
+    c = canvas.Canvas(stream, pagesize=(page_width, page_height))
+    stamp_pos = get_signature_stamp_position(page_width, page_height, posicao)
+    draw_signature_stamp(c, dados_carimbo, stamp_pos, with_qr=bool(posicao.get('qr')))
     c.save()
     return stream.getvalue()
 

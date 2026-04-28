@@ -7,6 +7,7 @@ from reportlab.pdfgen import canvas
 from documentos.models import AssinaturaDocumento, ValidacaoAssinaturaDocumento
 from documentos.services.assinaturas import (
     assinar_documento_pdf,
+    fit_text_single_or_two_lines,
     diagnosticar_estrutura_assinatura_pdf,
     mascarar_cpf,
     validar_codigo,
@@ -48,8 +49,9 @@ class AssinaturaDocumentoServiceTest(TestCase):
         self.assertEqual(len(reader.pages), 1)
         texto = reader.pages[0].extract_text()
         self.assertIn('ASSINADO ELETRONICAMENTE', texto)
-        self.assertIn(assinatura.codigo_verificacao, texto)
+        self.assertIn(f'Código verificador: {assinatura.codigo_verificacao}', texto)
         self.assertIn('***.456.789-**', texto)
+        self.assertIn('Verifique em:', texto)
         diag = diagnosticar_estrutura_assinatura_pdf(pdf_assinado)
         self.assertTrue(diag['has_byterange'])
         self.assertTrue(diag['has_sig'])
@@ -139,3 +141,10 @@ class AssinaturaDocumentoServiceTest(TestCase):
 
     def test_mascara_cpf_padrao(self):
         self.assertEqual(mascarar_cpf('123.456.789-00'), '***.456.789-**')
+
+    def test_nome_longo_ajusta_sem_particula_sozinha(self):
+        nome = 'JOAO MARIO DE GOES SILVA PEREIRA'
+        _, linha_1, linha_2 = fit_text_single_or_two_lines(nome, max_width=150, font_name='Helvetica-Bold')
+        if linha_2:
+            self.assertNotIn(linha_1.split(' ')[-1].lower(), {'de', 'da', 'do', 'dos', 'das', 'e'})
+            self.assertNotIn(linha_2.split(' ')[0].lower(), {'de', 'da', 'do', 'dos', 'das', 'e'})
