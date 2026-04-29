@@ -44,6 +44,11 @@ STATUS_PDF_INTEGRA = 'assinatura_pdf_integra'
 STATUS_PDF_INVALIDA = 'assinatura_pdf_invalida'
 STATUS_PDF_AUSENTE = 'assinatura_pdf_ausente'
 STATUS_PDF_CERT_NAO_CONFIAVEL = 'certificado_nao_confiavel'
+SIGNATURE_LABEL_WIDTH_PT = 150
+SIGNATURE_LABEL_HEIGHT_PT = 54
+SIGNATURE_LABEL_QR_PT = 40
+SIGNATURE_LABEL_WATERMARK_ALPHA = 0.14
+SIGNATURE_LABEL_MIN_BOTTOM_PT = 72
 
 
 @dataclass(frozen=True)
@@ -276,12 +281,13 @@ def _draw_logo_profissional(c: canvas.Canvas, left: float, bottom: float, width:
 
 
 def _calcular_layout_aparencia(width: float, height: float) -> AparenciaAssinaturaLayout:
-    padding = max(8, min(12, height * 0.12))
-    qr_size = min(height - padding * 2, width * 0.26)
+    width, height = _coerce_signature_label_size(width, height)
+    padding = 5
+    qr_size = min(SIGNATURE_LABEL_QR_PT, height - padding * 2)
     qr_box = (padding, (height - qr_size) / 2, qr_size, qr_size)
-    text_left = qr_box[0] + qr_size + max(14, width * 0.035)
+    text_left = qr_box[0] + qr_size + 7
     text_right = width - padding
-    text_box = (text_left, padding, max(72, text_right - text_left), height - padding * 2)
+    text_box = (text_left, padding, max(1, text_right - text_left), height - padding * 2)
     return AparenciaAssinaturaLayout(
         width=width,
         height=height,
@@ -301,6 +307,7 @@ def _draw_qrcode_profissional(c: canvas.Canvas, box: tuple[float, float, float, 
     qr_size = min(width, height)
     c.saveState()
     qr_code = qr.QrCodeWidget(url_validacao or 'assinatura')
+    qr_code.barBorder = 1
     qr_code.barFillColor = white
     qr_code.barStrokeColor = white
     bounds = qr_code.getBounds()
@@ -336,14 +343,50 @@ def _wrap_text_by_width(text: str, font_name: str, font_size: float, max_width: 
     return lines
 
 
+def _coerce_signature_label_size(width: float, height: float) -> tuple[float, float]:
+    return SIGNATURE_LABEL_WIDTH_PT, SIGNATURE_LABEL_HEIGHT_PT
+
+
+def _display_validation_url(raw_url: str) -> str:
+    raw_url = str(raw_url or '').strip()
+    parsed = urlparse(raw_url)
+    display = parsed.path or raw_url
+    if parsed.query:
+        display = f'{display}?{parsed.query}'
+    return display or raw_url
+
+
+def _wrap_url_line(text: str, font_name: str, font_size: float, max_width: float) -> list[str]:
+    if pdfmetrics.stringWidth(text, font_name, font_size) <= max_width:
+        return [text]
+    prefix = ''
+    rest = text
+    if text.startswith('verifique em '):
+        prefix = 'verifique em '
+        rest = text[len(prefix):]
+    pieces = re.findall(r'/[^/]*|[^/]+', rest)
+    lines: list[str] = []
+    current = prefix
+    for piece in pieces:
+        candidate = f'{current}{piece}'
+        if not current.strip() or pdfmetrics.stringWidth(candidate, font_name, font_size) <= max_width:
+            current = candidate
+            continue
+        lines.append(current.rstrip())
+        current = piece
+    if current.strip():
+        lines.append(current)
+    return lines
+
+
 def _draw_cv_watermark(c: canvas.Canvas, text_left: float, width: float, height: float, padding: float):
-    wm_size = min(height * 1.06, width * 0.36)
-    wm_left = text_left + (width - text_left) * 0.43 - wm_size / 2
+    wm_size = 56
+    wm_left = text_left + (width - text_left) * 0.56 - wm_size / 2
     wm_bottom = (height - wm_size) / 2
     c.saveState()
     try:
-        c.setFillAlpha(0.16)
-        c.setStrokeAlpha(0.16)
+        c.setFillAlpha(SIGNATURE_LABEL_WATERMARK_ALPHA)
+        c.setStrokeAlpha(SIGNATURE_LABEL_WATERMARK_ALPHA)
     except AttributeError:
         pass
     wm_path = _resolve_cv_watermark_path()
@@ -367,6 +410,7 @@ def _draw_cv_watermark(c: canvas.Canvas, text_left: float, width: float, height:
 
 
 def _draw_signature_stamp_content(c: canvas.Canvas, dados_carimbo: DadosCarimbo, width: float, height: float, *, with_qr: bool = True):
+    width, height = _coerce_signature_label_size(width, height)
     layout = _calcular_layout_aparencia(width, height)
     padding = layout.padding
 
@@ -384,32 +428,33 @@ def _draw_signature_stamp_content(c: canvas.Canvas, dados_carimbo: DadosCarimbo,
     _draw_cv_watermark(c, text_left, width, height, padding)
 
     title = 'Documento assinado eletronicamente'
-    title_size = _font_size_to_fit(title, 'Times-Bold', text_width, (10.8, 10.2, 9.6, 9.0))
-    y = height - padding - 4
+    title_size = _font_size_to_fit(title, 'Times-Bold', text_width, (6.4, 6.1, 5.8, 5.5))
+    y = height - padding - 5.8
     c.setFillColor(HexColor('#f8fafc'))
     c.setFont('Times-Bold', title_size)
     c.drawString(text_left, y, title)
-    y -= 21.5
+    y -= 6.6
 
-    name_size = _font_size_to_fit(dados_carimbo.nome_assinante, 'Times-Roman', text_width, (8.9, 8.4, 7.9, 7.4))
+    name_size = _font_size_to_fit(dados_carimbo.nome_assinante, 'Times-Roman', text_width, (5.6, 5.3, 5.0, 4.8))
     for line, font_size in (
         (dados_carimbo.nome_assinante, name_size),
-        (f'CPF: {dados_carimbo.cpf_mascarado}', 7.8),
-        (f'Data: {data_formatada}', 7.8),
+        (f'CPF: {dados_carimbo.cpf_mascarado}', 5.2),
+        (f'Data: {data_formatada}', 5.0),
     ):
         c.setFont('Times-Roman', font_size)
         c.drawString(text_left, y, line)
-        y -= font_size + 3.0
+        y -= 6.4
 
-    link_linha = f'verifique em {dados_carimbo.url_validacao}'
-    link_size = _font_size_to_fit(link_linha, 'Times-Roman', text_width, (7.5, 7.1, 6.7, 6.3))
+    link_linha = f'verifique em {_display_validation_url(dados_carimbo.url_validacao)}'
+    link_size = _font_size_to_fit(link_linha, 'Times-Roman', text_width, (4.9, 4.7, 4.5, 4.2))
     c.setFont('Times-Roman', link_size)
-    for line in _wrap_text_by_width(link_linha, 'Times-Roman', link_size, text_width)[:2]:
+    for line in _wrap_url_line(link_linha, 'Times-Roman', link_size, text_width)[:2]:
         c.drawString(text_left, y, line)
-        y -= link_size + 2.4
+        y -= 5.0
 
 
 def renderizar_aparencia_assinatura(dados_carimbo: DadosCarimbo, width: float, height: float) -> bytes:
+    width, height = _coerce_signature_label_size(width, height)
     stream = BytesIO()
     c = canvas.Canvas(stream, pagesize=(width, height), pageCompression=1)
     _draw_signature_stamp_content(c, dados_carimbo, width, height, with_qr=True)
@@ -467,12 +512,12 @@ def draw_signature_text(c: canvas.Canvas, x: float, y_top: float, stamp: Signatu
 
 
 def calculate_signature_stamp_box(page_width: float, page_height: float, posicao: dict) -> tuple[float, float, float, float]:
-    box_w = page_width * posicao['box_w']
-    box_h = page_height * posicao['box_h']
-    left = page_width * posicao['box_x']
+    box_w = SIGNATURE_LABEL_WIDTH_PT
+    box_h = SIGNATURE_LABEL_HEIGHT_PT
+    left = (page_width - box_w) / 2
     bottom = page_height - (page_height * posicao['box_y']) - box_h
     left = min(max(left, 8), page_width - box_w - 8)
-    bottom = min(max(bottom, 8), page_height - box_h - 8)
+    bottom = min(max(bottom, SIGNATURE_LABEL_MIN_BOTTOM_PT), page_height - box_h - 8)
     return left, bottom, box_w, box_h
 
 
@@ -530,7 +575,13 @@ def aplicar_carimbo_pdf(pdf_original: bytes, dados_carimbo: DadosCarimbo, posica
     )
     output = BytesIO()
     writer.write(output)
-    return output.getvalue(), {**posicao_final, 'page_number': target_index + 1}
+    return output.getvalue(), {
+        **posicao_final,
+        'page_number': target_index + 1,
+        'label_width_pt': SIGNATURE_LABEL_WIDTH_PT,
+        'label_height_pt': SIGNATURE_LABEL_HEIGHT_PT,
+        'qr_size_pt': SIGNATURE_LABEL_QR_PT,
+    }
 
 
 def _read_bytes(pdf_original) -> bytes:
@@ -712,6 +763,9 @@ def aplicar_assinatura_pdf_real(pdf_base: bytes, dados_carimbo: DadosCarimbo, po
         'certificado_serial': hex(cert.serial_number),
         'signature_field_name': meta.field_name,
         'signature_position': {**posicao, 'box_pdf': sig_box},
+        'label_width_pt': SIGNATURE_LABEL_WIDTH_PT,
+        'label_height_pt': SIGNATURE_LABEL_HEIGHT_PT,
+        'qr_size_pt': SIGNATURE_LABEL_QR_PT,
         'appearance_bound_to_signature_field': True,
     }
 
@@ -723,12 +777,12 @@ def _assinar_pdf_real(pdf_carimbado: bytes, posicao: dict, codigo_verificacao: s
     page = reader.pages[posicao['page_index']]
     page_width = float(page.mediabox.width)
     page_height = float(page.mediabox.height)
-    box_w = page_width * posicao['box_w']
-    box_h = page_height * posicao['box_h']
-    left = page_width * posicao['box_x']
+    box_w = SIGNATURE_LABEL_WIDTH_PT
+    box_h = SIGNATURE_LABEL_HEIGHT_PT
+    left = (page_width - box_w) / 2
     bottom = page_height - (page_height * posicao['box_y']) - box_h
     left = min(max(left, 8), page_width - box_w - 8)
-    bottom = min(max(bottom, 8), page_height - box_h - 8)
+    bottom = min(max(bottom, SIGNATURE_LABEL_MIN_BOTTOM_PT), page_height - box_h - 8)
     sig_box = (int(left), int(bottom), int(left + box_w), int(bottom + box_h))
 
     meta = signers.PdfSignatureMetadata(
@@ -843,9 +897,12 @@ def assinar_documento_pdf(
         'assinatura_hash_pdf_assinado': assinatura.hash_pdf_assinado_sha256,
         'assinatura_tipo': 'assinatura_pdf_real_com_aparencia_de_campo',
         'assinatura_visual': {
-            'layout': 'bloco_autenticacao_horizontal',
+            'layout': 'etiqueta_compacta_horizontal',
+            'largura_pt': SIGNATURE_LABEL_WIDTH_PT,
+            'altura_pt': SIGNATURE_LABEL_HEIGHT_PT,
+            'qr_tamanho_pt': SIGNATURE_LABEL_QR_PT,
             'marca_dagua': 'static/img/assinatura/cv-watermark.png',
-            'marca_dagua_opacidade': 0.16,
+            'marca_dagua_opacidade': SIGNATURE_LABEL_WATERMARK_ALPHA,
             'qr_code': True,
             'aparencia_vinculada_ao_campo_pdf': True,
             'sem_overlay_na_pagina': not diagnostico.get('page_text_has_signature_visual'),

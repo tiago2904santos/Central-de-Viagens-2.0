@@ -1,5 +1,7 @@
 from io import BytesIO
+from pathlib import Path
 
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -9,6 +11,10 @@ from reportlab.pdfgen import canvas
 from documentos.models import AssinaturaDocumento, ValidacaoAssinaturaDocumento
 from documentos.services.assinaturas import (
     DadosCarimbo,
+    SIGNATURE_LABEL_HEIGHT_PT,
+    SIGNATURE_LABEL_QR_PT,
+    SIGNATURE_LABEL_WATERMARK_ALPHA,
+    SIGNATURE_LABEL_WIDTH_PT,
     assinar_documento_pdf,
     calcular_layout_aparencia_assinatura,
     fit_text_single_or_two_lines,
@@ -65,6 +71,14 @@ class AssinaturaDocumentoServiceTest(TestCase):
         self.assertFalse(diag['page_text_has_signature_visual'])
         self.assertTrue(assinatura.metadata_json['assinatura_visual']['aparencia_vinculada_ao_campo_pdf'])
         self.assertTrue(assinatura.metadata_json['assinatura_visual']['qr_code'])
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['largura_pt'], 300)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['altura_pt'], 92)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['qr_tamanho_pt'], 70)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['marca_dagua'], 'static/img/assinatura/cv-watermark.png')
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['marca_dagua_opacidade'], 0.16)
+        box_pdf = assinatura.posicao_carimbo_json['box_pdf']
+        self.assertEqual(box_pdf[2] - box_pdf[0], SIGNATURE_LABEL_WIDTH_PT)
+        self.assertEqual(box_pdf[3] - box_pdf[1], SIGNATURE_LABEL_HEIGHT_PT)
 
     def test_aparencia_visual_contem_logo_qr_nome_cpf_data_codigo(self):
         dados = DadosCarimbo(
@@ -72,25 +86,43 @@ class AssinaturaDocumentoServiceTest(TestCase):
             cpf_mascarado='***.858.369-**',
             data_hora_assinatura=timezone.now(),
             codigo_verificacao='CV-2026-2892A7-326F',
-            url_validacao='https://centraldeviagens.local/assinaturas/CV-2026-2892A7-326F',
+            url_validacao='https://centraldeviagens.local/assinaturas/verificar/CV-2026-2892A7-326F/',
         )
         appearance = renderizar_aparencia_assinatura(dados, 410, 92)
         reader = PdfReader(BytesIO(appearance))
+        page = reader.pages[0]
+        self.assertEqual(float(page.mediabox.width), SIGNATURE_LABEL_WIDTH_PT)
+        self.assertEqual(float(page.mediabox.height), SIGNATURE_LABEL_HEIGHT_PT)
         text = reader.pages[0].extract_text()
         self.assertIn('Documento assinado eletronicamente', text)
         self.assertIn('JOAO MARIO DE GOES', text)
         self.assertIn('***.858.369-**', text)
-        self.assertIn('verifique em https://centraldeviagens.local/assinaturas/CV-2026-2892A7-326F', text)
+        self.assertIn('Data:', text)
+        self.assertIn('verifique em https:/', text)
+        self.assertIn('/centraldeviagens.local/assinaturas', text)
+        self.assertIn('/assinaturas/verificar', text)
+        self.assertIn('/CV-2026-2892A7-326F/', text)
+        self.assertIn('/CV-2026-2892A7-326F/', text)
         self.assertNotIn('verificador.iti.br', text)
         self.assertGreater(len(reader.pages[0].get_contents().get_data()), 3000)
 
     def test_layout_qr_nao_invade_texto_e_fica_dentro_da_area(self):
         layout = calcular_layout_aparencia_assinatura(410, 92)
         text_left, _text_bottom, text_width, _text_height = layout.text_box
-        qr_left, _qr_bottom, qr_width, _qr_height = layout.qr_box
+        qr_left, _qr_bottom, qr_width, qr_height = layout.qr_box
+        self.assertEqual(layout.width, SIGNATURE_LABEL_WIDTH_PT)
+        self.assertEqual(layout.height, SIGNATURE_LABEL_HEIGHT_PT)
+        self.assertEqual(qr_width, SIGNATURE_LABEL_QR_PT)
+        self.assertEqual(qr_height, SIGNATURE_LABEL_QR_PT)
         self.assertGreater(text_left, qr_left + qr_width)
         self.assertLessEqual(text_left + text_width, layout.width - layout.padding + 0.1)
         self.assertGreaterEqual(qr_left, 0)
+
+    def test_asset_cv_watermark_existe_e_opacidade_configurada(self):
+        path = Path(settings.BASE_DIR) / 'static' / 'img' / 'assinatura' / 'cv-watermark.png'
+        self.assertTrue(path.exists())
+        self.assertGreater(path.stat().st_size, 0)
+        self.assertEqual(SIGNATURE_LABEL_WATERMARK_ALPHA, 0.16)
 
     def test_validacao_por_upload_mesmo_pdf_valido_e_pdf_editado_invalido(self):
         oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)

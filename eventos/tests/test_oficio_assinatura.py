@@ -346,6 +346,8 @@ class OficioAssinaturaFlowTest(TestCase):
         self.assertEqual(pos['box_w'], 0.4)
         self.assertEqual(pos['box_h'], 0.1)
         self.assertEqual(pos['page_index'], 0)
+        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 300)
+        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 92)
         self.assertTrue(pedido.auditoria.get('codigo_validacao', '').startswith('CV-'))
         self.assertIn('/assinaturas/verificar/', pedido.auditoria.get('url_verificacao', ''))
         assinatura = AssinaturaDocumento.objects.get(pk=pedido.auditoria['assinatura_documento_id'])
@@ -367,7 +369,7 @@ class OficioAssinaturaFlowTest(TestCase):
         self.assertEqual(ValidacaoAssinaturaDocumento.objects.count(), 2)
 
     @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio')
-    def test_dimensoes_customizadas_da_caixa_vao_para_o_pdf(self, render_mock):
+    def test_caixa_de_assinatura_usa_etiqueta_compacta_fixa(self, render_mock):
         render_mock.return_value = self._build_pdf_with_text('PDF ORIGINAL')
         self.client.get(reverse('eventos:oficio-assinatura-gerar-link', kwargs={'pk': self.oficio.pk}), follow=True)
         pedido = OficioAssinaturaPedido.objects.get(oficio=self.oficio)
@@ -390,6 +392,8 @@ class OficioAssinaturaFlowTest(TestCase):
         pos = pedido.auditoria.get('assinatura_posicao', {})
         self.assertEqual(pos['box_w'], 0.44)
         self.assertEqual(pos['box_h'], 0.14)
+        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 300)
+        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 92)
 
     @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio', return_value=b'PDF_ORIGINAL')
     def test_gestao_assinado_nao_mostra_abrir_link(self, _render_mock):
@@ -515,7 +519,7 @@ class PdfSignatureFontResolutionTest(TestCase):
             'pedido_criado_em': '22/04/2026 14:59:00',
             'hash_documento': 'abc123',
             'codigo_validacao': 'CV-2026-ABC123-A7F9',
-            'url_verificacao': 'https://exemplo.local/assinatura/oficio/token/verificacao/',
+            'url_verificacao': 'https://exemplo.local/assinaturas/verificar/CV-2026-ABC123-A7F9/',
             'texto_assinatura': 'Documento assinado eletronicamente.',
         }
         final_pdf, meta = apply_text_signature_on_pdf(
@@ -530,7 +534,10 @@ class PdfSignatureFontResolutionTest(TestCase):
         self.assertFalse(meta.get('has_validation_page'))
         texto_primeira = pages[0].extract_text()
         self.assertIn('Documento assinado eletronicamente', texto_primeira)
-        self.assertIn('https://exemplo.local/assinatura/oficio/token/verificacao/', texto_primeira)
+        self.assertIn('verifique em https://exemplo.local', texto_primeira)
+        self.assertIn('/assinaturas/verificar', texto_primeira)
+        self.assertIn('/CV-2026-ABC123-A7F9/', texto_primeira)
+        self.assertNotIn('https://verificador.iti.br', texto_primeira)
 
     @patch('eventos.services.pdf_signature.resolve_signature_font', return_value=('Helvetica', False, 'ok'))
     def test_page_index_menos_um_usa_ultima_pagina(self, _font_mock):
