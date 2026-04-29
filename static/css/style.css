@@ -1048,16 +1048,16 @@ a:hover {
     position: absolute;
     inset: 0;
     box-sizing: border-box;
-    border: 1px solid rgba(15, 76, 129, 0.55);
-    border-radius: 8px;
-    background: rgba(248, 250, 252, 0.92);
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+    border: 0;
+    border-radius: 5px;
+    background: #08172a;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: stretch;
-    gap: 10px;
-    padding: 8px 10px;
+    gap: 4.5%;
+    padding: 6px;
     cursor: grab;
     user-select: none;
     touch-action: none;
@@ -1066,9 +1066,14 @@ a:hover {
 .assinatura-doc-placeholder__chrome::before {
     content: "";
     position: absolute;
-    inset: 0 0 auto 0;
-    height: 5px;
-    background: #0f4c81;
+    z-index: 0;
+    width: 114%;
+    aspect-ratio: 1;
+    left: 24%;
+    top: -113%;
+    background: url("../img/assinatura/cv-watermark.png") center / contain no-repeat;
+    opacity: 0.18;
+    pointer-events: none;
 }
 
 .assinatura-doc-placeholder__chrome:active {
@@ -1078,27 +1083,31 @@ a:hover {
 .assinatura-doc-placeholder__text {
     min-width: 0;
     flex: 1 1 auto;
+    position: relative;
+    z-index: 1;
     display: grid;
     gap: 2px;
-    color: #0f172a;
+    color: #f8fafc;
     pointer-events: none;
 }
 
 .assinatura-doc-placeholder__text strong {
     display: block;
-    color: #0f4c81;
-    font-size: clamp(0.52rem, 0.95vw, 0.78rem);
+    color: #f8fafc;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 0.43rem;
     line-height: 1.05;
-    font-weight: 800;
+    font-weight: 700;
     white-space: nowrap;
 }
 
 .assinatura-doc-placeholder__text span {
     display: block;
-    color: #111827;
-    font-size: clamp(0.62rem, 1.15vw, 0.94rem);
+    color: #f8fafc;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 0.39rem;
     line-height: 1.05;
-    font-weight: 800;
+    font-weight: 400;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1106,8 +1115,9 @@ a:hover {
 
 .assinatura-doc-placeholder__text small {
     display: block;
-    color: #64748b;
-    font-size: clamp(0.46rem, 0.75vw, 0.64rem);
+    color: #e5e7eb;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 0.34rem;
     line-height: 1.1;
     white-space: nowrap;
     overflow: hidden;
@@ -1116,69 +1126,87 @@ a:hover {
 
 .assinatura-doc-placeholder__logo,
 .assinatura-professional-preview__logo {
-    flex: 0 0 auto;
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #0f4c81;
-    color: #fff;
-    font-weight: 900;
-    letter-spacing: 0;
-    font-size: 0.86rem;
+    display: none;
 }
 
 .assinatura-doc-placeholder__qr,
 .assinatura-professional-preview__qr {
     flex: 0 0 auto;
-    width: 44px;
-    height: 44px;
+    position: relative;
+    z-index: 1;
+    width: 27.1%;
+    max-width: 72px;
+    aspect-ratio: 1;
+    height: auto;
     border-radius: 4px;
     background:
-        linear-gradient(90deg, #111827 2px, transparent 2px) 0 0 / 7px 7px,
-        linear-gradient(#111827 2px, transparent 2px) 0 0 / 7px 7px,
-        #fff;
-    border: 4px solid #fff;
-    box-shadow: 0 0 0 1px #cbd5e1;
+        linear-gradient(90deg, #fff 2px, transparent 2px) 0 0 / 6px 6px,
+        linear-gradient(#fff 2px, transparent 2px) 0 0 / 6px 6px;
+    border: 0;
+    box-shadow: none;
 }
 
 .assinatura-professional-preview {
     display: flex;
     align-items: center;
-    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    gap: 4.5%;
     padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
-    border-top: 5px solid #0f4c81;
+    border-radius: 5px;
+    border: 0;
+    aspect-ratio: 160 / 56;
+    background: #08172a;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+}
+
+.assinatura-professional-preview::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    width: 114%;
+    aspect-ratio: 1;
+    left: 24%;
+    top: -113%;
+    background: url("../img/assinatura/cv-watermark.png") center / contain no-repeat;
+    opacity: 0.18;
+    pointer-events: none;
 }
 
 .assinatura-professional-preview__body {
     min-width: 0;
+    position: relative;
+    z-index: 1;
     display: grid;
     gap: 3px;
 }
 
 .assinatura-professional-preview__body strong {
-    color: #0f4c81;
-    font-size: 0.68rem;
+    color: #f8fafc;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 0.72rem;
     line-height: 1.15;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
 .assinatura-professional-preview__body span {
-    color: #111827;
-    font-size: 0.86rem;
+    color: #f8fafc;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 0.66rem;
     line-height: 1.15;
-    font-weight: 800;
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .assinatura-professional-preview__body small {
-    color: #64748b;
-    font-size: 0.7rem;
+    color: #e5e7eb;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 0.56rem;
     line-height: 1.2;
+    white-space: nowrap;
 }
 
 .assinatura-preview-shell {

@@ -74,11 +74,11 @@ class AssinaturaDocumentoServiceTest(TestCase):
         self.assertFalse(diag['page_text_has_signature_visual'])
         self.assertTrue(assinatura.metadata_json['assinatura_visual']['aparencia_vinculada_ao_campo_pdf'])
         self.assertTrue(assinatura.metadata_json['assinatura_visual']['qr_code'])
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['largura_pt'], 205)
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['altura_pt'], 70)
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['qr_tamanho_pt'], 54)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['largura_pt'], 160)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['altura_pt'], 56)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['qr_tamanho_pt'], 44)
         self.assertEqual(assinatura.metadata_json['assinatura_visual']['marca_dagua'], 'static/img/assinatura/cv-watermark.png')
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['marca_dagua_opacidade'], 0.20)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['marca_dagua_opacidade'], 0.18)
         box_pdf = assinatura.posicao_carimbo_json['box_pdf']
         self.assertEqual(box_pdf[2] - box_pdf[0], SIGNATURE_LABEL_WIDTH_PT)
         self.assertEqual(box_pdf[3] - box_pdf[1], SIGNATURE_LABEL_HEIGHT_PT)
@@ -102,7 +102,7 @@ class AssinaturaDocumentoServiceTest(TestCase):
         self.assertIn('***.858.369-**', text)
         self.assertIn('Data:', text)
         self.assertIn('verifique em /assinaturas/verificar', text)
-        self.assertIn('/CV-2026-2892A7-326F/', text)
+        self.assertIn('/CV-2026-2892', text)
         self.assertNotIn('verificador.iti.br', text)
         self.assertGreater(len(reader.pages[0].get_contents().get_data()), 3000)
 
@@ -114,16 +114,16 @@ class AssinaturaDocumentoServiceTest(TestCase):
         self.assertEqual(layout.height, SIGNATURE_LABEL_HEIGHT_PT)
         self.assertEqual(qr_width, SIGNATURE_LABEL_QR_PT)
         self.assertEqual(qr_height, SIGNATURE_LABEL_QR_PT)
-        self.assertEqual(qr_left, 8)
+        self.assertEqual(qr_left, 6)
         self.assertGreater(text_left, qr_left + qr_width)
-        self.assertLessEqual(text_left + text_width, layout.width - 5 + 0.1)
+        self.assertLessEqual(text_left + text_width, layout.width - 6 + 0.1)
         self.assertGreaterEqual(qr_left, 0)
 
     def test_asset_cv_watermark_existe_e_opacidade_configurada(self):
         path = Path(settings.BASE_DIR) / 'static' / 'img' / 'assinatura' / 'cv-watermark.png'
         self.assertTrue(path.exists())
         self.assertGreater(path.stat().st_size, 0)
-        self.assertEqual(SIGNATURE_LABEL_WATERMARK_ALPHA, 0.20)
+        self.assertEqual(SIGNATURE_LABEL_WATERMARK_ALPHA, 0.18)
 
     def test_url_validacao_com_request_eh_absoluta_para_qr(self):
         oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)

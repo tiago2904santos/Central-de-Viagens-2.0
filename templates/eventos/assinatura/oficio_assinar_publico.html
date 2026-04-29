@@ -43,22 +43,21 @@
         <div class="col-xl-3 col-lg-4">
             <form method="post" class="card card-body shadow-sm border-0 h-100 assinatura-form-panel" id="assinatura-oficio-form">
                 {% csrf_token %}
-                <input type="hidden" name="sig_x" id="sig-x" value="0.16">
-                <input type="hidden" name="sig_y" id="sig-y" value="0.77">
-                <input type="hidden" name="sig_w" id="sig-w" value="0.68">
-                <input type="hidden" name="sig_h" id="sig-h" value="0.125">
+                <input type="hidden" name="sig_x" id="sig-x" value="0.37">
+                <input type="hidden" name="sig_y" id="sig-y" value="0.8">
+                <input type="hidden" name="sig_w" id="sig-w" value="0.269">
+                <input type="hidden" name="sig_h" id="sig-h" value="0.067">
                 <input type="hidden" name="sig_page" id="sig-page" value="-1">
                 <input type="hidden" name="fonte_escolhida" value="{{ fontes.0.0 }}" required>
 
                 <h2 class="h6 mb-3">Bloco de autenticacao</h2>
                 <div class="assinatura-professional-preview">
-                    <div class="assinatura-professional-preview__logo">CV</div>
+                    <div class="assinatura-professional-preview__qr" aria-hidden="true"></div>
                     <div class="assinatura-professional-preview__body">
-                        <strong>DOCUMENTO ASSINADO ELETRONICAMENTE</strong>
+                        <strong>Documento assinado eletronicamente</strong>
                         <span>{{ nome_assinatura }}</span>
-                        <small>CPF mascarado, data/hora, codigo verificador e QR Code.</small>
+                        <small>verifique em /assinaturas/verificar/...</small>
                     </div>
-                    <div class="assinatura-professional-preview__qr"></div>
                 </div>
                 <p class="small text-muted mt-3 mb-0">
                     A aparencia nao sera desenhada solta na pagina. Ela sera gravada como aparencia do campo de assinatura PDF.
@@ -108,13 +107,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const readBox = () => ({
         x: clamp(parseFloat(sigX.value || '0.16'), 0, 1),
         y: clamp(parseFloat(sigY.value || '0.77'), 0, 1),
-        w: clamp(parseFloat(sigW.value || '0.68'), 0.42, 0.95),
-        h: clamp(parseFloat(sigH.value || '0.125'), 0.095, 0.22),
+        w: clamp(parseFloat(sigW.value || '0.269'), 0.20, 0.40),
+        h: clamp(parseFloat(sigH.value || '0.067'), 0.05, 0.12),
     });
 
     const writeBox = (b) => {
-        const bw = clamp(b.w, 0.42, 0.95);
-        const bh = clamp(b.h, 0.095, 0.22);
+        const bw = clamp(b.w, 0.20, 0.40);
+        const bh = clamp(b.h, 0.05, 0.12);
         const bx = clamp(b.x, 0.001, 0.999 - bw);
         const by = clamp(b.y, 0.001, 0.999 - bh);
         sigX.value = bx.toFixed(4);
@@ -143,14 +142,13 @@ document.addEventListener('DOMContentLoaded', function () {
         el.className = 'assinatura-doc-placeholder';
         el.id = 'assinatura-doc-placeholder';
         el.innerHTML = `
-            <div class="assinatura-doc-placeholder__chrome" title="Arrastar para posicionar a assinatura">
-                <div class="assinatura-doc-placeholder__logo">CV</div>
+                <div class="assinatura-doc-placeholder__chrome" title="Arrastar para posicionar a assinatura">
+                <div class="assinatura-doc-placeholder__qr" aria-hidden="true"></div>
                 <div class="assinatura-doc-placeholder__text">
-                    <strong>DOCUMENTO ASSINADO ELETRONICAMENTE</strong>
+                    <strong>Documento assinado eletronicamente</strong>
                     <span></span>
-                    <small>Codigo verificador e QR Code no PDF assinado</small>
+                    <small>verifique em /assinaturas/verificar/...</small>
                 </div>
-                <div class="assinatura-doc-placeholder__qr"></div>
             </div>
         `;
         const txt = el.querySelector('.assinatura-doc-placeholder__text span');
@@ -160,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const fitSignatureBox = () => {
         const b0 = readBox();
-        writeBox({ x: b0.x, y: b0.y, w: b0.w || 0.68, h: b0.h || 0.125 });
+        writeBox({ x: b0.x, y: b0.y, w: b0.w || 0.269, h: b0.h || 0.067 });
         syncPlaceholderDom();
     };
 
