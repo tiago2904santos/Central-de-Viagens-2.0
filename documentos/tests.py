@@ -2,7 +2,8 @@ from io import BytesIO
 from pathlib import Path
 
 from django.conf import settings
-from django.test import TestCase
+from django.contrib.contenttypes.models import ContentType
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 from pypdf import PdfReader, PdfWriter
@@ -19,7 +20,9 @@ from documentos.services.assinaturas import (
     calcular_layout_aparencia_assinatura,
     fit_text_single_or_two_lines,
     diagnosticar_estrutura_assinatura_pdf,
+    gerar_url_validacao,
     mascarar_cpf,
+    montar_dados_assinatura,
     renderizar_aparencia_assinatura,
     validar_codigo,
     validar_pdf_por_upload,
@@ -71,11 +74,11 @@ class AssinaturaDocumentoServiceTest(TestCase):
         self.assertFalse(diag['page_text_has_signature_visual'])
         self.assertTrue(assinatura.metadata_json['assinatura_visual']['aparencia_vinculada_ao_campo_pdf'])
         self.assertTrue(assinatura.metadata_json['assinatura_visual']['qr_code'])
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['largura_pt'], 150)
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['altura_pt'], 54)
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['qr_tamanho_pt'], 40)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['largura_pt'], 205)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['altura_pt'], 70)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['qr_tamanho_pt'], 54)
         self.assertEqual(assinatura.metadata_json['assinatura_visual']['marca_dagua'], 'static/img/assinatura/cv-watermark.png')
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['marca_dagua_opacidade'], 0.14)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['marca_dagua_opacidade'], 0.20)
         box_pdf = assinatura.posicao_carimbo_json['box_pdf']
         self.assertEqual(box_pdf[2] - box_pdf[0], SIGNATURE_LABEL_WIDTH_PT)
         self.assertEqual(box_pdf[3] - box_pdf[1], SIGNATURE_LABEL_HEIGHT_PT)
@@ -111,15 +114,37 @@ class AssinaturaDocumentoServiceTest(TestCase):
         self.assertEqual(layout.height, SIGNATURE_LABEL_HEIGHT_PT)
         self.assertEqual(qr_width, SIGNATURE_LABEL_QR_PT)
         self.assertEqual(qr_height, SIGNATURE_LABEL_QR_PT)
+        self.assertEqual(qr_left, 8)
         self.assertGreater(text_left, qr_left + qr_width)
-        self.assertLessEqual(text_left + text_width, layout.width - layout.padding + 0.1)
+        self.assertLessEqual(text_left + text_width, layout.width - 5 + 0.1)
         self.assertGreaterEqual(qr_left, 0)
 
     def test_asset_cv_watermark_existe_e_opacidade_configurada(self):
         path = Path(settings.BASE_DIR) / 'static' / 'img' / 'assinatura' / 'cv-watermark.png'
         self.assertTrue(path.exists())
         self.assertGreater(path.stat().st_size, 0)
-        self.assertEqual(SIGNATURE_LABEL_WATERMARK_ALPHA, 0.14)
+        self.assertEqual(SIGNATURE_LABEL_WATERMARK_ALPHA, 0.20)
+
+    def test_url_validacao_com_request_eh_absoluta_para_qr(self):
+        oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)
+        assinatura = AssinaturaDocumento.objects.create(
+            content_type=ContentType.objects.get_for_model(oficio, for_concrete_model=False),
+            object_id=oficio.pk,
+            nome_assinante='Assinante Teste',
+            cpf_assinante='12345678900',
+            data_hora_assinatura=timezone.now(),
+            codigo_verificacao='CV-2026-ABC123-A7F9',
+            hash_pdf_original_sha256='abc',
+        )
+        request = RequestFactory().get('/')
+
+        url = gerar_url_validacao(assinatura, request=request)
+        dados = montar_dados_assinatura(assinatura, request=request)
+
+        self.assertEqual(url, 'http://testserver/assinaturas/verificar/CV-2026-ABC123-A7F9/')
+        self.assertEqual(dados.url_validacao, url)
+        self.assertTrue(dados.url_validacao.startswith('http://testserver/assinaturas/verificar/'))
+        self.assertNotIn('verificador.iti.br', dados.url_validacao)
 
     def test_validacao_por_upload_mesmo_pdf_valido_e_pdf_editado_invalido(self):
         oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)

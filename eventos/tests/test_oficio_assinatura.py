@@ -346,8 +346,8 @@ class OficioAssinaturaFlowTest(TestCase):
         self.assertEqual(pos['box_w'], 0.4)
         self.assertEqual(pos['box_h'], 0.1)
         self.assertEqual(pos['page_index'], 0)
-        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 150)
-        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 54)
+        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 205)
+        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 70)
         self.assertTrue(pedido.auditoria.get('codigo_validacao', '').startswith('CV-'))
         self.assertIn('/assinaturas/verificar/', pedido.auditoria.get('url_verificacao', ''))
         assinatura = AssinaturaDocumento.objects.get(pk=pedido.auditoria['assinatura_documento_id'])
@@ -392,8 +392,8 @@ class OficioAssinaturaFlowTest(TestCase):
         pos = pedido.auditoria.get('assinatura_posicao', {})
         self.assertEqual(pos['box_w'], 0.44)
         self.assertEqual(pos['box_h'], 0.14)
-        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 150)
-        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 54)
+        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 205)
+        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 70)
 
     @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio', return_value=b'PDF_ORIGINAL')
     def test_gestao_assinado_nao_mostra_abrir_link(self, _render_mock):

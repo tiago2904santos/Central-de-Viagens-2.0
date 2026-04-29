@@ -44,10 +44,10 @@ STATUS_PDF_INTEGRA = 'assinatura_pdf_integra'
 STATUS_PDF_INVALIDA = 'assinatura_pdf_invalida'
 STATUS_PDF_AUSENTE = 'assinatura_pdf_ausente'
 STATUS_PDF_CERT_NAO_CONFIAVEL = 'certificado_nao_confiavel'
-SIGNATURE_LABEL_WIDTH_PT = 150
-SIGNATURE_LABEL_HEIGHT_PT = 54
-SIGNATURE_LABEL_QR_PT = 40
-SIGNATURE_LABEL_WATERMARK_ALPHA = 0.14
+SIGNATURE_LABEL_WIDTH_PT = 205
+SIGNATURE_LABEL_HEIGHT_PT = 70
+SIGNATURE_LABEL_QR_PT = 54
+SIGNATURE_LABEL_WATERMARK_ALPHA = 0.20
 SIGNATURE_LABEL_MIN_BOTTOM_PT = 72
 
 
@@ -282,11 +282,11 @@ def _draw_logo_profissional(c: canvas.Canvas, left: float, bottom: float, width:
 
 def _calcular_layout_aparencia(width: float, height: float) -> AparenciaAssinaturaLayout:
     width, height = _coerce_signature_label_size(width, height)
-    padding = 5
+    padding = 8
     qr_size = min(SIGNATURE_LABEL_QR_PT, height - padding * 2)
     qr_box = (padding, (height - qr_size) / 2, qr_size, qr_size)
-    text_left = qr_box[0] + qr_size + 7
-    text_right = width - padding
+    text_left = qr_box[0] + qr_size + 8
+    text_right = width - 5
     text_box = (text_left, padding, max(1, text_right - text_left), height - padding * 2)
     return AparenciaAssinaturaLayout(
         width=width,
@@ -380,10 +380,13 @@ def _wrap_url_line(text: str, font_name: str, font_size: float, max_width: float
 
 
 def _draw_cv_watermark(c: canvas.Canvas, text_left: float, width: float, height: float, padding: float):
-    wm_size = 56
-    wm_left = text_left + (width - text_left) * 0.56 - wm_size / 2
-    wm_bottom = (height - wm_size) / 2
+    wm_size = 155
+    wm_left = max(text_left + 8, 82)
+    wm_bottom = -42
     c.saveState()
+    clip = c.beginPath()
+    clip.rect(0, 0, width, height)
+    c.clipPath(clip, stroke=0, fill=0)
     try:
         c.setFillAlpha(SIGNATURE_LABEL_WATERMARK_ALPHA)
         c.setStrokeAlpha(SIGNATURE_LABEL_WATERMARK_ALPHA)
@@ -417,40 +420,40 @@ def _draw_signature_stamp_content(c: canvas.Canvas, dados_carimbo: DadosCarimbo,
     c.setFillColor(HexColor('#08172a'))
     c.roundRect(0, 0, width, height, 6, stroke=0, fill=1)
 
+    text_left, _text_bottom, text_width, _text_height = layout.text_box
+    _draw_cv_watermark(c, text_left, width, height, padding)
+
     if with_qr and dados_carimbo.url_validacao:
         _draw_qrcode_profissional(c, layout.qr_box, dados_carimbo.url_validacao)
 
-    text_left, _text_bottom, text_width, _text_height = layout.text_box
     data_formatada = timezone.localtime(dados_carimbo.data_hora_assinatura).strftime('%d/%m/%Y %H:%M:%S%z')
     if not data_formatada.endswith(('-0300', '-0200', '-0400')):
         data_formatada = f'{data_formatada or timezone.localtime(dados_carimbo.data_hora_assinatura).strftime("%d/%m/%Y %H:%M:%S")}-0300'
 
-    _draw_cv_watermark(c, text_left, width, height, padding)
-
     title = 'Documento assinado eletronicamente'
-    title_size = _font_size_to_fit(title, 'Times-Bold', text_width, (6.4, 6.1, 5.8, 5.5))
-    y = height - padding - 5.8
+    title_size = _font_size_to_fit(title, 'Times-Bold', text_width, (8.2, 8.0, 7.8, 7.5))
+    y = height - 18
     c.setFillColor(HexColor('#f8fafc'))
     c.setFont('Times-Bold', title_size)
     c.drawString(text_left, y, title)
-    y -= 6.6
+    y -= 16
 
-    name_size = _font_size_to_fit(dados_carimbo.nome_assinante, 'Times-Roman', text_width, (5.6, 5.3, 5.0, 4.8))
+    name_size = _font_size_to_fit(dados_carimbo.nome_assinante, 'Times-Roman', text_width, (7.2, 7.0, 6.8, 6.5))
     for line, font_size in (
         (dados_carimbo.nome_assinante, name_size),
-        (f'CPF: {dados_carimbo.cpf_mascarado}', 5.2),
-        (f'Data: {data_formatada}', 5.0),
+        (f'CPF: {dados_carimbo.cpf_mascarado}', 6.8),
+        (f'Data: {data_formatada}', 6.6),
     ):
         c.setFont('Times-Roman', font_size)
         c.drawString(text_left, y, line)
-        y -= 6.4
+        y -= 10.2
 
     link_linha = f'verifique em {_display_validation_url(dados_carimbo.url_validacao)}'
-    link_size = _font_size_to_fit(link_linha, 'Times-Roman', text_width, (4.9, 4.7, 4.5, 4.2))
+    link_size = _font_size_to_fit(link_linha, 'Times-Roman', text_width, (5.8, 5.6, 5.3, 5.0))
     c.setFont('Times-Roman', link_size)
     for line in _wrap_url_line(link_linha, 'Times-Roman', link_size, text_width)[:2]:
         c.drawString(text_left, y, line)
-        y -= 5.0
+        y -= 5.8
 
 
 def renderizar_aparencia_assinatura(dados_carimbo: DadosCarimbo, width: float, height: float) -> bytes:
