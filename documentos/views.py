@@ -1,11 +1,10 @@
 import csv
 from io import StringIO
-from uuid import UUID
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
@@ -91,7 +90,7 @@ def assinatura_gestao(request):
         token_extraido = extrair_token_de_url_ou_texto(token_validacao)
         assinatura_token = validar_codigo(token_extraido)
         if assinatura_token:
-            return redirect('documentos:assinatura-detalhe', referencia=assinatura_token.codigo_verificacao)
+            return redirect(f"{reverse('documentos:assinatura-gestao')}?token={assinatura_token.codigo_verificacao}&abrir=1")
         validacao_erro = 'Código de validação não encontrado.'
 
     upload_resultado = None
@@ -106,7 +105,8 @@ def assinatura_gestao(request):
                 request=request,
             )
             if upload_resultado.get('assinatura'):
-                return redirect('documentos:assinatura-detalhe', referencia=upload_resultado['assinatura'].codigo_verificacao)
+                codigo = upload_resultado['assinatura'].codigo_verificacao
+                return redirect(f"{reverse('documentos:assinatura-gestao')}?token={codigo}&abrir=1")
 
     indicadores = AssinaturaDocumento.objects.aggregate(
         total=Count('id'),
@@ -126,6 +126,23 @@ def assinatura_gestao(request):
             }
         )
 
+    assinatura_selecionada = None
+    abrir_detalhe = (request.GET.get('abrir') or '') in {'1', 'true', 'True'}
+    token_query = extrair_token_de_url_ou_texto(request.GET.get('token') or '')
+    if token_query:
+        assinatura_encontrada = validar_codigo(token_query)
+        if assinatura_encontrada:
+            if request.user.is_staff or request.user.is_superuser or assinatura_encontrada.usuario_assinante_id == request.user.id:
+                assinatura_selecionada = {
+                    **_montar_contexto_validacao_assinatura(assinatura_encontrada),
+                    'historico_validacoes': assinatura_encontrada.validacoes.all()[:30],
+                    'url_validacao': request.build_absolute_uri(
+                        reverse('documentos:assinatura-verificar', kwargs={'token': assinatura_encontrada.codigo_verificacao})
+                    ),
+                }
+        elif abrir_detalhe:
+            validacao_erro = 'Token informado não foi encontrado.'
+
     return render(
         request,
         'documentos/assinaturas/gestao.html',
@@ -140,6 +157,8 @@ def assinatura_gestao(request):
             'upload_resultado': upload_resultado,
             'validacao_erro': validacao_erro,
             'token_validacao': token_validacao,
+            'abrir_detalhe': abrir_detalhe,
+            'assinatura_selecionada': assinatura_selecionada,
         },
     )
 
@@ -172,7 +191,7 @@ def _montar_contexto_validacao_assinatura(assinatura):
 
 @require_http_methods(['GET'])
 def assinatura_verificar_codigo(request, codigo):
-    return redirect('documentos:assinatura-detalhe', referencia=codigo)
+    return redirect(f"{reverse('documentos:assinatura-gestao')}?token={codigo}&abrir=1")
 
 
 @require_http_methods(['GET', 'POST'])
@@ -180,57 +199,20 @@ def assinatura_verificar_upload(request):
     return redirect('documentos:assinatura-gestao')
 
 
-def _resolver_assinatura_por_referencia(referencia: str):
-    referencia = str(referencia or '').strip()
-    try:
-        assinatura_uuid = UUID(referencia)
-    except ValueError:
-        assinatura_uuid = None
-    assinatura = None
-    if assinatura_uuid:
-        assinatura = AssinaturaDocumento.objects.select_related('content_type', 'usuario_assinante').filter(pk=assinatura_uuid).first()
-    if assinatura is None:
-        assinatura = validar_codigo(referencia)
-    return assinatura
-
-
-def _tem_permissao_assinatura(request, assinatura):
-    if getattr(request.user, 'is_authenticated', False):
-        if request.user.is_staff or request.user.is_superuser:
-            return True
-        return assinatura.usuario_assinante_id == request.user.id
-    return False
-
-
 @require_http_methods(['GET', 'POST'])
 def assinatura_detalhe(request, referencia):
-    assinatura = _resolver_assinatura_por_referencia(referencia)
-    if not assinatura:
-        return HttpResponse('Código de verificação não encontrado.', status=404, content_type='text/plain; charset=utf-8')
-    modo_publico = not _tem_permissao_assinatura(request, assinatura)
-    if request.method == 'POST' and not modo_publico and request.POST.get('acao_validar') == 'upload':
-        arquivo = request.FILES.get('arquivo_pdf')
-        if arquivo:
-            validar_pdf_por_upload(arquivo, codigo_manual=assinatura.codigo_verificacao, request=request)
-    contexto = _montar_contexto_validacao_assinatura(assinatura)
-    contexto['historico_validacoes'] = assinatura.validacoes.all()[:30]
-    contexto['modo_publico'] = modo_publico
-    contexto['url_validacao'] = request.build_absolute_uri(
-        reverse('documentos:assinatura-verificar', kwargs={'token': assinatura.codigo_verificacao})
-    )
-    return render(request, 'documentos/assinaturas/detalhe.html', contexto)
+    return redirect(f"{reverse('documentos:assinatura-gestao')}?token={referencia}&abrir=1")
 
 
 @require_http_methods(['GET'])
 def assinatura_verificar(request, token):
     assinatura = validar_codigo(token)
-    if not assinatura:
-        return HttpResponse('Código de verificação não encontrado.', status=404, content_type='text/plain; charset=utf-8')
-    ValidacaoAssinaturaDocumento.objects.create(
-        assinatura=assinatura,
-        ip=request.META.get('REMOTE_ADDR'),
-        user_agent=(request.META.get('HTTP_USER_AGENT') or '')[:1000],
-        resultado=ValidacaoAssinaturaDocumento.RESULTADO_VALIDO,
-        observacao='Validação por token público.',
-    )
-    return redirect('documentos:assinatura-detalhe', referencia=assinatura.codigo_verificacao)
+    if assinatura:
+        ValidacaoAssinaturaDocumento.objects.create(
+            assinatura=assinatura,
+            ip=request.META.get('REMOTE_ADDR'),
+            user_agent=(request.META.get('HTTP_USER_AGENT') or '')[:1000],
+            resultado=ValidacaoAssinaturaDocumento.RESULTADO_VALIDO,
+            observacao='Validação por token público.',
+        )
+    return redirect(f"{reverse('documentos:assinatura-gestao')}?token={token}&abrir=1")

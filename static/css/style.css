@@ -141,6 +141,31 @@
         grid-template-columns: 1fr;
     }
 }
+
+.assinaturas-drawer {
+    border-left: 4px solid #0f4c81;
+}
+
+.assinaturas-drawer--highlight {
+    box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.08);
+}
+
+.assinaturas-drawer-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem;
+}
+
+.assinaturas-drawer-card dt {
+    font-weight: 600;
+    color: #475569;
+    margin-top: 0.35rem;
+}
+
+.assinaturas-drawer-card dd {
+    margin-bottom: 0.25rem;
+}
 /* ===== Central de Viagens â€” Estilos base ===== */
 
 :root {

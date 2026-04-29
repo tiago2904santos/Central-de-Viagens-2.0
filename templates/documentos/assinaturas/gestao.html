@@ -1,4 +1,5 @@
 {% extends 'includes/list/document_list_base.html' %}
+{% load static %}
 
 {% block page_title_block %}Gestão de Assinaturas{% endblock %}
 {% block page_header_title %}Gestão de Assinaturas{% endblock %}
@@ -107,6 +108,83 @@
     </div>
 </section>
 
+{% if assinatura_selecionada %}
+<section class="card shadow-sm border-0 mb-4 assinaturas-drawer {% if abrir_detalhe %}assinaturas-drawer--highlight{% endif %}" id="assinaturas-detalhe-drawer">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start mb-3 gap-2">
+            <div>
+                <h2 class="h6 mb-1">Detalhes da assinatura</h2>
+                <p class="small text-muted mb-0">Resumo, integridade, link e histórico sem sair da gestão.</p>
+            </div>
+            <a href="{% url 'documentos:assinatura-gestao' %}" class="btn btn-sm btn-outline-secondary">Fechar</a>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-4">
+                <div class="assinaturas-drawer-card">
+                    <h3 class="h6">Resumo</h3>
+                    <dl class="mb-0 small">
+                        <dt>Status</dt><dd><span class="badge assinatura-status assinatura-status--{{ assinatura_selecionada.assinatura.status }}">{{ assinatura_selecionada.assinatura.get_status_display }}</span></dd>
+                        <dt>Documento</dt><dd>{{ assinatura_selecionada.assinatura.metadata_json.nome_documento|default:'Documento' }} #{{ assinatura_selecionada.assinatura.object_id }}</dd>
+                        <dt>Assinante</dt><dd>{{ assinatura_selecionada.assinatura.nome_assinante }}</dd>
+                        <dt>CPF</dt><dd>{{ assinatura_selecionada.cpf_mascarado }}</dd>
+                        <dt>Data/hora</dt><dd>{{ assinatura_selecionada.assinatura.data_hora_assinatura|date:'d/m/Y H:i:s' }}</dd>
+                        <dt>Token</dt><dd><code>{{ assinatura_selecionada.assinatura.codigo_verificacao }}</code></dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="assinaturas-drawer-card">
+                    <h3 class="h6">Integridade</h3>
+                    <p class="small mb-2">
+                        <span class="badge {% if assinatura_selecionada.status_documento_valido %}text-bg-success{% else %}text-bg-danger{% endif %}">
+                            {{ assinatura_selecionada.status_documento_valido|yesno:'Íntegro,Alterado/Inválido' }}
+                        </span>
+                    </p>
+                    <div class="small text-muted mb-1">Hash registrado</div>
+                    <code class="small d-block mb-2 text-break">{{ assinatura_selecionada.assinatura.hash_pdf_assinado_sha256|slice:":20" }}...</code>
+                    <div class="small text-muted mb-1">Hash atual</div>
+                    <code class="small d-block mb-2 text-break">{{ assinatura_selecionada.hash_atual_pdf_assinado|default:"indisponível"|slice:":20" }}{% if assinatura_selecionada.hash_atual_pdf_assinado %}...{% endif %}</code>
+                    <div class="small text-muted">Status técnico: <code>{{ assinatura_selecionada.assinatura.assinatura_pdf_tecnica_status|default:'não informado' }}</code></div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="assinaturas-drawer-card">
+                    <h3 class="h6">Ações e validação</h3>
+                    <div class="mb-2">
+                        <label class="form-label small mb-1">Link de validação</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" readonly value="{{ assinatura_selecionada.url_validacao }}" id="drawer-link-validacao">
+                            <button class="btn btn-outline-secondary" type="button" data-copy-target="drawer-link-validacao">Copiar</button>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        {% if assinatura_selecionada.assinatura.arquivo_pdf_assinado %}
+                        <a href="{{ assinatura_selecionada.assinatura.arquivo_pdf_assinado.url }}" class="btn btn-sm btn-primary" target="_blank" rel="noopener">Abrir PDF</a>
+                        <a href="{{ assinatura_selecionada.assinatura.arquivo_pdf_assinado.url }}" class="btn btn-sm btn-outline-secondary" download>Baixar PDF</a>
+                        {% endif %}
+                        <a href="{% url 'documentos:assinatura-verificar' assinatura_selecionada.assinatura.codigo_verificacao %}" class="btn btn-sm btn-outline-secondary">Validar token</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="assinaturas-drawer-card mt-3">
+            <h3 class="h6">Histórico</h3>
+            <ul class="list-unstyled small mb-0">
+                {% for evento in assinatura_selecionada.historico_validacoes %}
+                <li class="py-1 border-bottom">
+                    <strong>{{ evento.get_resultado_display }}</strong> · {{ evento.data_hora|date:'d/m/Y H:i:s' }}
+                </li>
+                {% empty %}
+                <li class="text-muted">Sem eventos de validação registrados.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <section class="card shadow-sm border-0">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -134,10 +212,11 @@
                     <td>{{ assinatura.obj.data_hora_assinatura|date:'d/m/Y H:i' }}</td>
                     <td><code>{{ assinatura.obj.codigo_verificacao }}</code></td>
                     <td class="text-nowrap">
-                        <a href="{% url 'documentos:assinatura-detalhe' assinatura.obj.codigo_verificacao %}" class="btn btn-sm btn-outline-primary">Detalhes</a>
-                        <a href="{% url 'documentos:assinatura-detalhe' assinatura.obj.codigo_verificacao %}?modo=verificacao" class="btn btn-sm btn-outline-secondary">Validar</a>
+                        <a href="{% url 'documentos:assinatura-gestao' %}?token={{ assinatura.obj.codigo_verificacao }}&abrir=1" class="btn btn-sm btn-outline-primary">Ver detalhes</a>
+                        <a href="{% url 'documentos:assinatura-gestao' %}?token={{ assinatura.obj.codigo_verificacao }}&abrir=1" class="btn btn-sm btn-outline-secondary">Validar</a>
                         {% if assinatura.obj.arquivo_pdf_assinado %}
                         <a href="{{ assinatura.obj.arquivo_pdf_assinado.url }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">Abrir PDF</a>
+                        <a href="{{ assinatura.obj.arquivo_pdf_assinado.url }}" class="btn btn-sm btn-outline-secondary" download>Baixar PDF</a>
                         {% endif %}
                     </td>
                 </tr>
@@ -148,5 +227,9 @@
         </table>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/assinaturas.js' %}" defer></script>
 {% endblock %}
 
