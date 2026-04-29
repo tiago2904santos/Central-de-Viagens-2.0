@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import hashlib
 import os
@@ -112,7 +112,7 @@ def _only_digits(value: str) -> str:
 def mascarar_cpf(cpf: str) -> str:
     digits = _only_digits(cpf)
     if len(digits) != 11:
-        return '—' if not digits else digits
+        return 'â€”' if not digits else digits
     return f'***.{digits[3:6]}.{digits[6:9]}-**'
 
 
@@ -151,7 +151,7 @@ def _normalizar_posicao(posicao: dict | None, total_paginas: int) -> dict:
     if page_index < 0:
         page_index = total_paginas - 1
     page_index = min(max(page_index, 0), max(total_paginas - 1, 0))
-    box_w = min(max(float(raw.get('box_w', 0.5)), 0.40), 0.55)
+    box_w = min(max(float(raw.get('box_w', 0.5)), 0.40), 0.50)
     default_box_x = (1 - box_w) / 2
     return {
         'page_index': page_index,
@@ -212,7 +212,7 @@ def build_signature_stamp_data(dados_carimbo: DadosCarimbo, text_width: float) -
         text_width,
         'Helvetica-Bold',
     )
-    dt = timezone.localtime(dados_carimbo.data_hora_assinatura).strftime('%d/%m/%Y às %H:%M')
+    dt = timezone.localtime(dados_carimbo.data_hora_assinatura).strftime('%d/%m/%Y Ã s %H:%M')
     return SignatureStampData(
         titulo='ASSINADO ELETRONICAMENTE',
         linha_nome_1=linha_nome_1,
@@ -220,7 +220,7 @@ def build_signature_stamp_data(dados_carimbo: DadosCarimbo, text_width: float) -
         fonte_nome=fonte_nome,
         cpf_linha=f'CPF: {dados_carimbo.cpf_mascarado}',
         data_hora_linha=f'Assinado em {dt}',
-        codigo_linha=f'Código verificador: {dados_carimbo.codigo_verificacao}',
+        codigo_linha=f'CÃ³digo verificador: {dados_carimbo.codigo_verificacao}',
         url_linha=f'Verifique em: {_short_url(dados_carimbo.url_validacao)}',
     )
 
@@ -233,6 +233,11 @@ def _resolve_logo_path() -> Path | None:
             return path
     fallback = Path(settings.BASE_DIR) / 'static' / 'favicon.svg'
     return fallback if fallback.exists() else None
+
+
+def _resolve_cv_watermark_path() -> Path | None:
+    path = Path(settings.BASE_DIR) / 'static' / 'img' / 'assinatura' / 'cv-watermark.png'
+    return path if path.exists() else None
 
 
 def _draw_fallback_logo(c: canvas.Canvas, left: float, bottom: float, width: float, height: float):
@@ -271,10 +276,10 @@ def _draw_logo_profissional(c: canvas.Canvas, left: float, bottom: float, width:
 
 
 def _calcular_layout_aparencia(width: float, height: float) -> AparenciaAssinaturaLayout:
-    padding = max(8, min(14, height * 0.12))
-    qr_size = min(height - padding * 2, width * 0.20, 60)
+    padding = max(8, min(12, height * 0.12))
+    qr_size = min(height - padding * 2, width * 0.26)
     qr_box = (padding, (height - qr_size) / 2, qr_size, qr_size)
-    text_left = qr_box[0] + qr_size + max(12, width * 0.03)
+    text_left = qr_box[0] + qr_size + max(14, width * 0.035)
     text_right = width - padding
     text_box = (text_left, padding, max(72, text_right - text_left), height - padding * 2)
     return AparenciaAssinaturaLayout(
@@ -306,74 +311,114 @@ def _draw_qrcode_profissional(c: canvas.Canvas, box: tuple[float, float, float, 
     c.restoreState()
 
 
-def renderizar_aparencia_assinatura(dados_carimbo: DadosCarimbo, width: float, height: float) -> bytes:
-    stream = BytesIO()
-    c = canvas.Canvas(stream, pagesize=(width, height), pageCompression=1)
+def _font_size_to_fit(text: str, font_name: str, max_width: float, candidates: tuple[float, ...]) -> float:
+    for font_size in candidates:
+        if pdfmetrics.stringWidth(str(text or ''), font_name, font_size) <= max_width:
+            return font_size
+    return candidates[-1]
+
+
+def _wrap_text_by_width(text: str, font_name: str, font_size: float, max_width: float) -> list[str]:
+    words = re.sub(r'\s+', ' ', str(text or '').strip()).split()
+    if not words:
+        return ['']
+    lines: list[str] = []
+    current = ''
+    for word in words:
+        candidate = f'{current} {word}'.strip()
+        if not current or pdfmetrics.stringWidth(candidate, font_name, font_size) <= max_width:
+            current = candidate
+            continue
+        lines.append(current)
+        current = word
+    if current:
+        lines.append(current)
+    return lines
+
+
+def _draw_cv_watermark(c: canvas.Canvas, text_left: float, width: float, height: float, padding: float):
+    wm_size = min(height * 1.06, width * 0.36)
+    wm_left = text_left + (width - text_left) * 0.43 - wm_size / 2
+    wm_bottom = (height - wm_size) / 2
+    c.saveState()
+    try:
+        c.setFillAlpha(0.16)
+        c.setStrokeAlpha(0.16)
+    except AttributeError:
+        pass
+    wm_path = _resolve_cv_watermark_path()
+    if wm_path:
+        try:
+            c.drawImage(
+                ImageReader(str(wm_path)),
+                wm_left,
+                wm_bottom,
+                width=wm_size,
+                height=wm_size,
+                preserveAspectRatio=True,
+                anchor='c',
+                mask='auto',
+            )
+            c.restoreState()
+            return
+        except Exception:
+            pass
+    c.restoreState()
+
+
+def _draw_signature_stamp_content(c: canvas.Canvas, dados_carimbo: DadosCarimbo, width: float, height: float, *, with_qr: bool = True):
     layout = _calcular_layout_aparencia(width, height)
     padding = layout.padding
 
     c.setFillColor(HexColor('#08172a'))
-    c.roundRect(0.5, 0.5, width - 1, height - 1, 8, stroke=0, fill=1)
-    c.setStrokeColor(HexColor('#1a3a57'))
-    c.setLineWidth(0.55)
-    c.roundRect(0.5, 0.5, width - 1, height - 1, 8, stroke=1, fill=0)
+    c.roundRect(0, 0, width, height, 6, stroke=0, fill=1)
 
-    _draw_qrcode_profissional(c, layout.qr_box, dados_carimbo.url_validacao)
+    if with_qr and dados_carimbo.url_validacao:
+        _draw_qrcode_profissional(c, layout.qr_box, dados_carimbo.url_validacao)
 
     text_left, _text_bottom, text_width, _text_height = layout.text_box
-    fonte_nome, linha_nome_1, linha_nome_2 = fit_text_single_or_two_lines(
-        dados_carimbo.nome_assinante,
-        max(text_width - 6, 60),
-        'Times-Bold',
-    )
     data_formatada = timezone.localtime(dados_carimbo.data_hora_assinatura).strftime('%d/%m/%Y %H:%M:%S%z')
     if not data_formatada.endswith(('-0300', '-0200', '-0400')):
         data_formatada = f'{data_formatada or timezone.localtime(dados_carimbo.data_hora_assinatura).strftime("%d/%m/%Y %H:%M:%S")}-0300'
 
-    # Marca d'água institucional ao fundo do texto.
-    c.saveState()
-    try:
-        c.setFillAlpha(0.16)
-    except AttributeError:
-        pass
-    c.setFillColor(HexColor('#f1f5f9'))
-    c.setFont('Helvetica-Bold', min(height * 0.85, 70))
-    c.drawString(text_left + 2, max(padding - 1, 2), 'C')
-    try:
-        c.setFillAlpha(0.20)
-    except AttributeError:
-        pass
-    c.setFillColor(HexColor('#d8b14f'))
-    c.setFont('Helvetica-Bold', min(height * 0.82, 66))
-    c.drawString(text_left + min(width * 0.09, 48), max(padding + 1, 3), 'V')
-    c.restoreState()
+    _draw_cv_watermark(c, text_left, width, height, padding)
 
-    y = height - padding - 2
+    title = 'Documento assinado eletronicamente'
+    title_size = _font_size_to_fit(title, 'Times-Bold', text_width, (10.8, 10.2, 9.6, 9.0))
+    y = height - padding - 4
     c.setFillColor(HexColor('#f8fafc'))
-    c.setFont('Times-Bold', 9.2)
-    c.drawString(text_left, y, 'Documento assinado eletronicamente')
-    y -= 12.2
-    c.setFont('Times-Bold', fonte_nome)
-    c.drawString(text_left, y, linha_nome_1)
-    if linha_nome_2:
-        y -= fonte_nome + 1.4
-        c.drawString(text_left, y, linha_nome_2)
-    y -= 10.2
-    c.setFont('Times-Roman', 7.5)
-    for line in (
-        f'CPF: {dados_carimbo.cpf_mascarado}',
-        f'Data: {data_formatada}',
-        'verifique em https://verificador.iti.br',
+    c.setFont('Times-Bold', title_size)
+    c.drawString(text_left, y, title)
+    y -= 21.5
+
+    name_size = _font_size_to_fit(dados_carimbo.nome_assinante, 'Times-Roman', text_width, (8.9, 8.4, 7.9, 7.4))
+    for line, font_size in (
+        (dados_carimbo.nome_assinante, name_size),
+        (f'CPF: {dados_carimbo.cpf_mascarado}', 7.8),
+        (f'Data: {data_formatada}', 7.8),
     ):
+        c.setFont('Times-Roman', font_size)
         c.drawString(text_left, y, line)
-        y -= 8.4
+        y -= font_size + 3.0
 
-    c.setFillColor(HexColor('#f8fafc'))
-    c.setFont('Times-Roman', 5.8)
-    c.drawCentredString(layout.qr_box[0] + layout.qr_box[2] / 2, layout.qr_box[1] - 7, 'QR de verificacao')
+    link_linha = f'verifique em {dados_carimbo.url_validacao}'
+    link_size = _font_size_to_fit(link_linha, 'Times-Roman', text_width, (7.5, 7.1, 6.7, 6.3))
+    c.setFont('Times-Roman', link_size)
+    for line in _wrap_text_by_width(link_linha, 'Times-Roman', link_size, text_width)[:2]:
+        c.drawString(text_left, y, line)
+        y -= link_size + 2.4
+
+
+def renderizar_aparencia_assinatura(dados_carimbo: DadosCarimbo, width: float, height: float) -> bytes:
+    stream = BytesIO()
+    c = canvas.Canvas(stream, pagesize=(width, height), pageCompression=1)
+    _draw_signature_stamp_content(c, dados_carimbo, width, height, with_qr=True)
     c.save()
     return stream.getvalue()
 
+
+def renderizar_aparencia_assinatura_legado(dados_carimbo: DadosCarimbo, width: float, height: float) -> bytes:
+    return renderizar_aparencia_assinatura(dados_carimbo, width, height)
 
 def draw_signature_logo(c: canvas.Canvas, left: float, bottom: float, logo_size: float) -> float:
     logo_path = _resolve_logo_path()
@@ -441,21 +486,10 @@ def draw_signature_stamp(c: canvas.Canvas, dados_carimbo: DadosCarimbo, stamp_po
     bottom = stamp_pos['bottom']
     box_w = stamp_pos['box_w']
     box_h = stamp_pos['box_h']
-    padding = 8
-    logo_size = min(34, box_h - 14)
-    qr_size = min(44, box_h - 14)
-
-    c.setStrokeColor(HexColor('#cbd5e1'))
-    c.setFillColor(HexColor('#f8fafc'))
-    c.roundRect(left, bottom, box_w, box_h, 4, stroke=1, fill=1)
-
-    text_left = draw_signature_logo(c, left + padding, bottom + (box_h - logo_size) / 2, logo_size)
-    text_right = left + box_w - padding
-    if with_qr and dados_carimbo.url_validacao:
-        text_right = draw_signature_qrcode(c, text_right, bottom + (box_h - qr_size) / 2, qr_size, dados_carimbo.url_validacao)
-    text_width = max(70, text_right - text_left)
-    stamp = build_signature_stamp_data(dados_carimbo, text_width)
-    draw_signature_text(c, text_left, bottom + box_h - 11, stamp)
+    c.saveState()
+    c.translate(left, bottom)
+    _draw_signature_stamp_content(c, dados_carimbo, box_w, box_h, with_qr=with_qr)
+    c.restoreState()
 
 
 def gerar_overlay_carimbo(page_width: float, page_height: float, dados_carimbo: DadosCarimbo, posicao: dict) -> bytes:
@@ -471,7 +505,7 @@ def aplicar_carimbo_pdf(pdf_original: bytes, dados_carimbo: DadosCarimbo, posica
     reader = PdfReader(BytesIO(pdf_original))
     writer = PdfWriter()
     if not reader.pages:
-        raise ValueError('PDF sem páginas para aplicação do carimbo.')
+        raise ValueError('PDF sem pÃ¡ginas para aplicaÃ§Ã£o do carimbo.')
 
     posicao_final = _normalizar_posicao(posicao, len(reader.pages))
     target_index = posicao_final['page_index']
@@ -534,7 +568,7 @@ def _ensure_dev_pkcs12_certificate() -> tuple[Path, bytes]:
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, 'BR'),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, 'Central de Viagens'),
-            x509.NameAttribute(NameOID.COMMON_NAME, 'Assinatura eletrônica interna'),
+            x509.NameAttribute(NameOID.COMMON_NAME, 'Assinatura eletrÃ´nica interna'),
         ]
     )
     now = datetime.now(UTC)
@@ -700,7 +734,7 @@ def _assinar_pdf_real(pdf_carimbado: bytes, posicao: dict, codigo_verificacao: s
     meta = signers.PdfSignatureMetadata(
         field_name=f'Signature_{codigo_verificacao}',
         md_algorithm='sha256',
-        reason=(os.getenv('PDF_SIGNING_REASON') or 'Assinatura eletrônica interna').strip(),
+        reason=(os.getenv('PDF_SIGNING_REASON') or 'Assinatura eletrÃ´nica interna').strip(),
         location=(os.getenv('PDF_SIGNING_LOCATION') or 'Central de Viagens').strip(),
     )
     out = BytesIO()
@@ -734,11 +768,11 @@ def _validar_assinatura_pdf_tecnica(pdf_bytes: bytes) -> tuple[str, str]:
         status = validation.validate_pdf_signature(emb)
         if status.intact and status.valid:
             if getattr(status, 'trusted', False):
-                return STATUS_PDF_INTEGRA, 'Assinatura PDF íntegra e cadeia confiável.'
-            return STATUS_PDF_CERT_NAO_CONFIAVEL, 'Assinatura PDF íntegra; certificado não confiável no ambiente.'
-        return STATUS_PDF_INVALIDA, 'Assinatura PDF inválida ou documento alterado.'
+                return STATUS_PDF_INTEGRA, 'Assinatura PDF Ã­ntegra e cadeia confiÃ¡vel.'
+            return STATUS_PDF_CERT_NAO_CONFIAVEL, 'Assinatura PDF Ã­ntegra; certificado nÃ£o confiÃ¡vel no ambiente.'
+        return STATUS_PDF_INVALIDA, 'Assinatura PDF invÃ¡lida ou documento alterado.'
     except Exception:
-        return STATUS_PDF_AUSENTE, 'Não foi possível validar tecnicamente a assinatura PDF.'
+        return STATUS_PDF_AUSENTE, 'NÃ£o foi possÃ­vel validar tecnicamente a assinatura PDF.'
 
 
 def validar_assinatura_pdf(pdf_bytes: bytes) -> tuple[str, str]:
@@ -791,7 +825,7 @@ def assinar_documento_pdf(
     dados = montar_dados_assinatura(assinatura, request=request)
     reader_original = PdfReader(BytesIO(pdf_original_bytes))
     if not reader_original.pages:
-        raise ValueError('PDF sem páginas para assinatura.')
+        raise ValueError('PDF sem pÃ¡ginas para assinatura.')
     posicao_final = _normalizar_posicao(posicao, len(reader_original.pages))
     pdf_base = _preparar_pdf_base_assinatura(pdf_original_bytes, dados)
     pdf_assinado, cert_meta = aplicar_assinatura_pdf_real(pdf_base, dados, posicao_final)
@@ -810,7 +844,8 @@ def assinar_documento_pdf(
         'assinatura_tipo': 'assinatura_pdf_real_com_aparencia_de_campo',
         'assinatura_visual': {
             'layout': 'bloco_autenticacao_horizontal',
-            'logo': 'ASSINATURA_LOGO_PATH' if _resolve_logo_path() else 'fallback_central_de_viagens',
+            'marca_dagua': 'static/img/assinatura/cv-watermark.png',
+            'marca_dagua_opacidade': 0.16,
             'qr_code': True,
             'aparencia_vinculada_ao_campo_pdf': True,
             'sem_overlay_na_pagina': not diagnostico.get('page_text_has_signature_visual'),
@@ -867,25 +902,25 @@ def validar_pdf_por_upload(arquivo_pdf, *, codigo_manual='', request=None) -> di
     codigo = (codigo_manual or '').strip().upper() or extrair_codigo_pdf(pdf_bytes)
     assinatura = validar_codigo(codigo) if codigo else None
     status_assinatura_pdf = STATUS_PDF_AUSENTE
-    msg_assinatura_pdf = 'Sem análise técnica de assinatura PDF.'
+    msg_assinatura_pdf = 'Sem anÃ¡lise tÃ©cnica de assinatura PDF.'
     if assinatura is not None:
         status_assinatura_pdf, msg_assinatura_pdf = _validar_assinatura_pdf_tecnica(pdf_bytes)
 
     if not codigo:
         resultado = ValidacaoAssinaturaDocumento.RESULTADO_ARQUIVO_SEM_CODIGO
-        mensagem = 'Não foi possível identificar um código de verificação no PDF enviado.'
+        mensagem = 'NÃ£o foi possÃ­vel identificar um cÃ³digo de verificaÃ§Ã£o no PDF enviado.'
     elif assinatura is None:
         resultado = ValidacaoAssinaturaDocumento.RESULTADO_CODIGO_NAO_ENCONTRADO
-        mensagem = 'Código de verificação não encontrado.'
+        mensagem = 'CÃ³digo de verificaÃ§Ã£o nÃ£o encontrado.'
     elif assinatura.status != AssinaturaDocumento.STATUS_VALIDA:
         resultado = ValidacaoAssinaturaDocumento.RESULTADO_INVALIDO
-        mensagem = 'A assinatura registrada não está ativa.'
+        mensagem = 'A assinatura registrada nÃ£o estÃ¡ ativa.'
     elif validar_hash_assinatura(pdf_bytes, assinatura) and status_assinatura_pdf in {STATUS_PDF_INTEGRA, STATUS_PDF_CERT_NAO_CONFIAVEL}:
         resultado = ValidacaoAssinaturaDocumento.RESULTADO_VALIDO
         mensagem = 'O arquivo enviado corresponde exatamente ao PDF assinado originalmente.'
     else:
         resultado = ValidacaoAssinaturaDocumento.RESULTADO_INVALIDO
-        mensagem = 'O arquivo enviado foi alterado após a assinatura, reexportado, editado ou não corresponde ao arquivo originalmente assinado.'
+        mensagem = 'O arquivo enviado foi alterado apÃ³s a assinatura, reexportado, editado ou nÃ£o corresponde ao arquivo originalmente assinado.'
 
     ValidacaoAssinaturaDocumento.objects.create(
         assinatura=assinatura,

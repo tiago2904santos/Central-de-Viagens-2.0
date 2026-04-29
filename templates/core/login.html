@@ -37,6 +37,13 @@
                 </div>
                 <button type="submit" class="btn btn-primary btn-lg w-100">Entrar</button>
             </form>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="text-muted small mb-2">Precisa validar um documento sem acessar o sistema?</p>
+                <a href="{% url 'documentos:assinatura-verificador' %}" class="btn btn-outline-secondary w-100">
+                    Abrir validador de documentos
+                </a>
+            </div>
         </div>
     </div>
 </div>

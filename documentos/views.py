@@ -1,15 +1,25 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
 from documentos.models import AssinaturaDocumento
-from documentos.services.assinaturas import calcular_sha256_bytes, validar_codigo, validar_pdf_por_upload
+from documentos.services.assinaturas import calcular_sha256_bytes, mascarar_cpf_assinatura, validar_codigo, validar_pdf_por_upload
 
 
 @login_required
 def placeholder_view(request):
     return render(request, 'core/placeholder.html', {'modulo': 'Documentos'})
+
+
+@require_http_methods(['GET', 'POST'])
+def assinatura_verificador(request):
+    codigo = ''
+    if request.method == 'POST':
+        codigo = (request.POST.get('codigo_verificacao') or '').strip()
+        if codigo:
+            return redirect('documentos:assinatura-verificar-codigo', codigo=codigo)
+    return render(request, 'documentos/assinaturas/verificador.html', {'codigo': codigo})
 
 
 @require_http_methods(['GET'])
@@ -35,6 +45,8 @@ def assinatura_verificar_codigo(request, codigo):
             'status_valido': assinatura.status == AssinaturaDocumento.STATUS_VALIDA,
             'hash_atual_pdf_assinado': hash_atual_pdf_assinado,
             'status_integridade_registro': status_integridade_registro,
+            'cpf_mascarado': mascarar_cpf_assinatura(assinatura.cpf_assinante),
+            'status_documento_valido': assinatura.status == AssinaturaDocumento.STATUS_VALIDA and status_integridade_registro,
         },
     )
 

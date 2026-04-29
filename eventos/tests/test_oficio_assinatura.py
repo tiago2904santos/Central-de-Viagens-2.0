@@ -529,8 +529,8 @@ class PdfSignatureFontResolutionTest(TestCase):
         self.assertEqual(len(pages), 1)
         self.assertFalse(meta.get('has_validation_page'))
         texto_primeira = pages[0].extract_text()
-        self.assertIn('ASSINADO ELETRONICAMENTE', texto_primeira)
-        self.assertIn('CV-2026-ABC123-A7F9', texto_primeira)
+        self.assertIn('Documento assinado eletronicamente', texto_primeira)
+        self.assertIn('https://exemplo.local/assinatura/oficio/token/verificacao/', texto_primeira)
 
     @patch('eventos.services.pdf_signature.resolve_signature_font', return_value=('Helvetica', False, 'ok'))
     def test_page_index_menos_um_usa_ultima_pagina(self, _font_mock):

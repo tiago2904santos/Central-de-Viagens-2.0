@@ -1,6 +1,7 @@
 from io import BytesIO
 
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
@@ -79,8 +80,8 @@ class AssinaturaDocumentoServiceTest(TestCase):
         self.assertIn('Documento assinado eletronicamente', text)
         self.assertIn('JOAO MARIO DE GOES', text)
         self.assertIn('***.858.369-**', text)
-        self.assertIn('verifique em https://verificador.iti.br', text)
-        self.assertIn('QR de verificacao', text)
+        self.assertIn('verifique em https://centraldeviagens.local/assinaturas/CV-2026-2892A7-326F', text)
+        self.assertNotIn('verificador.iti.br', text)
         self.assertGreater(len(reader.pages[0].get_contents().get_data()), 3000)
 
     def test_layout_qr_nao_invade_texto_e_fica_dentro_da_area(self):
@@ -114,6 +115,27 @@ class AssinaturaDocumentoServiceTest(TestCase):
             ('assinatura_pdf_invalida', 'assinatura_pdf_ausente', 'certificado_nao_confiavel'),
         )
         self.assertEqual(ValidacaoAssinaturaDocumento.objects.count(), 2)
+
+    def test_rota_verificacao_responde_para_codigo_valido_e_invalido(self):
+        oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)
+        assinatura = assinar_documento_pdf(
+            oficio,
+            pdf_original=self._pdf(),
+            nome_documento='Oficio',
+            nome_assinante='Assinante Teste',
+            cpf_assinante='12345678900',
+        )
+
+        url = reverse('documentos:assinatura-verificar-codigo', kwargs={'codigo': assinatura.codigo_verificacao})
+        valido = self.client.get(url)
+        self.assertEqual(valido.status_code, 200)
+        self.assertContains(valido, 'Assinante Teste')
+        self.assertContains(valido, '***.456.789-**')
+        self.assertContains(valido, assinatura.hash_pdf_assinado_sha256)
+
+        invalido = self.client.get(reverse('documentos:assinatura-verificar-codigo', kwargs={'codigo': 'CV-2026-XXXXXX-YYYY'}))
+        self.assertEqual(invalido.status_code, 404)
+        self.assertIn('encontrado', invalido.content.decode('utf-8').lower())
 
     def test_pdf_reexportado_com_mesmo_visual_falha_por_hash(self):
         oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)

@@ -16,18 +16,20 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-4">
             <dl class="row mb-0">
-                <dt class="col-sm-4">Status da assinatura</dt>
+                <dt class="col-sm-4">Status da validação</dt>
                 <dd class="col-sm-8">
-                    {% if status_valido %}
-                    <span class="badge text-bg-success">Registrada</span>
+                    {% if status_documento_valido %}
+                    <span class="badge text-bg-success">Documento valido e integro</span>
                     {% else %}
-                    <span class="badge text-bg-warning">Não ativa</span>
+                    <span class="badge text-bg-danger">Documento invalido, alterado ou assinatura nao ativa</span>
                     {% endif %}
                 </dd>
                 <dt class="col-sm-4">Documento vinculado</dt>
                 <dd class="col-sm-8">{{ assinatura.metadata_json.nome_documento|default:assinatura.content_type.name }} #{{ assinatura.object_id }}</dd>
                 <dt class="col-sm-4">Assinante</dt>
                 <dd class="col-sm-8">{{ assinatura.nome_assinante }}</dd>
+                <dt class="col-sm-4">CPF</dt>
+                <dd class="col-sm-8">{{ cpf_mascarado }}</dd>
                 <dt class="col-sm-4">Data/hora</dt>
                 <dd class="col-sm-8">{{ assinatura.data_hora_assinatura|date:'d/m/Y H:i' }}</dd>
                 <dt class="col-sm-4">Método de autenticação</dt>

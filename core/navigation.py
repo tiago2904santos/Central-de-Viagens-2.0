@@ -137,9 +137,21 @@ def get_sidebar_config():
                     order=4,
                     active_route_names=['eventos:documentos-termos'],
                 ),
+                _item(
+                    'documentos-validador',
+                    'Validador de documentos',
+                    'bi bi-shield-check',
+                    'documentos:assinatura-verificador',
+                    order=5,
+                    active_route_names=[
+                        'documentos:assinatura-verificador',
+                        'documentos:assinatura-verificar-upload',
+                        'documentos:assinatura-verificar-codigo',
+                    ],
+                ),
             ],
             order=3,
-            active_route_prefixes=['eventos:documentos-', 'eventos:oficio-', 'eventos:guiado-etapa-3', 'eventos:guiado-etapa-4', 'eventos:guiado-etapa-5', 'eventos:guiado-etapa-6'],
+            active_route_prefixes=['eventos:documentos-', 'eventos:oficio-', 'eventos:guiado-etapa-3', 'eventos:guiado-etapa-4', 'eventos:guiado-etapa-5', 'eventos:guiado-etapa-6', 'documentos:assinatura-'],
         ),
         # 5. Viajantes (submenu)
         _item(
