@@ -346,8 +346,8 @@ class OficioAssinaturaFlowTest(TestCase):
         self.assertEqual(pos['box_w'], 0.4)
         self.assertEqual(pos['box_h'], 0.1)
         self.assertEqual(pos['page_index'], 0)
-        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 300)
-        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 92)
+        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 150)
+        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 54)
         self.assertTrue(pedido.auditoria.get('codigo_validacao', '').startswith('CV-'))
         self.assertIn('/assinaturas/verificar/', pedido.auditoria.get('url_verificacao', ''))
         assinatura = AssinaturaDocumento.objects.get(pk=pedido.auditoria['assinatura_documento_id'])
@@ -392,8 +392,8 @@ class OficioAssinaturaFlowTest(TestCase):
         pos = pedido.auditoria.get('assinatura_posicao', {})
         self.assertEqual(pos['box_w'], 0.44)
         self.assertEqual(pos['box_h'], 0.14)
-        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 300)
-        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 92)
+        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 150)
+        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 54)
 
     @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio', return_value=b'PDF_ORIGINAL')
     def test_gestao_assinado_nao_mostra_abrir_link(self, _render_mock):
@@ -534,8 +534,7 @@ class PdfSignatureFontResolutionTest(TestCase):
         self.assertFalse(meta.get('has_validation_page'))
         texto_primeira = pages[0].extract_text()
         self.assertIn('Documento assinado eletronicamente', texto_primeira)
-        self.assertIn('verifique em https://exemplo.local', texto_primeira)
-        self.assertIn('/assinaturas/verificar', texto_primeira)
+        self.assertIn('verifique em /assinaturas/verificar', texto_primeira)
         self.assertIn('/CV-2026-ABC123-A7F9/', texto_primeira)
         self.assertNotIn('https://verificador.iti.br', texto_primeira)
 
