@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load static %}
+
+{% block title %}Prestações de Contas{% endblock %}
+
+{% block content %}
+<section class="rt-page-shell">
+    <header class="rt-page-header card">
+        <div>
+            <h1 class="rt-title">Prestações de Contas</h1>
+            <p class="rt-subtitle">Acesse a prestação pendente e gere o relatório técnico individual do servidor.</p>
+        </div>
+    </header>
+
+    <section class="rt-list-grid">
+        {% for prestacao in prestacoes %}
+        <article class="card rt-list-card">
+            <div class="rt-list-card__head">
+                <h2>Ofício {{ prestacao.oficio.numero_formatado }}</h2>
+                <span class="badge text-bg-{% if prestacao.status_rt == 'gerado' %}success{% elif prestacao.status_rt == 'rascunho' %}warning{% else %}secondary{% endif %}">
+                    RT {{ prestacao.get_status_rt_display }}
+                </span>
+            </div>
+            <div class="rt-list-card__meta">
+                <p><strong>Servidor:</strong> {{ prestacao.nome_servidor|default:"Não informado" }}</p>
+                <p><strong>RG:</strong> {{ prestacao.rg_servidor|default:"Não informado" }}</p>
+                <p><strong>Destino:</strong> {{ prestacao.oficio.cidade_sede.nome|default:"Não informado" }}</p>
+            </div>
+            <div class="rt-list-card__actions">
+                <a class="btn btn-outline-secondary" href="{% url 'prestacao_contas:detalhe' prestacao.id %}">Abrir prestação</a>
+                <a class="btn btn-primary" href="{% url 'prestacao_contas:relatorio-tecnico' prestacao.id %}">
+                    {% if prestacao.status_rt == 'pendente' %}Gerar RT{% else %}Editar RT{% endif %}
+                </a>
+            </div>
+        </article>
+        {% empty %}
+        <article class="card rt-list-card">
+            <p class="mb-0">Nenhuma prestação pendente encontrada.</p>
+        </article>
+        {% endfor %}
+    </section>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/prestacao_contas.js' %}" defer></script>
+{% endblock %}

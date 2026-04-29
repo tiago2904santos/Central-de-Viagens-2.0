@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'eventos',
     'documentos',
     'integracoes',
+    'prestacao_contas',
 ]
 
 MIDDLEWARE = [

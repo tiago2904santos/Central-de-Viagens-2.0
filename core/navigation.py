@@ -89,6 +89,14 @@ def get_sidebar_config():
             order=2,
             active_route_names=['eventos:simulacao-diarias'],
         ),
+        _item(
+            'prestacao-contas',
+            'Prestacao de contas',
+            'bi bi-file-earmark-text',
+            'prestacao_contas:lista',
+            order=3,
+            active_route_prefixes=['prestacao_contas:'],
+        ),
         # 4. Documentos (submenu)
         _item(
             'documentos',
@@ -152,7 +160,7 @@ def get_sidebar_config():
                     ],
                 ),
             ],
-            order=3,
+            order=4,
             active_route_prefixes=['eventos:documentos-', 'eventos:oficio-', 'eventos:guiado-etapa-3', 'eventos:guiado-etapa-4', 'eventos:guiado-etapa-5', 'eventos:guiado-etapa-6', 'documentos:assinatura-'],
         ),
         # 5. Viajantes (submenu)
@@ -187,7 +195,7 @@ def get_sidebar_config():
                     active_route_prefixes=['cadastros:unidade-lotacao-'],
                 ),
             ],
-            order=4,
+            order=5,
             active_route_prefixes=['cadastros:viajante-', 'cadastros:cargo-', 'cadastros:unidade-lotacao-'],
         ),
         # 6. Veiculos (submenu)
@@ -214,7 +222,7 @@ def get_sidebar_config():
                     active_route_prefixes=['cadastros:combustivel-'],
                 ),
             ],
-            order=5,
+            order=6,
             active_route_prefixes=['cadastros:veiculo-', 'cadastros:combustivel-'],
         ),
         # 7. Configurações
@@ -223,7 +231,7 @@ def get_sidebar_config():
             'Configurações',
             'bi bi-gear',
             'cadastros:configuracoes',
-            order=6,
+            order=7,
             active_route_names=['cadastros:configuracoes'],
         ),
     ]

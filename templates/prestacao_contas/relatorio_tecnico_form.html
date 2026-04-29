@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Relatório Técnico{% endblock %}
+
+{% block content %}
+<section class="rt-page-shell">
+    <header class="card rt-page-header">
+        <h1 class="rt-title">Relatório Técnico de Viagem</h1>
+        <p class="rt-subtitle">Revise os dados e gere o relatório técnico do servidor.</p>
+        <div class="rt-header-meta">
+            <span><strong>Ofício:</strong> {{ prestacao.oficio.numero_formatado }}</span>
+            <span><strong>Servidor:</strong> {{ prestacao.nome_servidor }}</span>
+            <span><strong>RG:</strong> {{ prestacao.rg_servidor|default:"Não informado" }}</span>
+            <span><strong>Destino:</strong> {{ resumo_viagem.destino }}</span>
+            <span><strong>Período:</strong> {{ resumo_viagem.periodo }}</span>
+            <span><strong>Diária:</strong> {{ form.diaria.value|default:"Não informado" }}</span>
+        </div>
+    </header>
+
+    <form method="post" action="{% url 'prestacao_contas:relatorio-tecnico' prestacao.id %}" class="rt-form-layout">
+        {% csrf_token %}
+        <article class="card rt-card">
+            <h2>Bloco 1 — Dados do servidor</h2>
+            <div class="rt-grid rt-grid-3">
+                <div class="form-group"><label for="{{ form.nome_servidor.id_for_label }}">Nome</label>{{ form.nome_servidor }}</div>
+                <div class="form-group"><label for="{{ form.rg_servidor.id_for_label }}">RG</label>{{ form.rg_servidor }}</div>
+                <div class="form-group"><label for="{{ form.cargo_servidor.id_for_label }}">Cargo</label>{{ form.cargo_servidor }}</div>
+            </div>
+        </article>
+
+        <article class="card rt-card">
+            <h2>Bloco 2 — Valores utilizados na viagem</h2>
+            <div class="rt-grid rt-grid-3">
+                <div class="form-group"><label for="{{ form.diaria.id_for_label }}">Diária</label>{{ form.diaria }}</div>
+                <div class="form-group"><label for="{{ form.translado.id_for_label }}">Translado</label>{{ form.translado }}</div>
+                <div class="form-group"><label for="{{ form.passagem.id_for_label }}">Passagem</label>{{ form.passagem }}</div>
+            </div>
+        </article>
+
+        <article class="card rt-card">
+            <h2>Bloco 3 — Conteúdo do relatório</h2>
+            <div class="rt-grid rt-grid-1">
+                <div class="form-group"><label for="{{ form.motivo.id_for_label }}">Descrição do evento / motivo</label>{{ form.motivo }}</div>
+                <div class="form-group"><label for="{{ form.atividade.id_for_label }}">Objetivo da participação</label>{{ form.atividade }}</div>
+                <div class="form-group"><label for="{{ form.conclusao.id_for_label }}">Conclusão</label>{{ form.conclusao }}</div>
+                <div class="form-group"><label for="{{ form.medidas.id_for_label }}">Medidas a serem adotadas</label>{{ form.medidas }}</div>
+                <div class="form-group"><label for="{{ form.informacoes_complementares.id_for_label }}">Informações complementares</label>{{ form.informacoes_complementares }}</div>
+            </div>
+        </article>
+
+        <div class="rt-actions">
+            <button class="btn btn-secondary" type="submit">Salvar rascunho</button>
+            <button
+                class="btn btn-primary"
+                type="submit"
+                formaction="{% url 'prestacao_contas:relatorio-tecnico-docx' prestacao.id %}"
+            >
+                Gerar DOCX
+            </button>
+            <button
+                class="btn btn-outline-primary"
+                type="submit"
+                formaction="{% url 'prestacao_contas:relatorio-tecnico-pdf' prestacao.id %}"
+            >
+                Gerar PDF
+            </button>
+            <a class="btn btn-outline-secondary" href="{% url 'prestacao_contas:detalhe' prestacao.id %}">Voltar para prestação</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/prestacao_contas.js' %}" defer></script>
+{% endblock %}

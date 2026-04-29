@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Prestação #{{ prestacao.id }}{% endblock %}
+
+{% block content %}
+<section class="rt-page-shell">
+    <article class="card rt-detail-card">
+        <div class="rt-detail-card__top">
+            <div>
+                <h1 class="rt-title">Prestação de Contas</h1>
+                <p class="rt-subtitle">Ofício {{ prestacao.oficio.numero_formatado }} · Servidor {{ prestacao.nome_servidor }}</p>
+            </div>
+            <span class="badge text-bg-{% if prestacao.status_rt == 'gerado' %}success{% elif prestacao.status_rt == 'rascunho' %}warning{% else %}secondary{% endif %}">
+                RT {{ prestacao.get_status_rt_display }}
+            </span>
+        </div>
+
+        <div class="rt-detail-grid">
+            <div>
+                <h3>Dados do servidor</h3>
+                <p><strong>Nome:</strong> {{ prestacao.nome_servidor|default:"Não informado" }}</p>
+                <p><strong>RG:</strong> {{ prestacao.rg_servidor|default:"Não informado" }}</p>
+                <p><strong>Cargo:</strong> {{ prestacao.cargo_servidor|default:"Não informado" }}</p>
+            </div>
+            <div>
+                <h3>Dados do ofício</h3>
+                <p><strong>Número:</strong> {{ prestacao.oficio.numero_formatado }}</p>
+                <p><strong>Motivo:</strong> {{ prestacao.oficio.motivo|default:"Não informado" }}</p>
+                <p><strong>Destino:</strong> {{ resumo_viagem.destino }}</p>
+                <p><strong>Período:</strong> {{ resumo_viagem.periodo }}</p>
+                <p><strong>Valor de diárias:</strong> {{ prestacao.oficio.valor_diarias|default:"Não informado" }}</p>
+            </div>
+        </div>
+
+        <div class="rt-list-card__actions">
+            <a class="btn btn-secondary" href="{% url 'prestacao_contas:lista' %}">Voltar</a>
+            <a class="btn btn-primary" href="{% url 'prestacao_contas:relatorio-tecnico' prestacao.id %}">
+                {% if rt %}Editar RT{% else %}Gerar RT{% endif %}
+            </a>
+            {% if rt and rt.arquivo_docx %}
+            <a class="btn btn-outline-primary" href="{{ rt.arquivo_docx.url }}" target="_blank">Baixar DOCX</a>
+            {% endif %}
+            {% if rt and rt.arquivo_pdf %}
+            <a class="btn btn-outline-primary" href="{{ rt.arquivo_pdf.url }}" target="_blank">Baixar PDF</a>
+            {% endif %}
+        </div>
+    </article>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/prestacao_contas.js' %}" defer></script>
+{% endblock %}

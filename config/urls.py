@@ -21,6 +21,7 @@ urlpatterns = [
     path('eventos/', include('eventos.urls')),
     path('assinaturas/', include('documentos.urls')),
     path('integracoes/', include('integracoes.urls')),
+    path('prestacao-contas/', include('prestacao_contas.urls')),
     path('', include('core.urls')),
 ]
 
