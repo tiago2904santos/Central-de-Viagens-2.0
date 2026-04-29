@@ -35,6 +35,112 @@
     background-color: #fee2e2;
     color: #991b1b;
 }
+
+.oficio-assinatura-page .card {
+    border-radius: 16px;
+}
+
+.oficio-assinatura-hero {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.oficio-assinatura-hero__meta .badge {
+    font-weight: 500;
+}
+
+.oficio-assinatura-steps__list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.oficio-assinatura-step {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.55rem 0.75rem;
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.oficio-assinatura-step span {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #0f4c81;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+.oficio-assinatura-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.oficio-assinatura-viewer__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem 1.25rem;
+}
+
+.oficio-assinatura-viewer__controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.oficio-assinatura-viewer__body {
+    padding: 1.25rem;
+    background: #f8fafc;
+}
+
+.oficio-assinatura-side__preview {
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.oficio-assinatura-side__preview-title {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.45rem 0.75rem;
+}
+
+.oficio-assinatura-side__preview-body {
+    padding: 0.75rem;
+    background: #fff;
+}
+
+.oficio-assinatura-side__checklist li {
+    padding: 0.15rem 0;
+    color: #334155;
+}
+
+@media (max-width: 991.98px) {
+    .oficio-assinatura-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .oficio-assinatura-steps__list {
+        grid-template-columns: 1fr;
+    }
+}
 /* ===== Central de Viagens â€” Estilos base ===== */
 
 :root {
