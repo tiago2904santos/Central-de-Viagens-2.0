@@ -85,11 +85,18 @@ class RelatorioTecnicoPrestacao(models.Model):
     rg_servidor = models.CharField(max_length=30, blank=True, default="")
     cpf_servidor = models.CharField(max_length=14, blank=True, default="")
     cargo_servidor = models.CharField(max_length=120, blank=True, default="")
+    unidade_servidor = models.CharField(max_length=160, blank=True, default="")
 
     diaria = models.CharField(max_length=80, blank=True, default="")
+    combustivel = models.CharField(max_length=80, blank=True, default="Cartao Prime")
+    teve_translado = models.BooleanField(default=False)
+    valor_translado = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     translado = models.CharField(max_length=80, blank=True, default="")
+    teve_passagem = models.BooleanField(default=False)
+    valor_passagem = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     passagem = models.CharField(max_length=80, blank=True, default="")
     motivo = models.TextField(blank=True, default="")
+    atividade_codigos = models.CharField(max_length=500, blank=True, default="")
     atividade = models.TextField(blank=True, default="")
     conclusao = models.TextField(blank=True, default="")
     medidas = models.TextField(blank=True, default="")
@@ -122,3 +129,44 @@ class RelatorioTecnicoPrestacao(models.Model):
         self.prestacao.status_rt = PrestacaoConta.STATUS_RT_GERADO
         self.prestacao.rt_atualizado_em = timezone.now()
         self.prestacao.save(update_fields=["status_rt", "rt_atualizado_em", "updated_at"])
+
+
+class TextoPadraoDocumento(models.Model):
+    CATEGORIA_OFICIO_MOTIVO = "oficio_motivo_viagem"
+    CATEGORIA_RT_CONCLUSAO = "relatorio_tecnico_conclusao"
+    CATEGORIA_RT_MEDIDAS = "relatorio_tecnico_medidas"
+    CATEGORIA_RT_INFO = "relatorio_tecnico_informacoes_complementares"
+    CATEGORIA_CHOICES = [
+        (CATEGORIA_OFICIO_MOTIVO, "Oficio - Motivo de viagem"),
+        (CATEGORIA_RT_CONCLUSAO, "RT - Conclusao"),
+        (CATEGORIA_RT_MEDIDAS, "RT - Medidas"),
+        (CATEGORIA_RT_INFO, "RT - Informacoes complementares"),
+    ]
+
+    categoria = models.CharField(max_length=60, choices=CATEGORIA_CHOICES, db_index=True)
+    titulo = models.CharField(max_length=160)
+    texto = models.TextField()
+    is_padrao = models.BooleanField(default=False)
+    ativo = models.BooleanField(default=True)
+    ordem = models.PositiveIntegerField(default=0)
+    criado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="textos_padrao_documento_criados",
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["categoria", "ordem", "titulo"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["categoria", "titulo"],
+                name="texto_padrao_documento_categoria_titulo_unique",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.get_categoria_display()} - {self.titulo}"

@@ -49,27 +49,62 @@ def _valor_padrao(value, fallback):
     return value if value else fallback
 
 
-def obter_ou_criar_rt(prestacao, usuario=None):
-    defaults = {
-        "oficio": prestacao.oficio,
-        "servidor": prestacao.servidor,
+def _dados_servidor(prestacao):
+    servidor = prestacao.servidor
+    if servidor:
+        return {
+            "nome_servidor": (servidor.nome or "").strip() or prestacao.nome_servidor,
+            "rg_servidor": getattr(servidor, "rg_formatado", "") or prestacao.rg_servidor,
+            "cpf_servidor": getattr(servidor, "cpf_formatado", "") or prestacao.cpf_servidor,
+            "cargo_servidor": (getattr(servidor.cargo, "nome", "") or "").strip() or prestacao.cargo_servidor,
+        }
+    return {
         "nome_servidor": prestacao.nome_servidor,
         "rg_servidor": prestacao.rg_servidor,
         "cpf_servidor": prestacao.cpf_servidor,
         "cargo_servidor": prestacao.cargo_servidor,
-        "diaria": _valor_padrao(prestacao.oficio.valor_diarias, "Nao informado"),
+    }
+
+
+def _diaria_auto(prestacao):
+    valor_saque = getattr(prestacao, "valor_saque", None)
+    if valor_saque:
+        return f"R$ {valor_saque:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return _valor_padrao(prestacao.oficio.valor_diarias, "Nao informado")
+
+
+def obter_ou_criar_rt(prestacao, usuario=None):
+    dados_servidor = _dados_servidor(prestacao)
+    defaults = {
+        "oficio": prestacao.oficio,
+        "servidor": prestacao.servidor,
+        **dados_servidor,
+        "diaria": _diaria_auto(prestacao),
         "translado": "Nao houve",
         "passagem": "Nao houve",
         "motivo": (prestacao.oficio.motivo or "").strip(),
-        "atividade": (
-            "Participacao nas atividades vinculadas ao deslocamento descrito no Oficio, "
-            "conforme programacao e necessidade institucional."
-        ),
+        "atividade": "",
         "conclusao": "Todas as atividades previstas foram desenvolvidas.",
         "medidas": "Nada a acrescentar.",
         "informacoes_complementares": "",
     }
     rt, created = RelatorioTecnicoPrestacao.objects.get_or_create(prestacao=prestacao, defaults=defaults)
+    if not created:
+        changed = False
+        for key, value in dados_servidor.items():
+            if getattr(rt, key) != value:
+                setattr(rt, key, value)
+                changed = True
+        diaria = _diaria_auto(prestacao)
+        if rt.diaria != diaria:
+            rt.diaria = diaria
+            changed = True
+        motivo = (prestacao.oficio.motivo or "").strip()
+        if rt.motivo != motivo:
+            rt.motivo = motivo
+            changed = True
+        if changed:
+            rt.save()
     if created:
         prestacao.status_rt = PrestacaoConta.STATUS_RT_RASCUNHO
         prestacao.rt_atualizado_em = timezone.now()
@@ -92,10 +127,11 @@ def montar_contexto_rt(rt):
         "diaria": _valor_padrao(rt.diaria, "Nao informado"),
         "translado": _valor_padrao(rt.translado, "Nao houve"),
         "passagem": _valor_padrao(rt.passagem, "Nao houve"),
-        "motivo": rt.motivo,
-        "atividade": rt.atividade,
+        "motivo": (oficio.motivo or "").strip() or rt.motivo,
+        "atividade": _valor_padrao(rt.atividade, ""),
         "conclusao": rt.conclusao,
         "medidas": rt.medidas,
+        "informacoes_complementares": rt.informacoes_complementares or "",
         "unidade_rodape": _valor_padrao(config.unidade, "ASSESSORIA DE COMUNICACAO SOCIAL"),
         "endereco": ", ".join(
             [p for p in [config.logradouro, config.numero, config.bairro, config.cidade_endereco, config.uf] if p]

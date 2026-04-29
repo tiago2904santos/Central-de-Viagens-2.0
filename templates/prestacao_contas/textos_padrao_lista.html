@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Textos Padrão do RT{% endblock %}
+
+{% block content %}
+<section class="rt-page-shell">
+    <article class="card rt-card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1 class="rt-title">Textos Padrão</h1>
+                <p class="rt-subtitle">Gerencie respostas prontas para conclusão, medidas e informações complementares do RT.</p>
+            </div>
+            <a class="btn btn-primary" href="{% url 'prestacao_contas:textos-padrao-novo' %}">Novo texto</a>
+        </div>
+        <form method="get" class="rt-inline-actions mt-3">
+            <select name="categoria" class="form-select" style="max-width: 320px;">
+                <option value="">Todas as categorias</option>
+                {% for value,label in categorias %}
+                <option value="{{ value }}" {% if categoria == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+        </form>
+    </article>
+
+    <section class="rt-list-grid">
+        {% for texto in textos %}
+        <article class="card rt-list-card">
+            <div class="rt-list-card__head">
+                <h2>{{ texto.titulo }}</h2>
+                <span class="badge text-bg-secondary">{{ texto.get_categoria_display }}</span>
+            </div>
+            <p class="mb-2">{{ texto.texto|truncatechars:180 }}</p>
+            <div class="rt-inline-actions">
+                {% if texto.is_padrao %}<span class="badge text-bg-success">Padrão</span>{% endif %}
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'prestacao_contas:textos-padrao-editar' texto.id %}">Editar</a>
+            </div>
+        </article>
+        {% empty %}
+        <article class="card rt-list-card"><p class="mb-0">Nenhum texto padrão cadastrado.</p></article>
+        {% endfor %}
+    </section>
+</section>
+{% endblock %}
