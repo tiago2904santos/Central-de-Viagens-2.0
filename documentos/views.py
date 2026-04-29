@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from documentos.models import AssinaturaDocumento
-from documentos.services.assinaturas import validar_codigo, validar_pdf_por_upload
+from documentos.services.assinaturas import calcular_sha256_bytes, validar_codigo, validar_pdf_por_upload
 
 
 @login_required
@@ -17,6 +17,15 @@ def assinatura_verificar_codigo(request, codigo):
     assinatura = validar_codigo(codigo)
     if not assinatura:
         return HttpResponse('Código de verificação não encontrado.', status=404, content_type='text/plain; charset=utf-8')
+    hash_atual_pdf_assinado = ''
+    status_integridade_registro = False
+    if assinatura.arquivo_pdf_assinado:
+        assinatura.arquivo_pdf_assinado.open('rb')
+        try:
+            hash_atual_pdf_assinado = calcular_sha256_bytes(assinatura.arquivo_pdf_assinado.read())
+        finally:
+            assinatura.arquivo_pdf_assinado.close()
+        status_integridade_registro = hash_atual_pdf_assinado == (assinatura.hash_pdf_assinado_sha256 or '')
     return render(
         request,
         'documentos/assinaturas/verificar_codigo.html',
@@ -24,6 +33,8 @@ def assinatura_verificar_codigo(request, codigo):
             'assinatura': assinatura,
             'documento': assinatura.content_object,
             'status_valido': assinatura.status == AssinaturaDocumento.STATUS_VALIDA,
+            'hash_atual_pdf_assinado': hash_atual_pdf_assinado,
+            'status_integridade_registro': status_integridade_registro,
         },
     )
 

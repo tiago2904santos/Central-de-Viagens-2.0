@@ -36,6 +36,18 @@
                 <dd class="col-sm-8"><code>{{ assinatura.codigo_verificacao }}</code></dd>
                 <dt class="col-sm-4">Hash do PDF assinado</dt>
                 <dd class="col-sm-8"><code class="small text-break">{{ assinatura.hash_pdf_assinado_sha256 }}</code></dd>
+                <dt class="col-sm-4">Hash atual do arquivo</dt>
+                <dd class="col-sm-8"><code class="small text-break">{{ hash_atual_pdf_assinado|default:"indisponível" }}</code></dd>
+                <dt class="col-sm-4">Integridade do registro</dt>
+                <dd class="col-sm-8">
+                    {% if status_integridade_registro %}
+                    <span class="badge text-bg-success">Íntegro</span>
+                    {% else %}
+                    <span class="badge text-bg-danger">Divergente</span>
+                    {% endif %}
+                </dd>
+                <dt class="col-sm-4">Status técnico PDF</dt>
+                <dd class="col-sm-8"><code>{{ assinatura.assinatura_pdf_tecnica_status|default:"não informado" }}</code></dd>
             </dl>
 
             <div class="alert alert-info mt-4 mb-0">

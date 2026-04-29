@@ -76,21 +76,19 @@ class AssinaturaDocumentoServiceTest(TestCase):
         appearance = renderizar_aparencia_assinatura(dados, 410, 92)
         reader = PdfReader(BytesIO(appearance))
         text = reader.pages[0].extract_text()
-        self.assertIn('DOCUMENTO ASSINADO ELETRONICAMENTE', text)
+        self.assertIn('Documento assinado eletronicamente', text)
         self.assertIn('JOAO MARIO DE GOES', text)
         self.assertIn('***.858.369-**', text)
-        self.assertIn('CV-2026-2892A7-326F', text)
-        self.assertIn('VALIDACAO', text)
+        self.assertIn('verifique em https://verificador.iti.br', text)
+        self.assertIn('QR de verificacao', text)
         self.assertGreater(len(reader.pages[0].get_contents().get_data()), 3000)
 
     def test_layout_qr_nao_invade_texto_e_fica_dentro_da_area(self):
         layout = calcular_layout_aparencia_assinatura(410, 92)
         text_left, _text_bottom, text_width, _text_height = layout.text_box
         qr_left, _qr_bottom, qr_width, _qr_height = layout.qr_box
-        logo_left, _logo_bottom, logo_width, _logo_height = layout.logo_box
-        self.assertGreater(text_left, logo_left + logo_width)
-        self.assertLess(text_left + text_width, qr_left)
-        self.assertLessEqual(qr_left + qr_width, layout.width - layout.padding + 0.1)
+        self.assertGreater(text_left, qr_left + qr_width)
+        self.assertLessEqual(text_left + text_width, layout.width - layout.padding + 0.1)
         self.assertGreaterEqual(qr_left, 0)
 
     def test_validacao_por_upload_mesmo_pdf_valido_e_pdf_editado_invalido(self):

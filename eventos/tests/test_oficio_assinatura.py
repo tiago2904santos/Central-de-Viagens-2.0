@@ -343,7 +343,7 @@ class OficioAssinaturaFlowTest(TestCase):
         pos = pedido.auditoria.get('assinatura_posicao', {})
         self.assertEqual(pos['box_x'], 0.81)
         self.assertEqual(pos['box_y'], 0.27)
-        self.assertEqual(pos['box_w'], 0.42)
+        self.assertEqual(pos['box_w'], 0.4)
         self.assertEqual(pos['box_h'], 0.1)
         self.assertEqual(pos['page_index'], 0)
         self.assertTrue(pedido.auditoria.get('codigo_validacao', '').startswith('CV-'))

@@ -151,12 +151,14 @@ def _normalizar_posicao(posicao: dict | None, total_paginas: int) -> dict:
     if page_index < 0:
         page_index = total_paginas - 1
     page_index = min(max(page_index, 0), max(total_paginas - 1, 0))
+    box_w = min(max(float(raw.get('box_w', 0.5)), 0.40), 0.55)
+    default_box_x = (1 - box_w) / 2
     return {
         'page_index': page_index,
-        'box_x': min(max(float(raw.get('box_x', raw.get('x_ratio', 0.16))), 0.01), 0.95),
-        'box_y': min(max(float(raw.get('box_y', raw.get('y_ratio', 0.77))), 0.01), 0.95),
-        'box_w': min(max(float(raw.get('box_w', 0.68)), 0.42), 0.95),
-        'box_h': min(max(float(raw.get('box_h', 0.125)), 0.095), 0.22),
+        'box_x': min(max(float(raw.get('box_x', raw.get('x_ratio', default_box_x))), 0.01), 0.95),
+        'box_y': min(max(float(raw.get('box_y', raw.get('y_ratio', 0.80))), 0.01), 0.95),
+        'box_w': box_w,
+        'box_h': min(max(float(raw.get('box_h', 0.11)), 0.09), 0.18),
         'qr': bool(raw.get('qr', True)),
     }
 
@@ -269,19 +271,17 @@ def _draw_logo_profissional(c: canvas.Canvas, left: float, bottom: float, width:
 
 
 def _calcular_layout_aparencia(width: float, height: float) -> AparenciaAssinaturaLayout:
-    padding = max(9, min(15, height * 0.14))
-    qr_size = min(height - padding * 2, width * 0.16, 58)
-    logo_size = min(height - padding * 2, width * 0.13, 54)
-    logo_box = (padding, (height - logo_size) / 2, logo_size, logo_size)
-    qr_box = (width - padding - qr_size, (height - qr_size) / 2, qr_size, qr_size)
-    text_left = padding + logo_size + max(10, width * 0.025)
-    text_right = qr_box[0] - max(12, width * 0.03)
+    padding = max(8, min(14, height * 0.12))
+    qr_size = min(height - padding * 2, width * 0.20, 60)
+    qr_box = (padding, (height - qr_size) / 2, qr_size, qr_size)
+    text_left = qr_box[0] + qr_size + max(12, width * 0.03)
+    text_right = width - padding
     text_box = (text_left, padding, max(72, text_right - text_left), height - padding * 2)
     return AparenciaAssinaturaLayout(
         width=width,
         height=height,
         padding=padding,
-        logo_box=logo_box,
+        logo_box=(0, 0, 0, 0),
         text_box=text_box,
         qr_box=qr_box,
     )
@@ -295,9 +295,9 @@ def _draw_qrcode_profissional(c: canvas.Canvas, box: tuple[float, float, float, 
     left, bottom, width, height = box
     qr_size = min(width, height)
     c.saveState()
-    c.setFillColor(white)
-    c.roundRect(left - 3, bottom - 3, qr_size + 6, qr_size + 6, 4, stroke=0, fill=1)
     qr_code = qr.QrCodeWidget(url_validacao or 'assinatura')
+    qr_code.barFillColor = white
+    qr_code.barStrokeColor = white
     bounds = qr_code.getBounds()
     scale = qr_size / max(bounds[2] - bounds[0], bounds[3] - bounds[1])
     drawing = Drawing(qr_size, qr_size, transform=[scale, 0, 0, scale, 0, 0])
@@ -312,51 +312,65 @@ def renderizar_aparencia_assinatura(dados_carimbo: DadosCarimbo, width: float, h
     layout = _calcular_layout_aparencia(width, height)
     padding = layout.padding
 
-    c.setFillColor(HexColor('#ffffff'))
+    c.setFillColor(HexColor('#08172a'))
     c.roundRect(0.5, 0.5, width - 1, height - 1, 8, stroke=0, fill=1)
-    c.setFillColor(HexColor('#f8fafc'))
-    c.roundRect(3, 3, width - 6, height - 6, 7, stroke=0, fill=1)
-    c.setStrokeColor(HexColor('#cbd5e1'))
-    c.setLineWidth(0.85)
-    c.roundRect(3, 3, width - 6, height - 6, 7, stroke=1, fill=0)
-    c.setFillColor(HexColor('#0f4c81'))
-    c.roundRect(3, height - 8, width - 6, 5, 3, stroke=0, fill=1)
+    c.setStrokeColor(HexColor('#1a3a57'))
+    c.setLineWidth(0.55)
+    c.roundRect(0.5, 0.5, width - 1, height - 1, 8, stroke=1, fill=0)
 
-    _draw_logo_profissional(c, *layout.logo_box)
     _draw_qrcode_profissional(c, layout.qr_box, dados_carimbo.url_validacao)
 
     text_left, _text_bottom, text_width, _text_height = layout.text_box
-    stamp = build_signature_stamp_data(dados_carimbo, text_width)
-    y = height - padding - 3
-    c.setFillColor(HexColor('#0f4c81'))
-    c.setFont('Helvetica-Bold', 8.6)
-    c.drawString(text_left, y, 'DOCUMENTO ASSINADO ELETRONICAMENTE')
+    fonte_nome, linha_nome_1, linha_nome_2 = fit_text_single_or_two_lines(
+        dados_carimbo.nome_assinante,
+        max(text_width - 6, 60),
+        'Times-Bold',
+    )
+    data_formatada = timezone.localtime(dados_carimbo.data_hora_assinatura).strftime('%d/%m/%Y %H:%M:%S%z')
+    if not data_formatada.endswith(('-0300', '-0200', '-0400')):
+        data_formatada = f'{data_formatada or timezone.localtime(dados_carimbo.data_hora_assinatura).strftime("%d/%m/%Y %H:%M:%S")}-0300'
 
-    y -= 14
-    c.setFillColor(HexColor('#111827'))
-    c.setFont('Helvetica-Bold', stamp.fonte_nome)
-    c.drawString(text_left, y, stamp.linha_nome_1)
-    if stamp.linha_nome_2:
-        y -= stamp.fonte_nome + 1.5
-        c.drawString(text_left, y, stamp.linha_nome_2)
+    # Marca d'água institucional ao fundo do texto.
+    c.saveState()
+    try:
+        c.setFillAlpha(0.16)
+    except AttributeError:
+        pass
+    c.setFillColor(HexColor('#f1f5f9'))
+    c.setFont('Helvetica-Bold', min(height * 0.85, 70))
+    c.drawString(text_left + 2, max(padding - 1, 2), 'C')
+    try:
+        c.setFillAlpha(0.20)
+    except AttributeError:
+        pass
+    c.setFillColor(HexColor('#d8b14f'))
+    c.setFont('Helvetica-Bold', min(height * 0.82, 66))
+    c.drawString(text_left + min(width * 0.09, 48), max(padding + 1, 3), 'V')
+    c.restoreState()
 
-    y -= 11
-    c.setFont('Helvetica', 7.4)
-    c.setFillColor(HexColor('#475569'))
-    dt = timezone.localtime(dados_carimbo.data_hora_assinatura).strftime('%d/%m/%Y as %H:%M')
-    details = [
+    y = height - padding - 2
+    c.setFillColor(HexColor('#f8fafc'))
+    c.setFont('Times-Bold', 9.2)
+    c.drawString(text_left, y, 'Documento assinado eletronicamente')
+    y -= 12.2
+    c.setFont('Times-Bold', fonte_nome)
+    c.drawString(text_left, y, linha_nome_1)
+    if linha_nome_2:
+        y -= fonte_nome + 1.4
+        c.drawString(text_left, y, linha_nome_2)
+    y -= 10.2
+    c.setFont('Times-Roman', 7.5)
+    for line in (
         f'CPF: {dados_carimbo.cpf_mascarado}',
-        f'Assinado em {dt}',
-        f'Codigo verificador: {dados_carimbo.codigo_verificacao}',
-        f'Validar em: {_short_url(dados_carimbo.url_validacao)}',
-    ]
-    for line in details:
+        f'Data: {data_formatada}',
+        'verifique em https://verificador.iti.br',
+    ):
         c.drawString(text_left, y, line)
-        y -= 8.7
+        y -= 8.4
 
-    c.setFillColor(HexColor('#64748b'))
-    c.setFont('Helvetica', 5.6)
-    c.drawCentredString(layout.qr_box[0] + layout.qr_box[2] / 2, layout.qr_box[1] - 7, 'VALIDACAO')
+    c.setFillColor(HexColor('#f8fafc'))
+    c.setFont('Times-Roman', 5.8)
+    c.drawCentredString(layout.qr_box[0] + layout.qr_box[2] / 2, layout.qr_box[1] - 7, 'QR de verificacao')
     c.save()
     return stream.getvalue()
 
