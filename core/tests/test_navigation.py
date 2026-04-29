@@ -66,7 +66,7 @@ class SidebarMenuTest(TestCase):
         self.assertIn('documentos-oficios', child_ids)
         self.assertEqual(
             child_ids,
-            ['documentos-oficios', 'documentos-plano-trabalho', 'documentos-ordem-servico', 'documentos-justificativas', 'documentos-termos'],
+            ['documentos-oficios', 'documentos-plano-trabalho', 'documentos-ordem-servico', 'documentos-justificativas', 'documentos-termos', 'documentos-validador'],
         )
 
     def test_todos_os_itens_habilitados_tem_url_resolvida(self):

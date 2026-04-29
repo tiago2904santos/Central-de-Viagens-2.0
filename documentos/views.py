@@ -32,7 +32,6 @@ def assinatura_gestao(request):
             Q(nome_assinante__icontains=filtros['busca'])
             | Q(codigo_verificacao__icontains=filtros['busca'])
             | Q(metadata_json__nome_documento__icontains=filtros['busca'])
-            | Q(object_id__icontains=filtros['busca'])
         )
     if filtros['status']:
         queryset = queryset.filter(status=filtros['status'])
@@ -108,11 +107,20 @@ def assinatura_gestao(request):
     pendentes = OficioAssinaturaPedido.objects.filter(status=OficioAssinaturaPedido.STATUS_PENDENTE).count()
     tipos_documento = AssinaturaDocumento.objects.values_list('content_type__model', flat=True).distinct().order_by('content_type__model')
 
+    assinaturas_lista = []
+    for assinatura in queryset[:200]:
+        assinaturas_lista.append(
+            {
+                'obj': assinatura,
+                'cpf_mascarado': mascarar_cpf_assinatura(assinatura.cpf_assinante),
+            }
+        )
+
     return render(
         request,
         'documentos/assinaturas/gestao.html',
         {
-            'assinaturas': queryset[:200],
+            'assinaturas': assinaturas_lista,
             'filtros': filtros,
             'tipos_documento': [tipo for tipo in tipos_documento if tipo],
             'status_choices': AssinaturaDocumento.STATUS_CHOICES,

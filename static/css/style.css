@@ -1,4 +1,41 @@
-﻿/* ===== Central de Viagens â€” Estilos base ===== */
+﻿.assinaturas-dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.assinaturas-dashboard-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.assinaturas-dashboard-card strong {
+    font-size: 1.2rem;
+    line-height: 1.2;
+}
+
+.assinaturas-dashboard-card span {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.assinatura-status--valida {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.assinatura-status--revogada,
+.assinatura-status--substituida {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+/* ===== Central de Viagens â€” Estilos base ===== */
 
 :root {
     --sidebar-width: 260px;

@@ -10,7 +10,12 @@ from reportlab.pdfgen import canvas
 
 from cadastros.models import AssinaturaConfiguracao, Cargo, Cidade, ConfiguracaoSistema, Estado, UnidadeLotacao, Viajante
 from documentos.models import AssinaturaDocumento, ValidacaoAssinaturaDocumento
-from documentos.services.assinaturas import diagnosticar_estrutura_assinatura_pdf, validar_pdf_por_upload
+from documentos.services.assinaturas import (
+    SIGNATURE_LABEL_HEIGHT_PT,
+    SIGNATURE_LABEL_WIDTH_PT,
+    diagnosticar_estrutura_assinatura_pdf,
+    validar_pdf_por_upload,
+)
 from eventos.models import Oficio, OficioAssinaturaPedido
 from eventos.services.oficio_assinatura import (
     TEXTO_CONFIRMACAO_IDENTIDADE_ASSINATURA_OFICIO,
@@ -346,8 +351,8 @@ class OficioAssinaturaFlowTest(TestCase):
         self.assertEqual(pos['box_w'], 0.32)
         self.assertEqual(pos['box_h'], 0.1)
         self.assertEqual(pos['page_index'], 0)
-        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 160)
-        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 56)
+        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], SIGNATURE_LABEL_WIDTH_PT)
+        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], SIGNATURE_LABEL_HEIGHT_PT)
         self.assertTrue(pedido.auditoria.get('codigo_validacao', '').startswith('CV-'))
         self.assertIn('/assinaturas/verificar/', pedido.auditoria.get('url_verificacao', ''))
         assinatura = AssinaturaDocumento.objects.get(pk=pedido.auditoria['assinatura_documento_id'])
@@ -392,8 +397,8 @@ class OficioAssinaturaFlowTest(TestCase):
         pos = pedido.auditoria.get('assinatura_posicao', {})
         self.assertEqual(pos['box_w'], 0.4)
         self.assertEqual(pos['box_h'], 0.12)
-        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], 160)
-        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], 56)
+        self.assertEqual(pos['box_pdf'][2] - pos['box_pdf'][0], SIGNATURE_LABEL_WIDTH_PT)
+        self.assertEqual(pos['box_pdf'][3] - pos['box_pdf'][1], SIGNATURE_LABEL_HEIGHT_PT)
 
     @patch('eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio', return_value=b'PDF_ORIGINAL')
     def test_gestao_assinado_nao_mostra_abrir_link(self, _render_mock):

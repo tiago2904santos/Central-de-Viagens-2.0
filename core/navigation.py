@@ -139,14 +139,15 @@ def get_sidebar_config():
                 ),
                 _item(
                     'documentos-validador',
-                    'Validador de documentos',
+                    'Gestão de Assinaturas',
                     'bi bi-shield-check',
-                    'documentos:assinatura-verificador',
+                    'documentos:assinatura-gestao',
                     order=5,
                     active_route_names=[
-                        'documentos:assinatura-verificador',
+                        'documentos:assinatura-gestao',
                         'documentos:assinatura-verificar-upload',
                         'documentos:assinatura-verificar-codigo',
+                        'documentos:assinatura-detalhe',
                     ],
                 ),
             ],

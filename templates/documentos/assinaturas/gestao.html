@@ -1,0 +1,149 @@
+{% extends 'includes/list/document_list_base.html' %}
+
+{% block page_title_block %}Gestão de Assinaturas{% endblock %}
+{% block page_header_title %}Gestão de Assinaturas{% endblock %}
+
+{% block list_title %}Gestão de Assinaturas{% endblock %}
+{% block list_subtitle %}
+<p class="system-list-header__subtitle">Consulte, valide e acompanhe assinaturas eletrônicas dos documentos.</p>
+{% endblock %}
+
+{% block list_header_actions %}
+<button type="button" class="btn btn-primary system-list-action-btn system-list-action-btn--header" data-bs-toggle="collapse" data-bs-target="#assinaturas-validacao-card" aria-expanded="true">
+    Validar documento
+</button>
+<a href="?exportar=csv" class="btn btn-outline-secondary system-list-action-btn system-list-action-btn--header">Exportar CSV</a>
+{% endblock %}
+
+{% block list_filter_primary_fields %}
+<div class="system-document-filter__field">
+    <label class="form-label" for="filtro-q">Busca geral</label>
+    <input class="form-control" type="text" id="filtro-q" name="q" value="{{ filtros.busca }}" placeholder="Nome, token, documento">
+</div>
+<div class="system-document-filter__field">
+    <label class="form-label" for="filtro-tipo">Tipo de documento</label>
+    <select class="form-select" id="filtro-tipo" name="tipo_documento">
+        <option value="">Todos</option>
+        {% for tipo in tipos_documento %}
+        <option value="{{ tipo }}" {% if filtros.tipo_documento == tipo %}selected{% endif %}>{{ tipo|title }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="system-document-filter__field">
+    <label class="form-label" for="filtro-status">Status</label>
+    <select class="form-select" id="filtro-status" name="status">
+        <option value="">Todos</option>
+        {% for valor, nome in status_choices %}
+        <option value="{{ valor }}" {% if filtros.status == valor %}selected{% endif %}>{{ nome }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% endblock %}
+
+{% block list_filter_secondary_fields %}
+<div class="system-document-filter__field">
+    <label class="form-label" for="filtro-assinante">Assinante</label>
+    <input class="form-control" type="text" id="filtro-assinante" name="assinante" value="{{ filtros.assinante }}" placeholder="Nome do assinante">
+</div>
+<div class="system-document-filter__field">
+    <label class="form-label" for="filtro-token">Token/código</label>
+    <input class="form-control" type="text" id="filtro-token" name="token" value="{{ filtros.token }}" placeholder="CV-2026-XXXXXX-YYYY">
+</div>
+{% endblock %}
+
+{% block page_result_content %}
+<section class="assinaturas-dashboard-cards">
+    <article class="assinaturas-dashboard-card"><strong>{{ indicadores.total }}</strong><span>Total de assinaturas</span></article>
+    <article class="assinaturas-dashboard-card"><strong>{{ indicadores.validas }}</strong><span>Assinaturas válidas</span></article>
+    <article class="assinaturas-dashboard-card"><strong>{{ indicadores.substituidas }}</strong><span>Documentos alterados</span></article>
+    <article class="assinaturas-dashboard-card"><strong>{{ pendentes_total }}</strong><span>Pendentes de assinatura</span></article>
+    <article class="assinaturas-dashboard-card"><strong>{{ indicadores.revogadas }}</strong><span>Revogadas</span></article>
+</section>
+
+<section class="card shadow-sm border-0 mb-4 collapse show" id="assinaturas-validacao-card">
+    <div class="card-body p-4">
+        <h2 class="h6 mb-3">Validar documento</h2>
+        <form method="post" class="row g-3 mb-2">
+            {% csrf_token %}
+            <input type="hidden" name="acao_validar" value="token">
+            <div class="col-lg-9">
+                <label class="form-label" for="token-validacao">Token ou URL de validação</label>
+                <input type="text" class="form-control" id="token-validacao" name="codigo_verificacao" value="{{ token_validacao }}" placeholder="CV-2026-XXXXXX-YYYY">
+            </div>
+            <div class="col-lg-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Validar</button>
+            </div>
+        </form>
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+            <input type="hidden" name="acao_validar" value="upload">
+            <div class="col-lg-8">
+                <label class="form-label" for="arquivo-pdf-validacao">Validar por upload de PDF</label>
+                <input type="file" class="form-control" id="arquivo-pdf-validacao" name="arquivo_pdf" accept=".pdf,application/pdf">
+            </div>
+            <div class="col-lg-4">
+                <label class="form-label" for="codigo-manual-upload">Token opcional</label>
+                <input type="text" class="form-control" id="codigo-manual-upload" name="codigo_verificacao" placeholder="CV-2026-XXXXXX-YYYY">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-outline-secondary">Validar PDF</button>
+            </div>
+        </form>
+        {% if validacao_erro %}
+        <div class="alert alert-danger mt-3 mb-0">{{ validacao_erro }}</div>
+        {% endif %}
+        {% if validacao_resultado %}
+        <div class="alert {% if validacao_resultado.status_documento_valido %}alert-success{% else %}alert-danger{% endif %} mt-3 mb-0">
+            Documento {{ validacao_resultado.status_documento_valido|yesno:'válido,inválido/alterado' }} ·
+            Token <code>{{ validacao_resultado.assinatura.codigo_verificacao }}</code> ·
+            Assinante {{ validacao_resultado.assinatura.nome_assinante }}.
+        </div>
+        {% endif %}
+        {% if upload_resultado %}
+        <div class="alert {% if upload_resultado.valido %}alert-success{% else %}alert-danger{% endif %} mt-3 mb-0">
+            {{ upload_resultado.mensagem }}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Documento</th>
+                    <th>Status</th>
+                    <th>Assinante</th>
+                    <th>CPF</th>
+                    <th>Data assinatura</th>
+                    <th>Token</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assinatura in assinaturas %}
+                <tr>
+                    <td>
+                        <strong>{{ assinatura.obj.metadata_json.nome_documento|default:assinatura.obj.content_type.model|title }}</strong><br>
+                        <span class="text-muted small">#{{ assinatura.obj.object_id }}</span>
+                    </td>
+                    <td><span class="badge assinatura-status assinatura-status--{{ assinatura.obj.status }}">{{ assinatura.obj.get_status_display }}</span></td>
+                    <td>{{ assinatura.obj.nome_assinante }}</td>
+                    <td>{{ assinatura.cpf_mascarado }}</td>
+                    <td>{{ assinatura.obj.data_hora_assinatura|date:'d/m/Y H:i' }}</td>
+                    <td><code>{{ assinatura.obj.codigo_verificacao }}</code></td>
+                    <td class="text-nowrap">
+                        <a href="{% url 'documentos:assinatura-detalhe' assinatura.obj.id %}" class="btn btn-sm btn-outline-primary">Detalhes</a>
+                        <a href="{% url 'documentos:assinatura-verificar-codigo' assinatura.obj.codigo_verificacao %}" class="btn btn-sm btn-outline-secondary">Validar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">Nenhuma assinatura encontrada com os filtros atuais.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+

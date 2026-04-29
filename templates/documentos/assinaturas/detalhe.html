@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalhes da assinatura{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <header class="mb-4">
+        <h1 class="h3 mb-2">Detalhes da assinatura</h1>
+        <p class="text-secondary mb-0">Dados do documento, integridade e histórico de validações.</p>
+    </header>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <h2 class="h6 text-uppercase text-muted mb-3">Documento e assinatura</h2>
+            <dl class="row mb-0">
+                <dt class="col-md-3">Tipo</dt>
+                <dd class="col-md-9">{{ assinatura.content_type.model|title }}</dd>
+                <dt class="col-md-3">Documento</dt>
+                <dd class="col-md-9">{{ assinatura.metadata_json.nome_documento|default:'Documento' }} #{{ assinatura.object_id }}</dd>
+                <dt class="col-md-3">Assinante</dt>
+                <dd class="col-md-9">{{ assinatura.nome_assinante }}</dd>
+                <dt class="col-md-3">CPF</dt>
+                <dd class="col-md-9">{{ cpf_mascarado }}</dd>
+                <dt class="col-md-3">Data/hora</dt>
+                <dd class="col-md-9">{{ assinatura.data_hora_assinatura|date:'d/m/Y H:i:s' }}</dd>
+                <dt class="col-md-3">Token</dt>
+                <dd class="col-md-9"><code>{{ assinatura.codigo_verificacao }}</code></dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <h2 class="h6 text-uppercase text-muted mb-3">Integridade</h2>
+            <dl class="row mb-0">
+                <dt class="col-md-3">Hash registrado</dt>
+                <dd class="col-md-9"><code class="small text-break">{{ assinatura.hash_pdf_assinado_sha256 }}</code></dd>
+                <dt class="col-md-3">Hash atual</dt>
+                <dd class="col-md-9"><code class="small text-break">{{ hash_atual_pdf_assinado|default:'indisponível' }}</code></dd>
+                <dt class="col-md-3">Resultado</dt>
+                <dd class="col-md-9">
+                    <span class="badge {% if status_documento_valido %}text-bg-success{% else %}text-bg-danger{% endif %}">
+                        {{ status_documento_valido|yesno:'Íntegro,Alterado/Inválido' }}
+                    </span>
+                </dd>
+            </dl>
+            <div class="d-flex gap-2 mt-3">
+                {% if assinatura.arquivo_pdf_assinado %}
+                <a class="btn btn-primary btn-sm" href="{{ assinatura.arquivo_pdf_assinado.url }}" target="_blank" rel="noopener">Abrir PDF assinado</a>
+                {% endif %}
+                <a class="btn btn-outline-secondary btn-sm" href="{% url 'documentos:assinatura-verificar-codigo' assinatura.codigo_verificacao %}">Validar por token</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <h2 class="h6 text-uppercase text-muted mb-3">Histórico de validações</h2>
+            <ul class="list-group list-group-flush">
+                {% for evento in historico_validacoes %}
+                <li class="list-group-item px-0">
+                    <strong>{{ evento.get_resultado_display }}</strong> em {{ evento.data_hora|date:'d/m/Y H:i:s' }}
+                </li>
+                {% empty %}
+                <li class="list-group-item px-0 text-muted">Ainda não há eventos de validação registrados.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

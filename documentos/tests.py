@@ -2,6 +2,7 @@ from io import BytesIO
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
@@ -74,9 +75,9 @@ class AssinaturaDocumentoServiceTest(TestCase):
         self.assertFalse(diag['page_text_has_signature_visual'])
         self.assertTrue(assinatura.metadata_json['assinatura_visual']['aparencia_vinculada_ao_campo_pdf'])
         self.assertTrue(assinatura.metadata_json['assinatura_visual']['qr_code'])
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['largura_pt'], 160)
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['altura_pt'], 56)
-        self.assertEqual(assinatura.metadata_json['assinatura_visual']['qr_tamanho_pt'], 44)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['largura_pt'], SIGNATURE_LABEL_WIDTH_PT)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['altura_pt'], SIGNATURE_LABEL_HEIGHT_PT)
+        self.assertEqual(assinatura.metadata_json['assinatura_visual']['qr_tamanho_pt'], SIGNATURE_LABEL_QR_PT)
         self.assertEqual(assinatura.metadata_json['assinatura_visual']['marca_dagua'], 'static/img/assinatura/cv-watermark.png')
         self.assertEqual(assinatura.metadata_json['assinatura_visual']['marca_dagua_opacidade'], 0.18)
         box_pdf = assinatura.posicao_carimbo_json['box_pdf']
@@ -256,3 +257,86 @@ class AssinaturaDocumentoServiceTest(TestCase):
         if linha_2:
             self.assertNotIn(linha_1.split(' ')[-1].lower(), {'de', 'da', 'do', 'dos', 'das', 'e'})
             self.assertNotIn(linha_2.split(' ')[0].lower(), {'de', 'da', 'do', 'dos', 'das', 'e'})
+
+
+class GestaoAssinaturasViewTest(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.admin = user_model.objects.create_user(username='admin-ass', password='123', is_staff=True)
+        self.usuario = user_model.objects.create_user(username='user-ass', password='123')
+        self.outro_usuario = user_model.objects.create_user(username='outro-ass', password='123')
+        self.oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO)
+
+        self.assinatura_usuario = AssinaturaDocumento.objects.create(
+            content_type=ContentType.objects.get_for_model(self.oficio, for_concrete_model=False),
+            object_id=self.oficio.pk,
+            usuario_assinante=self.usuario,
+            nome_assinante='Usuario Assinante',
+            cpf_assinante='12345678900',
+            data_hora_assinatura=timezone.now(),
+            codigo_verificacao='CV-2026-AAA111-BBBB',
+            hash_pdf_original_sha256='hash-original-a',
+            status=AssinaturaDocumento.STATUS_VALIDA,
+        )
+        self.assinatura_outro = AssinaturaDocumento.objects.create(
+            content_type=ContentType.objects.get_for_model(self.oficio, for_concrete_model=False),
+            object_id=self.oficio.pk,
+            usuario_assinante=self.outro_usuario,
+            nome_assinante='Outro Assinante',
+            cpf_assinante='98765432100',
+            data_hora_assinatura=timezone.now(),
+            codigo_verificacao='CV-2026-CCC222-DDDD',
+            hash_pdf_original_sha256='hash-original-b',
+            status=AssinaturaDocumento.STATUS_REVOGADA,
+        )
+
+    def test_usuario_autenticado_acessa_gestao(self):
+        self.client.force_login(self.usuario)
+        response = self.client.get(reverse('documentos:assinatura-gestao'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Gestão de Assinaturas')
+
+    def test_filtro_por_status_tipo_assinante_e_token(self):
+        self.client.force_login(self.admin)
+        base_url = reverse('documentos:assinatura-gestao')
+        r_status = self.client.get(base_url, {'status': AssinaturaDocumento.STATUS_REVOGADA})
+        self.assertContains(r_status, 'Outro Assinante')
+        self.assertNotContains(r_status, 'Usuario Assinante')
+
+        r_tipo = self.client.get(base_url, {'tipo_documento': 'oficio'})
+        self.assertContains(r_tipo, 'Usuario Assinante')
+        self.assertContains(r_tipo, 'Outro Assinante')
+
+        r_assinante = self.client.get(base_url, {'assinante': 'Usuario'})
+        self.assertContains(r_assinante, 'Usuario Assinante')
+        self.assertNotContains(r_assinante, 'Outro Assinante')
+
+        r_token = self.client.get(base_url, {'token': 'AAA111'})
+        self.assertContains(r_token, 'CV-2026-AAA111-BBBB')
+        self.assertNotContains(r_token, 'CV-2026-CCC222-DDDD')
+
+    def test_validacao_por_token_valido_inexistente_e_revogado(self):
+        self.client.force_login(self.admin)
+        url = reverse('documentos:assinatura-gestao')
+        ok = self.client.post(url, {'acao_validar': 'token', 'codigo_verificacao': self.assinatura_usuario.codigo_verificacao})
+        self.assertEqual(ok.status_code, 200)
+        self.assertContains(ok, 'Documento inválido/alterado')
+
+        nao_encontrado = self.client.post(url, {'acao_validar': 'token', 'codigo_verificacao': 'CV-2026-NAOEXI-0000'})
+        self.assertContains(nao_encontrado, 'Código de validação não encontrado')
+
+        revogado = self.client.post(url, {'acao_validar': 'token', 'codigo_verificacao': self.assinatura_outro.codigo_verificacao})
+        self.assertContains(revogado, 'Documento inválido/alterado')
+
+    def test_permissoes_usuario_versus_admin(self):
+        self.client.force_login(self.usuario)
+        lista = self.client.get(reverse('documentos:assinatura-gestao'))
+        self.assertContains(lista, 'Usuario Assinante')
+        self.assertNotContains(lista, 'Outro Assinante')
+
+        detalhe_bloqueado = self.client.get(reverse('documentos:assinatura-detalhe', kwargs={'assinatura_id': self.assinatura_outro.id}))
+        self.assertEqual(detalhe_bloqueado.status_code, 403)
+
+        self.client.force_login(self.admin)
+        detalhe_admin = self.client.get(reverse('documentos:assinatura-detalhe', kwargs={'assinatura_id': self.assinatura_outro.id}))
+        self.assertEqual(detalhe_admin.status_code, 200)
