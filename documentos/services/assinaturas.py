@@ -134,7 +134,7 @@ def gerar_codigo_verificacao() -> str:
 
 
 def gerar_url_validacao(assinatura, request=None) -> str:
-    url = reverse('documentos:assinatura-verificar-codigo', kwargs={'codigo': assinatura.codigo_verificacao})
+    url = reverse('documentos:assinatura-verificar', kwargs={'token': assinatura.codigo_verificacao})
     if request is not None:
         return request.build_absolute_uri(url)
     return url
@@ -980,6 +980,23 @@ def validar_codigo(codigo: str):
     if not clean:
         return None
     return AssinaturaDocumento.objects.filter(codigo_verificacao=clean).select_related('content_type', 'usuario_assinante').first()
+
+
+def extrair_token_de_url_ou_texto(valor: str) -> str:
+    raw = str(valor or '').strip()
+    if not raw:
+        return ''
+    upper = raw.upper()
+    if CODIGO_RE.search(upper):
+        return CODIGO_RE.search(upper).group(0)
+    if '://' in raw:
+        parsed = urlparse(raw)
+        caminho = (parsed.path or '').strip('/')
+        if caminho:
+            ultimo = caminho.split('/')[-1].upper()
+            if CODIGO_RE.fullmatch(ultimo):
+                return ultimo
+    return upper
 
 
 def validar_pdf_por_upload(arquivo_pdf, *, codigo_manual='', request=None) -> dict:

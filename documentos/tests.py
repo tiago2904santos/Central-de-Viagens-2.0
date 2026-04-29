@@ -181,14 +181,14 @@ class AssinaturaDocumentoServiceTest(TestCase):
             cpf_assinante='12345678900',
         )
 
-        url = reverse('documentos:assinatura-verificar-codigo', kwargs={'codigo': assinatura.codigo_verificacao})
+        url = reverse('documentos:assinatura-detalhe', kwargs={'referencia': assinatura.codigo_verificacao})
         valido = self.client.get(url)
         self.assertEqual(valido.status_code, 200)
         self.assertContains(valido, 'Assinante Teste')
         self.assertContains(valido, '***.456.789-**')
         self.assertContains(valido, assinatura.hash_pdf_assinado_sha256)
 
-        invalido = self.client.get(reverse('documentos:assinatura-verificar-codigo', kwargs={'codigo': 'CV-2026-XXXXXX-YYYY'}))
+        invalido = self.client.get(reverse('documentos:assinatura-detalhe', kwargs={'referencia': 'CV-2026-XXXXXX-YYYY'}))
         self.assertEqual(invalido.status_code, 404)
         self.assertIn('encontrado', invalido.content.decode('utf-8').lower())
 
@@ -319,14 +319,15 @@ class GestaoAssinaturasViewTest(TestCase):
         self.client.force_login(self.admin)
         url = reverse('documentos:assinatura-gestao')
         ok = self.client.post(url, {'acao_validar': 'token', 'codigo_verificacao': self.assinatura_usuario.codigo_verificacao})
-        self.assertEqual(ok.status_code, 200)
-        self.assertContains(ok, 'Documento inválido/alterado')
+        self.assertEqual(ok.status_code, 302)
+        self.assertIn(self.assinatura_usuario.codigo_verificacao, ok.url)
 
         nao_encontrado = self.client.post(url, {'acao_validar': 'token', 'codigo_verificacao': 'CV-2026-NAOEXI-0000'})
         self.assertContains(nao_encontrado, 'Código de validação não encontrado')
 
         revogado = self.client.post(url, {'acao_validar': 'token', 'codigo_verificacao': self.assinatura_outro.codigo_verificacao})
-        self.assertContains(revogado, 'Documento inválido/alterado')
+        self.assertEqual(revogado.status_code, 302)
+        self.assertIn(self.assinatura_outro.codigo_verificacao, revogado.url)
 
     def test_permissoes_usuario_versus_admin(self):
         self.client.force_login(self.usuario)
@@ -334,9 +335,29 @@ class GestaoAssinaturasViewTest(TestCase):
         self.assertContains(lista, 'Usuario Assinante')
         self.assertNotContains(lista, 'Outro Assinante')
 
-        detalhe_bloqueado = self.client.get(reverse('documentos:assinatura-detalhe', kwargs={'assinatura_id': self.assinatura_outro.id}))
-        self.assertEqual(detalhe_bloqueado.status_code, 403)
+        detalhe_bloqueado = self.client.get(reverse('documentos:assinatura-detalhe', kwargs={'referencia': self.assinatura_outro.codigo_verificacao}))
+        self.assertEqual(detalhe_bloqueado.status_code, 200)
+        self.assertNotContains(detalhe_bloqueado, 'Validar novamente por upload de PDF')
 
         self.client.force_login(self.admin)
-        detalhe_admin = self.client.get(reverse('documentos:assinatura-detalhe', kwargs={'assinatura_id': self.assinatura_outro.id}))
+        detalhe_admin = self.client.get(reverse('documentos:assinatura-detalhe', kwargs={'referencia': self.assinatura_outro.codigo_verificacao}))
         self.assertEqual(detalhe_admin.status_code, 200)
+
+    def test_validacao_por_url_completa_redireciona_para_detalhe(self):
+        self.client.force_login(self.admin)
+        url = reverse('documentos:assinatura-gestao')
+        resposta = self.client.post(
+            url,
+            {
+                'acao_validar': 'token',
+                'codigo_verificacao': f'https://sistema.local/assinaturas/verificar/{self.assinatura_usuario.codigo_verificacao}/',
+            },
+        )
+        self.assertEqual(resposta.status_code, 302)
+        self.assertIn(self.assinatura_usuario.codigo_verificacao, resposta.url)
+
+    def test_rota_verificar_redireciona_para_detalhe_unico(self):
+        url = reverse('documentos:assinatura-verificar', kwargs={'token': self.assinatura_usuario.codigo_verificacao})
+        resposta = self.client.get(url)
+        self.assertEqual(resposta.status_code, 302)
+        self.assertIn(reverse('documentos:assinatura-detalhe', kwargs={'referencia': self.assinatura_usuario.codigo_verificacao}), resposta.url)

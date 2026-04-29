@@ -145,6 +145,7 @@ def get_sidebar_config():
                     order=5,
                     active_route_names=[
                         'documentos:assinatura-gestao',
+                        'documentos:assinatura-verificar',
                         'documentos:assinatura-verificar-upload',
                         'documentos:assinatura-verificar-codigo',
                         'documentos:assinatura-detalhe',

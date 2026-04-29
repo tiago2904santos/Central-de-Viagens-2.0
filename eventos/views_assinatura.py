@@ -62,7 +62,7 @@ def _build_public_doc_context(request, pedido: OficioAssinaturaPedido):
     codigo_validacao = (pedido.auditoria or {}).get('assinatura_documento_codigo') or codigo_validacao_assinatura(pedido.token)
     if (pedido.auditoria or {}).get('assinatura_documento_codigo'):
         url_verificacao = request.build_absolute_uri(
-            reverse('documentos:assinatura-verificar-codigo', kwargs={'codigo': codigo_validacao})
+            reverse('documentos:assinatura-verificar', kwargs={'token': codigo_validacao})
         )
     else:
         url_verificacao = request.build_absolute_uri(
@@ -119,7 +119,7 @@ def _build_validation_block_payload(request, pedido: OficioAssinaturaPedido, nom
     codigo_validacao = (pedido.auditoria or {}).get('assinatura_documento_codigo') or codigo_validacao_assinatura(pedido.token)
     if (pedido.auditoria or {}).get('assinatura_documento_codigo'):
         validacao_url = request.build_absolute_uri(
-            reverse('documentos:assinatura-verificar-codigo', kwargs={'codigo': codigo_validacao})
+            reverse('documentos:assinatura-verificar', kwargs={'token': codigo_validacao})
         )
     else:
         validacao_url = request.build_absolute_uri(
@@ -306,8 +306,8 @@ def assinatura_oficio_assinar(request, token):
                     'codigo_validacao': assinatura_documento.codigo_verificacao,
                     'url_verificacao': request.build_absolute_uri(
                         reverse(
-                            'documentos:assinatura-verificar-codigo',
-                            kwargs={'codigo': assinatura_documento.codigo_verificacao},
+                            'documentos:assinatura-verificar',
+                            kwargs={'token': assinatura_documento.codigo_verificacao},
                         )
                     ),
                 }

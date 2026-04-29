@@ -134,8 +134,11 @@
                     <td>{{ assinatura.obj.data_hora_assinatura|date:'d/m/Y H:i' }}</td>
                     <td><code>{{ assinatura.obj.codigo_verificacao }}</code></td>
                     <td class="text-nowrap">
-                        <a href="{% url 'documentos:assinatura-detalhe' assinatura.obj.id %}" class="btn btn-sm btn-outline-primary">Detalhes</a>
-                        <a href="{% url 'documentos:assinatura-verificar-codigo' assinatura.obj.codigo_verificacao %}" class="btn btn-sm btn-outline-secondary">Validar</a>
+                        <a href="{% url 'documentos:assinatura-detalhe' assinatura.obj.codigo_verificacao %}" class="btn btn-sm btn-outline-primary">Detalhes</a>
+                        <a href="{% url 'documentos:assinatura-detalhe' assinatura.obj.codigo_verificacao %}?modo=verificacao" class="btn btn-sm btn-outline-secondary">Validar</a>
+                        {% if assinatura.obj.arquivo_pdf_assinado %}
+                        <a href="{{ assinatura.obj.arquivo_pdf_assinado.url }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">Abrir PDF</a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}
