@@ -24,6 +24,7 @@ from ..models import PrestacaoConta, RelatorioTecnicoPrestacao
 
 PLACEHOLDER_PATTERN = re.compile(r"\{\{[^{}]+\}\}")
 RT_TEMPLATE_PATH = Path(settings.BASE_DIR) / "templates_docx" / "prestacao_contas" / "relatorio-tecnico-model.docx"
+INFO_COMPLEMENTARES_FALLBACK = "(SE TROCAR DE VIATURA, FAVOR INFORMAR AQUI)"
 
 
 def _formata_data_extenso_pt(dt: date) -> str:
@@ -115,6 +116,7 @@ def obter_ou_criar_rt(prestacao, usuario=None):
 def montar_contexto_rt(rt):
     config = ConfiguracaoSistema.get_singleton()
     oficio = rt.oficio
+    info_complementares = (rt.informacoes_complementares or "").strip() or INFO_COMPLEMENTARES_FALLBACK
     return {
         "divisao": _valor_padrao(config.divisao, "DEPARTAMENTO DA POLICIA CIVIL"),
         "unidade_cabecalho": _valor_padrao(config.unidade, "ASSESSORIA DE COMUNICACAO SOCIAL"),
@@ -129,9 +131,10 @@ def montar_contexto_rt(rt):
         "passagem": _valor_padrao(rt.passagem, "Nao houve"),
         "motivo": (oficio.motivo or "").strip() or rt.motivo,
         "atividade": _valor_padrao(rt.atividade, ""),
-        "conclusao": rt.conclusao,
-        "medidas": rt.medidas,
-        "informacoes_complementares": rt.informacoes_complementares or "",
+        "conclusao": _valor_padrao(rt.conclusao, ""),
+        "medidas": _valor_padrao(rt.medidas, ""),
+        "informacoes_complementares": info_complementares,
+        "info_complementares": info_complementares,
         "unidade_rodape": _valor_padrao(config.unidade, "ASSESSORIA DE COMUNICACAO SOCIAL"),
         "endereco": ", ".join(
             [p for p in [config.logradouro, config.numero, config.bairro, config.cidade_endereco, config.uf] if p]

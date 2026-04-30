@@ -22,6 +22,7 @@ urlpatterns = [
     path('assinaturas/', include('documentos.urls')),
     path('integracoes/', include('integracoes.urls')),
     path('prestacao-contas/', include('prestacao_contas.urls')),
+    path('diarios-bordo/', include('diario_bordo.urls')),
     path('', include('core.urls')),
 ]
 

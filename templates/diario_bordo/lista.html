@@ -1,0 +1,106 @@
+{% extends 'includes/list/document_list_base.html' %}
+{% load static %}
+
+{% block page_title_block %}Diários de Bordo{% endblock %}
+{% block page_header_title %}Diários de Bordo{% endblock %}
+{% block list_page_class %}oficios-list-page diario-bordo-list-page system-list-page--complete{% endblock %}
+{% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.diarios-bordo.view-mode"{% endblock %}
+{% block list_title %}Diários de Bordo{% endblock %}
+{% block list_subtitle %}<p class="system-list-header__subtitle">Controle estruturado de viatura, responsável, trechos e assinatura.</p>{% endblock %}
+{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
+{% block list_header_aux_controls %}{% include 'includes/list/view_toggle.html' with aria_label='Alternar visualização da lista de diários de bordo' %}{% endblock %}
+{% block list_header_actions %}<a href="{% url 'diario_bordo:novo' %}" class="btn btn-primary system-list-action-btn">Novo diário</a>{% endblock %}
+
+{% block list_filter_primary_fields %}
+<div class="system-document-filter__field system-document-filter__field--search-xl">
+  <label for="db-search" class="form-label">Busca</label>
+  <input id="db-search" type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Ofício, e-protocolo, placa ou responsável" data-list-autosubmit>
+</div>
+<div class="system-document-filter__field system-document-filter__field--span-4">
+  <label for="db-status" class="form-label">Status</label>
+  <select id="db-status" name="status" data-list-autosubmit data-oficio-picker-search="false">
+    <option value="">Todos os status</option>
+    {% for key,label in status_choices %}
+    <option value="{{ key }}" {% if filters.status == key %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+</div>
+{% endblock %}
+
+{% block page_result_content %}
+<section class="oficios-table-panel oficios-view-pane oficios-view-pane--basic" aria-label="Tabela de diários de bordo">
+  {% if object_list %}
+  <div class="table-responsive">
+    <table class="table oficios-table mb-0">
+      <thead><tr><th>OFÍCIO</th><th>E-PROTOCOLO</th><th>VEÍCULO</th><th>RESPONSÁVEL</th><th>STATUS</th><th class="text-end">AÇÕES</th></tr></thead>
+      <tbody>
+      {% for diario in object_list %}
+      <tr>
+        <td data-label="OFÍCIO"><a href="{% url 'diario_bordo:editar' diario.id %}" class="oficios-table__link">{{ diario.oficio }}</a></td>
+        <td data-label="E-PROTOCOLO">{{ diario.protocolo }}</td>
+        <td data-label="VEÍCULO">{{ diario.veiculo }} · {{ diario.placa }}</td>
+        <td data-label="RESPONSÁVEL">{{ diario.responsavel }}</td>
+        <td data-label="STATUS"><span class="oficio-list-badge diario-status--{{ diario.status_key }}">{{ diario.status }}</span></td>
+        <td data-label="AÇÕES" class="text-end">
+          <div class="oficios-table__actions">
+            {% for action in diario.actions %}
+            <a href="{{ action.url }}" class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}" {% if action.download %}data-direct-download="true"{% endif %}>
+              <i class="bi {{ action.icon }}"></i>{% if action.icon_only %}<span class="visually-hidden">{{ action.label }}</span>{% else %}<span>{{ action.label }}</span>{% endif %}
+            </a>
+            {% endfor %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="oficios-table-panel__empty">Nenhum Diário de Bordo encontrado.</div>
+  {% endif %}
+</section>
+
+<section class="oficio-list-grid documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Cards de diários de bordo">
+  {% for diario in object_list %}
+  <article class="oficio-list-card diario-bordo-card">
+    <div class="oficio-list-rich-layout">
+      <div class="oficio-list-card__header">
+        <div class="oficio-list-chip-list oficio-list-chip-list--meta">
+          <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature is-key"><span class="oficio-list-chip__label">Ofício</span><span class="oficio-list-chip__value">{{ diario.oficio }}</span></span>
+          <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature"><span class="oficio-list-chip__label">E-protocolo</span><span class="oficio-list-chip__value">{{ diario.protocolo }}</span></span>
+          <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature is-date"><span class="oficio-list-chip__label">Trechos</span><span class="oficio-list-chip__value">{{ diario.trechos }}</span></span>
+        </div>
+        <div class="oficio-list-card__header-status"><span class="oficio-list-badge diario-status--{{ diario.status_key }}">{{ diario.status }}</span></div>
+      </div>
+      <div class="diario-bordo-card__body">
+        <section class="oficio-list-core-card oficio-list-surface oficio-list-surface--panel">
+          <div class="oficio-list-core-card__header"><h3 class="oficio-list-core-card__title">Veículo</h3><span class="oficio-list-core-card__meta">{{ diario.placa }}</span></div>
+          <p class="diario-bordo-card__headline">{{ diario.veiculo }}</p>
+          <p class="diario-bordo-card__support">Responsável: {{ diario.responsavel }}</p>
+        </section>
+        <section class="oficio-list-core-card oficio-list-surface oficio-list-surface--panel">
+          <div class="oficio-list-core-card__header"><h3 class="oficio-list-core-card__title">Arquivos</h3></div>
+          <div class="diario-bordo-file-status">
+            <span class="{% if diario.tem_pdf %}is-ready{% endif %}"><i class="bi bi-filetype-pdf"></i> PDF {% if diario.tem_pdf %}gerado{% else %}pendente{% endif %}</span>
+            <span class="{% if diario.tem_assinado %}is-ready{% endif %}"><i class="bi bi-file-earmark-check"></i> Assinado {% if diario.tem_assinado %}anexado{% else %}pendente{% endif %}</span>
+          </div>
+        </section>
+      </div>
+      <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+        <div class="oficio-list-card__footer-actions">
+          {% for action in diario.actions %}
+          <a href="{{ action.url }}" class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}" {% if action.download %}data-direct-download="true"{% endif %}>
+            <i class="bi {{ action.icon }}"></i>{% if action.icon_only %}<span class="visually-hidden">{{ action.label }}</span>{% else %}<span>{{ action.label }}</span>{% endif %}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </article>
+  {% empty %}
+  <div class="oficios-table-panel__empty">Nenhum Diário de Bordo encontrado.</div>
+  {% endfor %}
+</section>
+{% endblock %}
+
+{% block list_floating_actions %}{% include 'includes/list/floating_new_button.html' with url='/diarios-bordo/novo/' label='Novo diário' icon='bi-plus-lg' %}{% endblock %}

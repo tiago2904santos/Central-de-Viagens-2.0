@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Comprovante de transferência - Central de Viagens{% endblock %}
+
+{% block content %}
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page prestacao-wizard-page">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    {% include 'prestacao_contas/_wizard_header.html' %}
+    <div class="card oficio-stage-panel">
+      <div class="card-body">
+        <div class="oficio-stage-intro">
+          <div>
+            <span class="oficio-stage-kicker">Etapa 4</span>
+            <h2 class="oficio-stage-title">Comprovante de transferência</h2>
+            <p class="oficio-stage-description">Anexe o comprovante da transferência e mantenha o arquivo visível no fluxo.</p>
+          </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="oficio-stage-form">
+          {% csrf_token %}
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Arquivo do comprovante</h3>
+                <p class="oficio-stage-section-text">O arquivo atual pode ser aberto, baixado ou substituído.</p>
+              </div>
+            </div>
+            {% include 'prestacao_contas/partials/_document_upload.html' with label='Comprovante de transferência' field=form.comprovante_transferencia file=prestacao.comprovante_transferencia help_text='Arquivos aceitos: PDF, JPG ou PNG.' %}
+          </section>
+          <div class="oficio-wizard-footer-actions">
+            <a href="{% url 'prestacao_contas:step' prestacao.id 3 %}" class="btn btn-outline-secondary">Voltar</a>
+            <button type="submit" class="btn btn-secondary">Salvar</button>
+            <button type="submit" name="avancar" value="1" class="btn btn-primary">Avançar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/prestacao_contas.js' %}" defer></script>
+{% endblock %}

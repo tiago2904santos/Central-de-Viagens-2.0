@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir prestação - Central de Viagens{% endblock %}
+
+{% block content %}
+<div class="app-page-shell app-page-shell--confirm">
+  <div class="app-page-shell__inner">
+    <div class="card app-page-card app-page-card--spacious">
+      <div class="card-body">
+        <div class="oficio-stage-intro">
+          <div>
+            <span class="oficio-stage-kicker">Prestação de contas</span>
+            <h1 class="oficio-stage-title">Excluir prestação</h1>
+            <p class="oficio-stage-description">Confirme a exclusão da prestação vinculada ao ofício {{ prestacao.oficio.numero_formatado }}.</p>
+          </div>
+        </div>
+        <form method="post" class="oficio-wizard-footer-actions">
+          {% csrf_token %}
+          <a href="{% url 'prestacao_contas:lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-danger">Excluir</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

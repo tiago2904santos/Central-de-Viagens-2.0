@@ -4,6 +4,7 @@ import uuid
 from pathlib import Path
 
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -17,7 +18,31 @@ def _rt_upload_to(instance, filename):
     return f"prestacao_contas/rt/{instance.prestacao_id}/{stem}-{uuid.uuid4().hex[:10]}{ext}"
 
 
+# Funções de upload definidas no nível do módulo para migração
+def _despacho_upload_to(instance, filename):
+    base = Path(filename or "").name.strip() or "despacho.pdf"
+    ext = Path(base).suffix.lower() or ".pdf"
+    stem = slugify(Path(base).stem) or "despacho"
+    return f"prestacao_contas/despachos/{instance.pk or 'nova'}/{stem}-{uuid.uuid4().hex[:10]}{ext}"
+
+
+def _comprovante_upload_to(instance, filename):
+    base = Path(filename or "").name.strip() or "comprovante.pdf"
+    ext = Path(base).suffix.lower() or ".pdf"
+    stem = slugify(Path(base).stem) or "comprovante"
+    return f"prestacao_contas/comprovantes/{instance.pk or 'nova'}/{stem}-{uuid.uuid4().hex[:10]}{ext}"
+
+
 class PrestacaoConta(models.Model):
+    STATUS_RASCUNHO = "rascunho"
+    STATUS_EM_ANDAMENTO = "em_andamento"
+    STATUS_CONCLUIDA = "concluida"
+    STATUS_CHOICES = [
+        (STATUS_RASCUNHO, "Rascunho"),
+        (STATUS_EM_ANDAMENTO, "Em andamento"),
+        (STATUS_CONCLUIDA, "Concluida"),
+    ]
+
     STATUS_RT_PENDENTE = "pendente"
     STATUS_RT_RASCUNHO = "rascunho"
     STATUS_RT_GERADO = "gerado"
@@ -26,8 +51,31 @@ class PrestacaoConta(models.Model):
         (STATUS_RT_RASCUNHO, "Rascunho"),
         (STATUS_RT_GERADO, "Gerado"),
     ]
+    STATUS_DB_PENDENTE = "pendente"
+    STATUS_DB_RASCUNHO = "rascunho"
+    STATUS_DB_GERADO = "gerado"
+    STATUS_DB_CHOICES = [
+        (STATUS_DB_PENDENTE, "Pendente"),
+        (STATUS_DB_RASCUNHO, "Rascunho"),
+        (STATUS_DB_GERADO, "Gerado"),
+    ]
 
     oficio = models.ForeignKey("eventos.Oficio", on_delete=models.CASCADE, related_name="prestacoes_contas")
+    descricao_evento = models.CharField("Descricao do evento", max_length=255, blank=True, default="")
+    despacho_pdf = models.FileField(
+        "Despacho PDF",
+        upload_to=_despacho_upload_to,
+        validators=[FileExtensionValidator(["pdf"])],
+        blank=True,
+        null=True,
+    )
+    comprovante_transferencia = models.FileField(
+        "Comprovante de transferencia",
+        upload_to=_comprovante_upload_to,
+        validators=[FileExtensionValidator(["pdf", "jpg", "jpeg", "png"])],
+        blank=True,
+        null=True,
+    )
     servidor = models.ForeignKey(
         "cadastros.Viajante",
         on_delete=models.SET_NULL,
@@ -39,6 +87,13 @@ class PrestacaoConta(models.Model):
     rg_servidor = models.CharField("RG do servidor", max_length=30, blank=True, default="")
     cpf_servidor = models.CharField("CPF do servidor", max_length=14, blank=True, default="")
     cargo_servidor = models.CharField("Cargo do servidor", max_length=120, blank=True, default="")
+    status = models.CharField(
+        "Status da prestacao",
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_RASCUNHO,
+        db_index=True,
+    )
     status_rt = models.CharField(
         "Status do RT",
         max_length=20,
@@ -46,7 +101,16 @@ class PrestacaoConta(models.Model):
         default=STATUS_RT_PENDENTE,
         db_index=True,
     )
+    dados_db = models.JSONField("Dados do DB", blank=True, default=dict)
+    status_db = models.CharField(
+        "Status do DB",
+        max_length=20,
+        choices=STATUS_DB_CHOICES,
+        default=STATUS_DB_PENDENTE,
+        db_index=True,
+    )
     rt_atualizado_em = models.DateTimeField("RT atualizado em", null=True, blank=True)
+    db_atualizado_em = models.DateTimeField("DB atualizado em", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

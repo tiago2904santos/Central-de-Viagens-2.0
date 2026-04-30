@@ -1,8 +1,96 @@
 from django import forms
+from django.utils import timezone
 
-from eventos.services.plano_trabalho_domain import build_atividades_formatada, get_atividades_catalogo
+from eventos.services.plano_trabalho_domain import get_atividades_catalogo
 
-from .models import RelatorioTecnicoPrestacao, TextoPadraoDocumento
+from .models import PrestacaoConta, RelatorioTecnicoPrestacao, TextoPadraoDocumento
+
+
+class PrestacaoContaCreateForm(forms.ModelForm):
+    class Meta:
+        model = PrestacaoConta
+        fields = ["oficio", "servidor", "descricao_evento"]
+        widgets = {
+            "oficio": forms.Select(attrs={"class": "form-select"}),
+            "servidor": forms.Select(attrs={"class": "form-select"}),
+            "descricao_evento": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Ex.: Operacao Teste 123"}
+            ),
+        }
+
+
+class PrestacaoInformacoesForm(forms.ModelForm):
+    class Meta:
+        model = PrestacaoConta
+        fields = ["descricao_evento", "despacho_pdf"]
+        widgets = {
+            "descricao_evento": forms.TextInput(attrs={"class": "form-control"}),
+            "despacho_pdf": forms.ClearableFileInput(attrs={"class": "form-control", "accept": "application/pdf"}),
+        }
+
+    def clean_despacho_pdf(self):
+        arquivo = self.cleaned_data.get("despacho_pdf")
+        if arquivo and not arquivo.name.lower().endswith(".pdf"):
+            raise forms.ValidationError("Envie o despacho em PDF.")
+        return arquivo
+
+
+class PrestacaoComprovanteForm(forms.ModelForm):
+    class Meta:
+        model = PrestacaoConta
+        fields = ["comprovante_transferencia"]
+        widgets = {
+            "comprovante_transferencia": forms.ClearableFileInput(
+                attrs={"class": "form-control", "accept": "application/pdf,image/jpeg,image/png"}
+            ),
+        }
+
+    def clean_comprovante_transferencia(self):
+        arquivo = self.cleaned_data.get("comprovante_transferencia")
+        if arquivo:
+            allowed = (".pdf", ".jpg", ".jpeg", ".png")
+            if not arquivo.name.lower().endswith(allowed):
+                raise forms.ValidationError("Envie PDF, JPG ou PNG.")
+        return arquivo
+
+
+class PrestacaoDBForm(forms.Form):
+    db_numero = forms.CharField(
+        label="Numero do DB",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Numero ou identificacao"}),
+    )
+    db_descricao = forms.CharField(
+        label="Descricao do DB",
+        required=False,
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+    )
+    db_observacoes = forms.CharField(
+        label="Observacoes",
+        required=False,
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+    )
+
+    def __init__(self, *args, prestacao=None, **kwargs):
+        self.prestacao = prestacao
+        initial = kwargs.pop("initial", None) or {}
+        if prestacao:
+            dados = prestacao.dados_db or {}
+            initial = {**dados, **initial}
+        super().__init__(*args, initial=initial, **kwargs)
+
+    def save(self):
+        if not self.prestacao:
+            return None
+        self.prestacao.dados_db = {
+            "db_numero": self.cleaned_data.get("db_numero", ""),
+            "db_descricao": self.cleaned_data.get("db_descricao", ""),
+            "db_observacoes": self.cleaned_data.get("db_observacoes", ""),
+        }
+        self.prestacao.status_db = PrestacaoConta.STATUS_DB_RASCUNHO
+        self.prestacao.db_atualizado_em = timezone.now()
+        self.prestacao.save(update_fields=["dados_db", "status_db", "db_atualizado_em", "updated_at"])
+        return self.prestacao
 
 
 class RelatorioTecnicoPrestacaoForm(forms.ModelForm):
@@ -120,7 +208,11 @@ class RelatorioTecnicoPrestacaoForm(forms.ModelForm):
             cleaned["informacoes_complementares"] = cleaned["info_modelo"].texto
 
         codigos = cleaned.get("atividades_codigos") or []
-        cleaned["atividade"] = build_atividades_formatada(",".join(codigos))
+        if codigos:
+            nomes_por_codigo = {item["codigo"]: item["nome"] for item in get_atividades_catalogo()}
+            cleaned["atividade"] = ", ".join(
+                nomes_por_codigo.get(codigo, codigo) for codigo in codigos if codigo
+            )
         cleaned["atividade_codigos"] = ",".join(codigos)
 
         if cleaned.get("teve_translado"):

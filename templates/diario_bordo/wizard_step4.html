@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Conferência e geração - Diário de Bordo{% endblock %}
+{% block content %}
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page diario-bordo-wizard-page">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    {% include 'diario_bordo/_wizard_header.html' %}
+    <div class="card oficio-stage-panel"><div class="card-body">
+      <div class="oficio-stage-intro"><div><span class="oficio-stage-kicker">Etapa 4</span><h2 class="oficio-stage-title">Conferência e geração</h2><p class="oficio-stage-description">Confira os dados persistidos antes de gerar o documento.</p></div></div>
+      <section class="oficio-stage-section">
+        <div class="diario-review-grid">
+          <span><strong>Ofício</strong>{{ diario.numero_oficio|default:"Não informado" }}</span>
+          <span><strong>E-protocolo</strong>{{ diario.e_protocolo|default:"Não informado" }}</span>
+          <span><strong>Veículo</strong>{{ diario.tipo_veiculo|default:"Não informado" }}</span>
+          <span><strong>Combustível</strong>{{ diario.combustivel|default:"Não informado" }}</span>
+          <span><strong>Placa oficial</strong>{{ diario.placa_oficial|default:"Não informado" }}</span>
+          <span><strong>Placa reservada</strong>{{ diario.placa_reservada|default:"Não informado" }}</span>
+          <span><strong>Motorista</strong>{{ diario.nome_responsavel|default:"Não informado" }}</span>
+          <span><strong>RG</strong>{{ diario.rg_responsavel|default:"Não informado" }}</span>
+        </div>
+      </section>
+      <section class="oficio-stage-section">
+        <div class="table-responsive">
+          <table class="table oficios-table mb-0">
+            <thead><tr><th>SAÍDA</th><th>KM INICIAL</th><th>CHEGADA</th><th>KM FINAL</th><th>ORIGEM</th><th>DESTINO</th><th>ABASTECIMENTO</th></tr></thead>
+            <tbody>
+              {% for trecho in trechos %}
+              <tr><td>{{ trecho.data_saida|date:"d/m/Y" }} {{ trecho.hora_saida|time:"H:i" }}</td><td>{{ trecho.km_inicial|default:"-" }}</td><td>{{ trecho.data_chegada|date:"d/m/Y" }} {{ trecho.hora_chegada|time:"H:i" }}</td><td>{{ trecho.km_final|default:"-" }}</td><td>{{ trecho.origem }}</td><td>{{ trecho.destino }}</td><td>{% if trecho.necessidade_abastecimento %}(X) Sim ( ) Não{% else %}( ) Sim (X) Não{% endif %}</td></tr>
+              {% empty %}
+              <tr><td colspan="7" class="text-center text-muted py-4">Nenhum trecho cadastrado.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <form method="post" class="oficio-wizard-footer-actions">{% csrf_token %}
+        <a href="{% url 'diario_bordo:step' diario.id 3 %}" class="btn btn-outline-secondary">Voltar para edição</a>
+        <button type="submit" class="btn btn-secondary">Salvar</button>
+        <button type="submit" name="gerar_xlsx" value="1" class="btn btn-doc-action btn-doc-action--secondary"><i class="bi bi-filetype-xlsx"></i><span>Gerar XLSX</span></button>
+        <button type="submit" name="gerar_pdf" value="1" class="btn btn-doc-action btn-doc-action--pdf"><i class="bi bi-filetype-pdf"></i><span>Gerar PDF</span></button>
+        {% if diario.arquivo_xlsx %}<a href="{% url 'diario_bordo:xlsx' diario.id %}" class="btn btn-outline-primary" data-direct-download="true">Baixar XLSX</a>{% endif %}
+        {% if diario.arquivo_pdf %}<a href="{% url 'diario_bordo:pdf' diario.id %}" class="btn btn-outline-primary" data-direct-download="true">Baixar PDF</a>{% endif %}
+        <a href="{% url 'diario_bordo:step' diario.id 5 %}" class="btn btn-primary">Avançar</a>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

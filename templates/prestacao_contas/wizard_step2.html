@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gerador de RT - Central de Viagens{% endblock %}
+
+{% block content %}
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page prestacao-wizard-page">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    {% include 'prestacao_contas/_wizard_header.html' %}
+    <div class="card oficio-stage-panel">
+      <div class="card-body">
+        <div class="oficio-stage-intro">
+          <div>
+            <span class="oficio-stage-kicker">Etapa 2</span>
+            <h2 class="oficio-stage-title">Gerador de RT</h2>
+            <p class="oficio-stage-description">Revise os dados do relatório técnico sem sair do wizard da prestação.</p>
+          </div>
+        </div>
+        <form method="post" class="oficio-stage-form">
+          {% csrf_token %}
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Dados do servidor</h3>
+                <p class="oficio-stage-section-text">Informações herdadas da prestação e do cadastro.</p>
+              </div>
+            </div>
+            <div class="rt-grid rt-grid-3">
+              <div class="form-group"><label>Nome</label><div class="rt-readonly">{{ dados_servidor.nome|default:"Não informado" }}</div></div>
+              <div class="form-group"><label>RG</label><div class="rt-readonly">{{ dados_servidor.rg|default:"Não informado" }}</div></div>
+              <div class="form-group"><label>CPF</label><div class="rt-readonly">{{ dados_servidor.cpf|default:"Não informado" }}</div></div>
+            </div>
+          </section>
+
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Valores utilizados</h3>
+              </div>
+            </div>
+            <div class="rt-grid rt-grid-3">
+              <div class="form-group"><label for="{{ form.diaria.id_for_label }}">Diária</label>{{ form.diaria }}</div>
+              <div class="form-group"><label for="{{ form.combustivel.id_for_label }}">Combustível</label>{{ form.combustivel }}</div>
+            </div>
+            <div class="rt-grid rt-grid-2">
+              <div class="form-group rt-boolean-group">
+                <label>Teve translado?</label>
+                <div class="form-check">{{ form.teve_translado }} <label class="form-check-label" for="{{ form.teve_translado.id_for_label }}">Sim</label></div>
+                <div class="rt-money-field" data-money-wrapper="translado">
+                  <label for="{{ form.valor_translado.id_for_label }}">Valor translado (R$)</label>{{ form.valor_translado }}
+                </div>
+              </div>
+              <div class="form-group rt-boolean-group">
+                <label>Teve passagem?</label>
+                <div class="form-check">{{ form.teve_passagem }} <label class="form-check-label" for="{{ form.teve_passagem.id_for_label }}">Sim</label></div>
+                <div class="rt-money-field" data-money-wrapper="passagem">
+                  <label for="{{ form.valor_passagem.id_for_label }}">Valor passagem (R$)</label>{{ form.valor_passagem }}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Conteúdo do RT</h3>
+                <p class="oficio-stage-section-text">A descrição do evento permanece vinculada ao resumo final.</p>
+              </div>
+            </div>
+            <div class="rt-grid rt-grid-1">
+              <div class="form-group"><label for="{{ form.motivo.id_for_label }}">Descrição do evento / motivo</label>{{ form.motivo }}</div>
+              <div class="form-group">
+                <div class="prestacao-model-field__head">
+                  <label>Objetivo da participação</label>
+                  <a class="btn btn-outline-secondary btn-sm" href="{% url 'eventos:plano-trabalho-atividades-lista' %}" target="_blank" rel="noopener">Gerenciar atividades</a>
+                </div>
+                <div class="pt-activity-grid">
+                  {% for checkbox in form.atividades_codigos %}
+                  <label class="pt-activity-item" for="{{ checkbox.id_for_label }}"><span class="form-check">{{ checkbox.tag }} <span class="form-check-label">{{ checkbox.choice_label }}</span></span></label>
+                  {% endfor %}
+                </div>
+                <small class="form-text">As atividades selecionadas serão impressas no RT separadas por vírgula.</small>
+                <div class="d-none">{{ form.atividade }}</div>
+              </div>
+              <div class="form-group prestacao-model-field">
+                <div class="prestacao-model-field__head">
+                  <label for="id_conclusao_modelo">Conclusão (texto pronto)</label>
+                  <a class="btn btn-outline-secondary btn-sm" href="{% url 'prestacao_contas:textos-padrao' %}?categoria=relatorio_tecnico_conclusao" target="_blank" rel="noopener">Gerenciar modelos</a>
+                </div>
+                <select name="conclusao_modelo" id="id_conclusao_modelo" class="form-select">
+                  <option value="">Selecione texto pronto</option>
+                  {% for obj in form.fields.conclusao_modelo.queryset %}
+                  <option value="{{ obj.id }}" data-text="{{ obj.texto|escape }}" {% if form.conclusao_modelo.value|stringformat:"s" == obj.id|stringformat:"s" %}selected{% endif %}>{{ obj.titulo }}</option>
+                  {% endfor %}
+                </select>
+                <label class="mt-2" for="{{ form.conclusao.id_for_label }}">Conclusão final</label>
+                {{ form.conclusao }}
+              </div>
+              <div class="form-group prestacao-model-field">
+                <div class="prestacao-model-field__head">
+                  <label for="id_medidas_modelo">Medidas (texto pronto)</label>
+                  <a class="btn btn-outline-secondary btn-sm" href="{% url 'prestacao_contas:textos-padrao' %}?categoria=relatorio_tecnico_medidas" target="_blank" rel="noopener">Gerenciar modelos</a>
+                </div>
+                <select name="medidas_modelo" id="id_medidas_modelo" class="form-select">
+                  <option value="">Selecione texto pronto</option>
+                  {% for obj in form.fields.medidas_modelo.queryset %}
+                  <option value="{{ obj.id }}" data-text="{{ obj.texto|escape }}" {% if form.medidas_modelo.value|stringformat:"s" == obj.id|stringformat:"s" %}selected{% endif %}>{{ obj.titulo }}</option>
+                  {% endfor %}
+                </select>
+                <label class="mt-2" for="{{ form.medidas.id_for_label }}">Medidas finais</label>
+                {{ form.medidas }}
+              </div>
+              <div class="form-group prestacao-model-field">
+                <div class="prestacao-model-field__head">
+                  <label for="id_info_modelo">Informações complementares (texto pronto)</label>
+                  <a class="btn btn-outline-secondary btn-sm" href="{% url 'prestacao_contas:textos-padrao' %}?categoria=relatorio_tecnico_informacoes_complementares" target="_blank" rel="noopener">Gerenciar modelos</a>
+                </div>
+                <select name="info_modelo" id="id_info_modelo" class="form-select">
+                  <option value="">Selecione texto pronto</option>
+                  {% for obj in form.fields.info_modelo.queryset %}
+                  <option value="{{ obj.id }}" data-text="{{ obj.texto|escape }}" {% if form.info_modelo.value|stringformat:"s" == obj.id|stringformat:"s" %}selected{% endif %}>{{ obj.titulo }}</option>
+                  {% endfor %}
+                </select>
+                <label class="mt-2" for="{{ form.informacoes_complementares.id_for_label }}">Informações complementares finais</label>
+                {{ form.informacoes_complementares }}
+                <small class="form-text">Se ficar vazio, o RT imprimirá: (SE TROCAR DE VIATURA, FAVOR INFORMAR AQUI)</small>
+              </div>
+            </div>
+          </section>
+
+          <div class="oficio-wizard-footer-actions">
+            <a href="{% url 'prestacao_contas:step' prestacao.id 1 %}" class="btn btn-outline-secondary">Voltar</a>
+            <button type="submit" class="btn btn-secondary">Salvar</button>
+            <button type="submit" formaction="{% url 'prestacao_contas:relatorio-tecnico-docx' prestacao.id %}" class="btn btn-outline-primary">Gerar DOCX</button>
+            <button type="submit" formaction="{% url 'prestacao_contas:relatorio-tecnico-pdf' prestacao.id %}" class="btn btn-outline-primary">Gerar PDF</button>
+            <button type="submit" name="avancar" value="1" class="btn btn-primary">Avançar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/prestacao_contas.js' %}" defer></script>
+{% endblock %}

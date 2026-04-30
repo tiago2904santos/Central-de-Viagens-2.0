@@ -186,6 +186,31 @@
               </div>
             </section>
 
+            <section class="app-summary-section oficio-summary-section oficio-step4-card oficio-step4-card--diario-bordo">
+              <div class="oficio-step4-card-head">
+                <h2>Diário de Bordo</h2>
+                <span class="oficio-step4-head-meta">Controle da viatura</span>
+              </div>
+              {% with diario=oficio.diarios_bordo.first %}
+              {% if diario %}
+              <div class="diario-review-grid">
+                <span><strong>Status</strong>{{ diario.get_status_display }}</span>
+                <span><strong>Veículo</strong>{{ diario.tipo_veiculo|default:"Não informado" }}</span>
+                <span><strong>Placa</strong>{{ diario.placa_oficial|default:"Não informada" }}</span>
+                <span><strong>Trechos</strong>{{ diario.trechos.count }}</span>
+              </div>
+              <div class="oficio-list-card__footer-actions mt-3">
+                <a href="{% url 'diario_bordo:editar' diario.id %}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir Diário de Bordo</span></a>
+                {% if diario.arquivo_pdf %}<a href="{% url 'diario_bordo:pdf' diario.id %}" class="btn btn-sm btn-doc-action btn-doc-action--pdf" data-direct-download="true"><i class="bi bi-filetype-pdf"></i><span>PDF</span></a>{% endif %}
+                <a href="{% url 'diario_bordo:step' diario.id 5 %}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-upload"></i><span>Anexar assinado</span></a>
+              </div>
+              {% else %}
+              <p class="text-muted">Nenhum Diário de Bordo vinculado a este ofício.</p>
+              <a href="{% url 'diario_bordo:novo-oficio' oficio.id %}" class="btn btn-primary">Gerar Diário de Bordo</a>
+              {% endif %}
+              {% endwith %}
+            </section>
+
             <section class="app-summary-section oficio-summary-section oficio-step4-card oficio-step4-card--narrativa">
               <div class="oficio-step4-card-head">
                 <h2>Motivo e justificativa</h2>

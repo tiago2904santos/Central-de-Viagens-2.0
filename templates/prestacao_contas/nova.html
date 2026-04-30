@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Nova prestação - Central de Viagens{% endblock %}
+
+{% block content %}
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page prestacao-wizard-page">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    <div class="card oficio-stage-panel">
+      <div class="card-body">
+        <div class="oficio-stage-intro">
+          <div>
+            <span class="oficio-stage-kicker">Prestação de contas</span>
+            <h2 class="oficio-stage-title">Nova prestação</h2>
+            <p class="oficio-stage-description">Crie o registro inicial e continue no wizard documental.</p>
+          </div>
+        </div>
+        <form method="post" class="oficio-stage-form">
+          {% csrf_token %}
+          <section class="oficio-stage-section">
+            <div class="row g-3">
+              <div class="col-md-6"><label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício</label>{{ form.oficio }}</div>
+              <div class="col-md-6"><label class="form-label" for="{{ form.servidor.id_for_label }}">Servidor</label>{{ form.servidor }}</div>
+              <div class="col-12"><label class="form-label" for="{{ form.descricao_evento.id_for_label }}">Descrição do evento</label>{{ form.descricao_evento }}</div>
+            </div>
+          </section>
+          <div class="oficio-wizard-footer-actions">
+            <a href="{% url 'prestacao_contas:lista' %}" class="btn btn-outline-secondary">Voltar</a>
+            <button type="submit" class="btn btn-primary">Criar e abrir</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

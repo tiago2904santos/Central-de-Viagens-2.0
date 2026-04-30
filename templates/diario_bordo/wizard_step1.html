@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Identificação - Diário de Bordo{% endblock %}
+{% block content %}
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page diario-bordo-wizard-page">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    {% include 'diario_bordo/_wizard_header.html' %}
+    <div class="card oficio-stage-panel"><div class="card-body">
+      <div class="oficio-stage-intro"><div><span class="oficio-stage-kicker">Etapa 1</span><h2 class="oficio-stage-title">Identificação</h2><p class="oficio-stage-description">Vincule ofício, roteiro e prestação, mantendo os dados institucionais no documento.</p></div></div>
+      <form method="post" class="oficio-stage-form">{% csrf_token %}
+        <section class="oficio-stage-section">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label" for="{{ form.oficio.id_for_label }}">Ofício vinculado</label>{{ form.oficio }}</div>
+            <div class="col-md-6"><label class="form-label" for="{{ form.e_protocolo.id_for_label }}">E-protocolo</label>{{ form.e_protocolo }}</div>
+            <div class="col-md-6"><label class="form-label" for="{{ form.divisao.id_for_label }}">Divisão</label>{{ form.divisao }}</div>
+            <div class="col-md-6"><label class="form-label" for="{{ form.unidade_cabecalho.id_for_label }}">Unidade/cabeçalho</label>{{ form.unidade_cabecalho }}</div>
+            <div class="col-md-6"><label class="form-label" for="{{ form.roteiro.id_for_label }}">Roteiro vinculado</label>{{ form.roteiro }}</div>
+            <div class="col-md-6"><label class="form-label" for="{{ form.prestacao.id_for_label }}">Prestação de Contas</label>{{ form.prestacao }}</div>
+            <div class="col-md-4"><label class="form-label" for="{{ form.status.id_for_label }}">Status</label>{{ form.status }}</div>
+          </div>
+        </section>
+        <div class="oficio-wizard-footer-actions"><a href="{{ return_to_url }}" class="btn btn-outline-secondary">Voltar</a><button type="submit" class="btn btn-secondary">Salvar</button><button type="submit" name="avancar" value="1" class="btn btn-primary">Avançar</button></div>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

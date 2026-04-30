@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Resumo da prestação - Central de Viagens{% endblock %}
+
+{% block content %}
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page prestacao-wizard-page">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    {% include 'prestacao_contas/_wizard_header.html' %}
+    <div class="card oficio-stage-panel">
+      <div class="card-body">
+        <div class="oficio-stage-intro">
+          <div>
+            <span class="oficio-stage-kicker">Etapa 5</span>
+            <h2 class="oficio-stage-title">Resumo para copiar e colar</h2>
+            <p class="oficio-stage-description">Linhas documentais prontas para copiar individualmente ou em bloco.</p>
+          </div>
+        </div>
+
+        <section class="oficio-stage-section">
+          <div class="oficio-stage-section-head">
+            <div>
+              <h3 class="oficio-stage-section-title">Resumo executivo</h3>
+              <p class="oficio-stage-section-text">Cada botão copia exatamente o texto exibido na linha.</p>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm" data-copy-all data-copy-feedback="Copiado">Copiar tudo</button>
+          </div>
+          <div class="prestacao-copy-list" data-copy-list>
+            {% for linha in resumo_linhas %}
+            <div class="prestacao-copy-row">
+              <code data-copy-text>{{ linha }}</code>
+              <button type="button" class="btn btn-sm btn-doc-action btn-doc-action--secondary" data-copy-line data-copy-feedback="Copiado">
+                <i class="bi bi-clipboard"></i>
+                <span>Copiar</span>
+              </button>
+            </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <div class="oficio-wizard-footer-actions">
+          <a href="{% url 'prestacao_contas:step' prestacao.id 4 %}" class="btn btn-outline-secondary">Voltar</a>
+          <a href="{{ return_to_url }}" class="btn btn-primary">Concluir</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/prestacao_contas.js' %}" defer></script>
+{% endblock %}

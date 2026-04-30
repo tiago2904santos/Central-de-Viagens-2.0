@@ -1,0 +1,21 @@
+<div class="prestacao-upload-card">
+    <div class="prestacao-upload-card__current">
+        <span class="prestacao-upload-card__label">{{ label }}</span>
+        {% if file %}
+        <a href="{{ file.url }}" target="_blank" rel="noopener" class="prestacao-upload-card__file">
+            <i class="bi bi-file-earmark-check"></i>
+            <span>{{ file.name|slice:"-70:" }}</span>
+        </a>
+        {% else %}
+        <span class="prestacao-upload-card__empty">
+            <i class="bi bi-file-earmark"></i>
+            Nenhum arquivo anexado
+        </span>
+        {% endif %}
+    </div>
+    <div class="prestacao-upload-card__input">
+        {{ field }}
+        {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors.0 }}</div>{% endif %}
+        <small class="form-text">{{ help_text }}</small>
+    </div>
+</div>

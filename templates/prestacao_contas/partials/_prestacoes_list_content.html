@@ -1,0 +1,118 @@
+<section class="oficios-table-panel oficios-view-pane oficios-view-pane--basic" aria-label="Tabela de prestações de contas">
+    {% if object_list %}
+    <div class="table-responsive">
+        <table class="table oficios-table mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">PRESTAÇÃO</th>
+                    <th scope="col">EVENTO</th>
+                    <th scope="col">SERVIDOR</th>
+                    <th scope="col">DOCUMENTOS</th>
+                    <th scope="col">STATUS</th>
+                    <th scope="col" class="text-end">AÇÕES</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prestacao in object_list %}
+                <tr id="prestacao-row-{{ prestacao.id }}">
+                    <td data-label="PRESTAÇÃO"><a href="{% url 'prestacao_contas:editar' prestacao.id %}" class="oficios-table__link">{{ prestacao.identificacao }}</a></td>
+                    <td data-label="EVENTO">{{ prestacao.descricao }}</td>
+                    <td data-label="SERVIDOR">{{ prestacao.servidor }}</td>
+                    <td data-label="DOCUMENTOS">
+                        <span class="oficio-list-badge {% if prestacao.despacho_url %}oficio-list-badge--success{% else %}oficio-list-badge--muted{% endif %}">Despacho</span>
+                        <span class="oficio-list-badge {% if prestacao.comprovante_url %}oficio-list-badge--success{% else %}oficio-list-badge--muted{% endif %}">Comprovante</span>
+                    </td>
+                    <td data-label="STATUS"><span class="oficio-list-badge {{ prestacao.status_css_class }}">{{ prestacao.status_label }}</span></td>
+                    <td data-label="AÇÕES" class="text-end">
+                        <div class="oficios-table__actions">
+                            {% for action in prestacao.actions %}
+                            <a href="{{ action.url }}" class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}" aria-label="{{ action.aria_label }}" {% if action.download %}data-direct-download="true"{% endif %}>
+                                <i class="bi {{ action.icon }}"></i>
+                                {% if action.icon_only %}<span class="visually-hidden">{{ action.label }}</span>{% else %}<span>{{ action.label }}</span>{% endif %}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="oficios-table-panel__empty">Nenhuma prestação encontrada com os filtros atuais.</div>
+    {% endif %}
+</section>
+
+<section class="oficio-list-grid documento-cascade-grid oficios-view-pane oficios-view-pane--rich" aria-label="Cards de prestações de contas">
+    {% for prestacao in object_list %}
+    <article class="oficio-list-card prestacao-list-card" id="prestacao-card-{{ prestacao.id }}">
+        <div class="oficio-list-rich-layout">
+            <div class="oficio-list-card__header">
+                <div class="oficio-list-chip-list oficio-list-chip-list--meta">
+                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature is-key">
+                        <span class="oficio-list-chip__label">Prestação</span>
+                        <span class="oficio-list-chip__value">{{ prestacao.identificacao }}</span>
+                    </span>
+                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature">
+                        <span class="oficio-list-chip__label">Criada em</span>
+                        <span class="oficio-list-chip__value">{{ prestacao.created_display }}</span>
+                    </span>
+                    <span class="oficio-list-chip oficio-list-chip--meta oficio-list-surface oficio-list-surface--feature is-date">
+                        <span class="oficio-list-chip__label">Atualizada</span>
+                        <span class="oficio-list-chip__value">{{ prestacao.updated_display }}</span>
+                    </span>
+                </div>
+                <div class="oficio-list-card__header-status">
+                    <span class="oficio-list-badge {{ prestacao.status_css_class }}">{{ prestacao.status_label }}</span>
+                </div>
+            </div>
+
+            <div class="prestacao-list-card__body">
+                <section class="oficio-list-core-card oficio-list-surface oficio-list-surface--panel">
+                    <div class="oficio-list-core-card__header">
+                        <h3 class="oficio-list-core-card__title">Descrição do evento</h3>
+                        <span class="oficio-list-core-card__meta">{{ prestacao.status_rt_label }}</span>
+                    </div>
+                    <p class="prestacao-list-card__description">{{ prestacao.descricao }}</p>
+                    <div class="prestacao-list-card__meta-grid">
+                        <span><strong>Servidor</strong>{{ prestacao.servidor }}</span>
+                        <span><strong>RT</strong>{{ prestacao.status_rt_label }}</span>
+                        <span><strong>DB</strong>{{ prestacao.status_db_label }}</span>
+                    </div>
+                </section>
+
+                <section class="oficio-list-core-card oficio-list-surface oficio-list-surface--panel">
+                    <div class="oficio-list-core-card__header">
+                        <h3 class="oficio-list-core-card__title">Anexos documentais</h3>
+                    </div>
+                    <div class="prestacao-document-status-list">
+                        <a class="prestacao-document-status oficio-list-surface oficio-list-surface--soft {% if prestacao.despacho_url %}is-ready{% endif %}" {% if prestacao.despacho_url %}href="{{ prestacao.despacho_url }}" target="_blank" rel="noopener"{% endif %}>
+                            <i class="bi {% if prestacao.despacho_url %}bi-file-earmark-check{% else %}bi-file-earmark{% endif %}"></i>
+                            <span>Despacho</span>
+                            <small>{{ prestacao.despacho_nome|default:"Não anexado" }}</small>
+                        </a>
+                        <a class="prestacao-document-status oficio-list-surface oficio-list-surface--soft {% if prestacao.comprovante_url %}is-ready{% endif %}" {% if prestacao.comprovante_url %}href="{{ prestacao.comprovante_url }}" target="_blank" rel="noopener"{% endif %}>
+                            <i class="bi {% if prestacao.comprovante_url %}bi-file-earmark-check{% else %}bi-file-earmark{% endif %}"></i>
+                            <span>Comprovante</span>
+                            <small>{{ prestacao.comprovante_nome|default:"Não anexado" }}</small>
+                        </a>
+                    </div>
+                </section>
+            </div>
+
+            <div class="oficio-list-card__footer oficio-list-surface oficio-list-surface--footer">
+                <div class="oficio-list-card__footer-actions">
+                    {% for action in prestacao.actions %}
+                    <a href="{{ action.url }}" class="btn btn-sm btn-doc-action {{ action.css_class }}{% if action.icon_only %} is-icon-only{% endif %}" aria-label="{{ action.aria_label }}" {% if action.download %}data-direct-download="true"{% endif %}>
+                        <i class="bi {{ action.icon }}"></i>
+                        {% if action.icon_only %}<span class="visually-hidden">{{ action.label }}</span>{% else %}<span>{{ action.label }}</span>{% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </article>
+    {% empty %}
+    <div class="oficios-table-panel__empty">Nenhuma prestação encontrada com os filtros atuais.</div>
+    {% endfor %}
+</section>

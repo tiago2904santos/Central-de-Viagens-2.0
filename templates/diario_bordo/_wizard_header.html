@@ -1,0 +1,15 @@
+<div class="oficio-wizard-header guided-flow-header" data-oficio-sticky-header>
+  <div class="guided-flow-header-card app-page-card">
+    <section class="guided-flow-header__section guided-flow-header__title" aria-label="Título da etapa">
+      <div class="oficio-wizard-header-copy">
+        <span class="oficio-wizard-eyebrow">Diário de Bordo</span>
+        <h1>{{ wizard_header_title|default:"Diário de Bordo" }}</h1>
+      </div>
+    </section>
+    <section class="guided-flow-header__section guided-flow-header__steps" aria-label="Etapas do fluxo">
+      <div class="oficio-wizard-stepper-shell">
+        {% include 'eventos/oficio/_wizard_stepper.html' %}
+      </div>
+    </section>
+  </div>
+</div>

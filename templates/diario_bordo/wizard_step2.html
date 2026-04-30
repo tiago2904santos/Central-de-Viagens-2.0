@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Veículo e responsável - Diário de Bordo{% endblock %}
+{% block content %}
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page diario-bordo-wizard-page">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    {% include 'diario_bordo/_wizard_header.html' %}
+    <div class="card oficio-stage-panel"><div class="card-body">
+      <div class="oficio-stage-intro"><div><span class="oficio-stage-kicker">Etapa 2</span><h2 class="oficio-stage-title">Veículo e responsável</h2><p class="oficio-stage-description">Use os cadastros como origem e preserve ajustes manuais quando necessário.</p></div></div>
+      <form method="post" class="oficio-stage-form">{% csrf_token %}
+        <section class="oficio-stage-section">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label" for="{{ form.veiculo.id_for_label }}">Viatura/veículo</label>{{ form.veiculo }}</div>
+            <div class="col-md-6"><label class="form-label" for="{{ form.tipo_veiculo.id_for_label }}">Tipo do veículo</label>{{ form.tipo_veiculo }}</div>
+            <div class="col-md-4"><label class="form-label" for="{{ form.combustivel.id_for_label }}">Combustível</label>{{ form.combustivel }}</div>
+            <div class="col-md-4"><label class="form-label" for="{{ form.placa_oficial.id_for_label }}">Placa oficial</label>{{ form.placa_oficial }}</div>
+            <div class="col-md-4"><label class="form-label" for="{{ form.placa_reservada.id_for_label }}">Placa reservada</label>{{ form.placa_reservada }}</div>
+            <div class="col-md-6"><label class="form-label" for="{{ form.motorista.id_for_label }}">Motorista/responsável</label>{{ form.motorista }}</div>
+            <div class="col-md-4"><label class="form-label" for="{{ form.nome_responsavel.id_for_label }}">Nome do responsável</label>{{ form.nome_responsavel }}</div>
+            <div class="col-md-2"><label class="form-label" for="{{ form.rg_responsavel.id_for_label }}">RG</label>{{ form.rg_responsavel }}</div>
+          </div>
+        </section>
+        <div class="oficio-wizard-footer-actions"><a href="{% url 'diario_bordo:step' diario.id 1 %}" class="btn btn-outline-secondary">Voltar</a><button type="submit" class="btn btn-secondary">Salvar</button><button type="submit" name="avancar" value="1" class="btn btn-primary">Avançar</button></div>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/diario-bordo.js' %}" defer></script>{% endblock %}

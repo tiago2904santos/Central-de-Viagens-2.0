@@ -12728,5 +12728,282 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     }
 }
 
+.prestacoes-list-page .prestacao-list-card__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+    gap: 0.85rem;
+}
+
+.prestacao-list-card__description {
+    margin: 0.4rem 0 0;
+    color: #244665;
+    font-weight: 650;
+    line-height: 1.4;
+}
+
+.prestacao-list-card__meta-grid,
+.prestacao-document-status-list {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 0.8rem;
+}
+
+.prestacao-list-card__meta-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.prestacao-list-card__meta-grid span {
+    border: 1px solid #dbe7f3;
+    border-radius: 10px;
+    padding: 0.55rem 0.65rem;
+    background: #f8fbff;
+    color: #244665;
+    font-size: 0.84rem;
+}
+
+.prestacao-list-card__meta-grid strong {
+    display: block;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.prestacao-document-status {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.1rem 0.55rem;
+    align-items: center;
+    padding: 0.65rem 0.75rem;
+    border-radius: 10px;
+    color: #244665;
+    text-decoration: none;
+}
+
+.prestacao-document-status i {
+    grid-row: span 2;
+    color: #64748b;
+}
+
+.prestacao-document-status.is-ready i {
+    color: #16794f;
+}
+
+.prestacao-document-status span {
+    font-weight: 800;
+}
+
+.prestacao-document-status small {
+    color: #64748b;
+    overflow-wrap: anywhere;
+}
+
+.prestacao-upload-card {
+    display: grid;
+    gap: 0.85rem;
+    border: 1px solid #dbe7f3;
+    border-radius: 12px;
+    padding: 0.9rem;
+    background: #fbfdff;
+}
+
+.prestacao-upload-card__current {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.prestacao-upload-card__label {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.prestacao-upload-card__file,
+.prestacao-upload-card__empty {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2.4rem;
+    color: #244665;
+    font-weight: 750;
+}
+
+.prestacao-upload-card__file {
+    text-decoration: none;
+}
+
+.prestacao-upload-card__empty {
+    color: #64748b;
+}
+
+.prestacao-copy-list {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.prestacao-copy-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid #dbe7f3;
+    border-radius: 10px;
+    padding: 0.65rem;
+    background: #fbfdff;
+}
+
+.prestacao-copy-row code {
+    color: #17324d;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.prestacao-copy-row .is-copied,
+[data-copy-all].is-copied {
+    border-color: #16794f !important;
+    color: #16794f !important;
+}
+
+.prestacao-model-field {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.prestacao-model-field__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.diario-bordo-card__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr);
+    gap: 0.85rem;
+}
+
+.diario-bordo-card__headline {
+    margin: 0.35rem 0 0;
+    color: #17324d;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.diario-bordo-card__support {
+    margin: 0.25rem 0 0;
+    color: #64748b;
+}
+
+.diario-bordo-file-status {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.diario-bordo-file-status span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid #dbe7f3;
+    border-radius: 10px;
+    padding: 0.55rem 0.65rem;
+    color: #64748b;
+    font-weight: 750;
+}
+
+.diario-bordo-file-status span.is-ready {
+    color: #16794f;
+    border-color: #b9e4cf;
+    background: #f0fbf5;
+}
+
+.diario-status--assinado,
+.diario-status--gerado {
+    background: #e7f8ef;
+    color: #16794f;
+}
+
+.diario-status--rascunho {
+    background: #eef4fa;
+    color: #244665;
+}
+
+.diario-status--cancelado {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.diario-trechos-table {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.diario-trecho-row {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) 110px minmax(160px, 1fr) 110px repeat(3, minmax(140px, 1fr)) minmax(160px, 1fr) auto;
+    gap: 0.55rem;
+    align-items: end;
+    border: 1px solid #dbe7f3;
+    border-radius: 12px;
+    padding: 0.75rem;
+    background: #fbfdff;
+}
+
+.diario-trecho-row label {
+    display: block;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+}
+
+.diario-trecho-row__actions {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.diario-review-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0.65rem;
+}
+
+.diario-review-grid span {
+    border: 1px solid #dbe7f3;
+    border-radius: 10px;
+    padding: 0.65rem;
+    color: #244665;
+    background: #fbfdff;
+}
+
+.diario-review-grid strong {
+    display: block;
+    color: #64748b;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+    .diario-bordo-card__body,
+    .diario-trecho-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .prestacoes-list-page .prestacao-list-card__body,
+    .prestacao-list-card__meta-grid,
+    .prestacao-copy-row {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Arquivo assinado - Diário de Bordo{% endblock %}
+{% block content %}
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page diario-bordo-wizard-page">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    {% include 'diario_bordo/_wizard_header.html' %}
+    <div class="card oficio-stage-panel"><div class="card-body">
+      <div class="oficio-stage-intro"><div><span class="oficio-stage-kicker">Etapa 5</span><h2 class="oficio-stage-title">Arquivo assinado</h2><p class="oficio-stage-description">Anexe a versão assinada em PDF sem apagar o arquivo gerado.</p></div></div>
+      <form method="post" enctype="multipart/form-data" class="oficio-stage-form">{% csrf_token %}
+        <section class="oficio-stage-section">
+          <div class="prestacao-upload-card">
+            <div class="prestacao-upload-card__current">
+              <span class="prestacao-upload-card__label">Diário assinado</span>
+              {% if diario.arquivo_assinado %}
+              <a href="{{ diario.arquivo_assinado.url }}" target="_blank" rel="noopener" class="prestacao-upload-card__file"><i class="bi bi-file-earmark-check"></i><span>{{ diario.arquivo_assinado.name|slice:"-70:" }}</span></a>
+              {% else %}
+              <span class="prestacao-upload-card__empty"><i class="bi bi-file-earmark"></i>Nenhum arquivo assinado anexado</span>
+              {% endif %}
+            </div>
+            <div class="prestacao-upload-card__input">{{ form.arquivo_assinado }}{% if form.arquivo_assinado.errors %}<div class="invalid-feedback d-block">{{ form.arquivo_assinado.errors.0 }}</div>{% endif %}<small class="form-text">Arquivo aceito: PDF.</small></div>
+          </div>
+        </section>
+        <div class="oficio-wizard-footer-actions"><a href="{% url 'diario_bordo:step' diario.id 4 %}" class="btn btn-outline-secondary">Voltar</a><button type="submit" class="btn btn-primary">Salvar assinado</button><a href="{% url 'diario_bordo:lista' %}" class="btn btn-outline-secondary">Concluir</a></div>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

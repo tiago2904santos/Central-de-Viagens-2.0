@@ -130,11 +130,19 @@ def get_sidebar_config():
                     active_route_names=['eventos:documentos-ordens-servico'],
                 ),
                 _item(
+                    'documentos-diario-bordo',
+                    'Diario de Bordo',
+                    'bi bi-journal-richtext',
+                    'diario_bordo:lista',
+                    order=3,
+                    active_route_prefixes=['diario_bordo:'],
+                ),
+                _item(
                     'documentos-justificativas',
                     'Justificativas',
                     'bi bi-journal-text',
                     'eventos:documentos-justificativas',
-                    order=3,
+                    order=4,
                     active_route_names=['eventos:documentos-justificativas'],
                 ),
                 _item(
@@ -142,7 +150,7 @@ def get_sidebar_config():
                     'Termos de Autorização',
                     'bi bi-file-check',
                     'eventos:documentos-termos',
-                    order=4,
+                    order=5,
                     active_route_names=['eventos:documentos-termos'],
                 ),
                 _item(
@@ -150,7 +158,7 @@ def get_sidebar_config():
                     'Gestão de Assinaturas',
                     'bi bi-shield-check',
                     'documentos:assinatura-gestao',
-                    order=5,
+                    order=6,
                     active_route_names=[
                         'documentos:assinatura-gestao',
                         'documentos:assinatura-verificar',
@@ -161,7 +169,7 @@ def get_sidebar_config():
                 ),
             ],
             order=4,
-            active_route_prefixes=['eventos:documentos-', 'eventos:oficio-', 'eventos:guiado-etapa-3', 'eventos:guiado-etapa-4', 'eventos:guiado-etapa-5', 'eventos:guiado-etapa-6', 'documentos:assinatura-'],
+            active_route_prefixes=['eventos:documentos-', 'eventos:oficio-', 'eventos:guiado-etapa-3', 'eventos:guiado-etapa-4', 'eventos:guiado-etapa-5', 'eventos:guiado-etapa-6', 'documentos:assinatura-', 'diario_bordo:'],
         ),
         # 5. Viajantes (submenu)
         _item(

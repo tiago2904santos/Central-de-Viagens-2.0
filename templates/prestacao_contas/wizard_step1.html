@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Informações da prestação - Central de Viagens{% endblock %}
+
+{% block content %}
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page prestacao-wizard-page">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    {% include 'prestacao_contas/_wizard_header.html' %}
+
+    <div class="card oficio-stage-panel">
+      <div class="card-body">
+        <div class="oficio-stage-intro">
+          <div>
+            <span class="oficio-stage-kicker">Etapa 1</span>
+            <h2 class="oficio-stage-title">Informações da prestação</h2>
+            <p class="oficio-stage-description">Defina o evento de referência e mantenha o despacho anexado ao fluxo documental.</p>
+          </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="oficio-stage-form">
+          {% csrf_token %}
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Dados principais</h3>
+                <p class="oficio-stage-section-text">A descrição alimenta o gerador de RT e o resumo final para copiar.</p>
+              </div>
+            </div>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label" for="{{ form.descricao_evento.id_for_label }}">{{ form.descricao_evento.label }}</label>
+                {{ form.descricao_evento }}
+                {% if form.descricao_evento.errors %}<div class="invalid-feedback d-block">{{ form.descricao_evento.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+          </section>
+
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Despacho</h3>
+                <p class="oficio-stage-section-text">Anexe ou substitua o arquivo despacho.pdf da prestação.</p>
+              </div>
+            </div>
+            {% include 'prestacao_contas/partials/_document_upload.html' with label='despacho.pdf' field=form.despacho_pdf file=prestacao.despacho_pdf help_text='Arquivo aceito: PDF.' %}
+          </section>
+
+          <div class="oficio-wizard-footer-actions">
+            <a href="{{ return_to_url }}" class="btn btn-outline-secondary">Voltar para lista</a>
+            <button type="submit" class="btn btn-secondary">Salvar</button>
+            <button type="submit" name="avancar" value="1" class="btn btn-primary">Avançar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/prestacao_contas.js' %}" defer></script>
+{% endblock %}

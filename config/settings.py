@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'documentos',
     'integracoes',
     'prestacao_contas',
+    'diario_bordo',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gerador de DB - Central de Viagens{% endblock %}
+
+{% block content %}
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page prestacao-wizard-page">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    {% include 'prestacao_contas/_wizard_header.html' %}
+    <div class="card oficio-stage-panel">
+      <div class="card-body">
+        <div class="oficio-stage-intro">
+          <div>
+            <span class="oficio-stage-kicker">Etapa 3</span>
+            <h2 class="oficio-stage-title">Gerador de DB</h2>
+            <p class="oficio-stage-description">Registre os dados do DB vinculados a esta prestação sem perder o preenchimento já salvo.</p>
+          </div>
+        </div>
+
+        <form method="post" class="oficio-stage-form">
+          {% csrf_token %}
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Diário de Bordo</h3>
+                <p class="oficio-stage-section-text">A prestação apenas acessa o Diário de Bordo vinculado. O preenchimento fica no módulo próprio do documento.</p>
+              </div>
+            </div>
+            {% if diario_bordo %}
+            <article class="oficio-list-core-card oficio-list-surface oficio-list-surface--panel">
+              <div class="oficio-list-core-card__header">
+                <h3 class="oficio-list-core-card__title">{{ diario_bordo.numero_oficio|default:"Diário de Bordo" }}</h3>
+                <span class="oficio-list-badge diario-status--{{ diario_bordo.status }}">{{ diario_bordo.get_status_display }}</span>
+              </div>
+              <div class="diario-review-grid">
+                <span><strong>Veículo</strong>{{ diario_bordo.tipo_veiculo|default:"Não informado" }}</span>
+                <span><strong>Placa</strong>{{ diario_bordo.placa_oficial|default:"Não informada" }}</span>
+                <span><strong>Motorista</strong>{{ diario_bordo.nome_responsavel|default:"Não informado" }}</span>
+                <span><strong>Trechos</strong>{{ diario_bordo.trechos.count }}</span>
+              </div>
+              <div class="oficio-list-card__footer-actions mt-3">
+                <a href="{% url 'diario_bordo:editar' diario_bordo.id %}" class="btn btn-sm btn-doc-action btn-doc-action--primary"><i class="bi bi-box-arrow-up-right"></i><span>Abrir</span></a>
+                {% if diario_bordo.arquivo_pdf %}<a href="{% url 'diario_bordo:pdf' diario_bordo.id %}" class="btn btn-sm btn-doc-action btn-doc-action--pdf" data-direct-download="true"><i class="bi bi-filetype-pdf"></i><span>PDF</span></a>{% endif %}
+                <a href="{% url 'diario_bordo:step' diario_bordo.id 5 %}" class="btn btn-sm btn-doc-action btn-doc-action--secondary"><i class="bi bi-upload"></i><span>Anexar assinado</span></a>
+              </div>
+            </article>
+            {% else %}
+            <div class="oficios-table-panel__empty">
+              Nenhum Diário de Bordo vinculado a esta prestação.
+              <a href="{% url 'diario_bordo:novo-prestacao' prestacao.id %}" class="btn btn-primary ms-2">Gerar Diário de Bordo</a>
+            </div>
+            {% endif %}
+          </section>
+          <div class="oficio-wizard-footer-actions">
+            <a href="{% url 'prestacao_contas:step' prestacao.id 2 %}" class="btn btn-outline-secondary">Voltar</a>
+            <button type="submit" name="avancar" value="1" class="btn btn-primary">Avançar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/prestacao_contas.js' %}" defer></script>
+{% endblock %}

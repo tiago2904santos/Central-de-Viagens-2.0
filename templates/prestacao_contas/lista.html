@@ -1,48 +1,55 @@
-{% extends 'base.html' %}
+{% extends 'includes/list/document_list_base.html' %}
 {% load static %}
-{% load static %}
 
-{% block title %}Prestações de Contas{% endblock %}
+{% block page_title_block %}Prestações de contas{% endblock %}
+{% block page_header_title %}Prestações de contas{% endblock %}
 
-{% block content %}
-<section class="rt-page-shell">
-    <header class="rt-page-header card">
-        <div>
-            <h1 class="rt-title">Prestações de Contas</h1>
-            <p class="rt-subtitle">Acesse a prestação pendente e gere o relatório técnico individual do servidor.</p>
-        </div>
-    </header>
+{% block list_page_class %}oficios-list-page prestacoes-list-page system-list-page--complete{% endblock %}
+{% block list_page_attributes %}data-list-view-root data-view-mode="rich" data-view-storage-key="central-viagens.prestacoes.view-mode"{% endblock %}
+{% block list_title %}Prestações de contas{% endblock %}
+{% block list_subtitle %}<p class="system-list-header__subtitle">Acompanhe RT, DB, despacho e comprovante no mesmo padrão documental dos ofícios.</p>{% endblock %}
+{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='complete' %}{% endblock %}
+{% block list_header_aux_controls %}
+{% include 'includes/list/view_toggle.html' with aria_label='Alternar visualização da lista de prestações' %}
+{% endblock %}
+{% block list_header_actions %}
+<a href="{% url 'prestacao_contas:nova' %}" class="btn btn-primary system-list-action-btn">Nova prestação</a>
+{% endblock %}
 
-    <section class="rt-list-grid">
-        {% for prestacao in prestacoes %}
-        <article class="card rt-list-card">
-            <div class="rt-list-card__head">
-                <h2>Ofício {{ prestacao.oficio.numero_formatado }}</h2>
-                <span class="badge text-bg-{% if prestacao.status_rt == 'gerado' %}success{% elif prestacao.status_rt == 'rascunho' %}warning{% else %}secondary{% endif %}">
-                    RT {{ prestacao.get_status_rt_display }}
-                </span>
-            </div>
-            <div class="rt-list-card__meta">
-                <p><strong>Servidor:</strong> {{ prestacao.nome_servidor|default:"Não informado" }}</p>
-                <p><strong>RG:</strong> {{ prestacao.rg_servidor|default:"Não informado" }}</p>
-                <p><strong>Destino:</strong> {{ prestacao.oficio.cidade_sede.nome|default:"Não informado" }}</p>
-            </div>
-            <div class="rt-list-card__actions">
-                <a class="btn btn-outline-secondary" href="{% url 'prestacao_contas:detalhe' prestacao.id %}">Abrir prestação</a>
-                <a class="btn btn-primary" href="{% url 'prestacao_contas:relatorio-tecnico' prestacao.id %}">
-                    {% if prestacao.status_rt == 'pendente' %}Gerar RT{% else %}Editar RT{% endif %}
-                </a>
-            </div>
-        </article>
-        {% empty %}
-        <article class="card rt-list-card">
-            <p class="mb-0">Nenhuma prestação pendente encontrada.</p>
-        </article>
+{% block list_filter_primary_fields %}
+<div class="system-document-filter__field system-document-filter__field--search-xl">
+    <label for="prestacoes-search" class="form-label">Busca</label>
+    <input
+        id="prestacoes-search"
+        type="text"
+        name="q"
+        class="form-control"
+        value="{{ filters.q }}"
+        placeholder="Prestação, ofício, protocolo, evento ou servidor"
+        data-list-autosubmit
+    >
+</div>
+<div class="system-document-filter__field system-document-filter__field--span-4">
+    <label class="form-label" for="prestacoes-status">Status</label>
+    <select id="prestacoes-status" name="status" data-list-autosubmit data-oficio-picker-search="false">
+        <option value="">Todos os status</option>
+        {% for key, label in status_choices %}
+        <option value="{{ key }}" {% if filters.status == key %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
-    </section>
-</section>
+    </select>
+</div>
+{% endblock %}
+
+{% block page_result_content %}
+{% include 'prestacao_contas/partials/_prestacoes_list_content.html' %}
+{% endblock %}
+
+{% block list_floating_actions %}
+{% url 'prestacao_contas:nova' as prestacao_nova_url %}
+{% include 'includes/list/floating_new_button.html' with url=prestacao_nova_url label='Nova prestação' icon='bi-plus-lg' %}
 {% endblock %}
 
 {% block extra_js %}
+{{ block.super }}
 <script src="{% static 'js/prestacao_contas.js' %}" defer></script>
 {% endblock %}
