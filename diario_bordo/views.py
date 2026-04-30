@@ -14,21 +14,12 @@ from eventos.models import Oficio, RoteiroEvento
 from prestacao_contas.models import PrestacaoConta
 
 from .forms import DiarioAssinadoForm, DiarioIdentificacaoForm, DiarioTrechoFormSet, DiarioVeiculoResponsavelForm
-from .models import DiarioBordo, DiarioBordoTrecho
-from .services import gerar_pdf_diario, gerar_xlsx_diario
+from .models import DiarioBordo
+from .services import gerar_pdf_diario, gerar_xlsx_diario, inicializar_trechos_diario_bordo
 
 
 def _fmt_protocolo(oficio):
     return getattr(oficio, "protocolo_formatado", "") or getattr(oficio, "protocolo", "") or ""
-
-
-def _cidade_label(cidade, estado=None):
-    if cidade:
-        uf = getattr(getattr(cidade, "estado", None), "sigla", "") or getattr(estado, "sigla", "")
-        return f"{cidade.nome}/{uf}" if uf else cidade.nome
-    if estado:
-        return getattr(estado, "sigla", "") or str(estado)
-    return ""
 
 
 def preencher_diario_por_oficio(diario, oficio):
@@ -66,39 +57,6 @@ def _sync_manual_from_relations(diario):
     if diario.motorista_id and diario.motorista:
         diario.nome_responsavel = diario.nome_responsavel or diario.motorista.nome
         diario.rg_responsavel = diario.rg_responsavel or diario.motorista.rg_formatado
-
-
-def _importar_trechos(diario):
-    if diario.trechos.exists():
-        return
-    origem_trechos = []
-    if diario.roteiro_id:
-        origem_trechos = list(diario.roteiro.trechos.order_by("ordem", "id"))
-        for idx, trecho in enumerate(origem_trechos):
-            DiarioBordoTrecho.objects.create(
-                diario=diario,
-                ordem=idx,
-                data_saida=trecho.saida_dt.date() if trecho.saida_dt else None,
-                hora_saida=trecho.saida_dt.time() if trecho.saida_dt else None,
-                data_chegada=trecho.chegada_dt.date() if trecho.chegada_dt else None,
-                hora_chegada=trecho.chegada_dt.time() if trecho.chegada_dt else None,
-                origem=_cidade_label(trecho.origem_cidade, trecho.origem_estado) or "Origem",
-                destino=_cidade_label(trecho.destino_cidade, trecho.destino_estado) or "Destino",
-            )
-        return
-    if diario.oficio_id:
-        origem_trechos = list(diario.oficio.trechos.order_by("ordem", "id"))
-        for idx, trecho in enumerate(origem_trechos):
-            DiarioBordoTrecho.objects.create(
-                diario=diario,
-                ordem=idx,
-                data_saida=trecho.saida_data,
-                hora_saida=trecho.saida_hora,
-                data_chegada=trecho.chegada_data,
-                hora_chegada=trecho.chegada_hora,
-                origem=_cidade_label(trecho.origem_cidade, trecho.origem_estado) or "Origem",
-                destino=_cidade_label(trecho.destino_cidade, trecho.destino_estado) or "Destino",
-            )
 
 
 def _build_steps(diario, current_key):
@@ -213,7 +171,7 @@ def diario_novo_oficio(request, oficio_id):
     diario = DiarioBordo()
     preencher_diario_por_oficio(diario, oficio)
     diario.save()
-    _importar_trechos(diario)
+    inicializar_trechos_diario_bordo(diario, force=False)
     return redirect("diario_bordo:step", pk=diario.pk, step=1)
 
 
@@ -224,7 +182,7 @@ def diario_novo_prestacao(request, prestacao_id):
     if prestacao.oficio_id:
         preencher_diario_por_oficio(diario, prestacao.oficio)
     diario.save()
-    _importar_trechos(diario)
+    inicializar_trechos_diario_bordo(diario, force=False)
     return redirect("diario_bordo:step", pk=diario.pk, step=1)
 
 
@@ -242,7 +200,7 @@ def diario_step(request, pk, step):
             diario = form.save(commit=False)
             _sync_manual_from_relations(diario)
             diario.save()
-            _importar_trechos(diario)
+            inicializar_trechos_diario_bordo(diario, force=False)
             return redirect("diario_bordo:step", pk=diario.pk, step=2 if "avancar" in request.POST else 1)
         return render(request, "diario_bordo/wizard_step1.html", _wizard_context(diario, "step1", form=form))
     if step == 2:
@@ -254,7 +212,19 @@ def diario_step(request, pk, step):
             return redirect("diario_bordo:step", pk=diario.pk, step=3 if "avancar" in request.POST else 2)
         return render(request, "diario_bordo/wizard_step2.html", _wizard_context(diario, "step2", form=form))
     if step == 3:
-        _importar_trechos(diario)
+        if request.method == "POST" and request.POST.get("reimportar_trechos") == "1":
+            _trechos, imported = inicializar_trechos_diario_bordo(diario, force=True)
+            if imported:
+                messages.success(request, "Datas e destinos reimportados com sucesso.")
+            else:
+                messages.warning(
+                    request,
+                    "Nenhum roteiro/data foi encontrado automaticamente. Preencha os trechos manualmente.",
+                )
+            return redirect("diario_bordo:step", pk=diario.pk, step=3)
+
+        _trechos, imported = inicializar_trechos_diario_bordo(diario, force=False)
+        import_warning = not diario.trechos.exists() and not imported
         formset = DiarioTrechoFormSet(request.POST or None, instance=diario, prefix="trechos")
         if request.method == "POST" and formset.is_valid():
             instances = formset.save(commit=False)
@@ -265,7 +235,17 @@ def diario_step(request, pk, step):
                 item.ordem = index
                 item.save()
             return redirect("diario_bordo:step", pk=diario.pk, step=4 if "avancar" in request.POST else 3)
-        return render(request, "diario_bordo/wizard_step3.html", _wizard_context(diario, "step3", formset=formset))
+        return render(
+            request,
+            "diario_bordo/wizard_step3.html",
+            _wizard_context(
+                diario,
+                "step3",
+                formset=formset,
+                trechos=diario.trechos.all().order_by("ordem", "id"),
+                import_warning=import_warning,
+            ),
+        )
     if step == 4:
         if request.method == "POST" and request.POST.get("gerar_pdf"):
             try:
@@ -283,7 +263,11 @@ def diario_step(request, pk, step):
             else:
                 messages.success(request, "XLSX do Diário de Bordo gerado com sucesso.")
             return redirect("diario_bordo:step", pk=diario.pk, step=4)
-        return render(request, "diario_bordo/wizard_step4.html", _wizard_context(diario, "step4", trechos=diario.trechos.all()))
+        return render(
+            request,
+            "diario_bordo/wizard_step4.html",
+            _wizard_context(diario, "step4", trechos=diario.trechos.all().order_by("ordem", "id")),
+        )
     if step == 5:
         form = DiarioAssinadoForm(request.POST or None, request.FILES or None, instance=diario)
         if request.method == "POST" and form.is_valid():

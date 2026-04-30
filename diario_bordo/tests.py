@@ -1,6 +1,6 @@
 ﻿from __future__ import annotations
 
-from datetime import date, time
+from datetime import date, datetime, time
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -11,6 +11,11 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
+
+from cadastros.models import Cidade, Estado
+from eventos.models import Oficio, OficioTrecho, RoteiroEvento, RoteiroEventoTrecho
+from prestacao_contas.models import PrestacaoConta
 
 from .models import DiarioBordo, DiarioBordoTrecho
 from . import services
@@ -204,3 +209,139 @@ class DiarioBordoPlaceholderDinamicoTest(TestCase):
         form = DiarioTrechoForm(instance=trecho)
         self.assertIn('value="2026-04-30"', form["data_saida"].as_widget())
         self.assertIn('value="2026-04-30"', form["data_chegada"].as_widget())
+
+
+class DiarioBordoStep3ImportacaoTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user("step3", password="senha123")
+        self.client.force_login(self.user)
+        self.estado = Estado.objects.create(nome="Parana", sigla="PR", codigo_ibge="41")
+        self.curitiba = Cidade.objects.create(nome="Curitiba", estado=self.estado, codigo_ibge="4106902")
+        self.londrina = Cidade.objects.create(nome="Londrina", estado=self.estado, codigo_ibge="4113700")
+        self.maringa = Cidade.objects.create(nome="Maringa", estado=self.estado, codigo_ibge="4115200")
+
+    def _create_roteiro(self):
+        tz = timezone.get_current_timezone()
+        roteiro = RoteiroEvento.objects.create(
+            origem_estado=self.estado,
+            origem_cidade=self.curitiba,
+            saida_dt=timezone.make_aware(datetime(2026, 4, 4, 8, 0), tz),
+            chegada_dt=timezone.make_aware(datetime(2026, 4, 10, 18, 0), tz),
+            retorno_saida_dt=timezone.make_aware(datetime(2026, 4, 15, 9, 0), tz),
+        )
+        RoteiroEventoTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=0,
+            origem_estado=self.estado,
+            origem_cidade=self.curitiba,
+            destino_estado=self.estado,
+            destino_cidade=self.londrina,
+            saida_dt=timezone.make_aware(datetime(2026, 4, 4, 8, 0), tz),
+            chegada_dt=timezone.make_aware(datetime(2026, 4, 4, 11, 0), tz),
+        )
+        RoteiroEventoTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=1,
+            origem_estado=self.estado,
+            origem_cidade=self.londrina,
+            destino_estado=self.estado,
+            destino_cidade=self.maringa,
+            saida_dt=timezone.make_aware(datetime(2026, 4, 5, 9, 0), tz),
+            chegada_dt=timezone.make_aware(datetime(2026, 4, 5, 10, 30), tz),
+        )
+        return roteiro
+
+    def _create_oficio(self, roteiro=None):
+        oficio = Oficio.objects.create(status=Oficio.STATUS_RASCUNHO, cidade_sede=self.curitiba, estado_sede=self.estado)
+        if roteiro:
+            oficio.roteiro_evento = roteiro
+            oficio.save(update_fields=["roteiro_evento", "updated_at"])
+        return oficio
+
+    def test_step3_importa_trechos_do_oficio_com_roteiro(self):
+        roteiro = self._create_roteiro()
+        oficio = self._create_oficio(roteiro=roteiro)
+        diario = DiarioBordo.objects.create(oficio=oficio, roteiro=roteiro)
+
+        response = self.client.get(reverse("diario_bordo:step", kwargs={"pk": diario.pk, "step": 3}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(diario.trechos.count(), 2)
+        self.assertContains(response, "2026-04-04")
+        self.assertContains(response, "Curitiba/PR")
+        self.assertContains(response, "Londrina/PR")
+
+    def test_step3_importa_trechos_via_prestacao(self):
+        roteiro = self._create_roteiro()
+        oficio = self._create_oficio(roteiro=roteiro)
+        prestacao = PrestacaoConta.objects.create(oficio=oficio)
+        diario = DiarioBordo.objects.create(prestacao=prestacao)
+
+        response = self.client.get(reverse("diario_bordo:step", kwargs={"pk": diario.pk, "step": 3}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(diario.trechos.count(), 2)
+        self.assertContains(response, "Maringa/PR")
+
+    def test_reabrir_step3_preserva_km_digitado(self):
+        roteiro = self._create_roteiro()
+        oficio = self._create_oficio(roteiro=roteiro)
+        diario = DiarioBordo.objects.create(oficio=oficio, roteiro=roteiro)
+        trecho = DiarioBordoTrecho.objects.create(
+            diario=diario,
+            ordem=0,
+            origem="Curitiba/PR",
+            destino="Londrina/PR",
+            km_inicial=1234,
+            km_final=1300,
+        )
+
+        response = self.client.get(reverse("diario_bordo:step", kwargs={"pk": diario.pk, "step": 3}))
+        trecho.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(diario.trechos.count(), 1)
+        self.assertEqual(trecho.km_inicial, 1234)
+        self.assertEqual(trecho.km_final, 1300)
+
+    def test_step3_sem_roteiro_mostra_aviso_e_permite_manual(self):
+        diario = DiarioBordo.objects.create()
+
+        response = self.client.get(reverse("diario_bordo:step", kwargs={"pk": diario.pk, "step": 3}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Nenhum roteiro/data foi encontrado automaticamente. Preencha os trechos manualmente.")
+        self.assertContains(response, "Adicionar trecho")
+
+    def test_botao_reimportar_recria_trechos_somente_quando_acionado(self):
+        oficio = self._create_oficio()
+        OficioTrecho.objects.create(
+            oficio=oficio,
+            ordem=0,
+            origem_estado=self.estado,
+            origem_cidade=self.curitiba,
+            destino_estado=self.estado,
+            destino_cidade=self.londrina,
+            saida_data="2026-04-04",
+        )
+        diario = DiarioBordo.objects.create(oficio=oficio)
+        DiarioBordoTrecho.objects.create(diario=diario, ordem=0, origem="Manual", destino="Manual", km_inicial=10)
+
+        self.client.get(reverse("diario_bordo:step", kwargs={"pk": diario.pk, "step": 3}))
+        diario.refresh_from_db()
+        self.assertEqual(diario.trechos.first().origem, "Manual")
+
+        response = self.client.post(
+            reverse("diario_bordo:step", kwargs={"pk": diario.pk, "step": 3}),
+            {"reimportar_trechos": "1"},
+            follow=True,
+        )
+        diario.refresh_from_db()
+        trecho = diario.trechos.order_by("ordem", "id").first()
+        self.assertContains(response, "Datas e destinos reimportados com sucesso.")
+        self.assertEqual(trecho.origem, "Curitiba/PR")
+        self.assertEqual(trecho.destino, "Londrina/PR")
+
+    def test_xlsx_exige_trechos_salvos_no_banco(self):
+        diario = DiarioBordo.objects.create(numero_oficio="99/2026")
+        with self.assertRaises(ValidationError):
+            services.gerar_diario_bordo_xlsx(diario)

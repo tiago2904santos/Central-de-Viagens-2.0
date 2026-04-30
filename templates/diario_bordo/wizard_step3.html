@@ -9,6 +9,11 @@
       <div class="oficio-stage-intro"><div><span class="oficio-stage-kicker">Etapa 3</span><h2 class="oficio-stage-title">Trechos e quilometragem</h2><p class="oficio-stage-description">Registre saída, chegada, quilometragem e necessidade de abastecimento.</p></div></div>
       <form method="post" class="oficio-stage-form" data-diario-trechos-form>{% csrf_token %}
         {{ formset.management_form }}
+        {% if import_warning %}
+        <div class="alert alert-warning" role="alert">
+          Nenhum roteiro/data foi encontrado automaticamente. Preencha os trechos manualmente.
+        </div>
+        {% endif %}
         <section class="oficio-stage-section">
           <div class="diario-trechos-table" data-diario-trechos-list>
             {% for form in formset.forms %}
@@ -41,7 +46,18 @@
               <div class="diario-trecho-row__actions"><button type="button" class="btn btn-sm btn-outline-danger" data-remove-trecho>Remover</button></div>
             </div>
           </template>
-          <button type="button" class="btn btn-outline-primary" data-add-trecho>Adicionar trecho</button>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-primary" data-add-trecho>Adicionar trecho</button>
+            <button
+              type="submit"
+              name="reimportar_trechos"
+              value="1"
+              class="btn btn-outline-secondary"
+              onclick="return confirm('Reimportar pode substituir os trechos atuais. Deseja continuar?');"
+            >
+              Reimportar datas e destinos
+            </button>
+          </div>
         </section>
         <div class="oficio-wizard-footer-actions"><a href="{% url 'diario_bordo:step' diario.id 2 %}" class="btn btn-outline-secondary">Voltar</a><button type="submit" class="btn btn-secondary">Salvar</button><button type="submit" name="avancar" value="1" class="btn btn-primary">Avançar</button></div>
       </form>

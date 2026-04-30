@@ -89,6 +89,14 @@ class DiarioTrechoForm(forms.ModelForm):
         saida_hora = cleaned.get("hora_saida")
         chegada_data = cleaned.get("data_chegada")
         chegada_hora = cleaned.get("hora_chegada")
+        origem = (cleaned.get("origem") or "").strip()
+        destino = (cleaned.get("destino") or "").strip()
+        if not origem:
+            self.add_error("origem", "Origem não pode ficar vazia.")
+        if not destino:
+            self.add_error("destino", "Destino não pode ficar vazio.")
+        if saida_data and chegada_data and chegada_data < saida_data:
+            self.add_error("data_chegada", "Data de chegada não pode ser anterior à data de saída.")
         if saida_data and saida_hora and chegada_data and chegada_hora:
             if (chegada_data, chegada_hora) < (saida_data, saida_hora):
                 self.add_error("hora_chegada", "Chegada não pode ser anterior à saída.")

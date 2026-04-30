@@ -14,9 +14,10 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.utils import timezone
 
-from .models import DiarioBordo
+from .models import DiarioBordo, DiarioBordoTrecho
 
 XLSX_TEMPLATE_PATH = Path(settings.BASE_DIR) / "documentos" / "templates_xlsx" / "diario_bordo" / "modelo_diario_bordo.xlsx"
 SHEET_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
@@ -359,6 +360,8 @@ def _nome_base_arquivo(diario: DiarioBordo):
 
 
 def gerar_diario_bordo_xlsx(diario: DiarioBordo):
+    if not diario.trechos.exists():
+        raise ValidationError("Nenhum trecho cadastrado. Preencha o Step 3 antes de gerar o XLSX/PDF.")
     xlsx_bytes = render_xlsx_diario_bordo(diario)
     filename = f"{_nome_base_arquivo(diario)}_{timezone.localdate():%Y%m%d}.xlsx"
     diario.arquivo_xlsx.save(filename, ContentFile(xlsx_bytes), save=False)
@@ -452,3 +455,200 @@ def gerar_diario_bordo_pdf(diario: DiarioBordo):
 
 gerar_xlsx_diario = gerar_diario_bordo_xlsx
 gerar_pdf_diario = gerar_diario_bordo_pdf
+
+
+def _cidade_label(cidade=None, estado=None):
+    if cidade:
+        uf = getattr(getattr(cidade, "estado", None), "sigla", "") or getattr(estado, "sigla", "")
+        return f"{cidade.nome}/{uf}" if uf else cidade.nome
+    if estado:
+        return getattr(estado, "sigla", "") or str(estado)
+    return ""
+
+
+def _build_trecho_payload(
+    *,
+    ordem,
+    data_saida=None,
+    hora_saida=None,
+    data_chegada=None,
+    hora_chegada=None,
+    km_inicial=None,
+    km_final=None,
+    origem="",
+    destino="",
+    necessidade_abastecimento=False,
+):
+    return {
+        "ordem": ordem,
+        "data_saida": data_saida,
+        "hora_saida": hora_saida,
+        "km_inicial": km_inicial,
+        "data_chegada": data_chegada,
+        "hora_chegada": hora_chegada,
+        "km_final": km_final,
+        "origem": (origem or "").strip() or "Origem",
+        "destino": (destino or "").strip() or "Destino",
+        "necessidade_abastecimento": bool(necessidade_abastecimento),
+    }
+
+
+def _fallback_payloads_from_roteiro(roteiro):
+    origem_base = _cidade_label(getattr(roteiro, "origem_cidade", None), getattr(roteiro, "origem_estado", None))
+    destinos = list(roteiro.destinos.select_related("cidade", "estado").order_by("ordem", "id"))
+    destino_labels = [_cidade_label(destino.cidade, destino.estado) for destino in destinos if _cidade_label(destino.cidade, destino.estado)]
+    if not origem_base or not destino_labels:
+        return []
+
+    payloads = []
+    saida_dt = getattr(roteiro, "saida_dt", None)
+    chegada_dt = getattr(roteiro, "chegada_dt", None)
+    retorno_saida_dt = getattr(roteiro, "retorno_saida_dt", None)
+    retorno_chegada_dt = getattr(roteiro, "retorno_chegada_dt", None)
+
+    atual = origem_base
+    for ordem, destino_label in enumerate(destino_labels):
+        payloads.append(
+            _build_trecho_payload(
+                ordem=ordem,
+                data_saida=saida_dt.date() if ordem == 0 and saida_dt else None,
+                hora_saida=saida_dt.time() if ordem == 0 and saida_dt else None,
+                data_chegada=chegada_dt.date() if ordem == len(destino_labels) - 1 and chegada_dt else None,
+                hora_chegada=chegada_dt.time() if ordem == len(destino_labels) - 1 and chegada_dt else None,
+                origem=atual,
+                destino=destino_label,
+            )
+        )
+        atual = destino_label
+
+    payloads.append(
+        _build_trecho_payload(
+            ordem=len(payloads),
+            data_saida=retorno_saida_dt.date() if retorno_saida_dt else (chegada_dt.date() if chegada_dt else None),
+            hora_saida=retorno_saida_dt.time() if retorno_saida_dt else None,
+            data_chegada=retorno_chegada_dt.date() if retorno_chegada_dt else None,
+            hora_chegada=retorno_chegada_dt.time() if retorno_chegada_dt else None,
+            origem=atual,
+            destino=origem_base,
+        )
+    )
+    return payloads
+
+
+def _payloads_from_roteiro_trechos(roteiro):
+    trechos = list(roteiro.trechos.select_related("origem_cidade", "origem_estado", "destino_cidade", "destino_estado").order_by("ordem", "id"))
+    payloads = []
+    for idx, trecho in enumerate(trechos):
+        saida_dt = getattr(trecho, "saida_dt", None)
+        chegada_dt = getattr(trecho, "chegada_dt", None)
+        payloads.append(
+            _build_trecho_payload(
+                ordem=idx,
+                data_saida=saida_dt.date() if saida_dt else None,
+                hora_saida=saida_dt.time() if saida_dt else None,
+                data_chegada=chegada_dt.date() if chegada_dt else None,
+                hora_chegada=chegada_dt.time() if chegada_dt else None,
+                km_inicial=int(trecho.distancia_km) if getattr(trecho, "distancia_km", None) and idx == 0 else None,
+                origem=_cidade_label(trecho.origem_cidade, trecho.origem_estado),
+                destino=_cidade_label(trecho.destino_cidade, trecho.destino_estado),
+            )
+        )
+    return payloads
+
+
+def _payloads_from_oficio_trechos(oficio):
+    trechos = list(oficio.trechos.select_related("origem_cidade", "origem_estado", "destino_cidade", "destino_estado").order_by("ordem", "id"))
+    payloads = []
+    for idx, trecho in enumerate(trechos):
+        payloads.append(
+            _build_trecho_payload(
+                ordem=idx,
+                data_saida=trecho.saida_data,
+                hora_saida=trecho.saida_hora,
+                data_chegada=trecho.chegada_data,
+                hora_chegada=trecho.chegada_hora,
+                origem=_cidade_label(trecho.origem_cidade, trecho.origem_estado),
+                destino=_cidade_label(trecho.destino_cidade, trecho.destino_estado),
+            )
+        )
+    if payloads:
+        return payloads
+
+    origem = _cidade_label(getattr(oficio, "cidade_sede", None), getattr(oficio, "estado_sede", None))
+    destino = (getattr(oficio, "destinos_formatados_display", "") or "").split(",")[0].strip()
+    if origem and destino and (oficio.retorno_chegada_data or oficio.retorno_saida_data):
+        ida = _build_trecho_payload(
+            ordem=0,
+            data_saida=oficio.data_criacao,
+            origem=origem,
+            destino=destino,
+        )
+        volta = _build_trecho_payload(
+            ordem=1,
+            data_saida=oficio.retorno_saida_data or oficio.retorno_chegada_data,
+            hora_saida=oficio.retorno_saida_hora,
+            data_chegada=oficio.retorno_chegada_data,
+            hora_chegada=oficio.retorno_chegada_hora,
+            origem=destino,
+            destino=origem,
+        )
+        return [ida, volta]
+    return []
+
+
+def _descobrir_payloads_trechos(diario):
+    if diario.roteiro_id:
+        payloads = _payloads_from_roteiro_trechos(diario.roteiro)
+        if payloads:
+            return payloads
+        payloads = _fallback_payloads_from_roteiro(diario.roteiro)
+        if payloads:
+            return payloads
+
+    oficio = diario.oficio
+    if oficio is None and diario.prestacao_id and diario.prestacao and diario.prestacao.oficio_id:
+        oficio = diario.prestacao.oficio
+
+    if oficio and getattr(oficio, "roteiro_evento_id", None):
+        payloads = _payloads_from_roteiro_trechos(oficio.roteiro_evento)
+        if payloads:
+            return payloads
+        payloads = _fallback_payloads_from_roteiro(oficio.roteiro_evento)
+        if payloads:
+            return payloads
+
+    if oficio:
+        payloads = _payloads_from_oficio_trechos(oficio)
+        if payloads:
+            return payloads
+
+    return []
+
+
+@transaction.atomic
+def inicializar_trechos_diario_bordo(diario, force=False):
+    existentes = diario.trechos.order_by("ordem", "id")
+    if existentes.exists() and not force:
+        return list(existentes), False
+    if force:
+        diario.trechos.all().delete()
+
+    payloads = _descobrir_payloads_trechos(diario)
+    criados = []
+    for idx, data in enumerate(payloads):
+        criados.append(
+            DiarioBordoTrecho.objects.create(
+                diario=diario,
+                ordem=idx,
+                data_saida=data.get("data_saida"),
+                hora_saida=data.get("hora_saida"),
+                km_inicial=data.get("km_inicial"),
+                data_chegada=data.get("data_chegada"),
+                hora_chegada=data.get("hora_chegada"),
+                km_final=data.get("km_final"),
+                origem=data.get("origem") or "Origem",
+                destino=data.get("destino") or "Destino",
+                necessidade_abastecimento=data.get("necessidade_abastecimento", False),
+            )
+        )
+    return criados, bool(criados)
