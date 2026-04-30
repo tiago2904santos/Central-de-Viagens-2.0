@@ -12883,6 +12883,75 @@ html[data-oficio-picker-js="1"] select:not([data-oficio-picker-skip]) {
     flex-wrap: wrap;
 }
 
+.prestacao-wizard-page .evento-campo-card .rt-readonly {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    min-height: 1.5rem;
+    font-weight: 700;
+}
+
+.prestacao-wizard-page .rt-choice-group {
+    display: grid;
+    gap: 0.62rem;
+}
+
+.prestacao-wizard-page .rt-choice-group .oficio-step4-choice-option {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.7rem;
+    align-items: start;
+    padding: 0.78rem 0.82rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color var(--cv-transition-fast), box-shadow var(--cv-transition-fast), background var(--cv-transition-fast);
+}
+
+.prestacao-wizard-page .rt-choice-group .oficio-step4-choice-option.is-selected,
+.prestacao-wizard-page .rt-choice-group .oficio-step4-choice-option:hover,
+.prestacao-wizard-page .rt-choice-group .oficio-step4-choice-option:has(input:focus-visible),
+.prestacao-wizard-page .rt-choice-group .oficio-step4-choice-option:has(input:checked) {
+    border-color: rgba(31, 76, 125, 0.32);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+    background: #fbfdff;
+}
+
+.prestacao-rt-statusbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.prestacao-rt-status,
+.prestacao-rt-doc-status {
+    border: 1px solid #dbe7f3;
+    border-radius: 999px;
+    padding: 0.34rem 0.72rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #244665;
+    background: #f8fbff;
+}
+
+.prestacao-rt-doc-status.is-stale {
+    color: #92400e;
+    border-color: #fcd9a7;
+    background: #fff7ed;
+}
+
+.prestacao-rt-doc-status.is-updated {
+    color: #166534;
+    border-color: #b9e4cf;
+    background: #f0fbf5;
+}
+
+.prestacao-rt-actions {
+    gap: 0.6rem;
+}
+
 .diario-bordo-card__body {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr);

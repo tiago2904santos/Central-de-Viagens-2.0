@@ -16,6 +16,7 @@ urlpatterns = [
     path("<int:prestacao_id>/resumo/", views.prestacao_resumo, name="resumo"),
     path("<int:prestacao_id>/excluir/", views.prestacao_excluir, name="excluir"),
     path("<int:prestacao_id>/relatorio-tecnico/", views.relatorio_tecnico_form, name="relatorio-tecnico"),
+    path("<int:prestacao_id>/relatorio-tecnico/autosave/", views.relatorio_tecnico_autosave, name="relatorio-tecnico-autosave"),
     path("<int:prestacao_id>/relatorio-tecnico/docx/", views.relatorio_tecnico_docx, name="relatorio-tecnico-docx"),
     path("<int:prestacao_id>/relatorio-tecnico/pdf/", views.relatorio_tecnico_pdf, name="relatorio-tecnico-pdf"),
 ]

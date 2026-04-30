@@ -16,7 +16,7 @@
             <p class="oficio-stage-description">Revise os dados do relatório técnico sem sair do wizard da prestação.</p>
           </div>
         </div>
-        <form method="post" class="oficio-stage-form">
+        <form method="post" id="prestacao-rt-step1-form" class="oficio-stage-form" data-autosave-url="{% url 'prestacao_contas:relatorio-tecnico-autosave' prestacao.id %}">
           {% csrf_token %}
           <section class="oficio-stage-section">
             <div class="oficio-stage-section-head">
@@ -25,17 +25,45 @@
                 <p class="oficio-stage-section-text">Informações herdadas da prestação e do cadastro.</p>
               </div>
             </div>
-            <div class="rt-grid rt-grid-3">
-              <div class="form-group"><label>Nome</label><div class="rt-readonly">{{ dados_servidor.nome|default:"Não informado" }}</div></div>
-              <div class="form-group"><label>RG</label><div class="rt-readonly">{{ dados_servidor.rg|default:"Não informado" }}</div></div>
-              <div class="form-group"><label>CPF</label><div class="rt-readonly">{{ dados_servidor.cpf|default:"Não informado" }}</div></div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="evento-campo-card">
+                  <label class="form-label">Nome</label>
+                  <div class="rt-readonly">{{ dados_servidor.nome|default:"Não informado" }}</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="evento-campo-card">
+                  <label class="form-label">RG</label>
+                  <div class="rt-readonly">{{ dados_servidor.rg|default:"Não informado" }}</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="evento-campo-card">
+                  <label class="form-label">CPF</label>
+                  <div class="rt-readonly">{{ dados_servidor.cpf|default:"Não informado" }}</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="evento-campo-card">
+                  <label class="form-label">Cargo</label>
+                  <div class="rt-readonly">{{ dados_servidor.cargo|default:"Não informado" }}</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="evento-campo-card">
+                  <label class="form-label">Unidade</label>
+                  <div class="rt-readonly">{{ dados_servidor.unidade|default:"Não informado" }}</div>
+                </div>
+              </div>
             </div>
           </section>
 
           <section class="oficio-stage-section">
             <div class="oficio-stage-section-head">
               <div>
-                <h3 class="oficio-stage-section-title">Valores utilizados</h3>
+                <h3 class="oficio-stage-section-title">Informações de deslocamento</h3>
+                <p class="oficio-stage-section-text">Use o mesmo padrão visual de seleção do restante do sistema.</p>
               </div>
             </div>
             <div class="rt-grid rt-grid-3">
@@ -45,14 +73,44 @@
             <div class="rt-grid rt-grid-2">
               <div class="form-group rt-boolean-group">
                 <label>Teve translado?</label>
-                <div class="form-check">{{ form.teve_translado }} <label class="form-check-label" for="{{ form.teve_translado.id_for_label }}">Sim</label></div>
+                <div class="oficio-step4-choice-group rt-choice-group">
+                  <label class="oficio-step4-choice-option" for="id_teve_translado_sim">
+                    <input class="form-check-input" type="radio" name="teve_translado" id="id_teve_translado_sim" value="1" {% if form.teve_translado.value %}checked{% endif %}>
+                    <span class="oficio-step4-choice-copy">
+                      <span class="oficio-step4-choice-title">Sim</span>
+                      <span class="oficio-step4-choice-text">Inclui custo de translado no relatório.</span>
+                    </span>
+                  </label>
+                  <label class="oficio-step4-choice-option" for="id_teve_translado_nao">
+                    <input class="form-check-input" type="radio" name="teve_translado" id="id_teve_translado_nao" value="0" {% if not form.teve_translado.value %}checked{% endif %}>
+                    <span class="oficio-step4-choice-copy">
+                      <span class="oficio-step4-choice-title">Não</span>
+                      <span class="oficio-step4-choice-text">Registra automaticamente que não houve translado.</span>
+                    </span>
+                  </label>
+                </div>
                 <div class="rt-money-field" data-money-wrapper="translado">
                   <label for="{{ form.valor_translado.id_for_label }}">Valor translado (R$)</label>{{ form.valor_translado }}
                 </div>
               </div>
               <div class="form-group rt-boolean-group">
                 <label>Teve passagem?</label>
-                <div class="form-check">{{ form.teve_passagem }} <label class="form-check-label" for="{{ form.teve_passagem.id_for_label }}">Sim</label></div>
+                <div class="oficio-step4-choice-group rt-choice-group">
+                  <label class="oficio-step4-choice-option" for="id_teve_passagem_sim">
+                    <input class="form-check-input" type="radio" name="teve_passagem" id="id_teve_passagem_sim" value="1" {% if form.teve_passagem.value %}checked{% endif %}>
+                    <span class="oficio-step4-choice-copy">
+                      <span class="oficio-step4-choice-title">Sim</span>
+                      <span class="oficio-step4-choice-text">Inclui custo de passagem no relatório.</span>
+                    </span>
+                  </label>
+                  <label class="oficio-step4-choice-option" for="id_teve_passagem_nao">
+                    <input class="form-check-input" type="radio" name="teve_passagem" id="id_teve_passagem_nao" value="0" {% if not form.teve_passagem.value %}checked{% endif %}>
+                    <span class="oficio-step4-choice-copy">
+                      <span class="oficio-step4-choice-title">Não</span>
+                      <span class="oficio-step4-choice-text">Registra automaticamente que não houve passagem.</span>
+                    </span>
+                  </label>
+                </div>
                 <div class="rt-money-field" data-money-wrapper="passagem">
                   <label for="{{ form.valor_passagem.id_for_label }}">Valor passagem (R$)</label>{{ form.valor_passagem }}
                 </div>
@@ -82,7 +140,7 @@
                 <small class="form-text">As atividades selecionadas serão impressas no RT separadas por vírgula.</small>
                 <div class="d-none">{{ form.atividade }}</div>
               </div>
-              <div class="form-group prestacao-model-field">
+              <div class="form-group prestacao-model-field rt-model-field">
                 <div class="prestacao-model-field__head">
                   <label for="id_conclusao_modelo">Conclusão (texto pronto)</label>
                   <a class="btn btn-outline-secondary btn-sm" href="{% url 'prestacao_contas:textos-padrao' %}?categoria=relatorio_tecnico_conclusao" target="_blank" rel="noopener">Gerenciar modelos</a>
@@ -96,7 +154,7 @@
                 <label class="mt-2" for="{{ form.conclusao.id_for_label }}">Conclusão final</label>
                 {{ form.conclusao }}
               </div>
-              <div class="form-group prestacao-model-field">
+              <div class="form-group prestacao-model-field rt-model-field">
                 <div class="prestacao-model-field__head">
                   <label for="id_medidas_modelo">Medidas (texto pronto)</label>
                   <a class="btn btn-outline-secondary btn-sm" href="{% url 'prestacao_contas:textos-padrao' %}?categoria=relatorio_tecnico_medidas" target="_blank" rel="noopener">Gerenciar modelos</a>
@@ -110,7 +168,7 @@
                 <label class="mt-2" for="{{ form.medidas.id_for_label }}">Medidas finais</label>
                 {{ form.medidas }}
               </div>
-              <div class="form-group prestacao-model-field">
+              <div class="form-group prestacao-model-field rt-model-field">
                 <div class="prestacao-model-field__head">
                   <label for="id_info_modelo">Informações complementares (texto pronto)</label>
                   <a class="btn btn-outline-secondary btn-sm" href="{% url 'prestacao_contas:textos-padrao' %}?categoria=relatorio_tecnico_informacoes_complementares" target="_blank" rel="noopener">Gerenciar modelos</a>
@@ -128,11 +186,25 @@
             </div>
           </section>
 
-          <div class="oficio-wizard-footer-actions">
+          <section class="oficio-stage-section">
+            <div class="oficio-stage-section-head">
+              <div>
+                <h3 class="oficio-stage-section-title">Ações e status</h3>
+                <p class="oficio-stage-section-text">Autosave ativo e documentos atualizados sob demanda no download.</p>
+              </div>
+            </div>
+            <div class="prestacao-rt-statusbar">
+              <span class="prestacao-rt-status" id="rt-autosave-status" aria-live="polite">Autosave ativo.</span>
+              <span class="prestacao-rt-doc-status {% if rt.status == rt.STATUS_GERADO %}is-updated{% else %}is-stale{% endif %}" id="rt-document-status">
+                {% if rt.status == rt.STATUS_GERADO %}Documento atualizado{% else %}Documento desatualizado{% endif %}
+              </span>
+            </div>
+          </section>
+
+          <div class="oficio-wizard-footer-actions prestacao-rt-actions">
             <a href="{% url 'prestacao_contas:step' prestacao.id 1 %}" class="btn btn-outline-secondary">Voltar</a>
-            <button type="submit" class="btn btn-secondary">Salvar</button>
-            <button type="submit" formaction="{% url 'prestacao_contas:relatorio-tecnico-docx' prestacao.id %}" class="btn btn-outline-primary">Gerar DOCX</button>
-            <button type="submit" formaction="{% url 'prestacao_contas:relatorio-tecnico-pdf' prestacao.id %}" class="btn btn-outline-primary">Gerar PDF</button>
+            <a href="{% url 'prestacao_contas:relatorio-tecnico-pdf' prestacao.id %}" class="btn btn-outline-primary" data-autosave-link="1">Baixar PDF</a>
+            <a href="{% url 'prestacao_contas:relatorio-tecnico-docx' prestacao.id %}" class="btn btn-outline-primary" data-autosave-link="1">Baixar DOCX</a>
             <button type="submit" name="avancar" value="1" class="btn btn-primary">Avançar</button>
           </div>
         </form>
@@ -143,5 +215,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/prestacao_contas.js' %}" defer></script>
+<script src="{% static 'js/oficio_wizard.js' %}" defer></script>
+<script src="{% static 'js/rt-step1.js' %}" defer></script>
 {% endblock %}

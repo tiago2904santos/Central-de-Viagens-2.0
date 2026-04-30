@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, QueryDict
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -233,6 +234,43 @@ def _wizard_context(prestacao, current_key, **extra):
     return context
 
 
+def _rt_documento_desatualizado(rt, tipo):
+    if tipo == "docx" and not rt.arquivo_docx:
+        return True
+    if tipo == "pdf" and not rt.arquivo_pdf:
+        return True
+    if rt.status != rt.STATUS_GERADO:
+        return True
+    if not rt.data_geracao:
+        return True
+    if rt.updated_at and rt.updated_at > rt.data_geracao:
+        return True
+    return False
+
+
+def _build_rt_partial_payload(rt, post_data):
+    form_probe = RelatorioTecnicoPrestacaoForm(instance=rt)
+    data = QueryDict("", mutable=True)
+    saved_codigos = [c.strip() for c in (rt.atividade_codigos or "").split(",") if c.strip()]
+
+    for field_name in form_probe.fields.keys():
+        if field_name in post_data:
+            data.setlist(field_name, post_data.getlist(field_name))
+            continue
+        if field_name == "atividades_codigos":
+            data.setlist(field_name, saved_codigos)
+            continue
+        if field_name in {"conclusao_modelo", "medidas_modelo", "info_modelo"}:
+            data[field_name] = str(form_probe.initial.get(field_name) or "")
+            continue
+        if field_name in {"teve_translado", "teve_passagem"}:
+            data[field_name] = "1" if getattr(rt, field_name) else "0"
+            continue
+        current_value = getattr(rt, field_name, "")
+        data[field_name] = "" if current_value is None else str(current_value)
+    return data
+
+
 @login_required
 def prestacao_lista(request):
     prestacoes = PrestacaoConta.objects.select_related("oficio", "servidor").order_by("-updated_at")
@@ -308,6 +346,27 @@ def prestacao_step(request, prestacao_id, step):
             rt.motivo = prestacao.descricao_evento
             rt.save(update_fields=["motivo", "updated_at"])
         form = RelatorioTecnicoPrestacaoForm(request.POST or None, instance=rt)
+        is_autosave = request.method == "POST" and request.POST.get("autosave") == "1"
+        if is_autosave:
+            partial_payload = _build_rt_partial_payload(rt, request.POST)
+            form = RelatorioTecnicoPrestacaoForm(partial_payload, instance=rt)
+            if form.is_valid():
+                rt = form.save(commit=False)
+                rt.status = rt.STATUS_RASCUNHO
+                rt.save()
+                prestacao.status_rt = PrestacaoConta.STATUS_RT_RASCUNHO
+                prestacao.rt_atualizado_em = timezone.now()
+                prestacao.save(update_fields=["status_rt", "rt_atualizado_em", "updated_at"])
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "status": "salvo",
+                        "updated_at": prestacao.updated_at.isoformat(),
+                        "saved_at": timezone.localtime(prestacao.updated_at).strftime("%H:%M"),
+                        "documento_status": "desatualizado",
+                    }
+                )
+            return JsonResponse({"ok": False, "errors": form.errors, "status": "erro"}, status=400)
         if request.method == "POST" and form.is_valid():
             rt = form.save(commit=False)
             rt.status = rt.STATUS_RASCUNHO
@@ -368,25 +427,15 @@ def relatorio_tecnico_form(request, prestacao_id):
 def relatorio_tecnico_docx(request, prestacao_id):
     prestacao = get_object_or_404(PrestacaoConta.objects.select_related("oficio", "servidor"), pk=prestacao_id)
     rt = obter_ou_criar_rt(prestacao, usuario=request.user)
-    form = RelatorioTecnicoPrestacaoForm(request.POST or None, instance=rt)
-    if request.method == "POST":
-        if form.is_valid():
-            rt = form.save()
-        else:
-            messages.error(request, "Corrija os campos do RT antes de gerar o DOCX.")
-            return render(
-                request,
-                "prestacao_contas/relatorio_tecnico_form.html",
-                {
-                    "prestacao": prestacao,
-                    "rt": rt,
-                    "form": form,
-                    "resumo_viagem": _resumo_viagem(prestacao.oficio),
-                    "dados_servidor": _dados_servidor_preview(prestacao),
-                },
-                status=422,
-            )
-    docx_bytes, filename = gerar_docx_rt(rt, usuario=request.user)
+    if _rt_documento_desatualizado(rt, "docx"):
+        docx_bytes, filename = gerar_docx_rt(rt, usuario=request.user)
+    else:
+        rt.arquivo_docx.open("rb")
+        try:
+            docx_bytes = rt.arquivo_docx.read()
+        finally:
+            rt.arquivo_docx.close()
+        filename = rt.arquivo_docx.name.rsplit("/", 1)[-1]
     response = HttpResponse(
         docx_bytes,
         content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -399,32 +448,28 @@ def relatorio_tecnico_docx(request, prestacao_id):
 def relatorio_tecnico_pdf(request, prestacao_id):
     prestacao = get_object_or_404(PrestacaoConta.objects.select_related("oficio", "servidor"), pk=prestacao_id)
     rt = obter_ou_criar_rt(prestacao, usuario=request.user)
-    form = RelatorioTecnicoPrestacaoForm(request.POST or None, instance=rt)
-    if request.method == "POST":
-        if form.is_valid():
-            rt = form.save()
-        else:
-            messages.error(request, "Corrija os campos do RT antes de gerar o PDF.")
-            return render(
-                request,
-                "prestacao_contas/relatorio_tecnico_form.html",
-                {
-                    "prestacao": prestacao,
-                    "rt": rt,
-                    "form": form,
-                    "resumo_viagem": _resumo_viagem(prestacao.oficio),
-                    "dados_servidor": _dados_servidor_preview(prestacao),
-                },
-                status=422,
-            )
     try:
-        pdf_bytes, filename = gerar_pdf_rt(rt, usuario=request.user)
+        if _rt_documento_desatualizado(rt, "pdf"):
+            pdf_bytes, filename = gerar_pdf_rt(rt, usuario=request.user)
+        else:
+            rt.arquivo_pdf.open("rb")
+            try:
+                pdf_bytes = rt.arquivo_pdf.read()
+            finally:
+                rt.arquivo_pdf.close()
+            filename = rt.arquivo_pdf.name.rsplit("/", 1)[-1]
     except Exception as exc:
         messages.warning(request, str(exc))
         return redirect("prestacao_contas:relatorio-tecnico", prestacao_id=prestacao.id)
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
+
+
+@login_required
+@require_http_methods(["POST"])
+def relatorio_tecnico_autosave(request, prestacao_id):
+    return prestacao_step(request, prestacao_id, 2)
 
 
 @login_required
