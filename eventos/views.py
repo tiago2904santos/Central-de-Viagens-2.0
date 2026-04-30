@@ -30,6 +30,7 @@ from core.utils.masks import format_placa, format_protocolo, normalize_placa, on
 from documentos.services.exportacao_google_drive import ExportacaoEventoGoogleDriveService
 from integracoes.services.google_drive.drive_service import GoogleDriveServiceError
 from integracoes.models import GoogleDriveIntegration
+from prestacao_contas.services.sincronizacao import sincronizar_prestacoes_do_oficio
 
 from .models import (
     AtividadePlanoTrabalho,
@@ -4350,6 +4351,8 @@ def _autosave_oficio_step1(oficio, request):
         ],
     )
     oficio.viajantes.set(viajantes)
+    if oficio.status == Oficio.STATUS_FINALIZADO:
+        sincronizar_prestacoes_do_oficio(oficio)
     for ev in oficio.eventos.all():
         _evento_sincronizar_participantes(
             ev,
@@ -4442,6 +4445,8 @@ def oficio_step1(request, pk):
         ])
         viajantes_oficio = form.cleaned_data.get('viajantes') or []
         oficio.viajantes.set(viajantes_oficio)
+        if oficio.status == Oficio.STATUS_FINALIZADO:
+            sincronizar_prestacoes_do_oficio(oficio)
         if evento:
             _evento_sincronizar_participantes(
                 evento,
@@ -6500,6 +6505,9 @@ def _build_oficio_step4_context(oficio, finalize_validation=None):
     step2_preview = _build_step2_preview_data(oficio, step2_form)
     step3_preview = _build_oficio_step3_preview(oficio, saved_state, diarias_resultado=diarias_resultado)
     vinculos_resolvidos = resolver_vinculos_oficio(oficio)
+    prestacoes_do_oficio = list(
+        oficio.prestacoes_contas.select_related('servidor').order_by('nome_servidor', 'id')
+    )
     return {
         'oficio': oficio,
         'evento': oficio.evento,
@@ -6513,6 +6521,7 @@ def _build_oficio_step4_context(oficio, finalize_validation=None):
         'oficio_downloads': _build_oficio_document_download_context(oficio, DocumentoOficioTipo.OFICIO),
         'termo_autorizacao': _build_oficio_termo_autorizacao_context(oficio),
         'vinculos_resolvidos': vinculos_resolvidos,
+        'prestacoes_do_oficio': prestacoes_do_oficio,
         'justificativa_url': _oficio_justificativa_url(
             oficio,
             next_url=reverse('eventos:oficio-step4', kwargs={'pk': oficio.pk}),
@@ -7204,6 +7213,8 @@ def _download_oficio_documento(request, oficio, tipo_documento, formato):
         )
         return redirect('eventos:oficio-step4', pk=oficio.pk)
     try:
+        if oficio.status == Oficio.STATUS_FINALIZADO:
+            sincronizar_prestacoes_do_oficio(oficio)
         payload = render_document_bytes(oficio, meta.tipo, formato)
         if meta.tipo == DocumentoOficioTipo.OFICIO and formato == DocumentoFormato.PDF:
             pedido_assinado = (
@@ -7305,10 +7316,21 @@ def oficio_step4(request, pk):
                     _save_oficio_preserving_status(oficio, ['gerar_termo_preenchido'])
                 oficio.status = Oficio.STATUS_FINALIZADO
                 oficio.save(update_fields=['status', 'updated_at'])
+                prestacoes_sync_result = sincronizar_prestacoes_do_oficio(oficio)
                 if gerar_termo_preenchido:
                     termos, termos_created = _get_or_create_termos_from_oficio(oficio, user=request.user)
 
             messages.success(request, 'OfÃ­cio finalizado com sucesso.')
+            if prestacoes_sync_result:
+                criadas = sum(1 for _, created in prestacoes_sync_result if created)
+                total = len(prestacoes_sync_result)
+                if criadas:
+                    messages.success(
+                        request,
+                        f'{total} prestaÃ§Ã£o(Ãµes) sincronizada(s), sendo {criadas} criada(s) automaticamente.',
+                    )
+                else:
+                    messages.info(request, f'{total} prestaÃ§Ã£o(Ãµes) jÃ¡ estavam sincronizadas para este ofÃ­cio.')
             if gerar_termo_preenchido:
                 if termos and termos_created:
                     messages.success(

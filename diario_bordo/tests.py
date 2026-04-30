@@ -147,6 +147,16 @@ class DiarioBordoPlaceholderDinamicoTest(TestCase):
         )
         self.assertTrue(services.XLSX_TEMPLATE_PATH.exists())
 
+    def test_xlsx_gerado_nao_imprime_gridlines(self):
+        diario = self._diario()
+        self._trecho(diario, 0, "Curitiba", "Palmas")
+        xlsx = render_xlsx_diario_bordo(diario)
+        with ZipFile(BytesIO(xlsx)) as zf:
+            sheet_name = [name for name in zf.namelist() if name.startswith("xl/worksheets/sheet")][0]
+            sheet_xml = zf.read(sheet_name).decode("utf-8", errors="ignore")
+        self.assertIn('showGridLines="0"', sheet_xml)
+        self.assertIn('gridLines="0"', sheet_xml)
+
     def test_pdf_e_gerado_a_partir_do_xlsx_preenchido(self):
         diario = self._diario()
         self._trecho(diario, 0, "Curitiba", "Palmas")

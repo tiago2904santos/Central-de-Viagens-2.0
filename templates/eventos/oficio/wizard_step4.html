@@ -266,6 +266,27 @@
                 {% endfor %}
               </ul>
             </section>
+            <section class="app-summary-section oficio-summary-section oficio-step4-card">
+              <div class="oficio-step4-card-head">
+                <h2>Prestações de contas</h2>
+                <span class="oficio-step4-head-meta">Uma por servidor</span>
+              </div>
+              {% if prestacoes_do_oficio %}
+              <ul class="oficio-step4-people-list">
+                {% for prestacao in prestacoes_do_oficio %}
+                <li class="oficio-step4-people-item">
+                  <span class="oficio-step4-people-name">{{ prestacao.nome_servidor|default:"Servidor não informado" }}</span>
+                  <span class="oficio-step4-people-meta">{{ prestacao.get_status_display }}</span>
+                  <a href="{% url 'prestacao_contas:step' prestacao.id 1 %}" class="btn btn-sm btn-outline-primary mt-2">Abrir prestação</a>
+                </li>
+                {% endfor %}
+              </ul>
+              {% elif oficio.status == 'FINALIZADO' %}
+              <p class="text-muted mb-0">As prestações serão sincronizadas automaticamente ao abrir ou baixar os documentos do ofício.</p>
+              {% else %}
+              <p class="text-muted mb-0">As prestações individuais serão criadas automaticamente ao finalizar o ofício.</p>
+              {% endif %}
+            </section>
 
             {% include 'includes/list/oficio_evento_context_block.html' with block=oficio_evento_context_block %}
 

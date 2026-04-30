@@ -13,7 +13,7 @@
 {% include 'includes/list/view_toggle.html' with aria_label='Alternar visualização da lista de prestações' %}
 {% endblock %}
 {% block list_header_actions %}
-<a href="{% url 'prestacao_contas:nova' %}" class="btn btn-primary system-list-action-btn">Nova prestação</a>
+<span class="text-muted small">As prestações são criadas automaticamente a partir do ofício finalizado.</span>
 {% endblock %}
 
 {% block list_filter_primary_fields %}
@@ -44,10 +44,7 @@
 {% include 'prestacao_contas/partials/_prestacoes_list_content.html' %}
 {% endblock %}
 
-{% block list_floating_actions %}
-{% url 'prestacao_contas:nova' as prestacao_nova_url %}
-{% include 'includes/list/floating_new_button.html' with url=prestacao_nova_url label='Nova prestação' icon='bi-plus-lg' %}
-{% endblock %}
+{% block list_floating_actions %}{% endblock %}
 
 {% block extra_js %}
 {{ block.super }}

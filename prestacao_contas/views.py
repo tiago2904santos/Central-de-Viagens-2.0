@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, QueryDict
@@ -21,6 +23,21 @@ from .forms import (
 from .models import PrestacaoConta, TextoPadraoDocumento
 from .services.relatorio_tecnico import gerar_docx_rt, gerar_pdf_rt, obter_ou_criar_rt
 from diario_bordo.models import DiarioBordo
+
+
+def _is_autosave_request(request):
+    return request.method == "POST" and request.POST.get("autosave") == "1"
+
+
+def _autosave_success_response(extra=None):
+    payload = {"ok": True, "saved_at": timezone.localtime().strftime("%H:%M:%S")}
+    if extra:
+        payload.update(extra)
+    return JsonResponse(payload)
+
+
+def _autosave_error_response(message, status=400):
+    return JsonResponse({"ok": False, "error": message}, status=status)
 
 
 def _resumo_viagem(oficio):
@@ -271,6 +288,148 @@ def _build_rt_partial_payload(rt, post_data):
     return data
 
 
+def _parse_bool_field(value):
+    if value is None:
+        return None
+    return str(value).strip().lower() in {"1", "true", "on", "sim", "yes"}
+
+
+def _parse_decimal_field(value):
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    normalized = raw.replace("R$", "").replace(" ", "")
+    if "," in normalized and "." in normalized:
+        normalized = normalized.replace(".", "").replace(",", ".")
+    else:
+        normalized = normalized.replace(",", ".")
+    try:
+        return Decimal(normalized)
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+
+
+def _format_currency_br(value):
+    if value is None:
+        return "Nao houve"
+    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def _autosave_relatorio_tecnico(prestacao, rt, post_data):
+    allowed_fields = {
+        "teve_translado",
+        "valor_translado",
+        "teve_passagem",
+        "valor_passagem",
+        "atividade",
+        "conclusao",
+        "medidas",
+        "informacoes_complementares",
+        "atividade_codigos",
+        "conclusao_modelo",
+        "medidas_modelo",
+        "info_modelo",
+    }
+    incoming = {key for key in post_data.keys() if key in allowed_fields}
+    if not incoming:
+        return JsonResponse({"ok": True, "status": "ignorado", "documento_status": "desatualizado"})
+
+    update_fields = []
+    errors = {}
+
+    if "atividade_codigos" in incoming:
+        codigos = [c.strip() for c in post_data.getlist("atividade_codigos") if c.strip()]
+        rt.atividade_codigos = ",".join(codigos)
+        update_fields.append("atividade_codigos")
+
+    for field in ("atividade", "conclusao", "medidas", "informacoes_complementares"):
+        if field in incoming:
+            setattr(rt, field, (post_data.get(field) or "").strip())
+            update_fields.append(field)
+
+    if "conclusao_modelo" in incoming:
+        modelo = TextoPadraoDocumento.objects.filter(pk=post_data.get("conclusao_modelo") or None).first()
+        if modelo and "conclusao" not in incoming:
+            rt.conclusao = modelo.texto
+            update_fields.append("conclusao")
+    if "medidas_modelo" in incoming:
+        modelo = TextoPadraoDocumento.objects.filter(pk=post_data.get("medidas_modelo") or None).first()
+        if modelo and "medidas" not in incoming:
+            rt.medidas = modelo.texto
+            update_fields.append("medidas")
+    if "info_modelo" in incoming:
+        modelo = TextoPadraoDocumento.objects.filter(pk=post_data.get("info_modelo") or None).first()
+        if modelo and "informacoes_complementares" not in incoming:
+            rt.informacoes_complementares = modelo.texto
+            update_fields.append("informacoes_complementares")
+
+    if "teve_translado" in incoming:
+        valor_bool = _parse_bool_field(post_data.get("teve_translado"))
+        rt.teve_translado = bool(valor_bool)
+        update_fields.append("teve_translado")
+    if "valor_translado" in incoming:
+        valor = _parse_decimal_field(post_data.get("valor_translado"))
+        if valor is None and rt.teve_translado:
+            errors["valor_translado"] = "Informe um valor válido para translado."
+        else:
+            rt.valor_translado = valor
+            update_fields.append("valor_translado")
+    if "teve_translado" in incoming or "valor_translado" in incoming:
+        if rt.teve_translado:
+            if rt.valor_translado is None:
+                errors["valor_translado"] = "Informe o valor de translado."
+            rt.translado = _format_currency_br(rt.valor_translado) if rt.valor_translado is not None else ""
+        else:
+            rt.valor_translado = None
+            rt.translado = "Nao houve"
+            update_fields.extend(["valor_translado"])
+        update_fields.append("translado")
+
+    if "teve_passagem" in incoming:
+        valor_bool = _parse_bool_field(post_data.get("teve_passagem"))
+        rt.teve_passagem = bool(valor_bool)
+        update_fields.append("teve_passagem")
+    if "valor_passagem" in incoming:
+        valor = _parse_decimal_field(post_data.get("valor_passagem"))
+        if valor is None and rt.teve_passagem:
+            errors["valor_passagem"] = "Informe um valor válido para passagem."
+        else:
+            rt.valor_passagem = valor
+            update_fields.append("valor_passagem")
+    if "teve_passagem" in incoming or "valor_passagem" in incoming:
+        if rt.teve_passagem:
+            if rt.valor_passagem is None:
+                errors["valor_passagem"] = "Informe o valor de passagem."
+            rt.passagem = _format_currency_br(rt.valor_passagem) if rt.valor_passagem is not None else ""
+        else:
+            rt.valor_passagem = None
+            rt.passagem = "Nao houve"
+            update_fields.extend(["valor_passagem"])
+        update_fields.append("passagem")
+
+    if errors:
+        return JsonResponse({"ok": False, "status": "erro", "errors": errors}, status=400)
+
+    rt.status = rt.STATUS_RASCUNHO
+    update_fields.append("status")
+    rt.save(update_fields=[*set(update_fields), "updated_at"])
+    prestacao.status_rt = PrestacaoConta.STATUS_RT_RASCUNHO
+    prestacao.rt_atualizado_em = timezone.now()
+    prestacao.save(update_fields=["status_rt", "rt_atualizado_em", "updated_at"])
+    return JsonResponse(
+        {
+            "ok": True,
+            "status": "salvo",
+            "updated_at": prestacao.updated_at.isoformat(),
+            "saved_at": timezone.localtime(prestacao.updated_at).strftime("%H:%M"),
+            "documento_status": "desatualizado",
+            "documento_desatualizado": True,
+        }
+    )
+
+
 @login_required
 def prestacao_lista(request):
     prestacoes = PrestacaoConta.objects.select_related("oficio", "servidor").order_by("-updated_at")
@@ -334,6 +493,15 @@ def prestacao_step(request, prestacao_id, step):
     prestacao = get_object_or_404(PrestacaoConta.objects.select_related("oficio", "servidor"), pk=prestacao_id)
     if step == 1:
         form = PrestacaoInformacoesForm(request.POST or None, request.FILES or None, instance=prestacao)
+        if _is_autosave_request(request):
+            form = PrestacaoInformacoesForm(request.POST or None, instance=prestacao)
+            if form.is_valid():
+                form.save()
+                prestacao.status = PrestacaoConta.STATUS_EM_ANDAMENTO
+                prestacao.save(update_fields=["status", "updated_at"])
+                return _autosave_success_response({"status": "salvo"})
+            error = next(iter(form.errors.values()))[0] if form.errors else "Falha no autosave."
+            return _autosave_error_response(str(error))
         if request.method == "POST" and form.is_valid():
             form.save()
             prestacao.status = PrestacaoConta.STATUS_EM_ANDAMENTO
@@ -348,25 +516,7 @@ def prestacao_step(request, prestacao_id, step):
         form = RelatorioTecnicoPrestacaoForm(request.POST or None, instance=rt)
         is_autosave = request.method == "POST" and request.POST.get("autosave") == "1"
         if is_autosave:
-            partial_payload = _build_rt_partial_payload(rt, request.POST)
-            form = RelatorioTecnicoPrestacaoForm(partial_payload, instance=rt)
-            if form.is_valid():
-                rt = form.save(commit=False)
-                rt.status = rt.STATUS_RASCUNHO
-                rt.save()
-                prestacao.status_rt = PrestacaoConta.STATUS_RT_RASCUNHO
-                prestacao.rt_atualizado_em = timezone.now()
-                prestacao.save(update_fields=["status_rt", "rt_atualizado_em", "updated_at"])
-                return JsonResponse(
-                    {
-                        "ok": True,
-                        "status": "salvo",
-                        "updated_at": prestacao.updated_at.isoformat(),
-                        "saved_at": timezone.localtime(prestacao.updated_at).strftime("%H:%M"),
-                        "documento_status": "desatualizado",
-                    }
-                )
-            return JsonResponse({"ok": False, "errors": form.errors, "status": "erro"}, status=400)
+            return _autosave_relatorio_tecnico(prestacao, rt, request.POST)
         if request.method == "POST" and form.is_valid():
             rt = form.save(commit=False)
             rt.status = rt.STATUS_RASCUNHO
@@ -387,6 +537,9 @@ def prestacao_step(request, prestacao_id, step):
         return render(request, "prestacao_contas/wizard_step3.html", _wizard_context(prestacao, "step3", diario_bordo=diario))
     if step == 4:
         form = PrestacaoComprovanteForm(request.POST or None, request.FILES or None, instance=prestacao)
+        if _is_autosave_request(request):
+            # Autosave nesta etapa só persiste campos textuais; upload exige submit normal.
+            return _autosave_success_response({"status": "ok"})
         if request.method == "POST" and form.is_valid():
             form.save()
             if "avancar" in request.POST:
@@ -474,17 +627,64 @@ def relatorio_tecnico_autosave(request, prestacao_id):
 
 @login_required
 def texto_padrao_lista(request):
+    q = (request.GET.get("q") or "").strip()
     categoria = (request.GET.get("categoria") or "").strip()
-    qs = TextoPadraoDocumento.objects.all().order_by("categoria", "ordem", "titulo")
+    date_from = (request.GET.get("date_from") or "").strip()
+    date_to = (request.GET.get("date_to") or "").strip()
+    order_by = (request.GET.get("order_by") or "titulo").strip()
+    order_dir = (request.GET.get("order_dir") or "asc").strip()
+
+    qs = TextoPadraoDocumento.objects.all()
+    if q:
+        qs = qs.filter(Q(titulo__icontains=q) | Q(texto__icontains=q))
     if categoria:
         qs = qs.filter(categoria=categoria)
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
+
+    allowed_order_fields = {
+        "titulo": "titulo",
+        "categoria": "categoria",
+        "ordem": "ordem",
+        "created_at": "created_at",
+        "updated_at": "updated_at",
+    }
+    order_field = allowed_order_fields.get(order_by, "titulo")
+    if order_dir == "desc":
+        order_field = f"-{order_field}"
+    qs = qs.order_by(order_field, "titulo")
+
+    order_by_choices = [
+        ("titulo", "Titulo"),
+        ("categoria", "Categoria"),
+        ("ordem", "Ordem"),
+        ("created_at", "Data de criacao"),
+        ("updated_at", "Ultima atualizacao"),
+    ]
+    order_dir_choices = [("asc", "Crescente"), ("desc", "Decrescente")]
+
     return render(
         request,
         "prestacao_contas/textos_padrao_lista.html",
         {
+            "object_list": qs,
             "textos": qs,
             "categoria": categoria,
             "categorias": TextoPadraoDocumento.CATEGORIA_CHOICES,
+            "filters": {
+                "q": q,
+                "categoria": categoria,
+                "date_from": date_from,
+                "date_to": date_to,
+                "order_by": order_by if order_by in allowed_order_fields else "titulo",
+                "order_dir": order_dir if order_dir in {"asc", "desc"} else "asc",
+            },
+            "order_by_choices": order_by_choices,
+            "order_dir_choices": order_dir_choices,
+            "cadastrar_modelo_url": reverse("prestacao_contas:textos-padrao-novo"),
+            "clear_filters_url": reverse("prestacao_contas:textos-padrao"),
         },
     )
 

@@ -67,7 +67,7 @@
               </div>
             </div>
             <div class="rt-grid rt-grid-3">
-              <div class="form-group"><label for="{{ form.diaria.id_for_label }}">Diária</label>{{ form.diaria }}</div>
+              <div class="form-group"><label for="{{ form.diaria.id_for_label }}">Valor da diária do servidor</label>{{ form.diaria }}</div>
               <div class="form-group"><label for="{{ form.combustivel.id_for_label }}">Combustível</label>{{ form.combustivel }}</div>
             </div>
             <div class="rt-grid rt-grid-2">
@@ -205,7 +205,15 @@
             <a href="{% url 'prestacao_contas:step' prestacao.id 1 %}" class="btn btn-outline-secondary">Voltar</a>
             <a href="{% url 'prestacao_contas:relatorio-tecnico-pdf' prestacao.id %}" class="btn btn-outline-primary" data-autosave-link="1">Baixar PDF</a>
             <a href="{% url 'prestacao_contas:relatorio-tecnico-docx' prestacao.id %}" class="btn btn-outline-primary" data-autosave-link="1">Baixar DOCX</a>
-            <button type="submit" name="avancar" value="1" class="btn btn-primary">Avançar</button>
+            <button
+              type="submit"
+              name="avancar"
+              value="1"
+              class="btn btn-primary"
+              data-autosave-navigate="{% url 'prestacao_contas:step' prestacao.id 3 %}"
+            >
+              Avançar
+            </button>
           </div>
         </form>
       </div>
@@ -216,5 +224,5 @@
 
 {% block extra_js %}
 <script src="{% static 'js/oficio_wizard.js' %}" defer></script>
-<script src="{% static 'js/rt-step1.js' %}" defer></script>
+<script src="{% static 'js/rt-autosave.js' %}" defer></script>
 {% endblock %}

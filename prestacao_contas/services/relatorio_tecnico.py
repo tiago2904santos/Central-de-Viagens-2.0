@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import date
+from decimal import Decimal, InvalidOperation
 from io import BytesIO
 from pathlib import Path
 
@@ -50,6 +51,56 @@ def _valor_padrao(value, fallback):
     return value if value else fallback
 
 
+def _parse_decimal(value):
+    if value is None:
+        return None
+    if isinstance(value, Decimal):
+        return value
+    raw = str(value).strip()
+    if not raw:
+        return None
+    normalized = raw.replace("R$", "").replace(" ", "")
+    if "," in normalized and "." in normalized:
+        normalized = normalized.replace(".", "").replace(",", ".")
+    else:
+        normalized = normalized.replace(",", ".")
+    try:
+        return Decimal(normalized)
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+
+
+def _formatar_moeda_br(valor_decimal):
+    return f"R$ {valor_decimal:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def obter_valor_diaria_individual(prestacao):
+    """
+    Retorna o valor individual de diária para a prestação/servidor.
+
+    Prioridade:
+    1) valor individual salvo explicitamente na própria prestação (dados_db);
+    2) rateio do total do ofício pelo total de viajantes vinculados.
+    """
+    dados_db = prestacao.dados_db or {}
+    valor_explicito = _parse_decimal(
+        dados_db.get("valor_diaria_servidor")
+        or dados_db.get("valor_diaria_individual")
+        or dados_db.get("valor_saque")
+    )
+    if valor_explicito is not None:
+        return valor_explicito
+
+    total_oficio = _parse_decimal(getattr(prestacao.oficio, "valor_diarias", None))
+    total_servidores = prestacao.oficio.viajantes.count() or 0
+    if total_oficio is not None and total_servidores > 0:
+        try:
+            return (total_oficio / Decimal(total_servidores)).quantize(Decimal("0.01"))
+        except (InvalidOperation, ZeroDivisionError):
+            return None
+    return None
+
+
 def _dados_servidor(prestacao):
     servidor = prestacao.servidor
     if servidor:
@@ -68,10 +119,10 @@ def _dados_servidor(prestacao):
 
 
 def _diaria_auto(prestacao):
-    valor_saque = getattr(prestacao, "valor_saque", None)
-    if valor_saque:
-        return f"R$ {valor_saque:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    return _valor_padrao(prestacao.oficio.valor_diarias, "Nao informado")
+    valor_individual = obter_valor_diaria_individual(prestacao)
+    if valor_individual is not None:
+        return _formatar_moeda_br(valor_individual)
+    return "Nao informado"
 
 
 def obter_ou_criar_rt(prestacao, usuario=None):

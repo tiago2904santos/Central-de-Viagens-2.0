@@ -19,7 +19,7 @@ from documentos.models import AssinaturaDocumento
 from eventos.models import Oficio, OficioAssinaturaPedido
 from eventos.services.documentos import DocumentoFormato, DocumentoOficioTipo, render_document_bytes
 from eventos.services.documentos.backends import get_pdf_backend_availability
-from eventos.services.documentos.types import DocumentRendererUnavailable
+from eventos.services.documentos.types import DocumentRendererUnavailable, DocumentValidationError
 
 
 def sha256_bytes(payload: bytes) -> str:
@@ -232,8 +232,9 @@ def assinatura_foi_invalidada_por_alteracao(oficio: Oficio, pedido: OficioAssina
         return False
     try:
         atual = gerar_pdf_canonico_oficio(oficio)
-    except DocumentRendererUnavailable:
+    except (DocumentRendererUnavailable, DocumentValidationError):
         # Sem backend DOCX->PDF disponível, não é possível revalidar neste ambiente.
+        # Ou documento ainda está incompleto para renderização canônica.
         # Falha segura: preserva status atual sem quebrar a listagem.
         return False
     return hash_conteudo_pdf_bytes(atual) != pedido.hash_pdf_original

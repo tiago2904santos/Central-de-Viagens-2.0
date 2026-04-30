@@ -1,44 +1,94 @@
-{% extends 'base.html' %}
+{% extends 'includes/list/document_list_base.html' %}
 
-{% block title %}Textos Padrão do RT{% endblock %}
+{% block list_page_class %}system-list-page--simple{% endblock %}
+{% block page_title_block %}Textos padrão RT{% endblock %}
+{% block page_header_title %}Textos padrão RT{% endblock %}
+{% block list_title %}Textos padrão RT{% endblock %}
+{% block list_header_controls %}{% include 'includes/list/mode_badge.html' with mode='simple' %}{% endblock %}
 
-{% block content %}
-<section class="rt-page-shell">
-    <article class="card rt-card">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-                <h1 class="rt-title">Textos Padrão</h1>
-                <p class="rt-subtitle">Gerencie respostas prontas para conclusão, medidas e informações complementares do RT.</p>
-            </div>
-            <a class="btn btn-primary" href="{% url 'prestacao_contas:textos-padrao-novo' %}">Novo texto</a>
-        </div>
-        <form method="get" class="rt-inline-actions mt-3">
-            <select name="categoria" class="form-select" style="max-width: 320px;">
-                <option value="">Todas as categorias</option>
-                {% for value,label in categorias %}
-                <option value="{{ value }}" {% if categoria == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="btn btn-outline-primary">Filtrar</button>
-        </form>
-    </article>
+{% block list_header_actions %}
+<a href="{{ cadastrar_modelo_url }}" class="btn btn-primary system-list-action-btn">Cadastrar modelo</a>
+{% endblock %}
+{% block list_filter_actions_field_class %}system-document-filter__field--span-3{% endblock %}
 
-    <section class="rt-list-grid">
-        {% for texto in textos %}
-        <article class="card rt-list-card">
-            <div class="rt-list-card__head">
-                <h2>{{ texto.titulo }}</h2>
-                <span class="badge text-bg-secondary">{{ texto.get_categoria_display }}</span>
-            </div>
-            <p class="mb-2">{{ texto.texto|truncatechars:180 }}</p>
-            <div class="rt-inline-actions">
-                {% if texto.is_padrao %}<span class="badge text-bg-success">Padrão</span>{% endif %}
-                <a class="btn btn-sm btn-outline-secondary" href="{% url 'prestacao_contas:textos-padrao-editar' texto.id %}">Editar</a>
-            </div>
-        </article>
-        {% empty %}
-        <article class="card rt-list-card"><p class="mb-0">Nenhum texto padrão cadastrado.</p></article>
+{% block list_filter_primary_fields %}
+<div class="system-document-filter__field system-document-filter__field--full">
+    <label class="form-label">Busca</label>
+    <input type="text" name="q" class="form-control" value="{{ filters.q }}" placeholder="Título ou texto do modelo" data-list-autosubmit>
+</div>
+{% endblock %}
+
+{% block list_filter_secondary_fields %}
+<div class="system-document-filter__field system-document-filter__field--span-4">
+    <label class="form-label">Categoria</label>
+    <select name="categoria" data-list-autosubmit>
+        <option value="">Todas as categorias</option>
+        {% for value,label in categorias %}
+        <option value="{{ value }}" {% if filters.categoria == value %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
-    </section>
-</section>
+    </select>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Data inicial</label>
+    <input type="date" name="date_from" class="form-control" value="{{ filters.date_from }}" data-list-autosubmit>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--compact">
+    <label class="form-label">Data final</label>
+    <input type="date" name="date_to" class="form-control" value="{{ filters.date_to }}" data-list-autosubmit>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--span-4">
+    <label class="form-label">Ordenar por</label>
+    <select name="order_by" data-list-autosubmit>
+        {% for value, label in order_by_choices %}
+        <option value="{{ value }}" {% if filters.order_by == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="system-document-filter__field system-document-filter__field--micro">
+    <label class="form-label">Direção</label>
+    <select name="order_dir" data-list-autosubmit>
+        {% for value, label in order_dir_choices %}
+        <option value="{{ value }}" {% if filters.order_dir == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% endblock %}
+
+{% block page_result_content %}
+<div class="system-list-table-wrap">
+    <div class="table-responsive">
+        <table class="table table-hover table-cadastro mb-0 system-list-table">
+            <thead class="table-light">
+                <tr>
+                    <th>Título</th>
+                    <th>Categoria</th>
+                    <th>Padrão</th>
+                    <th width="320" class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in object_list %}
+                <tr>
+                    <td>{{ obj.titulo }}</td>
+                    <td>{{ obj.get_categoria_display }}</td>
+                    <td>{% if obj.is_padrao %}<span class="badge bg-primary">Padrão</span>{% else %}-{% endif %}</td>
+                    <td class="text-end">
+                        <a href="{% url 'prestacao_contas:textos-padrao-editar' obj.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-4">Nenhum texto padrão cadastrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block list_floating_actions %}
+{% include 'includes/list/floating_new_button.html' with url=cadastrar_modelo_url label='Cadastrar modelo' icon='bi-plus-lg' %}
 {% endblock %}

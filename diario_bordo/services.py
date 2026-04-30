@@ -248,6 +248,23 @@ def _configure_print_settings(sheet_root):
     page_setup.set("fitToHeight", "0")
 
 
+def limpar_bordas_indevidas_diario_bordo(sheet_root):
+    """
+    Remove apenas gridlines de visualizacao/impressao.
+    Nao aplica bordas novas e preserva as bordas do template oficial.
+    """
+    sheet_views = sheet_root.find("x:sheetViews", NS)
+    if sheet_views is not None:
+        for sheet_view in sheet_views.findall("x:sheetView", NS):
+            sheet_view.set("showGridLines", "0")
+
+    print_options = sheet_root.find("x:printOptions", NS)
+    if print_options is None:
+        print_options = ET.SubElement(sheet_root, f"{{{SHEET_NS}}}printOptions")
+    print_options.set("gridLines", "0")
+    print_options.set("gridLinesSet", "0")
+
+
 def render_trechos_diario_bordo(sheet_root, shared_strings, diario):
     sheet_data = sheet_root.find("x:sheetData", NS)
     if sheet_data is None:
@@ -339,6 +356,7 @@ def render_xlsx_diario_bordo(diario: DiarioBordo):
         sheet_root = ET_fromstring(zin.read(target_sheet))
         render_trechos_diario_bordo(sheet_root, shared, diario)
         _configure_print_settings(sheet_root)
+        limpar_bordas_indevidas_diario_bordo(sheet_root)
         _clear_dynamic_placeholders_in_shared_strings(shared_root)
         for item in zin.infolist():
             if item.filename == "xl/sharedStrings.xml":
@@ -376,16 +394,23 @@ def _converter_xlsx_com_excel(xlsx_path: Path, pdf_path: Path):
         return False
     try:
         import win32com.client  # type: ignore
+        import pythoncom  # type: ignore
     except ImportError:
         return False
 
     excel = None
     workbook = None
+    com_initialized = False
     try:
+        # Django pode executar requests em threads; COM precisa ser inicializado por thread.
+        pythoncom.CoInitialize()
+        com_initialized = True
         excel = win32com.client.DispatchEx("Excel.Application")
         excel.Visible = False
         excel.DisplayAlerts = False
         workbook = excel.Workbooks.Open(str(xlsx_path))
+        for worksheet in workbook.Worksheets:
+            worksheet.PageSetup.PrintGridlines = False
         workbook.ExportAsFixedFormat(0, str(pdf_path))
         return pdf_path.exists()
     finally:
@@ -393,6 +418,8 @@ def _converter_xlsx_com_excel(xlsx_path: Path, pdf_path: Path):
             workbook.Close(False)
         if excel is not None:
             excel.Quit()
+        if com_initialized:
+            pythoncom.CoUninitialize()
 
 
 def _converter_xlsx_com_libreoffice(xlsx_path: Path, pdf_path: Path):
@@ -427,13 +454,19 @@ def converter_xlsx_para_pdf(xlsx_path, pdf_path):
     if not xlsx_path.exists():
         raise ValidationError("XLSX preenchido do Diario de Bordo nao encontrado para conversao em PDF.")
 
+    errors = []
     for converter in (_converter_xlsx_com_excel, _converter_xlsx_com_libreoffice):
         try:
             if converter(xlsx_path, pdf_path):
                 return pdf_path
-        except Exception:
+        except Exception as exc:
+            errors.append(f"{converter.__name__}: {exc}")
             continue
-    raise ValidationError("Nao foi possivel converter o XLSX do Diario de Bordo para PDF. Verifique se Excel/LibreOffice esta disponivel.")
+    details = " | ".join(errors) if errors else "nenhum backend retornou sucesso"
+    raise ValidationError(
+        "Nao foi possivel converter o XLSX do Diario de Bordo para PDF. "
+        f"Detalhes: {details}. Verifique se Excel/LibreOffice esta disponivel."
+    )
 
 
 def gerar_diario_bordo_pdf(diario: DiarioBordo):

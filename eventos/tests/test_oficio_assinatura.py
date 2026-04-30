@@ -17,6 +17,7 @@ from documentos.services.assinaturas import (
     validar_pdf_por_upload,
 )
 from eventos.models import Oficio, OficioAssinaturaPedido
+from eventos.services.documentos.types import DocumentValidationError
 from eventos.services.oficio_assinatura import (
     TEXTO_CONFIRMACAO_IDENTIDADE_ASSINATURA_OFICIO,
     codigo_validacao_assinatura,
@@ -463,6 +464,39 @@ class OficioAssinaturaFlowTest(TestCase):
         pedido.refresh_from_db()
         self.assertEqual(status.key, 'ASSINADO')
         self.assertEqual(pedido.status, OficioAssinaturaPedido.STATUS_ASSINADO)
+
+    @patch(
+        'eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio',
+        side_effect=DocumentValidationError('Trecho 1: informe a saída (data e hora).'),
+    )
+    def test_status_assinatura_ignora_erro_validacao_documento_na_listagem(self, _render_mock):
+        pedido = OficioAssinaturaPedido.objects.create(
+            oficio=self.oficio,
+            token='token-teste-validacao',
+            status=OficioAssinaturaPedido.STATUS_ASSINADO,
+            hash_pdf_original='hash_dummy',
+        )
+
+        status = status_assinatura_oficio(self.oficio)
+
+        self.assertEqual(status.key, 'ASSINADO')
+
+    @patch(
+        'eventos.services.oficio_assinatura.gerar_pdf_canonico_oficio',
+        side_effect=DocumentValidationError('Trecho 1: informe a saída (data e hora).'),
+    )
+    def test_lista_oficios_nao_quebra_quando_pdf_canonico_falha_validacao(self, _render_mock):
+        OficioAssinaturaPedido.objects.create(
+            oficio=self.oficio,
+            token='token-teste-lista',
+            status=OficioAssinaturaPedido.STATUS_ASSINADO,
+            hash_pdf_original='hash_dummy',
+        )
+
+        response = self.client.get(reverse('eventos:oficios-global'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ofícios')
 
 
 class NomeAssinaturaHelperTest(TestCase):

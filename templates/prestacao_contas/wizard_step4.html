@@ -17,7 +17,14 @@
           </div>
         </div>
 
-        <form method="post" enctype="multipart/form-data" class="oficio-stage-form">
+        <form
+          method="post"
+          enctype="multipart/form-data"
+          class="oficio-stage-form"
+          id="prestacao-step4-form"
+          data-prestacao-autosave="1"
+          data-autosave-url="{% url 'prestacao_contas:step' prestacao.id 4 %}"
+        >
           {% csrf_token %}
           <section class="oficio-stage-section">
             <div class="oficio-stage-section-head">
@@ -41,5 +48,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/oficio_wizard.js' %}" defer></script>
+<script src="{% static 'js/prestacao-autosave.js' %}" defer></script>
 <script src="{% static 'js/prestacao_contas.js' %}" defer></script>
 {% endblock %}
