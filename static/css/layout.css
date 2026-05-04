@@ -10,8 +10,9 @@
 
 .topbar {
   align-items: center;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(214, 224, 234, 0.72);
   display: flex;
   min-height: 84px;
   padding: var(--space-6) var(--space-8);
@@ -31,7 +32,7 @@
 }
 
 .eyebrow {
-  color: var(--color-muted);
+  color: var(--color-accent);
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -41,22 +42,51 @@
 
 .page-header {
   align-items: flex-start;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--glow-primary);
+  color: var(--color-white);
   display: flex;
   gap: var(--space-4);
   justify-content: space-between;
   margin-bottom: var(--space-6);
+  overflow: hidden;
+  padding: var(--space-8);
+  position: relative;
+}
+
+.page-header::after {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+  content: "";
+  height: 100%;
+  position: absolute;
+  right: -18%;
+  top: -40%;
+  transform: rotate(18deg);
+  width: 46%;
+}
+
+.page-header > * {
+  position: relative;
+  z-index: 1;
 }
 
 .page-header h2 {
+  color: var(--color-white);
   font-size: var(--font-size-2xl);
   line-height: 1.15;
   margin-bottom: var(--space-2);
 }
 
 .page-header p {
-  color: var(--color-muted);
+  color: rgba(255, 255, 255, 0.82);
   margin-bottom: 0;
   max-width: 760px;
+}
+
+.page-header .eyebrow {
+  color: var(--color-accent-soft);
 }
 
 @media (max-width: 840px) {

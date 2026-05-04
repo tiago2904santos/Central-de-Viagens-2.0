@@ -5,8 +5,9 @@
 
 .list-toolbar {
   align-items: center;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(214, 224, 234, 0.9);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   display: flex;
@@ -42,7 +43,7 @@
 }
 
 .empty-state {
-  background: var(--color-surface);
+  background: rgba(255, 255, 255, 0.74);
   border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-md);
   color: var(--color-muted);

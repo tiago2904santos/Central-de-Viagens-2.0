@@ -4,6 +4,23 @@
 
 O design system define a base visual e estrutural do Central de Viagens 3. Ele deve manter todas as paginas com a mesma linguagem institucional, sobria e limpa, sem estilos avulsos por modulo.
 
+## Identidade visual
+
+A direcao visual e `Azul Operacional Premium`: institucional, moderna e elegante. A base usa azul profundo, fundo claro frio, superficies brancas com profundidade, bordas suaves, sombras controladas e dourado discreto apenas como detalhe de destaque.
+
+O sistema nao deve parecer uma planilha publica, site governamental antigo ou pagina turistica. A sensacao esperada e de produto administrativo bem acabado.
+
+Principios:
+
+- fundo claro com luz suave;
+- sidebar escura com profundidade;
+- cards brancos com sombra elegante;
+- headers com gradiente institucional;
+- hover em cards, botoes e navegacao;
+- status com cores controladas;
+- dourado usado com parcimonia;
+- tokens globais, sem cores aleatorias por modulo.
+
 ## CSS centralizado
 
 Todo CSS deve ficar em `static/css/`. O arquivo `static/css/style.css` e apenas o agregador dos modulos:
