@@ -22,7 +22,7 @@ O app `cadastros` usa listagens globais (`list_page` ou `list_page_simple`), `do
 
 ## Listagem simples vs cards
 
-- **Lista simples**: `list_page_simple.html`, `simple_list.html`, `simple_list_row.html`, estilos em `lists.css`. Para cadastros enxutos: Cargo, Combustivel, Unidade, Cidade.
+- **Lista simples**: `list_page_simple.html`, `simple_list.html`, `simple_list_row.html`, estilos em `lists.css`. Para cadastros enxutos: Cargo, Combustivel, Unidade, Cidade. Na inclusao da lista, **nao use** `only` no `{% include %}` da pagina para `list_page_simple` (nem na cadeia ate `simple_list_row`) quando houver formularios POST na linha — caso contrario `csrf_token` some do contexto e `{% csrf_token %}` renderiza vazio.
 - **Cards**: `list_page.html` + `document_card` para Servidor, Viatura e listagens ricas futuras.
 
 ## Sidebar

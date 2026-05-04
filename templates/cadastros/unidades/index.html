@@ -4,5 +4,5 @@
 
 {% block content %}
   {% url "cadastros:unidade_create" as create_url %}
-  {% include "components/lists/list_page_simple.html" with title=page_title description=page_description eyebrow="Cadastros" search_placeholder="Buscar unidades" action_label="Nova unidade" action_url=create_url empty_message="Nenhuma unidade cadastrada ainda." rows=rows q=q only %}
+  {% include "components/lists/list_page_simple.html" with title=page_title description=page_description eyebrow="Cadastros" search_placeholder="Buscar unidades" action_label="Nova unidade" action_url=create_url empty_message="Nenhuma unidade cadastrada ainda." rows=rows q=q %}
 {% endblock %}
