@@ -1,4 +1,7 @@
-﻿from django.test import TestCase
+﻿import re
+
+from django.test import Client
+from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse
 
@@ -56,6 +59,28 @@ class CombustivelCrudTests(TestCase):
         response = self.client.post(reverse("cadastros:combustivel_delete", args=[combustivel.pk]))
         self.assertRedirects(response, reverse("cadastros:combustiveis_index"))
         self.assertFalse(Combustivel.objects.filter(pk=combustivel.pk).exists())
+
+
+@override_settings(ALLOWED_HOSTS=["testserver", "localhost"])
+class SimpleListCsrfTests(TestCase):
+    def test_acao_inline_de_cargo_renderiza_csrf_e_aceita_post(self):
+        Cargo.objects.create(nome="ANALISTA", is_padrao=True)
+        cargo = Cargo.objects.create(nome="GERENTE")
+        client = Client(enforce_csrf_checks=True)
+
+        response = client.get(reverse("cadastros:cargos_index"))
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode()
+        self.assertIn('name="csrfmiddlewaretoken"', html)
+        match = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', html)
+        self.assertIsNotNone(match)
+
+        response = client.post(
+            reverse("cadastros:cargo_set_default", args=[cargo.pk]),
+            {"csrfmiddlewaretoken": match.group(1)},
+        )
+        self.assertRedirects(response, reverse("cadastros:cargos_index"))
 
 
 @override_settings(ALLOWED_HOSTS=["testserver", "localhost"])
