@@ -13,12 +13,12 @@ from .forms import CombustivelForm
 from .forms import ServidorForm
 from .forms import UnidadeForm
 from .forms import ViaturaForm
-from .presenters import apresentar_servidor_card
-from .presenters import apresentar_viatura_card
 from .presenters import apresentar_linha_lista_simples_cargo
 from .presenters import apresentar_linha_lista_simples_cidade
 from .presenters import apresentar_linha_lista_simples_combustivel
+from .presenters import apresentar_linha_lista_simples_servidor
 from .presenters import apresentar_linha_lista_simples_unidade
+from .presenters import apresentar_linha_lista_simples_viatura
 from .selectors import get_cargo_by_id
 from .selectors import get_cidade_by_id
 from .selectors import get_combustivel_by_id
@@ -60,26 +60,6 @@ def _vinculo_error(request):
     messages.error(
         request,
         "Não foi possível excluir este cadastro porque ele está vinculado a outros registros.",
-    )
-
-
-def index(request):
-    return render(
-        request,
-        "cadastros/index.html",
-        {
-            "page_title": "Cadastros",
-            "page_section": "Dados-base",
-            "page_description": "Base para cidades, unidades, cargos, combustíveis, servidores e viaturas.",
-            "modules": [
-                {"title": "Unidades", "description": "Estruturas administrativas.", "href": "unidades/"},
-                {"title": "Cidades", "description": "Cidades e UFs de referência.", "href": "cidades/"},
-                {"title": "Cargos", "description": "Cargos vinculados a servidores.", "href": "cargos/"},
-                {"title": "Combustíveis", "description": "Tipos de combustível para viaturas.", "href": "combustiveis/"},
-                {"title": "Servidores", "description": "Pessoas vinculadas aos fluxos.", "href": "servidores/"},
-                {"title": "Viaturas", "description": "Veículos operacionais cadastrados.", "href": "viaturas/"},
-            ],
-        },
     )
 
 
@@ -446,8 +426,8 @@ def combustivel_delete(request, pk):
 def servidores_index(request):
     q = request.GET.get("q", "").strip()
     servidores = listar_servidores(q=q)
-    cards = [
-        apresentar_servidor_card(
+    rows = [
+        apresentar_linha_lista_simples_servidor(
             servidor,
             edit_url=reverse("cadastros:servidor_update", args=[servidor.pk]),
             delete_url=reverse("cadastros:servidor_delete", args=[servidor.pk]),
@@ -460,7 +440,7 @@ def servidores_index(request):
         {
             "page_title": "Servidores",
             "page_description": "Servidores vinculados aos fluxos documentais.",
-            "cards": cards,
+            "rows": rows,
             "q": q,
         },
     )
@@ -530,8 +510,8 @@ def servidor_delete(request, pk):
 def viaturas_index(request):
     q = request.GET.get("q", "").strip()
     viaturas = listar_viaturas(q=q)
-    cards = [
-        apresentar_viatura_card(
+    rows = [
+        apresentar_linha_lista_simples_viatura(
             viatura,
             edit_url=reverse("cadastros:viatura_update", args=[viatura.pk]),
             delete_url=reverse("cadastros:viatura_delete", args=[viatura.pk]),
@@ -544,7 +524,7 @@ def viaturas_index(request):
         {
             "page_title": "Viaturas",
             "page_description": "Viaturas cadastradas para uso operacional.",
-            "cards": cards,
+            "rows": rows,
             "q": q,
         },
     )

@@ -66,6 +66,8 @@
   --font-sans: "Segoe UI", Arial, sans-serif;
   --z-sidebar: 20;
   --z-modal: 100;
+
+  /* Shell: sidebar fixa em % da viewport; conteudo usa o restante (grid em layout.css). */
   --sidebar-width: 15%;
   --page-max-width: 100%;
 }

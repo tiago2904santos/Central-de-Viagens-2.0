@@ -58,6 +58,15 @@ As telas de `Unidade`, `Cidade`, `Cargo`, `Combustivel`, `Servidor` e `Viatura` 
 - Ajustes de feedback em `templates/components/feedback/*.html` e `static/css/utilities.css`.
 - Nunca copiar CSS bruto do legado em bloco; extrair o conceito e reconstruir no sistema atual.
 
+## Layout do shell
+
+Tokens em `static/css/tokens.css`:
+
+- `--sidebar-width: 15%` — largura da coluna da sidebar em relacao ao viewport.
+- `--page-max-width: 100%` — conteudo principal sem teto artificial de largura.
+
+O `grid` em `static/css/layout.css` usa `var(--sidebar-width)` + `minmax(0, 1fr)` para a area principal ocupar o restante (~85%) sem estourar overflow.
+
 ## Sidebar hierarquica
 
 A sidebar e a unica navegacao lateral. O menu **Cadastros** e o unico bloco com botao de expandir/recolher; dentro dele, os itens sao uma lista plana com **indentacao visual** (e opcional indicador) para `Cargos` sob `Servidores` e `Combustiveis` sob `Viaturas`, **sem** sub-submenus com segundo toggle.
@@ -65,3 +74,9 @@ A sidebar e a unica navegacao lateral. O menu **Cadastros** e o unico bloco com 
 A hierarquia e declarada em `core/navigation.py` (filhos de Cadastros com `sidebar_indent`), renderizada em `templates/components/layout/sidebar.html`, estilizada em `static/css/sidebar.css` e o grupo Cadastros e aberto via `static/js/components/sidebar.js` (incluindo `localStorage`).
 
 Ordem sob Cadastros: Servidores, Cargos (subordinado visual), Viaturas, Combustiveis (subordinado visual), Unidades, Cidades. `Motoristas` nao aparece.
+
+### Comportamento do grupo expansivel (Cadastros)
+
+- O usuario abre/fecha o grupo pelo botao **Cadastros** (toggle).
+- Ao clicar em qualquer **link principal** fora do grupo (Dashboard, Roteiros, modulos, marca no topo), os grupos expansiveis **fecham** e o estado e removido do `localStorage`, para nao reabrir em rotas erradas.
+- Se a URL atual for sob `/cadastros/` (ou `/cadastros`), o grupo **Cadastros** carrega **aberto**; fora desse prefixo, carrega **fechado** e o `localStorage` nao mantem o submenu aberto.

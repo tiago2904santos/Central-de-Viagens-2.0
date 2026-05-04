@@ -1,6 +1,6 @@
-<aside class="sidebar" aria-label="Navegacao principal">
+<aside class="sidebar" data-sidebar aria-label="Navegacao principal">
   <div class="sidebar-header">
-    <a class="sidebar-brand" href="{% url 'core:dashboard' %}">
+    <a class="sidebar-brand" href="{% url 'core:dashboard' %}" data-sidebar-root-link>
       <span class="sidebar-brand-badge">CV</span>
       <span>Central de Viagens 3</span>
     </a>
@@ -8,16 +8,22 @@
   <nav class="sidebar-nav">
     {% for item in navigation_items %}
       {% if item.has_children %}
-        <div class="sidebar-item sidebar-item--collapsible{% if item.is_open %} is-open{% endif %}" data-sidebar-item="{{ item.id }}">
+        <div class="sidebar-item sidebar-item--collapsible{% if item.is_open %} is-open{% endif %}" data-sidebar-item="{{ item.id }}" data-sidebar-group="{{ item.id }}" data-sidebar-expandable>
           <div class="sidebar-row sidebar-row--top">
-            <a class="sidebar-link sidebar-link--module{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}" {% if item.is_current %}aria-current="page"{% endif %}>
+            <button
+              type="button"
+              class="sidebar-link sidebar-link--module sidebar-module-expand{% if item.is_active %} is-active{% endif %}"
+              aria-expanded="{% if item.is_open %}true{% else %}false{% endif %}"
+              aria-controls="{{ item.children_id }}"
+              aria-label="{{ item.label }}, alternar submenu"
+              data-sidebar-toggle
+              data-sidebar-expandable-control
+            >
               <span class="sidebar-item-main">
                 {% if item.icon %}<span class="sidebar-item-icon" aria-hidden="true">{{ item.icon }}</span>{% endif %}
                 <span class="sidebar-item-text">{{ item.label }}</span>
               </span>
-            </a>
-            <button class="sidebar-toggle" type="button" aria-label="Alternar submenu {{ item.label }}" aria-expanded="{% if item.is_open %}true{% else %}false{% endif %}" aria-controls="{{ item.children_id }}">
-              <span aria-hidden="true">▾</span>
+              <span class="sidebar-module-expand__chevron" aria-hidden="true">▾</span>
             </button>
           </div>
           <div class="sidebar-accordion">
@@ -27,7 +33,8 @@
                   <a
                     class="sidebar-link sidebar-link--cadastros{% if child.sidebar_indent %} sidebar-link--nested{% endif %}{% if child.is_active %} is-active{% endif %}"
                     href="{{ child.url }}"
-                    {% if child.is_active %}aria-current="page"{% endif %}
+                    data-sidebar-panel-link
+                    {% if child.is_current %}aria-current="page"{% endif %}
                   >
                     <span class="sidebar-link-text">{{ child.label }}</span>
                   </a>
@@ -38,7 +45,7 @@
         </div>
       {% else %}
         <div class="sidebar-item">
-          <a class="sidebar-link sidebar-link--module{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}" {% if item.is_current %}aria-current="page"{% endif %}>
+          <a class="sidebar-link sidebar-link--module{% if item.is_active %} is-active{% endif %} sidebar-link--root" href="{{ item.url }}" data-sidebar-root-link {% if item.is_current %}aria-current="page"{% endif %}>
             <span class="sidebar-item-main">
               {% if item.icon %}<span class="sidebar-item-icon" aria-hidden="true">{{ item.icon }}</span>{% endif %}
               <span class="sidebar-item-text">{{ item.label }}</span>

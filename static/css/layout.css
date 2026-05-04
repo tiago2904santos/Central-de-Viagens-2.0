@@ -1,3 +1,4 @@
+/* Duas colunas: sidebar (--sidebar-width) + area principal (resto, minmax evita overflow). */
 .app-shell {
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
@@ -5,8 +6,10 @@
 }
 
 .app-main {
+  box-sizing: border-box;
   min-width: 0;
   padding: 28px 32px;
+  width: 100%;
 }
 
 .content-wrap {

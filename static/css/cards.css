@@ -121,9 +121,11 @@
 }
 
 .page-card {
-  max-width: 920px;
-  margin-inline: auto;
+  box-sizing: border-box;
+  margin-inline: 0;
+  max-width: var(--page-max-width);
   padding: var(--space-6);
+  width: 100%;
 }
 
 .page-card h2 {
