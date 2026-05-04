@@ -1,4 +1,4 @@
-from django.db.models import ProtectedError
+﻿from django.db.models import ProtectedError
 
 
 class CadastroVinculadoError(Exception):
@@ -35,6 +35,36 @@ def excluir_cidade(instance):
         raise CadastroVinculadoError from exc
 
 
+def criar_cargo(form):
+    return form.save()
+
+
+def atualizar_cargo(instance, form):
+    return form.save()
+
+
+def excluir_cargo(instance):
+    try:
+        instance.delete()
+    except ProtectedError as exc:
+        raise CadastroVinculadoError from exc
+
+
+def criar_combustivel(form):
+    return form.save()
+
+
+def atualizar_combustivel(instance, form):
+    return form.save()
+
+
+def excluir_combustivel(instance):
+    try:
+        instance.delete()
+    except ProtectedError as exc:
+        raise CadastroVinculadoError from exc
+
+
 def criar_servidor(form):
     return form.save()
 
@@ -44,21 +74,6 @@ def atualizar_servidor(instance, form):
 
 
 def excluir_servidor(instance):
-    try:
-        instance.delete()
-    except ProtectedError as exc:
-        raise CadastroVinculadoError from exc
-
-
-def criar_motorista(form):
-    return form.save()
-
-
-def atualizar_motorista(instance, form):
-    return form.save()
-
-
-def excluir_motorista(instance):
     try:
         instance.delete()
     except ProtectedError as exc:

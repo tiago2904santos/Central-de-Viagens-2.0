@@ -1,7 +1,5 @@
-{% extends "base.html" %}
-
+﻿{% extends "base.html" %}
 {% block title %}{{ page_title }}{% endblock %}
-
 {% block content %}
   {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Cadastros" only %}
   <form class="form-shell" method="post">

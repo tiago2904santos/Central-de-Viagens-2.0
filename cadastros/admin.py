@@ -1,5 +1,25 @@
-from django.contrib import admin
-from .models import Cidade, Motorista, Servidor, Unidade, Viatura
+﻿from django.contrib import admin
+
+from .models import Cargo
+from .models import Cidade
+from .models import Combustivel
+from .models import Servidor
+from .models import Unidade
+from .models import Viatura
+
+
+@admin.register(Cargo)
+class CargoAdmin(admin.ModelAdmin):
+    list_display = ("nome", "updated_at")
+    search_fields = ("nome",)
+    ordering = ("nome",)
+
+
+@admin.register(Combustivel)
+class CombustivelAdmin(admin.ModelAdmin):
+    list_display = ("nome", "updated_at")
+    search_fields = ("nome",)
+    ordering = ("nome",)
 
 
 @admin.register(Unidade)
@@ -19,30 +39,15 @@ class CidadeAdmin(admin.ModelAdmin):
 
 @admin.register(Servidor)
 class ServidorAdmin(admin.ModelAdmin):
-    list_display = ("nome", "matricula", "cargo", "unidade", "updated_at")
-    search_fields = ("nome", "matricula", "cpf", "cargo")
-    list_filter = ("unidade",)
+    list_display = ("nome", "cargo", "cpf", "rg", "unidade", "updated_at")
+    search_fields = ("nome", "cpf", "rg", "cargo__nome", "unidade__nome")
+    list_filter = ("cargo", "unidade")
     ordering = ("nome",)
-
-
-@admin.register(Motorista)
-class MotoristaAdmin(admin.ModelAdmin):
-    list_display = ("servidor", "cnh", "categoria_cnh", "updated_at")
-    search_fields = ("servidor__nome", "cnh")
-    ordering = ("servidor__nome",)
 
 
 @admin.register(Viatura)
 class ViaturaAdmin(admin.ModelAdmin):
-    list_display = (
-        "placa",
-        "modelo",
-        "marca",
-        "tipo",
-        "combustivel",
-        "unidade",
-        "updated_at",
-    )
-    search_fields = ("placa", "modelo", "marca")
-    list_filter = ("combustivel", "unidade")
+    list_display = ("placa", "modelo", "combustivel", "tipo", "updated_at")
+    search_fields = ("placa", "modelo", "combustivel__nome", "tipo")
+    list_filter = ("combustivel", "tipo")
     ordering = ("placa",)

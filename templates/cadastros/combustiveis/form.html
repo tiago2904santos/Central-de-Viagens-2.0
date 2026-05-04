@@ -1,17 +1,13 @@
-{% extends "base.html" %}
-
+﻿{% extends "base.html" %}
 {% block title %}{{ page_title }}{% endblock %}
-
 {% block content %}
   {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Cadastros" only %}
   <form class="form-shell" method="post" novalidate>
     {% csrf_token %}
-    {% include "components/forms/form_section.html" with title="Dados do motorista" description="Selecione o servidor e informe a CNH quando disponivel." only %}
+    {% include "components/forms/form_section.html" with title="Dados do combustível" description="Informe o nome do combustível para uso nas viaturas." only %}
     <div class="form-section">
       <div class="form-grid">
-        {% include "components/forms/form_field.html" with field=form.servidor only %}
-        {% include "components/forms/form_field.html" with field=form.cnh only %}
-        {% include "components/forms/form_field.html" with field=form.categoria_cnh only %}
+        {% include "components/forms/form_field.html" with field=form.nome only %}
       </div>
     </div>
     {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}

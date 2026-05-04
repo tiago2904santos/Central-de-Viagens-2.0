@@ -6,10 +6,10 @@
     {% csrf_token %}
     <section class="form-section">
       <header class="form-section-header">
-        <h3>{{ object.placa }}</h3>
+        <h3>{{ object.nome }}</h3>
         <p>Esta ação excluirá o cadastro. Se houver vínculos com outros registros, a exclusão será bloqueada.</p>
       </header>
-      {% include "components/forms/form_actions.html" with primary_label="Excluir viatura" secondary_label="Cancelar" secondary_url=back_url only %}
+      {% include "components/forms/form_actions.html" with primary_label="Excluir combustível" secondary_label="Cancelar" secondary_url=back_url only %}
     </section>
   </form>
 {% endblock %}

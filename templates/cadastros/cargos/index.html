@@ -1,0 +1,6 @@
+﻿{% extends "base.html" %}
+{% block title %}Cargos{% endblock %}
+{% block content %}
+  {% url "cadastros:cargo_create" as create_url %}
+  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Cadastros" search_placeholder="Buscar cargos" action_label="Novo cargo" action_url=create_url empty_message="Nenhum cargo cadastrado ainda." cards=cards q=q only %}
+{% endblock %}

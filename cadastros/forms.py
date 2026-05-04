@@ -1,29 +1,39 @@
-from django import forms
-from django.db.models import Q
+﻿import re
 
+from django import forms
+
+from .models import Cargo
 from .models import Cidade
-from .models import Motorista
+from .models import Combustivel
 from .models import Servidor
 from .models import Unidade
 from .models import Viatura
 
+PLACA_RE = re.compile(r"^[A-Z]{3}(?:\d{4}|\d[A-Z]\d{2})$")
+
 
 def _format_cpf_display(value):
-    if not value:
-        return ""
-    digits = "".join(c for c in str(value) if c.isdigit())
+    digits = "".join(c for c in (value or "") if c.isdigit())
     if len(digits) == 11:
         return f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
-    return str(value).strip()
+    return digits
+
+
+def _format_rg_display(value):
+    raw = "".join(c for c in (value or "").upper() if c.isalnum())
+    if len(raw) >= 8:
+        base = raw[:8]
+        suffix = raw[8:9]
+        masked = f"{base[:2]}.{base[2:5]}.{base[5:8]}"
+        return f"{masked}-{suffix}" if suffix else masked
+    return raw
 
 
 def _format_placa_display(value):
-    if not value:
-        return ""
-    s = "".join(c for c in str(value).upper() if c.isalnum())
-    if len(s) == 7:
-        return f"{s[:3]}-{s[3:]}"
-    return str(value).strip().upper()
+    raw = "".join(c for c in (value or "").upper() if c.isalnum())
+    if len(raw) == 7 and raw[3:].isdigit():
+        return f"{raw[:3]}-{raw[3:]}"
+    return raw
 
 
 class BaseCadastroForm(forms.ModelForm):
@@ -64,116 +74,130 @@ class CidadeForm(BaseCadastroForm):
         return uf
 
 
+class CargoForm(BaseCadastroForm):
+    class Meta:
+        model = Cargo
+        fields = ["nome"]
+
+    def clean_nome(self):
+        nome = " ".join(self.cleaned_data.get("nome", "").strip().split()).upper()
+        if not nome:
+            raise forms.ValidationError("Este campo é obrigatório.")
+        qs = Cargo.objects.filter(nome=nome)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Já existe um cargo com este nome.")
+        return nome
+
+
+class CombustivelForm(BaseCadastroForm):
+    class Meta:
+        model = Combustivel
+        fields = ["nome"]
+
+    def clean_nome(self):
+        nome = " ".join(self.cleaned_data.get("nome", "").strip().split()).upper()
+        if not nome:
+            raise forms.ValidationError("Este campo é obrigatório.")
+        qs = Combustivel.objects.filter(nome=nome)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Já existe um combustível com este nome.")
+        return nome
+
+
 class ServidorForm(BaseCadastroForm):
     class Meta:
         model = Servidor
-        fields = ["nome", "matricula", "cargo", "cpf", "unidade"]
+        fields = ["nome", "cargo", "cpf", "rg", "unidade"]
         widgets = {
             "cpf": forms.TextInput(
                 attrs={
                     "placeholder": "000.000.000-00",
                     "inputmode": "numeric",
                     "autocomplete": "off",
+                    "data-mask": "cpf",
+                }
+            ),
+            "rg": forms.TextInput(
+                attrs={
+                    "placeholder": "00.000.000-0",
+                    "autocomplete": "off",
+                    "data-mask": "rg",
                 }
             ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["cargo"].required = True
+        self.fields["cargo"].empty_label = "Selecione"
+        self.fields["cargo"].widget.attrs["class"] = "form-select"
         self.fields["unidade"].required = False
         self.fields["unidade"].empty_label = "Selecione (opcional)"
         self.fields["unidade"].widget.attrs["class"] = "form-select"
-        if self.instance.pk and self.instance.cpf:
+        if self.instance.pk:
             self.initial["cpf"] = _format_cpf_display(self.instance.cpf)
+            self.initial["rg"] = _format_rg_display(self.instance.rg)
 
     def clean_nome(self):
-        raw = self.cleaned_data.get("nome", "")
-        nome = " ".join(raw.strip().split())
+        nome = " ".join(self.cleaned_data.get("nome", "").strip().split()).upper()
         if not nome:
             raise forms.ValidationError("Este campo é obrigatório.")
+        qs = Servidor.objects.filter(nome=nome)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Já existe um servidor com este nome.")
         return nome
 
-    def clean_matricula(self):
-        v = self.cleaned_data.get("matricula", "")
-        return " ".join(v.strip().split()) if v else ""
-
-    def clean_cargo(self):
-        v = self.cleaned_data.get("cargo", "")
-        return " ".join(v.strip().split()) if v else ""
-
     def clean_cpf(self):
-        v = self.cleaned_data.get("cpf", "")
-        if not v:
-            return ""
-        return "".join(c for c in v if c.isdigit())
+        digits = "".join(c for c in self.cleaned_data.get("cpf", "") if c.isdigit())
+        if digits and len(digits) != 11:
+            raise forms.ValidationError("CPF deve conter 11 dígitos.")
+        return digits
 
-
-class MotoristaForm(BaseCadastroForm):
-    class Meta:
-        model = Motorista
-        fields = ["servidor", "cnh", "categoria_cnh"]
-        widgets = {
-            "cnh": forms.TextInput(attrs={"placeholder": "Número da CNH", "autocomplete": "off"}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["servidor"].widget.attrs["class"] = "form-select"
-        self.fields["servidor"].queryset = self._servidor_queryset()
-
-    def _servidor_queryset(self):
-        qs = Servidor.objects.select_related("unidade").order_by("nome")
-        if self.instance.pk:
-            current_id = self.instance.servidor_id
-            return qs.filter(Q(pk=current_id) | Q(motorista__isnull=True)).distinct()
-        return qs.filter(motorista__isnull=True)
-
-    def clean_cnh(self):
-        v = self.cleaned_data.get("cnh", "")
-        return " ".join(v.strip().split()) if v else ""
-
-    def clean_categoria_cnh(self):
-        v = self.cleaned_data.get("categoria_cnh", "")
-        return v.strip().upper() if v else ""
+    def clean_rg(self):
+        raw = "".join(c for c in self.cleaned_data.get("rg", "").upper() if c.isalnum())
+        return raw
 
 
 class ViaturaForm(BaseCadastroForm):
     class Meta:
         model = Viatura
-        fields = ["placa", "modelo", "marca", "tipo", "combustivel", "unidade"]
+        fields = ["placa", "modelo", "combustivel", "tipo"]
         widgets = {
             "placa": forms.TextInput(
-                attrs={"placeholder": "ABC-1D23", "autocomplete": "off"}
+                attrs={
+                    "placeholder": "AAA-1234 ou AAA1A23",
+                    "autocomplete": "off",
+                    "data-mask": "placa",
+                }
             ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["unidade"].required = False
-        self.fields["unidade"].empty_label = "Selecione (opcional)"
-        self.fields["unidade"].widget.attrs["class"] = "form-select"
-        if self.instance.pk and self.instance.placa:
+        self.fields["combustivel"].required = True
+        self.fields["combustivel"].empty_label = "Selecione"
+        self.fields["combustivel"].widget.attrs["class"] = "form-select"
+        self.fields["tipo"].required = True
+        self.fields["tipo"].widget.attrs["class"] = "form-select"
+        if self.instance.pk:
             self.initial["placa"] = _format_placa_display(self.instance.placa)
 
     def clean_placa(self):
-        raw = self.cleaned_data.get("placa", "")
-        s = "".join(c for c in raw.upper() if c.isalnum())
-        if not s:
-            raise forms.ValidationError("Este campo é obrigatório.")
-        return s
+        raw = "".join(c for c in self.cleaned_data.get("placa", "").upper() if c.isalnum())
+        if not PLACA_RE.match(raw):
+            raise forms.ValidationError("Placa deve estar no formato AAA1234 ou AAA1A23.")
+        qs = Viatura.objects.filter(placa=raw)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Já existe uma viatura com esta placa.")
+        return raw
 
     def clean_modelo(self):
-        v = self.cleaned_data.get("modelo", "")
-        return " ".join(v.strip().split()) if v else ""
-
-    def clean_marca(self):
-        v = self.cleaned_data.get("marca", "")
-        return " ".join(v.strip().split()) if v else ""
-
-    def clean_tipo(self):
-        v = self.cleaned_data.get("tipo", "")
-        return " ".join(v.strip().split()) if v else ""
-
-    def clean_combustivel(self):
-        v = self.cleaned_data.get("combustivel", "")
-        return " ".join(v.strip().split()) if v else ""
+        return " ".join(self.cleaned_data.get("modelo", "").strip().split())

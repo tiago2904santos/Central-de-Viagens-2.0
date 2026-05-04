@@ -4,14 +4,10 @@
   {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Cadastros" only %}
   <form class="form-shell" method="post" novalidate>
     {% csrf_token %}
-    {% include "components/forms/form_section.html" with title="Dados do servidor" description="Informe nome, cargo, CPF, RG e unidade opcional." only %}
+    {% include "components/forms/form_section.html" with title="Dados do cargo" description="Informe o nome do cargo em uso pelos servidores." only %}
     <div class="form-section">
       <div class="form-grid">
         {% include "components/forms/form_field.html" with field=form.nome only %}
-        {% include "components/forms/form_field.html" with field=form.cargo only %}
-        {% include "components/forms/form_field.html" with field=form.cpf only %}
-        {% include "components/forms/form_field.html" with field=form.rg only %}
-        {% include "components/forms/form_field.html" with field=form.unidade only %}
       </div>
     </div>
     {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
