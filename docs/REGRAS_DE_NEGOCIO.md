@@ -9,10 +9,12 @@ Entidades ativas do modulo:
 - `Unidade`: nome e sigla.
 - `Estado`: cadastro de UF (nome, sigla 2 caracteres, `codigo_ibge` opcional). Ver seção **Base geográfica** e `docs/IMPORTACAO_BASE_GEOGRAFICA.md`.
 - `Cidade`: pertence a um `Estado`; combinação **nome + estado** é única; `uf` espelha a sigla do estado; pode ser **capital**; `codigo_ibge` e coordenadas opcionais. Carga em lote: `docs/IMPORTACAO_BASE_GEOGRAFICA.md` (comando `importar_base_geografica`). O guia `docs/IMPORTACAO_CIDADES.md` permanece como referência do fluxo somente cidades, quando aplicável.
-- `Cargo`: nome unico e em maiusculo.
-- `Combustivel`: nome unico e em maiusculo.
-- `Servidor`: nome unico e em maiusculo, cargo, CPF, RG opcional e unidade opcional.
-- `Viatura`: placa unica (AAA1234 ou AAA1A23), modelo, combustivel e tipo (`CARACTERIZADA`/`DESCARACTERIZADA`).
+- `Cargo`: nome unico e em maiusculo; opcionalmente um registro pode ser marcado como **padrao** (`is_padrao`), garantindo um unico padrao por vez no banco.
+- `Combustivel`: nome unico e em maiusculo; opcionalmente um registro pode ser **combustivel padrao** (`is_padrao`), garantindo um unico padrao por vez.
+- `Servidor`: nome unico e em maiusculo; cargo obrigatorio no form; **CPF obrigatorio**, validado por digitos verificadores, armazenado so digitos; **RG opcional** ou marcacao **sem RG** (valor canonico interno, espelhando o legacy); **telefone opcional** (10 ou 11 digitos); unicidade condicional de CPF, RG (exceto “nao possui”) e telefone quando preenchidos; unidade opcional.
+- `Viatura`: placa unica (AAA1234 ou AAA1A23), modelo obrigatorio normalizado em maiusculo, combustivel FK e tipo (`CARACTERIZADA`/`DESCARACTERIZADA`); placa persistida sem hifen e em maiusculo.
+- `ConfiguracaoSistema`: **singleton** institucional (endereco, orgao, chefia, prazo de justificativa, cidade sede padrao, numeracao auxiliar de PT quando aplicavel); usada para documentos futuros.
+- `AssinaturaConfiguracao`: assinante preferencial por **tipo de documento** (oficio, justificativa, plano de trabalho, ordem de servico, termo), apontando para `Servidor` (ordem 1 por tipo); nao e assinatura digital, apenas configuracao.
 
 ## Regras obrigatorias
 
@@ -31,9 +33,17 @@ Não foi possível excluir este cadastro porque ele está vinculado a outros reg
 
 ## Mascaras visuais
 
-- CPF: `000.000.000-00` (armazenado em digitos).
-- RG: `00.000.000-0` (armazenado normalizado).
+- CPF: `000.000.000-00` (armazenado em digitos; banco limpo).
+- RG: `00.000.000-0` ou exibicao de “nao possui” quando `sem_rg` (armazenado normalizado / valor canonico).
+- Telefone: `(00) 00000-0000` na tela; armazenado em digitos.
+- CEP: `00000-000` na configuracao; armazenado em digitos.
 - Placa: `AAA-1234` ou `AAA1A23` na tela; armazenada sem hifen e em maiusculo.
+
+Logica central em `core/utils/masks.py`; JS em `static/js/components/masks.js` via `data-mask` (sem JS inline).
+
+## Cadastros publicos vs base interna
+
+- **Estados e Cidades** permanecem como **base interna** (importacao/admin quando aplicavel); **nao** ha CRUD publico nem entradas no menu lateral para esses cadastros.
 
 ## Roteiros
 

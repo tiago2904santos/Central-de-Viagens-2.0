@@ -10,6 +10,7 @@ from django.urls import reverse
 from .forms import CargoForm
 from .forms import CidadeForm
 from .forms import CombustivelForm
+from .forms import ConfiguracaoSistemaForm
 from .forms import EstadoForm
 from .forms import ServidorForm
 from .forms import UnidadeForm
@@ -83,8 +84,11 @@ def index(request):
                 {"title": "Viaturas", "description": "Veículos operacionais.", "href": "viaturas/"},
                 {"title": "Combustíveis", "description": "Tipos de combustível.", "href": "combustiveis/"},
                 {"title": "Unidades", "description": "Unidades administrativas.", "href": "unidades/"},
-                {"title": "Estados", "description": "Unidades federativas (UF).", "href": "estados/"},
-                {"title": "Cidades", "description": "Municípios e base geográfica.", "href": "cidades/"},
+                {
+                    "title": "Configuração do sistema",
+                    "description": "Dados institucionais e assinaturas por tipo de documento.",
+                    "href": "configuracao/",
+                },
             ],
         },
     )
@@ -681,6 +685,28 @@ def viatura_update(request, pk):
             "form": form,
             "submit_label": "Salvar viatura",
             "back_url": reverse("cadastros:viaturas_index"),
+        },
+    )
+
+
+def configuracao_sistema(request):
+    from .models import ConfiguracaoSistema
+
+    obj = ConfiguracaoSistema.get_singleton()
+    form = ConfiguracaoSistemaForm(request.POST or None, instance=obj)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Configuração salva com sucesso.")
+        return redirect("cadastros:configuracao")
+    return render(
+        request,
+        "cadastros/configuracao/form.html",
+        {
+            "page_title": "Configuração do sistema",
+            "page_description": "Órgão, endereço, prazo de justificativa e assinantes por tipo de documento.",
+            "form": form,
+            "submit_label": "Salvar configuração",
+            "back_url": reverse("cadastros:index"),
         },
     )
 

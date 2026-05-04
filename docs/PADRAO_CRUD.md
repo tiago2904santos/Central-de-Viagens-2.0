@@ -2,7 +2,7 @@
 
 ## Escopo atual
 
-No app `cadastros`, o padrao CRUD esta consolidado para `Unidade`, `Cidade`, `Cargo`, `Combustivel`, `Servidor` e `Viatura`.
+No app `cadastros`, o padrao CRUD esta consolidado para `Unidade`, `Cargo`, `Combustivel`, `Servidor`, `Viatura` e a tela de **Configuracao do sistema** (`ConfiguracaoSistema` / assinaturas por tipo). `Estado`/`Cidade` seguem como base interna, sem CRUD publico nesta fase.
 
 `Motorista` nao e entidade de cadastro.
 
@@ -40,14 +40,15 @@ Não foi possível excluir este cadastro porque ele está vinculado a outros reg
 
 ## Regras especificas
 
-- Servidor: nome unico em maiusculo, sem matricula, com cargo selecionavel.
-- Viatura: sem marca/unidade, placa validada (AAA1234 ou AAA1A23), combustivel selecionavel e tipo fixo.
-- Cargo e Combustivel: nomes unicos em maiusculo.
+- Servidor: nome unico em maiusculo, sem matricula, cargo obrigatorio no form, CPF validado, RG opcional ou `sem_rg`, telefone opcional com unicidade quando preenchido.
+- Viatura: sem marca/unidade, placa validada (AAA1234 ou AAA1A23), modelo obrigatorio, combustivel selecionavel e tipo fixo.
+- Cargo e Combustivel: nomes unicos em maiusculo; `is_padrao` opcional (um padrao por tipo).
+- Configuracao: formulario singleton + escolha de servidores para assinatura por tipo de documento (persistencia em `AssinaturaConfiguracao`).
 
 ## Frontend
 
 - Sem CSS inline e sem JS inline.
-- Mascaras em `static/js/components/masks.js` via `data-mask="cpf|rg|placa"`.
+- Mascaras em `static/js/components/masks.js` via `data-mask="cpf|rg|placa|cep|telefone|upper"`.
 - Padrao visual global aplicado por components em `templates/components/`.
 - Header oficial do CRUD: `components/layout/page_header.html`.
 - Confirmacao de exclusao via component global `components/feedback/confirm_delete_block.html`.

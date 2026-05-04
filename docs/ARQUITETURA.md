@@ -10,25 +10,30 @@ O projeto novo pode consultar `legacy/` como referencia visual, mas nao pode imp
 
 ## App cadastros
 
-`cadastros` e o primeiro modulo fechado da arquitetura nova, com CRUD fisico para:
+`cadastros` e o modulo de dados-base reutilizados, com CRUD publico para:
 
 - `Unidade`
-- `Cidade`
 - `Cargo`
 - `Combustivel`
 - `Servidor`
 - `Viatura`
 
+e tela de **Configuracao do sistema** (`ConfiguracaoSistema` singleton + linhas `AssinaturaConfiguracao` por tipo de documento).
+
+`Estado` e `Cidade` existem como **base geografica interna** (roteiros e FKs); nao fazem parte do hub publico de cadastros nem do submenu lateral nesta fase.
+
 Regras estruturais aplicadas:
 
 - nao existe cadastro de `Motorista`;
 - `Servidor` nao possui matricula;
-- `Servidor.nome` e unico e em maiusculo;
-- `Servidor.cargo` referencia `Cargo` via `PROTECT`;
+- `Servidor.nome` e unico e em maiusculo; CPF obrigatorio e validado; RG/telefone com regras de unicidade quando informados;
+- `Servidor.cargo` referencia `Cargo` via `PROTECT` (nullable no model por compatibilidade; obrigatorio no form);
+- `Cargo`/`Combustivel` podem ter `is_padrao` (um padrao ativo por vez);
 - `Viatura` nao possui `marca` nem `unidade`;
 - `Viatura.combustivel` referencia `Combustivel` via `PROTECT`;
 - busca simples usa `q` nos selectors;
-- exclusao e fisica e bloqueada quando houver vinculos.
+- exclusao e fisica e bloqueada quando houver vinculos;
+- mascaras e normalizacoes centralizadas em `core/utils/masks.py`.
 
 ## App roteiros
 
@@ -57,6 +62,6 @@ A navegacao principal e declarada em `core/navigation.py` e suporta hierarquia. 
 - `Viaturas`
   - `Combustiveis`
 - `Unidades`
-- `Cidades`
+- `Configuracao`
 
-O estado ativo/aberto e preparado antes da renderizacao e o comportamento de abrir/fechar fica em JS centralizado. `Motoristas` nao e cadastro independente e nao deve aparecer no menu lateral. `Cidades` permanece como cadastro de banco, com importacao CSV prevista para etapa futura.
+O estado ativo/aberto e preparado antes da renderizacao e o comportamento de abrir/fechar fica em JS centralizado. `Motoristas` nao e cadastro independente e nao deve aparecer no menu lateral. Estados/Cidades **nao** aparecem no menu; permanecem como base interna e importacao conforme `docs/IMPORTACAO_BASE_GEOGRAFICA.md`.

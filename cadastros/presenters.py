@@ -1,4 +1,10 @@
-﻿def _actions(edit_url="#", delete_url="#"):
+﻿from core.utils.masks import format_cpf as _format_cpf_masked
+from core.utils.masks import format_placa as _format_placa_masked
+from core.utils.masks import format_rg_display as _format_rg_masked
+from core.utils.masks import format_telefone as _format_telefone_masked
+
+
+def _actions(edit_url="#", delete_url="#"):
     return [
         {"label": "Editar", "href": edit_url, "variant": "secondary"},
         {"label": "Excluir", "href": delete_url, "variant": "danger"},
@@ -6,27 +12,23 @@
 
 
 def _format_cpf(cpf):
-    digits = "".join(c for c in (cpf or "") if c.isdigit())
-    if len(digits) == 11:
-        return f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
-    return digits or "-"
+    t = _format_cpf_masked(cpf or "")
+    return t if t else "-"
 
 
-def _format_rg(rg):
-    raw = "".join(c for c in (rg or "").upper() if c.isalnum())
-    if len(raw) >= 8:
-        base = raw[:8]
-        suffix = raw[8:9]
-        masked = f"{base[:2]}.{base[2:5]}.{base[5:8]}"
-        return f"{masked}-{suffix}" if suffix else masked
-    return raw or "-"
+def _format_rg(rg, *, sem_rg=False):
+    t = _format_rg_masked(rg or "", sem_rg=sem_rg)
+    return t if t else "-"
 
 
 def _format_placa(placa):
-    raw = "".join(c for c in (placa or "").upper() if c.isalnum())
-    if len(raw) == 7 and raw[3:].isdigit():
-        return f"{raw[:3]}-{raw[3:]}"
-    return raw
+    t = _format_placa_masked(placa or "")
+    return t if t else "-"
+
+
+def _format_telefone(tel):
+    t = _format_telefone_masked(tel or "")
+    return t if t else "—"
 
 
 def apresentar_unidade_card(unidade, edit_url="#", delete_url="#"):
@@ -84,7 +86,8 @@ def apresentar_servidor_card(servidor, edit_url="#", delete_url="#"):
         "subtitle": servidor.cargo.nome if servidor.cargo else "Cargo não informado",
         "meta": [
             {"label": "CPF", "value": _format_cpf(servidor.cpf)},
-            {"label": "RG", "value": _format_rg(servidor.rg)},
+            {"label": "RG", "value": _format_rg(servidor.rg, sem_rg=servidor.sem_rg)},
+            {"label": "Telefone", "value": _format_telefone(servidor.telefone)},
             {"label": "Unidade", "value": unidade_label},
             {"label": "Atualizado em", "value": servidor.updated_at.strftime("%d/%m/%Y")},
         ],
@@ -109,6 +112,7 @@ def apresentar_linha_lista_simples_cargo(cargo, edit_url="#", delete_url="#"):
     return {
         "title": cargo.nome,
         "meta": [
+            {"label": "Padrão", "value": "Sim" if getattr(cargo, "is_padrao", False) else "Não"},
             {"label": "Atualizado em", "value": cargo.updated_at.strftime("%d/%m/%Y")},
         ],
         "edit_url": edit_url,
@@ -120,6 +124,7 @@ def apresentar_linha_lista_simples_combustivel(combustivel, edit_url="#", delete
     return {
         "title": combustivel.nome,
         "meta": [
+            {"label": "Padrão", "value": "Sim" if getattr(combustivel, "is_padrao", False) else "Não"},
             {"label": "Atualizado em", "value": combustivel.updated_at.strftime("%d/%m/%Y")},
         ],
         "edit_url": edit_url,
@@ -178,6 +183,7 @@ def apresentar_linha_lista_simples_servidor(servidor, edit_url="#", delete_url="
         "meta": [
             {"label": "Cargo", "value": cargo_label},
             {"label": "CPF", "value": _format_cpf(servidor.cpf)},
+            {"label": "Telefone", "value": _format_telefone(servidor.telefone)},
             {"label": "Unidade", "value": unidade_label},
             {"label": "Atualizado em", "value": servidor.updated_at.strftime("%d/%m/%Y")},
         ],

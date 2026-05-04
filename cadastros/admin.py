@@ -1,24 +1,37 @@
 ﻿from django.contrib import admin
 
+from .models import AssinaturaConfiguracao
 from .models import Cargo
 from .models import Cidade
-from .models import Estado
 from .models import Combustivel
+from .models import ConfiguracaoSistema
+from .models import Estado
 from .models import Servidor
 from .models import Unidade
 from .models import Viatura
 
 
+@admin.register(ConfiguracaoSistema)
+class ConfiguracaoSistemaAdmin(admin.ModelAdmin):
+    list_display = ("id", "nome_orgao", "sigla_orgao", "updated_at")
+
+
+@admin.register(AssinaturaConfiguracao)
+class AssinaturaConfiguracaoAdmin(admin.ModelAdmin):
+    list_display = ("configuracao", "tipo", "ordem", "servidor", "updated_at")
+    list_filter = ("tipo",)
+
+
 @admin.register(Cargo)
 class CargoAdmin(admin.ModelAdmin):
-    list_display = ("nome", "updated_at")
+    list_display = ("nome", "is_padrao", "updated_at")
     search_fields = ("nome",)
     ordering = ("nome",)
 
 
 @admin.register(Combustivel)
 class CombustivelAdmin(admin.ModelAdmin):
-    list_display = ("nome", "updated_at")
+    list_display = ("nome", "is_padrao", "updated_at")
     search_fields = ("nome",)
     ordering = ("nome",)
 
@@ -47,8 +60,8 @@ class CidadeAdmin(admin.ModelAdmin):
 
 @admin.register(Servidor)
 class ServidorAdmin(admin.ModelAdmin):
-    list_display = ("nome", "cargo", "cpf", "rg", "unidade", "updated_at")
-    search_fields = ("nome", "cpf", "rg", "cargo__nome", "unidade__nome")
+    list_display = ("nome", "cargo", "cpf", "sem_rg", "telefone", "unidade", "updated_at")
+    search_fields = ("nome", "cpf", "rg", "telefone", "cargo__nome", "unidade__nome")
     list_filter = ("cargo", "unidade")
     ordering = ("nome",)
 

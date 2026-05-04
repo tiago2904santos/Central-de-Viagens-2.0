@@ -27,6 +27,21 @@
     return onlyAlnum(value).slice(0, 7);
   }
 
+  function maskCep(value) {
+    const v = onlyDigits(value).slice(0, 8);
+    if (v.length <= 5) return v;
+    return `${v.slice(0, 5)}-${v.slice(5)}`;
+  }
+
+  function maskTelefone(value) {
+    const v = onlyDigits(value).slice(0, 11);
+    if (!v) return "";
+    if (v.length <= 2) return `(${v}`;
+    if (v.length <= 6) return `(${v.slice(0, 2)}) ${v.slice(2)}`;
+    if (v.length <= 10) return `(${v.slice(0, 2)}) ${v.slice(2, 6)}-${v.slice(6)}`;
+    return `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+  }
+
   function maskUpper(value) {
     return (value || "").toUpperCase();
   }
@@ -37,6 +52,8 @@
     if (mask === "cpf") input.value = maskCpf(input.value);
     if (mask === "rg") input.value = maskRg(input.value);
     if (mask === "placa") input.value = maskPlaca(input.value);
+    if (mask === "cep") input.value = maskCep(input.value);
+    if (mask === "telefone") input.value = maskTelefone(input.value);
   }
 
   function initMasks() {

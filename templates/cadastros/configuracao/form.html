@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+  {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Cadastros" only %}
+  <form class="form-shell" method="post" novalidate>
+    {% csrf_token %}
+    {% include "components/forms/form_section.html" with title="Órgão e identidade" description="Dados institucionais usados em documentos futuros." only %}
+    <div class="form-section">
+      <div class="form-grid">
+        {% include "components/forms/form_field.html" with field=form.nome_orgao only %}
+        {% include "components/forms/form_field.html" with field=form.sigla_orgao only %}
+        {% include "components/forms/form_field.html" with field=form.divisao only %}
+        {% include "components/forms/form_field.html" with field=form.unidade only %}
+        {% include "components/forms/form_field.html" with field=form.sede only %}
+        {% include "components/forms/form_field.html" with field=form.nome_chefia only %}
+        {% include "components/forms/form_field.html" with field=form.cargo_chefia only %}
+        {% include "components/forms/form_field.html" with field=form.cidade_sede_padrao only %}
+        {% include "components/forms/form_field.html" with field=form.prazo_justificativa_dias only %}
+      </div>
+    </div>
+    {% include "components/forms/form_section.html" with title="Endereço e contato" description="CEP e telefone são normalizados ao salvar." only %}
+    <div class="form-section">
+      <div class="form-grid">
+        {% include "components/forms/form_field.html" with field=form.cep only %}
+        {% include "components/forms/form_field.html" with field=form.logradouro only %}
+        {% include "components/forms/form_field.html" with field=form.numero only %}
+        {% include "components/forms/form_field.html" with field=form.bairro only %}
+        {% include "components/forms/form_field.html" with field=form.cidade_endereco only %}
+        {% include "components/forms/form_field.html" with field=form.uf only %}
+        {% include "components/forms/form_field.html" with field=form.telefone only %}
+        {% include "components/forms/form_field.html" with field=form.email only %}
+      </div>
+    </div>
+    {% include "components/forms/form_section.html" with title="Plano de trabalho e assinaturas" description="Coordenador padrão e assinantes por tipo de documento (configuração futura)." only %}
+    <div class="form-section">
+      <div class="form-grid">
+        {% include "components/forms/form_field.html" with field=form.coordenador_adm_plano_trabalho only %}
+        {% include "components/forms/form_field.html" with field=form.assinatura_oficio only %}
+        {% include "components/forms/form_field.html" with field=form.assinatura_justificativa only %}
+        {% include "components/forms/form_field.html" with field=form.assinatura_plano_trabalho only %}
+        {% include "components/forms/form_field.html" with field=form.assinatura_ordem_servico only %}
+        {% include "components/forms/form_field.html" with field=form.assinatura_termo only %}
+        {% include "components/forms/form_field.html" with field=form.pt_ultimo_numero only %}
+        {% include "components/forms/form_field.html" with field=form.pt_ano only %}
+      </div>
+    </div>
+    {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
+  </form>
+{% endblock %}
