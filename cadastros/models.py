@@ -28,16 +28,48 @@ class Unidade(TimeStampedModel):
         super().save(*args, **kwargs)
 
 
-class Cidade(TimeStampedModel):
-    nome = models.CharField(max_length=255)
-    uf = models.CharField(max_length=2, default="PR")
+class Estado(TimeStampedModel):
+    nome = models.CharField(max_length=128)
+    sigla = models.CharField(max_length=2, unique=True)
+    codigo_ibge = models.PositiveSmallIntegerField(null=True, blank=True, unique=True)
 
     class Meta:
-        ordering = ["uf", "nome"]
+        ordering = ["nome"]
+        verbose_name = "Estado"
+        verbose_name_plural = "Estados"
+        constraints = [
+            models.UniqueConstraint(fields=["nome"], name="unique_estado_nome"),
+        ]
+
+    def __str__(self):
+        return f"{self.nome} ({self.sigla})"
+
+    def save(self, *args, **kwargs):
+        self.nome = " ".join((self.nome or "").strip().split()).upper()
+        self.sigla = (self.sigla or "").strip().upper()[:2]
+        super().save(*args, **kwargs)
+
+
+class Cidade(TimeStampedModel):
+    estado = models.ForeignKey(Estado, on_delete=models.PROTECT, related_name="cidades", null=True, blank=True)
+    nome = models.CharField(max_length=255)
+    uf = models.CharField(max_length=2)
+    codigo_ibge = models.PositiveIntegerField(null=True, blank=True)
+    capital = models.BooleanField(default=False)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+
+    class Meta:
+        ordering = ["estado__sigla", "nome"]
         verbose_name = "Cidade"
         verbose_name_plural = "Cidades"
         constraints = [
-            models.UniqueConstraint(fields=["nome", "uf"], name="unique_cidade_nome_uf"),
+            models.UniqueConstraint(fields=["nome", "estado"], name="unique_cidade_nome_estado"),
+            models.UniqueConstraint(
+                fields=["codigo_ibge"],
+                name="unique_cidade_codigo_ibge_nn",
+                condition=models.Q(codigo_ibge__isnull=False),
+            ),
         ]
 
     def __str__(self):
@@ -45,7 +77,10 @@ class Cidade(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.nome = " ".join((self.nome or "").strip().split()).upper()
-        self.uf = (self.uf or "").strip().upper()
+        if self.estado_id:
+            self.uf = self.estado.sigla
+        else:
+            self.uf = (self.uf or "").strip().upper()[:2]
         super().save(*args, **kwargs)
 
 
