@@ -103,3 +103,49 @@ def apresentar_viatura_card(viatura, edit_url="#", delete_url="#"):
         ],
         "actions": _actions(edit_url, delete_url),
     }
+
+
+def apresentar_linha_lista_simples_cargo(cargo, edit_url="#", delete_url="#"):
+    return {
+        "title": cargo.nome,
+        "meta": [
+            {"label": "Atualizado em", "value": cargo.updated_at.strftime("%d/%m/%Y")},
+        ],
+        "edit_url": edit_url,
+        "delete_url": delete_url,
+    }
+
+
+def apresentar_linha_lista_simples_combustivel(combustivel, edit_url="#", delete_url="#"):
+    return {
+        "title": combustivel.nome,
+        "meta": [
+            {"label": "Atualizado em", "value": combustivel.updated_at.strftime("%d/%m/%Y")},
+        ],
+        "edit_url": edit_url,
+        "delete_url": delete_url,
+    }
+
+
+def apresentar_linha_lista_simples_unidade(unidade, edit_url="#", delete_url="#"):
+    return {
+        "title": unidade.nome,
+        "meta": [
+            {"label": "Sigla", "value": unidade.sigla or "—"},
+            {"label": "Atualizado em", "value": unidade.updated_at.strftime("%d/%m/%Y")},
+        ],
+        "edit_url": edit_url,
+        "delete_url": delete_url,
+    }
+
+
+def apresentar_linha_lista_simples_cidade(cidade, edit_url="#", delete_url="#"):
+    return {
+        "title": cidade.nome,
+        "meta": [
+            {"label": "UF", "value": cidade.uf},
+            {"label": "Atualizado em", "value": cidade.updated_at.strftime("%d/%m/%Y")},
+        ],
+        "edit_url": edit_url,
+        "delete_url": delete_url,
+    }

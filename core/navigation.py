@@ -11,50 +11,52 @@ NAVIGATION_ITEMS = [
         "label": "Cadastros",
         "url_name": "cadastros:index",
         "icon": "CD",
-        "active_when": ["cadastros:"],
+        "active_when": ["cadastros:index"],
         "children": [
             {
                 "id": "cadastros-servidores",
                 "label": "Servidores",
                 "url_name": "cadastros:servidores_index",
                 "active_when": ["cadastros:servidor_", "cadastros:servidores_index"],
-                "children": [
-                    {
-                        "id": "cadastros-cargos",
-                        "label": "Cargos",
-                        "url_name": "cadastros:cargos_index",
-                        "active_when": ["cadastros:cargo_", "cadastros:cargos_index"],
-                    },
-                ],
+                "sidebar_indent": 0,
+            },
+            {
+                "id": "cadastros-cargos",
+                "label": "Cargos",
+                "url_name": "cadastros:cargos_index",
+                "active_when": ["cadastros:cargo_", "cadastros:cargos_index"],
+                "sidebar_indent": 1,
             },
             {
                 "id": "cadastros-viaturas",
                 "label": "Viaturas",
                 "url_name": "cadastros:viaturas_index",
                 "active_when": ["cadastros:viatura_", "cadastros:viaturas_index"],
-                "children": [
-                    {
-                        "id": "cadastros-combustiveis",
-                        "label": "Combustíveis",
-                        "url_name": "cadastros:combustiveis_index",
-                        "active_when": [
-                            "cadastros:combustivel_",
-                            "cadastros:combustiveis_index",
-                        ],
-                    },
+                "sidebar_indent": 0,
+            },
+            {
+                "id": "cadastros-combustiveis",
+                "label": "Combustíveis",
+                "url_name": "cadastros:combustiveis_index",
+                "active_when": [
+                    "cadastros:combustivel_",
+                    "cadastros:combustiveis_index",
                 ],
+                "sidebar_indent": 1,
             },
             {
                 "id": "cadastros-unidades",
                 "label": "Unidades",
                 "url_name": "cadastros:unidades_index",
                 "active_when": ["cadastros:unidade_", "cadastros:unidades_index"],
+                "sidebar_indent": 0,
             },
             {
                 "id": "cadastros-cidades",
                 "label": "Cidades",
                 "url_name": "cadastros:cidades_index",
                 "active_when": ["cadastros:cidade_", "cadastros:cidades_index"],
+                "sidebar_indent": 0,
             },
         ],
     },

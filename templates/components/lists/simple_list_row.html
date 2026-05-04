@@ -1,0 +1,19 @@
+<div class="simple-list__row" role="listitem">
+  <div class="simple-list__main">
+    <div class="simple-list__title">{{ row.title }}</div>
+    {% if row.meta %}
+      <div class="simple-list__meta">
+        {% for item in row.meta %}
+          <span class="simple-list__meta-item">
+            <span class="simple-list__meta-label">{{ item.label }}</span>
+            <span class="simple-list__meta-value">{{ item.value }}</span>
+          </span>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+  <div class="simple-list__actions">
+    {% include "components/buttons/action_button.html" with href=row.edit_url label="Editar" variant="secondary" size="sm" only %}
+    {% include "components/buttons/action_button.html" with href=row.delete_url label="Excluir" variant="danger" size="sm" only %}
+  </div>
+</div>

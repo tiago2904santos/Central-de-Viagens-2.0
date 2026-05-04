@@ -2,7 +2,7 @@
 
 ## Uso no cadastros
 
-O app `cadastros` usa `list_page`, `document_card`, `form_field` e `form_actions` para os CRUDs de:
+O app `cadastros` usa listagens globais (`list_page` ou `list_page_simple`), `document_card` onde aplicavel, `form_field` e `form_actions` para os CRUDs de:
 
 - `Unidade`
 - `Cidade`
@@ -20,22 +20,20 @@ O app `cadastros` usa `list_page`, `document_card`, `form_field` e `form_actions
 - CSS principal: `static/css/layout.css`.
 - Eyebrow e detalhes visuais usam destaque amarelo/dourado do design system.
 
+## Listagem simples vs cards
+
+- **Lista simples**: `list_page_simple.html`, `simple_list.html`, `simple_list_row.html`, estilos em `lists.css`. Para cadastros enxutos: Cargo, Combustivel, Unidade, Cidade.
+- **Cards**: `list_page.html` + `document_card` para Servidor, Viatura e listagens ricas futuras.
+
 ## Sidebar
 
 - Component: `templates/components/layout/sidebar.html`.
 - Dados: `core/navigation.py`, preparados por `core/context_processors.py`.
 - CSS principal: `static/css/sidebar.css`.
 - JS principal: `static/js/components/sidebar.js`.
-- Suporta ate tres niveis: modulo, subgrupo e item interno.
-- O botao lateral de expansao abre/fecha submenus; o texto do item continua sendo link quando houver URL.
-- O estado aberto considera a pagina atual e tambem persiste grupos abertos em `localStorage`.
-- A estrutura atual de `Cadastros` e:
-  - `Servidores`
-    - `Cargos`
-  - `Viaturas`
-    - `Combustiveis`
-  - `Unidades`
-  - `Cidades`
+- Somente o grupo **Cadastros** usa botao de expandir/recolher; dentro dele, lista plana com indentacao visual para `Cargos` (sob Servidores) e `Combustiveis` (sob Viaturas), sem segundo toggle por nivel.
+- O estado aberto considera a pagina atual e persiste em `localStorage`.
+- Ordem: Servidores, Cargos, Viaturas, Combustiveis, Unidades, Cidades.
 - `Motoristas` nao aparece no menu porque nao e cadastro independente.
 
 ## List toolbar
@@ -43,12 +41,6 @@ O app `cadastros` usa `list_page`, `document_card`, `form_field` e `form_actions
 - Component: `templates/components/lists/list_toolbar.html`.
 - Estrutura: busca + espaco para filtros + acoes principais.
 - CSS principal: `static/css/lists.css`.
-
-## Cards
-
-- Components: `card`, `module_card`, `document_card`, `summary_card`.
-- Regras: sombra elegante, titulo destacado, metadados compactos e acoes alinhadas.
-- CSS principal: `static/css/cards.css`.
 
 ## Forms
 
@@ -74,8 +66,11 @@ Mascaras globais sao ativadas por atributo:
 
 ## Cards
 
-Presenters enviam `title`, `subtitle`, `meta`, `actions`.
-Templates nao montam metadados de negocio e nao formatam regra de dominio.
+- Components: `card`, `module_card`, `document_card`, `summary_card`.
+- Regras: sombra elegante, titulo destacado, metadados compactos e acoes alinhadas.
+- CSS principal: `static/css/cards.css`.
+- Presenters enviam `title`, `subtitle`, `meta`, `actions`.
+- Templates nao montam metadados de negocio e nao formatam regra de dominio.
 
 ## Alerts e feedback
 

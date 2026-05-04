@@ -9,11 +9,11 @@ from .forms import CombustivelForm
 from .forms import ServidorForm
 from .forms import UnidadeForm
 from .forms import ViaturaForm
-from .presenters import apresentar_cargo_card
-from .presenters import apresentar_cidade_card
-from .presenters import apresentar_combustivel_card
+from .presenters import apresentar_linha_lista_simples_cargo
+from .presenters import apresentar_linha_lista_simples_cidade
+from .presenters import apresentar_linha_lista_simples_combustivel
+from .presenters import apresentar_linha_lista_simples_unidade
 from .presenters import apresentar_servidor_card
-from .presenters import apresentar_unidade_card
 from .presenters import apresentar_viatura_card
 from .selectors import get_cargo_by_id
 from .selectors import get_cidade_by_id
@@ -82,8 +82,8 @@ def index(request):
 def unidades_index(request):
     q = request.GET.get("q", "").strip()
     unidades = listar_unidades(q=q)
-    cards = [
-        apresentar_unidade_card(
+    rows = [
+        apresentar_linha_lista_simples_unidade(
             unidade,
             edit_url=reverse("cadastros:unidade_update", args=[unidade.pk]),
             delete_url=reverse("cadastros:unidade_delete", args=[unidade.pk]),
@@ -96,7 +96,7 @@ def unidades_index(request):
         {
             "page_title": "Unidades",
             "page_description": "Unidades administrativas reutilizadas nos fluxos.",
-            "cards": cards,
+            "rows": rows,
             "q": q,
         },
     )
@@ -166,8 +166,8 @@ def unidade_delete(request, pk):
 def cidades_index(request):
     q = request.GET.get("q", "").strip()
     cidades = listar_cidades(q=q)
-    cards = [
-        apresentar_cidade_card(
+    rows = [
+        apresentar_linha_lista_simples_cidade(
             cidade,
             edit_url=reverse("cadastros:cidade_update", args=[cidade.pk]),
             delete_url=reverse("cadastros:cidade_delete", args=[cidade.pk]),
@@ -180,7 +180,7 @@ def cidades_index(request):
         {
             "page_title": "Cidades",
             "page_description": "Cidades de referência para os fluxos.",
-            "cards": cards,
+            "rows": rows,
             "q": q,
         },
     )
@@ -250,8 +250,8 @@ def cidade_delete(request, pk):
 def cargos_index(request):
     q = request.GET.get("q", "").strip()
     cargos = listar_cargos(q=q)
-    cards = [
-        apresentar_cargo_card(
+    rows = [
+        apresentar_linha_lista_simples_cargo(
             cargo,
             edit_url=reverse("cadastros:cargo_update", args=[cargo.pk]),
             delete_url=reverse("cadastros:cargo_delete", args=[cargo.pk]),
@@ -264,7 +264,7 @@ def cargos_index(request):
         {
             "page_title": "Cargos",
             "page_description": "Cadastre os cargos utilizados em servidores.",
-            "cards": cards,
+            "rows": rows,
             "q": q,
         },
     )
@@ -334,8 +334,8 @@ def cargo_delete(request, pk):
 def combustiveis_index(request):
     q = request.GET.get("q", "").strip()
     combustiveis = listar_combustiveis(q=q)
-    cards = [
-        apresentar_combustivel_card(
+    rows = [
+        apresentar_linha_lista_simples_combustivel(
             combustivel,
             edit_url=reverse("cadastros:combustivel_update", args=[combustivel.pk]),
             delete_url=reverse("cadastros:combustivel_delete", args=[combustivel.pk]),
@@ -348,7 +348,7 @@ def combustiveis_index(request):
         {
             "page_title": "Combustíveis",
             "page_description": "Cadastre os combustíveis disponíveis para viaturas.",
-            "cards": cards,
+            "rows": rows,
             "q": q,
         },
     )

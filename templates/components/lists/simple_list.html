@@ -1,0 +1,10 @@
+{% if rows %}
+  <div class="simple-list" role="list">
+    {% for row in rows %}
+      {% include "components/lists/simple_list_row.html" with row=row only %}
+    {% endfor %}
+  </div>
+{% else %}
+  {% include "components/lists/list_empty.html" with message=empty_message action_label=empty_action_label action_url=empty_action_url only %}
+{% endif %}
+<div class="list-pagination" aria-label="Paginacao futura"></div>

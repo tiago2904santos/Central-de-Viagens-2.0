@@ -43,6 +43,11 @@ A normalizacao final ocorre no backend (forms/models).
 
 As telas de `Unidade`, `Cidade`, `Cargo`, `Combustivel`, `Servidor` e `Viatura` sao a referencia visual e estrutural para os proximos modulos.
 
+## Tipos de listagem
+
+- **Lista simples** (`components/lists/list_page_simple.html`, `simple_list.html`): para cadastros enxutos com poucos campos — `Cargo`, `Combustivel`, `Unidade`, `Cidade`. Visual compacto, estilo tabela premium sem `<table>`, com linhas densas e acoes a direita.
+- **Cards ricos** (`list_page.html` + `document_card`): para entidades com mais contexto — `Servidor`, `Viatura` e, no futuro, documentos (Oficios, Termos, etc.).
+
 ## Regras para evolucao visual
 
 - Ajustes de header em `templates/components/layout/page_header.html` e `static/css/layout.css`.
@@ -55,15 +60,8 @@ As telas de `Unidade`, `Cidade`, `Cargo`, `Combustivel`, `Servidor` e `Viatura` 
 
 ## Sidebar hierarquica
 
-A sidebar suporta itens aninhados e deve ser a unica fonte visual de navegacao lateral. A hierarquia e declarada em `core/navigation.py`, renderizada por `templates/components/layout/sidebar.html`, estilizada em `static/css/sidebar.css` e controlada por JS centralizado em `static/js/components/sidebar.js`.
+A sidebar e a unica navegacao lateral. O menu **Cadastros** e o unico bloco com botao de expandir/recolher; dentro dele, os itens sao uma lista plana com **indentacao visual** (e opcional indicador) para `Cargos` sob `Servidores` e `Combustiveis` sob `Viaturas`, **sem** sub-submenus com segundo toggle.
 
-Em `Cadastros`, a estrutura visual e:
+A hierarquia e declarada em `core/navigation.py` (filhos de Cadastros com `sidebar_indent`), renderizada em `templates/components/layout/sidebar.html`, estilizada em `static/css/sidebar.css` e o grupo Cadastros e aberto via `static/js/components/sidebar.js` (incluindo `localStorage`).
 
-- `Servidores`
-  - `Cargos`
-- `Viaturas`
-  - `Combustiveis`
-- `Unidades`
-- `Cidades`
-
-`Cidades` continua sendo cadastro persistido em banco e pode receber importacao CSV em etapa futura. `Motoristas` nao deve aparecer como cadastro independente. Nao criar cores por submodulo nem CSS/JS em templates para controlar menu.
+Ordem sob Cadastros: Servidores, Cargos (subordinado visual), Viaturas, Combustiveis (subordinado visual), Unidades, Cidades. `Motoristas` nao aparece.
