@@ -17,7 +17,7 @@ Cada pagina deve expor um unico titulo principal via `page_header` ou via wrappe
 
 ## Lists
 
-- `lists/list_page.html`: estrutura completa de lista. Variaveis: `title`, `description`, `eyebrow`, `search_placeholder`, `empty_message`, `action_label`, `action_url`.
+- `lists/list_page.html`: estrutura completa de lista. Variaveis: `title`, `description`, `eyebrow`, `search_placeholder`, `empty_message`, `action_label`, `action_url`, `q` (busca simples repassada para a toolbar), `cards`.
 - `lists/list_toolbar.html`: busca, filtros e acao principal.
 - `lists/list_filters.html`: area reservada para filtros.
 - `lists/list_grid.html`: grid de resultados e paginacao futura. Recebe `cards`, uma lista de dicionarios preparada por presenters.
@@ -32,9 +32,19 @@ Exemplo:
 Em listagens reais, a view deve usar selectors e presenters:
 
 ```python
-objetos = listar_servidores()
-cards = [apresentar_servidor_card(objeto) for objeto in objetos]
+q = request.GET.get("q", "").strip()
+objetos = listar_servidores(q=q)
+cards = [
+    apresentar_servidor_card(
+        objeto,
+        edit_url=reverse("cadastros:servidor_update", args=[objeto.pk]),
+        delete_url=reverse("cadastros:servidor_delete", args=[objeto.pk]),
+    )
+    for objeto in objetos
+]
 ```
+
+O mesmo padrao aplica-se a `Unidade`, `Cidade`, `Motorista` e `Viatura` no app `cadastros`.
 
 ## Forms
 
@@ -43,7 +53,7 @@ cards = [apresentar_servidor_card(objeto) for objeto in objetos]
 - `forms/form_field.html`: campo padrao. Variaveis: `field_id`, `label`, `field`, `help_text`, `errors`.
 - `forms/form_actions.html`: acoes finais. Variaveis: `primary_label`, `secondary_label`, `secondary_url`.
 
-O primeiro uso real esta nos templates de `Unidade` e `Cidade`, em `templates/cadastros/*/form.html`. Forms devem usar widgets com classes globais como `form-control` e `form-check-input`.
+O uso real esta nos templates de `Unidade`, `Cidade`, `Servidor`, `Motorista` e `Viatura`, em `templates/cadastros/*/form.html`. Forms devem usar widgets com classes globais como `form-control` e `form-select` (campos de selecao). `form-check-input` so para checkboxes reais, nunca para ativo/inativo em cadastros.
 
 ## Steppers
 

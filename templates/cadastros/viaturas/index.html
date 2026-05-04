@@ -3,5 +3,6 @@
 {% block title %}Viaturas{% endblock %}
 
 {% block content %}
-  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Cadastros" search_placeholder="Buscar viaturas" action_label="Nova viatura" action_url="#" empty_message="Nenhuma viatura cadastrada ainda." cards=cards only %}
+  {% url "cadastros:viatura_create" as create_url %}
+  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Cadastros" search_placeholder="Buscar viaturas" action_label="Nova viatura" action_url=create_url empty_message="Nenhuma viatura cadastrada ainda." cards=cards q=q only %}
 {% endblock %}

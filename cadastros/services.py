@@ -33,3 +33,48 @@ def excluir_cidade(instance):
         instance.delete()
     except ProtectedError as exc:
         raise CadastroVinculadoError from exc
+
+
+def criar_servidor(form):
+    return form.save()
+
+
+def atualizar_servidor(instance, form):
+    return form.save()
+
+
+def excluir_servidor(instance):
+    try:
+        instance.delete()
+    except ProtectedError as exc:
+        raise CadastroVinculadoError from exc
+
+
+def criar_motorista(form):
+    return form.save()
+
+
+def atualizar_motorista(instance, form):
+    return form.save()
+
+
+def excluir_motorista(instance):
+    try:
+        instance.delete()
+    except ProtectedError as exc:
+        raise CadastroVinculadoError from exc
+
+
+def criar_viatura(form):
+    return form.save()
+
+
+def atualizar_viatura(instance, form):
+    return form.save()
+
+
+def excluir_viatura(instance):
+    try:
+        instance.delete()
+    except ProtectedError as exc:
+        raise CadastroVinculadoError from exc

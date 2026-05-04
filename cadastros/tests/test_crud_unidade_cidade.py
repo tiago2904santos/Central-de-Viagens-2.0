@@ -5,6 +5,7 @@ from django.urls import reverse
 from cadastros.models import Cidade
 from cadastros.models import Servidor
 from cadastros.models import Unidade
+from cadastros.models import Viatura
 
 
 @override_settings(ALLOWED_HOSTS=["testserver", "localhost"])
@@ -56,6 +57,13 @@ class UnidadeCrudTests(TestCase):
     def test_post_exclusao_unidade_com_vinculo_bloqueia_exclusao(self):
         unidade = Unidade.objects.create(nome="Unidade A", sigla="UA")
         Servidor.objects.create(nome="Servidor A", unidade=unidade)
+        response = self.client.post(reverse("cadastros:unidade_delete", args=[unidade.pk]))
+        self.assertRedirects(response, reverse("cadastros:unidades_index"))
+        self.assertTrue(Unidade.objects.filter(pk=unidade.pk).exists())
+
+    def test_post_exclusao_unidade_com_viatura_bloqueia_exclusao(self):
+        unidade = Unidade.objects.create(nome="Unidade B", sigla="UB")
+        Viatura.objects.create(placa="ZZZ0001", unidade=unidade)
         response = self.client.post(reverse("cadastros:unidade_delete", args=[unidade.pk]))
         self.assertRedirects(response, reverse("cadastros:unidades_index"))
         self.assertTrue(Unidade.objects.filter(pk=unidade.pk).exists())

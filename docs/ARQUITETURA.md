@@ -46,4 +46,6 @@ Apps com listagens reais devem separar consulta e apresentacao. Em `cadastros`, 
 
 ## Padrao CRUD inicial
 
-O primeiro CRUD real foi implementado em `cadastros` para `Unidade` e `Cidade`. Views usam forms para validacao, selectors para busca de objetos, services para gravacao/exclusao e messages para feedback. Cadastros nao usam estado ativo/inativo: exclusoes sao fisicas quando nao houver vinculos impeditivos e devem ser bloqueadas quando houver relacoes importantes.
+O app `cadastros` concentra o primeiro modulo completo da arquitetura nova, com CRUD fisico para `Unidade`, `Cidade`, `Servidor`, `Motorista` e `Viatura`. Views usam forms para validacao, selectors para listagens e busca (`q`), services para gravacao/exclusao e messages para feedback. Templates montam telas apenas com `base.html` e components globais; CSS e JavaScript por pagina continuam proibidos.
+
+Cadastros nao usam estado ativo/inativo: exclusoes sao fisicas quando nao houver vinculos impeditivos e devem ser bloqueadas quando houver relacoes importantes (por exemplo, `ForeignKey`/`OneToOneField` com `PROTECT` onde o historico ou dependencia importa). Este padrao e a referencia para os proximos modulos.

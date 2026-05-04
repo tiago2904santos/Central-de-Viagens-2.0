@@ -61,7 +61,7 @@ class Servidor(TimeStampedModel):
 class Motorista(TimeStampedModel):
     servidor = models.OneToOneField(
         Servidor,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="motorista",
     )
     cnh = models.CharField(max_length=50, blank=True)

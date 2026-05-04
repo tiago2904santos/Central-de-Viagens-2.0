@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Este padrao foi definido inicialmente no CRUD de `Unidade` e `Cidade` do app `cadastros`. Ele deve ser replicado nos proximos cadastros antes de evoluir para fluxos mais complexos.
+Este padrao foi consolidado no app `cadastros` para `Unidade`, `Cidade`, `Servidor`, `Motorista` e `Viatura`. Ele deve ser replicado nos proximos modulos antes de evoluir para fluxos mais complexos.
 
 ## Estrutura
 
@@ -16,7 +16,7 @@ Este padrao foi definido inicialmente no CRUD de `Unidade` e `Cidade` do app `ca
 
 ## URLs
 
-Padrao para listagem, criacao, edicao e exclusao:
+Padrao para listagem, criacao, edicao e exclusao (exemplo `Unidade`):
 
 ```text
 /cadastros/unidades/
@@ -24,6 +24,8 @@ Padrao para listagem, criacao, edicao e exclusao:
 /cadastros/unidades/<pk>/editar/
 /cadastros/unidades/<pk>/excluir/
 ```
+
+Entidades com rotas equivalentes no mesmo app: `Cidade`, `Servidor`, `Motorista`, `Viatura` (verbos de criacao: novo/nova conforme o nome da rota).
 
 ## Forms
 
@@ -35,7 +37,7 @@ Views nao devem chamar `save()` ou alterar status diretamente quando houver serv
 
 ## Selectors
 
-Views devem chamar selectors para consultas. Busca simples por `q` deve ficar no selector, nao no template.
+Views devem chamar selectors para consultas. Busca simples por `q` (querystring) deve ficar no selector, nao na view nem no template. A view apenas repassa `q` obtido de `request.GET`.
 
 ## Exclusao
 
@@ -49,11 +51,7 @@ Nao criar `desativar_*`, `ativar_*`, checkbox Ativo/Ativa ou status Ativo/Inativ
 
 ## Messages
 
-Mensagens usam `django.contrib.messages`:
-
-- Criacao: `... criada com sucesso.`
-- Atualizacao: `... atualizada com sucesso.`
-- Exclusao: `... excluida com sucesso.`
+Mensagens usam `django.contrib.messages`, no genero e numero corretos da entidade (ex.: servidor criado, viatura excluida).
 
 ## Templates
 

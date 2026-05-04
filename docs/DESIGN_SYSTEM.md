@@ -109,6 +109,8 @@ Esse padrao deve atender Oficios, Termos, Justificativas, Planos, Ordens, Roteir
 
 Listagens reais devem receber dados de cards ja formatados por presenters. Templates nao devem montar metadados ou decidir status visual.
 
+No app `cadastros`, as listagens de `Unidade`, `Cidade`, `Servidor`, `Motorista` e `Viatura` seguem esse modelo (toolbar com `q`, cards via `document_card` e acoes de Editar/Excluir) e servem de referencia visual e estrutural para os demais modulos.
+
 ## Cards
 
 Use:

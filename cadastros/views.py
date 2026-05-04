@@ -4,26 +4,41 @@ from django.shortcuts import render
 from django.urls import reverse
 
 from .forms import CidadeForm
+from .forms import MotoristaForm
+from .forms import ServidorForm
 from .forms import UnidadeForm
+from .forms import ViaturaForm
 from .presenters import apresentar_cidade_card
 from .presenters import apresentar_motorista_card
 from .presenters import apresentar_servidor_card
 from .presenters import apresentar_unidade_card
 from .presenters import apresentar_viatura_card
 from .selectors import get_cidade_by_id
+from .selectors import get_motorista_by_id
+from .selectors import get_servidor_by_id
 from .selectors import get_unidade_by_id
+from .selectors import get_viatura_by_id
 from .selectors import listar_cidades
 from .selectors import listar_motoristas
 from .selectors import listar_servidores
 from .selectors import listar_unidades
 from .selectors import listar_viaturas
 from .services import atualizar_cidade
+from .services import atualizar_motorista
+from .services import atualizar_servidor
 from .services import atualizar_unidade
+from .services import atualizar_viatura
 from .services import CadastroVinculadoError
 from .services import criar_cidade
+from .services import criar_motorista
+from .services import criar_servidor
 from .services import criar_unidade
+from .services import criar_viatura
 from .services import excluir_cidade
+from .services import excluir_motorista
+from .services import excluir_servidor
 from .services import excluir_unidade
+from .services import excluir_viatura
 
 
 def _render_listagem(request, template_name, context):
@@ -252,8 +267,16 @@ def cidade_delete(request, pk):
 
 
 def servidores_index(request):
-    servidores = listar_servidores()
-    cards = [apresentar_servidor_card(servidor) for servidor in servidores]
+    q = request.GET.get("q", "").strip()
+    servidores = listar_servidores(q=q)
+    cards = [
+        apresentar_servidor_card(
+            servidor,
+            edit_url=reverse("cadastros:servidor_update", args=[servidor.pk]),
+            delete_url=reverse("cadastros:servidor_delete", args=[servidor.pk]),
+        )
+        for servidor in servidores
+    ]
     return _render_listagem(
         request,
         "cadastros/servidores/index.html",
@@ -262,13 +285,89 @@ def servidores_index(request):
             "page_section": "Cadastros",
             "page_description": "Servidores que poderao participar dos documentos de viagem.",
             "cards": cards,
+            "q": q,
+        },
+    )
+
+
+def servidor_create(request):
+    form = ServidorForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        criar_servidor(form)
+        messages.success(request, "Servidor criado com sucesso.")
+        return redirect("cadastros:servidores_index")
+    return render(
+        request,
+        "cadastros/servidores/form.html",
+        {
+            "page_title": "Novo servidor",
+            "page_section": "Cadastros",
+            "page_description": "Cadastre um servidor para uso nos fluxos documentais.",
+            "form": form,
+            "submit_label": "Criar servidor",
+            "back_url": reverse("cadastros:servidores_index"),
+        },
+    )
+
+
+def servidor_update(request, pk):
+    servidor = get_servidor_by_id(pk)
+    form = ServidorForm(request.POST or None, instance=servidor)
+    if request.method == "POST" and form.is_valid():
+        atualizar_servidor(servidor, form)
+        messages.success(request, "Servidor atualizado com sucesso.")
+        return redirect("cadastros:servidores_index")
+    return render(
+        request,
+        "cadastros/servidores/form.html",
+        {
+            "page_title": "Editar servidor",
+            "page_section": "Cadastros",
+            "page_description": "Atualize os dados do servidor.",
+            "form": form,
+            "submit_label": "Salvar servidor",
+            "back_url": reverse("cadastros:servidores_index"),
+        },
+    )
+
+
+def servidor_delete(request, pk):
+    servidor = get_servidor_by_id(pk)
+    if request.method == "POST":
+        try:
+            excluir_servidor(servidor)
+        except CadastroVinculadoError:
+            messages.error(
+                request,
+                "Não foi possível excluir este cadastro porque ele está vinculado a outros registros.",
+            )
+            return redirect("cadastros:servidores_index")
+        messages.success(request, "Servidor excluído com sucesso.")
+        return redirect("cadastros:servidores_index")
+    return render(
+        request,
+        "cadastros/servidores/confirm_delete.html",
+        {
+            "page_title": "Excluir servidor",
+            "page_section": "Cadastros",
+            "page_description": "Confirme a exclusao fisica do cadastro.",
+            "object": servidor,
+            "back_url": reverse("cadastros:servidores_index"),
         },
     )
 
 
 def motoristas_index(request):
-    motoristas = listar_motoristas()
-    cards = [apresentar_motorista_card(motorista) for motorista in motoristas]
+    q = request.GET.get("q", "").strip()
+    motoristas = listar_motoristas(q=q)
+    cards = [
+        apresentar_motorista_card(
+            motorista,
+            edit_url=reverse("cadastros:motorista_update", args=[motorista.pk]),
+            delete_url=reverse("cadastros:motorista_delete", args=[motorista.pk]),
+        )
+        for motorista in motoristas
+    ]
     return _render_listagem(
         request,
         "cadastros/motoristas/index.html",
@@ -277,13 +376,89 @@ def motoristas_index(request):
             "page_section": "Cadastros",
             "page_description": "Servidores habilitados para conduzir viaturas.",
             "cards": cards,
+            "q": q,
+        },
+    )
+
+
+def motorista_create(request):
+    form = MotoristaForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        criar_motorista(form)
+        messages.success(request, "Motorista criado com sucesso.")
+        return redirect("cadastros:motoristas_index")
+    return render(
+        request,
+        "cadastros/motoristas/form.html",
+        {
+            "page_title": "Novo motorista",
+            "page_section": "Cadastros",
+            "page_description": "Vincule um servidor como motorista habilitado.",
+            "form": form,
+            "submit_label": "Criar motorista",
+            "back_url": reverse("cadastros:motoristas_index"),
+        },
+    )
+
+
+def motorista_update(request, pk):
+    motorista = get_motorista_by_id(pk)
+    form = MotoristaForm(request.POST or None, instance=motorista)
+    if request.method == "POST" and form.is_valid():
+        atualizar_motorista(motorista, form)
+        messages.success(request, "Motorista atualizado com sucesso.")
+        return redirect("cadastros:motoristas_index")
+    return render(
+        request,
+        "cadastros/motoristas/form.html",
+        {
+            "page_title": "Editar motorista",
+            "page_section": "Cadastros",
+            "page_description": "Atualize os dados do motorista.",
+            "form": form,
+            "submit_label": "Salvar motorista",
+            "back_url": reverse("cadastros:motoristas_index"),
+        },
+    )
+
+
+def motorista_delete(request, pk):
+    motorista = get_motorista_by_id(pk)
+    if request.method == "POST":
+        try:
+            excluir_motorista(motorista)
+        except CadastroVinculadoError:
+            messages.error(
+                request,
+                "Não foi possível excluir este cadastro porque ele está vinculado a outros registros.",
+            )
+            return redirect("cadastros:motoristas_index")
+        messages.success(request, "Motorista excluído com sucesso.")
+        return redirect("cadastros:motoristas_index")
+    return render(
+        request,
+        "cadastros/motoristas/confirm_delete.html",
+        {
+            "page_title": "Excluir motorista",
+            "page_section": "Cadastros",
+            "page_description": "Confirme a exclusao fisica do cadastro.",
+            "object": motorista,
+            "back_url": reverse("cadastros:motoristas_index"),
         },
     )
 
 
 def viaturas_index(request):
-    viaturas = listar_viaturas()
-    cards = [apresentar_viatura_card(viatura) for viatura in viaturas]
+    q = request.GET.get("q", "").strip()
+    viaturas = listar_viaturas(q=q)
+    cards = [
+        apresentar_viatura_card(
+            viatura,
+            edit_url=reverse("cadastros:viatura_update", args=[viatura.pk]),
+            delete_url=reverse("cadastros:viatura_delete", args=[viatura.pk]),
+        )
+        for viatura in viaturas
+    ]
     return _render_listagem(
         request,
         "cadastros/viaturas/index.html",
@@ -292,5 +467,73 @@ def viaturas_index(request):
             "page_section": "Cadastros",
             "page_description": "Veiculos usados em deslocamentos e ordens de servico.",
             "cards": cards,
+            "q": q,
+        },
+    )
+
+
+def viatura_create(request):
+    form = ViaturaForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        criar_viatura(form)
+        messages.success(request, "Viatura criada com sucesso.")
+        return redirect("cadastros:viaturas_index")
+    return render(
+        request,
+        "cadastros/viaturas/form.html",
+        {
+            "page_title": "Nova viatura",
+            "page_section": "Cadastros",
+            "page_description": "Cadastre um veiculo para deslocamentos e ordens de servico.",
+            "form": form,
+            "submit_label": "Criar viatura",
+            "back_url": reverse("cadastros:viaturas_index"),
+        },
+    )
+
+
+def viatura_update(request, pk):
+    viatura = get_viatura_by_id(pk)
+    form = ViaturaForm(request.POST or None, instance=viatura)
+    if request.method == "POST" and form.is_valid():
+        atualizar_viatura(viatura, form)
+        messages.success(request, "Viatura atualizada com sucesso.")
+        return redirect("cadastros:viaturas_index")
+    return render(
+        request,
+        "cadastros/viaturas/form.html",
+        {
+            "page_title": "Editar viatura",
+            "page_section": "Cadastros",
+            "page_description": "Atualize os dados da viatura.",
+            "form": form,
+            "submit_label": "Salvar viatura",
+            "back_url": reverse("cadastros:viaturas_index"),
+        },
+    )
+
+
+def viatura_delete(request, pk):
+    viatura = get_viatura_by_id(pk)
+    if request.method == "POST":
+        try:
+            excluir_viatura(viatura)
+        except CadastroVinculadoError:
+            messages.error(
+                request,
+                "Não foi possível excluir este cadastro porque ele está vinculado a outros registros.",
+            )
+            return redirect("cadastros:viaturas_index")
+        messages.success(request, "Viatura excluída com sucesso.")
+        return redirect("cadastros:viaturas_index")
+    return render(
+        request,
+        "cadastros/viaturas/confirm_delete.html",
+        {
+            "page_title": "Excluir viatura",
+            "page_section": "Cadastros",
+            "page_description": "Confirme a exclusao fisica do cadastro.",
+            "object": viatura,
+            "back_url": reverse("cadastros:viaturas_index"),
         },
     )

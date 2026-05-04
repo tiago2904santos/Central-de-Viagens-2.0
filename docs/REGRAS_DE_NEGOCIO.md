@@ -24,3 +24,7 @@ O app `cadastros` e a base de dados comum do sistema. Seus registros devem ser r
 Os models desta etapa sao uma base inicial e podem evoluir em etapas futuras. Views devem consultar dados por selectors, formatar exibicao por presenters e renderizar templates com components. CSS e JS por pagina continuam proibidos.
 
 Cadastros nao possuem estado ativo/inativo. O cadastro existe enquanto nao for excluido. A exclusao e fisica quando nao houver vinculos impeditivos. Se houver vinculos importantes, a exclusao deve ser bloqueada com mensagem clara. Nao usar desativacao logica, campos `ativo`/`ativa`, checkbox Ativo/Ativa ou status Ativo/Inativo em cadastros.
+
+Relacoes que representam dependencia ou historico relevante devem impedir exclusao destrutiva: por exemplo, `Unidade` vinculada a `Servidor` ou `Viatura`, e `Servidor` vinculado a `Motorista` (relacao protegida no model). A busca simples nas listagens usa a querystring `q`, tratada nos selectors, nao nas views.
+
+Quando documentos e outros modulos passarem a referenciar `Servidor`, `Motorista` ou `Viatura`, a exclusao desses cadastros tambem devera ser bloqueada enquanto existir vinculo real.

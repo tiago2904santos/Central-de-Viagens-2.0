@@ -29,42 +29,60 @@ def apresentar_cidade_card(cidade, edit_url="#", delete_url="#"):
     }
 
 
-def apresentar_servidor_card(servidor):
+def apresentar_servidor_card(servidor, edit_url="#", delete_url="#"):
+    unidade_label = "-"
+    if servidor.unidade:
+        unidade_label = servidor.unidade.sigla or servidor.unidade.nome
     return {
         "title": servidor.nome,
-        "subtitle": servidor.cargo or "Cargo nao informado",
+        "subtitle": servidor.cargo or "Cargo não informado",
         "meta": [
-            {"label": "Matricula", "value": servidor.matricula or "-"},
-            {"label": "Unidade", "value": servidor.unidade.sigla if servidor.unidade else "-"},
+            {"label": "Matrícula", "value": servidor.matricula or "-"},
+            {"label": "Unidade", "value": unidade_label},
+            {"label": "Atualizado em", "value": servidor.updated_at.strftime("%d/%m/%Y")},
         ],
-        "actions": _actions(),
+        "actions": _actions(edit_url, delete_url),
     }
 
 
-def apresentar_motorista_card(motorista):
+def apresentar_motorista_card(motorista, edit_url="#", delete_url="#"):
+    subtitle = f"CNH {motorista.cnh}" if motorista.cnh else "CNH não informada"
+    unidade_label = "-"
+    if motorista.servidor.unidade:
+        unidade_label = motorista.servidor.unidade.sigla or motorista.servidor.unidade.nome
     return {
         "title": motorista.servidor.nome,
-        "subtitle": f"CNH {motorista.cnh}" if motorista.cnh else "CNH nao informada",
+        "subtitle": subtitle,
         "meta": [
             {"label": "Categoria", "value": motorista.categoria_cnh or "-"},
-            {
-                "label": "Unidade",
-                "value": motorista.servidor.unidade.sigla
-                if motorista.servidor.unidade
-                else "-",
-            },
+            {"label": "Unidade", "value": unidade_label},
+            {"label": "Atualizado em", "value": motorista.updated_at.strftime("%d/%m/%Y")},
         ],
-        "actions": _actions(),
+        "actions": _actions(edit_url, delete_url),
     }
 
 
-def apresentar_viatura_card(viatura):
+def _placa_exibicao(placa):
+    if not placa:
+        return ""
+    s = "".join(c for c in str(placa).upper() if c.isalnum())
+    if len(s) == 7:
+        return f"{s[:3]}-{s[3:]}"
+    return str(placa).strip().upper()
+
+
+def apresentar_viatura_card(viatura, edit_url="#", delete_url="#"):
+    marca_modelo = " ".join(filter(None, [viatura.marca, viatura.modelo])) or "Modelo não informado"
+    unidade_label = "-"
+    if viatura.unidade:
+        unidade_label = viatura.unidade.sigla or viatura.unidade.nome
     return {
-        "title": viatura.placa,
-        "subtitle": " ".join(filter(None, [viatura.marca, viatura.modelo])) or "Modelo nao informado",
+        "title": _placa_exibicao(viatura.placa),
+        "subtitle": marca_modelo,
         "meta": [
             {"label": "Tipo", "value": viatura.tipo or "-"},
-            {"label": "Unidade", "value": viatura.unidade.sigla if viatura.unidade else "-"},
+            {"label": "Unidade", "value": unidade_label},
+            {"label": "Atualizado em", "value": viatura.updated_at.strftime("%d/%m/%Y")},
         ],
-        "actions": _actions(),
+        "actions": _actions(edit_url, delete_url),
     }
