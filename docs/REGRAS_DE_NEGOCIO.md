@@ -12,13 +12,13 @@ Entidades ativas do modulo:
 - `Cargo`: nome unico e em maiusculo; opcionalmente um registro pode ser marcado como **padrao** (`is_padrao`), garantindo um unico padrao por vez no banco.
 - `Combustivel`: nome unico e em maiusculo; opcionalmente um registro pode ser **combustivel padrao** (`is_padrao`), garantindo um unico padrao por vez.
 - `Servidor`: nome unico e em maiusculo; cargo obrigatorio no form; **CPF obrigatorio**, validado por digitos verificadores, armazenado so digitos; **RG opcional** ou marcacao **sem RG** (valor canonico interno, espelhando o legacy); **telefone opcional** (10 ou 11 digitos); unicidade condicional de CPF, RG (exceto “nao possui”) e telefone quando preenchidos; unidade opcional.
-- `Viatura`: placa unica (AAA1234 ou AAA1A23), modelo obrigatorio normalizado em maiusculo, combustivel FK e tipo (`CARACTERIZADA`/`DESCARACTERIZADA`); placa persistida sem hifen e em maiusculo.
+- `Viatura`: placa unica (AAA1234 ou AAA1A23), modelo obrigatorio normalizado em maiusculo, combustivel FK e tipo (`CARACTERIZADA`/`DESCARACTERIZADA`); placa persistida sem hifen e em maiusculo; **motoristas** opcionais via relacionamento N:N com `Servidor` (sem entidade Motorista).
 - `ConfiguracaoSistema`: **singleton** institucional (endereco, orgao, chefia, prazo de justificativa, cidade sede padrao, numeracao auxiliar de PT quando aplicavel); usada para documentos futuros.
 - `AssinaturaConfiguracao`: assinante preferencial por **tipo de documento** (oficio, justificativa, plano de trabalho, ordem de servico, termo), apontando para `Servidor` (ordem 1 por tipo); nao e assinatura digital, apenas configuracao.
 
 ## Regras obrigatorias
 
-- Nao existe cadastro de `Motorista`.
+- Nao existe cadastro de `Motorista`; motoristas de viatura sao apenas `Servidor` selecionados no relacionamento da viatura.
 - `Servidor` nao possui matricula.
 - `Viatura` nao possui marca nem unidade.
 - Cadastros nao possuem ativo/inativo.

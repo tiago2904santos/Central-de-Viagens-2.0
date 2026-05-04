@@ -8,7 +8,7 @@
     <div class="form-section">
       <div class="form-grid">
         {% include "components/forms/form_field.html" with field=form.nome only %}
-        {% include "components/forms/form_field.html" with field=form.is_padrao only %}
+        {% include "components/forms/toggle_field.html" with field=form.is_padrao only %}
       </div>
     </div>
     {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}

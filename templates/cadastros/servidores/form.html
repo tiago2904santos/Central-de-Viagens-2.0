@@ -2,18 +2,20 @@
 {% block title %}{{ page_title }}{% endblock %}
 {% block content %}
   {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Cadastros" only %}
-  <form class="form-shell" method="post" novalidate>
+  <form class="form-shell" method="post" novalidate data-servidor-sem-rg-form>
     {% csrf_token %}
     {% include "components/forms/form_section.html" with title="Dados do servidor" description="Nome, cargo e CPF obrigatórios. RG opcional ou marcação de ausência. Telefone opcional." only %}
     <div class="form-section">
       <div class="form-grid">
         {% include "components/forms/form_field.html" with field=form.nome only %}
-        {% include "components/forms/form_field.html" with field=form.cargo only %}
+        {% include "components/forms/input_with_action.html" with field=form.cargo action_url=cargos_manage_url action_label="Gerenciar cargos" only %}
         {% include "components/forms/form_field.html" with field=form.cpf only %}
-        {% include "components/forms/form_field.html" with field=form.sem_rg only %}
-        {% include "components/forms/form_field.html" with field=form.rg only %}
+        {% include "components/forms/toggle_field.html" with field=form.sem_rg only %}
+        <div class="field-span-12 field-rg-wrap" data-rg-field-wrap>
+          {% include "components/forms/form_field.html" with field=form.rg only %}
+        </div>
         {% include "components/forms/form_field.html" with field=form.telefone only %}
-        {% include "components/forms/form_field.html" with field=form.unidade only %}
+        {% include "components/forms/input_with_action.html" with field=form.unidade action_url=unidades_manage_url action_label="Gerenciar unidades" only %}
       </div>
     </div>
     {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}

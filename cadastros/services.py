@@ -1,8 +1,28 @@
-﻿from django.db.models import ProtectedError
+﻿from django.db import transaction
+from django.db.models import ProtectedError
+
+from .models import Cargo
+from .models import Combustivel
 
 
 class CadastroVinculadoError(Exception):
     pass
+
+
+@transaction.atomic
+def definir_cargo_padrao(cargo: Cargo) -> Cargo:
+    """Marca o cargo como padrão; o `save()` do modelo garante um único padrão."""
+    cargo.is_padrao = True
+    cargo.save()
+    return cargo
+
+
+@transaction.atomic
+def definir_combustivel_padrao(combustivel: Combustivel) -> Combustivel:
+    """Marca o combustível como padrão; o `save()` do modelo garante um único padrão."""
+    combustivel.is_padrao = True
+    combustivel.save()
+    return combustivel
 
 
 def criar_estado(form):

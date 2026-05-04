@@ -1,0 +1,10 @@
+<div class="field form-field-with-action">
+  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+  <div class="form-field-with-action__row">
+    <div class="form-field-with-action__control">
+      {{ field.as_widget }}
+    </div>
+    <a class="btn btn-secondary btn-sm form-field-with-action__button" href="{{ action_url }}">{{ action_label }}</a>
+  </div>
+  {% if field.errors %}<p class="field-error">{{ field.errors|striptags }}</p>{% endif %}
+</div>

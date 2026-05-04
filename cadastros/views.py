@@ -57,6 +57,8 @@ from .services import excluir_estado
 from .services import excluir_combustivel
 from .services import excluir_servidor
 from .services import excluir_unidade
+from .services import definir_cargo_padrao
+from .services import definir_combustivel_padrao
 from .services import excluir_viatura
 
 
@@ -383,6 +385,9 @@ def cargos_index(request):
             cargo,
             edit_url=reverse("cadastros:cargo_update", args=[cargo.pk]),
             delete_url=reverse("cadastros:cargo_delete", args=[cargo.pk]),
+            set_default_url=(
+                reverse("cadastros:cargo_set_default", args=[cargo.pk]) if not cargo.is_padrao else None
+            ),
         )
         for cargo in cargos
     ]
@@ -437,6 +442,15 @@ def cargo_update(request, pk):
     )
 
 
+def cargo_set_default(request, pk):
+    if request.method != "POST":
+        return redirect("cadastros:cargos_index")
+    cargo = get_cargo_by_id(pk)
+    definir_cargo_padrao(cargo)
+    messages.success(request, "Cargo definido como padrão com sucesso.")
+    return redirect("cadastros:cargos_index")
+
+
 def cargo_delete(request, pk):
     cargo = get_cargo_by_id(pk)
     if request.method == "POST":
@@ -467,6 +481,11 @@ def combustiveis_index(request):
             combustivel,
             edit_url=reverse("cadastros:combustivel_update", args=[combustivel.pk]),
             delete_url=reverse("cadastros:combustivel_delete", args=[combustivel.pk]),
+            set_default_url=(
+                reverse("cadastros:combustivel_set_default", args=[combustivel.pk])
+                if not combustivel.is_padrao
+                else None
+            ),
         )
         for combustivel in combustiveis
     ]
@@ -519,6 +538,15 @@ def combustivel_update(request, pk):
             "back_url": reverse("cadastros:combustiveis_index"),
         },
     )
+
+
+def combustivel_set_default(request, pk):
+    if request.method != "POST":
+        return redirect("cadastros:combustiveis_index")
+    combustivel = get_combustivel_by_id(pk)
+    definir_combustivel_padrao(combustivel)
+    messages.success(request, "Combustível definido como padrão com sucesso.")
+    return redirect("cadastros:combustiveis_index")
 
 
 def combustivel_delete(request, pk):
@@ -581,6 +609,8 @@ def servidor_create(request):
             "form": form,
             "submit_label": "Criar servidor",
             "back_url": reverse("cadastros:servidores_index"),
+            "cargos_manage_url": reverse("cadastros:cargos_index"),
+            "unidades_manage_url": reverse("cadastros:unidades_index"),
         },
     )
 
@@ -601,6 +631,8 @@ def servidor_update(request, pk):
             "form": form,
             "submit_label": "Salvar servidor",
             "back_url": reverse("cadastros:servidores_index"),
+            "cargos_manage_url": reverse("cadastros:cargos_index"),
+            "unidades_manage_url": reverse("cadastros:unidades_index"),
         },
     )
 
@@ -665,6 +697,7 @@ def viatura_create(request):
             "form": form,
             "submit_label": "Criar viatura",
             "back_url": reverse("cadastros:viaturas_index"),
+            "combustiveis_manage_url": reverse("cadastros:combustiveis_index"),
         },
     )
 
@@ -685,6 +718,7 @@ def viatura_update(request, pk):
             "form": form,
             "submit_label": "Salvar viatura",
             "back_url": reverse("cadastros:viaturas_index"),
+            "combustiveis_manage_url": reverse("cadastros:combustiveis_index"),
         },
     )
 

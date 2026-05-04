@@ -235,6 +235,12 @@ class Viatura(TimeStampedModel):
         related_name="viaturas",
     )
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, blank=True, default="")
+    motoristas = models.ManyToManyField(
+        Servidor,
+        blank=True,
+        related_name="viaturas_que_dirige",
+        verbose_name="Motoristas",
+    )
 
     class Meta:
         ordering = ["placa"]

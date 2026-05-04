@@ -86,12 +86,20 @@ class CidadeForm(BaseCadastroForm):
         return self.cleaned_data["nome"].strip()
 
 
+_TOGGLE_WIDGET = forms.CheckboxInput(
+    attrs={
+        "class": "app-toggle__input sr-only",
+        "role": "switch",
+    },
+)
+
+
 class CargoForm(BaseCadastroForm):
     class Meta:
         model = Cargo
         fields = ["nome", "is_padrao"]
         widgets = {
-            "is_padrao": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "is_padrao": _TOGGLE_WIDGET,
         }
 
     def __init__(self, *args, **kwargs):
@@ -116,7 +124,7 @@ class CombustivelForm(BaseCadastroForm):
         model = Combustivel
         fields = ["nome", "is_padrao"]
         widgets = {
-            "is_padrao": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "is_padrao": _TOGGLE_WIDGET,
         }
 
     def __init__(self, *args, **kwargs):
@@ -181,7 +189,7 @@ class ServidorForm(BaseCadastroForm):
     sem_rg = forms.BooleanField(
         label="Não possui RG",
         required=False,
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        widget=_TOGGLE_WIDGET,
     )
 
     class Meta:
@@ -272,7 +280,7 @@ class ServidorForm(BaseCadastroForm):
 class ViaturaForm(BaseCadastroForm):
     class Meta:
         model = Viatura
-        fields = ["placa", "modelo", "combustivel", "tipo"]
+        fields = ["placa", "modelo", "combustivel", "tipo", "motoristas"]
         widgets = {
             "placa": forms.TextInput(
                 attrs={
@@ -283,6 +291,13 @@ class ViaturaForm(BaseCadastroForm):
                 },
             ),
             "tipo": forms.Select(attrs={"class": "form-select"}),
+            "motoristas": forms.SelectMultiple(
+                attrs={
+                    "class": "form-select",
+                    "size": "6",
+                    "aria-label": "Motoristas",
+                },
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -292,6 +307,9 @@ class ViaturaForm(BaseCadastroForm):
         self.fields["combustivel"].widget.attrs["class"] = "form-select"
         self.fields["combustivel"].queryset = Combustivel.objects.order_by("nome")
         self.fields["tipo"].required = True
+        self.fields["motoristas"].required = False
+        self.fields["motoristas"].queryset = Servidor.objects.order_by("nome")
+        self.fields["motoristas"].label = "Motoristas"
         if not self.instance.pk and not self.data:
             padrao = Combustivel.objects.filter(is_padrao=True).first()
             if padrao:

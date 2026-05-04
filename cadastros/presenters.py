@@ -95,41 +95,63 @@ def apresentar_servidor_card(servidor, edit_url="#", delete_url="#"):
     }
 
 
+def _motoristas_label(viatura):
+    lista = list(viatura.motoristas.all())
+    if not lista:
+        return "Nenhum motorista vinculado"
+    return ", ".join(s.nome for s in lista)
+
+
 def apresentar_viatura_card(viatura, edit_url="#", delete_url="#"):
+    placa_fmt = _format_placa(viatura.placa)
+    modelo = (viatura.modelo or "").strip()
+    title = f"{modelo} — {placa_fmt}" if modelo else placa_fmt
+    subt = viatura.get_tipo_display() if viatura.tipo else "Tipo não informado"
     return {
-        "title": _format_placa(viatura.placa),
-        "subtitle": viatura.modelo or "Modelo não informado",
+        "title": title,
+        "subtitle": subt,
         "meta": [
             {"label": "Combustível", "value": viatura.combustivel.nome if viatura.combustivel else "-"},
             {"label": "Tipo", "value": viatura.get_tipo_display() if viatura.tipo else "-"},
+            {"label": "Motoristas", "value": _motoristas_label(viatura)},
             {"label": "Atualizado em", "value": viatura.updated_at.strftime("%d/%m/%Y")},
         ],
         "actions": _actions(edit_url, delete_url),
     }
 
 
-def apresentar_linha_lista_simples_cargo(cargo, edit_url="#", delete_url="#"):
-    return {
+def apresentar_linha_lista_simples_cargo(cargo, edit_url="#", delete_url="#", set_default_url=None):
+    row = {
         "title": cargo.nome,
+        "badges": [],
         "meta": [
-            {"label": "Padrão", "value": "Sim" if getattr(cargo, "is_padrao", False) else "Não"},
             {"label": "Atualizado em", "value": cargo.updated_at.strftime("%d/%m/%Y")},
         ],
         "edit_url": edit_url,
         "delete_url": delete_url,
+        "set_default_url": set_default_url,
     }
+    if getattr(cargo, "is_padrao", False):
+        row["badges"].append({"text": "Padrão", "variant": "accent"})
+        row["set_default_url"] = None
+    return row
 
 
-def apresentar_linha_lista_simples_combustivel(combustivel, edit_url="#", delete_url="#"):
-    return {
+def apresentar_linha_lista_simples_combustivel(combustivel, edit_url="#", delete_url="#", set_default_url=None):
+    row = {
         "title": combustivel.nome,
+        "badges": [],
         "meta": [
-            {"label": "Padrão", "value": "Sim" if getattr(combustivel, "is_padrao", False) else "Não"},
             {"label": "Atualizado em", "value": combustivel.updated_at.strftime("%d/%m/%Y")},
         ],
         "edit_url": edit_url,
         "delete_url": delete_url,
+        "set_default_url": set_default_url,
     }
+    if getattr(combustivel, "is_padrao", False):
+        row["badges"].append({"text": "Padrão", "variant": "accent"})
+        row["set_default_url"] = None
+    return row
 
 
 def apresentar_linha_lista_simples_unidade(unidade, edit_url="#", delete_url="#"):
@@ -183,6 +205,7 @@ def apresentar_linha_lista_simples_servidor(servidor, edit_url="#", delete_url="
         "meta": [
             {"label": "Cargo", "value": cargo_label},
             {"label": "CPF", "value": _format_cpf(servidor.cpf)},
+            {"label": "RG", "value": _format_rg(servidor.rg, sem_rg=servidor.sem_rg)},
             {"label": "Telefone", "value": _format_telefone(servidor.telefone)},
             {"label": "Unidade", "value": unidade_label},
             {"label": "Atualizado em", "value": servidor.updated_at.strftime("%d/%m/%Y")},
@@ -193,12 +216,16 @@ def apresentar_linha_lista_simples_servidor(servidor, edit_url="#", delete_url="
 
 
 def apresentar_linha_lista_simples_viatura(viatura, edit_url="#", delete_url="#"):
+    placa_fmt = _format_placa(viatura.placa)
+    modelo = (viatura.modelo or "").strip()
+    title = f"{modelo} — {placa_fmt}" if modelo else placa_fmt
     return {
-        "title": _format_placa(viatura.placa),
+        "title": title,
         "meta": [
-            {"label": "Modelo", "value": viatura.modelo or "—"},
+            {"label": "Placa", "value": placa_fmt},
             {"label": "Combustível", "value": viatura.combustivel.nome if viatura.combustivel else "—"},
             {"label": "Tipo", "value": viatura.get_tipo_display() if viatura.tipo else "—"},
+            {"label": "Motoristas", "value": _motoristas_label(viatura)},
             {"label": "Atualizado em", "value": viatura.updated_at.strftime("%d/%m/%Y")},
         ],
         "edit_url": edit_url,

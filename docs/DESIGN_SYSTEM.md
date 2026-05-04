@@ -35,9 +35,14 @@ Mascaras padrao:
 
 - CPF: `000.000.000-00`
 - RG: `00.000.000-0`
+- Telefone: `(00) 0000-0000` ou `(00) 00000-0000`
 - Placa: `AAA-1234` ou `AAA1A23`
 
 A normalizacao final ocorre no backend (forms/models).
+
+## Toggle (checkbox)
+
+Booleanos em formularios devem usar o padrao **toggle** (`app-toggle` em `static/css/forms.css`, componente `toggle_field.html`), inspirado funcionalmente no **Data unica** do legacy (checkbox oculto + rotulo clicavel + estado ON/OFF evidente). Estados de foco usam azul institucional e acento amarelo no indicador quando ligado. JS de sincronismo em `static/js/components/toggles.js` (sem JS inline).
 
 ## Cadastros como referencia
 

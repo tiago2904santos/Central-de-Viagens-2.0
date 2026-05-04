@@ -141,10 +141,48 @@
 }
 
 .simple-list__title {
+  align-items: center;
   color: var(--color-heading);
+  display: flex;
+  flex-wrap: wrap;
   font-size: var(--font-size-md);
   font-weight: 700;
+  gap: var(--space-2);
   line-height: 1.3;
+}
+
+.simple-list__badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.simple-list__badge {
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  text-transform: uppercase;
+}
+
+.simple-list__badge--accent {
+  background: var(--color-accent-soft);
+  border: 1px solid rgba(216, 162, 27, 0.35);
+  color: var(--color-accent-hover);
+}
+
+.simple-list__title-text {
+  min-width: 0;
+}
+
+.simple-list__inline-form {
+  display: inline;
+  margin: 0;
+}
+
+.simple-list__inline-form button {
+  margin: 0;
 }
 
 .simple-list__meta {

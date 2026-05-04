@@ -64,7 +64,16 @@ Mascaras globais sao ativadas por atributo:
 
 - `data-mask="cpf"`
 - `data-mask="rg"`
+- `data-mask="telefone"`
 - `data-mask="placa"`
+
+### Toggle (`toggle_field.html`)
+
+Checkboxes booleanos devem preferir `templates/components/forms/toggle_field.html` com widget `CheckboxInput` usando classes `app-toggle__input` + `sr-only`. Inspiracao conceitual: botao **Data unica** do Plano de Trabalho no legacy.
+
+### Campo com acao (`input_with_action.html`)
+
+Para select ao lado de link **Gerenciar** (ex.: Cargo, Unidade, Combustivel em cadastros), usar `templates/components/forms/input_with_action.html` com classes `form-field-with-action` em `static/css/forms.css`.
 
 ## Cards
 
