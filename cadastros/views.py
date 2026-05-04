@@ -19,10 +19,11 @@ from .selectors import listar_unidades
 from .selectors import listar_viaturas
 from .services import atualizar_cidade
 from .services import atualizar_unidade
+from .services import CadastroVinculadoError
 from .services import criar_cidade
 from .services import criar_unidade
-from .services import desativar_cidade
-from .services import desativar_unidade
+from .services import excluir_cidade
+from .services import excluir_unidade
 
 
 def _render_listagem(request, template_name, context):
@@ -136,16 +137,23 @@ def unidade_update(request, pk):
 def unidade_delete(request, pk):
     unidade = get_unidade_by_id(pk)
     if request.method == "POST":
-        desativar_unidade(unidade)
-        messages.success(request, "Unidade desativada com sucesso.")
+        try:
+            excluir_unidade(unidade)
+        except CadastroVinculadoError:
+            messages.error(
+                request,
+                "Não foi possível excluir este cadastro porque ele está vinculado a outros registros.",
+            )
+            return redirect("cadastros:unidades_index")
+        messages.success(request, "Unidade excluída com sucesso.")
         return redirect("cadastros:unidades_index")
     return render(
         request,
         "cadastros/unidades/confirm_delete.html",
         {
-            "page_title": "Desativar unidade",
+            "page_title": "Excluir unidade",
             "page_section": "Cadastros",
-            "page_description": "Esta acao marca a unidade como inativa, sem exclusao fisica.",
+            "page_description": "Esta acao exclui o cadastro quando nao houver vinculos impeditivos.",
             "object": unidade,
             "back_url": reverse("cadastros:unidades_index"),
         },
@@ -220,16 +228,23 @@ def cidade_update(request, pk):
 def cidade_delete(request, pk):
     cidade = get_cidade_by_id(pk)
     if request.method == "POST":
-        desativar_cidade(cidade)
-        messages.success(request, "Cidade desativada com sucesso.")
+        try:
+            excluir_cidade(cidade)
+        except CadastroVinculadoError:
+            messages.error(
+                request,
+                "Não foi possível excluir este cadastro porque ele está vinculado a outros registros.",
+            )
+            return redirect("cadastros:cidades_index")
+        messages.success(request, "Cidade excluída com sucesso.")
         return redirect("cadastros:cidades_index")
     return render(
         request,
         "cadastros/cidades/confirm_delete.html",
         {
-            "page_title": "Desativar cidade",
+            "page_title": "Excluir cidade",
             "page_section": "Cadastros",
-            "page_description": "Esta acao marca a cidade como inativa, sem exclusao fisica.",
+            "page_description": "Esta acao exclui o cadastro quando nao houver vinculos impeditivos.",
             "object": cidade,
             "back_url": reverse("cadastros:cidades_index"),
         },

@@ -46,4 +46,4 @@ Apps com listagens reais devem separar consulta e apresentacao. Em `cadastros`, 
 
 ## Padrao CRUD inicial
 
-O primeiro CRUD real foi implementado em `cadastros` para `Unidade` e `Cidade`. Views usam forms para validacao, selectors para busca de objetos, services para gravacao/desativacao e messages para feedback. Exclusoes em cadastros sao logicas nesta etapa, marcando `ativa=False`.
+O primeiro CRUD real foi implementado em `cadastros` para `Unidade` e `Cidade`. Views usam forms para validacao, selectors para busca de objetos, services para gravacao/exclusao e messages para feedback. Cadastros nao usam estado ativo/inativo: exclusoes sao fisicas quando nao houver vinculos impeditivos e devem ser bloqueadas quando houver relacoes importantes.

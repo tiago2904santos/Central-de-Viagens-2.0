@@ -13,7 +13,6 @@ class TimeStampedModel(models.Model):
 class Unidade(TimeStampedModel):
     nome = models.CharField(max_length=255)
     sigla = models.CharField(max_length=50, blank=True)
-    ativa = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["nome"]
@@ -27,7 +26,6 @@ class Unidade(TimeStampedModel):
 class Cidade(TimeStampedModel):
     nome = models.CharField(max_length=255)
     uf = models.CharField(max_length=2, default="PR")
-    ativa = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["uf", "nome"]
@@ -45,12 +43,11 @@ class Servidor(TimeStampedModel):
     cpf = models.CharField(max_length=14, blank=True)
     unidade = models.ForeignKey(
         Unidade,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="servidores",
     )
-    ativo = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["nome"]
@@ -69,7 +66,6 @@ class Motorista(TimeStampedModel):
     )
     cnh = models.CharField(max_length=50, blank=True)
     categoria_cnh = models.CharField(max_length=10, blank=True)
-    ativo = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["servidor__nome"]
@@ -88,12 +84,11 @@ class Viatura(TimeStampedModel):
     combustivel = models.CharField(max_length=120, blank=True)
     unidade = models.ForeignKey(
         Unidade,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="viaturas",
     )
-    ativa = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["placa"]

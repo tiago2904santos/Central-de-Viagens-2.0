@@ -9,9 +9,9 @@
     <section class="form-section">
       <header class="form-section-header">
         <h3>{{ object.nome }}/{{ object.uf }}</h3>
-        <p>Esta acao ira desativar o cadastro. O registro permanecera no banco para historico e vinculos futuros.</p>
+        <p>Esta acao ira excluir o cadastro. Se houver vinculos importantes, a exclusao sera bloqueada e o registro permanecera no banco.</p>
       </header>
-      {% include "components/forms/form_actions.html" with primary_label="Desativar cidade" secondary_label="Cancelar" secondary_url=back_url only %}
+      {% include "components/forms/form_actions.html" with primary_label="Excluir cidade" secondary_label="Cancelar" secondary_url=back_url only %}
     </section>
   </form>
 {% endblock %}

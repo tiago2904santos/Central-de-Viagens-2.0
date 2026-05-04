@@ -2,7 +2,9 @@
   <header class="document-card-header">
     <div>
       {% if card %}
-        <span class="status-chip {{ card.status_class|default:'status-chip--muted' }}">{{ card.status|default:"Rascunho" }}</span>
+        {% if card.status %}
+          <span class="status-chip {{ card.status_class|default:'status-chip--muted' }}">{{ card.status }}</span>
+        {% endif %}
         <h3>{{ card.title|default:"Documento" }}</h3>
       {% else %}
         <span class="status-chip {{ status_class|default:'status-chip--draft' }}">{{ status|default:"Rascunho" }}</span>

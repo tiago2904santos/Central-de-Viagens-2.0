@@ -11,7 +11,6 @@
       <div class="form-grid">
         {% include "components/forms/form_field.html" with field=form.nome only %}
         {% include "components/forms/form_field.html" with field=form.sigla only %}
-        {% include "components/forms/form_field.html" with field=form.ativa only %}
       </div>
     </div>
     {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}

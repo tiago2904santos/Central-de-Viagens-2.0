@@ -8,7 +8,7 @@ Este padrao foi definido inicialmente no CRUD de `Unidade` e `Cidade` do app `ca
 
 - `forms.py`: valida entrada e normaliza dados.
 - `selectors.py`: concentra consultas e `get_object_or_404`.
-- `services.py`: concentra criacao, atualizacao e desativacao.
+- `services.py`: concentra criacao, atualizacao e exclusao.
 - `presenters.py`: transforma objetos em dicionarios para cards.
 - `views.py`: orquestra request, form, selector, service, messages e redirect.
 - `urls.py`: define rotas nomeadas e previsiveis.
@@ -16,7 +16,7 @@ Este padrao foi definido inicialmente no CRUD de `Unidade` e `Cidade` do app `ca
 
 ## URLs
 
-Padrao para listagem, criacao, edicao e desativacao:
+Padrao para listagem, criacao, edicao e exclusao:
 
 ```text
 /cadastros/unidades/
@@ -37,9 +37,15 @@ Views nao devem chamar `save()` ou alterar status diretamente quando houver serv
 
 Views devem chamar selectors para consultas. Busca simples por `q` deve ficar no selector, nao no template.
 
-## Delete logico
+## Exclusao
 
-Cadastros com campo `ativa` ou `ativo` devem usar desativacao logica. A confirmacao deve deixar claro que nao ha exclusao fisica.
+Cadastros nao possuem estado ativo/inativo. A exclusao deve remover fisicamente o registro quando nao houver vinculos importantes. Se houver vinculos impeditivos, a exclusao deve ser bloqueada e a view deve exibir a mensagem:
+
+```text
+Não foi possível excluir este cadastro porque ele está vinculado a outros registros.
+```
+
+Nao criar `desativar_*`, `ativar_*`, checkbox Ativo/Ativa ou status Ativo/Inativo para cadastros.
 
 ## Messages
 
@@ -47,7 +53,7 @@ Mensagens usam `django.contrib.messages`:
 
 - Criacao: `... criada com sucesso.`
 - Atualizacao: `... atualizada com sucesso.`
-- Desativacao: `... desativada com sucesso.`
+- Exclusao: `... excluida com sucesso.`
 
 ## Templates
 
@@ -62,4 +68,4 @@ Para cada entidade CRUD:
 - POST criacao valida cria e redireciona.
 - GET edicao retorna 200.
 - POST edicao altera e redireciona.
-- POST desativacao marca status inativo.
+- POST exclusao remove o registro ou bloqueia quando houver vinculo importante.

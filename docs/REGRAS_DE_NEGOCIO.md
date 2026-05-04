@@ -15,7 +15,7 @@ Este documento registra apenas as regras conceituais da base inicial. A migracao
 
 O app `cadastros` e a base de dados comum do sistema. Seus registros devem ser reutilizados por Oficios, Roteiros, Planos de Trabalho, Ordens de Servico, Prestacoes de Contas e Diario de Bordo.
 
-- `Unidade`: representa uma unidade administrativa. Possui nome, sigla e status ativo/inativo.
+- `Unidade`: representa uma unidade administrativa. Possui nome e sigla.
 - `Cidade`: representa uma cidade de referencia para destinos e documentos. Usa `PR` como UF padrao nesta base inicial.
 - `Servidor`: representa uma pessoa vinculada a documentos de viagem. Possui nome, matricula, cargo, CPF textual e unidade opcional.
 - `Motorista`: representa um servidor habilitado para conduzir veiculos. Aponta para `Servidor` e guarda CNH e categoria.
@@ -23,4 +23,4 @@ O app `cadastros` e a base de dados comum do sistema. Seus registros devem ser r
 
 Os models desta etapa sao uma base inicial e podem evoluir em etapas futuras. Views devem consultar dados por selectors, formatar exibicao por presenters e renderizar templates com components. CSS e JS por pagina continuam proibidos.
 
-O CRUD inicial de `Unidade` e `Cidade` usa exclusao logica. Ao desativar um registro, ele permanece no banco com `ativa=False`, preservando historico para vinculos futuros. Esse padrao deve orientar os proximos CRUDs de `Servidor`, `Motorista` e `Viatura`.
+Cadastros nao possuem estado ativo/inativo. O cadastro existe enquanto nao for excluido. A exclusao e fisica quando nao houver vinculos impeditivos. Se houver vinculos importantes, a exclusao deve ser bloqueada com mensagem clara. Nao usar desativacao logica, campos `ativo`/`ativa`, checkbox Ativo/Ativa ou status Ativo/Inativo em cadastros.

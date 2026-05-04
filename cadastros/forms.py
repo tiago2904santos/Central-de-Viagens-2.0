@@ -5,21 +5,16 @@ from .models import Unidade
 
 
 class BaseCadastroForm(forms.ModelForm):
-    checkbox_fields = {"ativa", "ativo"}
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
-            if name in self.checkbox_fields:
-                field.widget.attrs.setdefault("class", "form-check-input")
-            else:
-                field.widget.attrs.setdefault("class", "form-control")
+        for _name, field in self.fields.items():
+            field.widget.attrs.setdefault("class", "form-control")
 
 
 class UnidadeForm(BaseCadastroForm):
     class Meta:
         model = Unidade
-        fields = ["nome", "sigla", "ativa"]
+        fields = ["nome", "sigla"]
 
     def clean_nome(self):
         return self.cleaned_data["nome"].strip()
@@ -31,7 +26,7 @@ class UnidadeForm(BaseCadastroForm):
 class CidadeForm(BaseCadastroForm):
     class Meta:
         model = Cidade
-        fields = ["nome", "uf", "ativa"]
+        fields = ["nome", "uf"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

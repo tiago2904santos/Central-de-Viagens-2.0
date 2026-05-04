@@ -1,3 +1,10 @@
+from django.db.models import ProtectedError
+
+
+class CadastroVinculadoError(Exception):
+    pass
+
+
 def criar_unidade(form):
     return form.save()
 
@@ -6,10 +13,11 @@ def atualizar_unidade(instance, form):
     return form.save()
 
 
-def desativar_unidade(instance):
-    instance.ativa = False
-    instance.save(update_fields=["ativa", "updated_at"])
-    return instance
+def excluir_unidade(instance):
+    try:
+        instance.delete()
+    except ProtectedError as exc:
+        raise CadastroVinculadoError from exc
 
 
 def criar_cidade(form):
@@ -20,7 +28,8 @@ def atualizar_cidade(instance, form):
     return form.save()
 
 
-def desativar_cidade(instance):
-    instance.ativa = False
-    instance.save(update_fields=["ativa", "updated_at"])
-    return instance
+def excluir_cidade(instance):
+    try:
+        instance.delete()
+    except ProtectedError as exc:
+        raise CadastroVinculadoError from exc
