@@ -36,6 +36,9 @@ class Cidade(TimeStampedModel):
         ordering = ["uf", "nome"]
         verbose_name = "Cidade"
         verbose_name_plural = "Cidades"
+        constraints = [
+            models.UniqueConstraint(fields=["nome", "uf"], name="unique_cidade_nome_uf"),
+        ]
 
     def __str__(self):
         return f"{self.nome}/{self.uf}"

@@ -7,7 +7,7 @@ O app `cadastros` centraliza dados-base reutilizados por documentos e fluxos fut
 Entidades ativas do modulo:
 
 - `Unidade`: nome e sigla.
-- `Cidade`: nome e UF.
+- `Cidade`: nome e UF; combinação nome + UF é única; nome e UF normalizados em maiúsculas (UF com 2 caracteres). Cidades podem ser carregadas em lote via CSV (`python manage.py importar_cidades`), conforme `docs/IMPORTACAO_CIDADES.md`.
 - `Cargo`: nome unico e em maiusculo.
 - `Combustivel`: nome unico e em maiusculo.
 - `Servidor`: nome unico e em maiusculo, cargo, CPF, RG opcional e unidade opcional.

@@ -15,6 +15,12 @@ htmlcov/
 .vscode/
 legacy/
 legacy/
+
+# CSVs grandes de geografia (manter localmente; exemplo versionado em dados/exemplos/)
+dados/municipio_code.csv
+dados/municipios.csv
+dados/estados.csv
+
 .env
 .venv/
 __pycache__/
