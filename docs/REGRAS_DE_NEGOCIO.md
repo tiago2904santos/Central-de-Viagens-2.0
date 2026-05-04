@@ -37,7 +37,7 @@ Não foi possível excluir este cadastro porque ele está vinculado a outros reg
 
 ## Roteiros
 
-`Roteiro` e uma entidade reutilizavel e avulsa. Ele pode existir sozinho e nao depende de Evento, Oficio, Plano de Trabalho, Ordem de Servico ou Evento.
+`Roteiro` e uma entidade reutilizavel e avulsa. Ele pode existir sozinho e nao depende de Evento, Oficio, Plano de Trabalho nem Ordem de Servico.
 
 Regras da base:
 

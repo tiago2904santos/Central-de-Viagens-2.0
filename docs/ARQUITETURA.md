@@ -41,6 +41,8 @@ Origem e destino de `Roteiro` e `TrechoRoteiro` apontam para `cadastros.Cidade`;
 
 O app segue a arquitetura ja validada em `cadastros`: views chamam selectors, presenters formatam dados para listagem, templates usam components globais e consultas nao ficam no template.
 
+Nesta etapa existem apenas listagem em `/roteiros/` (busca por texto) e cadastro via admin; nao ha CRUD completo na interface publica, nem calculo de distancia, tempo ou diarias.
+
 ## Padrao tecnico
 
 Views orquestram `forms + selectors + services + presenters + messages`.

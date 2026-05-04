@@ -5,6 +5,12 @@ from cadastros.models import TimeStampedModel
 
 
 class Roteiro(TimeStampedModel):
+    """
+    Roteiro avulso e reutilizável. Não depende de Evento, Ofício ou outros documentos.
+
+    Origem e destino usam a base interna de municípios (`cadastros.Cidade`).
+    """
+
     nome = models.CharField(max_length=255)
     descricao = models.TextField(blank=True)
     origem = models.ForeignKey(
@@ -31,6 +37,11 @@ class Roteiro(TimeStampedModel):
 
 
 class TrechoRoteiro(TimeStampedModel):
+    """
+    Trecho de deslocamento vinculado a um `Roteiro` (cascade na exclusão do roteiro).
+    Sem distância, tempo ou diária nesta etapa.
+    """
+
     roteiro = models.ForeignKey(Roteiro, on_delete=models.CASCADE, related_name="trechos")
     ordem = models.PositiveIntegerField(default=1)
     origem = models.ForeignKey(
