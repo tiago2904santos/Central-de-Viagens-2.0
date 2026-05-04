@@ -22,6 +22,11 @@ class Unidade(TimeStampedModel):
     def __str__(self):
         return self.sigla or self.nome
 
+    def save(self, *args, **kwargs):
+        self.nome = " ".join((self.nome or "").strip().split()).upper()
+        self.sigla = " ".join((self.sigla or "").strip().split()).upper()
+        super().save(*args, **kwargs)
+
 
 class Cidade(TimeStampedModel):
     nome = models.CharField(max_length=255)
@@ -34,6 +39,11 @@ class Cidade(TimeStampedModel):
 
     def __str__(self):
         return f"{self.nome}/{self.uf}"
+
+    def save(self, *args, **kwargs):
+        self.nome = " ".join((self.nome or "").strip().split()).upper()
+        self.uf = (self.uf or "").strip().upper()
+        super().save(*args, **kwargs)
 
 
 class Cargo(TimeStampedModel):
@@ -128,6 +138,8 @@ class Viatura(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.placa = "".join(c for c in (self.placa or "").upper() if c.isalnum())
+        self.modelo = " ".join((self.modelo or "").strip().split()).upper()
+        self.tipo = (self.tipo or "").strip().upper()
         super().save(*args, **kwargs)
 
     def __str__(self):

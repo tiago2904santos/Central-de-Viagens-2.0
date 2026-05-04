@@ -31,8 +31,6 @@ def _format_rg_display(value):
 
 def _format_placa_display(value):
     raw = "".join(c for c in (value or "").upper() if c.isalnum())
-    if len(raw) == 7 and raw[3:].isdigit():
-        return f"{raw[:3]}-{raw[3:]}"
     return raw
 
 
@@ -40,7 +38,12 @@ class BaseCadastroForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for _name, field in self.fields.items():
-            field.widget.attrs.setdefault("class", "form-control")
+            attrs = getattr(field.widget, "attrs", None)
+            if attrs is None:
+                continue
+            attrs.setdefault("class", "form-control")
+            if isinstance(field, forms.CharField):
+                attrs.setdefault("data-mask", "upper")
 
 
 class UnidadeForm(BaseCadastroForm):
@@ -193,7 +196,7 @@ class ViaturaForm(BaseCadastroForm):
         widgets = {
             "placa": forms.TextInput(
                 attrs={
-                    "placeholder": "AAA-1234 ou AAA1A23",
+                    "placeholder": "AAA1234 ou AAA1A23",
                     "autocomplete": "off",
                     "data-mask": "placa",
                 }

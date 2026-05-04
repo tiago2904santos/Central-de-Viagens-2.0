@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   function onlyDigits(value) {
     return (value || "").replace(/\D/g, "");
   }
@@ -24,18 +24,16 @@
   }
 
   function maskPlaca(value) {
-    const v = onlyAlnum(value).slice(0, 7);
-    if (v.length <= 3) return v;
-    const first = v.slice(0, 3);
-    const rest = v.slice(3);
-    if (/^\d*$/.test(rest)) {
-      return `${first}-${rest}`;
-    }
-    return first + rest;
+    return onlyAlnum(value).slice(0, 7);
+  }
+
+  function maskUpper(value) {
+    return (value || "").toUpperCase();
   }
 
   function applyMask(input) {
     const mask = input.dataset.mask;
+    if (mask === "upper") input.value = maskUpper(input.value);
     if (mask === "cpf") input.value = maskCpf(input.value);
     if (mask === "rg") input.value = maskRg(input.value);
     if (mask === "placa") input.value = maskPlaca(input.value);
