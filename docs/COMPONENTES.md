@@ -19,6 +19,24 @@ O app `cadastros` usa `list_page`, `document_card`, `form_field` e `form_actions
 - Objetivo: titulo forte, descricao clara e acao principal alinhada a direita.
 - CSS principal: `static/css/layout.css`.
 
+## Sidebar
+
+- Component: `templates/components/layout/sidebar.html`.
+- Dados: `core/navigation.py`, preparados por `core/context_processors.py`.
+- CSS principal: `static/css/sidebar.css`.
+- JS principal: `static/js/components/sidebar.js`.
+- Suporta ate tres niveis: modulo, subgrupo e item interno.
+- O botao lateral de expansao abre/fecha submenus; o texto do item continua sendo link quando houver URL.
+- O estado aberto considera a pagina atual e tambem persiste grupos abertos em `localStorage`.
+- A estrutura atual de `Cadastros` e:
+  - `Servidores`
+    - `Cargos`
+  - `Viaturas`
+    - `Combustiveis`
+  - `Unidades`
+  - `Cidades`
+- `Motoristas` nao aparece no menu porque nao e cadastro independente.
+
 ## List toolbar
 
 - Component: `templates/components/lists/list_toolbar.html`.

@@ -25,7 +25,7 @@ class UnidadeCrudTests(TestCase):
             {"nome": " Secretaria ", "sigla": " sec "},
         )
         self.assertRedirects(response, reverse("cadastros:unidades_index"))
-        unidade = Unidade.objects.get(nome="Secretaria", sigla="SEC")
+        unidade = Unidade.objects.get(nome="SECRETARIA", sigla="SEC")
         self.assertEqual(unidade.sigla, "SEC")
 
     def test_post_exclusao_unidade_com_vinculo_bloqueia_exclusao(self):
@@ -61,5 +61,5 @@ class CidadeCrudTests(TestCase):
             {"nome": " Curitiba ", "uf": " pr "},
         )
         self.assertRedirects(response, reverse("cadastros:cidades_index"))
-        cidade = Cidade.objects.get(nome="Curitiba", uf="PR")
+        cidade = Cidade.objects.get(nome="CURITIBA", uf="PR")
         self.assertEqual(cidade.uf, "PR")

@@ -42,8 +42,24 @@ As telas de `Unidade`, `Cidade`, `Cargo`, `Combustivel`, `Servidor` e `Viatura` 
 ## Regras para evolucao visual
 
 - Ajustes de header em `templates/components/layout/page_header.html` e `static/css/layout.css`.
+- Ajustes de sidebar em `templates/components/layout/sidebar.html`, `static/css/sidebar.css` e `static/js/components/sidebar.js`.
 - Ajustes de toolbar de lista em `templates/components/lists/list_toolbar.html` e `static/css/lists.css`.
 - Ajustes de formularios em `templates/components/forms/*.html` e `static/css/forms.css`.
 - Ajustes de cards em `templates/components/cards/*.html` e `static/css/cards.css`.
 - Ajustes de feedback em `templates/components/feedback/*.html` e `static/css/utilities.css`.
 - Nunca copiar CSS bruto do legado em bloco; extrair o conceito e reconstruir no sistema atual.
+
+## Sidebar hierarquica
+
+A sidebar suporta itens aninhados e deve ser a unica fonte visual de navegacao lateral. A hierarquia e declarada em `core/navigation.py`, renderizada por `templates/components/layout/sidebar.html`, estilizada em `static/css/sidebar.css` e controlada por JS centralizado em `static/js/components/sidebar.js`.
+
+Em `Cadastros`, a estrutura visual e:
+
+- `Servidores`
+  - `Cargos`
+- `Viaturas`
+  - `Combustiveis`
+- `Unidades`
+- `Cidades`
+
+`Cidades` continua sendo cadastro persistido em banco e pode receber importacao CSV em etapa futura. `Motoristas` nao deve aparecer como cadastro independente. Nao criar cores por submodulo nem CSS/JS em templates para controlar menu.

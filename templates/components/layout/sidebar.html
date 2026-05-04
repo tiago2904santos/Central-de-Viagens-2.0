@@ -7,13 +7,52 @@
   </div>
   <nav class="sidebar-nav">
     {% for item in navigation_items %}
-      {% url item.url_name as nav_url %}
-      <a href="{{ nav_url }}" {% if request.resolver_match.view_name == item.url_name %}aria-current="page"{% endif %}>
-        <span class="sidebar-item-main">
-          {% if item.icon %}<span class="sidebar-item-icon" aria-hidden="true">{{ item.icon }}</span>{% endif %}
-          <span class="sidebar-item-text">{{ item.label }}</span>
-        </span>
-      </a>
+      <div class="sidebar-item{% if item.has_children %} sidebar-item--has-children{% endif %}{% if item.is_open %} is-open{% endif %}" data-sidebar-item="{{ item.id }}">
+        <div class="sidebar-row">
+          <a class="sidebar-link sidebar-link--level-1{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}" {% if item.is_active %}aria-current="page"{% endif %}>
+            <span class="sidebar-item-main">
+              {% if item.icon %}<span class="sidebar-item-icon" aria-hidden="true">{{ item.icon }}</span>{% endif %}
+              <span class="sidebar-item-text">{{ item.label }}</span>
+            </span>
+          </a>
+          {% if item.has_children %}
+            <button class="sidebar-toggle" type="button" aria-label="Alternar submenu de {{ item.label }}" aria-expanded="{% if item.is_open %}true{% else %}false{% endif %}" aria-controls="{{ item.children_id }}">
+              <span aria-hidden="true">▾</span>
+            </button>
+          {% endif %}
+        </div>
+        {% if item.has_children %}
+          <div class="sidebar-children sidebar-children--level-2" id="{{ item.children_id }}">
+            {% for child in item.children %}
+              <div class="sidebar-item{% if child.has_children %} sidebar-item--has-children{% endif %}{% if child.is_open %} is-open{% endif %}" data-sidebar-item="{{ child.id }}">
+                <div class="sidebar-row">
+                  <a class="sidebar-link sidebar-link--level-2{% if child.is_active %} is-active{% endif %}" href="{{ child.url }}" {% if child.is_active %}aria-current="page"{% endif %}>
+                    <span class="sidebar-item-text">{{ child.label }}</span>
+                  </a>
+                  {% if child.has_children %}
+                    <button class="sidebar-toggle sidebar-toggle--nested" type="button" aria-label="Alternar submenu de {{ child.label }}" aria-expanded="{% if child.is_open %}true{% else %}false{% endif %}" aria-controls="{{ child.children_id }}">
+                      <span aria-hidden="true">▾</span>
+                    </button>
+                  {% endif %}
+                </div>
+                {% if child.has_children %}
+                  <div class="sidebar-children sidebar-children--level-3" id="{{ child.children_id }}">
+                    {% for grandchild in child.children %}
+                      <div class="sidebar-item" data-sidebar-item="{{ grandchild.id }}">
+                        <div class="sidebar-row">
+                          <a class="sidebar-link sidebar-link--level-3{% if grandchild.is_active %} is-active{% endif %}" href="{{ grandchild.url }}" {% if grandchild.is_active %}aria-current="page"{% endif %}>
+                            <span class="sidebar-item-text">{{ grandchild.label }}</span>
+                          </a>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
     {% endfor %}
   </nav>
   <div class="sidebar-footer">

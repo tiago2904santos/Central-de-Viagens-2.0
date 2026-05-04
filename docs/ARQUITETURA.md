@@ -34,3 +34,16 @@ Regras estruturais aplicadas:
 
 Views orquestram `forms + selectors + services + presenters + messages`.
 Templates usam apenas components globais. CSS/JS por pagina seguem proibidos.
+
+## Navegacao lateral
+
+A navegacao principal e declarada em `core/navigation.py` e suporta hierarquia. O grupo `Cadastros` organiza:
+
+- `Servidores`
+  - `Cargos`
+- `Viaturas`
+  - `Combustiveis`
+- `Unidades`
+- `Cidades`
+
+O estado ativo/aberto e preparado antes da renderizacao e o comportamento de abrir/fechar fica em JS centralizado. `Motoristas` nao e cadastro independente e nao deve aparecer no menu lateral. `Cidades` permanece como cadastro de banco, com importacao CSV prevista para etapa futura.
