@@ -21,8 +21,8 @@ from .services import atualizar_cidade
 from .services import atualizar_unidade
 from .services import criar_cidade
 from .services import criar_unidade
-from .services import excluir_cidade
-from .services import excluir_unidade
+from .services import desativar_cidade
+from .services import desativar_unidade
 
 
 def _render_listagem(request, template_name, context):
@@ -136,7 +136,7 @@ def unidade_update(request, pk):
 def unidade_delete(request, pk):
     unidade = get_unidade_by_id(pk)
     if request.method == "POST":
-        excluir_unidade(unidade)
+        desativar_unidade(unidade)
         messages.success(request, "Unidade desativada com sucesso.")
         return redirect("cadastros:unidades_index")
     return render(
@@ -220,7 +220,7 @@ def cidade_update(request, pk):
 def cidade_delete(request, pk):
     cidade = get_cidade_by_id(pk)
     if request.method == "POST":
-        excluir_cidade(cidade)
+        desativar_cidade(cidade)
         messages.success(request, "Cidade desativada com sucesso.")
         return redirect("cadastros:cidades_index")
     return render(

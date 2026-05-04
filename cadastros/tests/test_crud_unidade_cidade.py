@@ -22,7 +22,8 @@ class UnidadeCrudTests(TestCase):
             {"nome": " Secretaria ", "sigla": " sec ", "ativa": "on"},
         )
         self.assertRedirects(response, reverse("cadastros:unidades_index"))
-        self.assertTrue(Unidade.objects.filter(nome="Secretaria", sigla="SEC").exists())
+        unidade = Unidade.objects.get(nome="Secretaria", sigla="SEC")
+        self.assertTrue(unidade.ativa)
 
     def test_get_edicao_unidade_retorna_200(self):
         unidade = Unidade.objects.create(nome="Unidade A", sigla="UA")
@@ -39,6 +40,11 @@ class UnidadeCrudTests(TestCase):
         unidade.refresh_from_db()
         self.assertEqual(unidade.nome, "Unidade B")
         self.assertEqual(unidade.sigla, "UB")
+
+    def test_get_confirmacao_exclusao_unidade_retorna_200(self):
+        unidade = Unidade.objects.create(nome="Unidade A", sigla="UA")
+        response = self.client.get(reverse("cadastros:unidade_delete", args=[unidade.pk]))
+        self.assertEqual(response.status_code, 200)
 
     def test_post_exclusao_unidade_desativa_registro(self):
         unidade = Unidade.objects.create(nome="Unidade A", sigla="UA")
@@ -64,7 +70,8 @@ class CidadeCrudTests(TestCase):
             {"nome": " Curitiba ", "uf": " pr ", "ativa": "on"},
         )
         self.assertRedirects(response, reverse("cadastros:cidades_index"))
-        self.assertTrue(Cidade.objects.filter(nome="Curitiba", uf="PR").exists())
+        cidade = Cidade.objects.get(nome="Curitiba", uf="PR")
+        self.assertTrue(cidade.ativa)
 
     def test_get_edicao_cidade_retorna_200(self):
         cidade = Cidade.objects.create(nome="Curitiba", uf="PR")
@@ -81,6 +88,11 @@ class CidadeCrudTests(TestCase):
         cidade.refresh_from_db()
         self.assertEqual(cidade.nome, "Londrina")
         self.assertEqual(cidade.uf, "PR")
+
+    def test_get_confirmacao_exclusao_cidade_retorna_200(self):
+        cidade = Cidade.objects.create(nome="Curitiba", uf="PR")
+        response = self.client.get(reverse("cadastros:cidade_delete", args=[cidade.pk]))
+        self.assertEqual(response.status_code, 200)
 
     def test_post_exclusao_cidade_desativa_registro(self):
         cidade = Cidade.objects.create(nome="Curitiba", uf="PR")

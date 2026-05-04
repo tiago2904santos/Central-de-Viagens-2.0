@@ -9,7 +9,7 @@
     <section class="form-section">
       <header class="form-section-header">
         <h3>{{ object.nome }}/{{ object.uf }}</h3>
-        <p>A cidade sera marcada como inativa e podera ser preservada para historico.</p>
+        <p>Esta acao ira desativar o cadastro. O registro permanecera no banco para historico e vinculos futuros.</p>
       </header>
       {% include "components/forms/form_actions.html" with primary_label="Desativar cidade" secondary_label="Cancelar" secondary_url=back_url only %}
     </section>
