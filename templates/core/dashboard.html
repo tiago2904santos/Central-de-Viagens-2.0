@@ -3,5 +3,10 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-  {% include "components/cards/page_header.html" with title=page_title description=page_description only %}
+  {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Base institucional" only %}
+  <div class="list-grid">
+    {% include "components/cards/module_card.html" with title="Documentos" description="Componentes preparados para Oficios, Termos, Planos e Prestacoes." href="/oficios/" action_label="Abrir" only %}
+    {% include "components/cards/module_card.html" with title="Cadastros" description="Base futura para dados reutilizaveis do sistema." href="/cadastros/" action_label="Abrir" only %}
+    {% include "components/cards/module_card.html" with title="Roteiros" description="Estrutura futura para trechos, destinos e calculos." href="/roteiros/" action_label="Abrir" only %}
+  </div>
 {% endblock %}

@@ -1,28 +1,114 @@
 # Design System
 
+## Objetivo
+
+O design system define a base visual e estrutural do Central de Viagens 3. Ele deve manter todas as paginas com a mesma linguagem institucional, sobria e limpa, sem estilos avulsos por modulo.
+
 ## CSS centralizado
 
-Todo CSS deve ficar em `static/css/`. O arquivo `static/css/style.css` e o agregador principal e importa os modulos de tokens, base, layout, sidebar, botoes, forms, listas, cards, steppers, documentos e utilitarios.
+Todo CSS deve ficar em `static/css/`. O arquivo `static/css/style.css` e apenas o agregador dos modulos:
 
-## Tokens
+- `tokens.css`: cores, espacamentos, raios, sombras, fontes, z-index e larguras globais.
+- `base.css`: reset leve, tipografia e elementos HTML basicos.
+- `layout.css`: app shell, topbar, area de conteudo e cabecalhos.
+- `sidebar.css`: navegacao lateral.
+- `buttons.css`: botoes e grupos.
+- `forms.css`: formularios, secoes, campos e acoes.
+- `lists.css`: paginas de lista, toolbar, filtros, grid e estado vazio.
+- `cards.css`: cards genericos, de modulo, documentais e de resumo.
+- `steppers.css`: fluxos em etapas.
+- `documents.css`: estruturas documentais.
+- `utilities.css`: classes utilitarias pequenas.
 
-`tokens.css` concentra cores, espacamentos, raios, sombras e fonte base. Novos componentes devem consumir tokens antes de criar valores locais.
+Nao colocar CSS solto em templates. Excecoes precisam ser justificadas e depois movidas para o modulo correto.
 
-## Componentes reutilizaveis
+## JS centralizado
+
+JavaScript global deve ficar em `static/js/core/`. Comportamentos reutilizaveis devem ir para `static/js/components/`. Scripts especificos de pagina devem ficar em `static/js/pages/` e so devem ser carregados via bloco `extra_js` quando houver justificativa.
+
+Nao colocar JavaScript solto em templates.
+
+## Components
 
 Templates compartilhados ficam em `templates/components/`:
 
-- `layout`: estrutura de navegacao e cabecalho.
-- `lists`: listas e estados vazios.
-- `forms`: componentes de formularios.
-- `cards`: blocos de conteudo reutilizaveis.
-- `steppers`: fluxos em etapas.
-- `buttons`: padroes de botoes.
-- `modals`: dialogos e sobreposicoes.
-- `feedback`: alertas, erros e mensagens.
+- `layout`: app shell, sidebar, topbar e cabecalho de pagina.
+- `lists`: pagina de lista, toolbar, filtros, grid e estado vazio.
+- `forms`: pagina de formulario, secao, campo e acoes.
+- `cards`: card generico, card de modulo, card documental e card de resumo.
+- `steppers`: stepper e acoes de stepper.
+- `buttons`: botao de acao e grupo de botoes.
+- `modals`: estrutura base de modal.
+- `feedback`: alertas e estado vazio.
+
+Todo modulo novo deve compor suas paginas usando esses includes antes de criar novos templates estruturais.
+
+## Botoes
+
+Classes padrao:
+
+- `.btn`: base obrigatoria.
+- `.btn-primary`: acao principal.
+- `.btn-secondary`: acao secundaria forte.
+- `.btn-muted`: acao neutra.
+- `.btn-danger`: excluir ou acao destrutiva.
+- `.btn-sm`: botao compacto.
+- `.btn-icon`: botao quadrado para icone.
+- `.btn-group`: agrupamento de acoes.
+
+Use `templates/components/buttons/action_button.html` para botoes e links de acao.
+
+## Listas
+
+Use `templates/components/lists/list_page.html` para paginas de listagem. Ele compoe:
+
+- cabecalho de pagina;
+- toolbar com busca;
+- area de filtros;
+- botao principal opcional;
+- grid de resultados;
+- estado vazio;
+- area reservada para paginacao futura.
+
+Esse padrao deve atender Oficios, Termos, Justificativas, Planos, Ordens, Roteiros, Eventos, Prestacoes, Diario de Bordo e Cadastros.
+
+## Cards
+
+Use:
+
+- `card.html` para conteudo generico.
+- `module_card.html` para acesso a modulos.
+- `document_card.html` para documentos com titulo, status, metadados e acoes futuras de Abrir, PDF, DOCX e Excluir.
+- `summary_card.html` para indicadores e resumos.
+
+Nao criar cards com CSS proprio dentro de paginas.
+
+## Formularios
+
+Use:
+
+- `form_page.html` para a pagina.
+- `form_section.html` para blocos logicos.
+- `form_field.html` para label, campo, ajuda e erros.
+- `form_actions.html` para acoes finais.
+
+Formularios devem usar `.form-grid`, labels consistentes e mensagens de erro padronizadas.
+
+## Steppers
+
+Use `templates/components/steppers/stepper.html` para fluxos em etapas. O padrao inicial usa:
+
+1. Dados de viajantes
+2. Transporte
+3. Roteiros e diarias
+4. Resumo
+
+O componente e generico e pode servir para Oficios, Eventos, Prestacoes de Contas, Planos de Trabalho e fluxos futuros.
 
 ## Regras
 
-Nao colocar CSS solto em templates. Nao colocar JavaScript solto em templates. Excecoes devem ser raras, justificadas em comentario tecnico e preferencialmente convertidas depois em componente, CSS ou JS modular.
-
-Paginas de app devem estender `templates/base.html` e usar componentes quando houver padrao reutilizavel.
+- Toda pagina deve estender `templates/base.html`.
+- Toda pagina nova deve usar components.
+- CSS e JS devem ser centralizados.
+- Estetica e tokens sao globais, nao por app.
+- Componentes novos so devem ser criados quando houver padrao reutilizavel.

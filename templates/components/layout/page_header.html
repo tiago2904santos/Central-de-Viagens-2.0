@@ -1,0 +1,12 @@
+<div class="page-header">
+  <div>
+    <span class="eyebrow">{{ eyebrow|default:"Modulo" }}</span>
+    <h2>{{ title }}</h2>
+    {% if description %}
+      <p>{{ description }}</p>
+    {% endif %}
+  </div>
+  {% if action_label and action_url %}
+    {% include "components/buttons/action_button.html" with href=action_url label=action_label variant="primary" only %}
+  {% endif %}
+</div>

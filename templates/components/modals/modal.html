@@ -1,0 +1,10 @@
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="{{ modal_id|default:'modal-title' }}" hidden>
+  <div class="modal-panel">
+    <header class="modal-header">
+      <h2 id="{{ modal_id|default:'modal-title' }}">{{ title|default:"Confirmacao" }}</h2>
+    </header>
+    <div class="modal-body">
+      {{ content }}
+    </div>
+  </div>
+</div>

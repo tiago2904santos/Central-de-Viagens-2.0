@@ -3,5 +3,5 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-  {% include "components/cards/page_header.html" with title=page_title description=page_description only %}
+  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Integracoes" search_placeholder="Buscar conexoes" empty_message="A integracao com Google Drive sera implementada em etapa futura." only %}
 {% endblock %}

@@ -1,6 +1,6 @@
 .app-shell {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -13,18 +13,21 @@
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   display: flex;
-  min-height: 88px;
+  min-height: 84px;
   padding: var(--space-6) var(--space-8);
 }
 
 .topbar h1 {
-  font-size: 24px;
+  font-size: var(--font-size-xl);
   line-height: 1.2;
   margin-bottom: 0;
 }
 
 .content-wrap {
+  margin: 0 auto;
+  max-width: var(--page-max-width);
   padding: var(--space-8);
+  width: 100%;
 }
 
 .eyebrow {
@@ -36,6 +39,26 @@
   text-transform: uppercase;
 }
 
+.page-header {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.page-header h2 {
+  font-size: var(--font-size-2xl);
+  line-height: 1.15;
+  margin-bottom: var(--space-2);
+}
+
+.page-header p {
+  color: var(--color-muted);
+  margin-bottom: 0;
+  max-width: 760px;
+}
+
 @media (max-width: 840px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -44,5 +67,9 @@
   .topbar,
   .content-wrap {
     padding: var(--space-4);
+  }
+
+  .page-header {
+    display: grid;
   }
 }

@@ -4,3 +4,8 @@
   border-radius: var(--radius-md);
   padding: var(--space-6);
 }
+
+.document-card-body {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}

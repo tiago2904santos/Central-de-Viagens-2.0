@@ -2,7 +2,15 @@ from django.shortcuts import render
 
 
 def index(request):
-    return render(request, "cadastros/index.html")
+    return render(
+        request,
+        "cadastros/index.html",
+        {
+            "page_title": "Cadastros",
+            "page_section": "Dados-base",
+            "page_description": "Base para servidores, motoristas, viaturas, cidades e unidades.",
+        },
+    )
 
 
 def servidores_index(request):

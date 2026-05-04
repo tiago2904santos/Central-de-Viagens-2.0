@@ -6,17 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Central de Viagens 3{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_css %}{% endblock %}
 </head>
 <body>
   <div class="app-shell">
     {% include "components/layout/sidebar.html" %}
     <main class="app-main">
-      {% include "components/layout/header.html" %}
+      {% include "components/layout/topbar.html" %}
       <section class="content-wrap">
         {% block content %}{% endblock %}
       </section>
     </main>
   </div>
   <script src="{% static 'js/core/app.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

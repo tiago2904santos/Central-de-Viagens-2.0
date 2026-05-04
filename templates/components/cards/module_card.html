@@ -1,0 +1,8 @@
+<article class="module-card">
+  <span class="eyebrow">{{ eyebrow|default:"Modulo" }}</span>
+  <h3>{{ title }}</h3>
+  {% if description %}<p>{{ description }}</p>{% endif %}
+  {% if href %}
+    {% include "components/buttons/action_button.html" with href=href label=action_label|default:"Abrir" variant="secondary" size="sm" only %}
+  {% endif %}
+</article>

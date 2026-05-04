@@ -1,0 +1,6 @@
+<div class="form-page">
+  {% include "components/layout/page_header.html" with title=title description=description eyebrow=eyebrow only %}
+  <form class="form-shell" method="{{ method|default:'post' }}">
+    {{ content }}
+  </form>
+</div>

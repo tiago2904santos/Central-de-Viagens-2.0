@@ -1,16 +1,11 @@
 <aside class="sidebar" aria-label="Navegacao principal">
   <a class="sidebar-brand" href="{% url 'core:dashboard' %}">Central de Viagens 3</a>
   <nav class="sidebar-nav">
-    <a href="{% url 'cadastros:index' %}">Cadastros</a>
-    <a href="{% url 'roteiros:index' %}">Roteiros</a>
-    <a href="{% url 'eventos:index' %}">Eventos</a>
-    <a href="{% url 'oficios:index' %}">Oficios</a>
-    <a href="{% url 'termos:index' %}">Termos</a>
-    <a href="{% url 'justificativas:index' %}">Justificativas</a>
-    <a href="{% url 'planos_trabalho:index' %}">Planos</a>
-    <a href="{% url 'ordens_servico:index' %}">Ordens</a>
-    <a href="{% url 'prestacoes_contas:index' %}">Prestacoes</a>
-    <a href="{% url 'diario_bordo:index' %}">Diario</a>
-    <a href="{% url 'assinaturas:index' %}">Assinaturas</a>
+    {% for item in navigation_items %}
+      {% url item.url_name as nav_url %}
+      <a href="{{ nav_url }}" {% if request.resolver_match.view_name == item.url_name %}aria-current="page"{% endif %}>
+        {{ item.label }}
+      </a>
+    {% endfor %}
   </nav>
 </aside>

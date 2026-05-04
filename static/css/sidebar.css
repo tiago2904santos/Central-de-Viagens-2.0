@@ -2,6 +2,8 @@
   background: #172033;
   color: #ffffff;
   padding: var(--space-6);
+  position: relative;
+  z-index: var(--z-sidebar);
 }
 
 .sidebar-brand {
@@ -19,11 +21,13 @@
 .sidebar-nav a {
   border-radius: var(--radius-sm);
   color: rgba(255, 255, 255, 0.84);
+  font-size: var(--font-size-sm);
   padding: var(--space-2) var(--space-3);
 }
 
 .sidebar-nav a:hover,
-.sidebar-nav a:focus {
+.sidebar-nav a:focus,
+.sidebar-nav a[aria-current="page"] {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
 }

@@ -1,0 +1,21 @@
+<article class="document-card">
+  <header class="document-card-header">
+    <div>
+      <span class="document-status">{{ status|default:"Rascunho" }}</span>
+      <h3>{{ title|default:"Documento" }}</h3>
+    </div>
+  </header>
+  <dl class="document-meta">
+    <div><dt>Tipo</dt><dd>{{ document_type|default:"Documento" }}</dd></div>
+    <div><dt>Atualizado em</dt><dd>{{ updated_at|default:"-" }}</dd></div>
+  </dl>
+  <div class="document-card-body">
+    {{ content }}
+  </div>
+  <footer class="document-actions">
+    {% include "components/buttons/action_button.html" with href=open_url label="Abrir" variant="secondary" size="sm" only %}
+    {% include "components/buttons/action_button.html" with href=pdf_url label="PDF" variant="muted" size="sm" only %}
+    {% include "components/buttons/action_button.html" with href=docx_url label="DOCX" variant="muted" size="sm" only %}
+    {% include "components/buttons/action_button.html" with href=delete_url label="Excluir" variant="danger" size="sm" only %}
+  </footer>
+</article>

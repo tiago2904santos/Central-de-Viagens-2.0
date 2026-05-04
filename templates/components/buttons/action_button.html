@@ -1,0 +1,5 @@
+{% if href %}
+  <a class="btn btn-{{ variant|default:'primary' }}{% if size %} btn-{{ size }}{% endif %}{% if icon %} btn-icon{% endif %}" href="{{ href }}">{{ label }}</a>
+{% else %}
+  <button class="btn btn-{{ variant|default:'primary' }}{% if size %} btn-{{ size }}{% endif %}{% if icon %} btn-icon{% endif %}" type="{{ type|default:'button' }}">{{ label }}</button>
+{% endif %}
