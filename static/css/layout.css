@@ -41,14 +41,13 @@
 }
 
 .page-header::after {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 65%);
   content: "";
-  height: 100%;
+  height: 280px;
   position: absolute;
-  right: -18%;
-  top: -40%;
-  transform: rotate(18deg);
-  width: 46%;
+  right: -90px;
+  top: -120px;
+  width: 280px;
 }
 
 .page-header > * {

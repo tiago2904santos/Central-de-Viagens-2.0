@@ -58,6 +58,8 @@ O primeiro uso real esta nos templates de `Unidade` e `Cidade`, em `templates/ca
 - `cards/document_card.html`: tambem aceita `card`, com `title`, `subtitle`, `status`, `meta`, `body` e `actions`.
 - `cards/summary_card.html`: resumo numerico ou textual. Variaveis: `label`, `value`, `description`.
 
+Cards com status devem usar `status_class` com as variantes globais `.status-chip--draft`, `.status-chip--active`, `.status-chip--completed`, `.status-chip--danger` ou `.status-chip--muted`.
+
 ## Buttons
 
 - `buttons/action_button.html`: renderiza link ou button. Variaveis: `href`, `label`, `variant`, `size`, `icon`, `type`.

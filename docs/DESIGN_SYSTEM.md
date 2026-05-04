@@ -21,6 +21,18 @@ Principios:
 - dourado usado com parcimonia;
 - tokens globais, sem cores aleatorias por modulo.
 
+## Status e chips
+
+Status visuais devem usar `.status-chip` com variantes globais:
+
+- `.status-chip--draft`: rascunho ou pendente.
+- `.status-chip--active`: ativo ou em andamento.
+- `.status-chip--completed`: concluido.
+- `.status-chip--danger`: erro, bloqueio ou acao critica.
+- `.status-chip--muted`: inativo ou informacao neutra.
+
+Nao criar cores de status por modulo.
+
 ## CSS centralizado
 
 Todo CSS deve ficar em `static/css/`. O arquivo `static/css/style.css` e apenas o agregador dos modulos:

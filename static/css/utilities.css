@@ -38,3 +38,46 @@
   border-color: var(--color-primary);
   color: var(--color-primary-strong);
 }
+
+.status-chip {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  letter-spacing: 0;
+  margin-bottom: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  text-transform: uppercase;
+}
+
+.status-chip--draft {
+  background: var(--color-warning-soft);
+  border-color: rgba(183, 121, 31, 0.22);
+  color: var(--color-warning);
+}
+
+.status-chip--active {
+  background: var(--color-info-soft);
+  border-color: rgba(37, 99, 168, 0.24);
+  color: var(--color-info);
+}
+
+.status-chip--completed {
+  background: var(--color-success-soft);
+  border-color: rgba(22, 128, 90, 0.22);
+  color: var(--color-success);
+}
+
+.status-chip--danger {
+  background: var(--color-danger-soft);
+  border-color: rgba(180, 35, 24, 0.20);
+  color: var(--color-danger);
+}
+
+.status-chip--muted {
+  background: var(--color-surface-soft);
+  border-color: var(--color-border);
+  color: var(--color-muted);
+}

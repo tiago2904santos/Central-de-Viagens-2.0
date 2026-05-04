@@ -5,8 +5,8 @@
 body {
   margin: 0;
   background:
-    linear-gradient(135deg, rgba(37, 99, 168, 0.10) 0%, rgba(255, 255, 255, 0) 34%),
-    linear-gradient(225deg, rgba(201, 154, 46, 0.08) 0%, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at top left, rgba(37, 99, 168, 0.16), transparent 32rem),
+    radial-gradient(circle at top right, rgba(201, 154, 46, 0.10), transparent 28rem),
     linear-gradient(180deg, #f8fbff 0%, var(--color-bg) 100%);
   color: var(--color-text);
   font-family: var(--font-sans);

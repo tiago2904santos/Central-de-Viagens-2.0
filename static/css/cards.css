@@ -7,6 +7,7 @@
   border: 1px solid rgba(214, 224, 234, 0.9);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 .card,
@@ -54,18 +55,6 @@
   align-items: flex-start;
   display: flex;
   justify-content: space-between;
-}
-
-.document-status {
-  background: var(--color-primary-soft);
-  border-radius: var(--radius-sm);
-  color: var(--color-primary-strong);
-  display: inline-flex;
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  margin-bottom: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  text-transform: uppercase;
 }
 
 .document-meta {

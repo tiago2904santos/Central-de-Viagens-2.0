@@ -2,6 +2,10 @@ def _status_label(is_active):
     return "Ativo" if is_active else "Inativo"
 
 
+def _status_class(is_active):
+    return "status-chip--active" if is_active else "status-chip--muted"
+
+
 def _actions(edit_url="#", delete_url="#"):
     return [
         {"label": "Editar", "href": edit_url, "variant": "secondary"},
@@ -14,6 +18,7 @@ def apresentar_unidade_card(unidade, edit_url="#", delete_url="#"):
         "title": unidade.nome,
         "subtitle": unidade.sigla or "Sem sigla",
         "status": _status_label(unidade.ativa),
+        "status_class": _status_class(unidade.ativa),
         "meta": [
             {"label": "Sigla", "value": unidade.sigla or "-"},
             {"label": "Atualizado em", "value": unidade.updated_at.strftime("%d/%m/%Y")},
@@ -27,6 +32,7 @@ def apresentar_cidade_card(cidade, edit_url="#", delete_url="#"):
         "title": cidade.nome,
         "subtitle": cidade.uf,
         "status": _status_label(cidade.ativa),
+        "status_class": _status_class(cidade.ativa),
         "meta": [
             {"label": "UF", "value": cidade.uf},
             {"label": "Atualizado em", "value": cidade.updated_at.strftime("%d/%m/%Y")},
