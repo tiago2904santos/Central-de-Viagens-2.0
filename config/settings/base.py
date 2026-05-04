@@ -1,12 +1,21 @@
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 load_dotenv(BASE_DIR / ".env")
 
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-key")
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "").split(",")
+    if host.strip()
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -61,8 +70,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-LANGUAGE_CODE = "pt-br"
-TIME_ZONE = "America/Sao_Paulo"
+LANGUAGE_CODE = os.getenv("LANGUAGE_CODE", "pt-br")
+TIME_ZONE = os.getenv("TIME_ZONE", "America/Sao_Paulo")
 USE_I18N = True
 USE_TZ = True
 

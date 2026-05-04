@@ -10,25 +10,94 @@ O sistema e separado por apps de dominio: cadastros, roteiros, eventos, document
 
 Documentos sao o centro da arquitetura. Eventos podem agrupar documentos, mas nao sao obrigatorios para criar ou evoluir fluxos.
 
-## Ambiente local
+## Criar ambiente virtual
 
 ```powershell
 python -m venv .venv
+```
+
+## Ativar ambiente virtual no Windows PowerShell
+
+```powershell
 .venv\Scripts\activate
+```
+
+Se a politica de execucao bloquear scripts, use o CMD.
+
+## Ativar ambiente virtual no CMD
+
+```cmd
+.venv\Scripts\activate
+```
+
+## Instalar dependencias
+
+```powershell
 pip install -r requirements/dev.txt
 ```
 
-## Banco e validacao
+## Configurar .env
+
+Copie `.env.example` para `.env` e ajuste as variaveis locais:
+
+```env
+SECRET_KEY=change-me
+DEBUG=True
+ALLOWED_HOSTS=127.0.0.1,localhost
+
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=central_viagens_3
+DB_USER=central_viagens_user
+DB_PASSWORD=central_viagens_dev
+DB_HOST=127.0.0.1
+DB_PORT=5432
+
+TIME_ZONE=America/Sao_Paulo
+LANGUAGE_CODE=pt-br
+```
+
+`.env` nao deve ser versionado. `.env.example` deve ser mantido como referencia.
+
+## Criar banco PostgreSQL local
+
+O banco de desenvolvimento e PostgreSQL. Nao ha fallback para SQLite em `config.settings.dev`.
+
+Forma recomendada para desenvolvimento local:
+
+```powershell
+docker compose up -d db
+docker compose ps
+docker compose exec db psql -U central_viagens_user -d central_viagens_3 -c "SELECT 1;"
+```
+
+Se preferir usar uma instalacao local do PostgreSQL, crie o usuario e banco manualmente:
+
+```powershell
+psql -U postgres -c "CREATE USER central_viagens_user WITH PASSWORD 'central_viagens_dev';"
+psql -U postgres -c "CREATE DATABASE central_viagens_3 OWNER central_viagens_user;"
+psql -U postgres -d central_viagens_3 -c "GRANT ALL ON SCHEMA public TO central_viagens_user;"
+```
+
+Se o usuario ou banco ja existirem, siga para as migrations.
+
+## Rodar migrations
 
 ```powershell
 python manage.py migrate
+```
+
+## Validar projeto
+
+```powershell
 python manage.py check
 ```
 
-## Servidor local
+## Rodar servidor
 
 ```powershell
 python manage.py runserver
 ```
 
 Settings locais usam `config.settings.dev` por padrao em `manage.py`.
+
+SQLite so pode ser usado em `config.settings.test`, para testes automatizados.

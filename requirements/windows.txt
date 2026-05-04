@@ -1,6 +1,5 @@
 -r base.txt
 
-# Dependencias futuras para geracao DOCX/PDF no Windows:
-# python-docx
-# docx2pdf
-# pywin32
+python-docx
+docx2pdf
+pywin32
