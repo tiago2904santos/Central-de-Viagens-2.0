@@ -7,10 +7,18 @@ from django.core.management.base import CommandError
 from django.test import TestCase
 
 from cadastros.models import Cidade
+from cadastros.models import Estado
 from cadastros.services_importacao import importar_cidades_csv
 
 
 class ImportacaoCidadesCsvTests(TestCase):
+    def setUp(self):
+        self.estado_pr, _ = Estado.objects.get_or_create(sigla="PR", defaults={"nome": "PARANA", "codigo_ibge": 41})
+        self.estado_sc, _ = Estado.objects.get_or_create(
+            sigla="SC",
+            defaults={"nome": "SANTA CATARINA", "codigo_ibge": 42},
+        )
+
     def _write_csv(self, content: str, suffix: str = ".csv") -> Path:
         t = tempfile.NamedTemporaryFile(
             mode="w",
@@ -56,7 +64,7 @@ class ImportacaoCidadesCsvTests(TestCase):
         self.assertEqual(r.criadas, 1)
 
     def test_nao_duplica_existente(self):
-        Cidade.objects.create(nome="PONTA GROSSA", uf="PR")
+        Cidade.objects.create(nome="PONTA GROSSA", estado=self.estado_pr)
         p = self._write_csv("municipio;uf\nPONTA GROSSA;pr\n")
         r = importar_cidades_csv(p, dry_run=False)
         p.unlink(missing_ok=True)

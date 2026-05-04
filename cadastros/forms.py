@@ -5,6 +5,7 @@ from django import forms
 from .models import Cargo
 from .models import Cidade
 from .models import Combustivel
+from .models import Estado
 from .models import Servidor
 from .models import Unidade
 from .models import Viatura
@@ -58,23 +59,39 @@ class UnidadeForm(BaseCadastroForm):
         return self.cleaned_data.get("sigla", "").strip().upper()
 
 
-class CidadeForm(BaseCadastroForm):
+class EstadoForm(BaseCadastroForm):
     class Meta:
-        model = Cidade
-        fields = ["nome", "uf"]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["uf"].initial = self.fields["uf"].initial or "PR"
+        model = Estado
+        fields = ["nome", "sigla", "codigo_ibge"]
 
     def clean_nome(self):
         return self.cleaned_data["nome"].strip()
 
-    def clean_uf(self):
-        uf = self.cleaned_data["uf"].strip().upper()
-        if len(uf) != 2:
-            raise forms.ValidationError("UF deve ter 2 caracteres.")
-        return uf
+    def clean_sigla(self):
+        sigla = self.cleaned_data["sigla"].strip().upper()
+        if len(sigla) != 2:
+            raise forms.ValidationError("Sigla deve ter 2 caracteres.")
+        return sigla
+
+
+class CidadeForm(BaseCadastroForm):
+    class Meta:
+        model = Cidade
+        fields = ["nome", "estado", "capital", "codigo_ibge", "latitude", "longitude"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["estado"].queryset = Estado.objects.order_by("nome")
+        self.fields["estado"].empty_label = "Selecione"
+        self.fields["estado"].widget.attrs["class"] = "form-select"
+        for fname in ("latitude", "longitude"):
+            if fname in self.fields:
+                self.fields[fname].required = False
+        if "codigo_ibge" in self.fields:
+            self.fields["codigo_ibge"].required = False
+
+    def clean_nome(self):
+        return self.cleaned_data["nome"].strip()
 
 
 class CargoForm(BaseCadastroForm):

@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404
 from .models import Cargo
 from .models import Cidade
 from .models import Combustivel
+from .models import Estado
 from .models import Servidor
 from .models import Unidade
 from .models import Viatura
@@ -17,9 +18,21 @@ def listar_unidades(q=None):
 
 
 def listar_cidades(q=None):
-    queryset = Cidade.objects.order_by("uf", "nome")
+    queryset = Cidade.objects.select_related("estado").order_by("estado__sigla", "nome")
     if q:
-        queryset = queryset.filter(Q(nome__icontains=q) | Q(uf__icontains=q))
+        queryset = queryset.filter(
+            Q(nome__icontains=q)
+            | Q(uf__icontains=q)
+            | Q(estado__nome__icontains=q)
+            | Q(estado__sigla__icontains=q)
+        )
+    return queryset
+
+
+def listar_estados(q=None):
+    queryset = Estado.objects.order_by("nome")
+    if q:
+        queryset = queryset.filter(Q(nome__icontains=q) | Q(sigla__icontains=q))
     return queryset
 
 
@@ -28,7 +41,11 @@ def get_unidade_by_id(pk):
 
 
 def get_cidade_by_id(pk):
-    return get_object_or_404(Cidade, pk=pk)
+    return get_object_or_404(Cidade.objects.select_related("estado"), pk=pk)
+
+
+def get_estado_by_id(pk):
+    return get_object_or_404(Estado, pk=pk)
 
 
 def listar_cargos(q=None):

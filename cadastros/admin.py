@@ -2,6 +2,7 @@
 
 from .models import Cargo
 from .models import Cidade
+from .models import Estado
 from .models import Combustivel
 from .models import Servidor
 from .models import Unidade
@@ -22,6 +23,13 @@ class CombustivelAdmin(admin.ModelAdmin):
     ordering = ("nome",)
 
 
+@admin.register(Estado)
+class EstadoAdmin(admin.ModelAdmin):
+    list_display = ("nome", "sigla", "codigo_ibge", "updated_at")
+    search_fields = ("nome", "sigla")
+    ordering = ("nome",)
+
+
 @admin.register(Unidade)
 class UnidadeAdmin(admin.ModelAdmin):
     list_display = ("nome", "sigla", "updated_at")
@@ -31,9 +39,9 @@ class UnidadeAdmin(admin.ModelAdmin):
 
 @admin.register(Cidade)
 class CidadeAdmin(admin.ModelAdmin):
-    list_display = ("nome", "uf", "updated_at")
-    search_fields = ("nome", "uf")
-    list_filter = ("uf",)
+    list_display = ("nome", "estado", "uf", "capital", "codigo_ibge", "updated_at")
+    search_fields = ("nome", "uf", "estado__nome", "estado__sigla")
+    list_filter = ("capital", "uf")
     ordering = ("uf", "nome")
 
 

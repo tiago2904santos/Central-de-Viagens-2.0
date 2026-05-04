@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Excluir estado{% endblock %}
+{% block content %}
+  {% include "components/feedback/confirm_delete_block.html" with object_label=object.nome primary_label="Excluir estado" message="Esta acao ira excluir o estado. Se houver cidades vinculadas, a exclusao sera bloqueada." back_url=back_url only %}
+{% endblock %}

@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from cadastros.models import Cidade
 from cadastros.models import Combustivel
+from cadastros.models import Estado
 from cadastros.models import Servidor
 from cadastros.models import Unidade
 from cadastros.models import Viatura
@@ -47,6 +48,9 @@ class UnidadeCrudTests(TestCase):
 
 @override_settings(ALLOWED_HOSTS=["testserver", "localhost"])
 class CidadeCrudTests(TestCase):
+    def setUp(self):
+        self.estado_pr, _ = Estado.objects.get_or_create(sigla="PR", defaults={"nome": "PARANA"})
+
     def test_get_listagem_cidades_retorna_200(self):
         response = self.client.get(reverse("cadastros:cidades_index"))
         self.assertEqual(response.status_code, 200)
@@ -58,14 +62,14 @@ class CidadeCrudTests(TestCase):
     def test_post_criacao_cidade_valida_redireciona_e_cria(self):
         response = self.client.post(
             reverse("cadastros:cidade_create"),
-            {"nome": " Curitiba ", "uf": " pr "},
+            {"nome": " Curitiba ", "estado": self.estado_pr.pk},
         )
         self.assertRedirects(response, reverse("cadastros:cidades_index"))
-        cidade = Cidade.objects.get(nome="CURITIBA", uf="PR")
+        cidade = Cidade.objects.get(nome="CURITIBA", estado=self.estado_pr)
         self.assertEqual(cidade.uf, "PR")
 
     def test_get_exportar_cidades_csv_retorna_arquivo(self):
-        Cidade.objects.create(nome="LONDRINA", uf="PR")
+        Cidade.objects.create(nome="LONDRINA", estado=self.estado_pr)
         response = self.client.get(reverse("cadastros:cidades_export_csv"))
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/csv", response["Content-Type"])

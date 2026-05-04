@@ -51,7 +51,7 @@ class Estado(TimeStampedModel):
 
 
 class Cidade(TimeStampedModel):
-    estado = models.ForeignKey(Estado, on_delete=models.PROTECT, related_name="cidades", null=True, blank=True)
+    estado = models.ForeignKey(Estado, on_delete=models.PROTECT, related_name="cidades")
     nome = models.CharField(max_length=255)
     uf = models.CharField(max_length=2)
     codigo_ibge = models.PositiveIntegerField(null=True, blank=True)

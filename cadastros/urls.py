@@ -1,16 +1,15 @@
 ﻿from django.urls import path
-from django.views.generic import RedirectView
 
 from . import views
 
 app_name = "cadastros"
 
 urlpatterns = [
-    path(
-        "",
-        RedirectView.as_view(pattern_name="cadastros:servidores_index", permanent=False),
-        name="index",
-    ),
+    path("", views.index, name="index"),
+    path("estados/", views.estados_index, name="estados_index"),
+    path("estados/novo/", views.estado_create, name="estado_create"),
+    path("estados/<int:pk>/editar/", views.estado_update, name="estado_update"),
+    path("estados/<int:pk>/excluir/", views.estado_delete, name="estado_delete"),
     path("unidades/", views.unidades_index, name="unidades_index"),
     path("unidades/novo/", views.unidade_create, name="unidade_create"),
     path("unidades/<int:pk>/editar/", views.unidade_update, name="unidade_update"),
