@@ -31,3 +31,7 @@ O projeto novo fica na raiz. A pasta `legacy/` existe apenas para consulta histo
 ## Separacao conceitual
 
 Cadastros guardam dados reutilizaveis. Roteiros descrevem deslocamentos reaproveitaveis. Documentos centralizam geracao e validacao. Eventos agrupam quando houver ganho de organizacao, mas documentos tambem podem existir sem evento. Integracoes ficam isoladas para evitar acoplamento de dominio com APIs externas.
+
+## Banco de desenvolvimento
+
+O ambiente de desenvolvimento usa PostgreSQL local no Windows, configurado por `.env`. O settings `config.settings.dev` nao deve usar SQLite como fallback silencioso. SQLite fica restrito a `config.settings.test`, para testes automatizados.

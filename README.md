@@ -19,7 +19,7 @@ python -m venv .venv
 ## Ativar ambiente virtual no Windows PowerShell
 
 ```powershell
-.venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
 ```
 
 Se a politica de execucao bloquear scripts, use o CMD.
@@ -60,17 +60,24 @@ LANGUAGE_CODE=pt-br
 
 ## Criar banco PostgreSQL local
 
-O banco de desenvolvimento e PostgreSQL. Nao ha fallback para SQLite em `config.settings.dev`.
+O banco de desenvolvimento e PostgreSQL instalado localmente no Windows. Nao ha fallback para SQLite em `config.settings.dev`.
 
-Forma recomendada para desenvolvimento local:
+Instale o PostgreSQL para Windows pelo instalador oficial e marque a opcao de instalar as ferramentas de linha de comando.
+
+Se o comando `psql` nao estiver disponivel depois da instalacao, adicione uma destas pastas ao PATH do Windows, conforme a versao instalada:
 
 ```powershell
-docker compose up -d db
-docker compose ps
-docker compose exec db psql -U central_viagens_user -d central_viagens_3 -c "SELECT 1;"
+C:\Program Files\PostgreSQL\16\bin
+C:\Program Files\PostgreSQL\17\bin
 ```
 
-Se preferir usar uma instalacao local do PostgreSQL, crie o usuario e banco manualmente:
+Feche e abra o terminal novamente, depois valide:
+
+```powershell
+psql --version
+```
+
+Crie o usuario e o banco esperados pelo `.env`:
 
 ```powershell
 psql -U postgres -c "CREATE USER central_viagens_user WITH PASSWORD 'central_viagens_dev';"
@@ -83,6 +90,7 @@ Se o usuario ou banco ja existirem, siga para as migrations.
 ## Rodar migrations
 
 ```powershell
+.venv\Scripts\activate
 python manage.py migrate
 ```
 
