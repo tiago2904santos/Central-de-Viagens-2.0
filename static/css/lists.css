@@ -1,0 +1,8 @@
+.list-stack {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.empty-state {
+  color: var(--color-muted);
+}

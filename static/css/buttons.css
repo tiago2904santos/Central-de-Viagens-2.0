@@ -1,0 +1,17 @@
+.button {
+  align-items: center;
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  color: #ffffff;
+  display: inline-flex;
+  font-weight: 700;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-4);
+}
+
+.button:hover,
+.button:focus {
+  background: var(--color-primary-strong);
+}

@@ -1,0 +1,39 @@
+.sidebar {
+  background: #172033;
+  color: #ffffff;
+  padding: var(--space-6);
+}
+
+.sidebar-brand {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: var(--space-6);
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.sidebar-nav a {
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.84);
+  padding: var(--space-2) var(--space-3);
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a:focus {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+@media (max-width: 840px) {
+  .sidebar {
+    padding: var(--space-4);
+  }
+
+  .sidebar-nav {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+}

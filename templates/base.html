@@ -1,0 +1,22 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Central de Viagens 3{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <div class="app-shell">
+    {% include "components/layout/sidebar.html" %}
+    <main class="app-main">
+      {% include "components/layout/header.html" %}
+      <section class="content-wrap">
+        {% block content %}{% endblock %}
+      </section>
+    </main>
+  </div>
+  <script src="{% static 'js/core/app.js' %}" defer></script>
+</body>
+</html>

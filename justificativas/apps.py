@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class JustificativasConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "justificativas"
+    verbose_name = "Justificativas"

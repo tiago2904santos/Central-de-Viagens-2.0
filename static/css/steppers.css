@@ -1,0 +1,4 @@
+.stepper {
+  display: flex;
+  gap: var(--space-3);
+}
