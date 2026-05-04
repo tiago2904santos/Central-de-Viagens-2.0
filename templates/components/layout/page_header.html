@@ -7,6 +7,8 @@
     {% endif %}
   </div>
   {% if action_label and action_url %}
-    {% include "components/buttons/action_button.html" with href=action_url label=action_label variant="primary" only %}
+    <div class="page-header-actions">
+      {% include "components/buttons/action_button.html" with href=action_url label=action_label variant="primary" only %}
+    </div>
   {% endif %}
 </div>

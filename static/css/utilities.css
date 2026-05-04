@@ -30,13 +30,61 @@
 .alert {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  font-weight: 600;
   padding: var(--space-3) var(--space-4);
+  position: relative;
+}
+
+.alert::before {
+  border-radius: var(--radius-pill);
+  content: "";
+  display: inline-block;
+  height: 8px;
+  margin-right: var(--space-2);
+  width: 8px;
 }
 
 .alert-success {
-  background: var(--color-primary-soft);
-  border-color: var(--color-primary);
-  color: var(--color-primary-strong);
+  background: var(--color-success-soft);
+  border-color: rgba(22, 128, 90, 0.35);
+  color: #106544;
+}
+
+.alert-success::before {
+  background: var(--color-success);
+}
+
+.alert-error,
+.alert-danger {
+  background: var(--color-danger-soft);
+  border-color: rgba(180, 35, 24, 0.32);
+  color: #8e1f17;
+}
+
+.alert-error::before,
+.alert-danger::before {
+  background: var(--color-danger);
+}
+
+.alert-warning {
+  background: var(--color-warning-soft);
+  border-color: rgba(183, 121, 31, 0.3);
+  color: #8a5f1c;
+}
+
+.alert-warning::before {
+  background: var(--color-warning);
+}
+
+.alert-info {
+  background: var(--color-info-soft);
+  border-color: rgba(37, 99, 168, 0.32);
+  color: #164d84;
+}
+
+.alert-info::before {
+  background: var(--color-info);
 }
 
 .status-chip {

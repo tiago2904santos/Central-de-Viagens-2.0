@@ -1,1 +1,1 @@
-{% include "components/feedback/empty_state.html" with title="Nenhum registro" message=message|default:"Este modulo ainda nao possui registros cadastrados." only %}
+{% include "components/feedback/empty_state.html" with title=title|default:"Nenhum registro cadastrado" message=message|default:"Este modulo ainda nao possui registros cadastrados." action_label=action_label action_url=action_url only %}

@@ -1,5 +1,6 @@
 :root {
   --color-bg: #eef3f8;
+  --color-bg-dark: #09192b;
   --color-bg-subtle: #ddeafa;
   --color-bg-glow: #ddebfa;
   --color-surface: #ffffff;
@@ -18,6 +19,7 @@
   --color-primary-strong: #0a223d;
   --color-primary-dark: #0a223d;
   --color-primary-hover: #0e2f51;
+  --color-primary-bright: #2f78c7;
   --color-primary-soft: #e6f0fa;
   --color-secondary: #2563a8;
   --color-secondary-soft: #e8f2ff;
@@ -36,6 +38,7 @@
   --shadow-sm: 0 6px 16px rgba(15, 23, 42, 0.08);
   --shadow-md: 0 14px 32px rgba(15, 23, 42, 0.12);
   --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.16);
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.55);
   --glow-primary: 0 0 0 1px rgba(37, 99, 168, 0.08), 0 18px 44px rgba(37, 99, 168, 0.18);
   --glow-accent: 0 14px 34px rgba(201, 154, 46, 0.22);
   --space-1: 4px;
@@ -50,6 +53,7 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-xl: 28px;
+  --radius-pill: 999px;
   --font-size-xs: 12px;
   --font-size-sm: 14px;
   --font-size-md: 16px;

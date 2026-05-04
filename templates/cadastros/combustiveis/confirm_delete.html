@@ -4,12 +4,6 @@
   {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Cadastros" only %}
   <form class="form-shell" method="post">
     {% csrf_token %}
-    <section class="form-section">
-      <header class="form-section-header">
-        <h3>{{ object.nome }}</h3>
-        <p>Esta ação excluirá o cadastro. Se houver vínculos com outros registros, a exclusão será bloqueada.</p>
-      </header>
-      {% include "components/forms/form_actions.html" with primary_label="Excluir combustível" secondary_label="Cancelar" secondary_url=back_url only %}
-    </section>
+    {% include "components/feedback/confirm_delete_block.html" with object_label=object.nome primary_label="Excluir combustivel" back_url=back_url only %}
   </form>
 {% endblock %}

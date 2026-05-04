@@ -1,6 +1,6 @@
 <div class="form-actions">
-  {% include "components/buttons/action_button.html" with label=primary_label|default:"Salvar" variant="primary" type="submit" only %}
+  {% include "components/buttons/action_button.html" with label=primary_label|default:"Salvar" variant=primary_variant|default:"primary" type="submit" only %}
   {% if secondary_label %}
-    {% include "components/buttons/action_button.html" with href=secondary_url label=secondary_label variant="secondary" only %}
+    {% include "components/buttons/action_button.html" with href=secondary_url label=secondary_label variant=secondary_variant|default:"secondary" only %}
   {% endif %}
 </div>

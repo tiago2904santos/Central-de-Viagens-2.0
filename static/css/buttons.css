@@ -1,15 +1,17 @@
 .btn {
   align-items: center;
-  border-radius: var(--radius-sm);
+  border-radius: 11px;
   border: 1px solid transparent;
   cursor: pointer;
   display: inline-flex;
   font-weight: 700;
   gap: var(--space-2);
   justify-content: center;
-  min-height: 40px;
+  min-height: 42px;
   padding: 0 var(--space-4);
-  box-shadow: var(--shadow-xs);
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: var(--shadow-xs), var(--shadow-inner);
   transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, color 140ms ease, transform 140ms ease;
 }
 
@@ -20,21 +22,27 @@
 
 .btn-primary {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  border-color: var(--color-primary);
+  border-color: rgba(8, 32, 58, 0.55);
   color: var(--color-white);
 }
 
 .btn-primary:hover,
 .btn-primary:focus {
-  background: linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-secondary) 100%);
-  border-color: var(--color-primary-hover);
-  box-shadow: var(--glow-primary);
+  background: linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-primary-bright) 100%);
+  border-color: rgba(8, 32, 58, 0.7);
+  box-shadow: var(--glow-primary), var(--shadow-inner);
 }
 
 .btn-secondary {
-  background: var(--color-secondary);
-  border-color: var(--color-secondary);
-  color: var(--color-white);
+  background: rgba(18, 58, 99, 0.06);
+  border-color: rgba(18, 58, 99, 0.3);
+  color: var(--color-primary);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+  background: rgba(18, 58, 99, 0.14);
+  border-color: rgba(18, 58, 99, 0.45);
 }
 
 .btn-muted {
@@ -51,14 +59,20 @@
 }
 
 .btn-danger {
-  background: var(--color-danger);
-  border-color: var(--color-danger);
+  background: linear-gradient(135deg, #c0392b 0%, var(--color-danger) 100%);
+  border-color: #8f1f18;
   color: var(--color-white);
+}
+
+.btn-danger:hover,
+.btn-danger:focus {
+  background: linear-gradient(135deg, #b02f22 0%, #9a2018 100%);
+  border-color: #801611;
 }
 
 .btn-sm {
   font-size: var(--font-size-sm);
-  min-height: 32px;
+  min-height: 34px;
   padding: 0 var(--space-3);
 }
 
@@ -73,4 +87,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+@media (max-width: 720px) {
+  .btn-group {
+    width: 100%;
+  }
+
+  .btn-group .btn {
+    flex: 1;
+  }
 }

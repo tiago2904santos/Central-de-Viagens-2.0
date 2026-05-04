@@ -1,0 +1,10 @@
+<section class="page-card">
+  <article class="form-section">
+    <header class="form-section-header">
+      <span class="status-chip status-chip--danger">Atencao</span>
+      <h3>{{ object_label }}</h3>
+      <p>{{ message|default:"Esta acao excluira o cadastro. Se houver vinculos com outros registros, a exclusao sera bloqueada." }}</p>
+    </header>
+    {% include "components/forms/form_actions.html" with primary_label=primary_label|default:"Excluir" primary_variant="danger" secondary_label="Cancelar" secondary_variant="secondary" secondary_url=back_url only %}
+  </article>
+</section>

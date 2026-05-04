@@ -1,4 +1,7 @@
 <div class="empty-state">
   <h3>{{ title|default:"Nada por aqui" }}</h3>
   <p>{{ message|default:"Quando houver dados, eles aparecerao nesta area." }}</p>
+  {% if action_label and action_url %}
+    {% include "components/buttons/action_button.html" with href=action_url label=action_label variant="primary" only %}
+  {% endif %}
 </div>

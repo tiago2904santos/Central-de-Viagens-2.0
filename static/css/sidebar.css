@@ -4,6 +4,7 @@
   color: #ffffff;
   padding: var(--space-6);
   position: relative;
+  top: 0;
   z-index: var(--z-sidebar);
 }
 
@@ -43,6 +44,7 @@
 
 @media (max-width: 840px) {
   .sidebar {
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
     padding: var(--space-4);
   }
 

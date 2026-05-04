@@ -1,5 +1,5 @@
 <div class="list-page">
   {% include "components/layout/page_header.html" with title=title description=description eyebrow=eyebrow action_label=action_label action_url=action_url only %}
   {% include "components/lists/list_toolbar.html" with search_placeholder=search_placeholder action_label=action_label action_url=action_url q=q only %}
-  {% include "components/lists/list_grid.html" with cards=cards empty_message=empty_message only %}
+  {% include "components/lists/list_grid.html" with cards=cards empty_message=empty_message empty_action_label=action_label empty_action_url=action_url only %}
 </div>

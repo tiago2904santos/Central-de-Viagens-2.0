@@ -1,10 +1,13 @@
 <div class="field{% if field.field.widget.input_type == 'checkbox' %} field-check{% endif %}">
   {% if field.field.widget.input_type == 'checkbox' %}
-    {{ field }}
+    {{ field.as_widget }}
     <label for="{{ field.id_for_label }}">{{ label|default:field.label }}</label>
+  {% elif field.field.widget.input_type == 'select' %}
+    <label for="{{ field.id_for_label }}">{{ label|default:field.label }}</label>
+    {{ field.as_widget }}
   {% else %}
   <label for="{{ field.id_for_label }}">{{ label|default:field.label }}</label>
-  {{ field }}
+  {{ field.as_widget }}
   {% endif %}
   {% if help_text %}<p class="field-help">{{ help_text }}</p>{% endif %}
   {% if field.errors %}<p class="field-error">{{ field.errors|striptags }}</p>{% endif %}

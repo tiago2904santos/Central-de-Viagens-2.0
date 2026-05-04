@@ -1,11 +1,12 @@
 .document-preview {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   padding: var(--space-6);
 }
 
 .document-card-body {
   color: var(--color-muted);
   font-size: var(--font-size-sm);
+  margin-top: -2px;
 }

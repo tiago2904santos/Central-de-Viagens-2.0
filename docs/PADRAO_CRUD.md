@@ -35,3 +35,7 @@ Não foi possível excluir este cadastro porque ele está vinculado a outros reg
 
 - Sem CSS inline e sem JS inline.
 - Mascaras em `static/js/components/masks.js` via `data-mask="cpf|rg|placa"`.
+- Padrao visual global aplicado por components em `templates/components/`.
+- Header oficial do CRUD: `components/layout/page_header.html`.
+- Confirmacao de exclusao via component global `components/feedback/confirm_delete_block.html`.
+- Estados vazios e alertas devem usar os components de feedback reutilizaveis.

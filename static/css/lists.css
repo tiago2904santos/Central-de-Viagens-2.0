@@ -11,18 +11,38 @@
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   display: flex;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2);
   justify-content: space-between;
   padding: var(--space-4);
 }
 
 .list-search {
-  flex: 1;
-  max-width: 420px;
+  flex: 1 1 320px;
+  max-width: 520px;
+  min-width: 220px;
+  position: relative;
 }
 
 .list-search input {
+  background: var(--color-white);
+  border-color: var(--color-border-soft);
+  border-radius: 12px;
+  min-height: 44px;
+  padding-left: 42px;
   width: 100%;
+}
+
+.list-search::before {
+  color: var(--color-muted);
+  content: "Buscar";
+  font-size: 11px;
+  font-weight: 700;
+  left: 14px;
+  letter-spacing: 0.04em;
+  position: absolute;
+  text-transform: uppercase;
+  top: 2px;
 }
 
 .list-filters {
@@ -34,7 +54,7 @@
 .list-grid {
   display: grid;
   gap: var(--space-4);
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 .list-stack {
@@ -43,12 +63,12 @@
 }
 
 .empty-state {
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px dashed var(--color-border-strong);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 251, 255, 0.95));
+  border: 1px dashed rgba(18, 58, 99, 0.26);
   border-radius: var(--radius-md);
   color: var(--color-muted);
   grid-column: 1 / -1;
-  padding: var(--space-8);
+  padding: var(--space-6);
   text-align: center;
 }
 
@@ -59,7 +79,12 @@
 }
 
 .empty-state p {
-  margin-bottom: 0;
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.empty-state .btn {
+  margin-top: var(--space-4);
 }
 
 .list-pagination {
@@ -70,5 +95,9 @@
   .list-toolbar {
     align-items: stretch;
     display: grid;
+  }
+
+  .list-search {
+    max-width: none;
   }
 }

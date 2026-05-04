@@ -5,7 +5,7 @@
 
 .form-shell {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-4);
 }
 
 .form-section {
@@ -13,11 +13,11 @@
   border: 1px solid rgba(214, 224, 234, 0.9);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
-  padding: var(--space-6);
+  padding: var(--space-5);
 }
 
 .form-section-header {
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .form-section-header h3 {
@@ -35,12 +35,28 @@
 .form-grid {
   display: grid;
   gap: var(--space-4);
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.form-grid > * {
+  grid-column: span 6;
+}
+
+.field-span-12 {
+  grid-column: span 12;
+}
+
+.field-span-8 {
+  grid-column: span 8;
+}
+
+.field-span-4 {
+  grid-column: span 4;
 }
 
 .field {
   display: grid;
-  gap: var(--space-2);
+  gap: 6px;
 }
 
 .field-check {
@@ -52,9 +68,21 @@
   color: var(--color-muted-strong);
   font-size: var(--font-size-sm);
   font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .form-control {
+  background: var(--color-white);
+  border-color: var(--color-border-soft);
+  min-height: 44px;
+  width: 100%;
+}
+
+.form-select {
+  background-color: var(--color-white);
+  border-color: var(--color-border-soft);
+  color: var(--color-text);
+  min-height: 44px;
   width: 100%;
 }
 
@@ -67,12 +95,22 @@
 .field-error {
   color: var(--color-danger);
   font-size: var(--font-size-sm);
+  font-weight: 600;
   margin-bottom: 0;
 }
 
 .form-actions {
   align-items: center;
+  border-top: 1px solid var(--color-border-soft);
   display: flex;
   gap: var(--space-3);
   justify-content: flex-end;
+  margin-top: var(--space-1);
+  padding-top: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .form-grid > * {
+    grid-column: span 12;
+  }
 }
