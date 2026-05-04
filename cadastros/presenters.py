@@ -2,15 +2,14 @@ def _status_label(is_active):
     return "Ativo" if is_active else "Inativo"
 
 
-def _actions():
+def _actions(edit_url="#", delete_url="#"):
     return [
-        {"label": "Abrir", "href": "#", "variant": "secondary"},
-        {"label": "Editar", "href": "#", "variant": "muted"},
-        {"label": "Excluir", "href": "#", "variant": "danger"},
+        {"label": "Editar", "href": edit_url, "variant": "secondary"},
+        {"label": "Desativar", "href": delete_url, "variant": "danger"},
     ]
 
 
-def apresentar_unidade_card(unidade):
+def apresentar_unidade_card(unidade, edit_url="#", delete_url="#"):
     return {
         "title": unidade.nome,
         "subtitle": unidade.sigla or "Sem sigla",
@@ -19,11 +18,11 @@ def apresentar_unidade_card(unidade):
             {"label": "Sigla", "value": unidade.sigla or "-"},
             {"label": "Atualizado em", "value": unidade.updated_at.strftime("%d/%m/%Y")},
         ],
-        "actions": _actions(),
+        "actions": _actions(edit_url, delete_url),
     }
 
 
-def apresentar_cidade_card(cidade):
+def apresentar_cidade_card(cidade, edit_url="#", delete_url="#"):
     return {
         "title": cidade.nome,
         "subtitle": cidade.uf,
@@ -32,7 +31,7 @@ def apresentar_cidade_card(cidade):
             {"label": "UF", "value": cidade.uf},
             {"label": "Atualizado em", "value": cidade.updated_at.strftime("%d/%m/%Y")},
         ],
-        "actions": _actions(),
+        "actions": _actions(edit_url, delete_url),
     }
 
 

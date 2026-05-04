@@ -1,15 +1,28 @@
+from django.contrib import messages
+from django.shortcuts import redirect
 from django.shortcuts import render
+from django.urls import reverse
 
+from .forms import CidadeForm
+from .forms import UnidadeForm
 from .presenters import apresentar_cidade_card
 from .presenters import apresentar_motorista_card
 from .presenters import apresentar_servidor_card
 from .presenters import apresentar_unidade_card
 from .presenters import apresentar_viatura_card
+from .selectors import get_cidade_by_id
+from .selectors import get_unidade_by_id
 from .selectors import listar_cidades
 from .selectors import listar_motoristas
 from .selectors import listar_servidores
 from .selectors import listar_unidades
 from .selectors import listar_viaturas
+from .services import atualizar_cidade
+from .services import atualizar_unidade
+from .services import criar_cidade
+from .services import criar_unidade
+from .services import excluir_cidade
+from .services import excluir_unidade
 
 
 def _render_listagem(request, template_name, context):
@@ -56,8 +69,16 @@ def index(request):
 
 
 def unidades_index(request):
-    unidades = listar_unidades()
-    cards = [apresentar_unidade_card(unidade) for unidade in unidades]
+    q = request.GET.get("q", "").strip()
+    unidades = listar_unidades(q=q)
+    cards = [
+        apresentar_unidade_card(
+            unidade,
+            edit_url=reverse("cadastros:unidade_update", args=[unidade.pk]),
+            delete_url=reverse("cadastros:unidade_delete", args=[unidade.pk]),
+        )
+        for unidade in unidades
+    ]
     return _render_listagem(
         request,
         "cadastros/unidades/index.html",
@@ -66,13 +87,82 @@ def unidades_index(request):
             "page_section": "Cadastros",
             "page_description": "Unidades administrativas reutilizadas nos fluxos documentais.",
             "cards": cards,
+            "q": q,
+        },
+    )
+
+
+def unidade_create(request):
+    form = UnidadeForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        criar_unidade(form)
+        messages.success(request, "Unidade criada com sucesso.")
+        return redirect("cadastros:unidades_index")
+    return render(
+        request,
+        "cadastros/unidades/form.html",
+        {
+            "page_title": "Nova unidade",
+            "page_section": "Cadastros",
+            "page_description": "Cadastre uma unidade administrativa reutilizavel.",
+            "form": form,
+            "submit_label": "Criar unidade",
+            "back_url": reverse("cadastros:unidades_index"),
+        },
+    )
+
+
+def unidade_update(request, pk):
+    unidade = get_unidade_by_id(pk)
+    form = UnidadeForm(request.POST or None, instance=unidade)
+    if request.method == "POST" and form.is_valid():
+        atualizar_unidade(unidade, form)
+        messages.success(request, "Unidade atualizada com sucesso.")
+        return redirect("cadastros:unidades_index")
+    return render(
+        request,
+        "cadastros/unidades/form.html",
+        {
+            "page_title": "Editar unidade",
+            "page_section": "Cadastros",
+            "page_description": "Atualize os dados da unidade administrativa.",
+            "form": form,
+            "submit_label": "Salvar unidade",
+            "back_url": reverse("cadastros:unidades_index"),
+        },
+    )
+
+
+def unidade_delete(request, pk):
+    unidade = get_unidade_by_id(pk)
+    if request.method == "POST":
+        excluir_unidade(unidade)
+        messages.success(request, "Unidade desativada com sucesso.")
+        return redirect("cadastros:unidades_index")
+    return render(
+        request,
+        "cadastros/unidades/confirm_delete.html",
+        {
+            "page_title": "Desativar unidade",
+            "page_section": "Cadastros",
+            "page_description": "Esta acao marca a unidade como inativa, sem exclusao fisica.",
+            "object": unidade,
+            "back_url": reverse("cadastros:unidades_index"),
         },
     )
 
 
 def cidades_index(request):
-    cidades = listar_cidades()
-    cards = [apresentar_cidade_card(cidade) for cidade in cidades]
+    q = request.GET.get("q", "").strip()
+    cidades = listar_cidades(q=q)
+    cards = [
+        apresentar_cidade_card(
+            cidade,
+            edit_url=reverse("cadastros:cidade_update", args=[cidade.pk]),
+            delete_url=reverse("cadastros:cidade_delete", args=[cidade.pk]),
+        )
+        for cidade in cidades
+    ]
     return _render_listagem(
         request,
         "cadastros/cidades/index.html",
@@ -81,6 +171,67 @@ def cidades_index(request):
             "page_section": "Cadastros",
             "page_description": "Cidades de referencia para destinos, roteiros e documentos.",
             "cards": cards,
+            "q": q,
+        },
+    )
+
+
+def cidade_create(request):
+    form = CidadeForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        criar_cidade(form)
+        messages.success(request, "Cidade criada com sucesso.")
+        return redirect("cadastros:cidades_index")
+    return render(
+        request,
+        "cadastros/cidades/form.html",
+        {
+            "page_title": "Nova cidade",
+            "page_section": "Cadastros",
+            "page_description": "Cadastre uma cidade de referencia para os fluxos.",
+            "form": form,
+            "submit_label": "Criar cidade",
+            "back_url": reverse("cadastros:cidades_index"),
+        },
+    )
+
+
+def cidade_update(request, pk):
+    cidade = get_cidade_by_id(pk)
+    form = CidadeForm(request.POST or None, instance=cidade)
+    if request.method == "POST" and form.is_valid():
+        atualizar_cidade(cidade, form)
+        messages.success(request, "Cidade atualizada com sucesso.")
+        return redirect("cadastros:cidades_index")
+    return render(
+        request,
+        "cadastros/cidades/form.html",
+        {
+            "page_title": "Editar cidade",
+            "page_section": "Cadastros",
+            "page_description": "Atualize os dados da cidade.",
+            "form": form,
+            "submit_label": "Salvar cidade",
+            "back_url": reverse("cadastros:cidades_index"),
+        },
+    )
+
+
+def cidade_delete(request, pk):
+    cidade = get_cidade_by_id(pk)
+    if request.method == "POST":
+        excluir_cidade(cidade)
+        messages.success(request, "Cidade desativada com sucesso.")
+        return redirect("cadastros:cidades_index")
+    return render(
+        request,
+        "cadastros/cidades/confirm_delete.html",
+        {
+            "page_title": "Desativar cidade",
+            "page_section": "Cadastros",
+            "page_description": "Esta acao marca a cidade como inativa, sem exclusao fisica.",
+            "object": cidade,
+            "back_url": reverse("cadastros:cidades_index"),
         },
     )
 

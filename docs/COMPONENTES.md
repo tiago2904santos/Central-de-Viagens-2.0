@@ -41,6 +41,8 @@ cards = [apresentar_servidor_card(objeto) for objeto in objetos]
 - `forms/form_field.html`: campo padrao. Variaveis: `field_id`, `label`, `field`, `help_text`, `errors`.
 - `forms/form_actions.html`: acoes finais. Variaveis: `primary_label`, `secondary_label`, `secondary_url`.
 
+O primeiro uso real esta nos templates de `Unidade` e `Cidade`, em `templates/cadastros/*/form.html`. Forms devem usar widgets com classes globais como `form-control` e `form-check-input`.
+
 ## Steppers
 
 - `steppers/stepper.html`: etapas padrao para fluxos.

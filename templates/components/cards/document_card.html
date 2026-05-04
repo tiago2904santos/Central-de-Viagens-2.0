@@ -1,8 +1,13 @@
 <article class="document-card">
   <header class="document-card-header">
     <div>
-      <span class="document-status">{{ card.status|default:status|default:"Rascunho" }}</span>
-      <h3>{{ card.title|default:title|default:"Documento" }}</h3>
+      {% if card %}
+        <span class="document-status">{{ card.status|default:"Rascunho" }}</span>
+        <h3>{{ card.title|default:"Documento" }}</h3>
+      {% else %}
+        <span class="document-status">{{ status|default:"Rascunho" }}</span>
+        <h3>{{ title|default:"Documento" }}</h3>
+      {% endif %}
       {% if card.subtitle %}
         <p>{{ card.subtitle }}</p>
       {% endif %}
@@ -21,7 +26,11 @@
     </dl>
   {% endif %}
   <div class="document-card-body">
-    {{ card.body|default:content }}
+    {% if card.body %}
+      {{ card.body }}
+    {% else %}
+      {{ content|default:"" }}
+    {% endif %}
   </div>
   <footer class="document-actions">
     {% if card.actions %}

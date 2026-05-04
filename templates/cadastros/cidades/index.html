@@ -3,5 +3,6 @@
 {% block title %}Cidades{% endblock %}
 
 {% block content %}
-  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Cadastros" search_placeholder="Buscar cidades" action_label="Nova cidade" action_url="#" empty_message="Nenhuma cidade cadastrada ainda." cards=cards only %}
+  {% url "cadastros:cidade_create" as create_url %}
+  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Cadastros" search_placeholder="Buscar cidades" action_label="Nova cidade" action_url=create_url empty_message="Nenhuma cidade cadastrada ainda." cards=cards q=q only %}
 {% endblock %}

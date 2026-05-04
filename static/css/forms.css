@@ -43,10 +43,25 @@
   gap: var(--space-2);
 }
 
+.field-check {
+  align-items: center;
+  display: flex;
+}
+
 .field label {
   color: var(--color-muted-strong);
   font-size: var(--font-size-sm);
   font-weight: 700;
+}
+
+.form-control {
+  width: 100%;
+}
+
+.form-check-input {
+  height: 18px;
+  min-height: 18px;
+  width: 18px;
 }
 
 .field-error {

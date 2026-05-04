@@ -96,6 +96,8 @@ Use:
 
 Formularios devem usar `.form-grid`, labels consistentes e mensagens de erro padronizadas.
 
+Views devem enviar `form` validado por `ModelForm`; templates renderizam campos por `forms/form_field.html` e acoes por `forms/form_actions.html`. Nao criar markup de formulario fora do padrao salvo necessidade reutilizavel.
+
 ## Steppers
 
 Use `templates/components/steppers/stepper.html` para fluxos em etapas. O padrao inicial usa:

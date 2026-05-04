@@ -22,3 +22,5 @@ O app `cadastros` e a base de dados comum do sistema. Seus registros devem ser r
 - `Viatura`: representa um veiculo da frota. Possui placa unica, modelo, marca, tipo, combustivel e unidade opcional.
 
 Os models desta etapa sao uma base inicial e podem evoluir em etapas futuras. Views devem consultar dados por selectors, formatar exibicao por presenters e renderizar templates com components. CSS e JS por pagina continuam proibidos.
+
+O CRUD inicial de `Unidade` e `Cidade` usa exclusao logica. Ao desativar um registro, ele permanece no banco com `ativa=False`, preservando historico para vinculos futuros. Esse padrao deve orientar os proximos CRUDs de `Servidor`, `Motorista` e `Viatura`.

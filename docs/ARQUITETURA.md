@@ -43,3 +43,7 @@ As paginas devem ser compostas por includes reutilizaveis em `templates/componen
 ## Padrao de consulta e apresentacao
 
 Apps com listagens reais devem separar consulta e apresentacao. Em `cadastros`, views chamam selectors para obter QuerySets e presenters para transformar objetos em dados de cards. Templates recebem dados prontos para exibicao e continuam compostos por components globais.
+
+## Padrao CRUD inicial
+
+O primeiro CRUD real foi implementado em `cadastros` para `Unidade` e `Cidade`. Views usam forms para validacao, selectors para busca de objetos, services para gravacao/desativacao e messages para feedback. Exclusoes em cadastros sao logicas nesta etapa, marcando `ativa=False`.
