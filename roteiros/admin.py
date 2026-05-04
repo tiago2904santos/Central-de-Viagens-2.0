@@ -6,7 +6,7 @@ from .models import TrechoRoteiro
 
 @admin.register(Roteiro)
 class RoteiroAdmin(admin.ModelAdmin):
-    list_display = ("nome", "origem", "destino", "data_inicio", "data_fim", "updated_at")
+    list_display = ("nome", "origem", "destino", "data_inicio", "data_fim")
     search_fields = ("nome", "descricao", "origem__nome", "destino__nome")
     list_filter = ("origem__estado", "destino__estado", "data_inicio")
     ordering = ("-updated_at", "nome")

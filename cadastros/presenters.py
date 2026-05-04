@@ -37,7 +37,6 @@ def apresentar_unidade_card(unidade, edit_url="#", delete_url="#"):
         "subtitle": unidade.sigla or "Sem sigla",
         "meta": [
             {"label": "Sigla", "value": unidade.sigla or "-"},
-            {"label": "Atualizado em", "value": unidade.updated_at.strftime("%d/%m/%Y")},
         ],
         "actions": _actions(edit_url, delete_url),
     }
@@ -49,7 +48,6 @@ def apresentar_cidade_card(cidade, edit_url="#", delete_url="#"):
         "subtitle": cidade.uf,
         "meta": [
             {"label": "UF", "value": cidade.uf},
-            {"label": "Atualizado em", "value": cidade.updated_at.strftime("%d/%m/%Y")},
         ],
         "actions": _actions(edit_url, delete_url),
     }
@@ -59,9 +57,7 @@ def apresentar_cargo_card(cargo, edit_url="#", delete_url="#"):
     return {
         "title": cargo.nome,
         "subtitle": "Cadastro de cargo",
-        "meta": [
-            {"label": "Atualizado em", "value": cargo.updated_at.strftime("%d/%m/%Y")},
-        ],
+        "meta": [],
         "actions": _actions(edit_url, delete_url),
     }
 
@@ -70,9 +66,7 @@ def apresentar_combustivel_card(combustivel, edit_url="#", delete_url="#"):
     return {
         "title": combustivel.nome,
         "subtitle": "Cadastro de combustível",
-        "meta": [
-            {"label": "Atualizado em", "value": combustivel.updated_at.strftime("%d/%m/%Y")},
-        ],
+        "meta": [],
         "actions": _actions(edit_url, delete_url),
     }
 
@@ -89,7 +83,6 @@ def apresentar_servidor_card(servidor, edit_url="#", delete_url="#"):
             {"label": "RG", "value": _format_rg(servidor.rg, sem_rg=servidor.sem_rg)},
             {"label": "Telefone", "value": _format_telefone(servidor.telefone)},
             {"label": "Unidade", "value": unidade_label},
-            {"label": "Atualizado em", "value": servidor.updated_at.strftime("%d/%m/%Y")},
         ],
         "actions": _actions(edit_url, delete_url),
     }
@@ -114,7 +107,6 @@ def apresentar_viatura_card(viatura, edit_url="#", delete_url="#"):
             {"label": "Combustível", "value": viatura.combustivel.nome if viatura.combustivel else "-"},
             {"label": "Tipo", "value": viatura.get_tipo_display() if viatura.tipo else "-"},
             {"label": "Motoristas", "value": _motoristas_label(viatura)},
-            {"label": "Atualizado em", "value": viatura.updated_at.strftime("%d/%m/%Y")},
         ],
         "actions": _actions(edit_url, delete_url),
     }
@@ -124,9 +116,7 @@ def apresentar_linha_lista_simples_cargo(cargo, edit_url="#", delete_url="#", se
     row = {
         "title": cargo.nome,
         "badges": [],
-        "meta": [
-            {"label": "Atualizado em", "value": cargo.updated_at.strftime("%d/%m/%Y")},
-        ],
+        "meta": [],
         "edit_url": edit_url,
         "delete_url": delete_url,
         "set_default_url": set_default_url,
@@ -141,9 +131,7 @@ def apresentar_linha_lista_simples_combustivel(combustivel, edit_url="#", delete
     row = {
         "title": combustivel.nome,
         "badges": [],
-        "meta": [
-            {"label": "Atualizado em", "value": combustivel.updated_at.strftime("%d/%m/%Y")},
-        ],
+        "meta": [],
         "edit_url": edit_url,
         "delete_url": delete_url,
         "set_default_url": set_default_url,
@@ -159,7 +147,6 @@ def apresentar_linha_lista_simples_unidade(unidade, edit_url="#", delete_url="#"
         "title": unidade.nome,
         "meta": [
             {"label": "Sigla", "value": unidade.sigla or "—"},
-            {"label": "Atualizado em", "value": unidade.updated_at.strftime("%d/%m/%Y")},
         ],
         "edit_url": edit_url,
         "delete_url": delete_url,
@@ -174,7 +161,6 @@ def apresentar_linha_lista_simples_cidade(cidade, edit_url="#", delete_url="#"):
         "meta": [
             {"label": "UF", "value": sigla},
             {"label": "Capital", "value": cap},
-            {"label": "Atualizado em", "value": cidade.updated_at.strftime("%d/%m/%Y")},
         ],
         "edit_url": edit_url,
         "delete_url": delete_url,
@@ -188,7 +174,6 @@ def apresentar_linha_lista_simples_estado(estado, edit_url="#", delete_url="#"):
         "meta": [
             {"label": "Sigla", "value": estado.sigla},
             {"label": "IBGE", "value": cod},
-            {"label": "Atualizado em", "value": estado.updated_at.strftime("%d/%m/%Y")},
         ],
         "edit_url": edit_url,
         "delete_url": delete_url,
@@ -208,7 +193,6 @@ def apresentar_linha_lista_simples_servidor(servidor, edit_url="#", delete_url="
             {"label": "RG", "value": _format_rg(servidor.rg, sem_rg=servidor.sem_rg)},
             {"label": "Telefone", "value": _format_telefone(servidor.telefone)},
             {"label": "Unidade", "value": unidade_label},
-            {"label": "Atualizado em", "value": servidor.updated_at.strftime("%d/%m/%Y")},
         ],
         "edit_url": edit_url,
         "delete_url": delete_url,
@@ -226,7 +210,6 @@ def apresentar_linha_lista_simples_viatura(viatura, edit_url="#", delete_url="#"
             {"label": "Combustível", "value": viatura.combustivel.nome if viatura.combustivel else "—"},
             {"label": "Tipo", "value": viatura.get_tipo_display() if viatura.tipo else "—"},
             {"label": "Motoristas", "value": _motoristas_label(viatura)},
-            {"label": "Atualizado em", "value": viatura.updated_at.strftime("%d/%m/%Y")},
         ],
         "edit_url": edit_url,
         "delete_url": delete_url,

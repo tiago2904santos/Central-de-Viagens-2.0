@@ -69,7 +69,7 @@ Fontes de verdade usadas: `docs/LEGACY_*_MAP.md` e arquivos em `legacy/.../cadas
 - Checkboxes booleanos em Cadastros usam o componente global **toggle** (`templates/components/forms/toggle_field.html`, `static/css/forms.css`, `static/js/components/toggles.js`), inspirado no botao **Data unica** do Plano de Trabalho / OS no legacy (`visually-hidden` + controle visual + estado claro), sem copiar CSS legado.
 - **Servidor**: ao lado de Cargo e Unidade ha botoes para listas de gerenciamento (`input_with_action`); **Nao possui RG** trava o campo RG (JS centralizado); telefone com mascara via `data-mask="telefone"`.
 - **Cargo / Combustivel**: acoes POST **Definir como padrao** na lista (`cadastros:cargo_set_default`, `cadastros:combustivel_set_default`); badge **Padrao** quando `is_padrao`; services `definir_cargo_padrao` / `definir_combustivel_padrao`.
-- **Viatura**: titulo de lista `MODELO — PLACA`; meta com combustivel, tipo, motoristas e atualizado em; relacionamento **motoristas** e M2M com `Servidor` (sem cadastro Motorista).
+- **Viatura**: titulo de lista `MODELO — PLACA`; meta com combustivel, tipo e motoristas; relacionamento **motoristas** e M2M com `Servidor` (sem cadastro Motorista).
 
 ## Menu e hub
 

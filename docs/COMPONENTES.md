@@ -24,6 +24,7 @@ O app `cadastros` usa listagens globais (`list_page` ou `list_page_simple`), `do
 
 - **Lista simples**: `list_page_simple.html`, `simple_list.html`, `simple_list_row.html`, estilos em `lists.css`. Para cadastros enxutos: Cargo, Combustivel, Unidade, Cidade. Na inclusao da lista, **nao use** `only` no `{% include %}` da pagina para `list_page_simple` (nem na cadeia ate `simple_list_row`) quando houver formularios POST na linha — caso contrario `csrf_token` some do contexto e `{% csrf_token %}` renderiza vazio.
 - **Cards**: `list_page.html` + `document_card` para Servidor, Viatura e listagens ricas futuras.
+- Listagens nao exibem data de atualizacao por padrao. Datas so devem aparecer quando forem informacao de negocio, como data de viagem, data do documento, periodo do roteiro, prazo ou data de criacao relevante.
 
 ## Sidebar
 

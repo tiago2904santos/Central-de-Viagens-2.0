@@ -30,7 +30,6 @@ def apresentar_roteiro_card(roteiro):
         "meta": [
             {"label": "Período", "value": _format_periodo(roteiro)},
             {"label": "Trechos", "value": quantidade_trechos},
-            {"label": "Atualizado em", "value": roteiro.updated_at.strftime("%d/%m/%Y")},
         ],
         "actions": [
             {"label": "Abrir", "href": "#", "variant": "secondary"},
