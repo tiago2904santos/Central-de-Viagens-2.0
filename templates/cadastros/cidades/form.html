@@ -11,7 +11,7 @@
       <div class="form-grid">
         {% include "components/forms/form_field.html" with field=form.nome only %}
         {% include "components/forms/form_field.html" with field=form.estado only %}
-        {% include "components/forms/form_field.html" with field=form.capital only %}
+        {% include "components/forms/card_toggle.html" with field=form.capital title="Capital" description="Marca a cidade como capital do estado" icon="UF" only %}
         {% include "components/forms/form_field.html" with field=form.codigo_ibge only %}
         {% include "components/forms/form_field.html" with field=form.latitude only %}
         {% include "components/forms/form_field.html" with field=form.longitude only %}

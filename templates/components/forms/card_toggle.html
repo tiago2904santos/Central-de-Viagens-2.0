@@ -1,0 +1,16 @@
+<div class="field field-card-toggle">
+  <label class="app-card-toggle{% if field.value %} is-checked{% endif %}{% if field.field.disabled %} is-disabled{% endif %}" data-card-toggle data-on-label="{{ on_label|default:'LIGADA' }}" data-off-label="{{ off_label|default:'DESLIGADA' }}">
+    {{ field.as_widget }}
+    <span class="app-card-toggle__icon" aria-hidden="true">{{ icon|default:"i" }}</span>
+    <span class="app-card-toggle__content">
+      <span class="app-card-toggle__title">{{ title|default:field.label }}</span>
+      {% if description %}
+        <span class="app-card-toggle__description">{{ description }}</span>
+      {% endif %}
+    </span>
+    <span class="app-card-toggle__state" data-card-toggle-state>
+      {% if field.value %}{{ on_label|default:"LIGADA" }}{% else %}{{ off_label|default:"DESLIGADA" }}{% endif %}
+    </span>
+  </label>
+  {% if field.errors %}<p class="field-error">{{ field.errors|striptags }}</p>{% endif %}
+</div>

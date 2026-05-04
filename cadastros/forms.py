@@ -34,6 +34,10 @@ class BaseCadastroForm(forms.ModelForm):
             attrs = getattr(field.widget, "attrs", None)
             if attrs is None:
                 continue
+            if isinstance(field.widget, forms.CheckboxInput):
+                attrs.setdefault("class", "app-card-toggle__input sr-only")
+                attrs.setdefault("role", "switch")
+                continue
             attrs.setdefault("class", "form-control")
             if isinstance(field, forms.CharField):
                 attrs.setdefault("data-mask", "upper")
@@ -88,7 +92,7 @@ class CidadeForm(BaseCadastroForm):
 
 _TOGGLE_WIDGET = forms.CheckboxInput(
     attrs={
-        "class": "app-toggle__input sr-only",
+        "class": "app-card-toggle__input sr-only",
         "role": "switch",
     },
 )
@@ -337,41 +341,48 @@ class ViaturaForm(BaseCadastroForm):
 
 
 class ConfiguracaoSistemaForm(forms.ModelForm):
-    """Singleton institucional + assinantes por tipo (ordem 1), espelhando o legacy."""
+    """Singleton institucional + assinantes por tipo documental, espelhando o legacy."""
 
-    assinatura_oficio = forms.ModelChoiceField(
+    assinatura_oficio_1 = forms.ModelChoiceField(
         queryset=Servidor.objects.none(),
         required=False,
         empty_label="---------",
-        label="Assinatura (Ofícios)",
+        label="Assinatura 1",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
-    assinatura_justificativa = forms.ModelChoiceField(
+    assinatura_oficio_2 = forms.ModelChoiceField(
         queryset=Servidor.objects.none(),
         required=False,
         empty_label="---------",
-        label="Assinatura (Justificativas)",
+        label="Assinatura 2",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
-    assinatura_plano_trabalho = forms.ModelChoiceField(
+    assinatura_justificativas = forms.ModelChoiceField(
         queryset=Servidor.objects.none(),
         required=False,
         empty_label="---------",
-        label="Assinatura (Planos de Trabalho)",
+        label="Assinante",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
-    assinatura_ordem_servico = forms.ModelChoiceField(
+    assinatura_planos_trabalho = forms.ModelChoiceField(
         queryset=Servidor.objects.none(),
         required=False,
         empty_label="---------",
-        label="Assinatura (Ordem de Serviço)",
+        label="Assinante",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
-    assinatura_termo = forms.ModelChoiceField(
+    assinatura_ordens_servico = forms.ModelChoiceField(
         queryset=Servidor.objects.none(),
         required=False,
         empty_label="---------",
-        label="Assinatura (Termo de Autorização)",
+        label="Assinante",
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    assinatura_termo_autorizacao = forms.ModelChoiceField(
+        queryset=Servidor.objects.none(),
+        required=False,
+        empty_label="---------",
+        label="Assinante",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
 
@@ -403,7 +414,7 @@ class ConfiguracaoSistemaForm(forms.ModelForm):
             "cidade_sede_padrao": forms.Select(attrs={"class": "form-select"}),
             "prazo_justificativa_dias": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
             "nome_orgao": forms.TextInput(attrs={"class": "form-control"}),
-            "sigla_orgao": forms.TextInput(attrs={"class": "form-control"}),
+            "sigla_orgao": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
             "divisao": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
             "unidade": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
             "sede": forms.TextInput(attrs={"class": "form-control"}),
@@ -448,13 +459,16 @@ class ConfiguracaoSistemaForm(forms.ModelForm):
         )
         self.fields["cidade_sede_padrao"].required = False
         self.fields["cidade_sede_padrao"].empty_label = "---------"
+        self.fields["cidade_sede_padrao"].disabled = True
+        self.fields["cidade_sede_padrao"].help_text = "Resolvida automaticamente pelo endereço informado."
 
         for fname in (
-            "assinatura_oficio",
-            "assinatura_justificativa",
-            "assinatura_plano_trabalho",
-            "assinatura_ordem_servico",
-            "assinatura_termo",
+            "assinatura_oficio_1",
+            "assinatura_oficio_2",
+            "assinatura_justificativas",
+            "assinatura_planos_trabalho",
+            "assinatura_ordens_servico",
+            "assinatura_termo_autorizacao",
         ):
             self.fields[fname].queryset = qs
 
@@ -465,16 +479,20 @@ class ConfiguracaoSistemaForm(forms.ModelForm):
                 self.initial.setdefault("telefone", format_telefone(self.instance.telefone))
 
             mapping = [
-                ("assinatura_oficio", AssinaturaConfiguracao.TIPO_OFICIO),
-                ("assinatura_justificativa", AssinaturaConfiguracao.TIPO_JUSTIFICATIVA),
-                ("assinatura_plano_trabalho", AssinaturaConfiguracao.TIPO_PLANO_TRABALHO),
-                ("assinatura_ordem_servico", AssinaturaConfiguracao.TIPO_ORDEM_SERVICO),
-                ("assinatura_termo", AssinaturaConfiguracao.TIPO_TERMO_AUTORIZACAO),
+                ("assinatura_oficio_1", AssinaturaConfiguracao.TIPO_OFICIO, 1),
+                ("assinatura_oficio_2", AssinaturaConfiguracao.TIPO_OFICIO, 2),
+                ("assinatura_justificativas", AssinaturaConfiguracao.TIPO_JUSTIFICATIVA, 1),
+                ("assinatura_planos_trabalho", AssinaturaConfiguracao.TIPO_PLANO_TRABALHO, 1),
+                ("assinatura_ordens_servico", AssinaturaConfiguracao.TIPO_ORDEM_SERVICO, 1),
+                ("assinatura_termo_autorizacao", AssinaturaConfiguracao.TIPO_TERMO_AUTORIZACAO, 1),
             ]
-            for field_name, tipo in mapping:
-                rec = self.instance.assinaturas.filter(tipo=tipo, ordem=1).first()
+            for field_name, tipo, ordem in mapping:
+                rec = self.instance.assinaturas.filter(tipo=tipo, ordem=ordem).first()
                 if rec and rec.servidor_id:
                     self.fields[field_name].initial = rec.servidor_id
+
+    def clean_nome_orgao(self):
+        return " ".join((self.cleaned_data.get("nome_orgao") or "").strip().split()).upper()
 
     def clean_divisao(self):
         return (self.cleaned_data.get("divisao") or "").strip().upper()
@@ -492,7 +510,7 @@ class ConfiguracaoSistemaForm(forms.ModelForm):
             return ""
         if len(cep_limpo) != 8:
             raise forms.ValidationError("CEP deve ter 8 dígitos.")
-        return f"{cep_limpo[:5]}-{cep_limpo[5:]}"
+        return cep_limpo
 
     def clean_uf(self):
         value = (self.cleaned_data.get("uf") or "").strip().upper()
@@ -508,22 +526,3 @@ class ConfiguracaoSistemaForm(forms.ModelForm):
             raise forms.ValidationError("Telefone deve ter 10 ou 11 dígitos.")
         return digits
 
-    def save(self, commit=True):
-        instance = super().save(commit=commit)
-        if commit:
-            pairs = [
-                ("assinatura_oficio", AssinaturaConfiguracao.TIPO_OFICIO),
-                ("assinatura_justificativa", AssinaturaConfiguracao.TIPO_JUSTIFICATIVA),
-                ("assinatura_plano_trabalho", AssinaturaConfiguracao.TIPO_PLANO_TRABALHO),
-                ("assinatura_ordem_servico", AssinaturaConfiguracao.TIPO_ORDEM_SERVICO),
-                ("assinatura_termo", AssinaturaConfiguracao.TIPO_TERMO_AUTORIZACAO),
-            ]
-            for field_name, tipo in pairs:
-                servidor = self.cleaned_data.get(field_name)
-                AssinaturaConfiguracao.objects.update_or_create(
-                    configuracao=instance,
-                    tipo=tipo,
-                    ordem=1,
-                    defaults={"servidor": servidor},
-                )
-        return instance

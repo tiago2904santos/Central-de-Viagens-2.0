@@ -120,85 +120,137 @@
   }
 }
 
-/* Toggle global (checkbox oculto; inspirado no "Data única" do legacy — pill/estado, sem copiar CSS legado) */
-.app-toggle {
-  display: inline-flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  max-width: 100%;
+/* Card toggle global para BooleanFields visiveis. */
+.field-card-toggle {
+  grid-column: span 6;
 }
 
-.app-toggle__input:focus-visible + .app-toggle__control .app-toggle__track {
+.app-card-toggle {
+  align-items: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(253, 236, 236, 0.82)),
+    var(--color-danger-soft);
+  border: 1px solid rgba(180, 35, 24, 0.24);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  cursor: pointer;
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 84px;
+  padding: var(--space-4);
+  position: relative;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  width: 100%;
+}
+
+.app-card-toggle__input {
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.app-card-toggle__input:focus-visible ~ .app-card-toggle__icon,
+.app-card-toggle:focus-within {
   box-shadow: var(--glow-primary);
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid rgba(216, 162, 27, 0.72);
   outline-offset: 2px;
 }
 
-.app-toggle__control {
+.app-card-toggle__icon {
   align-items: center;
-  cursor: pointer;
+  background: rgba(180, 35, 24, 0.1);
+  border: 1px solid rgba(180, 35, 24, 0.18);
+  border-radius: 12px;
+  color: #9b2c22;
   display: inline-flex;
-  gap: var(--space-3);
-  max-width: 100%;
-}
-
-.app-toggle__track {
-  background: linear-gradient(
-    180deg,
-    rgba(243, 249, 254, 0.98),
-    rgba(232, 241, 250, 0.96)
-  );
-  border: 1px solid rgba(31, 76, 125, 0.28);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--shadow-inner);
-  flex-shrink: 0;
-  height: 28px;
-  position: relative;
-  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-  width: 52px;
-}
-
-.app-toggle__knob {
-  background: var(--color-surface);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--shadow-xs);
-  display: block;
-  height: 22px;
-  left: 3px;
-  position: absolute;
-  top: 3px;
-  transition: transform 0.18s ease, background 0.18s ease;
-  width: 22px;
-}
-
-.app-toggle.is-checked .app-toggle__track {
-  background: linear-gradient(
-    180deg,
-    rgba(21, 91, 154, 0.35),
-    rgba(11, 58, 102, 0.55)
-  );
-  border-color: rgba(11, 58, 102, 0.65);
-}
-
-.app-toggle.is-checked .app-toggle__knob {
-  background: var(--color-accent);
-  box-shadow: 0 2px 8px rgba(216, 162, 27, 0.35);
-  transform: translateX(22px);
-}
-
-.app-toggle__text {
-  color: var(--color-heading);
   font-size: var(--font-size-sm);
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-weight: 900;
+  height: 42px;
+  justify-content: center;
+  letter-spacing: 0;
+  min-width: 42px;
+  padding: 0 var(--space-2);
 }
 
-.app-toggle__control:hover .app-toggle__track {
-  border-color: rgba(21, 91, 154, 0.45);
+.app-card-toggle__content {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
-.app-toggle.is-checked .app-toggle__text {
+.app-card-toggle__title {
+  color: var(--color-heading);
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.app-card-toggle__description {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.app-card-toggle__state {
+  align-items: center;
+  background: rgba(180, 35, 24, 0.11);
+  border: 1px solid rgba(180, 35, 24, 0.24);
+  border-radius: var(--radius-pill);
+  color: #8e1f17;
+  display: inline-flex;
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  justify-content: center;
+  letter-spacing: 0;
+  min-width: 92px;
+  padding: 7px var(--space-3);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.app-card-toggle:hover {
+  border-color: rgba(180, 35, 24, 0.38);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.app-card-toggle.is-checked {
+  background:
+    linear-gradient(135deg, rgba(227, 240, 251, 0.98), rgba(255, 243, 207, 0.82)),
+    var(--color-info-soft);
+  border-color: rgba(21, 91, 154, 0.48);
+  box-shadow: 0 10px 24px rgba(11, 58, 102, 0.12);
+}
+
+.app-card-toggle.is-checked .app-card-toggle__icon {
+  background: linear-gradient(180deg, rgba(255, 243, 207, 0.98), rgba(216, 162, 27, 0.2));
+  border-color: rgba(216, 162, 27, 0.48);
   color: var(--color-primary-strong);
+}
+
+.app-card-toggle.is-checked .app-card-toggle__state {
+  background: linear-gradient(180deg, var(--color-primary-bright), var(--color-primary));
+  border-color: rgba(6, 40, 71, 0.36);
+  box-shadow: 0 8px 16px rgba(11, 58, 102, 0.18);
+  color: var(--color-white);
+}
+
+.app-card-toggle.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+  transform: none;
+}
+
+.app-card-toggle.is-disabled:hover {
+  box-shadow: var(--shadow-xs);
+  transform: none;
 }
 
 /* Select + ação lateral */
@@ -223,6 +275,16 @@
 @media (max-width: 640px) {
   .form-field-with-action__button {
     width: 100%;
+  }
+
+  .app-card-toggle {
+    align-items: start;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .app-card-toggle__state {
+    grid-column: 2;
+    justify-self: start;
   }
 }
 

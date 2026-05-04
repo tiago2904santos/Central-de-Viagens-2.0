@@ -10,7 +10,7 @@
         {% include "components/forms/form_field.html" with field=form.nome only %}
         {% include "components/forms/input_with_action.html" with field=form.cargo action_url=cargos_manage_url action_label="Gerenciar cargos" only %}
         {% include "components/forms/form_field.html" with field=form.cpf only %}
-        {% include "components/forms/toggle_field.html" with field=form.sem_rg only %}
+        {% include "components/forms/card_toggle.html" with field=form.sem_rg title="Não possui RG" description="Bloqueia o campo RG" icon="RG" only %}
         <div class="field-span-12 field-rg-wrap" data-rg-field-wrap>
           {% include "components/forms/form_field.html" with field=form.rg only %}
         </div>

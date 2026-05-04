@@ -64,9 +64,10 @@ Fontes de verdade usadas: `docs/LEGACY_*_MAP.md` e arquivos em `legacy/.../cadas
 - Forms atualizados: `CargoForm`, `CombustivelForm`, `ServidorForm`, `ViaturaForm`, `UnidadeForm`, `ConfiguracaoSistemaForm`.
 - Padrao mantido: views orquestram; selectors consultam; services persistem; presenters formatam listagens.
 
-## UI e toggles (alinhamento ao legacy)
+## UI e card-toggles (alinhamento ao legacy)
 
-- Checkboxes booleanos em Cadastros usam o componente global **toggle** (`templates/components/forms/toggle_field.html`, `static/css/forms.css`, `static/js/components/toggles.js`), inspirado no botao **Data unica** do Plano de Trabalho / OS no legacy (`visually-hidden` + controle visual + estado claro), sem copiar CSS legado.
+- Checkboxes booleanos em Cadastros usam o componente global **card-toggle** (`templates/components/forms/card_toggle.html`, `static/css/forms.css`, `static/js/components/card-toggle.js`), inspirado no botao **Data unica** do Plano de Trabalho no legacy (`visually-hidden` + card clicavel + estado `LIGADA` / `DESLIGADA`), sem copiar CSS legado.
+- Checkbox cru do navegador nao deve aparecer na interface final; BooleanFields futuros renderizados manualmente devem usar o card-toggle.
 - **Servidor**: ao lado de Cargo e Unidade ha botoes para listas de gerenciamento (`input_with_action`); **Nao possui RG** trava o campo RG (JS centralizado); telefone com mascara via `data-mask="telefone"`.
 - **Cargo / Combustivel**: acoes POST **Definir como padrao** na lista (`cadastros:cargo_set_default`, `cadastros:combustivel_set_default`); badge **Padrao** quando `is_padrao`; services `definir_cargo_padrao` / `definir_combustivel_padrao`.
 - **Viatura**: titulo de lista `MODELO — PLACA`; meta com combustivel, tipo e motoristas; relacionamento **motoristas** e M2M com `Servidor` (sem cadastro Motorista).

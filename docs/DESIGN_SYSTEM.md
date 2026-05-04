@@ -40,9 +40,19 @@ Mascaras padrao:
 
 A normalizacao final ocorre no backend (forms/models).
 
-## Toggle (checkbox)
+## Card-toggle (checkbox)
 
-Booleanos em formularios devem usar o padrao **toggle** (`app-toggle` em `static/css/forms.css`, componente `toggle_field.html`), inspirado funcionalmente no **Data unica** do legacy (checkbox oculto + rotulo clicavel + estado ON/OFF evidente). Estados de foco usam azul institucional e acento amarelo no indicador quando ligado. JS de sincronismo em `static/js/components/toggles.js` (sem JS inline).
+Booleanos visiveis em formularios devem usar o padrao **card-toggle** (`app-card-toggle` em `static/css/forms.css`, componente `card_toggle.html`), inspirado no botao **Data unica** do Plano de Trabalho do legacy.
+
+Regras:
+
+- Checkbox cru do navegador nao deve aparecer na interface final.
+- O input real continua no DOM, oculto com tecnica acessivel de visually-hidden.
+- O card mostra icone, titulo forte, descricao pequena e badge de estado `LIGADA` / `DESLIGADA`.
+- Desligado usa fundo e borda vermelhos suaves, com badge vermelho.
+- Ligado usa azul institucional com acento amarelo/dourado, borda destacada e badge premium.
+- BooleanFields futuros renderizados manualmente devem usar `templates/components/forms/card_toggle.html`.
+- JS de sincronismo em `static/js/components/card-toggle.js` (sem JS inline).
 
 ## Cadastros como referencia
 

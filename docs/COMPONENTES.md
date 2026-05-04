@@ -68,9 +68,11 @@ Mascaras globais sao ativadas por atributo:
 - `data-mask="telefone"`
 - `data-mask="placa"`
 
-### Toggle (`toggle_field.html`)
+### Card-toggle (`card_toggle.html`)
 
-Checkboxes booleanos devem preferir `templates/components/forms/toggle_field.html` com widget `CheckboxInput` usando classes `app-toggle__input` + `sr-only`. Inspiracao conceitual: botao **Data unica** do Plano de Trabalho no legacy.
+Checkboxes booleanos visiveis devem usar `templates/components/forms/card_toggle.html` com widget `CheckboxInput` usando classes `app-card-toggle__input` + `sr-only`. Inspiracao conceitual: botao **Data unica** do Plano de Trabalho no legacy.
+
+O componente renderiza um card clicavel com icone, titulo, descricao e badge `LIGADA` / `DESLIGADA`. Checkbox cru do navegador nao deve aparecer na interface final. BooleanFields futuros renderizados manualmente devem seguir este componente.
 
 ### Campo com acao (`input_with_action.html`)
 
