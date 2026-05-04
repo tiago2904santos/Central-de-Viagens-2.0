@@ -4,14 +4,16 @@
 
 - `templates/components/layout/app_shell.html`: estrutura base de shell para composicoes futuras. Variavel esperada: `content`.
 - `templates/components/layout/sidebar.html`: navegacao principal. Usa `navigation_items` do context processor.
-- `templates/components/layout/topbar.html`: barra superior. Usa `page_section` e `page_title`.
-- `templates/components/layout/page_header.html`: cabecalho de pagina. Variaveis: `title`, `description`, `eyebrow`, `action_label`, `action_url`.
+- `templates/components/layout/page_header.html`: **cabecalho oficial de pagina** (unico cabecalho principal por tela). Variaveis: `title`, `description`, `eyebrow`, `action_label`, `action_url`. Visual com gradiente, sombra e borda arredondada definidos em `layout.css`.
+- `templates/components/layout/topbar.html`: **nao** deve ser usado como cabecalho de pagina no layout atual; mantido apenas como componente reservado para eventual uso futuro e **nao** e incluido em `base.html`.
 
 Exemplo:
 
 ```django
 {% include "components/layout/page_header.html" with title=page_title description=page_description only %}
 ```
+
+Cada pagina deve expor um unico titulo principal via `page_header` ou via wrappers que o incluem (`list_page`, `form_page`, etc.). Evite repetir o mesmo titulo em outro bloco para nao duplicar informacao.
 
 ## Lists
 

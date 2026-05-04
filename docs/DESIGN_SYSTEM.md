@@ -27,7 +27,7 @@ Todo CSS deve ficar em `static/css/`. O arquivo `static/css/style.css` e apenas 
 
 - `tokens.css`: cores, espacamentos, raios, sombras, fontes, z-index e larguras globais.
 - `base.css`: reset leve, tipografia e elementos HTML basicos.
-- `layout.css`: app shell, topbar, area de conteudo e cabecalhos.
+- `layout.css`: app shell, area de conteudo e cabecalhos de pagina.
 - `sidebar.css`: navegacao lateral.
 - `buttons.css`: botoes e grupos.
 - `forms.css`: formularios, secoes, campos e acoes.
@@ -49,7 +49,7 @@ Nao colocar JavaScript solto em templates.
 
 Templates compartilhados ficam em `templates/components/`:
 
-- `layout`: app shell, sidebar, topbar e cabecalho de pagina.
+- `layout`: app shell, sidebar e cabecalho de pagina (`page_header.html`).
 - `lists`: pagina de lista, toolbar, filtros, grid e estado vazio.
 - `forms`: pagina de formulario, secao, campo e acoes.
 - `cards`: card generico, card de modulo, card documental e card de resumo.
@@ -59,6 +59,12 @@ Templates compartilhados ficam em `templates/components/`:
 - `feedback`: alertas e estado vazio.
 
 Todo modulo novo deve compor suas paginas usando esses includes antes de criar novos templates estruturais.
+
+## Cabecalho de pagina
+
+O cabecalho oficial de cada tela e o componente `templates/components/layout/page_header.html` (bloco `div.page-header`), com eyebrow, titulo principal, descricao opcional e acoes opcionais. Cada pagina deve ter **um unico** cabecalho principal na area de conteudo para evitar titulos duplicados.
+
+O arquivo `templates/components/layout/topbar.html` existe no projeto como peca reservada para uso futuro e **nao** e renderizado no layout atual (`base.html`). Nao usar `topbar` como cabecalho de pagina.
 
 ## Botoes
 

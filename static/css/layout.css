@@ -8,22 +8,6 @@
   min-width: 0;
 }
 
-.topbar {
-  align-items: center;
-  background: rgba(255, 255, 255, 0.76);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(214, 224, 234, 0.72);
-  display: flex;
-  min-height: 84px;
-  padding: var(--space-6) var(--space-8);
-}
-
-.topbar h1 {
-  font-size: var(--font-size-xl);
-  line-height: 1.2;
-  margin-bottom: 0;
-}
-
 .content-wrap {
   margin: 0 auto;
   max-width: var(--page-max-width);
@@ -94,7 +78,6 @@
     grid-template-columns: 1fr;
   }
 
-  .topbar,
   .content-wrap {
     padding: var(--space-4);
   }
