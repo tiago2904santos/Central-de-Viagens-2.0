@@ -10,7 +10,7 @@
 }
 
 .content-wrap {
-  margin: 0 auto;
+  margin: 0;
   max-width: var(--page-max-width);
   padding: 0;
   width: 100%;

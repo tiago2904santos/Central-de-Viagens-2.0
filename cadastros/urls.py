@@ -11,6 +11,7 @@ urlpatterns = [
     path("unidades/<int:pk>/editar/", views.unidade_update, name="unidade_update"),
     path("unidades/<int:pk>/excluir/", views.unidade_delete, name="unidade_delete"),
     path("cidades/", views.cidades_index, name="cidades_index"),
+    path("cidades/exportar.csv", views.cidades_export_csv, name="cidades_export_csv"),
     path("cidades/nova/", views.cidade_create, name="cidade_create"),
     path("cidades/<int:pk>/editar/", views.cidade_update, name="cidade_update"),
     path("cidades/<int:pk>/excluir/", views.cidade_delete, name="cidade_delete"),

@@ -116,7 +116,8 @@ def _build_item(item, current_view_name):
     is_active = _matches_current_view(built_item, current_view_name)
     has_active_child = any(child["is_active"] or child["is_open"] for child in children)
 
-    built_item["is_active"] = is_active
+    built_item["is_current"] = is_active
+    built_item["is_active"] = is_active or has_active_child
     built_item["is_open"] = has_active_child
     built_item["has_children"] = bool(children)
     built_item["children_id"] = f"sidebar-children-{built_item['id']}"

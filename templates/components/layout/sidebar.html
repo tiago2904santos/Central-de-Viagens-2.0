@@ -10,31 +10,35 @@
       {% if item.has_children %}
         <div class="sidebar-item sidebar-item--collapsible{% if item.is_open %} is-open{% endif %}" data-sidebar-item="{{ item.id }}">
           <div class="sidebar-row sidebar-row--top">
-            <a class="sidebar-link sidebar-link--module{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}" {% if item.is_active %}aria-current="page"{% endif %}>
+            <a class="sidebar-link sidebar-link--module{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}" {% if item.is_current %}aria-current="page"{% endif %}>
               <span class="sidebar-item-main">
                 {% if item.icon %}<span class="sidebar-item-icon" aria-hidden="true">{{ item.icon }}</span>{% endif %}
                 <span class="sidebar-item-text">{{ item.label }}</span>
               </span>
             </a>
-            <button class="sidebar-toggle" type="button" aria-label="Alternar menu {{ item.label }}" aria-expanded="{% if item.is_open %}true{% else %}false{% endif %}" aria-controls="{{ item.children_id }}">
+            <button class="sidebar-toggle" type="button" aria-label="Alternar submenu {{ item.label }}" aria-expanded="{% if item.is_open %}true{% else %}false{% endif %}" aria-controls="{{ item.children_id }}">
               <span aria-hidden="true">▾</span>
             </button>
           </div>
-          <div class="sidebar-panel" id="{{ item.children_id }}">
-            {% for child in item.children %}
-              <a
-                class="sidebar-link sidebar-link--cadastros{% if child.sidebar_indent %} sidebar-link--nested{% endif %}{% if child.is_active %} is-active{% endif %}"
-                href="{{ child.url }}"
-                {% if child.is_active %}aria-current="page"{% endif %}
-              >
-                <span class="sidebar-link-text">{{ child.label }}</span>
-              </a>
-            {% endfor %}
+          <div class="sidebar-accordion">
+            <div class="sidebar-accordion__inner">
+              <div class="sidebar-panel" id="{{ item.children_id }}">
+                {% for child in item.children %}
+                  <a
+                    class="sidebar-link sidebar-link--cadastros{% if child.sidebar_indent %} sidebar-link--nested{% endif %}{% if child.is_active %} is-active{% endif %}"
+                    href="{{ child.url }}"
+                    {% if child.is_active %}aria-current="page"{% endif %}
+                  >
+                    <span class="sidebar-link-text">{{ child.label }}</span>
+                  </a>
+                {% endfor %}
+              </div>
+            </div>
           </div>
         </div>
       {% else %}
         <div class="sidebar-item">
-          <a class="sidebar-link sidebar-link--module{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}" {% if item.is_active %}aria-current="page"{% endif %}>
+          <a class="sidebar-link sidebar-link--module{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}" {% if item.is_current %}aria-current="page"{% endif %}>
             <span class="sidebar-item-main">
               {% if item.icon %}<span class="sidebar-item-icon" aria-hidden="true">{{ item.icon }}</span>{% endif %}
               <span class="sidebar-item-text">{{ item.label }}</span>

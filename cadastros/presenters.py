@@ -149,3 +149,35 @@ def apresentar_linha_lista_simples_cidade(cidade, edit_url="#", delete_url="#"):
         "edit_url": edit_url,
         "delete_url": delete_url,
     }
+
+
+def apresentar_linha_lista_simples_servidor(servidor, edit_url="#", delete_url="#"):
+    unidade_label = "—"
+    if servidor.unidade:
+        unidade_label = servidor.unidade.sigla or servidor.unidade.nome
+    cargo_label = servidor.cargo.nome if servidor.cargo else "—"
+    return {
+        "title": servidor.nome,
+        "meta": [
+            {"label": "Cargo", "value": cargo_label},
+            {"label": "CPF", "value": _format_cpf(servidor.cpf)},
+            {"label": "Unidade", "value": unidade_label},
+            {"label": "Atualizado em", "value": servidor.updated_at.strftime("%d/%m/%Y")},
+        ],
+        "edit_url": edit_url,
+        "delete_url": delete_url,
+    }
+
+
+def apresentar_linha_lista_simples_viatura(viatura, edit_url="#", delete_url="#"):
+    return {
+        "title": _format_placa(viatura.placa),
+        "meta": [
+            {"label": "Modelo", "value": viatura.modelo or "—"},
+            {"label": "Combustível", "value": viatura.combustivel.nome if viatura.combustivel else "—"},
+            {"label": "Tipo", "value": viatura.get_tipo_display() if viatura.tipo else "—"},
+            {"label": "Atualizado em", "value": viatura.updated_at.strftime("%d/%m/%Y")},
+        ],
+        "edit_url": edit_url,
+        "delete_url": delete_url,
+    }

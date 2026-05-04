@@ -1,4 +1,8 @@
-﻿from django.contrib import messages
+﻿import csv
+from urllib.parse import urlencode
+
+from django.contrib import messages
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -9,12 +13,12 @@ from .forms import CombustivelForm
 from .forms import ServidorForm
 from .forms import UnidadeForm
 from .forms import ViaturaForm
+from .presenters import apresentar_servidor_card
+from .presenters import apresentar_viatura_card
 from .presenters import apresentar_linha_lista_simples_cargo
 from .presenters import apresentar_linha_lista_simples_cidade
 from .presenters import apresentar_linha_lista_simples_combustivel
 from .presenters import apresentar_linha_lista_simples_unidade
-from .presenters import apresentar_servidor_card
-from .presenters import apresentar_viatura_card
 from .selectors import get_cargo_by_id
 from .selectors import get_cidade_by_id
 from .selectors import get_combustivel_by_id
@@ -174,6 +178,8 @@ def cidades_index(request):
         )
         for cidade in cidades
     ]
+    export_base = reverse("cadastros:cidades_export_csv")
+    export_csv_url = f"{export_base}?{urlencode({'q': q})}" if q else export_base
     return _render_listagem(
         request,
         "cadastros/cidades/index.html",
@@ -182,8 +188,30 @@ def cidades_index(request):
             "page_description": "Cidades de referência para os fluxos.",
             "rows": rows,
             "q": q,
+            "export_csv_url": export_csv_url,
         },
     )
+
+
+def cidades_export_csv(request):
+    q = request.GET.get("q", "").strip()
+    cidades = listar_cidades(q=q)
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="cidades.csv"'
+    response.write("\ufeff")
+    writer = csv.writer(response)
+    writer.writerow(["id", "nome", "uf", "criado_em", "atualizado_em"])
+    for cidade in cidades:
+        writer.writerow(
+            [
+                cidade.pk,
+                cidade.nome,
+                cidade.uf,
+                cidade.created_at.isoformat(),
+                cidade.updated_at.isoformat(),
+            ]
+        )
+    return response
 
 
 def cidade_create(request):

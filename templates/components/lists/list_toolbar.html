@@ -5,6 +5,9 @@
   </div>
   {% include "components/lists/list_filters.html" %}
   <div class="btn-group">
+    {% if export_csv_url %}
+      {% include "components/buttons/action_button.html" with href=export_csv_url label=export_csv_label|default:"Baixar CSV" variant="secondary" only %}
+    {% endif %}
     {% include "components/buttons/action_button.html" with label="Buscar" variant="muted" type="submit" only %}
     {% if action_label and action_url %}
       {% include "components/buttons/action_button.html" with href=action_url label=action_label variant="primary" only %}

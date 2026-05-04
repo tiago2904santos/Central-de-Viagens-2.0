@@ -63,3 +63,13 @@ class CidadeCrudTests(TestCase):
         self.assertRedirects(response, reverse("cadastros:cidades_index"))
         cidade = Cidade.objects.get(nome="CURITIBA", uf="PR")
         self.assertEqual(cidade.uf, "PR")
+
+    def test_get_exportar_cidades_csv_retorna_arquivo(self):
+        Cidade.objects.create(nome="LONDRINA", uf="PR")
+        response = self.client.get(reverse("cadastros:cidades_export_csv"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/csv", response["Content-Type"])
+        self.assertIn("attachment", response["Content-Disposition"])
+        body = response.content.decode("utf-8-sig")
+        self.assertIn("LONDRINA", body)
+        self.assertIn("PR", body)
