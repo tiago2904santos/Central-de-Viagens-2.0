@@ -109,6 +109,9 @@ class CombustivelForm(BaseCadastroForm):
 
 
 class ServidorForm(BaseCadastroForm):
+    cpf = forms.CharField(required=False, max_length=14)
+    rg = forms.CharField(required=False, max_length=20)
+
     class Meta:
         model = Servidor
         fields = ["nome", "cargo", "cpf", "rg", "unidade"]
@@ -119,6 +122,7 @@ class ServidorForm(BaseCadastroForm):
                     "inputmode": "numeric",
                     "autocomplete": "off",
                     "data-mask": "cpf",
+                    "maxlength": "14",
                 }
             ),
             "rg": forms.TextInput(
@@ -132,6 +136,24 @@ class ServidorForm(BaseCadastroForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["cpf"].widget = forms.TextInput(
+            attrs={
+                "placeholder": "000.000.000-00",
+                "inputmode": "numeric",
+                "autocomplete": "off",
+                "data-mask": "cpf",
+                "maxlength": "14",
+                "class": "form-control",
+            }
+        )
+        self.fields["rg"].widget = forms.TextInput(
+            attrs={
+                "placeholder": "00.000.000-0",
+                "autocomplete": "off",
+                "data-mask": "rg",
+                "class": "form-control",
+            }
+        )
         self.fields["cargo"].required = True
         self.fields["cargo"].empty_label = "Selecione"
         self.fields["cargo"].widget.attrs["class"] = "form-select"

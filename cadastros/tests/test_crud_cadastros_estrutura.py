@@ -65,8 +65,9 @@ class ServidorCrudTests(TestCase):
         self.cargo = Cargo.objects.create(nome="ANALISTA")
 
     def test_servidor_fluxo_busca_e_regras(self):
-        self.assertEqual(self.client.get(reverse("cadastros:servidores_index")).status_code, 200)
-        self.assertEqual(self.client.get(reverse("cadastros:servidor_create")).status_code, 200)
+        create_page = self.client.get(reverse("cadastros:servidor_create"))
+        self.assertEqual(create_page.status_code, 200)
+        self.assertNotContains(create_page, 'name="matricula"')
 
         response = self.client.post(
             reverse("cadastros:servidor_create"),
@@ -76,14 +77,12 @@ class ServidorCrudTests(TestCase):
                 "cpf": "111.444.777-35",
                 "rg": "12.345.678-9",
                 "unidade": str(self.unidade.pk),
-                "matricula": "X",
             },
         )
         self.assertRedirects(response, reverse("cadastros:servidores_index"))
         servidor = Servidor.objects.get(nome="JOAO SILVA")
         self.assertEqual(servidor.cpf, "11144477735")
         self.assertEqual(servidor.rg, "123456789")
-        self.assertFalse(hasattr(servidor, "matricula"))
 
         response = self.client.post(
             reverse("cadastros:servidor_update", args=[servidor.pk]),
@@ -134,8 +133,6 @@ class ViaturaCrudTests(TestCase):
                 "modelo": "Onix",
                 "combustivel": str(self.combustivel.pk),
                 "tipo": Viatura.TIPO_CARACTERIZADA,
-                "marca": "X",
-                "unidade": "1",
             },
         )
         self.assertRedirects(response, reverse("cadastros:viaturas_index"))
@@ -157,7 +154,7 @@ class ViaturaCrudTests(TestCase):
             reverse("cadastros:viatura_create"),
             {
                 "placa": "12ABC34",
-                "modelo": "Inválida",
+                "modelo": "Invalida",
                 "combustivel": str(self.combustivel.pk),
                 "tipo": Viatura.TIPO_CARACTERIZADA,
             },
@@ -181,12 +178,15 @@ class ViaturaCrudTests(TestCase):
         self.assertEqual(self.client.get(reverse("cadastros:viaturas_index"), {"q": "GASOLINA"}).status_code, 200)
         self.assertEqual(self.client.get(reverse("cadastros:viaturas_index"), {"q": "CARACTERIZADA"}).status_code, 200)
 
-        response = self.client.post(reverse("cadastros:viatura_update", args=[viatura.pk]), {
-            "placa": "aaa1234",
-            "modelo": "Onix Plus",
-            "combustivel": str(self.combustivel.pk),
-            "tipo": Viatura.TIPO_CARACTERIZADA,
-        })
+        response = self.client.post(
+            reverse("cadastros:viatura_update", args=[viatura.pk]),
+            {
+                "placa": "aaa1234",
+                "modelo": "Onix Plus",
+                "combustivel": str(self.combustivel.pk),
+                "tipo": Viatura.TIPO_CARACTERIZADA,
+            },
+        )
         self.assertRedirects(response, reverse("cadastros:viaturas_index"))
 
         response = self.client.post(reverse("cadastros:viatura_delete", args=[viatura.pk]))
