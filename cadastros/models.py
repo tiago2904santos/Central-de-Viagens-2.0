@@ -1,7 +1,16 @@
 from django.db import models
+from django.utils import timezone
 
 
-class Unidade(models.Model):
+class TimeStampedModel(models.Model):
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class Unidade(TimeStampedModel):
     nome = models.CharField(max_length=255)
     sigla = models.CharField(max_length=50, blank=True)
     ativa = models.BooleanField(default=True)
@@ -15,7 +24,7 @@ class Unidade(models.Model):
         return self.sigla or self.nome
 
 
-class Cidade(models.Model):
+class Cidade(TimeStampedModel):
     nome = models.CharField(max_length=255)
     uf = models.CharField(max_length=2, default="PR")
     ativa = models.BooleanField(default=True)
@@ -29,7 +38,7 @@ class Cidade(models.Model):
         return f"{self.nome}/{self.uf}"
 
 
-class Servidor(models.Model):
+class Servidor(TimeStampedModel):
     nome = models.CharField(max_length=255)
     matricula = models.CharField(max_length=50, blank=True)
     cargo = models.CharField(max_length=120, blank=True)
@@ -52,7 +61,7 @@ class Servidor(models.Model):
         return self.nome
 
 
-class Motorista(models.Model):
+class Motorista(TimeStampedModel):
     servidor = models.OneToOneField(
         Servidor,
         on_delete=models.CASCADE,
@@ -63,6 +72,7 @@ class Motorista(models.Model):
     ativo = models.BooleanField(default=True)
 
     class Meta:
+        ordering = ["servidor__nome"]
         verbose_name = "Motorista"
         verbose_name_plural = "Motoristas"
 
@@ -70,7 +80,7 @@ class Motorista(models.Model):
         return self.servidor.nome
 
 
-class Viatura(models.Model):
+class Viatura(TimeStampedModel):
     placa = models.CharField(max_length=20, unique=True)
     modelo = models.CharField(max_length=120, blank=True)
     marca = models.CharField(max_length=120, blank=True)

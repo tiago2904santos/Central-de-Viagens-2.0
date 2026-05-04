@@ -1,4 +1,10 @@
 <div class="list-grid">
-  {% include "components/lists/list_empty.html" with message=empty_message only %}
+  {% if cards %}
+    {% for card in cards %}
+      {% include "components/cards/document_card.html" with card=card only %}
+    {% endfor %}
+  {% else %}
+    {% include "components/lists/list_empty.html" with message=empty_message only %}
+  {% endif %}
 </div>
 <div class="list-pagination" aria-label="Paginacao futura"></div>

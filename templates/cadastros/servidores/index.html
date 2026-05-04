@@ -3,5 +3,5 @@
 {% block title %}Servidores{% endblock %}
 
 {% block content %}
-  {% include "components/lists/list_page.html" with title="Servidores" description="Base futura para servidores." eyebrow="Cadastros" search_placeholder="Buscar servidores" empty_message="O cadastro de servidores sera implementado em etapa futura." only %}
+  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Cadastros" search_placeholder="Buscar servidores" action_label="Novo servidor" action_url="#" empty_message="Nenhum servidor cadastrado ainda." cards=cards only %}
 {% endblock %}

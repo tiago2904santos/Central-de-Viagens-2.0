@@ -3,5 +3,5 @@
 {% block title %}Motoristas{% endblock %}
 
 {% block content %}
-  {% include "components/lists/list_page.html" with title="Motoristas" description="Base futura para motoristas." eyebrow="Cadastros" search_placeholder="Buscar motoristas" empty_message="O cadastro de motoristas sera implementado em etapa futura." only %}
+  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Cadastros" search_placeholder="Buscar motoristas" action_label="Novo motorista" action_url="#" empty_message="Nenhum motorista cadastrado ainda." cards=cards only %}
 {% endblock %}

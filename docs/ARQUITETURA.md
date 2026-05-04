@@ -39,3 +39,7 @@ O ambiente de desenvolvimento usa PostgreSQL local no Windows, configurado por `
 ## Templates componentizados
 
 As paginas devem ser compostas por includes reutilizaveis em `templates/components/`. A estrutura visual global fica em `templates/base.html`, com sidebar, topbar e area de conteudo padronizadas. Modulos nao devem criar estetica propria: listas, cards, formularios, steppers, botoes e feedback devem usar os componentes e tokens globais.
+
+## Padrao de consulta e apresentacao
+
+Apps com listagens reais devem separar consulta e apresentacao. Em `cadastros`, views chamam selectors para obter QuerySets e presenters para transformar objetos em dados de cards. Templates recebem dados prontos para exibicao e continuam compostos por components globais.

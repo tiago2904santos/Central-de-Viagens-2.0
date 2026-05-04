@@ -18,13 +18,20 @@ Exemplo:
 - `lists/list_page.html`: estrutura completa de lista. Variaveis: `title`, `description`, `eyebrow`, `search_placeholder`, `empty_message`, `action_label`, `action_url`.
 - `lists/list_toolbar.html`: busca, filtros e acao principal.
 - `lists/list_filters.html`: area reservada para filtros.
-- `lists/list_grid.html`: grid de resultados e paginacao futura.
+- `lists/list_grid.html`: grid de resultados e paginacao futura. Recebe `cards`, uma lista de dicionarios preparada por presenters.
 - `lists/list_empty.html`: estado vazio da lista.
 
 Exemplo:
 
 ```django
 {% include "components/lists/list_page.html" with title="Oficios" description="Lista de oficios." only %}
+```
+
+Em listagens reais, a view deve usar selectors e presenters:
+
+```python
+objetos = listar_servidores()
+cards = [apresentar_servidor_card(objeto) for objeto in objetos]
 ```
 
 ## Forms
@@ -44,6 +51,7 @@ Exemplo:
 - `cards/card.html`: card generico.
 - `cards/module_card.html`: acesso a modulo. Variaveis: `title`, `description`, `href`, `action_label`.
 - `cards/document_card.html`: documento com status, metadados e acoes. Variaveis: `title`, `status`, `document_type`, `updated_at`, `open_url`, `pdf_url`, `docx_url`, `delete_url`.
+- `cards/document_card.html`: tambem aceita `card`, com `title`, `subtitle`, `status`, `meta`, `body` e `actions`.
 - `cards/summary_card.html`: resumo numerico ou textual. Variaveis: `label`, `value`, `description`.
 
 ## Buttons

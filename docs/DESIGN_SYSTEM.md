@@ -72,6 +72,8 @@ Use `templates/components/lists/list_page.html` para paginas de listagem. Ele co
 
 Esse padrao deve atender Oficios, Termos, Justificativas, Planos, Ordens, Roteiros, Eventos, Prestacoes, Diario de Bordo e Cadastros.
 
+Listagens reais devem receber dados de cards ja formatados por presenters. Templates nao devem montar metadados ou decidir status visual.
+
 ## Cards
 
 Use:

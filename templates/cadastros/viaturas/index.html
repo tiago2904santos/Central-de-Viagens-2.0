@@ -3,5 +3,5 @@
 {% block title %}Viaturas{% endblock %}
 
 {% block content %}
-  {% include "components/lists/list_page.html" with title="Viaturas" description="Base futura para viaturas." eyebrow="Cadastros" search_placeholder="Buscar viaturas" empty_message="O cadastro de viaturas sera implementado em etapa futura." only %}
+  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Cadastros" search_placeholder="Buscar viaturas" action_label="Nova viatura" action_url="#" empty_message="Nenhuma viatura cadastrada ainda." cards=cards only %}
 {% endblock %}
