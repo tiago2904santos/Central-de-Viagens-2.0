@@ -18,6 +18,7 @@ O app `cadastros` usa `list_page`, `document_card`, `form_field` e `form_actions
 - Component: `templates/components/layout/page_header.html`.
 - Objetivo: titulo forte, descricao clara e acao principal alinhada a direita.
 - CSS principal: `static/css/layout.css`.
+- Eyebrow e detalhes visuais usam destaque amarelo/dourado do design system.
 
 ## Sidebar
 

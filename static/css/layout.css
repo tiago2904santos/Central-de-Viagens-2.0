@@ -6,12 +6,13 @@
 
 .app-main {
   min-width: 0;
+  padding: 28px 32px;
 }
 
 .content-wrap {
   margin: 0 auto;
   max-width: var(--page-max-width);
-  padding: var(--space-5) var(--space-8) var(--space-8);
+  padding: 0;
   width: 100%;
 }
 
@@ -27,41 +28,47 @@
 .page-header {
   align-items: center;
   background:
-    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.2), transparent 42%),
-    linear-gradient(138deg, #1f4c7d 0%, #173d65 42%, #0d1a2d 100%);
+    linear-gradient(135deg, #0b3a66 0%, #155b9a 100%);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 1rem;
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 42px rgba(7, 26, 51, 0.22);
   color: var(--color-white);
   display: flex;
   gap: var(--space-6);
   justify-content: space-between;
-  margin-bottom: var(--space-6);
+  margin-bottom: 24px;
   overflow: hidden;
-  padding: var(--space-5) var(--space-7);
+  padding: 28px 32px;
   position: relative;
 }
 
 .page-header::after {
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.28), transparent 65%);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
   content: "";
-  height: 240px;
+  height: 300px;
   position: absolute;
   right: -80px;
-  top: -95px;
-  width: 240px;
+  top: -120px;
+  width: 300px;
 }
 
 .page-header::before {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 70%);
+  background: linear-gradient(90deg, rgba(216, 162, 27, 0.22), transparent 38%);
   content: "";
   inset: 0;
+  pointer-events: none;
   position: absolute;
 }
 
 .page-header > * {
   position: relative;
   z-index: 1;
+}
+
+.page-header > div:first-child {
+  display: grid;
+  gap: 6px;
 }
 
 .page-header h2 {
@@ -73,6 +80,10 @@
   margin-bottom: 4px;
 }
 
+.page-header__title {
+  color: #ffffff;
+}
+
 .page-header p {
   color: rgba(255, 255, 255, 0.9);
   font-size: var(--font-size-sm);
@@ -80,9 +91,14 @@
   max-width: 66ch;
 }
 
+.page-header__description {
+  color: rgba(255, 255, 255, 0.88);
+}
+
 .page-header .eyebrow {
-  color: rgba(223, 249, 246, 0.92);
+  color: var(--color-accent);
   font-size: 11px;
+  font-weight: 800;
   letter-spacing: 0.08em;
   margin-bottom: var(--space-2);
 }
@@ -99,8 +115,8 @@
     grid-template-columns: 1fr;
   }
 
-  .content-wrap {
-    padding: var(--space-4);
+  .app-main {
+    padding: 16px;
   }
 
   .page-header {

@@ -1,9 +1,9 @@
 <div class="page-header">
   <div>
-    <span class="eyebrow">{{ eyebrow|default:"Modulo" }}</span>
-    <h2>{{ title }}</h2>
+    <span class="eyebrow page-header__eyebrow">{{ eyebrow|default:"Modulo" }}</span>
+    <h2 class="page-header__title">{{ title }}</h2>
     {% if description %}
-      <p>{{ description }}</p>
+      <p class="page-header__description">{{ description }}</p>
     {% endif %}
   </div>
   {% if action_label and action_url %}

@@ -5,9 +5,7 @@
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 168, 0.16), transparent 32rem),
-    radial-gradient(circle at top right, rgba(201, 154, 46, 0.10), transparent 28rem),
-    linear-gradient(180deg, #f8fbff 0%, var(--color-bg) 100%);
+    linear-gradient(180deg, #f8fbff 0%, #f2f6fb 45%, #eaf1f8 100%);
   color: var(--color-text);
   font-family: var(--font-sans);
   font-size: var(--font-size-md);

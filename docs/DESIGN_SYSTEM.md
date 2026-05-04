@@ -14,6 +14,10 @@
 - Inputs, cards e botoes com altura/radius consistentes para manter ritmo visual.
 - Estados de sucesso, erro, aviso e info com contraste elegante e sem agressividade.
 - Densidade otimizada para CRUD: menos espaco morto e leitura mais rapida.
+- Identidade oficial: azul institucional solido com destaque amarelo/dourado.
+- Evitar verde/ciano como destaque padrao em labels, chips e elementos de identidade.
+- Evitar gradientes acinzentados pesados no header e no fundo global.
+- Page header deve manter margem, respiro e contraste forte de titulo/descricao.
 
 ## Referência estética do legacy
 
