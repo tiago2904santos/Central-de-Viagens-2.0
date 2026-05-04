@@ -6,6 +6,8 @@ No app `cadastros`, o padrao CRUD esta consolidado para `Unidade`, `Cidade`, `Ca
 
 `Motorista` nao e entidade de cadastro.
 
+O app `roteiros` ainda nao possui CRUD completo. Nesta etapa existe apenas a base real com models, admin, selectors, presenters e listagem componentizada. A criacao manual inicial acontece pelo Django Admin.
+
 ## Estrutura
 
 - `forms.py`: validacao, normalizacao e mascaras de entrada.
@@ -15,6 +17,17 @@ No app `cadastros`, o padrao CRUD esta consolidado para `Unidade`, `Cidade`, `Ca
 - `views.py`: fluxo request/form/service/messages/redirect.
 - `urls.py`: rotas nomeadas padronizadas.
 - `templates/`: composicao com components globais.
+
+## Roteiros base
+
+- `models.py`: `Roteiro` e `TrechoRoteiro`.
+- `admin.py`: cadastro manual de roteiros e trechos.
+- `selectors.py`: `listar_roteiros`, `get_roteiro_by_id`, `listar_trechos_do_roteiro`.
+- `presenters.py`: `apresentar_roteiro_card`.
+- `views.py`: listagem `index`, sem acesso direto aos models.
+- `templates/roteiros/index.html`: lista rica com components globais.
+
+CRUD de roteiro, calculos e vinculos documentais ficam para etapas futuras.
 
 ## Regras de exclusao
 

@@ -33,3 +33,19 @@ Não foi possível excluir este cadastro porque ele está vinculado a outros reg
 - CPF: `000.000.000-00` (armazenado em digitos).
 - RG: `00.000.000-0` (armazenado normalizado).
 - Placa: `AAA-1234` ou `AAA1A23` na tela; armazenada sem hifen e em maiusculo.
+
+## Roteiros
+
+`Roteiro` e uma entidade reutilizavel e avulsa. Ele pode existir sozinho e nao depende de Evento, Oficio, Plano de Trabalho, Ordem de Servico ou Evento.
+
+Regras da base:
+
+- roteiros poderao ser reutilizados futuramente por documentos e fluxos;
+- Evento, quando existir, sera apenas agrupador opcional;
+- nao existe ativo/inativo;
+- exclusao futura sera fisica;
+- se houver vinculo futuro com documentos, a exclusao devera ser bloqueada;
+- origem e destino usam `Cidade` do app `cadastros`;
+- cada `Cidade` pertence a um `Estado`;
+- trechos pertencem ao roteiro;
+- nao ha calculo de distancia, tempo ou diarias nesta etapa.

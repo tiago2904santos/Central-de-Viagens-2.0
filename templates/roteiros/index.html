@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}{{ page_title }}{% endblock %}
+{% block title %}Roteiros{% endblock %}
 
 {% block content %}
-  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Roteiros" search_placeholder="Buscar roteiros" empty_message="Roteiros reutilizaveis serao cadastrados em etapa futura." only %}
+  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="ROTEIROS" search_placeholder="Buscar roteiros" action_label="Novo roteiro" action_url="#" empty_message="Nenhum roteiro cadastrado ainda." cards=cards q=q only %}
 {% endblock %}

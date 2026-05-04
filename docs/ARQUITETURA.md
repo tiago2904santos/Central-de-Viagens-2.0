@@ -30,6 +30,17 @@ Regras estruturais aplicadas:
 - busca simples usa `q` nos selectors;
 - exclusao e fisica e bloqueada quando houver vinculos.
 
+## App roteiros
+
+`roteiros` guarda roteiros reutilizaveis e avulsos para deslocamentos. Nesta base inicial, o app possui:
+
+- `Roteiro`: entidade principal, independente de Evento, Oficio, Plano de Trabalho, Ordem de Servico ou qualquer outro documento.
+- `TrechoRoteiro`: trecho pertencente a um roteiro, removido em cascata quando o roteiro for excluido.
+
+Origem e destino de `Roteiro` e `TrechoRoteiro` apontam para `cadastros.Cidade`; cada cidade pertence a um `Estado`. As relacoes com cidades usam `PROTECT`, porque uma cidade em uso nao deve ser removida.
+
+O app segue a arquitetura ja validada em `cadastros`: views chamam selectors, presenters formatam dados para listagem, templates usam components globais e consultas nao ficam no template.
+
 ## Padrao tecnico
 
 Views orquestram `forms + selectors + services + presenters + messages`.

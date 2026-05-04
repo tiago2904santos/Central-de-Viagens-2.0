@@ -74,6 +74,12 @@ Mascaras globais sao ativadas por atributo:
 - Presenters enviam `title`, `subtitle`, `meta`, `actions`.
 - Templates nao montam metadados de negocio e nao formatam regra de dominio.
 
+## Roteiros
+
+A listagem de `roteiros` usa `components/lists/list_page.html`, `components/lists/list_toolbar.html`, `components/lists/list_grid.html`, `components/cards/document_card.html` e empty state global.
+
+O presenter `apresentar_roteiro_card` entrega `title`, `subtitle`, `meta` e `actions` sem HTML. A view apenas le `q`, chama selector, aplica presenter e renderiza o template.
+
 ## Alerts e feedback
 
 - Component: `templates/components/feedback/alerts.html`.
