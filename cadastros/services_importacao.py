@@ -638,6 +638,18 @@ def importar_base_geografica(
     """
     Orquestra: 1) estados.csv 2) municipio_code OU municipios.csv (IBGE).
     """
+    if dry_run:
+        with transaction.atomic():
+            resultado = importar_base_geografica(
+                estados_path,
+                municipios_code_path=municipios_code_path,
+                municipios_ibge_path=municipios_ibge_path,
+                dry_run=False,
+                encoding=encoding,
+            )
+            transaction.set_rollback(True)
+            return resultado
+
     re_estados = importar_estados_csv(estados_path, dry_run=dry_run, encoding=encoding)
 
     re_cidades = ResultadoImportacaoCidades()
@@ -645,13 +657,21 @@ def importar_base_geografica(
         return ResultadoImportacaoGeografica(estados=re_estados, cidades=re_cidades)
 
     if municipios_code_path:
+        p_code = Path(municipios_code_path)
+        if not p_code.is_file():
+            re_cidades.erros.append((0, f"Arquivo não encontrado: {p_code}"))
+            return ResultadoImportacaoGeografica(estados=re_estados, cidades=re_cidades)
         re_cidades = importar_cidades_csv(
-            municipios_code_path,
+            p_code,
             dry_run=dry_run,
             encoding=encoding,
             fonte_municipio_code=True,
         )
     elif municipios_ibge_path:
-        re_cidades = importar_municipios_csv(municipios_ibge_path, dry_run=dry_run, encoding=encoding)
+        p_ibge = Path(municipios_ibge_path)
+        if not p_ibge.is_file():
+            re_cidades.erros.append((0, f"Arquivo não encontrado: {p_ibge}"))
+            return ResultadoImportacaoGeografica(estados=re_estados, cidades=re_cidades)
+        re_cidades = importar_municipios_csv(p_ibge, dry_run=dry_run, encoding=encoding)
 
     return ResultadoImportacaoGeografica(estados=re_estados, cidades=re_cidades)

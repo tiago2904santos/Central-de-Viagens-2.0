@@ -41,6 +41,8 @@ class ImportacaoCidadesCsvTests(TestCase):
         self.assertEqual(r.existentes, 0)
         self.assertTrue(Cidade.objects.filter(nome="CURITIBA", uf="PR").exists())
         self.assertTrue(Cidade.objects.filter(nome="LONDRINA", uf="PR").exists())
+        self.assertTrue(Cidade.objects.get(nome="CURITIBA").capital)
+        self.assertFalse(Cidade.objects.get(nome="LONDRINA").capital)
 
     def test_formato_nome_uf_virgula(self):
         p = self._write_csv("nome,uf\nMaringá,pr\n", suffix=".csv")

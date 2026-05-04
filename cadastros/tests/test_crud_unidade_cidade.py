@@ -77,3 +77,9 @@ class CidadeCrudTests(TestCase):
         body = response.content.decode("utf-8-sig")
         self.assertIn("LONDRINA", body)
         self.assertIn("PR", body)
+
+    def test_post_exclusao_estado_com_cidade_bloqueia(self):
+        Cidade.objects.create(nome="CURITIBA", estado=self.estado_pr)
+        response = self.client.post(reverse("cadastros:estado_delete", args=[self.estado_pr.pk]))
+        self.assertRedirects(response, reverse("cadastros:estados_index"))
+        self.assertTrue(Estado.objects.filter(pk=self.estado_pr.pk).exists())

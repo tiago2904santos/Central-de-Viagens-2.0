@@ -7,7 +7,8 @@ O app `cadastros` centraliza dados-base reutilizados por documentos e fluxos fut
 Entidades ativas do modulo:
 
 - `Unidade`: nome e sigla.
-- `Cidade`: nome e UF; combinação nome + UF é única; nome e UF normalizados em maiúsculas (UF com 2 caracteres). Cidades podem ser carregadas em lote via CSV (`python manage.py importar_cidades`), conforme `docs/IMPORTACAO_CIDADES.md`.
+- `Estado`: cadastro de UF (nome, sigla 2 caracteres, `codigo_ibge` opcional). Ver seção **Base geográfica** e `docs/IMPORTACAO_BASE_GEOGRAFICA.md`.
+- `Cidade`: pertence a um `Estado`; combinação **nome + estado** é única; `uf` espelha a sigla do estado; pode ser **capital**; `codigo_ibge` e coordenadas opcionais. Carga em lote: `docs/IMPORTACAO_BASE_GEOGRAFICA.md` (comando `importar_base_geografica`). O guia `docs/IMPORTACAO_CIDADES.md` permanece como referência do fluxo somente cidades, quando aplicável.
 - `Cargo`: nome unico e em maiusculo.
 - `Combustivel`: nome unico e em maiusculo.
 - `Servidor`: nome unico e em maiusculo, cargo, CPF, RG opcional e unidade opcional.
@@ -49,3 +50,11 @@ Regras da base:
 - cada `Cidade` pertence a um `Estado`;
 - trechos pertencem ao roteiro;
 - nao ha calculo de distancia, tempo ou diarias nesta etapa.
+
+## Base geografica
+
+- `Estado` e um cadastro proprio (nao e apenas texto solto de UF).
+- Toda `Cidade` referencia um `Estado` (exclusao de estado com cidades vinculadas e bloqueada).
+- Uma cidade pode ser marcada como `capital` (usado em regras futuras; capitais sao identificadas na importacao por mapa UF -> nome, com comparacao normalizada de texto).
+- Roteiros usarao `Cidade` para origem e destino.
+- Nao existe ativo/inativo para estado nem cidade.

@@ -7,6 +7,8 @@ from django.db import migrations, models
 def _fix_cidades_sem_estado(apps, schema_editor):
     Estado = apps.get_model("cadastros", "Estado")
     Cidade = apps.get_model("cadastros", "Cidade")
+    if not Cidade.objects.filter(estado__isnull=True).exists():
+        return
     fallback, _ = Estado.objects.get_or_create(
         sigla="PR",
         defaults={"nome": "PARANÁ", "codigo_ibge": 41},

@@ -42,6 +42,15 @@ class Command(BaseCommand):
         if not code_path and not ibge_path:
             raise CommandError("Informe --municipios-code ou --municipios.")
 
+        if code_path:
+            mp = Path(code_path).expanduser()
+            if not mp.is_file():
+                raise CommandError(f"Arquivo não encontrado (--municipios-code): {mp}")
+        if ibge_path:
+            mp = Path(ibge_path).expanduser()
+            if not mp.is_file():
+                raise CommandError(f"Arquivo não encontrado (--municipios): {mp}")
+
         resultado = importar_base_geografica(
             estados_path,
             municipios_code_path=Path(code_path).expanduser() if code_path else None,
@@ -51,6 +60,9 @@ class Command(BaseCommand):
         )
 
         for ln, msg in resultado.estados.erros:
+            if ln == 0:
+                raise CommandError(msg)
+        for ln, msg in resultado.cidades.erros:
             if ln == 0:
                 raise CommandError(msg)
 
