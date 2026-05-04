@@ -47,6 +47,7 @@
 }
 
 .document-card {
+  border-left: 6px solid rgba(42, 95, 149, 0.75);
   display: grid;
   gap: var(--space-3);
 }
@@ -62,6 +63,13 @@
   gap: var(--space-2);
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   margin: 0;
+}
+
+.document-meta > div {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 251, 255, 0.82));
+  border: 1px solid rgba(18, 58, 99, 0.12);
+  border-radius: 12px;
+  padding: 8px 10px;
 }
 
 .document-meta dt {
@@ -82,6 +90,11 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   padding-top: var(--space-2);
+}
+
+.document-card-body {
+  color: var(--color-muted-strong);
+  font-size: var(--font-size-sm);
 }
 
 .summary-card {

@@ -1,4 +1,4 @@
-<article class="document-card">
+<article class="document-card{% if card and card.status_class %} {{ card.status_class }}{% endif %}">
   <header class="document-card-header">
     <div>
       {% if card %}
@@ -18,13 +18,13 @@
   {% if card.meta %}
     <dl class="document-meta">
       {% for item in card.meta %}
-        <div><dt>{{ item.label }}</dt><dd>{{ item.value }}</dd></div>
+        <div class="document-meta-item"><dt>{{ item.label }}</dt><dd>{{ item.value }}</dd></div>
       {% endfor %}
     </dl>
   {% else %}
     <dl class="document-meta">
-      <div><dt>Tipo</dt><dd>{{ document_type|default:"Documento" }}</dd></div>
-      <div><dt>Atualizado em</dt><dd>{{ updated_at|default:"-" }}</dd></div>
+      <div class="document-meta-item"><dt>Tipo</dt><dd>{{ document_type|default:"Documento" }}</dd></div>
+      <div class="document-meta-item"><dt>Atualizado em</dt><dd>{{ updated_at|default:"-" }}</dd></div>
     </dl>
   {% endif %}
   <div class="document-card-body">

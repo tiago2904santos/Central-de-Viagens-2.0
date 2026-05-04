@@ -11,7 +11,7 @@
 .content-wrap {
   margin: 0 auto;
   max-width: var(--page-max-width);
-  padding: var(--space-6) var(--space-8) var(--space-8);
+  padding: var(--space-5) var(--space-8) var(--space-8);
   width: 100%;
 }
 
@@ -27,10 +27,10 @@
 .page-header {
   align-items: center;
   background:
-    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.24), transparent 42%),
-    linear-gradient(125deg, #0a223d 0%, #123a63 48%, #2b6cae 100%);
+    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.2), transparent 42%),
+    linear-gradient(138deg, #1f4c7d 0%, #173d65 42%, #0d1a2d 100%);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--radius-lg);
+  border-radius: 1rem;
   box-shadow: var(--shadow-lg);
   color: var(--color-white);
   display: flex;
@@ -38,7 +38,7 @@
   justify-content: space-between;
   margin-bottom: var(--space-6);
   overflow: hidden;
-  padding: var(--space-6) var(--space-8);
+  padding: var(--space-5) var(--space-7);
   position: relative;
 }
 
@@ -69,7 +69,8 @@
   font-size: clamp(1.55rem, 1.9vw, 2rem);
   font-weight: 750;
   line-height: 1.15;
-  margin-bottom: var(--space-1);
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
 }
 
 .page-header p {
@@ -80,7 +81,9 @@
 }
 
 .page-header .eyebrow {
-  color: rgba(255, 244, 220, 0.92);
+  color: rgba(223, 249, 246, 0.92);
+  font-size: 11px;
+  letter-spacing: 0.08em;
   margin-bottom: var(--space-2);
 }
 

@@ -6,6 +6,8 @@ Central de Viagens 3 e um projeto Django por apps de dominio, com arquitetura do
 
 A pasta `legacy/` existe apenas para consulta historica e nao pode ser dependencia de runtime.
 
+O projeto novo pode consultar `legacy/` como referencia visual, mas nao pode importar ou depender tecnicamente de templates, CSS ou JS antigos.
+
 ## App cadastros
 
 `cadastros` e o primeiro modulo fechado da arquitetura nova, com CRUD fisico para:

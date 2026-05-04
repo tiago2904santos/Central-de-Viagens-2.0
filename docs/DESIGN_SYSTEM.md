@@ -15,6 +15,14 @@
 - Estados de sucesso, erro, aviso e info com contraste elegante e sem agressividade.
 - Densidade otimizada para CRUD: menos espaco morto e leitura mais rapida.
 
+## Referência estética do legacy
+
+- O projeto em `legacy/` foi usado como referencia visual e conceitual para sidebar, gradientes, densidade de cards, botoes em pilula e acabamento de toolbar/formularios.
+- Foram aproveitadas ideias de identidade: menu lateral escuro com estados ativos mais evidentes, cabecalho com gradiente institucional, cards com acento lateral e superficies em camadas.
+- Foram descartados trechos especificos e volumosos de CSS legado, estilos acoplados por pagina e estruturas antigas de template nao componentizadas.
+- A reinterpretacao foi aplicada somente no design system novo (`templates/components/` + `static/css/`) com tokens globais.
+- Nao existe importacao, dependencia de runtime, ou reaproveitamento tecnico direto de arquivos de `legacy/`.
+
 ## Mascaras reutilizaveis
 
 As mascaras do sistema ficam em `static/js/components/masks.js` e devem ser habilitadas por `data-mask` nos campos.
@@ -38,3 +46,4 @@ As telas de `Unidade`, `Cidade`, `Cargo`, `Combustivel`, `Servidor` e `Viatura` 
 - Ajustes de formularios em `templates/components/forms/*.html` e `static/css/forms.css`.
 - Ajustes de cards em `templates/components/cards/*.html` e `static/css/cards.css`.
 - Ajustes de feedback em `templates/components/feedback/*.html` e `static/css/utilities.css`.
+- Nunca copiar CSS bruto do legado em bloco; extrair o conceito e reconstruir no sistema atual.

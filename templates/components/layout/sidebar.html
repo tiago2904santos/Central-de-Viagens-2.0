@@ -1,11 +1,22 @@
 <aside class="sidebar" aria-label="Navegacao principal">
-  <a class="sidebar-brand" href="{% url 'core:dashboard' %}">Central de Viagens 3</a>
+  <div class="sidebar-header">
+    <a class="sidebar-brand" href="{% url 'core:dashboard' %}">
+      <span class="sidebar-brand-badge">CV</span>
+      <span>Central de Viagens 3</span>
+    </a>
+  </div>
   <nav class="sidebar-nav">
     {% for item in navigation_items %}
       {% url item.url_name as nav_url %}
       <a href="{{ nav_url }}" {% if request.resolver_match.view_name == item.url_name %}aria-current="page"{% endif %}>
-        {{ item.label }}
+        <span class="sidebar-item-main">
+          {% if item.icon %}<span class="sidebar-item-icon" aria-hidden="true">{{ item.icon }}</span>{% endif %}
+          <span class="sidebar-item-text">{{ item.label }}</span>
+        </span>
       </a>
     {% endfor %}
   </nav>
+  <div class="sidebar-footer">
+    <span>Sistema institucional</span>
+  </div>
 </aside>

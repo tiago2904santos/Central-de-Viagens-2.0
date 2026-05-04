@@ -12,9 +12,9 @@
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-3);
   justify-content: space-between;
-  padding: var(--space-4);
+  padding: var(--space-4) var(--space-5);
 }
 
 .list-search {
@@ -25,24 +25,24 @@
 }
 
 .list-search input {
-  background: var(--color-white);
-  border-color: var(--color-border-soft);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(243, 249, 254, 0.95));
+  border-color: rgba(31, 76, 125, 0.2);
   border-radius: 12px;
   min-height: 44px;
-  padding-left: 42px;
+  padding-left: 64px;
   width: 100%;
 }
 
 .list-search::before {
   color: var(--color-muted);
-  content: "Buscar";
+  content: "Q";
   font-size: 11px;
-  font-weight: 700;
-  left: 14px;
-  letter-spacing: 0.04em;
+  font-weight: 800;
+  left: 22px;
+  letter-spacing: 0.08em;
   position: absolute;
   text-transform: uppercase;
-  top: 2px;
+  top: 14px;
 }
 
 .list-filters {
@@ -54,7 +54,7 @@
 .list-grid {
   display: grid;
   gap: var(--space-4);
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
 .list-stack {

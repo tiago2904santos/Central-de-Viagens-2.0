@@ -78,3 +78,5 @@ Templates nao montam metadados de negocio e nao formatam regra de dominio.
 
 - Nao criar CSS/JS por pagina.
 - Qualquer ajuste visual de CRUD deve ser feito no component global correspondente.
+- `legacy/` pode inspirar a estetica, mas nunca deve ser dependencia tecnica do projeto novo.
+- Nao copiar templates inteiros do legado: recriar a ideia no component atual e manter coesao arquitetural.
