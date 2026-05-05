@@ -20,8 +20,8 @@
       <div class="app-page__form-card">
         <form class="form-shell" method="post" novalidate>
           {% csrf_token %}
-          {% include "components/forms/form_section.html" with title="Dados do combustível" description="Nome único. Opcionalmente marque o padrão para novas viaturas." only %}
           <div class="form-section">
+            {% include "components/forms/form_section.html" with title="Dados do combustível" description="Nome único. Opcionalmente marque o padrão para novas viaturas." only %}
             <div class="form-grid">
               {% include "components/forms/form_field.html" with field=form.nome only %}
               {% include "components/forms/card_toggle.html" with field=form.is_padrao title="Combustível padrão" description="Usado como sugestão inicial nas viaturas" icon="F" only %}

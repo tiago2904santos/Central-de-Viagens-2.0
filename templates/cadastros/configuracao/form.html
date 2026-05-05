@@ -24,23 +24,23 @@
         <form class="form-shell" method="post" novalidate data-configuracoes-form>
           {% csrf_token %}
 
-          {% include "components/forms/form_section.html" with title="Dados da unidade" description="Identificação da divisão e da unidade." only %}
           <div class="form-section">
+            {% include "components/forms/form_section.html" with title="Dados da unidade" description="Identificação da divisão e da unidade." only %}
             <div class="form-grid">
               {% include "components/forms/form_field.html" with field=form.divisao only %}
               {% include "components/forms/form_field.html" with field=form.unidade only %}
             </div>
           </div>
 
-          {% include "components/forms/form_section.html" with title="Endereço dos documentos" description="Cidade utilizada no rodapé e referências dos documentos." only %}
           <div class="form-section">
+            {% include "components/forms/form_section.html" with title="Endereço dos documentos" description="Cidade utilizada no rodapé e referências dos documentos." only %}
             <div class="form-grid">
               {% include "components/forms/form_field.html" with field=form.cidade_endereco only %}
             </div>
           </div>
 
-          {% include "components/forms/form_section.html" with title="Assinaturas documentais" description="Assinantes preferenciais por tipo de documento; não é assinatura digital." only %}
           <div class="form-section">
+            {% include "components/forms/form_section.html" with title="Assinaturas documentais" description="Assinantes preferenciais por tipo de documento; não é assinatura digital." only %}
             <div class="form-grid">
               {% include "components/forms/form_field.html" with field=form.assinatura_oficio only %}
               {% include "components/forms/form_field.html" with field=form.assinatura_justificativas only %}

@@ -22,8 +22,8 @@
       <div class="app-page__form-card">
         <form class="form-shell" method="post" novalidate>
           {% csrf_token %}
-          {% include "components/forms/form_section.html" with title="Dados da UF" description="Nome oficial, sigla de 2 letras e codigo IBGE da UF (opcional)." only %}
           <div class="form-section">
+            {% include "components/forms/form_section.html" with title="Dados da UF" description="Nome oficial, sigla de 2 letras e codigo IBGE da UF (opcional)." only %}
             <div class="form-grid">
               {% include "components/forms/form_field.html" with field=form.nome only %}
               {% include "components/forms/form_field.html" with field=form.sigla only %}

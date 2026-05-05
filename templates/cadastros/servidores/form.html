@@ -20,8 +20,8 @@
       <div class="app-page__form-card">
         <form class="form-shell" method="post" novalidate data-servidor-sem-rg-form>
           {% csrf_token %}
-          {% include "components/forms/form_section.html" with title="Dados do servidor" description="Nome, cargo e CPF obrigatórios. RG opcional ou marcação de ausência. Telefone opcional." only %}
           <div class="form-section">
+            {% include "components/forms/form_section.html" with title="Dados do servidor" description="Nome, cargo e CPF obrigatórios. RG opcional ou marcação de ausência. Telefone opcional." only %}
             <div class="form-grid">
               {% include "components/forms/form_field.html" with field=form.nome only %}
               {% include "components/forms/input_with_action.html" with field=form.cargo action_url=cargos_manage_url action_label="Gerenciar cargos" only %}

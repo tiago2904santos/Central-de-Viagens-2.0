@@ -8,6 +8,9 @@
   gap: var(--space-4);
 }
 
+/* form_section.html renderiza apenas .form-section-header. Um único .form-section no template pai
+   deve envolver cabeçalho + .form-grid; dois .form-section seguidos para a mesma seção geram faixa vazia. */
+
 .form-section {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 255, 0.96));
   border: 1px solid rgba(214, 224, 234, 0.9);
