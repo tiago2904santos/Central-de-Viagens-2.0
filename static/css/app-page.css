@@ -8,12 +8,12 @@
   background-image: var(--app-featured-bg);
   box-sizing: border-box;
   min-height: 100vh;
-  padding: 28px 0 0;
+  padding: 28px 28px 28px;
 }
 
 @media (max-width: 840px) {
   .app-main:has(.app-page) {
-    padding: 20px 0 0;
+    padding: 20px 20px 20px;
   }
 }
 
@@ -34,8 +34,7 @@
   flex-direction: column;
   gap: var(--space-5);
   margin: 0 auto;
-  max-width: 1180px;
-  width: 100%;
+  width: 100% ;
 }
 
 /* Hero híbrido: estrutura em app-ui.css (.app-page-hero) */
