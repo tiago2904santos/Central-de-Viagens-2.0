@@ -947,7 +947,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-block--retorno .roteiro-editor__reference-body {
-  padding: 24px;
+  padding: 24px 24px 0 24px;
 }
 
 .roteiro-editor--avulso #retorno-card .row.g-3 {
@@ -1413,11 +1413,9 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__diarias-head {
-  align-items: flex-start;
-  border-bottom: 1px solid #e3ebf4;
+  align-items: center;
   gap: 14px;
-  margin-bottom: 8px;
-  padding-bottom: 12px;
+
 }
 
 .roteiro-editor--avulso .roteiro-editor__diarias-top {
@@ -1431,6 +1429,7 @@
   letter-spacing: -0.02em;
   line-height: 1.2;
   margin-bottom: 4px;
+  margin-left: 5px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__diarias-subtitle {
@@ -1470,7 +1469,7 @@
 .roteiro-editor--avulso .roteiro-editor__diarias-finance-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(0, 1.55fr) minmax(220px, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .roteiro-editor--avulso .roteiro-editor__summary-stack {

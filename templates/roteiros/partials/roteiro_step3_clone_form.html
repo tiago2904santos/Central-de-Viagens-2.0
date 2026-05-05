@@ -272,10 +272,7 @@
               <div class="roteiro-editor__diarias">
                 <div class="roteiro-editor__diarias-head">
                   <div class="roteiro-editor__diarias-top">
-                    <span class="roteiro-editor__diarias-eyebrow">RESUMO FINANCEIRO</span>
                     <div class="roteiro-editor__diarias-title">Cálculo de diárias</div>
-                    <div class="roteiro-editor__diarias-subtitle">Atualização reativa conforme trechos e retorno completos.</div>
-                    <p class="roteiro-editor__diarias-note">Cálculo considerando <strong>1 servidor</strong> (regra fixa do roteiro avulso).</p>
                   </div>
 
                   <div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending" role="status">Aguardando dados para cálculo.</div>
@@ -284,10 +281,9 @@
                 <div id="diarias-error" class="alert alert-danger py-2 d-none" role="alert"></div>
 
                 <div class="roteiro-editor__diarias-finance-grid">
-                  <div class="roteiro-editor__summary-item roteiro-editor__summary-item--principal">
+                  <div class="roteiro-editor__summary-item">
                     <span class="roteiro-editor__summary-label">Valor total</span>
                     <span class="roteiro-editor__summary-value roteiro-editor__summary-value--principal" id="diarias-valor">{{ step3_diarias_resultado.totais.total_valor|default:"—" }}</span>
-                    <div class="roteiro-editor__summary-divider" aria-hidden="true"></div>
                     <span class="roteiro-editor__summary-label">Valor por extenso</span>
                     <span id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"Não informado" }}</span>
                   </div>
