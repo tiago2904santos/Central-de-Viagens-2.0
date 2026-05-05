@@ -265,19 +265,23 @@
 
             {# SEÇÃO 6: CALCULADORA DE DIÁRIAS #}
             <section class="roteiro-editor__section roteiro-editor__section--diarias" aria-labelledby="sec-diarias">
+              <header class="roteiro-editor__section-header" id="sec-diarias">
+                <h3 class="roteiro-editor__section-title">6. Calculadora de diárias</h3>
+              </header>
+
               <div class="roteiro-editor__diarias">
                 <div class="roteiro-editor__diarias-head">
-                  <div>
-                    <span class="roteiro-editor__diarias-eyebrow">Resumo financeiro</span>
-                    <header class="roteiro-editor__section-header mb-0" id="sec-diarias">
-                      <h3 class="roteiro-editor__section-title">6. Calculadora de diárias</h3>
-                      <p class="roteiro-editor__section-desc">Atualização reativa conforme trechos e retorno completos.</p>
-                    </header>
+                  <div class="roteiro-editor__diarias-top">
+                    <span class="roteiro-editor__diarias-eyebrow">RESUMO FINANCEIRO</span>
+                    <div class="roteiro-editor__diarias-subtitle">Atualização reativa conforme trechos e retorno completos.</div>
+                    <p class="roteiro-editor__diarias-note">Cálculo considerando <strong>1 servidor</strong> (regra fixa do roteiro avulso).</p>
                   </div>
+
                   <div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending" role="status">Aguardando dados para cálculo.</div>
                 </div>
-                <p class="roteiro-editor__diarias-note">Cálculo considerando <strong>1 servidor</strong> (regra fixa do roteiro avulso).</p>
+
                 <div id="diarias-error" class="alert alert-danger py-2 d-none" role="alert"></div>
+
                 <div class="roteiro-editor__summary-grid">
                   <div class="roteiro-editor__summary-item">
                     <span class="roteiro-editor__summary-label">Valor total</span>

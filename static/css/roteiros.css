@@ -1218,6 +1218,7 @@
   border: 1px solid rgba(210, 224, 238, 0.95);
   border-radius: 18px;
   box-shadow: 0 18px 36px rgba(15, 34, 54, 0.08);
+  border-bottom: 0;
   overflow: hidden;
   padding: 0;
 }
@@ -1282,6 +1283,14 @@
   text-transform: uppercase;
 }
 
+.roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__section-header::before {
+  content: "RESUMO FINANCEIRO";
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__section-header {
+  min-height: 48px;
+}
+
 .roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header .roteiro-editor__section-title,
 .roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header .roteiro-editor__section-desc {
   color: #ffffff;
@@ -1341,7 +1350,7 @@
 
 .roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__diarias {
   border-radius: 14px;
-  margin: 20px;
+  margin: 0 20px 20px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__bate-volta-head {
@@ -1396,25 +1405,12 @@
   max-width: none;
 }
 
-.roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__diarias-head .roteiro-editor__section-header {
-  display: block;
-  margin-bottom: 8px;
-}
-
-.roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__diarias-head .roteiro-editor__section-title {
-  color: #1c3148;
-  font-size: clamp(1rem, 2.1vw, 1.12rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin: 0 0 4px;
-}
-
-.roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__diarias-head .roteiro-editor__section-desc {
+.roteiro-editor--avulso .roteiro-editor__diarias-subtitle {
   color: #58708a;
   font-size: 12px;
-  line-height: 1.4;
-  margin: 0;
-  max-width: 68ch;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0 0 8px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__diarias-eyebrow {
