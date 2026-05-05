@@ -40,25 +40,34 @@ def resolver_cidade_sede_por_endereco(uf, cidade_endereco):
 @transaction.atomic
 def salvar_configuracao_sistema(form):
     configuracao = form.save(commit=False)
-    cidade_sede = resolver_cidade_sede_por_endereco(
-        form.cleaned_data.get("uf"),
-        form.cleaned_data.get("cidade_endereco"),
-    )
-    configuracao.cidade_sede_padrao = cidade_sede
+    if "assinatura_planos_trabalho" in form.cleaned_data:
+        configuracao.coordenador_adm_plano_trabalho = form.cleaned_data.get(
+            "assinatura_planos_trabalho"
+        )
+
+    cidade_ok = False
+    if "uf" in form.cleaned_data:
+        uf = form.cleaned_data.get("uf") or ""
+        cidade_txt = form.cleaned_data.get("cidade_endereco") or ""
+        if uf and cidade_txt:
+            cidade_sede = resolver_cidade_sede_por_endereco(uf, cidade_txt)
+            configuracao.cidade_sede_padrao = cidade_sede
+            cidade_ok = cidade_sede is not None
+        else:
+            configuracao.cidade_sede_padrao = None
+
     configuracao.save()
     form.save_m2m()
     salvar_assinaturas_configuracao(configuracao, form.cleaned_data)
-    return configuracao, cidade_sede is not None
+    return configuracao, cidade_ok
 
 
 def salvar_assinaturas_configuracao(configuracao, cleaned_data):
     mapping = [
-        ("assinatura_oficio_1", AssinaturaConfiguracao.TIPO_OFICIO, 1),
-        ("assinatura_oficio_2", AssinaturaConfiguracao.TIPO_OFICIO, 2),
+        ("assinatura_oficio", AssinaturaConfiguracao.TIPO_OFICIO, 1),
         ("assinatura_justificativas", AssinaturaConfiguracao.TIPO_JUSTIFICATIVA, 1),
         ("assinatura_planos_trabalho", AssinaturaConfiguracao.TIPO_PLANO_TRABALHO, 1),
         ("assinatura_ordens_servico", AssinaturaConfiguracao.TIPO_ORDEM_SERVICO, 1),
-        ("assinatura_termo_autorizacao", AssinaturaConfiguracao.TIPO_TERMO_AUTORIZACAO, 1),
     ]
     for field_name, tipo, ordem in mapping:
         servidor = cleaned_data.get(field_name)
@@ -68,6 +77,16 @@ def salvar_assinaturas_configuracao(configuracao, cleaned_data):
             ordem=ordem,
             defaults={"servidor": servidor, "ativo": bool(servidor)},
         )
+
+    AssinaturaConfiguracao.objects.filter(
+        configuracao=configuracao,
+        tipo=AssinaturaConfiguracao.TIPO_OFICIO,
+        ordem=2,
+    ).delete()
+    AssinaturaConfiguracao.objects.filter(
+        configuracao=configuracao,
+        tipo=AssinaturaConfiguracao.TIPO_TERMO_AUTORIZACAO,
+    ).delete()
 
 
 @transaction.atomic

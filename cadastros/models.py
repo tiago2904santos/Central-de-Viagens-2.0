@@ -337,10 +337,21 @@ class ConfiguracaoSistema(TimeStampedModel):
         return obj
 
     def save(self, *args, **kwargs):
-        self.nome_orgao = " ".join((self.nome_orgao or "").strip().split()).upper()
-        self.sigla_orgao = " ".join((self.sigla_orgao or "").strip().split()).upper()
-        self.divisao = " ".join((self.divisao or "").strip().split()).upper()
-        self.unidade = " ".join((self.unidade or "").strip().split()).upper()
+        def norm_upper_words(val):
+            val = (val or "").strip()
+            return " ".join(val.split()).upper() if val else ""
+
+        self.nome_orgao = norm_upper_words(self.nome_orgao)
+        self.sigla_orgao = norm_upper_words(self.sigla_orgao)
+        self.divisao = norm_upper_words(self.divisao)
+        self.unidade = norm_upper_words(self.unidade)
+        self.sede = norm_upper_words(self.sede)
+        self.nome_chefia = norm_upper_words(self.nome_chefia)
+        self.cargo_chefia = norm_upper_words(self.cargo_chefia)
+        self.cidade_endereco = norm_upper_words(self.cidade_endereco)
+        self.logradouro = norm_upper_words(self.logradouro)
+        self.bairro = norm_upper_words(self.bairro)
+        self.numero = norm_upper_words(self.numero)
         self.uf = (self.uf or "").strip().upper()[:2]
         self.cep = "".join(c for c in (self.cep or "") if c.isdigit())
         self.telefone = "".join(c for c in (self.telefone or "") if c.isdigit())
