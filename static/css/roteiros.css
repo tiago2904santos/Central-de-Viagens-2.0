@@ -1,11 +1,804 @@
-/* Formulário step 3 (fluxo legacy de roteiro) dentro do design system atual */
+/* Roteiros — editor step 3 alinhado ao design system (--theme-*) e aos 4 temas */
 
 .roteiro-form--legacy-step3 .oficio-wizard-footer-actions .btn,
-.oficio-step3-page .oficio-wizard-footer-actions .btn {
+.oficio-step3-page .oficio-wizard-footer-actions .btn,
+.roteiro-editor__actions .btn {
   border-radius: 999px;
+  min-height: 44px;
+  padding-left: var(--space-5);
+  padding-right: var(--space-5);
 }
 
 .roteiro-form--legacy-step3 .btn-adicionar-destino,
 .oficio-step3-page #btn-adicionar-destino {
   border-radius: 999px;
+}
+
+/* Shell do wizard: sem “buraco” visual; intro legível em todos os temas */
+.roteiro-editor {
+  --re-accent: var(--theme-accent-eyebrow);
+  --re-accent-border: rgba(11, 58, 102, 0.55);
+  --re-choice-ring: rgba(21, 91, 154, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+}
+
+.roteiro-editor .app-page-shell__inner.oficio-wizard-shell {
+  gap: var(--space-5);
+}
+
+/* Intro compacto */
+.roteiro-editor__intro {
+  background: linear-gradient(
+    145deg,
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
+  );
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--theme-shadow-block);
+  box-sizing: border-box;
+  padding: var(--space-4) var(--space-5);
+  position: relative;
+}
+
+.roteiro-editor__intro::before {
+  background: var(--theme-accent-line);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  content: "";
+  height: 3px;
+  left: 0;
+  opacity: 0.85;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.roteiro-editor__intro-kicker {
+  color: var(--theme-accent-eyebrow);
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+}
+
+.roteiro-editor__intro-title {
+  color: var(--theme-text-heading);
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 var(--space-2);
+}
+
+.roteiro-editor__intro-text {
+  color: var(--theme-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 62ch;
+}
+
+/* Card principal */
+.roteiro-editor__main.card {
+  background: linear-gradient(
+    180deg,
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
+  );
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--theme-shadow-hero);
+  margin-bottom: 0;
+  overflow: visible;
+  padding: 0;
+  transition: none;
+}
+
+.roteiro-editor__main.card:hover {
+  box-shadow: var(--theme-shadow-hero);
+  transform: none;
+}
+
+.roteiro-editor__main-head {
+  border-bottom: 1px solid var(--theme-border-card);
+  margin: 0;
+  padding: var(--space-5) var(--space-6) var(--space-4);
+}
+
+.roteiro-editor__main-head-title {
+  color: var(--theme-text-heading);
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-1);
+}
+
+.roteiro-editor__main-head-desc {
+  color: var(--theme-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 72ch;
+}
+
+.roteiro-editor__main .card-body {
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+.roteiro-editor .oficio-stage-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Seções */
+.roteiro-editor__section {
+  background: var(--theme-surface-card-soft);
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  box-sizing: border-box;
+  padding: var(--space-5);
+}
+
+.roteiro-editor__section-header {
+  margin-bottom: var(--space-4);
+}
+
+.roteiro-editor__section-title {
+  color: var(--theme-text-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-2);
+}
+
+.roteiro-editor__section-desc {
+  color: var(--theme-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 72ch;
+}
+
+/* Grid de campos */
+.roteiro-editor__grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.roteiro-editor__grid.align-items-end {
+  align-items: end;
+}
+
+.roteiro-editor__grid > .field-span-6 {
+  grid-column: span 6;
+}
+
+.roteiro-editor__grid > .field-span-4 {
+  grid-column: span 4;
+}
+
+.roteiro-editor__grid > .field-span-12 {
+  grid-column: span 12;
+}
+
+@media (max-width: 720px) {
+  .roteiro-editor__grid > .field-span-6,
+  .roteiro-editor__grid > .field-span-4 {
+    grid-column: span 12;
+  }
+}
+
+.roteiro-editor__field-label {
+  color: var(--theme-text-muted-strong);
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin-bottom: var(--space-2);
+}
+
+.roteiro-editor__helper {
+  color: var(--theme-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: var(--space-2);
+}
+
+/* Radios → cards */
+.roteiro-editor__choice-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.roteiro-editor__choice-card {
+  align-items: flex-start;
+  background: var(--theme-surface-card);
+  border: 2px solid var(--theme-border-card);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-3);
+  margin: 0;
+  min-height: 88px;
+  padding: var(--space-4);
+  position: relative;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.roteiro-editor__choice-card:hover {
+  border-color: rgba(11, 58, 102, 0.35);
+}
+
+.roteiro-editor__choice-card:has(input:checked) {
+  background: linear-gradient(
+    180deg,
+    rgba(21, 91, 154, 0.06) 0%,
+    var(--theme-surface-card) 100%
+  );
+  border-color: var(--re-accent-border);
+  box-shadow: 0 0 0 3px var(--re-choice-ring);
+}
+
+.roteiro-editor__choice-card:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.roteiro-editor__choice-input {
+  accent-color: #0b3a66;
+  flex-shrink: 0;
+  height: 18px;
+  margin-top: 2px;
+  width: 18px;
+}
+
+.roteiro-editor__choice-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.roteiro-editor__choice-title {
+  color: var(--theme-text-heading);
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.roteiro-editor__choice-desc {
+  color: var(--theme-text-muted);
+  display: block;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* Painel roteiros salvos */
+.roteiro-editor__routes-panel .roteiro-editor__grid {
+  margin-top: var(--space-3);
+}
+
+#id_roteiro_busca.roteiro-editor__input,
+.roteiro-editor__input {
+  background: var(--theme-input-bg);
+  border: 1px solid var(--theme-input-border);
+  border-radius: var(--radius-pill);
+  color: var(--theme-input-text);
+  font-size: 14px;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+}
+
+.roteiro-editor__route-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  max-height: 280px;
+  overflow: auto;
+}
+
+.oficio-step3-route-item {
+  background: var(--theme-surface-card);
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-md);
+  color: var(--theme-text-body);
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.oficio-step3-route-item:hover {
+  background: var(--theme-list-row-hover);
+  border-color: rgba(11, 58, 102, 0.28);
+}
+
+.oficio-step3-route-item.is-active {
+  border-color: var(--re-accent-border);
+  box-shadow: 0 0 0 2px var(--re-choice-ring);
+}
+
+.oficio-step3-route-item .route-title {
+  color: var(--theme-text-heading);
+  font-weight: 700;
+}
+
+.oficio-step3-route-item .route-destinos,
+.oficio-step3-route-item .route-periodo {
+  color: var(--theme-text-muted);
+  font-size: 12px;
+}
+
+.oficio-step3-route-empty {
+  border: 1px dashed var(--theme-border-card);
+  border-radius: var(--radius-md);
+  color: var(--theme-text-muted);
+  font-size: 13px;
+  padding: var(--space-4);
+  text-align: center;
+}
+
+#roteiro-selector-resumo {
+  color: var(--theme-text-muted);
+  font-size: 12px;
+}
+
+/* Superfícies internas (substitui bg-white) */
+.roteiro-editor__panel-surface {
+  background: var(--theme-surface-card);
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.roteiro-editor__bate-volta-head {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--theme-border-card);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+}
+
+.roteiro-editor__bate-volta-title {
+  color: var(--theme-text-heading);
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0 0 var(--space-1);
+}
+
+.roteiro-editor__chip {
+  background: rgba(11, 58, 102, 0.08);
+  border: 1px solid var(--theme-border-card);
+  border-radius: 999px;
+  color: var(--theme-text-muted-strong);
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  text-transform: uppercase;
+}
+
+.roteiro-editor__chip.is-on {
+  background: rgba(34, 139, 84, 0.12);
+  border-color: rgba(34, 139, 84, 0.35);
+  color: var(--theme-text-heading);
+}
+
+.roteiro-editor__switch-row {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-3);
+}
+
+.roteiro-editor__switch-row .form-check {
+  margin: 0;
+}
+
+.roteiro-editor__switch-row .form-check-input {
+  height: 1.15rem;
+  width: 2.25rem;
+}
+
+.roteiro-editor__switch-row .form-check-label {
+  color: var(--theme-text-muted-strong);
+  font-size: 13px;
+  font-weight: 700;
+  margin-left: var(--space-2);
+}
+
+#bate-volta-panel.is-muted {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Destinos */
+.roteiro-editor__destinos-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.roteiro-editor__destination-card.destino-row {
+  align-items: stretch;
+  background: var(--theme-surface-card);
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: 0;
+  grid-template-columns: auto 1fr auto;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+@media (max-width: 720px) {
+  .roteiro-editor__destination-card.destino-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roteiro-editor__destination-card.destino-row.is-dragging {
+  opacity: 0.75;
+}
+
+.roteiro-editor__destination-card.destino-row.is-drop-target {
+  box-shadow: 0 0 0 2px var(--re-accent-border);
+}
+
+.roteiro-editor__drag-col {
+  align-items: flex-start;
+  display: flex;
+  justify-content: center;
+  padding-top: 28px;
+}
+
+.roteiro-editor__drag-handle {
+  align-items: center;
+  background: var(--theme-surface-card-soft);
+  border: 1px solid var(--theme-border-card);
+  border-radius: 999px;
+  color: var(--theme-text-muted);
+  cursor: grab;
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
+  padding: 0;
+  width: 36px;
+}
+
+.roteiro-editor__drag-handle:active {
+  cursor: grabbing;
+}
+
+.roteiro-editor__destination-fields {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr 1fr;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .roteiro-editor__destination-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roteiro-editor__remove-col {
+  align-items: flex-start;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 28px;
+}
+
+.roteiro-editor__icon-btn.btn-remover-destino {
+  align-items: center;
+  background: var(--theme-surface-card-soft);
+  border: 1px solid rgba(183, 42, 42, 0.35);
+  border-radius: 999px;
+  color: #b72a2a;
+  display: inline-flex;
+  font-size: 18px;
+  font-weight: 700;
+  height: 40px;
+  justify-content: center;
+  line-height: 1;
+  min-width: 40px;
+  padding: 0;
+}
+
+.roteiro-editor__icon-btn.btn-remover-destino:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.roteiro-editor__add-btn#btn-adicionar-destino {
+  align-items: center;
+  background: var(--theme-btn-secondary-bg);
+  border: 1px solid var(--theme-btn-secondary-border);
+  color: var(--theme-btn-secondary-text);
+  display: inline-flex;
+  font-weight: 700;
+  gap: var(--space-2);
+  justify-content: center;
+  margin-top: var(--space-2);
+  width: 100%;
+}
+
+.roteiro-editor__add-btn#btn-adicionar-destino::before {
+  content: "+";
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Trechos */
+.roteiro-editor__trechos-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.roteiro-editor__empty {
+  align-items: center;
+  background: var(--theme-surface-card);
+  border: 1px dashed var(--theme-border-card);
+  border-radius: var(--radius-md);
+  color: var(--theme-text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+}
+
+.roteiro-editor__empty-title {
+  color: var(--theme-text-heading);
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.roteiro-editor__empty-text {
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 42ch;
+}
+
+.card.roteiro-editor__trecho-card {
+  background: var(--theme-surface-card);
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: none;
+}
+
+.card.roteiro-editor__trecho-card:hover {
+  transform: none;
+}
+
+.roteiro-editor__trecho-card .card-header {
+  background: var(--theme-surface-card-soft);
+  border-bottom: 1px solid var(--theme-border-card);
+}
+
+.roteiro-editor__trecho-card .roteiro-editor__trecho-route {
+  color: var(--theme-text-muted);
+  font-size: 12px;
+}
+
+.roteiro-editor__subpanel {
+  background: var(--theme-surface-card-soft);
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-sm);
+  height: 100%;
+  padding: var(--space-3);
+}
+
+.roteiro-editor__subpanel-title {
+  color: var(--theme-text-heading);
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0 0 var(--space-3);
+}
+
+.roteiro-editor__btn-pill.btn-calcular-km {
+  border-radius: 999px;
+}
+
+/* Retorno */
+#retorno-card .roteiro-editor__grid {
+  align-items: start;
+}
+
+/* Calculadora */
+.roteiro-editor__diarias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.roteiro-editor__diarias-head {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.roteiro-editor__diarias-eyebrow {
+  color: var(--theme-accent-eyebrow);
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+}
+
+#diarias-status {
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+}
+
+#diarias-status[data-state="pending"] {
+  background: rgba(11, 58, 102, 0.08);
+  color: var(--theme-text-muted-strong);
+}
+
+#diarias-status[data-state="stale"] {
+  background: rgba(216, 162, 27, 0.14);
+  color: var(--theme-text-heading);
+}
+
+#diarias-status[data-state="updated"] {
+  background: rgba(34, 139, 84, 0.12);
+  color: var(--theme-text-heading);
+}
+
+#diarias-status[data-state="error"] {
+  background: rgba(183, 42, 42, 0.12);
+  color: #8f2a2a;
+}
+
+.roteiro-editor__diarias-note {
+  color: var(--theme-text-muted);
+  font-size: 12px;
+  margin: 0;
+}
+
+.roteiro-editor__summary-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.roteiro-editor__summary-item {
+  background: var(--theme-surface-card);
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 88px;
+  padding: var(--space-4);
+}
+
+.roteiro-editor__summary-label {
+  color: var(--theme-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.roteiro-editor__summary-value {
+  color: var(--theme-stat-value);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+#diarias-valor {
+  color: var(--theme-stat-value);
+}
+
+#diarias-extenso {
+  color: var(--theme-text-heading);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+#diarias-error:not(:empty):not(.d-none) {
+  border-radius: var(--radius-md);
+}
+
+#diarias-error:empty,
+#diarias-error.d-none {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Alertas do formulário */
+.roteiro-editor .alert {
+  border-radius: var(--radius-md);
+}
+
+.roteiro-editor .alert-danger:empty {
+  display: none !important;
+}
+
+/* Barra de ações */
+.roteiro-editor__actions {
+  align-items: center;
+  background: var(--theme-surface-card-soft);
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+}
+
+.roteiro-editor__actions .btn-primary {
+  background: linear-gradient(180deg, #0e5088 0%, #0b3a66 100%);
+  border-color: rgba(6, 40, 71, 0.5);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 8px 18px rgba(11, 58, 102, 0.28);
+}
+
+.roteiro-editor__actions .btn-outline-secondary {
+  background: var(--theme-btn-secondary-bg);
+  border-color: var(--theme-btn-secondary-border);
+  color: var(--theme-btn-secondary-text);
+}
+
+/* Inputs dentro do editor */
+.roteiro-editor .form-control,
+.roteiro-editor .form-select,
+.roteiro-editor select {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  border-radius: var(--radius-sm);
+  color: var(--theme-input-text);
+}
+
+.roteiro-editor .form-control:focus,
+.roteiro-editor .form-select:focus,
+.roteiro-editor select:focus {
+  border-color: rgba(11, 58, 102, 0.55);
+  box-shadow: 0 0 0 3px rgba(21, 91, 154, 0.15);
+  outline: none;
 }
