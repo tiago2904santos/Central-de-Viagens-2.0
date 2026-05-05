@@ -4,15 +4,11 @@
   <div class="app-page-shell__inner oficio-wizard-shell">
     <div class="roteiro-editor__intro" role="region" aria-labelledby="roteiro-editor-intro-title">
       <span class="roteiro-editor__intro-kicker" id="roteiro-editor-intro-kicker">{% if is_avulso %}Cadastro avulso{% else %}Etapa 2{% endif %}</span>
-      <h2 class="roteiro-editor__intro-title" id="roteiro-editor-intro-title">{% if is_avulso %}Roteiro avulso{% else %}Etapa 2 — Roteiro{% endif %}</h2>
-      <p class="roteiro-editor__intro-text">Monte sede, destinos e trechos com o mesmo padrão espacial dos fluxos internos; preencha os blocos na ordem para liberar trechos, retorno e o cálculo de diárias.</p>
+      <h2 class="roteiro-editor__intro-title" id="roteiro-editor-intro-title">Roteiro e trechos</h2>
+      <p class="roteiro-editor__intro-text">Organize sede, destinos, trechos, retorno e diárias em um fluxo único e contínuo.</p>
     </div>
 
     <div class="card roteiro-editor__main oficio-stage-panel">
-      <div class="roteiro-editor__main-head">
-        <h3 class="roteiro-editor__main-head-title">Roteiro e trechos</h3>
-        <p class="roteiro-editor__main-head-desc">Organize a sede, os destinos na sequência correta e complete tempos e datas em cada trecho e no retorno.</p>
-      </div>
       <div class="card-body">
         <form method="post" id="oficio-step3-form" novalidate class="oficio-stage-form">
           {% csrf_token %}
@@ -289,7 +285,7 @@
             </div>
           </section>
 
-          <div class="roteiro-editor__actions oficio-wizard-footer-actions" data-oficio-footer-actions="1">
+          <div class="roteiro-editor__actions oficio-wizard-footer-actions {% if is_avulso %}roteiro-editor__actions--avulso{% endif %}" data-oficio-footer-actions="1">
             {% if is_avulso %}
             <a href="{% url 'roteiros:index' %}" class="btn btn-outline-secondary">Voltar para lista</a>
             <button type="submit" class="btn btn-primary">{% if object %}Salvar roteiro{% else %}Cadastrar roteiro{% endif %}</button>
