@@ -3,9 +3,5 @@
 {% block title %}Roteiros{% endblock %}
 
 {% block content %}
-  <div class="list-page">
-    {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Roteiros" action_label="Novo roteiro" action_url="#" only %}
-    {% include "components/lists/list_toolbar.html" with search_placeholder="Buscar roteiros" action_label="Novo roteiro" action_url="#" q=q only %}
-    {% include "components/lists/list_grid.html" with cards=cards empty_message="Nenhum roteiro cadastrado ainda." empty_action_label="Novo roteiro" empty_action_url="#" only %}
-  </div>
+  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Roteiros" brand_mark="RT" search_placeholder="Buscar roteiros" cards=cards empty_message="Nenhum roteiro cadastrado ainda." action_label="Novo roteiro" action_url="#" q=q only %}
 {% endblock %}

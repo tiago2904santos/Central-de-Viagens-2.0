@@ -1,6 +1,9 @@
-/* Páginas de Cargos: identidade alinhada ao dashboard experimental (login). */
+/*
+ * Shell institucional para páginas internas (lista, formulário, exclusão).
+ * Mesmo padrão visual do Dashboard/Cargos; responde aos 4 temas via --theme-*.
+ */
 
-.app-main:has(.cargos-page) {
+.app-main:has(.app-page) {
   background-color: var(--app-featured-bg-fallback);
   background-image: var(--app-featured-bg);
   box-sizing: border-box;
@@ -9,16 +12,16 @@
 }
 
 @media (max-width: 840px) {
-  .app-main:has(.cargos-page) {
+  .app-main:has(.app-page) {
     padding: 20px 0 0;
   }
 }
 
-.content-wrap:has(.cargos-page) {
+.content-wrap:has(.app-page) {
   max-width: none;
 }
 
-.cargos-page {
+.app-page {
   box-sizing: border-box;
   color: var(--theme-text-body);
   min-height: min(100vh, 100%);
@@ -26,7 +29,7 @@
   width: 100%;
 }
 
-.cargos-page__shell {
+.app-page__shell {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -37,18 +40,18 @@
 
 /* Hero híbrido: estrutura em app-ui.css (.app-page-hero) */
 
-.cargos-page__hero-single {
+.app-page__hero-single {
   align-items: flex-start;
   display: flex;
   gap: var(--space-4);
 }
 
-.cargos-page__hero-single .cargos-page__subtitle {
+.app-page__hero-single .app-page__subtitle {
   flex: 1;
   margin: 0;
 }
 
-.cargos-page__hero-top {
+.app-page__hero-top {
   align-items: flex-start;
   display: flex;
   flex-wrap: wrap;
@@ -56,7 +59,7 @@
   justify-content: space-between;
 }
 
-.cargos-page__brand {
+.app-page__brand {
   align-items: center;
   display: flex;
   flex: 1 1 220px;
@@ -64,7 +67,7 @@
   min-width: 0;
 }
 
-.cargos-page__brand-mark {
+.app-page__brand-mark {
   align-items: center;
   background: linear-gradient(145deg, rgba(216, 162, 27, 0.9), rgba(185, 135, 18, 0.96));
   border: 1px solid rgba(255, 243, 207, 0.5);
@@ -83,11 +86,11 @@
   width: 40px;
 }
 
-.cargos-page__brand-copy {
+.app-page__brand-copy {
   min-width: 0;
 }
 
-.cargos-page__eyebrow {
+.app-page__eyebrow {
   color: var(--theme-accent-eyebrow);
   display: block;
   font-size: 10px;
@@ -97,7 +100,7 @@
   text-transform: uppercase;
 }
 
-.cargos-page__title {
+.app-page__title {
   color: var(--theme-text-heading);
   font-size: clamp(1.28rem, 1.9vw, 1.85rem);
   font-weight: 800;
@@ -106,7 +109,7 @@
   margin: 0 0 var(--space-2);
 }
 
-.cargos-page__subtitle {
+.app-page__subtitle {
   color: var(--theme-text-muted);
   font-size: 13px;
   line-height: 1.45;
@@ -114,11 +117,11 @@
   max-width: 56ch;
 }
 
-.cargos-page .app-page-hero__body .cargos-page__subtitle {
+.app-page .app-page-hero__body .app-page__subtitle {
   color: var(--theme-text-muted);
 }
 
-.cargos-page__hero-actions {
+.app-page__hero-actions {
   align-items: center;
   display: flex;
   flex-shrink: 0;
@@ -126,10 +129,10 @@
 }
 
 /* Botão institucional no hero (alinha ao dashboard) */
-.cargos-page__hero-actions .btn-primary {
+.app-page__hero-actions .btn-primary {
   background: linear-gradient(180deg, #0e5088 0%, #0b3a66 100%);
   border-color: rgba(6, 40, 71, 0.5);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.12) inset,
     0 8px 18px rgba(11, 58, 102, 0.28);
@@ -143,8 +146,8 @@
     transform 140ms ease;
 }
 
-.cargos-page__hero-actions .btn-primary:hover,
-.cargos-page__hero-actions .btn-primary:focus {
+.app-page__hero-actions .btn-primary:hover,
+.app-page__hero-actions .btn-primary:focus {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.15) inset,
     0 10px 24px rgba(11, 58, 102, 0.34);
@@ -152,7 +155,7 @@
 }
 
 /* Toolbar / busca */
-.cargos-page__toolbar .list-toolbar {
+.app-page__toolbar .list-toolbar {
   align-items: center;
   background: linear-gradient(
     180deg,
@@ -166,7 +169,7 @@
   padding: var(--space-4) var(--space-5);
 }
 
-.cargos-page__toolbar .list-search input {
+.app-page__toolbar .list-search input {
   background: var(--theme-input-bg);
   border-radius: var(--radius-sm);
   border-color: var(--theme-input-border);
@@ -174,26 +177,26 @@
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-.cargos-page__toolbar .list-search::before {
+.app-page__toolbar .list-search::before {
   color: var(--theme-text-muted);
 }
 
-.cargos-page__toolbar .list-search input:focus {
+.app-page__toolbar .list-search input:focus {
   border-color: rgba(11, 58, 102, 0.55);
   box-shadow: 0 0 0 3px rgba(21, 91, 154, 0.18);
   outline: none;
 }
 
-.cargos-page__toolbar .btn-muted {
+.app-page__toolbar .btn-muted {
   background: var(--theme-btn-muted-bg);
   border-color: var(--theme-btn-muted-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   color: var(--theme-btn-muted-text);
   min-height: 44px;
 }
 
-.cargos-page__toolbar .btn-muted:hover,
-.cargos-page__toolbar .btn-muted:focus {
+.app-page__toolbar .btn-muted:hover,
+.app-page__toolbar .btn-muted:focus {
   background: var(--theme-btn-muted-hover-bg);
   border-color: var(--theme-btn-muted-hover-border);
   color: var(--theme-btn-muted-text);
@@ -201,12 +204,12 @@
 }
 
 /* Lista */
-.cargos-page__list-card {
+.app-page__list-card {
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
-.cargos-page__list-card .simple-list {
+.app-page__list-card .simple-list {
   background: linear-gradient(
     180deg,
     var(--theme-surface-card) 0%,
@@ -217,78 +220,78 @@
   box-shadow: var(--theme-shadow-block);
 }
 
-.cargos-page__list-card .simple-list__row {
+.app-page__list-card .simple-list__row {
   border-bottom-color: var(--theme-list-border);
   min-height: 56px;
   padding: var(--space-4) var(--space-5);
   transition: background-color 160ms ease;
 }
 
-.cargos-page__list-card .simple-list__row:hover {
+.app-page__list-card .simple-list__row:hover {
   background: var(--theme-list-row-hover);
 }
 
-.cargos-page__list-card .simple-list__title {
+.app-page__list-card .simple-list__title {
   color: var(--theme-text-heading);
   font-size: var(--font-size-md);
   font-weight: 700;
 }
 
-.cargos-page__list-card .simple-list__meta-item {
+.app-page__list-card .simple-list__meta-item {
   color: var(--theme-text-muted);
 }
 
-.cargos-page__list-card .simple-list__meta-label {
+.app-page__list-card .simple-list__meta-label {
   color: var(--theme-text-subtle);
 }
 
-.cargos-page__list-card .simple-list__meta-value {
+.app-page__list-card .simple-list__meta-value {
   color: var(--theme-text-muted-strong);
 }
 
-.cargos-page__list-card .simple-list__badge--accent {
+.app-page__list-card .simple-list__badge--accent {
   background: var(--theme-badge-accent-bg);
   border-color: var(--theme-badge-accent-border);
   color: var(--theme-badge-accent-text);
 }
 
-.cargos-page__list-card .simple-list__actions .btn {
-  border-radius: var(--radius-sm);
+.app-page__list-card .simple-list__actions .btn {
+  border-radius: var(--radius-pill);
   min-height: 34px;
 }
 
-.cargos-page__list-card .simple-list__actions .btn-secondary {
+.app-page__list-card .simple-list__actions .btn-secondary {
   background: var(--theme-btn-secondary-bg);
   border-color: var(--theme-btn-secondary-border);
   color: var(--theme-btn-secondary-text);
 }
 
-.cargos-page__list-card .simple-list__actions .btn-secondary:hover,
-.cargos-page__list-card .simple-list__actions .btn-secondary:focus {
+.app-page__list-card .simple-list__actions .btn-secondary:hover,
+.app-page__list-card .simple-list__actions .btn-secondary:focus {
   background: var(--theme-btn-secondary-hover-bg);
   border-color: var(--theme-btn-secondary-hover-border);
 }
 
-.cargos-page__list-card .empty-state {
+.app-page__list-card .empty-state {
   background: var(--theme-empty-bg);
   border: 1px dashed var(--theme-empty-border);
   border-radius: var(--radius-md);
   color: var(--theme-text-muted);
 }
 
-.cargos-page__list-card .empty-state h3 {
+.app-page__list-card .empty-state h3 {
   color: var(--theme-text-heading);
 }
 
-.cargos-page__list-card .empty-state .btn-primary {
+.app-page__list-card .empty-state .btn-primary {
   background: linear-gradient(180deg, #0e5088 0%, #0b3a66 100%);
   border-color: rgba(6, 40, 71, 0.5);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   box-shadow: 0 8px 18px rgba(11, 58, 102, 0.26);
 }
 
 /* Formulário */
-.cargos-page__form-card {
+.app-page__form-card {
   background: linear-gradient(
     180deg,
     var(--theme-surface-card) 0%,
@@ -301,62 +304,62 @@
   padding: var(--space-6) var(--space-7);
 }
 
-.cargos-page__form-card .form-shell {
+.app-page__form-card .form-shell {
   gap: var(--space-5);
 }
 
-.cargos-page__form-card .form-section {
+.app-page__form-card .form-section {
   background: var(--theme-form-section-bg);
   border: 1px solid var(--theme-form-section-border);
   border-radius: var(--radius-md);
   box-shadow: 0 2px 8px rgba(7, 26, 51, 0.04);
 }
 
-.cargos-page__form-card .form-section-header {
+.app-page__form-card .form-section-header {
   border-bottom-color: var(--theme-border-card);
 }
 
-.cargos-page__form-card .form-section-header h3,
-.cargos-page__form-card h2 {
+.app-page__form-card .form-section-header h3,
+.app-page__form-card h2 {
   color: var(--theme-text-heading);
 }
 
-.cargos-page__form-card .form-section-header p,
-.cargos-page__form-card .field-help {
+.app-page__form-card .form-section-header p,
+.app-page__form-card .field-help {
   color: var(--theme-text-muted);
 }
 
-.cargos-page__form-card .field label {
+.app-page__form-card .field label {
   color: var(--theme-text-muted-strong);
 }
 
-.cargos-page__form-card .app-card-toggle__title {
+.app-page__form-card .app-card-toggle__title {
   color: var(--theme-text-heading);
 }
 
-.cargos-page__form-card .app-card-toggle__description {
+.app-page__form-card .app-card-toggle__description {
   color: var(--theme-text-muted);
 }
 
-.cargos-page__form-card .form-control,
-.cargos-page__form-card .form-select {
+.app-page__form-card .form-control,
+.app-page__form-card .form-select {
   background: var(--theme-input-bg);
   border-color: var(--theme-input-border);
   border-radius: var(--radius-sm);
   color: var(--theme-input-text);
 }
 
-.cargos-page__form-card .form-control:focus,
-.cargos-page__form-card .form-select:focus {
+.app-page__form-card .form-control:focus,
+.app-page__form-card .form-select:focus {
   border-color: rgba(11, 58, 102, 0.55);
   box-shadow: 0 0 0 3px rgba(21, 91, 154, 0.15);
   outline: none;
 }
 
-.cargos-page__form-card .form-actions .btn-primary {
+.app-page__form-card .form-actions .btn-primary {
   background: linear-gradient(180deg, #0e5088 0%, #0b3a66 100%);
   border-color: rgba(6, 40, 71, 0.5);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.12) inset,
     0 8px 18px rgba(11, 58, 102, 0.28);
@@ -364,27 +367,43 @@
   padding: 0 var(--space-6);
 }
 
-.cargos-page__form-card .form-actions .btn-primary:hover,
-.cargos-page__form-card .form-actions .btn-primary:focus {
+.app-page__form-card .form-actions .btn-primary:hover,
+.app-page__form-card .form-actions .btn-primary:focus {
   filter: brightness(1.06);
 }
 
-.cargos-page__form-card .form-actions .btn-secondary {
+.app-page__form-card .form-actions .btn-secondary {
   background: var(--theme-btn-secondary-bg);
   border-color: var(--theme-btn-secondary-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   color: var(--theme-btn-secondary-text);
 }
 
-.cargos-page__form-card .form-actions .btn-secondary:hover,
-.cargos-page__form-card .form-actions .btn-secondary:focus {
+.app-page__form-card .form-actions .btn-secondary:hover,
+.app-page__form-card .form-actions .btn-secondary:focus {
   background: var(--theme-btn-secondary-hover-bg);
   border-color: var(--theme-btn-secondary-hover-border);
   color: var(--theme-btn-secondary-text);
 }
 
+/* Grade de cards (documentos, hub cadastros) */
+.app-page__list-card--grid {
+  background: linear-gradient(
+    180deg,
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
+  );
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--theme-shadow-block);
+}
+
+.app-page__list-card--grid .list-grid {
+  padding: var(--space-5);
+}
+
 /* Exclusão: page-card interno */
-.cargos-page .page-card {
+.app-page .page-card {
   background: transparent;
   border: 0;
   border-radius: 0;
@@ -393,74 +412,74 @@
   padding: 0;
 }
 
-.cargos-page .page-card .form-section {
+.app-page .page-card .form-section {
   background: var(--theme-form-section-bg);
   border: 1px solid var(--theme-form-section-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 }
 
-.cargos-page .page-card .form-section-header h3,
-.cargos-page .page-card h2,
-.cargos-page .page-card h3 {
+.app-page .page-card .form-section-header h3,
+.app-page .page-card h2,
+.app-page .page-card h3 {
   color: var(--theme-text-heading);
 }
 
-.cargos-page .page-card .form-section-header p,
-.cargos-page .page-card .field-help {
+.app-page .page-card .form-section-header p,
+.app-page .page-card .field-help {
   color: var(--theme-text-muted);
 }
 
-.cargos-page .page-card .field label {
+.app-page .page-card .field label {
   color: var(--theme-text-muted-strong);
 }
 
-.cargos-page .page-card .form-control,
-.cargos-page .page-card .form-select,
-.cargos-page .page-card textarea {
+.app-page .page-card .form-control,
+.app-page .page-card .form-select,
+.app-page .page-card textarea {
   background: var(--theme-input-bg);
   border-color: var(--theme-input-border);
   color: var(--theme-input-text);
 }
 
-.cargos-page .page-card .form-actions .btn-secondary {
+.app-page .page-card .form-actions .btn-secondary {
   background: var(--theme-btn-secondary-bg);
   border-color: var(--theme-btn-secondary-border);
   color: var(--theme-btn-secondary-text);
 }
 
-.cargos-page .page-card .form-actions .btn-secondary:hover,
-.cargos-page .page-card .form-actions .btn-secondary:focus {
+.app-page .page-card .form-actions .btn-secondary:hover,
+.app-page .page-card .form-actions .btn-secondary:focus {
   background: var(--theme-btn-secondary-hover-bg);
   border-color: var(--theme-btn-secondary-hover-border);
 }
 
-.cargos-page .page-card .form-actions .btn-primary,
-.cargos-page .page-card .form-actions .btn-danger {
-  border-radius: var(--radius-sm);
+.app-page .page-card .form-actions .btn-primary,
+.app-page .page-card .form-actions .btn-danger {
+  border-radius: var(--radius-pill);
   min-height: 44px;
 }
 
 @media (max-width: 720px) {
-  .cargos-page {
+  .app-page {
     padding: var(--space-5) var(--space-4);
   }
 
-  .cargos-page__hero-top {
+  .app-page__hero-top {
     flex-direction: column;
   }
 
-  .cargos-page__hero-actions {
+  .app-page__hero-actions {
     width: 100%;
   }
 
-  .cargos-page__hero-actions .btn-primary {
+  .app-page__hero-actions .btn-primary {
     flex: 1;
     justify-content: center;
     width: 100%;
   }
 
-  .cargos-page__form-card {
+  .app-page__form-card {
     padding: var(--space-5);
   }
 }

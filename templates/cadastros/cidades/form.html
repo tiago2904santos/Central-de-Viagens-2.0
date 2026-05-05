@@ -3,20 +3,39 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-  {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Cadastros" only %}
-  <form class="form-shell" method="post" novalidate>
-    {% csrf_token %}
-    {% include "components/forms/form_section.html" with title="Dados da cidade" description="Informe nome, estado e dados geograficos da cidade." only %}
-    <div class="form-section">
-      <div class="form-grid">
-        {% include "components/forms/form_field.html" with field=form.nome only %}
-        {% include "components/forms/form_field.html" with field=form.estado only %}
-        {% include "components/forms/card_toggle.html" with field=form.capital title="Capital" description="Marca a cidade como capital do estado" icon="UF" only %}
-        {% include "components/forms/form_field.html" with field=form.codigo_ibge only %}
-        {% include "components/forms/form_field.html" with field=form.latitude only %}
-        {% include "components/forms/form_field.html" with field=form.longitude only %}
+  <div class="app-page">
+    <div class="app-page__shell">
+      <header class="app-page-hero app-page-hero--hybrid app-page-hero--compact" aria-labelledby="cidades-form-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Cadastros</span>
+          <h1 class="app-page-hero__title" id="cidades-form-title">{{ page_title }}</h1>
+        </div>
+        <div class="app-page-hero__body">
+          <div class="app-page__hero-single">
+            <div class="app-page__brand-mark" aria-hidden="true">CI</div>
+            <p class="app-page__subtitle">{{ page_description }}</p>
+          </div>
+        </div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
+      </header>
+
+      <div class="app-page__form-card">
+        <form class="form-shell" method="post" novalidate>
+          {% csrf_token %}
+          {% include "components/forms/form_section.html" with title="Dados da cidade" description="Informe nome, estado e dados geograficos da cidade." only %}
+          <div class="form-section">
+            <div class="form-grid">
+              {% include "components/forms/form_field.html" with field=form.nome only %}
+              {% include "components/forms/form_field.html" with field=form.estado only %}
+              {% include "components/forms/card_toggle.html" with field=form.capital title="Capital" description="Marca a cidade como capital do estado" icon="UF" only %}
+              {% include "components/forms/form_field.html" with field=form.codigo_ibge only %}
+              {% include "components/forms/form_field.html" with field=form.latitude only %}
+              {% include "components/forms/form_field.html" with field=form.longitude only %}
+            </div>
+          </div>
+          {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
+        </form>
       </div>
     </div>
-    {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
-  </form>
+  </div>
 {% endblock %}

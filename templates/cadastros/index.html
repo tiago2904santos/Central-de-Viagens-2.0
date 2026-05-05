@@ -3,10 +3,35 @@
 {% block title %}Cadastros{% endblock %}
 
 {% block content %}
-  {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Dados-base" only %}
-  <div class="list-grid">
-    {% for module in modules %}
-      {% include "components/cards/module_card.html" with title=module.title description=module.description href=module.href action_label="Abrir" eyebrow="Cadastro" only %}
-    {% endfor %}
+  <div class="app-page">
+    <div class="app-page__shell">
+      <header class="app-page-hero app-page-hero--hybrid" aria-labelledby="cadastros-hub-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Cadastros</span>
+          <h1 class="app-page-hero__title" id="cadastros-hub-title">{{ page_title }}</h1>
+        </div>
+        <div class="app-page-hero__body">
+          <div class="app-page__hero-top">
+            <div class="app-page__brand">
+              <div class="app-page__brand-mark" aria-hidden="true">CV</div>
+              <div class="app-page__brand-copy">
+                {% if page_description %}
+                  <p class="app-page__subtitle">{{ page_description }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
+      </header>
+
+      <div class="app-page__list-card app-page__list-card--grid">
+        <div class="list-grid">
+          {% for module in modules %}
+            {% include "components/cards/module_card.html" with title=module.title description=module.description href=module.href action_label="Abrir" eyebrow="Cadastro" only %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
   </div>
 {% endblock %}

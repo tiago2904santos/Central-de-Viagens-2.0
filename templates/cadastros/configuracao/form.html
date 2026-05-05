@@ -4,82 +4,100 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-  {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Cadastros" only %}
+  <div class="app-page">
+    <div class="app-page__shell">
+      <header class="app-page-hero app-page-hero--hybrid app-page-hero--compact" aria-labelledby="config-form-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Cadastros</span>
+          <h1 class="app-page-hero__title" id="config-form-title">{{ page_title }}</h1>
+        </div>
+        <div class="app-page-hero__body">
+          <div class="app-page__hero-single">
+            <div class="app-page__brand-mark" aria-hidden="true">CF</div>
+            <p class="app-page__subtitle">{{ page_description }}</p>
+          </div>
+        </div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
+      </header>
 
-  <form
-    class="form-shell"
-    method="post"
-    novalidate
-    data-configuracoes-form
-    data-cep-api-url="{{ api_consulta_cep_url }}"
-  >
-    {% csrf_token %}
-    <div id="configuracoes-cep-alert" class="alert alert-danger" role="alert" data-cep-alert hidden></div>
+      <div class="app-page__form-card">
+        <form
+          class="form-shell"
+          method="post"
+          novalidate
+          data-configuracoes-form
+          data-cep-api-url="{{ api_consulta_cep_url }}"
+        >
+          {% csrf_token %}
+          <div id="configuracoes-cep-alert" class="alert alert-danger" role="alert" data-cep-alert hidden></div>
 
-    {% include "components/forms/form_section.html" with title="Identificação institucional" description="Dados do órgão usados no cabeçalho dos documentos." only %}
-    <div class="form-section">
-      <div class="form-grid">
-        {% include "components/forms/form_field.html" with field=form.nome_orgao only %}
-        {% include "components/forms/form_field.html" with field=form.sigla_orgao only %}
-        {% include "components/forms/form_field.html" with field=form.divisao only %}
-        {% include "components/forms/form_field.html" with field=form.unidade only %}
+          {% include "components/forms/form_section.html" with title="Identificação institucional" description="Dados do órgão usados no cabeçalho dos documentos." only %}
+          <div class="form-section">
+            <div class="form-grid">
+              {% include "components/forms/form_field.html" with field=form.nome_orgao only %}
+              {% include "components/forms/form_field.html" with field=form.sigla_orgao only %}
+              {% include "components/forms/form_field.html" with field=form.divisao only %}
+              {% include "components/forms/form_field.html" with field=form.unidade only %}
+            </div>
+          </div>
+
+          {% include "components/forms/form_section.html" with title="Sede e chefia" description="Responsáveis institucionais e cidade sede calculada pelo endereço." only %}
+          <div class="form-section">
+            <div class="form-grid">
+              {% include "components/forms/form_field.html" with field=form.sede only %}
+              {% include "components/forms/form_field.html" with field=form.nome_chefia only %}
+              {% include "components/forms/form_field.html" with field=form.cargo_chefia only %}
+              {% include "components/forms/form_field.html" with field=form.cidade_sede_padrao help_text=form.cidade_sede_padrao.help_text only %}
+              {% include "components/forms/form_field.html" with field=form.coordenador_adm_plano_trabalho only %}
+            </div>
+          </div>
+
+          {% include "components/forms/form_section.html" with title="Endereço dos documentos" description="Rodapé institucional preenchido manualmente ou por consulta de CEP." only %}
+          <div class="form-section">
+            <div class="form-grid">
+              {% include "components/forms/form_field.html" with field=form.cep only %}
+              {% include "components/forms/form_field.html" with field=form.logradouro only %}
+              {% include "components/forms/form_field.html" with field=form.numero only %}
+              {% include "components/forms/form_field.html" with field=form.bairro only %}
+              {% include "components/forms/form_field.html" with field=form.cidade_endereco only %}
+              {% include "components/forms/form_field.html" with field=form.uf only %}
+            </div>
+          </div>
+
+          {% include "components/forms/form_section.html" with title="Contato" description="Canais exibidos nos documentos institucionais." only %}
+          <div class="form-section">
+            <div class="form-grid">
+              {% include "components/forms/form_field.html" with field=form.telefone only %}
+              {% include "components/forms/form_field.html" with field=form.email only %}
+            </div>
+          </div>
+
+          {% include "components/forms/form_section.html" with title="Prazos e numeração" description="Parâmetros de justificativa e controle auxiliar de Plano de Trabalho." only %}
+          <div class="form-section">
+            <div class="form-grid">
+              {% include "components/forms/form_field.html" with field=form.prazo_justificativa_dias only %}
+              {% include "components/forms/form_field.html" with field=form.pt_ultimo_numero only %}
+              {% include "components/forms/form_field.html" with field=form.pt_ano only %}
+            </div>
+          </div>
+
+          {% include "components/forms/form_section.html" with title="Assinaturas documentais" description="Assinantes padrão por tipo de documento; não é assinatura digital." only %}
+          <div class="form-section">
+            <div class="form-grid">
+              {% include "components/forms/form_field.html" with field=form.assinatura_oficio_1 label="Ofício: assinatura 1" only %}
+              {% include "components/forms/form_field.html" with field=form.assinatura_oficio_2 label="Ofício: assinatura 2" only %}
+              {% include "components/forms/form_field.html" with field=form.assinatura_justificativas label="Justificativa: assinante" only %}
+              {% include "components/forms/form_field.html" with field=form.assinatura_planos_trabalho label="Plano de Trabalho: assinante" only %}
+              {% include "components/forms/form_field.html" with field=form.assinatura_ordens_servico label="Ordem de Serviço: assinante" only %}
+              {% include "components/forms/form_field.html" with field=form.assinatura_termo_autorizacao label="Termo de Autorização: assinante" only %}
+            </div>
+          </div>
+
+          {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
+        </form>
       </div>
     </div>
-
-    {% include "components/forms/form_section.html" with title="Sede e chefia" description="Responsáveis institucionais e cidade sede calculada pelo endereço." only %}
-    <div class="form-section">
-      <div class="form-grid">
-        {% include "components/forms/form_field.html" with field=form.sede only %}
-        {% include "components/forms/form_field.html" with field=form.nome_chefia only %}
-        {% include "components/forms/form_field.html" with field=form.cargo_chefia only %}
-        {% include "components/forms/form_field.html" with field=form.cidade_sede_padrao help_text=form.cidade_sede_padrao.help_text only %}
-        {% include "components/forms/form_field.html" with field=form.coordenador_adm_plano_trabalho only %}
-      </div>
-    </div>
-
-    {% include "components/forms/form_section.html" with title="Endereço dos documentos" description="Rodapé institucional preenchido manualmente ou por consulta de CEP." only %}
-    <div class="form-section">
-      <div class="form-grid">
-        {% include "components/forms/form_field.html" with field=form.cep only %}
-        {% include "components/forms/form_field.html" with field=form.logradouro only %}
-        {% include "components/forms/form_field.html" with field=form.numero only %}
-        {% include "components/forms/form_field.html" with field=form.bairro only %}
-        {% include "components/forms/form_field.html" with field=form.cidade_endereco only %}
-        {% include "components/forms/form_field.html" with field=form.uf only %}
-      </div>
-    </div>
-
-    {% include "components/forms/form_section.html" with title="Contato" description="Canais exibidos nos documentos institucionais." only %}
-    <div class="form-section">
-      <div class="form-grid">
-        {% include "components/forms/form_field.html" with field=form.telefone only %}
-        {% include "components/forms/form_field.html" with field=form.email only %}
-      </div>
-    </div>
-
-    {% include "components/forms/form_section.html" with title="Prazos e numeração" description="Parâmetros de justificativa e controle auxiliar de Plano de Trabalho." only %}
-    <div class="form-section">
-      <div class="form-grid">
-        {% include "components/forms/form_field.html" with field=form.prazo_justificativa_dias only %}
-        {% include "components/forms/form_field.html" with field=form.pt_ultimo_numero only %}
-        {% include "components/forms/form_field.html" with field=form.pt_ano only %}
-      </div>
-    </div>
-
-    {% include "components/forms/form_section.html" with title="Assinaturas documentais" description="Assinantes padrão por tipo de documento; não é assinatura digital." only %}
-    <div class="form-section">
-      <div class="form-grid">
-        {% include "components/forms/form_field.html" with field=form.assinatura_oficio_1 label="Ofício: assinatura 1" only %}
-        {% include "components/forms/form_field.html" with field=form.assinatura_oficio_2 label="Ofício: assinatura 2" only %}
-        {% include "components/forms/form_field.html" with field=form.assinatura_justificativas label="Justificativa: assinante" only %}
-        {% include "components/forms/form_field.html" with field=form.assinatura_planos_trabalho label="Plano de Trabalho: assinante" only %}
-        {% include "components/forms/form_field.html" with field=form.assinatura_ordens_servico label="Ordem de Serviço: assinante" only %}
-        {% include "components/forms/form_field.html" with field=form.assinatura_termo_autorizacao label="Termo de Autorização: assinante" only %}
-      </div>
-    </div>
-
-    {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
-  </form>
+  </div>
 {% endblock %}
 
 {% block extra_js %}

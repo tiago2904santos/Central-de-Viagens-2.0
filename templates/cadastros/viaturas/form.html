@@ -1,21 +1,40 @@
 {% extends "base.html" %}
 {% block title %}{{ page_title }}{% endblock %}
 {% block content %}
-  {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Cadastros" only %}
-  <form class="form-shell" method="post" novalidate>
-    {% csrf_token %}
-    {% include "components/forms/form_section.html" with title="Dados da viatura" description="Informe placa, modelo, combustível, tipo e opcionalmente motoristas (servidores)." only %}
-    <div class="form-section">
-      <div class="form-grid">
-        {% include "components/forms/form_field.html" with field=form.placa only %}
-        {% include "components/forms/form_field.html" with field=form.modelo only %}
-        {% include "components/forms/input_with_action.html" with field=form.combustivel action_url=combustiveis_manage_url action_label="Gerenciar combustíveis" only %}
-        {% include "components/forms/form_field.html" with field=form.tipo only %}
-        <div class="field-span-12">
-          {% include "components/forms/form_field.html" with field=form.motoristas only %}
+  <div class="app-page">
+    <div class="app-page__shell">
+      <header class="app-page-hero app-page-hero--hybrid app-page-hero--compact" aria-labelledby="viaturas-form-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Cadastros</span>
+          <h1 class="app-page-hero__title" id="viaturas-form-title">{{ page_title }}</h1>
         </div>
+        <div class="app-page-hero__body">
+          <div class="app-page__hero-single">
+            <div class="app-page__brand-mark" aria-hidden="true">VT</div>
+            <p class="app-page__subtitle">{{ page_description }}</p>
+          </div>
+        </div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
+      </header>
+
+      <div class="app-page__form-card">
+        <form class="form-shell" method="post" novalidate>
+          {% csrf_token %}
+          {% include "components/forms/form_section.html" with title="Dados da viatura" description="Informe placa, modelo, combustível, tipo e opcionalmente motoristas (servidores)." only %}
+          <div class="form-section">
+            <div class="form-grid">
+              {% include "components/forms/form_field.html" with field=form.placa only %}
+              {% include "components/forms/form_field.html" with field=form.modelo only %}
+              {% include "components/forms/input_with_action.html" with field=form.combustivel action_url=combustiveis_manage_url action_label="Gerenciar combustíveis" only %}
+              {% include "components/forms/form_field.html" with field=form.tipo only %}
+              <div class="field-span-12">
+                {% include "components/forms/form_field.html" with field=form.motoristas only %}
+              </div>
+            </div>
+          </div>
+          {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
+        </form>
       </div>
     </div>
-    {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
-  </form>
+  </div>
 {% endblock %}

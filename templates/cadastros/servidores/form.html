@@ -1,23 +1,42 @@
 {% extends "base.html" %}
 {% block title %}{{ page_title }}{% endblock %}
 {% block content %}
-  {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Cadastros" only %}
-  <form class="form-shell" method="post" novalidate data-servidor-sem-rg-form>
-    {% csrf_token %}
-    {% include "components/forms/form_section.html" with title="Dados do servidor" description="Nome, cargo e CPF obrigatórios. RG opcional ou marcação de ausência. Telefone opcional." only %}
-    <div class="form-section">
-      <div class="form-grid">
-        {% include "components/forms/form_field.html" with field=form.nome only %}
-        {% include "components/forms/input_with_action.html" with field=form.cargo action_url=cargos_manage_url action_label="Gerenciar cargos" only %}
-        {% include "components/forms/form_field.html" with field=form.cpf only %}
-        {% include "components/forms/card_toggle.html" with field=form.sem_rg title="Não possui RG" description="Bloqueia o campo RG" icon="RG" only %}
-        <div class="field-span-12 field-rg-wrap" data-rg-field-wrap>
-          {% include "components/forms/form_field.html" with field=form.rg only %}
+  <div class="app-page">
+    <div class="app-page__shell">
+      <header class="app-page-hero app-page-hero--hybrid app-page-hero--compact" aria-labelledby="servidores-form-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Cadastros</span>
+          <h1 class="app-page-hero__title" id="servidores-form-title">{{ page_title }}</h1>
         </div>
-        {% include "components/forms/form_field.html" with field=form.telefone only %}
-        {% include "components/forms/input_with_action.html" with field=form.unidade action_url=unidades_manage_url action_label="Gerenciar unidades" only %}
+        <div class="app-page-hero__body">
+          <div class="app-page__hero-single">
+            <div class="app-page__brand-mark" aria-hidden="true">SV</div>
+            <p class="app-page__subtitle">{{ page_description }}</p>
+          </div>
+        </div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
+      </header>
+
+      <div class="app-page__form-card">
+        <form class="form-shell" method="post" novalidate data-servidor-sem-rg-form>
+          {% csrf_token %}
+          {% include "components/forms/form_section.html" with title="Dados do servidor" description="Nome, cargo e CPF obrigatórios. RG opcional ou marcação de ausência. Telefone opcional." only %}
+          <div class="form-section">
+            <div class="form-grid">
+              {% include "components/forms/form_field.html" with field=form.nome only %}
+              {% include "components/forms/input_with_action.html" with field=form.cargo action_url=cargos_manage_url action_label="Gerenciar cargos" only %}
+              {% include "components/forms/form_field.html" with field=form.cpf only %}
+              {% include "components/forms/card_toggle.html" with field=form.sem_rg title="Não possui RG" description="Bloqueia o campo RG" icon="RG" only %}
+              <div class="field-span-12 field-rg-wrap" data-rg-field-wrap>
+                {% include "components/forms/form_field.html" with field=form.rg only %}
+              </div>
+              {% include "components/forms/form_field.html" with field=form.telefone only %}
+              {% include "components/forms/input_with_action.html" with field=form.unidade action_url=unidades_manage_url action_label="Gerenciar unidades" only %}
+            </div>
+          </div>
+          {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
+        </form>
       </div>
     </div>
-    {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
-  </form>
+  </div>
 {% endblock %}

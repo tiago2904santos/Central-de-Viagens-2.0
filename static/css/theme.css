@@ -6,7 +6,8 @@
  *
  * IDs: dark-light | dark-dark | light-light | light-dark
  * Sidebar (--sidebar-*): fixa em :root — não rotacionar por tema.
- * Variáveis --theme-*: usar apenas em dashboard, cargos-page, app-ui (hero).
+ * Variáveis --theme-*: usar em dashboard, app-page.css, app-ui (hero).
+ * --app-hero-stage-start / --app-hero-stage-end: fixos em :root (faixa azul do hero).
  */
 
 :root {
@@ -55,6 +56,7 @@
     radial-gradient(ellipse 90% 60% at 100% 0%, rgba(21, 91, 154, 0.1), transparent 50%),
     linear-gradient(165deg, #eef3fb 0%, #e0eaf6 45%, #d2e0f0 100%);
 
+  /* Faixa superior do hero (.app-page-hero__stage): igual em todos os temas */
   --app-hero-stage-start: #0a1f35;
   --app-hero-stage-end: #1a4d7a;
   --app-hero-eyebrow: rgba(255, 248, 230, 0.98);
@@ -126,8 +128,6 @@ html[data-theme="dark-light"] {
     radial-gradient(ellipse 95% 65% at 100% 16%, rgba(21, 91, 154, 0.35), transparent 52%),
     linear-gradient(165deg, #041e36 0%, #062847 48%, #031523 100%);
 
-  --app-hero-stage-start: #0a1f35;
-  --app-hero-stage-end: #1a4d7a;
   --app-hero-eyebrow: rgba(255, 243, 207, 0.92);
   --app-hero-title: #ffffff;
   --app-hero-body-bg: linear-gradient(180deg, #ffffff 0%, #f6f9fd 100%);
@@ -196,8 +196,6 @@ html[data-theme="dark-dark"] {
     radial-gradient(ellipse 95% 65% at 100% 16%, rgba(21, 91, 154, 0.3), transparent 52%),
     linear-gradient(165deg, #041e36 0%, #062847 48%, #031523 100%);
 
-  --app-hero-stage-start: #0a1f35;
-  --app-hero-stage-end: #1a4d7a;
   --app-hero-eyebrow: rgba(255, 236, 180, 0.95);
   --app-hero-title: #ffffff;
   --app-hero-body-bg: linear-gradient(180deg, #1a2638 0%, #243447 100%);
@@ -264,8 +262,6 @@ html[data-theme="light-light"] {
     radial-gradient(ellipse 90% 60% at 100% 0%, rgba(21, 91, 154, 0.1), transparent 50%),
     linear-gradient(165deg, #eef3fb 0%, #e0eaf6 45%, #d2e0f0 100%);
 
-  --app-hero-stage-start: #0a1f35;
-  --app-hero-stage-end: #1a4d7a;
   --app-hero-eyebrow: rgba(255, 248, 230, 0.98);
   --app-hero-title: #ffffff;
   --app-hero-body-bg: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
@@ -332,8 +328,6 @@ html[data-theme="light-dark"] {
     radial-gradient(ellipse 90% 60% at 100% 0%, rgba(21, 91, 154, 0.08), transparent 50%),
     linear-gradient(165deg, #eef3fb 0%, #e0eaf6 45%, #d2e0f0 100%);
 
-  --app-hero-stage-start: #0a1f35;
-  --app-hero-stage-end: #1a4d7a;
   --app-hero-eyebrow: rgba(255, 243, 207, 0.95);
   --app-hero-title: #ffffff;
   --app-hero-body-bg: linear-gradient(180deg, #1e2d3f 0%, #2a3d52 100%);

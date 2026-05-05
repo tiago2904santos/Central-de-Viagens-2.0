@@ -2,24 +2,24 @@
 {% block title %}Cargos{% endblock %}
 {% block content %}
   {% url "cadastros:cargo_create" as create_url %}
-  <div class="cargos-page">
-    <div class="cargos-page__shell">
+  <div class="app-page">
+    <div class="app-page__shell">
       <header class="app-page-hero app-page-hero--hybrid" aria-labelledby="cargos-page-title">
         <div class="app-page-hero__stage">
           <span class="app-page-hero__eyebrow">Cadastros</span>
           <h1 class="app-page-hero__title" id="cargos-page-title">Cargos</h1>
         </div>
         <div class="app-page-hero__body">
-          <div class="cargos-page__hero-top">
-            <div class="cargos-page__brand">
-              <div class="cargos-page__brand-mark" aria-hidden="true">CG</div>
-              <div class="cargos-page__brand-copy">
-                <p class="cargos-page__subtitle">
+          <div class="app-page__hero-top">
+            <div class="app-page__brand">
+              <div class="app-page__brand-mark" aria-hidden="true">CG</div>
+              <div class="app-page__brand-copy">
+                <p class="app-page__subtitle">
                   Gerencie os cargos utilizados nos cadastros institucionais.
                 </p>
               </div>
             </div>
-            <div class="cargos-page__hero-actions">
+            <div class="app-page__hero-actions">
               {% include "components/buttons/action_button.html" with href=create_url label="Novo cargo" variant="primary" only %}
             </div>
           </div>
@@ -27,11 +27,11 @@
         <div class="app-page-hero__ribbon" aria-hidden="true"></div>
       </header>
 
-      <div class="cargos-page__toolbar">
+      <div class="app-page__toolbar">
         {% include "components/lists/list_toolbar.html" with search_placeholder="Buscar cargos" q=q action_label="" action_url="" only %}
       </div>
 
-      <div class="cargos-page__list-card">
+      <div class="app-page__list-card">
         {% include "components/lists/simple_list.html" with rows=rows empty_message="Nenhum cargo cadastrado ainda." empty_action_label="Novo cargo" empty_action_url=create_url %}
       </div>
     </div>

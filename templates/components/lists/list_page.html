@@ -1,5 +1,36 @@
-<div class="list-page">
-  {% include "components/layout/page_header.html" with title=title description=description eyebrow=eyebrow action_label=action_label action_url=action_url only %}
-  {% include "components/lists/list_toolbar.html" with search_placeholder=search_placeholder action_label=action_label action_url=action_url q=q only %}
-  {% include "components/lists/list_grid.html" with cards=cards empty_message=empty_message empty_action_label=action_label empty_action_url=action_url only %}
+<div class="app-page">
+  <div class="app-page__shell">
+    <header class="app-page-hero app-page-hero--hybrid" aria-labelledby="{{ title_id|default:'app-list-grid-title' }}">
+      <div class="app-page-hero__stage">
+        <span class="app-page-hero__eyebrow">{{ eyebrow|default:"Documentos" }}</span>
+        <h1 class="app-page-hero__title" id="{{ title_id|default:'app-list-grid-title' }}">{{ title }}</h1>
+      </div>
+      <div class="app-page-hero__body">
+        <div class="app-page__hero-top">
+          <div class="app-page__brand">
+            <div class="app-page__brand-mark" aria-hidden="true">{{ brand_mark|default:"CV" }}</div>
+            <div class="app-page__brand-copy">
+              {% if description %}
+                <p class="app-page__subtitle">{{ description }}</p>
+              {% endif %}
+            </div>
+          </div>
+          {% if action_label and action_url %}
+            <div class="app-page__hero-actions">
+              {% include "components/buttons/action_button.html" with href=action_url label=action_label variant="primary" only %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="app-page-hero__ribbon" aria-hidden="true"></div>
+    </header>
+
+    <div class="app-page__toolbar">
+      {% include "components/lists/list_toolbar.html" with search_placeholder=search_placeholder q=q action_label="" action_url="" only %}
+    </div>
+
+    <div class="app-page__list-card app-page__list-card--grid">
+      {% include "components/lists/list_grid.html" with cards=cards empty_message=empty_message empty_action_label=action_label empty_action_url=action_url only %}
+    </div>
+  </div>
 </div>
