@@ -13,8 +13,8 @@ Entidades ativas do modulo:
 - `Combustivel`: nome unico e em maiusculo; opcionalmente um registro pode ser **combustivel padrao** (`is_padrao`), garantindo um unico padrao por vez.
 - `Servidor`: nome unico e em maiusculo; cargo obrigatorio no form; **CPF obrigatorio**, validado por digitos verificadores, armazenado so digitos; **RG opcional** ou marcacao **sem RG** (valor canonico interno, espelhando o legacy); **telefone opcional** (10 ou 11 digitos); unicidade condicional de CPF, RG (exceto “nao possui”) e telefone quando preenchidos; unidade opcional.
 - `Viatura`: placa unica (AAA1234 ou AAA1A23), modelo obrigatorio normalizado em maiusculo, combustivel FK e tipo (`CARACTERIZADA`/`DESCARACTERIZADA`); placa persistida sem hifen e em maiusculo; **motoristas** opcionais via relacionamento N:N com `Servidor` (sem entidade Motorista).
-- `ConfiguracaoSistema`: **singleton** institucional (endereco, orgao, chefia, prazo de justificativa, cidade sede padrao, numeracao auxiliar de PT quando aplicavel); usada para documentos futuros.
-- `AssinaturaConfiguracao`: assinante preferencial por **tipo de documento** (oficio, justificativa, plano de trabalho, ordem de servico, termo), apontando para `Servidor` (ordem 1 por tipo); nao e assinatura digital, apenas configuracao.
+- `ConfiguracaoSistema`: **singleton** institucional (orgao, cabecalho, endereco, contato, chefia, prazo de justificativa, cidade sede padrao, coordenador administrativo de PT e numeracao auxiliar de PT); usada para documentos futuros.
+- `AssinaturaConfiguracao`: assinante preferencial por **tipo de documento** (oficio, justificativa, plano de trabalho, ordem de servico, termo), apontando para `Servidor`, com ordem por tipo e `ativo` tecnico; nao e assinatura digital, apenas configuracao.
 
 ## Regras obrigatorias
 
@@ -40,6 +40,13 @@ Não foi possível excluir este cadastro porque ele está vinculado a outros reg
 - Placa: `AAA-1234` ou `AAA1A23` na tela; armazenada sem hifen e em maiusculo.
 
 Logica central em `core/utils/masks.py`; JS em `static/js/components/masks.js` via `data-mask` (sem JS inline).
+
+## Configuracoes e documentos
+
+- A tela `/cadastros/configuracao/` e a fonte funcional de dados institucionais para geradores documentais futuros.
+- `cidade_sede_padrao` nao deve ser digitada como texto livre: e resolvida por UF + cidade do endereco contra a base geografica interna.
+- A consulta de CEP passa pela API interna autenticada `/cadastros/api/cep/<cep>/`; o front nao chama ViaCEP diretamente.
+- Assinaturas configuradas sao apenas politica de assinantes por tipo documental. Assinatura digital, token publico, hash e validacao ficam para etapa futura.
 
 ## Cadastros publicos vs base interna
 

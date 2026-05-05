@@ -336,6 +336,16 @@ class ConfiguracaoSistema(TimeStampedModel):
         obj, _ = cls.objects.get_or_create(pk=1, defaults={"prazo_justificativa_dias": 10})
         return obj
 
+    def save(self, *args, **kwargs):
+        self.nome_orgao = " ".join((self.nome_orgao or "").strip().split()).upper()
+        self.sigla_orgao = " ".join((self.sigla_orgao or "").strip().split()).upper()
+        self.divisao = " ".join((self.divisao or "").strip().split()).upper()
+        self.unidade = " ".join((self.unidade or "").strip().split()).upper()
+        self.uf = (self.uf or "").strip().upper()[:2]
+        self.cep = "".join(c for c in (self.cep or "") if c.isdigit())
+        self.telefone = "".join(c for c in (self.telefone or "") if c.isdigit())
+        super().save(*args, **kwargs)
+
 
 class AssinaturaConfiguracao(TimeStampedModel):
     TIPO_OFICIO = "OFICIO"
@@ -365,6 +375,7 @@ class AssinaturaConfiguracao(TimeStampedModel):
         blank=True,
         related_name="+",
     )
+    ativo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "Assinatura (configuração)"

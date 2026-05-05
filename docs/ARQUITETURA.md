@@ -53,6 +53,19 @@ Nesta etapa existem apenas listagem em `/roteiros/` (busca por texto) e cadastro
 Views orquestram `forms + selectors + services + presenters + messages`.
 Templates usam apenas components globais. CSS/JS por pagina seguem proibidos.
 
+## Configuracoes do sistema
+
+A tela de configuracao segue o mesmo padrao arquitetural dos cadastros:
+
+- view orquestra singleton, form, messages e redirect;
+- `cadastros.services.salvar_configuracao_sistema()` persiste configuracao, resolve cidade sede e grava assinaturas por `update_or_create`;
+- `cadastros.services.resolver_cidade_sede_por_endereco()` concentra a comparacao tolerante a acentos;
+- `cadastros.selectors.build_configuracao_context()` prepara um contexto reutilizavel para documentos;
+- API interna `/cadastros/api/cep/<cep>/` encapsula ViaCEP;
+- JS da pagina fica em `static/js/pages/configuracoes.js`, enquanto mascaras globais permanecem em `static/js/components/masks.js`.
+
+O app novo nao importa codigo do legacy em runtime; a tela apenas adapta as regras documentadas e auditadas do legacy.
+
 ## Navegacao lateral
 
 A navegacao principal e declarada em `core/navigation.py` e suporta hierarquia. O grupo `Cadastros` organiza:
@@ -62,6 +75,6 @@ A navegacao principal e declarada em `core/navigation.py` e suporta hierarquia. 
 - `Viaturas`
   - `Combustiveis`
 - `Unidades`
-- `Configuracao`
+- `Configuracoes`
 
 O estado ativo/aberto e preparado antes da renderizacao e o comportamento de abrir/fechar fica em JS centralizado. `Motoristas` nao e cadastro independente e nao deve aparecer no menu lateral. Estados/Cidades **nao** aparecem no menu; permanecem como base interna e importacao conforme `docs/IMPORTACAO_BASE_GEOGRAFICA.md`.

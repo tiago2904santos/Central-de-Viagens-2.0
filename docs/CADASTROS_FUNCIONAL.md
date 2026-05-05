@@ -52,11 +52,16 @@ Fontes de verdade usadas: `docs/LEGACY_*_MAP.md` e arquivos em `legacy/.../cadas
 
 - **Implementado**: modelo `ConfiguracaoSistema` (singleton `get_singleton()`), campos institucionais (orgao, endereco, chefia, prazo justificativa, cidade sede padrao, numeracao PT auxiliar quando aplicavel).
 - **Local**: `cadastros/models.py` (coerente com demais cadastros e FKs para `Cidade` / `Servidor`).
-- Mascaras CEP/telefone alinhadas ao legacy conceitualmente.
+- A tela foi refinada como central institucional: identificacao, sede/chefia, endereco dos documentos, contato, prazos/numeracao e assinaturas documentais.
+- CEP e telefone sao normalizados no backend e mascarados via `static/js/components/masks.js`.
+- A consulta de CEP usa a API interna autenticada `/cadastros/api/cep/<cep>/`, que chama ViaCEP com timeout curto.
+- `cidade_sede_padrao` e resolvida automaticamente por UF + cidade do endereco, com comparacao tolerante a acentos.
+- Detalhes em `docs/CONFIGURACOES_SISTEMA.md`.
 
 ## AssinaturaConfiguracao
 
-- **Implementado** como base de configuracao: por tipo de documento (oficio, justificativa, plano de trabalho, ordem de servico, termo), referencia `Servidor`, ordem fixa 1.
+- **Implementado** como base de configuracao: por tipo de documento (oficio, justificativa, plano de trabalho, ordem de servico, termo), referencia `Servidor`, ordem por tipo e `ativo` tecnico.
+- A UI permite Ofício com assinatura 1 e 2; os demais tipos usam ordem 1.
 - **Nao** e assinatura digital; apenas preparacao para geracao de documentos futura.
 
 ## Forms, services, views

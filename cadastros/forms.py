@@ -1,6 +1,7 @@
 ﻿import re
 
 from django import forms
+from django.db.models import Q
 
 from core.utils.masks import (
     RG_NAO_POSSUI_CANONICAL,
@@ -25,6 +26,15 @@ from .models import Unidade
 from .models import Viatura
 
 PLACA_RE = re.compile(r"^[A-Z]{3}(?:\d{4}|\d[A-Z]\d{2})$")
+
+
+def _servidores_assinantes_queryset(extra_ids=None):
+    servidores = list(Servidor.objects.select_related("cargo", "unidade").order_by("nome"))
+    completos_ids = [servidor.pk for servidor in servidores if servidor.esta_completo()]
+    extra_ids = [pk for pk in (extra_ids or []) if pk]
+    if completos_ids:
+        return Servidor.objects.filter(Q(pk__in=completos_ids) | Q(pk__in=extra_ids)).order_by("nome")
+    return Servidor.objects.order_by("nome")
 
 
 class BaseCadastroForm(forms.ModelForm):
@@ -449,7 +459,11 @@ class ConfiguracaoSistemaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        qs = Servidor.objects.order_by("nome")
+        extra_ids = []
+        if self.instance and self.instance.pk:
+            extra_ids = list(self.instance.assinaturas.values_list("servidor_id", flat=True))
+            extra_ids.append(self.instance.coordenador_adm_plano_trabalho_id)
+        qs = _servidores_assinantes_queryset(extra_ids)
         self.fields["coordenador_adm_plano_trabalho"].queryset = qs
         self.fields["coordenador_adm_plano_trabalho"].empty_label = "---------"
         self.fields["coordenador_adm_plano_trabalho"].required = False
@@ -471,6 +485,7 @@ class ConfiguracaoSistemaForm(forms.ModelForm):
             "assinatura_termo_autorizacao",
         ):
             self.fields[fname].queryset = qs
+
 
         if self.instance and self.instance.pk:
             if self.instance.cep:

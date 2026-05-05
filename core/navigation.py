@@ -48,7 +48,7 @@ NAVIGATION_ITEMS = [
             },
             {
                 "id": "cadastros-configuracao",
-                "label": "Configuração",
+                "label": "Configurações",
                 "url_name": "cadastros:configuracao",
                 "active_when": ["cadastros:configuracao"],
             },

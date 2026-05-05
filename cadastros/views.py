@@ -1,12 +1,16 @@
 ﻿import csv
 from urllib.parse import urlencode
+import requests
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.urls import reverse
 
+from core.utils.masks import only_digits
 from .forms import CargoForm
 from .forms import CidadeForm
 from .forms import CombustivelForm
@@ -60,6 +64,7 @@ from .services import excluir_unidade
 from .services import definir_cargo_padrao
 from .services import definir_combustivel_padrao
 from .services import excluir_viatura
+from .services import salvar_configuracao_sistema
 
 
 def _render_listagem(request, template_name, context):
@@ -87,7 +92,7 @@ def index(request):
                 {"title": "Combustíveis", "description": "Tipos de combustível.", "href": "combustiveis/"},
                 {"title": "Unidades", "description": "Unidades administrativas.", "href": "unidades/"},
                 {
-                    "title": "Configuração do sistema",
+                    "title": "Configurações do sistema",
                     "description": "Dados institucionais e assinaturas por tipo de documento.",
                     "href": "configuracao/",
                 },
@@ -723,24 +728,61 @@ def viatura_update(request, pk):
     )
 
 
+@login_required
 def configuracao_sistema(request):
     from .models import ConfiguracaoSistema
 
     obj = ConfiguracaoSistema.get_singleton()
     form = ConfiguracaoSistemaForm(request.POST or None, instance=obj)
     if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Configuração salva com sucesso.")
+        _, cidade_resolvida = salvar_configuracao_sistema(form)
+        if (form.cleaned_data.get("uf") or form.cleaned_data.get("cidade_endereco")) and not cidade_resolvida:
+            messages.warning(
+                request,
+                "Base geográfica não importada ou cidade não encontrada; cidade sede padrão não foi definida.",
+            )
+        messages.success(request, "Configurações salvas com sucesso.")
         return redirect("cadastros:configuracao")
     return render(
         request,
         "cadastros/configuracao/form.html",
         {
-            "page_title": "Configuração do sistema",
+            "page_title": "Configurações do sistema",
             "page_description": "Órgão, endereço, prazo de justificativa e assinantes por tipo de documento.",
             "form": form,
             "submit_label": "Salvar configuração",
             "back_url": reverse("cadastros:index"),
+            "api_consulta_cep_url": reverse("cadastros:api_consulta_cep", kwargs={"cep": "00000000"}),
+        },
+    )
+
+
+@login_required
+def api_consulta_cep(request, cep):
+    cep_limpo = only_digits(cep)
+    if len(cep_limpo) != 8:
+        return JsonResponse({"erro": "CEP deve ter 8 dígitos."}, status=400)
+
+    try:
+        response = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
+        response.raise_for_status()
+    except requests.RequestException:
+        return JsonResponse({"erro": "Erro ao consultar serviço externo de CEP."}, status=502)
+
+    try:
+        data = response.json()
+    except ValueError:
+        return JsonResponse({"erro": "Erro ao consultar serviço externo de CEP."}, status=502)
+    if data.get("erro"):
+        return JsonResponse({"erro": "CEP não encontrado."}, status=404)
+
+    return JsonResponse(
+        {
+            "cep": data.get("cep") or f"{cep_limpo[:5]}-{cep_limpo[5:]}",
+            "logradouro": data.get("logradouro") or "",
+            "bairro": data.get("bairro") or "",
+            "cidade": data.get("localidade") or "",
+            "uf": data.get("uf") or "",
         },
     )
 

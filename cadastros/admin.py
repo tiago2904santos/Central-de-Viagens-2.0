@@ -13,13 +13,19 @@ from .models import Viatura
 
 @admin.register(ConfiguracaoSistema)
 class ConfiguracaoSistemaAdmin(admin.ModelAdmin):
-    list_display = ("id", "nome_orgao", "sigla_orgao")
+    list_display = ("id", "nome_orgao", "sigla_orgao", "cidade_sede_padrao", "updated_at")
+
+    def has_add_permission(self, request):
+        if ConfiguracaoSistema.objects.exists():
+            return False
+        return super().has_add_permission(request)
 
 
 @admin.register(AssinaturaConfiguracao)
 class AssinaturaConfiguracaoAdmin(admin.ModelAdmin):
-    list_display = ("configuracao", "tipo", "ordem", "servidor")
-    list_filter = ("tipo",)
+    list_display = ("configuracao", "tipo", "ordem", "servidor", "ativo", "updated_at")
+    list_filter = ("tipo", "ativo")
+    ordering = ("tipo", "ordem")
 
 
 @admin.register(Cargo)
