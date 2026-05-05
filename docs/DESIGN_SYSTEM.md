@@ -6,6 +6,7 @@
 - JS centralizado em `static/js/`.
 - Proibido CSS e JS soltos por pagina.
 - Nao criar estilo especifico por CRUD; corrigir no component global reutilizavel.
+- A **tela de login** usa layout proprio (sem sidebar): classes em `static/css/auth.css` (prefixo `auth-`), importado tambem em `style.css`; ver `docs/AUTENTICACAO.md`.
 
 ## Padrao visual premium
 

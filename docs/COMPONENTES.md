@@ -32,6 +32,7 @@ O app `cadastros` usa listagens globais (`list_page` ou `list_page_simple`), `do
 - Dados: `core/navigation.py`, preparados por `core/context_processors.py`.
 - CSS principal: `static/css/sidebar.css`.
 - JS principal: `static/js/components/sidebar.js`.
+- Rodape: texto institucional e, para usuario autenticado, formulario **Sair** (POST para `core:logout`, classe `sidebar-logout-btn`).
 - Largura da coluna: token `--sidebar-width` (15%); area principal ~85% via grid em `layout.css`; `--page-max-width: 100%` no shell.
 - Somente o grupo **Cadastros** usa botao de expandir/recolher; dentro dele, lista plana com indentacao visual para `Cargos` (sob Servidores) e `Combustiveis` (sob Viaturas), sem segundo toggle por nivel.
 - Links principais usam `data-sidebar-root-link`; grupo expansivel usa `data-sidebar-item`, `data-sidebar-group`, `data-sidebar-expandable`; filhos do painel usam `data-sidebar-panel-link`.

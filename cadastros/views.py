@@ -3,7 +3,6 @@ from urllib.parse import urlencode
 import requests
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import redirect
@@ -728,7 +727,6 @@ def viatura_update(request, pk):
     )
 
 
-@login_required
 def configuracao_sistema(request):
     from .models import ConfiguracaoSistema
 
@@ -748,7 +746,7 @@ def configuracao_sistema(request):
         "cadastros/configuracao/form.html",
         {
             "page_title": "Configurações do sistema",
-            "page_description": "Órgão, endereço, prazo de justificativa e assinantes por tipo de documento.",
+            "page_description": "Órgão, endereço e assinantes por tipo de documento.",
             "form": form,
             "submit_label": "Salvar configuração",
             "back_url": reverse("cadastros:index"),
@@ -757,7 +755,6 @@ def configuracao_sistema(request):
     )
 
 
-@login_required
 def api_consulta_cep(request, cep):
     cep_limpo = only_digits(cep)
     if len(cep_limpo) != 8:

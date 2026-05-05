@@ -56,6 +56,12 @@
     {% endfor %}
   </nav>
   <div class="sidebar-footer">
-    <span>Sistema institucional</span>
+    {% if user.is_authenticated %}
+    <form class="sidebar-logout-form" method="post" action="{% url 'core:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="sidebar-logout-btn">Sair</button>
+    </form>
+    {% endif %}
+    <span class="sidebar-footer-note">Sistema institucional</span>
   </div>
 </aside>

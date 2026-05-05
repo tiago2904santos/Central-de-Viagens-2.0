@@ -1,0 +1,65 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar — Central de Viagens 3</title>
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body class="auth-page">
+  <div class="auth-shell">
+    <div class="auth-card" role="main">
+      <header class="auth-brand">
+        <div class="auth-logo" aria-hidden="true">CV</div>
+        <div class="auth-brand-text">
+          <h1 class="auth-title">Central de Viagens 3</h1>
+          <p class="auth-subtitle">Acesso institucional ao sistema de documentos e viagens oficiais.</p>
+        </div>
+      </header>
+
+      <div class="auth-accent-bar" aria-hidden="true"></div>
+
+      <form class="auth-form" method="post" action="{% url 'core:login' %}" novalidate>
+        {% csrf_token %}
+        {% if next %}
+          <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="auth-error" role="alert">
+            {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="auth-field">
+          <label class="auth-field-label" for="id_username">Usuário</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+            <div class="auth-field-error">{% for e in form.username.errors %}<span>{{ e }}</span>{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-field-label" for="id_password">Senha</label>
+          {{ form.password }}
+          {% if form.password.errors %}
+            <div class="auth-field-error">{% for e in form.password.errors %}<span>{{ e }}</span>{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="auth-actions">
+          <button class="auth-submit" type="submit">Entrar</button>
+        </div>
+      </form>
+
+      <footer class="auth-footer">
+        <span>Sistema institucional</span>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>

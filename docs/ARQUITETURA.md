@@ -78,3 +78,7 @@ A navegacao principal e declarada em `core/navigation.py` e suporta hierarquia. 
 - `Configuracoes`
 
 O estado ativo/aberto e preparado antes da renderizacao e o comportamento de abrir/fechar fica em JS centralizado. `Motoristas` nao e cadastro independente e nao deve aparecer no menu lateral. Estados/Cidades **nao** aparecem no menu; permanecem como base interna e importacao conforme `docs/IMPORTACAO_BASE_GEOGRAFICA.md`.
+
+## Autenticacao
+
+Fluxo documentado em `docs/AUTENTICACAO.md`: login e logout em `/login/` e `/logout/` (`core:login`, `core:logout`), sessao padrao do Django, sem cadastro publico. Paginas internas sao protegidas por `LoginRequiredMiddleware`; usuarios sao criados pelo admin ate haver modulo proprio.

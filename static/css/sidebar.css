@@ -216,8 +216,37 @@
 .sidebar-footer {
   border-top: 1px solid rgba(148, 163, 184, 0.24);
   color: rgba(205, 226, 249, 0.84);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   font-size: 12px;
   padding: 14px 20px 16px;
+}
+
+.sidebar-logout-form {
+  margin: 0;
+}
+
+.sidebar-logout-btn {
+  background: rgba(4, 24, 46, 0.55);
+  border: 1px solid rgba(175, 192, 211, 0.35);
+  border-radius: var(--radius-sm);
+  color: rgba(230, 241, 255, 0.95);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  transition: background-color 160ms ease, border-color 160ms ease;
+  width: 100%;
+}
+
+.sidebar-logout-btn:hover {
+  background: rgba(216, 162, 27, 0.2);
+  border-color: rgba(255, 243, 207, 0.35);
+}
+
+.sidebar-footer-note {
+  opacity: 0.92;
 }
 
 @media (max-width: 840px) {
