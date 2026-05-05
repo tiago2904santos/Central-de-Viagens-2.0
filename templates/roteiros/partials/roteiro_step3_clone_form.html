@@ -36,8 +36,9 @@
               <div class="roteiro-editor__reference-body">
               <header class="roteiro-editor__section-header" id="sec-fonte-roteiro">
                 <h3 class="roteiro-editor__section-title">1. Fonte do roteiro</h3>
+                <p class="roteiro-editor__section-desc">Escolha um roteiro salvo ou monte um roteiro novo.</p>
               </header>
-              <div class="roteiro-editor__choice-grid mb-1">
+              <div class="roteiro-editor__choice-grid roteiro-editor__choice-grid--source mb-1">
                 <label class="roteiro-editor__choice-card">
                   <input class="form-check-input roteiro-editor__choice-input" type="radio" name="roteiro_modo" id="id_roteiro_modo_evento" value="EVENTO_EXISTENTE" {% if roteiro_modo == 'EVENTO_EXISTENTE' %}checked{% endif %} {% if not has_event_routes %}disabled{% endif %}>
                   <span class="roteiro-editor__choice-body">
@@ -53,8 +54,9 @@
                   </span>
                 </label>
               </div>
-              <div id="roteiro-selector-wrapper" class="roteiro-editor__routes-panel">
-                <label class="roteiro-editor__field-label" for="id_roteiro_busca">Roteiros salvos</label>
+              <div id="roteiro-selector-wrapper" class="roteiro-editor__routes-panel roteiro-editor__routes-panel--source">
+                <div class="roteiro-editor__routes-panel-title">ROTEIROS SALVOS</div>
+                <label class="roteiro-editor__field-label" for="id_roteiro_busca">Buscar roteiro salvo</label>
                 <div class="roteiro-editor__grid">
                   <div class="field-span-12">
                     <input type="search" id="id_roteiro_busca" class="form-control roteiro-editor__input" placeholder="Buscar por destino, tipo ou trecho..." {% if not has_event_routes %}disabled{% endif %} autocomplete="off">
