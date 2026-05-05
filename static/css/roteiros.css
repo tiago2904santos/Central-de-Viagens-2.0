@@ -508,7 +508,7 @@
 .roteiro-editor__input {
   background: var(--theme-input-bg);
   border: 1px solid var(--theme-input-border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   color: var(--theme-input-text);
   font-size: 14px;
   min-height: 44px;
@@ -518,7 +518,7 @@
 .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__input {
   background: #ffffff;
   border: 1px solid #cfddeb;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   min-height: 42px;
 }
 

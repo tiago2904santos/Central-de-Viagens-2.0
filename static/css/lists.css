@@ -54,7 +54,6 @@
 .list-grid {
   display: grid;
   gap: var(--space-4);
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
 .list-stack {
