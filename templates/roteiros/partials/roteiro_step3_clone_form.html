@@ -728,8 +728,8 @@
     row.className = 'destino-row roteiro-editor__destination-card'; row.draggable = true; row.dataset.index = String(idx);
     var selE = destino && destino.estado_id ? destino.estado_id : (destinoEstadoDefaultId || '');
     row.innerHTML = '<div class="roteiro-editor__drag-col"><button type="button" class="roteiro-editor__drag-handle destino-drag-handle" aria-label="Arrastar para reordenar">&#8942;</button></div>' +
-      '<div class="roteiro-editor__destination-fields"><div><label class="roteiro-editor__field-label">UF</label><select name="destino_estado_'+idx+'" class="destino-estado form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">'+estadoOptionsMarkup(selE)+'</select></div>' +
-      '<div><label class="roteiro-editor__field-label">Cidade</label><select name="destino_cidade_'+idx+'" class="destino-cidade form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..."><option value="">---------</option></select></div></div>' +
+      '<div class="roteiro-editor__destination-fields"><div><label class="roteiro-editor__field-label"></label><select name="destino_estado_'+idx+'" class="destino-estado form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">'+estadoOptionsMarkup(selE)+'</select></div>' +
+      '<div><label class="roteiro-editor__field-label"></label><select name="destino_cidade_'+idx+'" class="destino-cidade form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade..."><option value="">Município</option></select></div></div>' +
       '<div class="roteiro-editor__remove-col"><button type="button" class="btn-remover-destino roteiro-editor__icon-btn" title="Remover destino" aria-label="Remover destino">&times;</button></div>';
     $('destinos-container').appendChild(row); refreshSelectPickers(row);
     var cs = row.querySelector('.destino-cidade');
