@@ -29,8 +29,12 @@
       {% include "components/lists/list_toolbar.html" with search_placeholder=search_placeholder q=q action_label="" action_url="" only %}
     </div>
 
-    <div class="app-page__list-card app-page__list-card--grid{% if flush_cards %} app-page__list-card--flush{% endif %}">
+    {% if flush_cards %}
       {% include "components/lists/list_grid.html" with cards=cards empty_message=empty_message empty_action_label=action_label empty_action_url=action_url only %}
-    </div>
+    {% else %}
+      <div class="app-page__list-card app-page__list-card--grid">
+        {% include "components/lists/list_grid.html" with cards=cards empty_message=empty_message empty_action_label=action_label empty_action_url=action_url only %}
+      </div>
+    {% endif %}
   </div>
 </div>

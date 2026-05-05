@@ -3,41 +3,41 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from .models import Roteiro
-from .models import TrechoRoteiro
 
 
 def listar_roteiros(q=None):
     queryset = (
-        Roteiro.objects.select_related(
-            "origem",
-            "destino",
-            "origem__estado",
-            "destino__estado",
-        )
-        .annotate(trechos_count=Count("trechos"))
-        .order_by("-updated_at", "nome")
+        Roteiro.objects.select_related("origem_estado", "origem_cidade", "origem_cidade__estado")
+        .prefetch_related("destinos__cidade", "destinos__estado")
+        .annotate(trechos_count=Count("trechos", distinct=True))
+        .order_by("-updated_at")
     )
     if q:
         queryset = queryset.filter(
-            Q(nome__icontains=q)
-            | Q(descricao__icontains=q)
-            | Q(origem__nome__icontains=q)
-            | Q(origem__estado__nome__icontains=q)
-            | Q(origem__estado__sigla__icontains=q)
-            | Q(destino__nome__icontains=q)
-            | Q(destino__estado__nome__icontains=q)
-            | Q(destino__estado__sigla__icontains=q)
-        )
+            Q(origem_cidade__nome__icontains=q)
+            | Q(origem_estado__sigla__icontains=q)
+            | Q(origem_estado__nome__icontains=q)
+            | Q(destinos__cidade__nome__icontains=q)
+            | Q(destinos__estado__sigla__icontains=q)
+            | Q(observacoes__icontains=q)
+            | Q(quantidade_diarias__icontains=q)
+        ).distinct()
     return queryset
 
 
 def get_roteiro_by_id(pk):
     return get_object_or_404(
         Roteiro.objects.select_related(
-            "origem",
-            "destino",
-            "origem__estado",
-            "destino__estado",
+            "origem_estado",
+            "origem_cidade",
+            "origem_cidade__estado",
+        ).prefetch_related(
+            "destinos__cidade",
+            "destinos__estado",
+            "trechos__origem_estado",
+            "trechos__origem_cidade",
+            "trechos__destino_estado",
+            "trechos__destino_cidade",
         ),
         pk=pk,
     )
@@ -45,7 +45,11 @@ def get_roteiro_by_id(pk):
 
 def listar_trechos_do_roteiro(roteiro):
     return (
-        TrechoRoteiro.objects.filter(roteiro=roteiro)
-        .select_related("origem", "destino", "origem__estado", "destino__estado")
-        .order_by("ordem")
+        roteiro.trechos.select_related(
+            "origem_estado",
+            "origem_cidade",
+            "destino_estado",
+            "destino_cidade",
+        )
+        .order_by("ordem", "pk")
     )

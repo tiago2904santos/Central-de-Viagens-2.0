@@ -27,61 +27,85 @@
 
       <section class="app-page__form-card roteiro-detail">
         <div class="form-section">
-          {% include "components/forms/form_section.html" with title="Identificação" description="Dados principais do trajeto cadastrado." only %}
+          {% include "components/forms/form_section.html" with title="Sede e resumo" description="Dados persistidos conforme o fluxo legacy (sedes, trechos e diárias)." only %}
           <dl class="roteiro-detail__grid">
-            <div class="roteiro-detail__item roteiro-detail__item--wide">
-              <dt>Nome</dt>
-              <dd>{{ roteiro.nome }}</dd>
+            <div class="roteiro-detail__item">
+              <dt>Status</dt>
+              <dd>{{ roteiro.get_status_display }}</dd>
             </div>
             <div class="roteiro-detail__item">
-              <dt>Origem</dt>
-              <dd>{{ roteiro.origem }}</dd>
+              <dt>Sede (UF)</dt>
+              <dd>{{ roteiro.origem_estado|default:"—" }}</dd>
             </div>
             <div class="roteiro-detail__item">
-              <dt>Destino principal</dt>
-              <dd>{{ roteiro.destino }}</dd>
+              <dt>Sede (cidade)</dt>
+              <dd>{{ roteiro.origem_cidade|default:"—" }}</dd>
             </div>
             <div class="roteiro-detail__item">
-              <dt>Data inicial</dt>
-              <dd>{{ roteiro.data_inicio|date:"d/m/Y"|default:"Não informado" }}</dd>
+              <dt>Saída</dt>
+              <dd>{{ roteiro.saida_dt|date:"d/m/Y H:i"|default:"—" }}</dd>
             </div>
             <div class="roteiro-detail__item">
-              <dt>Data final</dt>
-              <dd>{{ roteiro.data_fim|date:"d/m/Y"|default:"Não informado" }}</dd>
+              <dt>Chegada</dt>
+              <dd>{{ roteiro.chegada_dt|date:"d/m/Y H:i"|default:"—" }}</dd>
             </div>
-            <div class="roteiro-detail__item roteiro-detail__item--wide">
-              <dt>Descrição</dt>
-              <dd>{{ roteiro.descricao|default:"Não informado" }}</dd>
+            <div class="roteiro-detail__item">
+              <dt>Retorno — saída</dt>
+              <dd>{{ roteiro.retorno_saida_dt|date:"d/m/Y H:i"|default:"—" }}</dd>
+            </div>
+            <div class="roteiro-detail__item">
+              <dt>Retorno — chegada</dt>
+              <dd>{{ roteiro.retorno_chegada_dt|date:"d/m/Y H:i"|default:"—" }}</dd>
+            </div>
+            <div class="roteiro-detail__item">
+              <dt>Quantidade de diárias</dt>
+              <dd>{{ roteiro.quantidade_diarias|default:"—" }}</dd>
+            </div>
+            <div class="roteiro-detail__item">
+              <dt>Valor diárias</dt>
+              <dd>{{ roteiro.valor_diarias|default:"—" }}</dd>
             </div>
             <div class="roteiro-detail__item roteiro-detail__item--wide">
               <dt>Observações</dt>
-              <dd>{{ roteiro.observacoes|default:"Não informado" }}</dd>
+              <dd>{{ roteiro.observacoes|default:"—" }}</dd>
             </div>
           </dl>
         </div>
 
         <div class="form-section">
-          {% include "components/forms/form_section.html" with title="Trechos e paradas" description="Trechos cadastrados para este roteiro, quando existirem." only %}
+          {% include "components/forms/form_section.html" with title="Destinos (ordem)" only %}
+          {% if roteiro.destinos.exists %}
+            <ol class="roteiro-steps">
+              {% for d in roteiro.destinos.all %}
+                <li>{{ forloop.counter }}. {{ d.cidade }} / {{ d.estado.sigla }}</li>
+              {% endfor %}
+            </ol>
+          {% else %}
+            <p class="text-muted">Nenhum destino cadastrado.</p>
+          {% endif %}
+        </div>
+
+        <div class="form-section">
+          {% include "components/forms/form_section.html" with title="Trechos" only %}
           {% if trechos %}
             <div class="roteiro-steps" role="list">
               {% for trecho in trechos %}
                 <article class="roteiro-steps__item" role="listitem">
                   <span class="roteiro-steps__order">{{ trecho.ordem }}</span>
                   <div class="roteiro-steps__content">
-                    <h3>{{ trecho.origem }} &rarr; {{ trecho.destino }}</h3>
+                    <h3>{{ trecho.get_tipo_display }} — {{ trecho.origem_cidade|default:trecho.origem_estado }} → {{ trecho.destino_cidade|default:trecho.destino_estado }}</h3>
                     <p>
-                      Saída: {{ trecho.data_saida|date:"d/m/Y H:i"|default:"Não informada" }}
-                      &middot; Chegada: {{ trecho.data_chegada|date:"d/m/Y H:i"|default:"Não informada" }}
+                      Saída: {{ trecho.saida_dt|date:"d/m/Y H:i"|default:"—" }}
+                      · Chegada: {{ trecho.chegada_dt|date:"d/m/Y H:i"|default:"—" }}
+                      {% if trecho.distancia_km %} · {{ trecho.distancia_km }} km{% endif %}
                     </p>
-                    {% if trecho.observacoes %}<p>{{ trecho.observacoes }}</p>{% endif %}
                   </div>
                 </article>
               {% endfor %}
             </div>
           {% else %}
             <div class="empty-state roteiro-detail__empty">
-              <h3>Nenhum trecho cadastrado</h3>
-              <p>Este roteiro usa apenas origem e destino principal nesta etapa.</p>
+              <p>Nenhum trecho persistido.</p>
             </div>
           {% endif %}
         </div>

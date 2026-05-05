@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/roteiros.css' %}">
+{% endblock %}
+
+{% block title %}{% if object %}Editar roteiro{% else %}Novo roteiro{% endif %}{% endblock %}
+
+{% block content %}
+  <div class="app-page">
+    <div class="app-page__shell">
+      <header class="app-page-hero app-page-hero--hybrid app-page-hero--compact" aria-labelledby="roteiros-form-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Roteiros</span>
+          <h1 class="app-page-hero__title" id="roteiros-form-title">{{ page_title }}</h1>
+        </div>
+        <div class="app-page-hero__body">
+          <div class="app-page__hero-top">
+            <div class="app-page__brand">
+              <div class="app-page__brand-mark" aria-hidden="true">RT</div>
+              <div class="app-page__brand-copy">
+                <p class="app-page__subtitle">{{ page_description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
+      </header>
+
+      {{ initial_trechos_data|json_script:"initialTrechosData" }}
+      {% include "roteiros/partials/roteiro_step3_clone_form.html" with is_avulso=True %}
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,11 @@
+/* Formulário step 3 (fluxo legacy de roteiro) dentro do design system atual */
+
+.roteiro-form--legacy-step3 .oficio-wizard-footer-actions .btn,
+.oficio-step3-page .oficio-wizard-footer-actions .btn {
+  border-radius: 999px;
+}
+
+.roteiro-form--legacy-step3 .btn-adicionar-destino,
+.oficio-step3-page #btn-adicionar-destino {
+  border-radius: 999px;
+}

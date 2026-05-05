@@ -1,67 +1,206 @@
+from decimal import Decimal, InvalidOperation
+
 from django.db import models
+from django.utils import timezone
 
 from cadastros.models import Cidade
+from cadastros.models import Estado
 from cadastros.models import TimeStampedModel
 
 
-class Roteiro(TimeStampedModel):
+class Roteiro(models.Model):
     """
-    Roteiro avulso e reutilizável. Não depende de Evento, Ofício ou outros documentos.
-
-    Origem e destino usam a base interna de municípios (`cadastros.Cidade`).
+    Roteiro avulso (e futuramente vinculado a evento), alinhado ao legacy `RoteiroEvento`.
     """
 
-    nome = models.CharField(max_length=255)
-    descricao = models.TextField(blank=True)
-    origem = models.ForeignKey(
-        Cidade,
-        on_delete=models.PROTECT,
-        related_name="roteiros_como_origem",
+    STATUS_RASCUNHO = "RASCUNHO"
+    STATUS_FINALIZADO = "FINALIZADO"
+    STATUS_CHOICES = [
+        (STATUS_RASCUNHO, "Rascunho"),
+        (STATUS_FINALIZADO, "Finalizado"),
+    ]
+
+    TIPO_EVENTO = "EVENTO"
+    TIPO_AVULSO = "AVULSO"
+    TIPO_CHOICES = [
+        (TIPO_EVENTO, "Vinculado a evento"),
+        (TIPO_AVULSO, "Avulso"),
+    ]
+
+    origem_estado = models.ForeignKey(
+        Estado,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Estado sede",
     )
-    destino = models.ForeignKey(
+    origem_cidade = models.ForeignKey(
         Cidade,
-        on_delete=models.PROTECT,
-        related_name="roteiros_como_destino",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Cidade sede",
     )
-    data_inicio = models.DateField(null=True, blank=True)
-    data_fim = models.DateField(null=True, blank=True)
-    observacoes = models.TextField(blank=True)
+    saida_dt = models.DateTimeField("Data/hora saída", null=True, blank=True)
+    duracao_min = models.PositiveIntegerField("Duração (min)", null=True, blank=True)
+    chegada_dt = models.DateTimeField("Data/hora chegada", null=True, blank=True)
+    retorno_saida_dt = models.DateTimeField("Retorno - saída", null=True, blank=True)
+    retorno_duracao_min = models.PositiveIntegerField("Retorno - duração (min)", null=True, blank=True)
+    retorno_chegada_dt = models.DateTimeField("Retorno - chegada", null=True, blank=True)
+    quantidade_diarias = models.CharField("Quantidade de diárias", max_length=120, blank=True, default="")
+    valor_diarias = models.DecimalField(
+        "Valor das diárias", max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    valor_diarias_extenso = models.TextField("Valor das diárias por extenso", blank=True, default="")
+    observacoes = models.TextField("Observações", blank=True, default="")
+    status = models.CharField(
+        "Status", max_length=20, choices=STATUS_CHOICES, default=STATUS_RASCUNHO
+    )
+    tipo = models.CharField(
+        "Tipo de roteiro",
+        max_length=20,
+        choices=TIPO_CHOICES,
+        default=TIPO_AVULSO,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-updated_at", "nome"]
+        ordering = ["-created_at"]
         verbose_name = "Roteiro"
         verbose_name_plural = "Roteiros"
 
     def __str__(self):
-        return f"{self.nome} ({self.origem} -> {self.destino})"
+        orig = self.origem_cidade or self.origem_estado
+        return str(orig) if orig else f"Roteiro #{self.pk or ''}"
+
+    def aplicar_diarias_calculadas(self, resultado):
+        totais = (resultado or {}).get("totais") or {}
+        self.quantidade_diarias = totais.get("total_diarias") or ""
+
+        valor_decimal = totais.get("total_valor_decimal")
+        if valor_decimal is None:
+            valor_texto = (totais.get("total_valor") or "").strip()
+            if valor_texto:
+                try:
+                    valor_decimal = Decimal(valor_texto.replace(".", "").replace(",", "."))
+                except (InvalidOperation, TypeError, ValueError):
+                    valor_decimal = None
+        self.valor_diarias = valor_decimal
+        self.valor_diarias_extenso = totais.get("valor_extenso") or ""
 
 
-class TrechoRoteiro(TimeStampedModel):
-    """
-    Trecho de deslocamento vinculado a um `Roteiro` (cascade na exclusão do roteiro).
-    Sem distância, tempo ou diária nesta etapa.
-    """
-
-    roteiro = models.ForeignKey(Roteiro, on_delete=models.CASCADE, related_name="trechos")
-    ordem = models.PositiveIntegerField(default=1)
-    origem = models.ForeignKey(
+class RoteiroDestino(models.Model):
+    roteiro = models.ForeignKey(
+        Roteiro,
+        on_delete=models.CASCADE,
+        related_name="destinos",
+        verbose_name="Roteiro",
+    )
+    estado = models.ForeignKey(
+        Estado,
+        on_delete=models.PROTECT,
+        related_name="roteiro_destinos",
+        verbose_name="Estado",
+    )
+    cidade = models.ForeignKey(
         Cidade,
         on_delete=models.PROTECT,
-        related_name="trechos_como_origem",
+        related_name="roteiro_destinos",
+        verbose_name="Cidade",
     )
-    destino = models.ForeignKey(
-        Cidade,
-        on_delete=models.PROTECT,
-        related_name="trechos_como_destino",
-    )
-    data_saida = models.DateTimeField(null=True, blank=True)
-    data_chegada = models.DateTimeField(null=True, blank=True)
-    observacoes = models.TextField(blank=True)
+    ordem = models.PositiveIntegerField("Ordem", default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["roteiro", "ordem"]
-        verbose_name = "Trecho de roteiro"
-        verbose_name_plural = "Trechos de roteiro"
+        verbose_name = "Destino do roteiro"
+        verbose_name_plural = "Destinos do roteiro"
 
     def __str__(self):
-        return f"{self.roteiro.nome} - trecho {self.ordem}: {self.origem} -> {self.destino}"
+        return f"{self.cidade} ({self.estado.sigla})"
+
+
+class RoteiroTrecho(models.Model):
+    TIPO_IDA = "IDA"
+    TIPO_RETORNO = "RETORNO"
+    TIPO_CHOICES = [
+        (TIPO_IDA, "Ida"),
+        (TIPO_RETORNO, "Retorno"),
+    ]
+
+    roteiro = models.ForeignKey(
+        Roteiro,
+        on_delete=models.CASCADE,
+        related_name="trechos",
+        verbose_name="Roteiro",
+    )
+    ordem = models.PositiveIntegerField("Ordem", default=0)
+    tipo = models.CharField("Tipo", max_length=10, choices=TIPO_CHOICES, default=TIPO_IDA)
+    origem_estado = models.ForeignKey(
+        Estado,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+        verbose_name="Estado origem",
+    )
+    origem_cidade = models.ForeignKey(
+        Cidade,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+        verbose_name="Cidade origem",
+    )
+    destino_estado = models.ForeignKey(
+        Estado,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+        verbose_name="Estado destino",
+    )
+    destino_cidade = models.ForeignKey(
+        Cidade,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+        verbose_name="Cidade destino",
+    )
+    saida_dt = models.DateTimeField("Saída", null=True, blank=True)
+    chegada_dt = models.DateTimeField("Chegada", null=True, blank=True)
+    distancia_km = models.DecimalField(
+        "Distância (km)",
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    duracao_estimada_min = models.PositiveIntegerField(
+        "Duração estimada (min)", null=True, blank=True
+    )
+    tempo_cru_estimado_min = models.PositiveIntegerField(
+        "Tempo cru estimado (min)", null=True, blank=True
+    )
+    tempo_adicional_min = models.IntegerField(
+        "Tempo adicional (min)", null=True, blank=True, default=0
+    )
+    rota_fonte = models.CharField("Fonte da rota", max_length=30, blank=True, default="")
+    rota_calculada_em = models.DateTimeField("Rota calculada em", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["roteiro", "ordem"]
+        verbose_name = "Trecho do roteiro"
+        verbose_name_plural = "Trechos do roteiro"
+
+    def __str__(self):
+        orig = self.origem_cidade or self.origem_estado
+        dest = self.destino_cidade or self.destino_estado
+        return f"{orig} -> {dest} ({self.get_tipo_display()})"
