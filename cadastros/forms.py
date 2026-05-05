@@ -351,193 +351,90 @@ class ViaturaForm(BaseCadastroForm):
 
 
 class ConfiguracaoSistemaForm(forms.ModelForm):
-    """Singleton institucional + assinantes por tipo documental, espelhando o legacy."""
+    """Singleton institucional: unidade, cidade em documentos e assinantes por tipo."""
 
-    assinatura_oficio_1 = forms.ModelChoiceField(
+    assinatura_oficio = forms.ModelChoiceField(
         queryset=Servidor.objects.none(),
         required=False,
         empty_label="---------",
-        label="Assinatura 1",
-        widget=forms.Select(attrs={"class": "form-select"}),
-    )
-    assinatura_oficio_2 = forms.ModelChoiceField(
-        queryset=Servidor.objects.none(),
-        required=False,
-        empty_label="---------",
-        label="Assinatura 2",
+        label="Assinante ofício",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
     assinatura_justificativas = forms.ModelChoiceField(
         queryset=Servidor.objects.none(),
         required=False,
         empty_label="---------",
-        label="Assinante",
+        label="Assinante justificativa",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
     assinatura_planos_trabalho = forms.ModelChoiceField(
         queryset=Servidor.objects.none(),
         required=False,
         empty_label="---------",
-        label="Assinante",
+        label="Assinante plano de trabalho",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
     assinatura_ordens_servico = forms.ModelChoiceField(
         queryset=Servidor.objects.none(),
         required=False,
         empty_label="---------",
-        label="Assinante",
-        widget=forms.Select(attrs={"class": "form-select"}),
-    )
-    assinatura_termo_autorizacao = forms.ModelChoiceField(
-        queryset=Servidor.objects.none(),
-        required=False,
-        empty_label="---------",
-        label="Assinante",
+        label="Assinante ordem de serviço",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
 
     class Meta:
         model = ConfiguracaoSistema
-        fields = [
-            "cidade_sede_padrao",
-            "prazo_justificativa_dias",
-            "nome_orgao",
-            "sigla_orgao",
-            "divisao",
-            "unidade",
-            "sede",
-            "nome_chefia",
-            "cargo_chefia",
-            "coordenador_adm_plano_trabalho",
-            "cep",
-            "logradouro",
-            "bairro",
-            "cidade_endereco",
-            "uf",
-            "numero",
-            "telefone",
-            "email",
-            "pt_ultimo_numero",
-            "pt_ano",
-        ]
+        fields = ["divisao", "unidade", "cidade_endereco"]
         widgets = {
-            "cidade_sede_padrao": forms.Select(attrs={"class": "form-select"}),
-            "prazo_justificativa_dias": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
-            "nome_orgao": forms.TextInput(attrs={"class": "form-control"}),
-            "sigla_orgao": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
             "divisao": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
             "unidade": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
-            "sede": forms.TextInput(attrs={"class": "form-control"}),
-            "nome_chefia": forms.TextInput(attrs={"class": "form-control"}),
-            "cargo_chefia": forms.TextInput(attrs={"class": "form-control"}),
-            "coordenador_adm_plano_trabalho": forms.Select(attrs={"class": "form-select"}),
-            "cep": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "maxlength": "9",
-                    "placeholder": "00000-000",
-                    "data-mask": "cep",
-                    "inputmode": "numeric",
-                },
-            ),
-            "logradouro": forms.TextInput(attrs={"class": "form-control"}),
-            "bairro": forms.TextInput(attrs={"class": "form-control"}),
-            "cidade_endereco": forms.TextInput(attrs={"class": "form-control"}),
-            "uf": forms.TextInput(attrs={"class": "form-control", "maxlength": 2, "data-mask": "upper"}),
-            "numero": forms.TextInput(attrs={"class": "form-control"}),
-            "telefone": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "data-mask": "telefone",
-                    "inputmode": "numeric",
-                },
-            ),
-            "email": forms.EmailInput(attrs={"class": "form-control"}),
-            "pt_ultimo_numero": forms.NumberInput(attrs={"class": "form-control", "min": 0}),
-            "pt_ano": forms.NumberInput(attrs={"class": "form-control", "min": 0}),
+            "cidade_endereco": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["divisao"].label = "Divisão"
+        self.fields["unidade"].label = "Unidade"
+        self.fields["cidade_endereco"].label = "Cidade endereço"
+
         extra_ids = []
         if self.instance and self.instance.pk:
             extra_ids = list(self.instance.assinaturas.values_list("servidor_id", flat=True))
             extra_ids.append(self.instance.coordenador_adm_plano_trabalho_id)
         qs = _servidores_assinantes_queryset(extra_ids)
-        self.fields["coordenador_adm_plano_trabalho"].queryset = qs
-        self.fields["coordenador_adm_plano_trabalho"].empty_label = "---------"
-        self.fields["coordenador_adm_plano_trabalho"].required = False
-        self.fields["cidade_sede_padrao"].queryset = Cidade.objects.select_related("estado").order_by(
-            "estado__sigla",
-            "nome",
-        )
-        self.fields["cidade_sede_padrao"].required = False
-        self.fields["cidade_sede_padrao"].empty_label = "---------"
-        self.fields["cidade_sede_padrao"].disabled = True
-        self.fields["cidade_sede_padrao"].help_text = "Resolvida automaticamente pelo endereço informado."
 
         for fname in (
-            "assinatura_oficio_1",
-            "assinatura_oficio_2",
+            "assinatura_oficio",
             "assinatura_justificativas",
             "assinatura_planos_trabalho",
             "assinatura_ordens_servico",
-            "assinatura_termo_autorizacao",
         ):
             self.fields[fname].queryset = qs
 
-
         if self.instance and self.instance.pk:
-            if self.instance.cep:
-                self.initial.setdefault("cep", format_cep(self.instance.cep))
-            if self.instance.telefone:
-                self.initial.setdefault("telefone", format_telefone(self.instance.telefone))
-
             mapping = [
-                ("assinatura_oficio_1", AssinaturaConfiguracao.TIPO_OFICIO, 1),
-                ("assinatura_oficio_2", AssinaturaConfiguracao.TIPO_OFICIO, 2),
+                ("assinatura_oficio", AssinaturaConfiguracao.TIPO_OFICIO, 1),
                 ("assinatura_justificativas", AssinaturaConfiguracao.TIPO_JUSTIFICATIVA, 1),
                 ("assinatura_planos_trabalho", AssinaturaConfiguracao.TIPO_PLANO_TRABALHO, 1),
                 ("assinatura_ordens_servico", AssinaturaConfiguracao.TIPO_ORDEM_SERVICO, 1),
-                ("assinatura_termo_autorizacao", AssinaturaConfiguracao.TIPO_TERMO_AUTORIZACAO, 1),
             ]
             for field_name, tipo, ordem in mapping:
                 rec = self.instance.assinaturas.filter(tipo=tipo, ordem=ordem).first()
-                if rec and rec.servidor_id:
-                    self.fields[field_name].initial = rec.servidor_id
-
-    def clean_nome_orgao(self):
-        return " ".join((self.cleaned_data.get("nome_orgao") or "").strip().split()).upper()
+                sid = rec.servidor_id if rec and rec.servidor_id else None
+                if not sid and tipo == AssinaturaConfiguracao.TIPO_PLANO_TRABALHO:
+                    sid = self.instance.coordenador_adm_plano_trabalho_id
+                if sid:
+                    self.fields[field_name].initial = sid
 
     def clean_divisao(self):
-        return (self.cleaned_data.get("divisao") or "").strip().upper()
+        raw = (self.cleaned_data.get("divisao") or "").strip()
+        return " ".join(raw.split()).upper() if raw else ""
 
     def clean_unidade(self):
-        return (self.cleaned_data.get("unidade") or "").strip().upper()
+        raw = (self.cleaned_data.get("unidade") or "").strip()
+        return " ".join(raw.split()).upper() if raw else ""
 
-    def clean_sigla_orgao(self):
-        return (self.cleaned_data.get("sigla_orgao") or "").strip().upper()
-
-    def clean_cep(self):
-        value = self.cleaned_data.get("cep") or ""
-        cep_limpo = only_digits(value)
-        if not cep_limpo:
-            return ""
-        if len(cep_limpo) != 8:
-            raise forms.ValidationError("CEP deve ter 8 dígitos.")
-        return cep_limpo
-
-    def clean_uf(self):
-        value = (self.cleaned_data.get("uf") or "").strip().upper()
-        if value and len(value) != 2:
-            raise forms.ValidationError("UF deve ter 2 letras.")
-        return value
-
-    def clean_telefone(self):
-        digits = only_digits(self.cleaned_data.get("telefone", ""))
-        if not digits:
-            return ""
-        if len(digits) not in (10, 11):
-            raise forms.ValidationError("Telefone deve ter 10 ou 11 dígitos.")
-        return digits
+    def clean_cidade_endereco(self):
+        raw = (self.cleaned_data.get("cidade_endereco") or "").strip()
+        return " ".join(raw.split()).upper() if raw else ""
 

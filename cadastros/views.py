@@ -734,7 +734,11 @@ def configuracao_sistema(request):
     form = ConfiguracaoSistemaForm(request.POST or None, instance=obj)
     if request.method == "POST" and form.is_valid():
         _, cidade_resolvida = salvar_configuracao_sistema(form)
-        if (form.cleaned_data.get("uf") or form.cleaned_data.get("cidade_endereco")) and not cidade_resolvida:
+        if (
+            "uf" in form.cleaned_data
+            and (form.cleaned_data.get("uf") or form.cleaned_data.get("cidade_endereco"))
+            and not cidade_resolvida
+        ):
             messages.warning(
                 request,
                 "Base geográfica não importada ou cidade não encontrada; cidade sede padrão não foi definida.",
@@ -746,11 +750,10 @@ def configuracao_sistema(request):
         "cadastros/configuracao/form.html",
         {
             "page_title": "Configurações do sistema",
-            "page_description": "Órgão, endereço e assinantes por tipo de documento.",
+            "page_description": "Unidade, cidade em documentos e assinantes padrão por tipo.",
             "form": form,
             "submit_label": "Salvar configuração",
             "back_url": reverse("cadastros:index"),
-            "api_consulta_cep_url": reverse("cadastros:api_consulta_cep", kwargs={"cep": "00000000"}),
         },
     )
 

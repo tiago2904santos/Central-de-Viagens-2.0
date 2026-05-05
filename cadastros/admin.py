@@ -13,7 +13,7 @@ from .models import Viatura
 
 @admin.register(ConfiguracaoSistema)
 class ConfiguracaoSistemaAdmin(admin.ModelAdmin):
-    list_display = ("id", "nome_orgao", "sigla_orgao", "cidade_sede_padrao", "updated_at")
+    list_display = ("id", "divisao", "unidade", "cidade_endereco", "updated_at")
 
     def has_add_permission(self, request):
         if ConfiguracaoSistema.objects.exists():

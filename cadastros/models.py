@@ -355,6 +355,8 @@ class ConfiguracaoSistema(TimeStampedModel):
         self.uf = (self.uf or "").strip().upper()[:2]
         self.cep = "".join(c for c in (self.cep or "") if c.isdigit())
         self.telefone = "".join(c for c in (self.telefone or "") if c.isdigit())
+        # Mantém compatível com código que ainda lê `sede`: mesmo valor que cidade_endereco.
+        self.sede = self.cidade_endereco
         super().save(*args, **kwargs)
 
 

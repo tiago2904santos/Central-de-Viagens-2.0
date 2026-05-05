@@ -134,12 +134,14 @@ def build_configuracao_context():
             },
         )
 
+    cidade_doc = configuracao.cidade_endereco or ""
     return {
         "nome_orgao": configuracao.nome_orgao,
         "sigla_orgao": configuracao.sigla_orgao,
         "divisao": configuracao.divisao,
         "unidade": configuracao.unidade,
-        "sede": configuracao.sede,
+        # Compatibilidade: placeholders antigos "sede" passam a refletir cidade_endereco.
+        "sede": cidade_doc,
         "nome_chefia": configuracao.nome_chefia,
         "cargo_chefia": configuracao.cargo_chefia,
         "cep": configuracao.cep,
@@ -147,7 +149,7 @@ def build_configuracao_context():
         "logradouro": configuracao.logradouro,
         "numero": configuracao.numero,
         "bairro": configuracao.bairro,
-        "cidade_endereco": configuracao.cidade_endereco,
+        "cidade_endereco": cidade_doc,
         "uf": configuracao.uf,
         "telefone": configuracao.telefone,
         "telefone_formatado": configuracao.telefone_formatado,
