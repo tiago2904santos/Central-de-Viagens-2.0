@@ -408,15 +408,13 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card {
-  align-items: flex-start;
+  align-items: center;
   background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
   border: 1px solid #d2deea;
   border-radius: 8px;
   box-shadow: 0 8px 18px rgba(28, 49, 72, 0.05);
   gap: 12px;
   height: 100%;
-  min-height: 86px;
-  padding: 14px 16px;
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease,
@@ -569,8 +567,6 @@
   background: #ffffff;
   border: 1px solid #d7e2ee;
   border-radius: 8px;
-  gap: 5px;
-  min-height: 70px;
   padding: 12px 13px;
   width: 100%;
   transition:
