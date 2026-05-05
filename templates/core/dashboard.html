@@ -3,10 +3,89 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-  {% include "components/layout/page_header.html" with title=page_title description=page_description eyebrow="Base institucional" only %}
-  <div class="list-grid">
-    {% include "components/cards/module_card.html" with title="Documentos" description="Componentes preparados para Oficios, Termos, Planos e Prestacoes." href="/oficios/" action_label="Abrir" only %}
-    {% include "components/cards/module_card.html" with title="Cadastros" description="Base futura para dados reutilizaveis do sistema." href="/cadastros/" action_label="Abrir" only %}
-    {% include "components/cards/module_card.html" with title="Roteiros" description="Estrutura futura para trechos, destinos e calculos." href="/roteiros/" action_label="Abrir" only %}
+  <div class="dashboard-login-inspired">
+    <div class="dashboard-shell">
+      <section class="dashboard-hero-card" aria-labelledby="dashboard-title">
+        <header class="dashboard-brand">
+          <div class="dashboard-logo" aria-hidden="true">CV</div>
+          <div class="dashboard-brand-text">
+            <span class="dashboard-eyebrow">Base institucional</span>
+            <h1 id="dashboard-title">Central de Viagens 3</h1>
+            <p>Painel institucional de documentos e viagens oficiais.</p>
+          </div>
+        </header>
+        <div class="dashboard-accent-line" aria-hidden="true"></div>
+      </section>
+
+      <section class="dashboard-welcome-card" aria-labelledby="dashboard-welcome-title">
+        <div>
+          <span class="dashboard-eyebrow">Painel inicial</span>
+          <h2 id="dashboard-welcome-title">Bem-vindo ao sistema</h2>
+          <p>Use os acessos rapidos para abrir os principais documentos e fluxos de viagens oficiais.</p>
+        </div>
+      </section>
+
+      <section class="dashboard-stat-grid" aria-label="Resumo do sistema">
+        <article class="dashboard-stat-card">
+          <span>Total de oficios</span>
+          <strong>-</strong>
+          <p>Aguardando dados do modulo.</p>
+        </article>
+        <article class="dashboard-stat-card">
+          <span>Rascunhos</span>
+          <strong>-</strong>
+          <p>Indicador visual do painel.</p>
+        </article>
+        <article class="dashboard-stat-card">
+          <span>Documentos recentes</span>
+          <strong>-</strong>
+          <p>Sem consulta adicional nesta tela.</p>
+        </article>
+        <article class="dashboard-stat-card">
+          <span>Pendencias</span>
+          <strong>-</strong>
+          <p>Resumo reservado para dados futuros.</p>
+        </article>
+      </section>
+
+      <section class="dashboard-quick-grid" aria-label="Acessos rapidos">
+        <article class="dashboard-quick-card">
+          <span class="dashboard-quick-mark" aria-hidden="true">OF</span>
+          <h3>Oficios</h3>
+          <p>Emissao e acompanhamento dos documentos oficiais de viagem.</p>
+          <a class="dashboard-card-button" href="{% url 'oficios:index' %}">Abrir</a>
+        </article>
+        <article class="dashboard-quick-card">
+          <span class="dashboard-quick-mark" aria-hidden="true">TA</span>
+          <h3>Termos de Autorizacao</h3>
+          <p>Controle dos termos vinculados aos processos de deslocamento.</p>
+          <a class="dashboard-card-button" href="{% url 'termos:index' %}">Abrir</a>
+        </article>
+        <article class="dashboard-quick-card">
+          <span class="dashboard-quick-mark" aria-hidden="true">JT</span>
+          <h3>Justificativas</h3>
+          <p>Registro das justificativas necessarias aos documentos oficiais.</p>
+          <a class="dashboard-card-button" href="{% url 'justificativas:index' %}">Abrir</a>
+        </article>
+        <article class="dashboard-quick-card">
+          <span class="dashboard-quick-mark" aria-hidden="true">PT</span>
+          <h3>Planos de Trabalho</h3>
+          <p>Organizacao dos planos que estruturam atividades e viagens.</p>
+          <a class="dashboard-card-button" href="{% url 'planos_trabalho:index' %}">Abrir</a>
+        </article>
+        <article class="dashboard-quick-card">
+          <span class="dashboard-quick-mark" aria-hidden="true">OS</span>
+          <h3>Ordens de Servico</h3>
+          <p>Acesso aos registros operacionais de servicos e deslocamentos.</p>
+          <a class="dashboard-card-button" href="{% url 'ordens_servico:index' %}">Abrir</a>
+        </article>
+        <article class="dashboard-quick-card">
+          <span class="dashboard-quick-mark" aria-hidden="true">RT</span>
+          <h3>Roteiros</h3>
+          <p>Consulta e preparacao de roteiros, trechos e destinos oficiais.</p>
+          <a class="dashboard-card-button" href="{% url 'roteiros:index' %}">Abrir</a>
+        </article>
+      </section>
+    </div>
   </div>
 {% endblock %}
