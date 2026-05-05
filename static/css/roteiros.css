@@ -182,7 +182,7 @@
 }
 
 .roteiro-editor--avulso .oficio-stage-form {
-  gap: 14px;
+  gap: 12px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section {
@@ -1217,7 +1217,7 @@
   background: #f8fbff;
   border: 1px solid rgba(210, 224, 238, 0.95);
   border-radius: 18px;
-  box-shadow: 0 18px 36px rgba(15, 34, 54, 0.08);
+  box-shadow: 0 14px 30px rgba(15, 34, 54, 0.08);
   border-bottom: 0;
   overflow: hidden;
   padding: 0;
@@ -1267,8 +1267,8 @@
     linear-gradient(180deg, #124872 0%, #0c3558 100%);
   border-radius: 18px 18px 0 0;
   margin: 0;
-  min-height: 52px;
-  padding: 10px 20px;
+  min-height: 50px;
+  padding: 9px 20px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header::before {
@@ -1288,7 +1288,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__section-header {
-  min-height: 48px;
+  min-height: 50px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header .roteiro-editor__section-title,
@@ -1325,9 +1325,9 @@
   background: #ffffff;
   border: 1px solid #dbe4ef;
   border-radius: 14px;
-  box-shadow: 0 10px 22px rgba(28, 49, 72, 0.04);
+  box-shadow: 0 8px 20px rgba(28, 49, 72, 0.05);
   margin: 0;
-  padding: 18px;
+  padding: 16px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid {
@@ -1340,17 +1340,17 @@
 
 .roteiro-editor--avulso .roteiro-editor__section--bate-volta > .roteiro-editor__panel-surface {
   border-radius: 0 0 14px 14px;
-  margin: 0 20px 20px;
+  margin: 0 18px 18px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--trechos > .roteiro-editor__trechos-wrap {
   border-radius: 0 0 14px 14px;
-  margin: 0 20px 20px;
+  margin: 0 18px 18px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__diarias {
   border-radius: 14px;
-  margin: 0 20px 20px;
+  margin: 0 18px 18px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__bate-volta-head {
@@ -1388,11 +1388,12 @@
 
 .roteiro-editor--avulso .roteiro-editor__section--trechos .roteiro-editor__empty {
   align-items: flex-start;
-  background: #f7fbff;
+  background: linear-gradient(180deg, #f9fcff 0%, #f4f9ff 100%);
+  border: 1px dashed #d8e3ef;
   border-radius: 12px;
   gap: 0;
   min-height: 0;
-  padding: 14px 16px;
+  padding: 13px 15px;
   text-align: left;
 }
 
@@ -1405,21 +1406,141 @@
   max-width: none;
 }
 
+.roteiro-editor--avulso .roteiro-editor__diarias {
+  background:
+    radial-gradient(circle at 0 0, rgba(25, 93, 150, 0.08), transparent 50%),
+    #ffffff;
+}
+
+.roteiro-editor--avulso .roteiro-editor__diarias-head {
+  align-items: flex-start;
+  border-bottom: 1px solid #e3ebf4;
+  gap: 14px;
+  margin-bottom: 8px;
+  padding-bottom: 12px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__diarias-top {
+  min-width: min(100%, 560px);
+}
+
+.roteiro-editor--avulso .roteiro-editor__diarias-title {
+  color: #1a324a;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
 .roteiro-editor--avulso .roteiro-editor__diarias-subtitle {
   color: #58708a;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.35;
-  margin: 0 0 8px;
+  margin: 0 0 6px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__diarias-eyebrow {
-  color: #23435f;
-  margin-bottom: 6px;
+  color: #8b6a21;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  margin-bottom: 5px;
 }
 
-.roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__summary-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.roteiro-editor--avulso .roteiro-editor__diarias-note {
+  color: #6a7f95;
+  font-size: 11px;
+  margin-top: 0;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--diarias #diarias-status {
+  align-self: flex-start;
+  background: #edf3fa;
+  border: 1px solid #d5e2ef;
+  color: #314a63;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  min-height: 32px;
+  padding: 7px 12px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__diarias-finance-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(220px, 1fr);
+}
+
+.roteiro-editor--avulso .roteiro-editor__summary-stack {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+
+.roteiro-editor--avulso .roteiro-editor__summary-item {
+  border: 1px solid #d7e4ef;
+  border-radius: 14px;
+  box-shadow: 0 10px 20px rgba(15, 34, 54, 0.05);
+  padding: 14px 16px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__summary-item--principal {
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  border-color: #c9dcee;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.88) inset,
+    0 14px 24px rgba(15, 34, 54, 0.07);
+  position: relative;
+}
+
+.roteiro-editor--avulso .roteiro-editor__summary-item--principal::before {
+  background: linear-gradient(180deg, #d7a532 0%, #b68719 100%);
+  border-radius: 14px 14px 0 0;
+  content: "";
+  height: 3px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.roteiro-editor--avulso .roteiro-editor__summary-item--secondary {
+  background: #fbfdff;
+  min-height: 92px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__summary-label {
+  color: #5b748d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+}
+
+.roteiro-editor--avulso .roteiro-editor__summary-value {
+  color: #1f3a54;
+  font-size: 1.3rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.roteiro-editor--avulso .roteiro-editor__summary-value--principal {
+  color: #0f365d;
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  letter-spacing: -0.02em;
+}
+
+.roteiro-editor--avulso .roteiro-editor__summary-divider {
+  border-top: 1px solid #dce8f3;
+  margin: 4px 0 2px;
+}
+
+.roteiro-editor--avulso #diarias-extenso {
+  color: #2e4964;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 @media (max-width: 991.98px) {
@@ -1427,12 +1548,21 @@
   .roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .roteiro-editor--avulso .roteiro-editor__diarias-finance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .roteiro-editor--avulso .roteiro-editor__summary-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
   .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid,
   .roteiro-editor--avulso #bate-volta-panel.row,
-  .roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__summary-grid {
+  .roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__summary-grid,
+  .roteiro-editor--avulso .roteiro-editor__summary-stack {
     grid-template-columns: 1fr;
   }
 }
