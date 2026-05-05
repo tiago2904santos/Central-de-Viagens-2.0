@@ -63,7 +63,6 @@
                   </div>
                 </div>
                 <input type="hidden" name="roteiro_id" id="id_roteiro_id" value="{{ roteiro_id|default:'' }}" data-route-selected-input {% if not has_event_routes %}disabled{% endif %}>
-                <p class="roteiro-editor__helper">{% if has_event_routes %}Filtre e selecione um roteiro para carregar os trechos no editor. As edições não alteram o original salvo.{% else %}Nenhum roteiro salvo válido está disponível.{% endif %}</p>
                 <div id="roteiro-lista" class="roteiro-editor__route-list oficio-step3-route-list"></div>
                 <div class="roteiro-editor__helper" id="roteiro-selector-resumo"></div>
               </div>
@@ -674,7 +673,7 @@
     var add = (value.tempo_adicional_min != null && value.tempo_adicional_min !== '') ? value.tempo_adicional_min : 0;
     var fonte = value.rota_fonte || '';
     return '<div class="card roteiro-editor__trecho-card oficio-step3-trecho-card" data-key="'+esc(trecho.key)+'" data-ordem="'+o+'" data-origem-nome="'+esc(trecho.origem_nome)+'" data-destino-nome="'+esc(trecho.destino_nome)+'" data-origem-estado-id="'+esc(trecho.origem_estado_id)+'" data-origem-cidade-id="'+esc(trecho.origem_cidade_id)+'" data-destino-estado-id="'+esc(trecho.destino_estado_id)+'" data-destino-cidade-id="'+esc(trecho.destino_cidade_id)+'">' +
-      '<div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2"><span class="fw-semibold">Trecho '+(o+1)+'</span><span class="roteiro-editor__trecho-route">'+esc(trecho.origem_nome)+' → '+esc(trecho.destino_nome)+'</span></div>' +
+      '<div class="card-header py-3"><span class="fw-semibold">Trecho '+(o+1)+' — '+esc(trecho.origem_nome)+' → '+esc(trecho.destino_nome)+'</span></div>' +
       '<div class="card-body">' +
         '<input type="hidden" name="trecho_'+o+'_origem_nome" value="'+esc(trecho.origem_nome)+'">' +
         '<input type="hidden" name="trecho_'+o+'_destino_nome" value="'+esc(trecho.destino_nome)+'">' +
@@ -684,19 +683,19 @@
         '<input type="hidden" name="trecho_'+o+'_destino_cidade_id" value="'+esc(trecho.destino_cidade_id)+'">' +
         '<div class="row g-3">' +
           '<div class="col-md-6"><div class="roteiro-editor__subpanel h-100"><div class="roteiro-editor__subpanel-title">Saída</div><div class="row g-2">' +
-            '<div class="col-12"><label class="roteiro-editor__field-label">Cidade</label><input type="text" class="form-control form-control-sm" value="'+esc(trecho.origem_nome)+'" readonly></div>' +
-            '<div class="col-md-6"><label class="roteiro-editor__field-label">Data</label><input type="date" class="form-control form-control-sm" name="trecho_'+o+'_saida_data" value="'+esc(value.saida_data||'')+'" ></div>' +
-            '<div class="col-md-6"><label class="roteiro-editor__field-label">Hora</label><input type="time" class="form-control form-control-sm" name="trecho_'+o+'_saida_hora" value="'+esc(value.saida_hora||'')+'" ></div>' +
+            '<div class="col-12"><label class="roteiro-editor__field-label">Cidade</label><input type="text" class="form-control" value="'+esc(trecho.origem_nome)+'" readonly></div>' +
+            '<div class="col-md-6"><label class="roteiro-editor__field-label">Data</label><input type="date" class="form-control" name="trecho_'+o+'_saida_data" value="'+esc(value.saida_data||'')+'" ></div>' +
+            '<div class="col-md-6"><label class="roteiro-editor__field-label">Hora</label><input type="time" class="form-control" name="trecho_'+o+'_saida_hora" value="'+esc(value.saida_hora||'')+'" ></div>' +
           '</div></div></div>' +
           '<div class="col-md-6"><div class="roteiro-editor__subpanel h-100"><div class="roteiro-editor__subpanel-title">Chegada</div><div class="row g-2">' +
-            '<div class="col-12"><label class="roteiro-editor__field-label">Cidade</label><input type="text" class="form-control form-control-sm" value="'+esc(trecho.destino_nome)+'" readonly></div>' +
-            '<div class="col-md-6"><label class="roteiro-editor__field-label">Data</label><input type="date" class="form-control form-control-sm" name="trecho_'+o+'_chegada_data" value="'+esc(value.chegada_data||'')+'" ></div>' +
-            '<div class="col-md-6"><label class="roteiro-editor__field-label">Hora</label><input type="time" class="form-control form-control-sm" name="trecho_'+o+'_chegada_hora" value="'+esc(value.chegada_hora||'')+'" ></div>' +
+            '<div class="col-12"><label class="roteiro-editor__field-label">Cidade</label><input type="text" class="form-control" value="'+esc(trecho.destino_nome)+'" readonly></div>' +
+            '<div class="col-md-6"><label class="roteiro-editor__field-label">Data</label><input type="date" class="form-control" name="trecho_'+o+'_chegada_data" value="'+esc(value.chegada_data||'')+'" ></div>' +
+            '<div class="col-md-6"><label class="roteiro-editor__field-label">Hora</label><input type="time" class="form-control" name="trecho_'+o+'_chegada_hora" value="'+esc(value.chegada_hora||'')+'" ></div>' +
           '</div></div></div>' +
-          '<div class="col-12"><div class="row g-3 align-items-end oficio-step3-time-calc-grid">' +
-            '<div class="col-md-4"><label class="roteiro-editor__field-label">Tempo de viagem</label><input type="text" class="form-control form-control-sm trecho-tempo-viagem-hhmm" value="'+esc(formatDurationInput(cru))+'" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off"><input type="hidden" name="trecho_'+o+'_tempo_cru_estimado_min" value="'+esc(cru)+'" ></div>' +
-            '<div class="col-md-4"><label class="roteiro-editor__field-label">Tempo adicional</label><input type="number" min="0" step="15" class="form-control form-control-sm" name="trecho_'+o+'_tempo_adicional_min" value="'+esc(add)+'" ></div>' +
-            '<div class="col-md-4"><label class="roteiro-editor__field-label">Tempo total</label><input type="text" class="form-control form-control-sm trecho-tempo-total" value="" readonly></div>' +
+          '<div class="col-12"><div class="roteiro-editor__grid oficio-step3-time-calc-grid align-items-end">' +
+            '<div class="field-span-4"><label class="roteiro-editor__field-label">Tempo de viagem</label><input type="text" class="form-control trecho-tempo-viagem-hhmm" value="'+esc(formatDurationInput(cru))+'" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off"><input type="hidden" name="trecho_'+o+'_tempo_cru_estimado_min" value="'+esc(cru)+'" ></div>' +
+            '<div class="field-span-4"><label class="roteiro-editor__field-label">Tempo adicional</label><input type="number" min="0" step="15" class="form-control" name="trecho_'+o+'_tempo_adicional_min" value="'+esc(add)+'" ></div>' +
+            '<div class="field-span-4"><label class="roteiro-editor__field-label">Tempo total</label><input type="text" class="form-control trecho-tempo-total" value="" readonly></div>' +
           '</div></div>' +
           '<div class="col-12"><div class="roteiro-editor__helper text-danger d-none trecho-erro"></div></div>' +
         '</div>' +

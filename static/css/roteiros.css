@@ -411,7 +411,7 @@
   align-items: center;
   background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
   border: 1px solid #d2deea;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   box-shadow: 0 8px 18px rgba(28, 49, 72, 0.05);
   gap: 12px;
   height: 100%;
@@ -476,7 +476,7 @@
 .roteiro-editor--avulso .roteiro-editor__routes-panel--source {
   background: #f4f8fc;
   border: 1px solid #d4e0ec;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.7) inset,
     0 8px 18px rgba(28, 49, 72, 0.05);
@@ -550,7 +550,7 @@
 .oficio-step3-route-item {
   background: var(--theme-surface-card);
   border: 1px solid var(--theme-border-card);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--theme-text-body);
   cursor: pointer;
   display: flex;
@@ -566,7 +566,7 @@
 .roteiro-editor--avulso .oficio-step3-route-item {
   background: #ffffff;
   border: 1px solid #d7e2ee;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 12px 13px;
   width: 100%;
   transition:
@@ -1140,9 +1140,106 @@
   background: #ffffff;
 }
 
+.roteiro-editor--avulso .oficio-step3-trecho-card .card-header {
+  background: #f3f8ff;
+  border-bottom: 1px solid #d8e1ec;
+  color: #1f3650;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .card-body > .row.g-3 {
+  --bs-gutter-x: 16px;
+  --bs-gutter-y: 16px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .card-body > .row.g-3 > [class*="col-"] {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+  width: auto;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .card-body > .row.g-3 > .col-12 {
+  grid-column: 1 / -1;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel .row.g-2 {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel .row.g-2 > [class*="col-"] {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+  width: auto;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel .row.g-2 > .col-12 {
+  grid-column: 1 / -1;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel {
+  background: #ffffff;
+  border: 1px solid #d8e1ec;
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  padding: 20px 18px;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel-title {
+  color: #2c4056;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 22px;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .form-control {
+  background: #ffffff;
+  border: 1px solid #d8e1ec;
+  border-radius: 14px;
+  color: #17324d;
+  font-size: 14px;
+  min-height: 44px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .form-control[readonly] {
+  background: #f5f9fd;
+  color: #6d8196;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .oficio-step3-time-calc-grid {
+  background: #f7fbff;
+  border: solid 1px var(--theme-border-card);
+  border-radius: var(--radius-md);
+  gap: 14px;
+  padding: 20px;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .oficio-step3-time-calc-grid .form-control {
+  background: #ffffff;
+}
+
+.roteiro-editor--avulso .oficio-step3-trecho-card .btn-calcular-km {
+  margin-top: 10px;
+}
+
 @media (max-width: 991.98px) {
   .roteiro-editor--avulso #retorno-card .row.g-3,
-  .roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel .row.g-2 {
+  .roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel .row.g-2,
+  .roteiro-editor--avulso .oficio-step3-trecho-card .card-body > .row.g-3,
+  .roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel .row.g-2 {
     grid-template-columns: 1fr;
   }
 }
