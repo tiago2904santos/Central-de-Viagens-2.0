@@ -1,3 +1,6 @@
+from django.urls import reverse
+
+
 def _format_date(value):
     return value.strftime("%d/%m/%Y") if value else "-"
 
@@ -24,16 +27,24 @@ def apresentar_roteiro_card(roteiro):
     if quantidade_trechos is None:
         quantidade_trechos = roteiro.trechos.count()
 
+    change_url = reverse("admin:roteiros_roteiro_change", args=[roteiro.pk])
+    delete_url = reverse("admin:roteiros_roteiro_delete", args=[roteiro.pk])
+
     return {
         "title": roteiro.nome,
-        "subtitle": f"{_format_cidade_uf(roteiro.origem)} → {_format_cidade_uf(roteiro.destino)}",
+        "subtitle": "Trajeto oficial reutilizável",
+        "status": "Biblioteca",
+        "status_class": "status-chip--active",
         "meta": [
+            {"label": "Origem", "value": _format_cidade_uf(roteiro.origem)},
+            {"label": "Destino principal", "value": _format_cidade_uf(roteiro.destino)},
             {"label": "Período", "value": _format_periodo(roteiro)},
             {"label": "Trechos", "value": quantidade_trechos},
         ],
+        "body": roteiro.descricao or "Roteiro disponível para uso administrativo nos fluxos de viagem.",
         "actions": [
-            {"label": "Abrir", "href": "#", "variant": "secondary"},
-            {"label": "Editar", "href": "#", "variant": "secondary"},
-            {"label": "Excluir", "href": "#", "variant": "danger"},
+            {"label": "Abrir", "href": change_url, "variant": "secondary"},
+            {"label": "Editar", "href": change_url, "variant": "secondary"},
+            {"label": "Excluir", "href": delete_url, "variant": "danger"},
         ],
     }

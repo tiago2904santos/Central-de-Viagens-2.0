@@ -3,5 +3,5 @@
 {% block title %}Roteiros{% endblock %}
 
 {% block content %}
-  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Roteiros" brand_mark="RT" search_placeholder="Buscar roteiros" cards=cards empty_message="Nenhum roteiro cadastrado ainda." action_label="Novo roteiro" action_url="#" q=q only %}
+  {% include "components/lists/list_page.html" with title=page_title description=page_description eyebrow="Roteiros" brand_mark="RT" search_placeholder="Buscar por nome, origem ou destino" cards=cards empty_message="Nenhum roteiro cadastrado ainda." action_label="Novo roteiro" action_url=create_url q=q only %}
 {% endblock %}

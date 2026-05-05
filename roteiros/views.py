@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.urls import reverse
 
 from .presenters import apresentar_roteiro_card
 from .selectors import listar_roteiros
@@ -13,7 +14,8 @@ def index(request):
         "roteiros/index.html",
         {
             "page_title": "Roteiros",
-            "page_description": "Cadastre e reutilize roteiros de deslocamento para documentos e fluxos da Central de Viagens.",
+            "page_description": "Cadastre, consulte e reutilize trajetos oficiais nos documentos de viagem.",
+            "create_url": reverse("admin:roteiros_roteiro_add"),
             "cards": cards,
             "q": q,
         },

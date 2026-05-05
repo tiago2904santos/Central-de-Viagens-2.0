@@ -402,6 +402,58 @@
   padding: var(--space-5);
 }
 
+.app-page__list-card--grid .document-card {
+  background: linear-gradient(
+    180deg,
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
+  );
+  border-color: var(--theme-border-card);
+  border-left-color: rgba(216, 162, 27, 0.78);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--theme-shadow-block);
+}
+
+.app-page__list-card--grid .document-card h3 {
+  color: var(--theme-text-heading);
+}
+
+.app-page__list-card--grid .document-card-header p,
+.app-page__list-card--grid .document-card-body {
+  color: var(--theme-text-muted);
+}
+
+.app-page__list-card--grid .document-meta > div {
+  background: var(--theme-form-section-bg);
+  border-color: var(--theme-form-section-border);
+  border-radius: var(--radius-md);
+}
+
+.app-page__list-card--grid .document-meta dt {
+  color: var(--theme-text-subtle);
+}
+
+.app-page__list-card--grid .document-meta dd {
+  color: var(--theme-text-heading);
+}
+
+.app-page__list-card--grid .document-actions .btn {
+  border-radius: var(--radius-pill);
+}
+
+.app-page__list-card--grid .document-actions .btn-secondary {
+  background: var(--theme-btn-secondary-bg);
+  border-color: var(--theme-btn-secondary-border);
+  color: var(--theme-btn-secondary-text);
+}
+
+.app-page__list-card--grid .document-actions .btn-secondary:hover,
+.app-page__list-card--grid .document-actions .btn-secondary:focus {
+  background: var(--theme-btn-secondary-hover-bg);
+  border-color: var(--theme-btn-secondary-hover-border);
+  color: var(--theme-btn-secondary-text);
+}
+
 /* Exclusão: page-card interno */
 .app-page .page-card {
   background: transparent;
