@@ -1,0 +1,84 @@
+/* Componentes de UI compartilhados (hero híbrido, superfícies). */
+
+.app-page-hero {
+  border-radius: var(--radius-lg);
+  box-sizing: border-box;
+  overflow: hidden;
+  width: 100%;
+}
+
+.app-page-hero--hybrid {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-ui-soft);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 4px 12px rgba(7, 26, 51, 0.08),
+    0 16px 40px rgba(7, 26, 51, 0.12);
+}
+
+html[data-theme="dark"] .app-page-hero--hybrid {
+  border-color: var(--color-border);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.app-page-hero__stage {
+  background: linear-gradient(135deg, var(--app-hero-stage-start) 0%, var(--app-hero-stage-end) 100%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  padding: var(--space-5) var(--space-6);
+  position: relative;
+}
+
+.app-page-hero__stage::after {
+  background: radial-gradient(ellipse 80% 120% at 100% 0%, rgba(216, 162, 27, 0.2), transparent 55%);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.app-page-hero__eyebrow {
+  color: var(--app-hero-eyebrow);
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  margin-bottom: var(--space-2);
+  position: relative;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.app-page-hero__title {
+  color: var(--app-hero-title);
+  font-size: clamp(1.35rem, 2.2vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.app-page-hero__body {
+  background: var(--app-hero-body-bg);
+  padding: var(--space-5) var(--space-6);
+}
+
+.app-page-hero__ribbon {
+  background: var(--app-hero-ribbon);
+  border-radius: 0;
+  box-shadow: 0 1px 2px rgba(7, 26, 51, 0.08);
+  height: 3px;
+  margin: 0;
+  width: 100%;
+}
+
+.app-page-hero--compact .app-page-hero__stage {
+  padding: var(--space-4) var(--space-5);
+}
+
+.app-page-hero--compact .app-page-hero__body {
+  padding: var(--space-4) var(--space-5);
+}

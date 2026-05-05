@@ -4,8 +4,7 @@
 
 body {
   margin: 0;
-  background:
-    linear-gradient(180deg, #f8fbff 0%, #f2f6fb 45%, #eaf1f8 100%);
+  background: var(--app-body-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
   font-size: var(--font-size-md);

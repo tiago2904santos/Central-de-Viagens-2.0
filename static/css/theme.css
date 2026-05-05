@@ -1,0 +1,283 @@
+/*
+ * Sistema de temas: use html[data-theme="light"|"dark"].
+ * Tokens base permanecem em tokens.css; este arquivo define camadas semânticas e overrides escuros.
+ */
+
+:root {
+  /* Aliases semânticos (espelham tokens; úteis para JS/docs) */
+  --color-bg-app: var(--color-bg);
+  --color-bg-content: var(--color-bg);
+  --color-bg-card: var(--color-surface);
+  --color-bg-card-soft: var(--color-surface-muted);
+  --color-text-primary: var(--color-text);
+  --color-text-secondary: var(--color-muted);
+  --color-text-muted: var(--color-subtle);
+  --color-border-ui: var(--color-border);
+  --color-border-ui-soft: var(--color-border-soft);
+  --color-shadow-ambient: var(--shadow-sm);
+
+  /* Corpo e área principal (páginas “comuns”) */
+  --app-body-bg: linear-gradient(180deg, #f8fbff 0%, #f2f6fb 45%, #eaf1f8 100%);
+  --app-main-bg: transparent;
+
+  /* Páginas com destaque (dashboard experimental, módulos como Cargos) */
+  --app-featured-bg-fallback: #d8e4f2;
+  --app-featured-bg:
+    radial-gradient(ellipse 100% 80% at 6% 0%, rgba(216, 162, 27, 0.12), transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 0%, rgba(21, 91, 154, 0.1), transparent 50%),
+    linear-gradient(165deg, #eef3fb 0%, #e0eaf6 45%, #d2e0f0 100%);
+
+  /* Hero híbrido (estágio azul institucional + corpo claro) */
+  --app-hero-stage-start: #0b3a66;
+  --app-hero-stage-end: #155b9a;
+  --app-hero-eyebrow: rgba(255, 243, 207, 0.95);
+  --app-hero-title: #ffffff;
+  --app-hero-body-bg: linear-gradient(180deg, #ffffff 0%, #f6f9fd 100%);
+  --app-hero-ribbon: linear-gradient(
+    90deg,
+    rgba(216, 162, 27, 0.92) 0%,
+    rgba(200, 150, 40, 0.55) 42%,
+    rgba(11, 58, 102, 0.88) 100%
+  );
+
+  /* Sidebar */
+  --sidebar-surface: linear-gradient(180deg, #f3f6fb 0%, #e5edf6 100%);
+  --sidebar-fg: #1a2a3d;
+  --sidebar-fg-soft: #3d5066;
+  /* Títulos/ícones de destaque no sidebar claro */
+  --sidebar-fg-heading: #122231;
+  --sidebar-border: rgba(100, 120, 145, 0.22);
+  --sidebar-shadow: inset -1px 0 0 rgba(100, 120, 145, 0.12), 8px 0 20px rgba(15, 35, 60, 0.08);
+  --sidebar-brand-fg: #0d2035;
+  --sidebar-badge-bg: linear-gradient(140deg, rgba(216, 162, 27, 0.75), rgba(185, 135, 18, 0.88));
+  --sidebar-link-surface: rgba(11, 58, 102, 0.07);
+  --sidebar-link-border: rgba(100, 120, 145, 0.25);
+  --sidebar-link-fg: #2c3d51;
+  --sidebar-link-hover-bg: rgba(11, 58, 102, 0.1);
+  --sidebar-icon-bg: rgba(216, 162, 27, 0.2);
+  --sidebar-icon-fg: #0b3a66;
+  --sidebar-active-bg: rgba(11, 58, 102, 0.12);
+  --sidebar-active-fg: #0b3a66;
+  --sidebar-active-border: rgba(216, 162, 27, 0.5);
+  --sidebar-panel-border: rgba(216, 162, 27, 0.32);
+  --sidebar-footer-fg: rgba(40, 55, 75, 0.75);
+  --sidebar-logout-bg: rgba(255, 255, 255, 0.75);
+  --sidebar-logout-border: rgba(100, 120, 145, 0.35);
+  --sidebar-logout-fg: #1a2a3d;
+  --sidebar-focus-ring: rgba(11, 58, 102, 0.35);
+}
+
+/* Tema escuro: tokens de cor + sombras + fundos de app */
+html[data-theme="dark"] {
+  --color-bg: #0a1219;
+  --color-bg-strong: #0f1a25;
+  --color-bg-subtle: #0d141c;
+  --color-bg-glow: #0c1118;
+  --color-surface: #131e2c;
+  --color-surface-muted: #101a26;
+  --color-surface-soft: #111b28;
+  --color-surface-glass: rgba(20, 32, 48, 0.86);
+  --color-border: #2a3d52;
+  --color-border-soft: #1a2633;
+  --color-border-strong: #3a4f66;
+  --color-text: #e6edf5;
+  --color-heading: #f1f6fc;
+  --color-muted: #9db0c4;
+  --color-muted-strong: #b8c9da;
+  --color-subtle: #7d91a8;
+  /* Primários: gradientes de botão; brights para destaques em superfícies escuras */
+  --color-primary: #0d2844;
+  --color-primary-strong: #cfe4ff;
+  --color-primary-dark: #061a2e;
+  --color-primary-hover: #134878;
+  --color-primary-bright: #8ec8ff;
+  --color-primary-soft: rgba(110, 179, 255, 0.14);
+  --color-secondary: #2563ab;
+  --color-secondary-hover: #3d7dcc;
+  --color-secondary-soft: rgba(21, 91, 154, 0.22);
+  --color-accent: #e8bc3c;
+  --color-accent-hover: #f0ca5c;
+  --color-accent-soft: rgba(216, 162, 27, 0.18);
+  --color-danger: #f07167;
+  --color-danger-soft: rgba(180, 35, 24, 0.22);
+  --color-warning-soft: rgba(216, 162, 27, 0.15);
+  --color-success-soft: rgba(22, 128, 90, 0.22);
+  --color-info-soft: rgba(21, 91, 154, 0.22);
+  --color-white: #ffffff;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 14px 34px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glow-primary: 0 0 0 1px rgba(21, 91, 154, 0.35), 0 14px 34px rgba(0, 0, 0, 0.35);
+
+  --color-bg-app: var(--color-bg);
+  --color-bg-content: var(--color-bg);
+  --color-bg-card: var(--color-surface);
+  --color-bg-card-soft: var(--color-surface-muted);
+  --color-text-primary: var(--color-text);
+  --color-text-secondary: var(--color-muted);
+  --color-text-muted: var(--color-subtle);
+  --color-border-ui: var(--color-border);
+  --color-border-ui-soft: var(--color-border-soft);
+
+  --app-body-bg: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(21, 91, 154, 0.12), transparent 55%),
+    linear-gradient(180deg, #0a1219 0%, #060a10 100%);
+  --app-main-bg: transparent;
+
+  --app-featured-bg-fallback: #062847;
+  --app-featured-bg:
+    radial-gradient(ellipse 120% 80% at 8% 0%, rgba(216, 162, 27, 0.18), transparent 55%),
+    radial-gradient(ellipse 95% 65% at 100% 16%, rgba(21, 91, 154, 0.35), transparent 52%),
+    linear-gradient(165deg, #041e36 0%, #062847 48%, #031523 100%);
+
+  --app-hero-stage-start: #071a2e;
+  --app-hero-stage-end: #0f4d82;
+  --app-hero-eyebrow: rgba(255, 243, 207, 0.92);
+  --app-hero-title: #ffffff;
+  --app-hero-body-bg: linear-gradient(180deg, rgba(18, 28, 40, 0.98) 0%, rgba(12, 20, 32, 0.96) 100%);
+  --app-hero-ribbon: linear-gradient(
+    90deg,
+    rgba(216, 162, 27, 0.92) 0%,
+    rgba(200, 150, 40, 0.55) 42%,
+    rgba(90, 160, 230, 0.88) 100%
+  );
+
+  --sidebar-surface: linear-gradient(180deg, #062847 0%, #031c33 100%);
+  --sidebar-fg: #d8e3f2;
+  --sidebar-fg-soft: #c8d8ea;
+  --sidebar-fg-heading: #f1f7ff;
+  --sidebar-border: rgba(175, 192, 211, 0.24);
+  --sidebar-shadow: inset -1px 0 0 rgba(175, 192, 211, 0.2), 12px 0 28px rgba(2, 8, 23, 0.34);
+  --sidebar-brand-fg: #f1f7ff;
+  --sidebar-badge-bg: linear-gradient(140deg, rgba(216, 162, 27, 0.62), rgba(185, 135, 18, 0.72));
+  --sidebar-link-surface: rgba(255, 255, 255, 0.06);
+  --sidebar-link-border: rgba(175, 192, 211, 0.22);
+  --sidebar-link-fg: #c8d8ea;
+  --sidebar-link-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-icon-bg: rgba(216, 162, 27, 0.18);
+  --sidebar-icon-fg: #deebff;
+  --sidebar-active-bg: rgba(255, 255, 255, 0.1);
+  --sidebar-active-fg: #ffffff;
+  --sidebar-active-border: rgba(216, 162, 27, 0.45);
+  --sidebar-panel-border: rgba(216, 162, 27, 0.35);
+  --sidebar-footer-fg: rgba(205, 226, 249, 0.84);
+  --sidebar-logout-bg: rgba(4, 24, 46, 0.55);
+  --sidebar-logout-border: rgba(175, 192, 211, 0.35);
+  --sidebar-logout-fg: rgba(230, 241, 255, 0.95);
+  --sidebar-focus-ring: rgba(216, 162, 27, 0.35);
+}
+
+/* Toggle de tema (sidebar) */
+.sidebar-theme {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-theme__label {
+  color: var(--sidebar-footer-fg);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-theme-segment {
+  background: var(--sidebar-link-surface);
+  border: 1px solid var(--sidebar-link-border);
+  border-radius: var(--radius-pill);
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+}
+
+.app-theme-segment__btn {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-pill);
+  color: var(--sidebar-fg-soft);
+  cursor: pointer;
+  flex: 1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  min-height: 30px;
+  padding: 6px 8px;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.app-theme-segment__btn:hover,
+.app-theme-segment__btn:focus-visible {
+  color: var(--sidebar-brand-fg);
+}
+
+.app-theme-segment__btn[aria-pressed="true"] {
+  background: rgba(216, 162, 27, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: var(--sidebar-brand-fg);
+}
+
+html[data-theme="dark"] .app-theme-segment__btn[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.app-theme-segment__btn:focus-visible {
+  outline: 2px solid var(--sidebar-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Componentes compartilhados — modo escuro (demais telas) */
+html[data-theme="dark"] .page-header {
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+}
+
+html[data-theme="dark"] .list-toolbar {
+  background: linear-gradient(180deg, var(--color-bg-card) 0%, var(--color-bg-card-soft) 100%);
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .list-search input {
+  background: var(--color-surface-soft);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+html[data-theme="dark"] .simple-list {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .simple-list__row {
+  border-bottom-color: var(--color-border-soft);
+}
+
+html[data-theme="dark"] .simple-list__row:hover {
+  background: var(--color-primary-soft);
+}
+
+html[data-theme="dark"] .empty-state {
+  background: linear-gradient(180deg, var(--color-bg-card-soft), var(--color-bg-card));
+  border-color: var(--color-border);
+  color: var(--color-muted);
+}
+
+html[data-theme="dark"] .form-section {
+  background: linear-gradient(180deg, var(--color-bg-card) 0%, var(--color-bg-card-soft) 100%);
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select {
+  background: var(--color-surface-soft);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+html[data-theme="dark"] .page-card {
+  background: var(--color-bg-card);
+  border-color: var(--color-border);
+}

@@ -56,6 +56,13 @@
     {% endfor %}
   </nav>
   <div class="sidebar-footer">
+    <div class="sidebar-theme" role="group" aria-label="Tema da interface">
+      <span class="sidebar-theme__label" id="sidebar-theme-label">Aparência</span>
+      <div class="app-theme-segment" role="radiogroup" aria-labelledby="sidebar-theme-label">
+        <button type="button" class="app-theme-segment__btn" data-theme-mode="light" aria-pressed="false">Claro</button>
+        <button type="button" class="app-theme-segment__btn" data-theme-mode="dark" aria-pressed="false">Escuro</button>
+      </div>
+    </div>
     {% if user.is_authenticated %}
     <form class="sidebar-logout-form" method="post" action="{% url 'core:logout' %}">
       {% csrf_token %}

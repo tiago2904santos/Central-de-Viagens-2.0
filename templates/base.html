@@ -4,6 +4,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    (function () {
+      try {
+        var k = "cv-theme";
+        var s = localStorage.getItem(k);
+        var t;
+        if (s === "light" || s === "dark") {
+          t = s;
+        } else {
+          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
   <title>{% block title %}Central de Viagens 3{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   {% block extra_css %}{% endblock %}
@@ -18,6 +35,7 @@
       </section>
     </main>
   </div>
+  <script src="{% static 'js/theme-toggle.js' %}" defer></script>
   <script src="{% static 'js/core/app.js' %}" defer></script>
   <script src="{% static 'js/components/sidebar.js' %}" defer></script>
   <script src="{% static 'js/components/masks.js' %}" defer></script>

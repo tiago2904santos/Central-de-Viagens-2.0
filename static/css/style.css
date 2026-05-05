@@ -1,4 +1,5 @@
 @import url("./tokens.css");
+@import url("./theme.css");
 @import url("./auth.css");
 @import url("./base.css");
 @import url("./layout.css");
@@ -7,6 +8,7 @@
 @import url("./forms.css");
 @import url("./lists.css");
 @import url("./cards.css");
+@import url("./app-ui.css");
 @import url("./dashboard.css");
 @import url("./cargos-page.css");
 @import url("./steppers.css");

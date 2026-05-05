@@ -4,23 +4,27 @@
   {% url "cadastros:cargo_create" as create_url %}
   <div class="cargos-page">
     <div class="cargos-page__shell">
-      <header class="cargos-page__hero" aria-labelledby="cargos-page-title">
-        <div class="cargos-page__hero-top">
-          <div class="cargos-page__brand">
-            <div class="cargos-page__brand-mark" aria-hidden="true">CG</div>
-            <div class="cargos-page__brand-copy">
-              <span class="cargos-page__eyebrow">Cadastros</span>
-              <h1 class="cargos-page__title" id="cargos-page-title">Cargos</h1>
-              <p class="cargos-page__subtitle">
-                Gerencie os cargos utilizados nos cadastros institucionais.
-              </p>
+      <header class="app-page-hero app-page-hero--hybrid" aria-labelledby="cargos-page-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Cadastros</span>
+          <h1 class="app-page-hero__title" id="cargos-page-title">Cargos</h1>
+        </div>
+        <div class="app-page-hero__body">
+          <div class="cargos-page__hero-top">
+            <div class="cargos-page__brand">
+              <div class="cargos-page__brand-mark" aria-hidden="true">CG</div>
+              <div class="cargos-page__brand-copy">
+                <p class="cargos-page__subtitle">
+                  Gerencie os cargos utilizados nos cadastros institucionais.
+                </p>
+              </div>
+            </div>
+            <div class="cargos-page__hero-actions">
+              {% include "components/buttons/action_button.html" with href=create_url label="Novo cargo" variant="primary" only %}
             </div>
           </div>
-          <div class="cargos-page__hero-actions">
-            {% include "components/buttons/action_button.html" with href=create_url label="Novo cargo" variant="primary" only %}
-          </div>
         </div>
-        <div class="cargos-page__accent-line" aria-hidden="true"></div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
       </header>
 
       <div class="cargos-page__toolbar">

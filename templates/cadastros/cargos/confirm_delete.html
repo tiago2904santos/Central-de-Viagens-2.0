@@ -3,16 +3,18 @@
 {% block content %}
   <div class="cargos-page">
     <div class="cargos-page__shell">
-      <header class="cargos-page__hero cargos-page__hero--compact" aria-labelledby="cargos-delete-title">
-        <div class="cargos-page__brand">
-          <div class="cargos-page__brand-mark" aria-hidden="true">CG</div>
-          <div class="cargos-page__brand-copy">
-            <span class="cargos-page__eyebrow">Cadastros</span>
-            <h1 class="cargos-page__title" id="cargos-delete-title">{{ page_title }}</h1>
+      <header class="app-page-hero app-page-hero--hybrid app-page-hero--compact" aria-labelledby="cargos-delete-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Cadastros</span>
+          <h1 class="app-page-hero__title" id="cargos-delete-title">{{ page_title }}</h1>
+        </div>
+        <div class="app-page-hero__body">
+          <div class="cargos-page__hero-single">
+            <div class="cargos-page__brand-mark" aria-hidden="true">CG</div>
             <p class="cargos-page__subtitle">{{ page_description }}</p>
           </div>
         </div>
-        <div class="cargos-page__accent-line" aria-hidden="true"></div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
       </header>
 
       <div class="cargos-page__form-card">
