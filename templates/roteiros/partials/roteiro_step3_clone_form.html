@@ -73,54 +73,54 @@
               </div>
             </section>
 
-            {# SEÇÃO 2: SEDE #}
-            <section class="roteiro-editor__section roteiro-editor__section--sede" aria-labelledby="sec-sede">
-              <header class="roteiro-editor__section-header" id="sec-sede">
-                <h3 class="roteiro-editor__section-title">2. Sede</h3>
-              </header>
-              <div class="roteiro-editor__grid">
-                <div class="field-span-6">
-                  <label class="roteiro-editor__field-label" for="id_origem_estado">UF</label>
-                  <select name="origem_estado" id="id_origem_estado" class="form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">
-                    <option value="">---------</option>
-                    {% for estado in estados %}
-                    <option value="{{ estado.pk }}" {% if sede_estado_id == estado.pk %}selected{% endif %}>{{ estado.nome }} ({{ estado.sigla }})</option>
-                    {% endfor %}
-                  </select>
-                  {% if form.origem_estado.errors %}<div class="invalid-feedback d-block">{{ form.origem_estado.errors.0 }}</div>{% endif %}
-                </div>
-                <div class="field-span-6">
-                  <label class="roteiro-editor__field-label" for="id_origem_cidade">Cidade</label>
-                  <select name="origem_cidade" id="id_origem_cidade" class="form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade...">
-                    <option value="">---------</option>
-                    {% for cidade in sede_cidades_qs %}
-                    <option value="{{ cidade.pk }}" {% if sede_cidade_id == cidade.pk %}selected{% endif %}>{{ cidade.nome }}</option>
-                    {% endfor %}
-                  </select>
-                  {% if form.origem_cidade.errors %}<div class="invalid-feedback d-block">{{ form.origem_cidade.errors.0 }}</div>{% endif %}
-                </div>
-              </div>
-            </section>
-
-            {# SEÇÃO 3: DESTINOS #}
-            <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--destinos" aria-labelledby="sec-destinos">
+            {# SEÇÃO 2: SEDE E DESTINOS #}
+            <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--sede-destinos roteiro-editor__section--sede-destinos" aria-label="2. Sede e destinos">
               <div class="roteiro-editor__reference-top" aria-hidden="true">
-                <span class="roteiro-editor__reference-title">3. Destinos</span>
+                <span class="roteiro-editor__reference-title">2. Sede e destinos</span>
               </div>
               <div class="roteiro-editor__reference-body">
-              <header class="roteiro-editor__section-header" id="sec-destinos">
-                <h3 class="roteiro-editor__section-title">3. Destinos</h3>
-                <p class="roteiro-editor__section-desc">Reordene por arrastar e soltar para atualizar automaticamente a sequência dos trechos.</p>
-              </header>
-              <div id="destinos-container" class="roteiro-editor__destinos-stack oficio-step3-destinos-stack"></div>
-              <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary roteiro-editor__add-btn mt-2 w-100">Adicionar destino</button>
+                <header class="roteiro-editor__section-header">
+                  <h3 class="roteiro-editor__section-title">2. Sede e destinos</h3>
+                </header>
+                <div id="sec-sede" class="roteiro-editor__nest-block roteiro-editor__nest-block--sede">
+                  <h4 class="roteiro-editor__nest-title">Sede</h4>
+                  <p class="roteiro-editor__nest-desc">Defina a unidade de origem da viagem (UF e cidade).</p>
+                  <div class="roteiro-editor__grid">
+                    <div class="field-span-6">
+                      <label class="roteiro-editor__field-label" for="id_origem_estado">UF</label>
+                      <select name="origem_estado" id="id_origem_estado" class="form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">
+                        <option value="">---------</option>
+                        {% for estado in estados %}
+                        <option value="{{ estado.pk }}" {% if sede_estado_id == estado.pk %}selected{% endif %}>{{ estado.nome }} ({{ estado.sigla }})</option>
+                        {% endfor %}
+                      </select>
+                      {% if form.origem_estado.errors %}<div class="invalid-feedback d-block">{{ form.origem_estado.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="field-span-6">
+                      <label class="roteiro-editor__field-label" for="id_origem_cidade">Cidade</label>
+                      <select name="origem_cidade" id="id_origem_cidade" class="form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade...">
+                        <option value="">---------</option>
+                        {% for cidade in sede_cidades_qs %}
+                        <option value="{{ cidade.pk }}" {% if sede_cidade_id == cidade.pk %}selected{% endif %}>{{ cidade.nome }}</option>
+                        {% endfor %}
+                      </select>
+                      {% if form.origem_cidade.errors %}<div class="invalid-feedback d-block">{{ form.origem_cidade.errors.0 }}</div>{% endif %}
+                    </div>
+                  </div>
+                </div>
+                <div id="sec-destinos" class="roteiro-editor__nest-block roteiro-editor__nest-block--destinos">
+                  <h4 class="roteiro-editor__nest-title">Destinos</h4>
+                  <p class="roteiro-editor__nest-desc">Reordene por arrastar e soltar para atualizar automaticamente a sequência dos trechos.</p>
+                  <div id="destinos-container" class="roteiro-editor__destinos-stack oficio-step3-destinos-stack"></div>
+                  <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary roteiro-editor__add-btn mt-2 w-100">Adicionar destino</button>
+                </div>
               </div>
             </section>
 
-            {# SEÇÃO 4: BATE-VOLTA #}
+            {# SEÇÃO 3: BATE-VOLTA #}
             <section class="roteiro-editor__section roteiro-editor__section--bate-volta" aria-labelledby="sec-bate-volta">
               <header class="roteiro-editor__section-header" id="sec-bate-volta">
-                <h3 class="roteiro-editor__section-title">4. Modo bate-volta diário</h3>
+                <h3 class="roteiro-editor__section-title">3. Modo bate-volta diário</h3>
               </header>
               <div class="roteiro-editor__panel-surface">
                 <div class="roteiro-editor__bate-volta-head">
@@ -172,10 +172,10 @@
               </div>
             </section>
 
-            {# SEÇÃO 5: TRECHOS #}
+            {# SEÇÃO 4: TRECHOS #}
             <section class="roteiro-editor__section roteiro-editor__section--trechos" aria-labelledby="sec-trechos">
               <header class="roteiro-editor__section-header" id="sec-trechos">
-                <h3 class="roteiro-editor__section-title">5. Trechos</h3>
+                <h3 class="roteiro-editor__section-title">4. Trechos</h3>
               </header>
               <div id="trechos-gerados-container" class="roteiro-editor__trechos-wrap">
                 <div class="roteiro-editor__empty">
@@ -185,14 +185,14 @@
               </div>
             </section>
 
-            {# SEÇÃO 6: RETORNO #}
+            {# SEÇÃO 5: RETORNO #}
             <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--retorno" aria-labelledby="sec-retorno">
               <div class="roteiro-editor__reference-top" aria-hidden="true">
-                <span class="roteiro-editor__reference-title">6. Retorno</span>
+                <span class="roteiro-editor__reference-title">5. Retorno</span>
               </div>
               <div class="roteiro-editor__reference-body">
               <header class="roteiro-editor__section-header" id="sec-retorno">
-                <h3 class="roteiro-editor__section-title">6. Retorno</h3>
+                <h3 class="roteiro-editor__section-title">5. Retorno</h3>
                 <p class="roteiro-editor__section-desc">Mesma lógica da ida: tempo de viagem + tempo adicional = tempo total.</p>
               </header>
               <div class="rota-bloco" id="retorno-card">
@@ -263,14 +263,14 @@
               </div>
             </section>
 
-            {# SEÇÃO 7: CALCULADORA DE DIÁRIAS #}
+            {# SEÇÃO 6: CALCULADORA DE DIÁRIAS #}
             <section class="roteiro-editor__section roteiro-editor__section--diarias" aria-labelledby="sec-diarias">
               <div class="roteiro-editor__diarias">
                 <div class="roteiro-editor__diarias-head">
                   <div>
                     <span class="roteiro-editor__diarias-eyebrow">Resumo financeiro</span>
                     <header class="roteiro-editor__section-header mb-0" id="sec-diarias">
-                      <h3 class="roteiro-editor__section-title">7. Calculadora de diárias</h3>
+                      <h3 class="roteiro-editor__section-title">6. Calculadora de diárias</h3>
                       <p class="roteiro-editor__section-desc">Atualização reativa conforme trechos e retorno completos.</p>
                     </header>
                   </div>
