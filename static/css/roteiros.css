@@ -149,6 +149,130 @@
   max-width: 68ch;
 }
 
+.roteiro-editor--avulso .roteiro-editor__intro {
+  display: none;
+}
+
+.roteiro-editor--avulso .roteiro-editor__main.card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.roteiro-editor--avulso .roteiro-editor__main.card:hover {
+  box-shadow: none;
+}
+
+.roteiro-editor--avulso .roteiro-editor__main .card-body {
+  padding: 0;
+}
+
+.roteiro-editor--avulso .oficio-stage-form {
+  gap: 22px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section {
+  order: 4;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--source {
+  order: 1;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--destinos {
+  order: 2;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--retorno {
+  order: 3;
+}
+
+.roteiro-editor--avulso .roteiro-editor__actions {
+  order: 9;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block {
+  background: #ffffff;
+  border: 1px solid rgba(11, 58, 102, 0.14);
+  border-radius: 18px;
+  box-shadow: 0 18px 36px rgba(15, 34, 54, 0.08);
+  overflow: hidden;
+  padding: 0;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-top {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, #0e385d 0%, #082d51 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 82px;
+  padding: 16px 24px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-eyebrow {
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-title {
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-body {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  padding: 22px 24px 24px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section-header {
+  margin-bottom: 22px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section-title {
+  color: #1c3148;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0;
+  margin-bottom: 6px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section-desc {
+  color: #58708a;
+  font-size: 12px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section-header--sr {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__field-label {
+  color: #24394f;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
 /* Grid de campos */
 .roteiro-editor__grid {
   display: grid;
@@ -269,6 +393,60 @@
   display: block;
   font-size: 13px;
   line-height: 1.45;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-grid {
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d8e1ec;
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgba(28, 49, 72, 0.04);
+  gap: 12px;
+  min-height: 62px;
+  padding: 13px 16px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card:has(input:checked) {
+  background: #ffffff;
+  border-color: #d8e1ec;
+  box-shadow: 0 10px 22px rgba(28, 49, 72, 0.04);
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-input {
+  height: 17px;
+  margin-top: 0;
+  width: 17px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-body {
+  gap: 4px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-title {
+  color: #12263a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-desc {
+  color: #667d95;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.roteiro-editor--avulso:has(#id_roteiro_modo_proprio:checked) #roteiro-selector-wrapper {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Painel roteiros salvos */
@@ -538,6 +716,124 @@
   line-height: 1;
 }
 
+.roteiro-editor--avulso .roteiro-editor__reference-block--destinos .roteiro-editor__reference-body {
+  padding-bottom: 30px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--destinos .roteiro-editor__destinos-stack {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgba(28, 49, 72, 0.04);
+  gap: 0;
+  padding: 16px 18px 10px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__destination-card.destino-row {
+  align-items: end;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 96px minmax(0, 1fr) 200px;
+  padding: 0;
+}
+
+.roteiro-editor--avulso .roteiro-editor__drag-col,
+.roteiro-editor--avulso .roteiro-editor__remove-col {
+  align-items: end;
+  padding-top: 0;
+}
+
+.roteiro-editor--avulso .roteiro-editor__drag-handle {
+  background: #ffffff;
+  border: 1px solid #d8e1ec;
+  border-radius: 999px;
+  color: #17324d;
+  font-size: 0;
+  height: 44px;
+  width: 92px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__drag-handle::before {
+  content: "\2261";
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.roteiro-editor--avulso .roteiro-editor__destination-fields {
+  gap: 8px;
+  grid-template-columns: minmax(180px, 0.34fr) minmax(280px, 0.66fr);
+}
+
+.roteiro-editor--avulso .roteiro-editor__destination-fields .form-select,
+.roteiro-editor--avulso .roteiro-editor__destination-fields select {
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 800;
+  min-height: 44px;
+  padding-left: 16px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__icon-btn.btn-remover-destino {
+  background: #fff6f6;
+  border: 1px solid #f1d7d7;
+  border-radius: 999px;
+  color: #d86a62;
+  font-size: 0;
+  font-weight: 900;
+  height: 44px;
+  min-width: 190px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__icon-btn.btn-remover-destino::after {
+  content: "Remover";
+  font-size: 13px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__add-btn#btn-adicionar-destino {
+  background: #f3f8fc;
+  border-color: #bdd0e2;
+  border-radius: 999px;
+  color: #173e66;
+  font-size: 13px;
+  font-weight: 900;
+  min-height: 40px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__add-btn#btn-adicionar-destino::before {
+  content: "";
+  display: none;
+}
+
+@media (max-width: 920px) {
+  .roteiro-editor--avulso .roteiro-editor__destination-card.destino-row {
+    grid-template-columns: 72px minmax(0, 1fr) 140px;
+  }
+
+  .roteiro-editor--avulso .roteiro-editor__drag-handle {
+    width: 68px;
+  }
+
+  .roteiro-editor--avulso .roteiro-editor__icon-btn.btn-remover-destino {
+    min-width: 132px;
+  }
+}
+
+@media (max-width: 720px) {
+  .roteiro-editor--avulso .roteiro-editor__destination-card.destino-row,
+  .roteiro-editor--avulso .roteiro-editor__destination-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .roteiro-editor--avulso .roteiro-editor__drag-handle,
+  .roteiro-editor--avulso .roteiro-editor__icon-btn.btn-remover-destino {
+    width: 100%;
+  }
+}
+
 /* Trechos */
 .roteiro-editor__trechos-wrap {
   display: flex;
@@ -616,6 +912,100 @@
 /* Retorno */
 #retorno-card .roteiro-editor__grid {
   align-items: start;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block--retorno .roteiro-editor__reference-body {
+  padding: 24px;
+}
+
+.roteiro-editor--avulso #retorno-card .row.g-3 {
+  --bs-gutter-x: 16px;
+  --bs-gutter-y: 16px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.roteiro-editor--avulso #retorno-card > .row.g-3 > [class*="col-"] {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+  width: auto;
+}
+
+.roteiro-editor--avulso #retorno-card > .row.g-3 > .col-12 {
+  grid-column: 1 / -1;
+}
+
+.roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel .row.g-2 {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel .row.g-2 > [class*="col-"] {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+  width: auto;
+}
+
+.roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel .row.g-2 > .col-12 {
+  grid-column: 1 / -1;
+}
+
+.roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel {
+  background: #ffffff;
+  border: 1px solid #d8e1ec;
+  border-radius: 4px;
+  box-shadow: none;
+  padding: 20px 18px;
+}
+
+.roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel-title {
+  color: #2c4056;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 22px;
+}
+
+.roteiro-editor--avulso #retorno-card .form-control {
+  background: #ffffff;
+  border: 1px solid #d8e1ec;
+  border-radius: 14px;
+  color: #17324d;
+  font-size: 14px;
+  min-height: 44px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.roteiro-editor--avulso #retorno-card .form-control[readonly] {
+  background: #f5f9fd;
+  color: #6d8196;
+}
+
+.roteiro-editor--avulso #retorno-card .oficio-step3-time-calc-grid {
+  background: #f7fbff;
+  border: 1px dashed #b7d2ec;
+  border-radius: 14px;
+  gap: 14px;
+  padding: 20px;
+}
+
+.roteiro-editor--avulso #retorno-card .oficio-step3-time-calc-grid .form-control {
+  background: #ffffff;
+}
+
+@media (max-width: 991.98px) {
+  .roteiro-editor--avulso #retorno-card .row.g-3,
+  .roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel .row.g-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Calculadora */
