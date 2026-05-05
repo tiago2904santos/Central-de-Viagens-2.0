@@ -31,13 +31,11 @@
             {# SEÇÃO 1: FONTE DO ROTEIRO #}
             <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--source" aria-labelledby="sec-fonte-roteiro">
               <div class="roteiro-editor__reference-top" aria-hidden="true">
-                <span class="roteiro-editor__reference-eyebrow">ROTEIROS</span>
-                <span class="roteiro-editor__reference-title">Novo roteiro</span>
+                <span class="roteiro-editor__reference-title">1. Fonte do roteiro</span>
               </div>
               <div class="roteiro-editor__reference-body">
               <header class="roteiro-editor__section-header" id="sec-fonte-roteiro">
                 <h3 class="roteiro-editor__section-title">1. Fonte do roteiro</h3>
-                <p class="roteiro-editor__section-desc">Escolha um roteiro salvo ou monte um roteiro novo.</p>
               </header>
               <div class="roteiro-editor__choice-grid mb-1">
                 <label class="roteiro-editor__choice-card">
@@ -55,7 +53,7 @@
                   </span>
                 </label>
               </div>
-              <div id="roteiro-selector-wrapper" class="roteiro-editor__routes-panel {% if roteiro_modo != 'EVENTO_EXISTENTE' %}d-none{% endif %}">
+              <div id="roteiro-selector-wrapper" class="roteiro-editor__routes-panel">
                 <label class="roteiro-editor__field-label" for="id_roteiro_busca">Roteiros salvos</label>
                 <div class="roteiro-editor__grid">
                   <div class="field-span-12">
@@ -76,10 +74,9 @@
             </section>
 
             {# SEÇÃO 2: SEDE #}
-            <section class="roteiro-editor__section" aria-labelledby="sec-sede">
+            <section class="roteiro-editor__section roteiro-editor__section--sede" aria-labelledby="sec-sede">
               <header class="roteiro-editor__section-header" id="sec-sede">
                 <h3 class="roteiro-editor__section-title">2. Sede</h3>
-                <p class="roteiro-editor__section-desc">Defina a unidade de origem da viagem (UF e cidade).</p>
               </header>
               <div class="roteiro-editor__grid">
                 <div class="field-span-6">
@@ -108,8 +105,7 @@
             {# SEÇÃO 3: DESTINOS #}
             <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--destinos" aria-labelledby="sec-destinos">
               <div class="roteiro-editor__reference-top" aria-hidden="true">
-                <span class="roteiro-editor__reference-eyebrow">ROTEIROS</span>
-                <span class="roteiro-editor__reference-title">Novo roteiro</span>
+                <span class="roteiro-editor__reference-title">3. Destinos</span>
               </div>
               <div class="roteiro-editor__reference-body">
               <header class="roteiro-editor__section-header" id="sec-destinos">
@@ -122,17 +118,17 @@
             </section>
 
             {# SEÇÃO 4: BATE-VOLTA #}
-            <section class="roteiro-editor__section" aria-labelledby="sec-bate-volta">
+            <section class="roteiro-editor__section roteiro-editor__section--bate-volta" aria-labelledby="sec-bate-volta">
               <header class="roteiro-editor__section-header" id="sec-bate-volta">
                 <h3 class="roteiro-editor__section-title">4. Modo bate-volta diário</h3>
-                <p class="roteiro-editor__section-desc">Gera automaticamente o loop sede → destino → sede em cada dia do período.</p>
               </header>
               <div class="roteiro-editor__panel-surface">
                 <div class="roteiro-editor__bate-volta-head">
                   <div>
-                    <div class="roteiro-editor__bate-volta-title">Gerador automático de loop diário</div>
-                    <span class="roteiro-editor__chip" id="bate-volta-status-chip" aria-hidden="true">Inativo</span>
-                    <p class="roteiro-editor__helper mb-0 mt-2" id="bate-volta-status-text">Modo inativo.</p>
+                    <div class="roteiro-editor__bate-volta-title">
+                      Gerador automático de loop diário
+                      <span class="roteiro-editor__chip" id="bate-volta-status-chip" aria-hidden="true">Inativo</span>
+                    </div>
                   </div>
                   <div class="roteiro-editor__switch-row">
                     <div class="form-check form-switch m-0">
@@ -147,17 +143,18 @@
                     <input type="date" class="form-control" id="id_bate_volta_data_inicio" name="bate_volta_data_inicio" value="{{ step3_state_json.bate_volta_diario.data_inicio|default:'' }}">
                   </div>
                   <div class="col-md-3 col-sm-6">
-                    <label class="roteiro-editor__field-label" for="id_bate_volta_data_fim">Data final</label>
-                    <input type="date" class="form-control" id="id_bate_volta_data_fim" name="bate_volta_data_fim" value="{{ step3_state_json.bate_volta_diario.data_fim|default:'' }}">
-                  </div>
-                  <div class="col-md-3 col-sm-6">
                     <label class="roteiro-editor__field-label" for="id_bate_volta_ida_saida_hora">Saída da ida</label>
                     <input type="time" class="form-control" id="id_bate_volta_ida_saida_hora" name="bate_volta_ida_saida_hora" value="{{ step3_state_json.bate_volta_diario.ida_saida_hora|default:'' }}">
                   </div>
+                 
                   <div class="col-md-3 col-sm-6">
                     <label class="roteiro-editor__field-label" for="id_bate_volta_ida_tempo_hhmm">Tempo da ida</label>
                     <input type="text" class="form-control" id="id_bate_volta_ida_tempo_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
                     <input type="hidden" id="id_bate_volta_ida_tempo_min" name="bate_volta_ida_tempo_min" value="{{ step3_state_json.bate_volta_diario.ida_tempo_min|default:'' }}">
+                  </div>
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_data_fim">Data final</label>
+                    <input type="date" class="form-control" id="id_bate_volta_data_fim" name="bate_volta_data_fim" value="{{ step3_state_json.bate_volta_diario.data_fim|default:'' }}">
                   </div>
                   <div class="col-md-3 col-sm-6">
                     <label class="roteiro-editor__field-label" for="id_bate_volta_volta_saida_hora">Saída da volta</label>
@@ -176,10 +173,9 @@
             </section>
 
             {# SEÇÃO 5: TRECHOS #}
-            <section class="roteiro-editor__section" aria-labelledby="sec-trechos">
+            <section class="roteiro-editor__section roteiro-editor__section--trechos" aria-labelledby="sec-trechos">
               <header class="roteiro-editor__section-header" id="sec-trechos">
                 <h3 class="roteiro-editor__section-title">5. Trechos</h3>
-                <p class="roteiro-editor__section-desc">Informe tempos de viagem e adicionais; chegada e totais são calculados conforme as regras do fluxo.</p>
               </header>
               <div id="trechos-gerados-container" class="roteiro-editor__trechos-wrap">
                 <div class="roteiro-editor__empty">
@@ -192,11 +188,10 @@
             {# SEÇÃO 6: RETORNO #}
             <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--retorno" aria-labelledby="sec-retorno">
               <div class="roteiro-editor__reference-top" aria-hidden="true">
-                <span class="roteiro-editor__reference-eyebrow">ROTEIROS</span>
-                <span class="roteiro-editor__reference-title">Novo roteiro</span>
+                <span class="roteiro-editor__reference-title">6. Retorno</span>
               </div>
               <div class="roteiro-editor__reference-body">
-              <header class="roteiro-editor__section-header roteiro-editor__section-header--sr" id="sec-retorno">
+              <header class="roteiro-editor__section-header" id="sec-retorno">
                 <h3 class="roteiro-editor__section-title">6. Retorno</h3>
                 <p class="roteiro-editor__section-desc">Mesma lógica da ida: tempo de viagem + tempo adicional = tempo total.</p>
               </header>
@@ -269,7 +264,7 @@
             </section>
 
             {# SEÇÃO 7: CALCULADORA DE DIÁRIAS #}
-            <section class="roteiro-editor__section" aria-labelledby="sec-diarias">
+            <section class="roteiro-editor__section roteiro-editor__section--diarias" aria-labelledby="sec-diarias">
               <div class="roteiro-editor__diarias">
                 <div class="roteiro-editor__diarias-head">
                   <div>

@@ -439,10 +439,6 @@
   line-height: 1.25;
 }
 
-.roteiro-editor--avulso:has(#id_roteiro_modo_proprio:checked) #roteiro-selector-wrapper {
-  display: none !important;
-}
-
 @media (max-width: 720px) {
   .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-grid {
     grid-template-columns: 1fr;
@@ -524,6 +520,10 @@
   font-size: 12px;
 }
 
+.roteiro-editor--avulso #roteiro-selector-wrapper.d-none {
+  display: block !important;
+}
+
 /* Superfícies internas (substitui bg-white) */
 .roteiro-editor__panel-surface {
   background: var(--theme-surface-card);
@@ -561,6 +561,8 @@
   letter-spacing: 0.04em;
   padding: 4px 10px;
   text-transform: uppercase;
+    margin-left: 5px;
+
 }
 
 .roteiro-editor__chip.is-on {
@@ -961,7 +963,7 @@
 .roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel {
   background: #ffffff;
   border: 1px solid #d8e1ec;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   box-shadow: none;
   padding: 20px 18px;
 }
@@ -991,8 +993,8 @@
 
 .roteiro-editor--avulso #retorno-card .oficio-step3-time-calc-grid {
   background: #f7fbff;
-  border: 1px dashed #b7d2ec;
-  border-radius: 14px;
+  border: solid 1px var(--theme-border-card);
+  border-radius: var(--radius-md);
   gap: 14px;
   padding: 20px;
 }
@@ -1178,4 +1180,200 @@
   border-color: rgba(11, 58, 102, 0.55);
   box-shadow: 0 0 0 3px rgba(21, 91, 154, 0.15);
   outline: none;
+}
+
+/* Roteiro avulso: sections internas com titulo real da etapa. */
+.roteiro-editor--avulso .roteiro-editor__section {
+  background: #f8fbff;
+  border: 1px solid rgba(210, 224, 238, 0.95);
+  border-radius: 18px;
+  box-shadow: 0 18px 36px rgba(15, 34, 54, 0.08);
+  overflow: hidden;
+  padding: 0;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--source,
+.roteiro-editor--avulso .roteiro-editor__reference-block--source {
+  order: 1;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--sede {
+  order: 2;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--destinos,
+.roteiro-editor--avulso .roteiro-editor__reference-block--destinos {
+  order: 3;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--bate-volta {
+  order: 4;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--trechos {
+  order: 5;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--retorno,
+.roteiro-editor--avulso .roteiro-editor__reference-block--retorno {
+  order: 6;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--diarias {
+  order: 7;
+}
+
+.roteiro-editor--avulso .roteiro-editor__actions {
+  order: 8;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-title,
+.roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header .roteiro-editor__section-title {
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, #0e385d 0%, #082d51 100%);
+  margin: 0;
+  min-height: 82px;
+  padding: 16px 24px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header::before {
+  color: #ffffff;
+  content: "ROTEIROS";
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header .roteiro-editor__section-title,
+.roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header .roteiro-editor__section-desc {
+  color: #ffffff;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header .roteiro-editor__section-desc {
+  font-size: 12px;
+  margin-top: 8px;
+  opacity: 0.82;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block > .roteiro-editor__reference-body > .roteiro-editor__section-header .roteiro-editor__section-title {
+  display: none;
+}
+
+.roteiro-editor--avulso .roteiro-editor__reference-block > .roteiro-editor__reference-body > .roteiro-editor__section-header {
+  margin-bottom: 18px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--sede > .roteiro-editor__grid,
+.roteiro-editor--avulso .roteiro-editor__section--bate-volta > .roteiro-editor__panel-surface,
+.roteiro-editor--avulso .roteiro-editor__section--trechos > .roteiro-editor__trechos-wrap,
+.roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__diarias {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgba(28, 49, 72, 0.04);
+  margin: 24px;
+  padding: 18px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--sede > .roteiro-editor__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--sede > .roteiro-editor__grid > .field-span-6 {
+  grid-column: auto;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--bate-volta > .roteiro-editor__panel-surface {
+  border-radius: 14px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__bate-volta-head {
+  align-items: flex-start;
+  background: transparent;
+  border-bottom: 1px solid #e0e8f2;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__bate-volta-title {
+  color: #142b42;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.roteiro-editor--avulso #bate-volta-panel.row {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.roteiro-editor--avulso #bate-volta-panel.row > [class*="col-"] {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+  width: auto;
+}
+
+.roteiro-editor--avulso #bate-volta-panel.row > .col-12 {
+  grid-column: 1 / -1;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--trechos .roteiro-editor__empty {
+  align-items: flex-start;
+  background: #f7fbff;
+  border-radius: 12px;
+  gap: 0;
+  min-height: 0;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--trechos .roteiro-editor__empty-title {
+  display: none;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--trechos .roteiro-editor__empty-text {
+  margin: 0;
+  max-width: none;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__diarias-head .roteiro-editor__section-header {
+  display: none;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__diarias-eyebrow {
+  color: #23435f;
+  margin-bottom: 0;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 991.98px) {
+  .roteiro-editor--avulso #bate-volta-panel.row,
+  .roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .roteiro-editor--avulso .roteiro-editor__section--sede > .roteiro-editor__grid,
+  .roteiro-editor--avulso #bate-volta-panel.row,
+  .roteiro-editor--avulso .roteiro-editor__section--diarias .roteiro-editor__summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
