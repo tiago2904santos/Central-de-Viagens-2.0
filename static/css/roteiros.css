@@ -1054,7 +1054,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-block--retorno .roteiro-editor__reference-body {
-  padding: 24px 24px 0 24px;
+  padding: 0 24px 0 24px;
 }
 
 .roteiro-editor--avulso #retorno-card .row.g-3 {
@@ -1063,8 +1063,7 @@
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-left: 0;
-  margin-right: 0;
+  margin: 0;
 }
 
 .roteiro-editor--avulso #retorno-card > .row.g-3 > [class*="col-"] {
@@ -1141,6 +1140,7 @@
 }
 
 .roteiro-editor--avulso .oficio-step3-trecho-card .card-header {
+  margin: 0 2px 16px;
   color: #1f3650;
   font-size: 14px;
   font-weight: 800;
