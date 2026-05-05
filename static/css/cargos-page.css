@@ -20,7 +20,7 @@
 
 .cargos-page {
   box-sizing: border-box;
-  color: var(--color-text);
+  color: var(--theme-text-body);
   min-height: min(100vh, 100%);
   padding: var(--space-2) var(--space-7) var(--space-6);
   width: 100%;
@@ -88,7 +88,7 @@
 }
 
 .cargos-page__eyebrow {
-  color: var(--color-accent);
+  color: var(--theme-accent-eyebrow);
   display: block;
   font-size: 10px;
   font-weight: 800;
@@ -98,7 +98,7 @@
 }
 
 .cargos-page__title {
-  color: var(--color-heading);
+  color: var(--theme-text-heading);
   font-size: clamp(1.28rem, 1.9vw, 1.85rem);
   font-weight: 800;
   letter-spacing: -0.025em;
@@ -107,11 +107,15 @@
 }
 
 .cargos-page__subtitle {
-  color: var(--color-muted);
+  color: var(--theme-text-muted);
   font-size: 13px;
   line-height: 1.45;
   margin: 0;
   max-width: 56ch;
+}
+
+.cargos-page .app-page-hero__body .cargos-page__subtitle {
+  color: var(--theme-text-muted);
 }
 
 .cargos-page__hero-actions {
@@ -152,22 +156,26 @@
   align-items: center;
   background: linear-gradient(
     180deg,
-    var(--color-bg-card) 0%,
-    var(--color-bg-card-soft) 100%
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
   );
-  border: 1px solid var(--color-border-soft);
+  border: 1px solid var(--theme-border-card);
   border-radius: var(--radius-lg);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    var(--shadow-md);
+  box-shadow: var(--theme-shadow-block);
   gap: var(--space-4);
   padding: var(--space-4) var(--space-5);
 }
 
 .cargos-page__toolbar .list-search input {
+  background: var(--theme-input-bg);
   border-radius: var(--radius-sm);
-  border-color: rgba(31, 76, 125, 0.22);
+  border-color: var(--theme-input-border);
+  color: var(--theme-input-text);
   transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.cargos-page__toolbar .list-search::before {
+  color: var(--theme-text-muted);
 }
 
 .cargos-page__toolbar .list-search input:focus {
@@ -177,12 +185,18 @@
 }
 
 .cargos-page__toolbar .btn-muted {
+  background: var(--theme-btn-muted-bg);
+  border-color: var(--theme-btn-muted-border);
   border-radius: var(--radius-sm);
+  color: var(--theme-btn-muted-text);
   min-height: 44px;
 }
 
 .cargos-page__toolbar .btn-muted:hover,
 .cargos-page__toolbar .btn-muted:focus {
+  background: var(--theme-btn-muted-hover-bg);
+  border-color: var(--theme-btn-muted-hover-border);
+  color: var(--theme-btn-muted-text);
   transform: translateY(-1px);
 }
 
@@ -195,29 +209,47 @@
 .cargos-page__list-card .simple-list {
   background: linear-gradient(
     180deg,
-    var(--color-bg-card) 0%,
-    var(--color-bg-card-soft) 100%
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
   );
-  border: 1px solid var(--color-border-soft);
+  border: 1px solid var(--theme-border-card);
   border-radius: var(--radius-lg);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    var(--shadow-md);
+  box-shadow: var(--theme-shadow-block);
 }
 
 .cargos-page__list-card .simple-list__row {
+  border-bottom-color: var(--theme-list-border);
   min-height: 56px;
   padding: var(--space-4) var(--space-5);
   transition: background-color 160ms ease;
 }
 
 .cargos-page__list-card .simple-list__row:hover {
-  background: var(--color-primary-soft);
+  background: var(--theme-list-row-hover);
 }
 
 .cargos-page__list-card .simple-list__title {
+  color: var(--theme-text-heading);
   font-size: var(--font-size-md);
   font-weight: 700;
+}
+
+.cargos-page__list-card .simple-list__meta-item {
+  color: var(--theme-text-muted);
+}
+
+.cargos-page__list-card .simple-list__meta-label {
+  color: var(--theme-text-subtle);
+}
+
+.cargos-page__list-card .simple-list__meta-value {
+  color: var(--theme-text-muted-strong);
+}
+
+.cargos-page__list-card .simple-list__badge--accent {
+  background: var(--theme-badge-accent-bg);
+  border-color: var(--theme-badge-accent-border);
+  color: var(--theme-badge-accent-text);
 }
 
 .cargos-page__list-card .simple-list__actions .btn {
@@ -226,22 +258,26 @@
 }
 
 .cargos-page__list-card .simple-list__actions .btn-secondary {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(175, 192, 211, 0.95);
-  color: var(--color-primary);
+  background: var(--theme-btn-secondary-bg);
+  border-color: var(--theme-btn-secondary-border);
+  color: var(--theme-btn-secondary-text);
 }
 
 .cargos-page__list-card .simple-list__actions .btn-secondary:hover,
 .cargos-page__list-card .simple-list__actions .btn-secondary:focus {
-  background: var(--color-secondary-soft);
-  border-color: var(--color-secondary);
+  background: var(--theme-btn-secondary-hover-bg);
+  border-color: var(--theme-btn-secondary-hover-border);
 }
 
 .cargos-page__list-card .empty-state {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 255, 0.94));
-  border: 1px dashed rgba(18, 58, 99, 0.22);
+  background: var(--theme-empty-bg);
+  border: 1px dashed var(--theme-empty-border);
   border-radius: var(--radius-md);
+  color: var(--theme-text-muted);
+}
+
+.cargos-page__list-card .empty-state h3 {
+  color: var(--theme-text-heading);
 }
 
 .cargos-page__list-card .empty-state .btn-primary {
@@ -255,14 +291,12 @@
 .cargos-page__form-card {
   background: linear-gradient(
     180deg,
-    var(--color-bg-card) 0%,
-    var(--color-bg-card-soft) 100%
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
   );
-  border: 1px solid var(--color-border-soft);
+  border: 1px solid var(--theme-border-card);
   border-radius: var(--radius-lg);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    var(--shadow-lg);
+  box-shadow: var(--theme-shadow-hero);
   box-sizing: border-box;
   padding: var(--space-6) var(--space-7);
 }
@@ -272,15 +306,44 @@
 }
 
 .cargos-page__form-card .form-section {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(214, 224, 234, 0.75);
+  background: var(--theme-form-section-bg);
+  border: 1px solid var(--theme-form-section-border);
   border-radius: var(--radius-md);
   box-shadow: 0 2px 8px rgba(7, 26, 51, 0.04);
 }
 
+.cargos-page__form-card .form-section-header {
+  border-bottom-color: var(--theme-border-card);
+}
+
+.cargos-page__form-card .form-section-header h3,
+.cargos-page__form-card h2 {
+  color: var(--theme-text-heading);
+}
+
+.cargos-page__form-card .form-section-header p,
+.cargos-page__form-card .field-help {
+  color: var(--theme-text-muted);
+}
+
+.cargos-page__form-card .field label {
+  color: var(--theme-text-muted-strong);
+}
+
+.cargos-page__form-card .app-card-toggle__title {
+  color: var(--theme-text-heading);
+}
+
+.cargos-page__form-card .app-card-toggle__description {
+  color: var(--theme-text-muted);
+}
+
 .cargos-page__form-card .form-control,
 .cargos-page__form-card .form-select {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
   border-radius: var(--radius-sm);
+  color: var(--theme-input-text);
 }
 
 .cargos-page__form-card .form-control:focus,
@@ -307,17 +370,17 @@
 }
 
 .cargos-page__form-card .form-actions .btn-secondary {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(175, 192, 211, 0.95);
+  background: var(--theme-btn-secondary-bg);
+  border-color: var(--theme-btn-secondary-border);
   border-radius: var(--radius-sm);
-  color: var(--color-muted-strong);
+  color: var(--theme-btn-secondary-text);
 }
 
 .cargos-page__form-card .form-actions .btn-secondary:hover,
 .cargos-page__form-card .form-actions .btn-secondary:focus {
-  background: var(--color-secondary-soft);
-  border-color: var(--color-border-strong);
-  color: var(--color-primary);
+  background: var(--theme-btn-secondary-hover-bg);
+  border-color: var(--theme-btn-secondary-hover-border);
+  color: var(--theme-btn-secondary-text);
 }
 
 /* Exclusão: page-card interno */
@@ -331,10 +394,45 @@
 }
 
 .cargos-page .page-card .form-section {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border-soft);
+  background: var(--theme-form-section-bg);
+  border: 1px solid var(--theme-form-section-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+}
+
+.cargos-page .page-card .form-section-header h3,
+.cargos-page .page-card h2,
+.cargos-page .page-card h3 {
+  color: var(--theme-text-heading);
+}
+
+.cargos-page .page-card .form-section-header p,
+.cargos-page .page-card .field-help {
+  color: var(--theme-text-muted);
+}
+
+.cargos-page .page-card .field label {
+  color: var(--theme-text-muted-strong);
+}
+
+.cargos-page .page-card .form-control,
+.cargos-page .page-card .form-select,
+.cargos-page .page-card textarea {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-input-text);
+}
+
+.cargos-page .page-card .form-actions .btn-secondary {
+  background: var(--theme-btn-secondary-bg);
+  border-color: var(--theme-btn-secondary-border);
+  color: var(--theme-btn-secondary-text);
+}
+
+.cargos-page .page-card .form-actions .btn-secondary:hover,
+.cargos-page .page-card .form-actions .btn-secondary:focus {
+  background: var(--theme-btn-secondary-hover-bg);
+  border-color: var(--theme-btn-secondary-hover-border);
 }
 
 .cargos-page .page-card .form-actions .btn-primary,

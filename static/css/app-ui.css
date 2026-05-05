@@ -8,7 +8,7 @@
 }
 
 .app-page-hero--hybrid {
-  background: var(--color-bg-card);
+  background: var(--theme-surface-card);
   box-shadow: var(--shadow-lg);
 }
 

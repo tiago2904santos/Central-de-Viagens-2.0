@@ -20,7 +20,7 @@
 
 .dashboard-login-inspired {
   box-sizing: border-box;
-  color: var(--color-text);
+  color: var(--theme-text-body);
   min-height: min(100vh, 100%);
   padding: var(--space-2) var(--space-7) var(--space-6);
   width: 100%;
@@ -39,15 +39,12 @@
 .dashboard-login-inspired__hero {
   background: linear-gradient(
     180deg,
-    var(--color-bg-card) 0%,
-    var(--color-bg-card-soft) 100%
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
   );
-  border: 1px solid var(--color-border-soft);
+  border: 1px solid var(--theme-border-card);
   border-radius: var(--radius-lg);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 4px 12px rgba(7, 26, 51, 0.07),
-    var(--shadow-lg);
+  box-shadow: var(--theme-shadow-hero);
   box-sizing: border-box;
   padding: var(--space-5) var(--space-6) var(--space-4);
   width: 100%;
@@ -83,7 +80,7 @@
 }
 
 .dashboard-login-inspired__eyebrow {
-  color: var(--color-accent);
+  color: var(--theme-accent-eyebrow);
   display: block;
   font-size: 10px;
   font-weight: 800;
@@ -93,7 +90,7 @@
 }
 
 .dashboard-login-inspired__title {
-  color: var(--color-heading);
+  color: var(--theme-text-heading);
   font-size: clamp(1.38rem, 2vw, 1.95rem);
   font-weight: 800;
   letter-spacing: -0.025em;
@@ -102,26 +99,21 @@
 }
 
 .dashboard-login-inspired__subtitle {
-  color: var(--color-muted);
+  color: var(--theme-text-muted);
   font-size: 13px;
   line-height: 1.45;
   margin: 0;
 }
 
 .dashboard-login-inspired__subtitle--secondary {
-  color: var(--color-subtle);
+  color: var(--theme-text-subtle);
   font-size: 12.5px;
   line-height: 1.5;
   margin-top: var(--space-1);
 }
 
 .dashboard-login-inspired__accent-line {
-  background: linear-gradient(
-    90deg,
-    rgba(216, 162, 27, 0.92) 0%,
-    rgba(200, 150, 40, 0.55) 42%,
-    rgba(11, 58, 102, 0.88) 100%
-  );
+  background: var(--theme-accent-line);
   border-radius: var(--radius-pill);
   box-shadow: 0 1px 2px rgba(7, 26, 51, 0.06);
   height: 3px;
@@ -141,14 +133,12 @@
 .dashboard-login-inspired__welcome {
   background: linear-gradient(
     165deg,
-    var(--color-bg-card) 0%,
-    var(--color-bg-card-soft) 100%
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
   );
-  border: 1px solid var(--color-border-soft);
+  border: 1px solid var(--theme-border-card);
   border-radius: var(--radius-lg);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    var(--shadow-md);
+  box-shadow: var(--theme-shadow-block);
   box-sizing: border-box;
   padding: var(--space-4) var(--space-5) var(--space-5);
 }
@@ -158,7 +148,7 @@
 }
 
 .dashboard-login-inspired__welcome-title {
-  color: var(--color-heading);
+  color: var(--theme-text-heading);
   font-size: clamp(1.05rem, 1.35vw, 1.28rem);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -167,7 +157,7 @@
 }
 
 .dashboard-login-inspired__welcome-text {
-  color: var(--color-muted);
+  color: var(--theme-text-muted);
   font-size: 13px;
   line-height: 1.55;
   margin: 0;
@@ -183,14 +173,12 @@
 .dashboard-login-inspired__stat-card {
   background: linear-gradient(
     180deg,
-    var(--color-bg-card) 0%,
-    var(--color-bg-card-soft) 100%
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
   );
-  border: 1px solid var(--color-border-soft);
+  border: 1px solid var(--theme-border-card);
   border-radius: var(--radius-md);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    var(--shadow-sm);
+  box-shadow: var(--theme-shadow-stat);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -201,7 +189,7 @@
 }
 
 .dashboard-login-inspired__stat-label {
-  color: var(--color-muted-strong);
+  color: var(--theme-text-muted-strong);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -210,7 +198,7 @@
 }
 
 .dashboard-login-inspired__stat-value {
-  color: var(--color-primary);
+  color: var(--theme-stat-value);
   font-size: 2.05rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -220,7 +208,7 @@
 }
 
 .dashboard-login-inspired__stat-note {
-  color: var(--color-subtle);
+  color: var(--theme-text-subtle);
   font-size: 11px;
   font-weight: 500;
   line-height: 1.4;
@@ -239,14 +227,12 @@
 .dashboard-login-inspired__quick-card {
   background: linear-gradient(
     180deg,
-    var(--color-bg-card) 0%,
-    var(--color-bg-card-soft) 100%
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
   );
-  border: 1px solid var(--color-border-soft);
+  border: 1px solid var(--theme-border-card);
   border-radius: var(--radius-lg);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    var(--shadow-md);
+  box-shadow: var(--theme-shadow-block);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -271,11 +257,11 @@
 
 .dashboard-login-inspired__quick-icon {
   align-items: center;
-  background: linear-gradient(165deg, rgba(255, 246, 220, 0.98), rgba(255, 250, 235, 0.96));
-  border: 1px solid rgba(216, 162, 27, 0.28);
+  background: var(--theme-quick-icon-bg);
+  border: 1px solid var(--theme-quick-icon-border);
   border-radius: var(--radius-pill);
   box-shadow: 0 1px 2px rgba(216, 162, 27, 0.12) inset;
-  color: var(--color-primary);
+  color: var(--theme-quick-icon-fg);
   display: inline-flex;
   font-size: 11px;
   font-weight: 800;
@@ -286,7 +272,7 @@
 }
 
 .dashboard-login-inspired__quick-title {
-  color: var(--color-heading);
+  color: var(--theme-text-heading);
   font-size: 0.97rem;
   font-weight: 700;
   letter-spacing: -0.015em;
@@ -295,7 +281,7 @@
 }
 
 .dashboard-login-inspired__quick-desc {
-  color: var(--color-muted-strong);
+  color: var(--theme-text-muted-strong);
   flex: 1;
   font-size: 12.75px;
   line-height: 1.48;

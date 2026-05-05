@@ -6,10 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script>
     (function () {
+      var VALID = ["dark-light", "dark-dark", "light-light", "light-dark"];
       function norm(v) {
-        if (v === "variant-a" || v === "variant-b") return v;
-        if (v === "dark") return "variant-a";
-        if (v === "light") return "variant-b";
+        if (VALID.indexOf(v) >= 0) return v;
+        if (v === "variant-a") return "dark-light";
+        if (v === "variant-b") return "light-light";
+        if (v === "dark") return "dark-light";
+        if (v === "light") return "light-light";
         return null;
       }
       try {
@@ -17,11 +20,11 @@
         var s = localStorage.getItem(k);
         var t = norm(s);
         if (!t) {
-          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "variant-a" : "variant-b";
+          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark-light" : "light-light";
         }
         document.documentElement.setAttribute("data-theme", t);
       } catch (e) {
-        document.documentElement.setAttribute("data-theme", "variant-b");
+        document.documentElement.setAttribute("data-theme", "light-light");
       }
     })();
   </script>

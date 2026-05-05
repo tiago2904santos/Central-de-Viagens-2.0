@@ -2,16 +2,23 @@
   "use strict";
 
   var STORAGE_KEY = "cv-theme";
+  var VALID_THEMES = ["dark-light", "dark-dark", "light-light", "light-dark"];
 
   function normalizeTheme(raw) {
-    if (raw === "variant-a" || raw === "variant-b") {
+    if (VALID_THEMES.indexOf(raw) >= 0) {
       return raw;
     }
+    if (raw === "variant-a") {
+      return "dark-light";
+    }
+    if (raw === "variant-b") {
+      return "light-light";
+    }
     if (raw === "dark") {
-      return "variant-a";
+      return "dark-light";
     }
     if (raw === "light") {
-      return "variant-b";
+      return "light-light";
     }
     return null;
   }
@@ -24,12 +31,12 @@
         return n;
       }
     } catch (e) {}
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "variant-a" : "variant-b";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark-light" : "light-light";
   }
 
   function applyTheme(theme) {
-    if (theme !== "variant-a" && theme !== "variant-b") {
-      theme = "variant-b";
+    if (VALID_THEMES.indexOf(theme) < 0) {
+      theme = "light-light";
     }
     document.documentElement.setAttribute("data-theme", theme);
     try {
@@ -51,7 +58,7 @@
         localStorage.setItem(STORAGE_KEY, initial);
       } else {
         var raw = localStorage.getItem(STORAGE_KEY);
-        if (raw === "light" || raw === "dark") {
+        if (normalizeTheme(raw) !== raw) {
           localStorage.setItem(STORAGE_KEY, initial);
         }
       }
@@ -60,7 +67,7 @@
     document.querySelectorAll("[data-theme-mode]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var mode = btn.getAttribute("data-theme-mode");
-        if (mode === "variant-a" || mode === "variant-b") {
+        if (VALID_THEMES.indexOf(mode) >= 0) {
           applyTheme(mode);
         }
       });
