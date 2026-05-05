@@ -1,0 +1,377 @@
+/* Páginas de Cargos: identidade alinhada ao dashboard experimental (login). */
+
+.app-main:has(.cargos-page) {
+  background-color: #062847;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 8% 0%, rgba(216, 162, 27, 0.18), transparent 55%),
+    radial-gradient(ellipse 95% 65% at 100% 16%, rgba(21, 91, 154, 0.35), transparent 52%),
+    linear-gradient(165deg, #041e36 0%, #062847 48%, #031523 100%);
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 0;
+}
+
+.content-wrap:has(.cargos-page) {
+  max-width: none;
+}
+
+.cargos-page {
+  box-sizing: border-box;
+  color: var(--color-text);
+  min-height: min(100vh, 100%);
+  padding: var(--space-6) var(--space-7);
+  width: 100%;
+}
+
+.cargos-page__shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin: 0 auto;
+  max-width: 1180px;
+  width: 100%;
+}
+
+/* Hero */
+.cargos-page__hero {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(252, 253, 255, 1) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 4px 12px rgba(7, 26, 51, 0.07),
+    0 16px 40px rgba(7, 26, 51, 0.12);
+  box-sizing: border-box;
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  width: 100%;
+}
+
+.cargos-page__hero--compact {
+  padding: var(--space-4) var(--space-5) var(--space-3);
+}
+
+.cargos-page__hero-top {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.cargos-page__brand {
+  align-items: center;
+  display: flex;
+  flex: 1 1 220px;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.cargos-page__brand-mark {
+  align-items: center;
+  background: linear-gradient(145deg, rgba(216, 162, 27, 0.9), rgba(185, 135, 18, 0.96));
+  border: 1px solid rgba(255, 243, 207, 0.5);
+  border-radius: var(--radius-pill);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 8px 18px rgba(216, 162, 27, 0.22);
+  color: #ffffff;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  height: 40px;
+  justify-content: center;
+  letter-spacing: 0.06em;
+  width: 40px;
+}
+
+.cargos-page__brand-copy {
+  min-width: 0;
+}
+
+.cargos-page__eyebrow {
+  color: var(--color-accent);
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-bottom: var(--space-1);
+  text-transform: uppercase;
+}
+
+.cargos-page__title {
+  color: var(--color-heading);
+  font-size: clamp(1.28rem, 1.9vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin: 0 0 var(--space-2);
+}
+
+.cargos-page__subtitle {
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 56ch;
+}
+
+.cargos-page__accent-line {
+  background: linear-gradient(
+    90deg,
+    rgba(216, 162, 27, 0.92) 0%,
+    rgba(200, 150, 40, 0.55) 42%,
+    rgba(11, 58, 102, 0.88) 100%
+  );
+  border-radius: var(--radius-pill);
+  box-shadow: 0 1px 2px rgba(7, 26, 51, 0.06);
+  height: 3px;
+  margin-top: var(--space-5);
+  opacity: 0.95;
+}
+
+.cargos-page__hero-actions {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-2);
+}
+
+/* Botão institucional no hero (alinha ao dashboard) */
+.cargos-page__hero-actions .btn-primary {
+  background: linear-gradient(180deg, #0e5088 0%, #0b3a66 100%);
+  border-color: rgba(6, 40, 71, 0.5);
+  border-radius: var(--radius-sm);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 8px 18px rgba(11, 58, 102, 0.28);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  transition:
+    filter 180ms ease,
+    box-shadow 180ms ease,
+    transform 140ms ease;
+}
+
+.cargos-page__hero-actions .btn-primary:hover,
+.cargos-page__hero-actions .btn-primary:focus {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.15) inset,
+    0 10px 24px rgba(11, 58, 102, 0.34);
+  filter: brightness(1.06);
+}
+
+/* Toolbar / busca */
+.cargos-page__toolbar .list-toolbar {
+  align-items: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(249, 251, 254, 1) 100%);
+  border: 1px solid rgba(227, 235, 245, 0.98);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 8px 22px rgba(7, 26, 51, 0.1);
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+}
+
+.cargos-page__toolbar .list-search input {
+  border-radius: var(--radius-sm);
+  border-color: rgba(31, 76, 125, 0.22);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.cargos-page__toolbar .list-search input:focus {
+  border-color: rgba(11, 58, 102, 0.55);
+  box-shadow: 0 0 0 3px rgba(21, 91, 154, 0.18);
+  outline: none;
+}
+
+.cargos-page__toolbar .btn-muted {
+  border-radius: var(--radius-sm);
+  min-height: 44px;
+}
+
+.cargos-page__toolbar .btn-muted:hover,
+.cargos-page__toolbar .btn-muted:focus {
+  transform: translateY(-1px);
+}
+
+/* Lista */
+.cargos-page__list-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.cargos-page__list-card .simple-list {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(250, 252, 255, 1) 100%);
+  border: 1px solid rgba(227, 235, 245, 0.95);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 10px 28px rgba(7, 26, 51, 0.11),
+    0 2px 6px rgba(7, 26, 51, 0.05);
+}
+
+.cargos-page__list-card .simple-list__row {
+  min-height: 56px;
+  padding: var(--space-4) var(--space-5);
+  transition: background-color 160ms ease;
+}
+
+.cargos-page__list-card .simple-list__row:hover {
+  background: rgba(229, 239, 248, 0.65);
+}
+
+.cargos-page__list-card .simple-list__title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+
+.cargos-page__list-card .simple-list__actions .btn {
+  border-radius: var(--radius-sm);
+  min-height: 34px;
+}
+
+.cargos-page__list-card .simple-list__actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(175, 192, 211, 0.95);
+  color: var(--color-primary);
+}
+
+.cargos-page__list-card .simple-list__actions .btn-secondary:hover,
+.cargos-page__list-card .simple-list__actions .btn-secondary:focus {
+  background: #f5f9ff;
+  border-color: var(--color-secondary);
+}
+
+.cargos-page__list-card .empty-state {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 255, 0.94));
+  border: 1px dashed rgba(18, 58, 99, 0.22);
+  border-radius: var(--radius-md);
+}
+
+.cargos-page__list-card .empty-state .btn-primary {
+  background: linear-gradient(180deg, #0e5088 0%, #0b3a66 100%);
+  border-color: rgba(6, 40, 71, 0.5);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 18px rgba(11, 58, 102, 0.26);
+}
+
+/* Formulário */
+.cargos-page__form-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(249, 251, 254, 1) 100%);
+  border: 1px solid rgba(227, 235, 245, 0.98);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 12px 32px rgba(7, 26, 51, 0.1);
+  box-sizing: border-box;
+  padding: var(--space-6) var(--space-7);
+}
+
+.cargos-page__form-card .form-shell {
+  gap: var(--space-5);
+}
+
+.cargos-page__form-card .form-section {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(214, 224, 234, 0.75);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(7, 26, 51, 0.04);
+}
+
+.cargos-page__form-card .form-control,
+.cargos-page__form-card .form-select {
+  border-radius: var(--radius-sm);
+}
+
+.cargos-page__form-card .form-control:focus,
+.cargos-page__form-card .form-select:focus {
+  border-color: rgba(11, 58, 102, 0.55);
+  box-shadow: 0 0 0 3px rgba(21, 91, 154, 0.15);
+  outline: none;
+}
+
+.cargos-page__form-card .form-actions .btn-primary {
+  background: linear-gradient(180deg, #0e5088 0%, #0b3a66 100%);
+  border-color: rgba(6, 40, 71, 0.5);
+  border-radius: var(--radius-sm);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 8px 18px rgba(11, 58, 102, 0.28);
+  min-height: 44px;
+  padding: 0 var(--space-6);
+}
+
+.cargos-page__form-card .form-actions .btn-primary:hover,
+.cargos-page__form-card .form-actions .btn-primary:focus {
+  filter: brightness(1.06);
+}
+
+.cargos-page__form-card .form-actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(175, 192, 211, 0.95);
+  border-radius: var(--radius-sm);
+  color: var(--color-muted-strong);
+}
+
+.cargos-page__form-card .form-actions .btn-secondary:hover,
+.cargos-page__form-card .form-actions .btn-secondary:focus {
+  background: #f8fbff;
+  border-color: var(--color-border-strong);
+  color: var(--color-primary);
+}
+
+/* Exclusão: page-card interno */
+.cargos-page .page-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  padding: 0;
+}
+
+.cargos-page .page-card .form-section {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(214, 224, 234, 0.85);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 10px rgba(7, 26, 51, 0.06);
+}
+
+.cargos-page .page-card .form-actions .btn-primary,
+.cargos-page .page-card .form-actions .btn-danger {
+  border-radius: var(--radius-sm);
+  min-height: 44px;
+}
+
+@media (max-width: 720px) {
+  .cargos-page {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .cargos-page__hero-top {
+    flex-direction: column;
+  }
+
+  .cargos-page__hero-actions {
+    width: 100%;
+  }
+
+  .cargos-page__hero-actions .btn-primary {
+    flex: 1;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .cargos-page__form-card {
+    padding: var(--space-5);
+  }
+}
