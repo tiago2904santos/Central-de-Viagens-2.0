@@ -3,6 +3,8 @@ import os
 from .base import *
 
 
+DEBUG = True
+
 required_db_vars = ["DB_NAME", "DB_USER", "DB_PASSWORD"]
 missing_db_vars = [name for name in required_db_vars if not os.getenv(name)]
 

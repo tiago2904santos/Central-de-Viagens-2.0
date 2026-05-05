@@ -401,6 +401,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-grid {
+  align-items: stretch;
   gap: 12px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-bottom: 14px !important;
@@ -410,10 +411,11 @@
   align-items: flex-start;
   background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
   border: 1px solid #d2deea;
-  border-radius: 14px;
+  border-radius: 8px;
   box-shadow: 0 8px 18px rgba(28, 49, 72, 0.05);
   gap: 12px;
-  min-height: 88px;
+  height: 100%;
+  min-height: 86px;
   padding: 14px 16px;
   transition:
     border-color 150ms ease,
@@ -429,9 +431,9 @@
 
 .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card:has(input:checked) {
   background: linear-gradient(180deg, #ffffff 0%, #f4f9ff 100%);
-  border-color: #9fc2dc;
+  border-color: #2f80c9;
   box-shadow:
-    0 0 0 2px rgba(29, 95, 151, 0.14),
+    0 0 0 2px rgba(47, 128, 201, 0.16),
     0 10px 22px rgba(28, 49, 72, 0.08);
 }
 
@@ -474,18 +476,18 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__routes-panel--source {
-  background: linear-gradient(180deg, #f8fbff 0%, #f4f9ff 100%);
-  border: 1px solid #d6e2ee;
-  border-radius: 14px;
+  background: #f4f8fc;
+  border: 1px solid #d4e0ec;
+  border-radius: 8px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.7) inset,
     0 8px 18px rgba(28, 49, 72, 0.05);
   margin-top: 6px;
-  padding: 14px 15px 15px;
+  padding: 16px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__routes-panel-title {
-  color: #6f5421;
+  color: #47627c;
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.13em;
@@ -539,21 +541,22 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__route-list {
-  background: #ffffff;
-  border: 1px solid #d7e3ef;
-  border-radius: 12px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   margin-top: 10px;
-  max-height: 240px;
-  padding: 9px;
+  max-height: 280px;
+  padding: 0 2px 0 0;
 }
 
 .oficio-step3-route-item {
   background: var(--theme-surface-card);
   border: 1px solid var(--theme-border-card);
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   color: var(--theme-text-body);
   cursor: pointer;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 2px;
   padding: var(--space-2) var(--space-3);
   text-align: left;
@@ -563,12 +566,13 @@
 }
 
 .roteiro-editor--avulso .oficio-step3-route-item {
-  background: #fbfdff;
-  border: 1px solid #d5e2ee;
-  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #d7e2ee;
+  border-radius: 8px;
   gap: 5px;
   min-height: 70px;
-  padding: 10px 12px;
+  padding: 12px 13px;
+  width: 100%;
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease,
@@ -592,10 +596,10 @@
 }
 
 .roteiro-editor--avulso .oficio-step3-route-item.is-active {
-  background: linear-gradient(180deg, #ffffff 0%, #f3f9ff 100%);
-  border-color: #97bedb;
+  background: #f0f7ff;
+  border-color: #2f80c9;
   box-shadow:
-    0 0 0 2px rgba(29, 95, 151, 0.14),
+    0 0 0 2px rgba(47, 128, 201, 0.16),
     0 10px 16px rgba(23, 50, 77, 0.1);
 }
 
@@ -634,10 +638,6 @@
 #roteiro-selector-resumo {
   color: var(--theme-text-muted);
   font-size: 12px;
-}
-
-.roteiro-editor--avulso #roteiro-selector-wrapper.d-none {
-  display: block !important;
 }
 
 /* Superfícies internas (substitui bg-white) */

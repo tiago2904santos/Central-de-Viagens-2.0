@@ -62,12 +62,7 @@
                     <input type="search" id="id_roteiro_busca" class="form-control roteiro-editor__input" placeholder="Buscar por destino, tipo ou trecho..." {% if not has_event_routes %}disabled{% endif %} autocomplete="off">
                   </div>
                 </div>
-                <select name="roteiro_evento_id" id="id_roteiro_evento_id" class="d-none" {% if not has_event_routes %}disabled{% endif %} aria-hidden="true" tabindex="-1">
-                  <option value="">Selecione</option>
-                  {% for roteiro in roteiros_evento %}
-                  <option value="{{ roteiro.id }}" {% if roteiro_evento_id == roteiro.id %}selected{% endif %}>{{ roteiro.label }}</option>
-                  {% endfor %}
-                </select>
+                <input type="hidden" name="roteiro_id" id="id_roteiro_id" value="{{ roteiro_id|default:'' }}" data-route-selected-input {% if not has_event_routes %}disabled{% endif %}>
                 <p class="roteiro-editor__helper">{% if has_event_routes %}Filtre e selecione um roteiro para carregar os trechos no editor. As edições não alteram o original salvo.{% else %}Nenhum roteiro salvo válido está disponível.{% endif %}</p>
                 <div id="roteiro-lista" class="roteiro-editor__route-list oficio-step3-route-list"></div>
                 <div class="roteiro-editor__helper" id="roteiro-selector-resumo"></div>
@@ -864,10 +859,22 @@
     form.dataset.resumoKm = cards.length ? totKm.toFixed(2).replace('.',',')+' km' : '-';
     form.dataset.resumoTempo = cards.length ? hhmm(totMin) : '-';
   }
+  function getSelectedRouteInput() {
+    return form.querySelector('[data-route-selected-input]');
+  }
+  function getSelectedRouteId() {
+    var input = getSelectedRouteInput();
+    return input ? String(input.value || '') : '';
+  }
+  function setSelectedRouteId(value) {
+    var input = getSelectedRouteInput();
+    if (!input) return;
+    input.value = value ? String(value) : '';
+  }
   function captureCurrentState() {
     return {
       roteiro_modo: $('id_roteiro_modo_evento').checked ? 'EVENTO_EXISTENTE' : 'ROTEIRO_PROPRIO',
-      roteiro_evento_id: $('id_roteiro_modo_evento').checked ? ($('id_roteiro_evento_id').value||null) : null,
+      roteiro_id: $('id_roteiro_modo_evento').checked ? (getSelectedRouteId() || null) : null,
       sede_estado_id: $('id_origem_estado').value||null, sede_cidade_id: $('id_origem_cidade').value||null,
       destinos_atuais: getDestinos().map(function(d) { return { estado_id: d.estado_id, cidade_id: d.cidade_id }; }),
       bate_volta_diario: {
@@ -1009,8 +1016,9 @@
   }
   function applyState(state) {
     var cur = Object.assign({}, state || {}); applyingState = true;
-    if (cur.roteiro_modo === 'EVENTO_EXISTENTE' && cur.roteiro_evento_id) { $('id_roteiro_modo_evento').checked=true; $('id_roteiro_modo_proprio').checked=false; $('id_roteiro_evento_id').value=String(cur.roteiro_evento_id); }
-    else { $('id_roteiro_modo_evento').checked=false; $('id_roteiro_modo_proprio').checked=true; $('id_roteiro_evento_id').value=''; }
+    var curRouteId = cur.roteiro_id || '';
+    if (cur.roteiro_modo === 'EVENTO_EXISTENTE' && curRouteId) { $('id_roteiro_modo_evento').checked=true; $('id_roteiro_modo_proprio').checked=false; setSelectedRouteId(curRouteId); }
+    else { $('id_roteiro_modo_evento').checked=false; $('id_roteiro_modo_proprio').checked=true; setSelectedRouteId(''); }
     setModeUi();
     $('id_origem_estado').value = cur.sede_estado_id || '';
     return loadCities($('id_origem_cidade'), cur.sede_estado_id, cur.sede_cidade_id)
@@ -1053,11 +1061,28 @@
     if (!names.length) return 'Sem destinos';
     return names.slice(0,3).join(' • ')+(names.length>3?' +'+(names.length-3):'');
   }
+  function normalizeRouteSearch(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+  function routeSearchText(route) {
+    return [
+      route && route.label,
+      route && route.resumo,
+      route && route.tipo_label,
+      routeDestinationsSummary(route),
+      routePeriodSummary(route)
+    ].join(' ');
+  }
   function renderRouteList(filterText) {
     var target = $('roteiro-lista'); if (!target) return;
-    var selId = String($('id_roteiro_evento_id').value||''); var term = String(filterText||'').trim().toLowerCase();
-    var filtered = routes.filter(function(r) { if (!term) return true; return [r.label,r.resumo,r.tipo_label,routePeriodSummary(r),routeDestinationsSummary(r)].join(' ').toLowerCase().indexOf(term)!==-1; });
-    if (!filtered.length) { target.innerHTML = '<div class="oficio-step3-route-empty">Nenhum roteiro encontrado.</div>'; return; }
+    var selId = getSelectedRouteId(); var term = normalizeRouteSearch(filterText);
+    var filtered = routes.filter(function(r) { if (!term) return true; return normalizeRouteSearch(routeSearchText(r)).indexOf(term)!==-1; });
+    if (!filtered.length) { target.innerHTML = '<div class="oficio-step3-route-empty">Nenhum roteiro encontrado para a busca.</div>'; return; }
     target.innerHTML = filtered.map(function(r) {
       var rid=String(r.id); var ac=rid===selId?' is-active':'';
       return '<button type="button" class="oficio-step3-route-item'+ac+'" data-route-id="'+esc(rid)+'">' +
@@ -1067,15 +1092,24 @@
     }).join('');
   }
   function routeResumo() {
-    var r = routeMap[String($('id_roteiro_evento_id').value||'')];
+    var r = routeMap[String(getSelectedRouteId() || '')];
     $('roteiro-selector-resumo').textContent = r ? ((r.tipo_label ? r.tipo_label+' — ' : '')+r.resumo) : '';
     renderRouteList($('id_roteiro_busca') ? $('id_roteiro_busca').value : '');
   }
   function setModeUi() {
     var em = $('id_roteiro_modo_evento').checked;
-    $('roteiro-selector-wrapper').classList.toggle('d-none', !em);
-    $('id_roteiro_evento_id').disabled = !em || !routes.length;
-    if ($('id_roteiro_busca')) $('id_roteiro_busca').disabled = !em || !routes.length;
+    var panel = $('roteiro-selector-wrapper');
+    var routeInput = getSelectedRouteInput();
+    if (panel) {
+      panel.classList.toggle('d-none', !em);
+      panel.hidden = !em;
+    }
+    if (routeInput) routeInput.disabled = !em || !routes.length;
+    if ($('id_roteiro_busca')) {
+      $('id_roteiro_busca').disabled = !em || !routes.length;
+      if (!em) $('id_roteiro_busca').value = '';
+    }
+    if (!em) setSelectedRouteId('');
     routeResumo();
   }
   $('destinos-container').addEventListener('change', function(e) {
@@ -1189,24 +1223,29 @@
       syncBateVoltaDurationInputs();
     });
   });
-  $('roteiro-lista').addEventListener('click', function(e) {
-    var btn = e.target.closest('[data-route-id]'); if (!btn) return;
-    var rid = btn.getAttribute('data-route-id')||''; if (!rid) return;
-    $('id_roteiro_evento_id').value = rid; $('id_roteiro_evento_id').dispatchEvent(new Event('change',{bubbles:true}));
-  });
-  $('id_roteiro_modo_evento').addEventListener('change', function() {
-    setModeUi();
-    if ($('id_roteiro_modo_evento').checked && $('id_roteiro_evento_id').value) { var r = routeMap[String($('id_roteiro_evento_id').value)]; if (r && r.state) applyState(r.state); }
-    else { scheduleRealtimeDiarias(); }
-    scheduleAutosave();
-  });
-  $('id_roteiro_modo_proprio').addEventListener('change', function() { setModeUi(); scheduleRealtimeDiarias(); scheduleAutosave(); });
-  $('id_roteiro_evento_id').addEventListener('change', function() {
-    routeResumo(); var r = routeMap[String($('id_roteiro_evento_id').value||'')];
-    if (r && r.state && $('id_roteiro_modo_evento').checked) applyState(r.state);
-    else scheduleRealtimeDiarias();
-    scheduleAutosave();
-  });
+  if ($('roteiro-lista')) {
+    $('roteiro-lista').addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-route-id]'); if (!btn) return;
+      var rid = btn.getAttribute('data-route-id')||''; if (!rid) return;
+      setSelectedRouteId(rid);
+      routeResumo();
+      var r = routeMap[String(rid)];
+      if (r && r.state && $('id_roteiro_modo_evento').checked) applyState(r.state);
+      else scheduleRealtimeDiarias();
+      scheduleAutosave();
+    });
+  }
+  if ($('id_roteiro_modo_evento')) {
+    $('id_roteiro_modo_evento').addEventListener('change', function() {
+      setModeUi();
+      if ($('id_roteiro_modo_evento').checked && getSelectedRouteId()) { var r = routeMap[String(getSelectedRouteId())]; if (r && r.state) applyState(r.state); }
+      else { scheduleRealtimeDiarias(); }
+      scheduleAutosave();
+    });
+  }
+  if ($('id_roteiro_modo_proprio')) {
+    $('id_roteiro_modo_proprio').addEventListener('change', function() { setModeUi(); scheduleRealtimeDiarias(); scheduleAutosave(); });
+  }
   setModeUi();
   toggleBateVoltaPanel();
   syncBateVoltaDurationInputs();

@@ -546,6 +546,7 @@ def _serialize_step3_state(state):
     retorno = state.get('retorno') or {}
     return {
         'roteiro_modo': state.get('roteiro_modo') or ROTEIRO_MODO_PROPRIO,
+        'roteiro_id': state.get('roteiro_evento_id'),
         'roteiro_evento_id': state.get('roteiro_evento_id'),
         'roteiro_evento_label': state.get('roteiro_evento_label') or '',
         'sede_estado_id': state.get('sede_estado_id'),
@@ -921,7 +922,7 @@ def _build_step3_state_from_post(request, oficio=None, route_state_map=None):
     roteiro_modo = (request.POST.get('roteiro_modo') or '').strip()
     if roteiro_modo not in {ROTEIRO_MODO_EVENTO, ROTEIRO_MODO_PROPRIO}:
         roteiro_modo = ROTEIRO_MODO_EVENTO if route_state_map else ROTEIRO_MODO_PROPRIO
-    roteiro_evento_id = _parse_int(request.POST.get('roteiro_evento_id'))
+    roteiro_evento_id = _parse_int(request.POST.get('roteiro_id') or request.POST.get('roteiro_evento_id'))
     sede_estado_id = _parse_int(request.POST.get('sede_estado'))
     sede_cidade_id = _parse_int(request.POST.get('sede_cidade'))
     sede_cidade = Cidade.objects.select_related('estado').filter(pk=sede_cidade_id).first() if sede_cidade_id else None
@@ -1384,7 +1385,7 @@ def _build_roteiro_diarias_from_request(request, *, roteiro=None, evento=None):
     post_data = request.POST.copy()
     if 'roteiro_modo' not in post_data:
         post_data['roteiro_modo'] = ROTEIRO_MODO_PROPRIO
-    roteiro_evento_id = _parse_int(request.POST.get('roteiro_evento_id'))
+    roteiro_evento_id = _parse_int(request.POST.get('roteiro_id') or request.POST.get('roteiro_evento_id'))
     if not roteiro_evento_id and roteiro is not None:
         roteiro_evento_id = roteiro.pk
     evento_id = None
@@ -1560,6 +1561,14 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         if ts:
             rows_src = list(ts)
     initial_trechos_data, trechos_json = _trechos_list_json_compat(rows_src)
+    serialized_step3_state = _serialize_step3_state(step3_state)
+    route_options_json = route_options or []
+    if is_avulso:
+        serialized_step3_state.pop('roteiro_evento_id', None)
+        route_options_json = deepcopy(route_options_json)
+        for route_option in route_options_json:
+            state = route_option.get('state') or {}
+            state.pop('roteiro_evento_id', None)
     return {
         'evento': evento,
         'object': obj,
@@ -1570,14 +1579,15 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         'trechos': trechos_list,
         'trechos_json': trechos_json,
         'initial_trechos_data': initial_trechos_data,
-        'step3_state_json': _serialize_step3_state(step3_state),
+        'step3_state_json': serialized_step3_state,
         'step3_diarias_resultado': diarias_resultado,
         'step3_seed_source_label': step3_state.get('seed_source_label', ''),
         'api_calcular_diarias_url': reverse('roteiros:calcular_diarias'),
         'roteiro_modo': step3_state.get('roteiro_modo', 'ROTEIRO_PROPRIO'),
+        'roteiro_id': step3_state.get('roteiro_evento_id'),
         'roteiro_evento_id': step3_state.get('roteiro_evento_id'),
         'roteiros_evento': route_options or [],
-        'roteiros_evento_json': route_options or [],
+        'roteiros_evento_json': route_options_json,
         'has_event_routes': bool(route_options),
         'is_avulso': is_avulso,
         'retorno_state': step3_state.get('retorno', {}),
