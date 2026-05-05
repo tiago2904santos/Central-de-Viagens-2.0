@@ -58,21 +58,13 @@
   }
 
   function initConfiguracoesForm(form) {
-    ["#id_divisao", "#id_unidade", "#id_sigla_orgao", "#id_uf"].forEach((selector) => {
+    ["#id_divisao", "#id_unidade", "#id_cidade_endereco"].forEach((selector) => {
       const input = form.querySelector(selector);
       if (!input) return;
       input.addEventListener("input", () => {
         input.value = input.value.toUpperCase();
       });
     });
-
-    const cepInput = form.querySelector("#id_cep");
-    if (cepInput) {
-      cepInput.addEventListener("input", () => {
-        if (onlyDigits(cepInput.value).length === 8) consultarCep(form);
-      });
-      cepInput.addEventListener("blur", () => consultarCep(form));
-    }
   }
 
   function init() {
