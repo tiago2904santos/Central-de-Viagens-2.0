@@ -10,310 +10,312 @@
 
     <div class="card roteiro-editor__main oficio-stage-panel">
       <div class="card-body">
-        <form method="post" id="oficio-step3-form" novalidate class="oficio-stage-form">
-          {% csrf_token %}
-          <input type="hidden" name="autosave_obj_id" id="id_autosave_obj_id" value="{{ object.pk|default:'' }}">
-          <input type="hidden" name="tipo_destino" id="id_tipo_destino" value="{{ step3_diarias_resultado.tipo_destino|default:'' }}">
-          <input type="hidden" name="quantidade_diarias" id="id_quantidade_diarias" value="{{ step3_diarias_resultado.totais.total_diarias|default:'' }}">
-          <input type="hidden" name="valor_diarias" id="id_valor_diarias" value="{{ step3_diarias_resultado.totais.total_valor|default:'' }}">
-          <input type="hidden" name="valor_diarias_extenso" id="id_valor_diarias_extenso" value="{{ step3_diarias_resultado.totais.valor_extenso|default:'' }}">
+        <section class="card-section">
+          <form method="post" id="oficio-step3-form" novalidate class="oficio-stage-form">
+            {% csrf_token %}
+            <input type="hidden" name="autosave_obj_id" id="id_autosave_obj_id" value="{{ object.pk|default:'' }}">
+            <input type="hidden" name="tipo_destino" id="id_tipo_destino" value="{{ step3_diarias_resultado.tipo_destino|default:'' }}">
+            <input type="hidden" name="quantidade_diarias" id="id_quantidade_diarias" value="{{ step3_diarias_resultado.totais.total_diarias|default:'' }}">
+            <input type="hidden" name="valor_diarias" id="id_valor_diarias" value="{{ step3_diarias_resultado.totais.total_valor|default:'' }}">
+            <input type="hidden" name="valor_diarias_extenso" id="id_valor_diarias_extenso" value="{{ step3_diarias_resultado.totais.valor_extenso|default:'' }}">
 
-          {% if form.non_field_errors %}
-          <div class="alert alert-danger py-2" role="alert">
-            {% for err in form.non_field_errors %}
-              {% if err %}<div>{{ err }}</div>{% endif %}
-            {% endfor %}
-          </div>
-          {% endif %}
-          {% if step3_seed_source_label %}<div class="alert alert-info py-2" role="status">{{ step3_seed_source_label }}</div>{% endif %}
-
-          {# SEÇÃO 1: FONTE DO ROTEIRO #}
-          <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--source" aria-labelledby="sec-fonte-roteiro">
-            <div class="roteiro-editor__reference-top" aria-hidden="true">
-              <span class="roteiro-editor__reference-eyebrow">ROTEIROS</span>
-              <span class="roteiro-editor__reference-title">Novo roteiro</span>
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2" role="alert">
+              {% for err in form.non_field_errors %}
+                {% if err %}<div>{{ err }}</div>{% endif %}
+              {% endfor %}
             </div>
-            <div class="roteiro-editor__reference-body">
-            <header class="roteiro-editor__section-header" id="sec-fonte-roteiro">
-              <h3 class="roteiro-editor__section-title">1. Fonte do roteiro</h3>
-              <p class="roteiro-editor__section-desc">Escolha um roteiro salvo ou monte um roteiro novo.</p>
-            </header>
-            <div class="roteiro-editor__choice-grid mb-1">
-              <label class="roteiro-editor__choice-card">
-                <input class="form-check-input roteiro-editor__choice-input" type="radio" name="roteiro_modo" id="id_roteiro_modo_evento" value="EVENTO_EXISTENTE" {% if roteiro_modo == 'EVENTO_EXISTENTE' %}checked{% endif %} {% if not has_event_routes %}disabled{% endif %}>
-                <span class="roteiro-editor__choice-body">
-                  <span class="roteiro-editor__choice-title">Usar roteiro salvo</span>
-                  <span class="roteiro-editor__choice-desc">Reaproveita um roteiro já validado para acelerar o preenchimento.</span>
-                </span>
-              </label>
-              <label class="roteiro-editor__choice-card">
-                <input class="form-check-input roteiro-editor__choice-input" type="radio" name="roteiro_modo" id="id_roteiro_modo_proprio" value="ROTEIRO_PROPRIO" {% if roteiro_modo != 'EVENTO_EXISTENTE' %}checked{% endif %}>
-                <span class="roteiro-editor__choice-body">
-                  <span class="roteiro-editor__choice-title">{% if object %}Editar roteiro{% else %}Montar roteiro novo{% endif %}</span>
-                  <span class="roteiro-editor__choice-desc">Permite ajustar destinos e trechos de forma totalmente livre.</span>
-                </span>
-              </label>
-            </div>
-            <div id="roteiro-selector-wrapper" class="roteiro-editor__routes-panel {% if roteiro_modo != 'EVENTO_EXISTENTE' %}d-none{% endif %}">
-              <label class="roteiro-editor__field-label" for="id_roteiro_busca">Roteiros salvos</label>
-              <div class="roteiro-editor__grid">
-                <div class="field-span-12">
-                  <input type="search" id="id_roteiro_busca" class="form-control roteiro-editor__input" placeholder="Buscar por destino, tipo ou trecho..." {% if not has_event_routes %}disabled{% endif %} autocomplete="off">
-                </div>
-              </div>
-              <select name="roteiro_evento_id" id="id_roteiro_evento_id" class="d-none" {% if not has_event_routes %}disabled{% endif %} aria-hidden="true" tabindex="-1">
-                <option value="">Selecione</option>
-                {% for roteiro in roteiros_evento %}
-                <option value="{{ roteiro.id }}" {% if roteiro_evento_id == roteiro.id %}selected{% endif %}>{{ roteiro.label }}</option>
-                {% endfor %}
-              </select>
-              <p class="roteiro-editor__helper">{% if has_event_routes %}Filtre e selecione um roteiro para carregar os trechos no editor. As edições não alteram o original salvo.{% else %}Nenhum roteiro salvo válido está disponível.{% endif %}</p>
-              <div id="roteiro-lista" class="roteiro-editor__route-list oficio-step3-route-list"></div>
-              <div class="roteiro-editor__helper" id="roteiro-selector-resumo"></div>
-            </div>
-            </div>
-          </section>
-
-          {# SEÇÃO 2: SEDE #}
-          <section class="roteiro-editor__section" aria-labelledby="sec-sede">
-            <header class="roteiro-editor__section-header" id="sec-sede">
-              <h3 class="roteiro-editor__section-title">2. Sede</h3>
-              <p class="roteiro-editor__section-desc">Defina a unidade de origem da viagem (UF e cidade).</p>
-            </header>
-            <div class="roteiro-editor__grid">
-              <div class="field-span-6">
-                <label class="roteiro-editor__field-label" for="id_origem_estado">UF</label>
-                <select name="origem_estado" id="id_origem_estado" class="form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">
-                  <option value="">---------</option>
-                  {% for estado in estados %}
-                  <option value="{{ estado.pk }}" {% if sede_estado_id == estado.pk %}selected{% endif %}>{{ estado.nome }} ({{ estado.sigla }})</option>
-                  {% endfor %}
-                </select>
-                {% if form.origem_estado.errors %}<div class="invalid-feedback d-block">{{ form.origem_estado.errors.0 }}</div>{% endif %}
-              </div>
-              <div class="field-span-6">
-                <label class="roteiro-editor__field-label" for="id_origem_cidade">Cidade</label>
-                <select name="origem_cidade" id="id_origem_cidade" class="form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade...">
-                  <option value="">---------</option>
-                  {% for cidade in sede_cidades_qs %}
-                  <option value="{{ cidade.pk }}" {% if sede_cidade_id == cidade.pk %}selected{% endif %}>{{ cidade.nome }}</option>
-                  {% endfor %}
-                </select>
-                {% if form.origem_cidade.errors %}<div class="invalid-feedback d-block">{{ form.origem_cidade.errors.0 }}</div>{% endif %}
-              </div>
-            </div>
-          </section>
-
-          {# SEÇÃO 3: DESTINOS #}
-          <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--destinos" aria-labelledby="sec-destinos">
-            <div class="roteiro-editor__reference-top" aria-hidden="true">
-              <span class="roteiro-editor__reference-eyebrow">ROTEIROS</span>
-              <span class="roteiro-editor__reference-title">Novo roteiro</span>
-            </div>
-            <div class="roteiro-editor__reference-body">
-            <header class="roteiro-editor__section-header" id="sec-destinos">
-              <h3 class="roteiro-editor__section-title">3. Destinos</h3>
-              <p class="roteiro-editor__section-desc">Reordene por arrastar e soltar para atualizar automaticamente a sequência dos trechos.</p>
-            </header>
-            <div id="destinos-container" class="roteiro-editor__destinos-stack oficio-step3-destinos-stack"></div>
-            <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary roteiro-editor__add-btn mt-2 w-100">Adicionar destino</button>
-            </div>
-          </section>
-
-          {# SEÇÃO 4: BATE-VOLTA #}
-          <section class="roteiro-editor__section" aria-labelledby="sec-bate-volta">
-            <header class="roteiro-editor__section-header" id="sec-bate-volta">
-              <h3 class="roteiro-editor__section-title">4. Modo bate-volta diário</h3>
-              <p class="roteiro-editor__section-desc">Gera automaticamente o loop sede → destino → sede em cada dia do período.</p>
-            </header>
-            <div class="roteiro-editor__panel-surface">
-              <div class="roteiro-editor__bate-volta-head">
-                <div>
-                  <div class="roteiro-editor__bate-volta-title">Gerador automático de loop diário</div>
-                  <span class="roteiro-editor__chip" id="bate-volta-status-chip" aria-hidden="true">Inativo</span>
-                  <p class="roteiro-editor__helper mb-0 mt-2" id="bate-volta-status-text">Modo inativo.</p>
-                </div>
-                <div class="roteiro-editor__switch-row">
-                  <div class="form-check form-switch m-0">
-                    <input class="form-check-input" type="checkbox" role="switch" id="id_bate_volta_diario_ativo" name="bate_volta_diario_ativo" {% if step3_state_json.bate_volta_diario.ativo %}checked{% endif %}>
-                    <label class="form-check-label" for="id_bate_volta_diario_ativo">Ativar bate-volta diário</label>
-                  </div>
-                </div>
-              </div>
-              <div id="bate-volta-panel" class="row g-3">
-                <div class="col-md-3 col-sm-6">
-                  <label class="roteiro-editor__field-label" for="id_bate_volta_data_inicio">Data inicial</label>
-                  <input type="date" class="form-control" id="id_bate_volta_data_inicio" name="bate_volta_data_inicio" value="{{ step3_state_json.bate_volta_diario.data_inicio|default:'' }}">
-                </div>
-                <div class="col-md-3 col-sm-6">
-                  <label class="roteiro-editor__field-label" for="id_bate_volta_data_fim">Data final</label>
-                  <input type="date" class="form-control" id="id_bate_volta_data_fim" name="bate_volta_data_fim" value="{{ step3_state_json.bate_volta_diario.data_fim|default:'' }}">
-                </div>
-                <div class="col-md-3 col-sm-6">
-                  <label class="roteiro-editor__field-label" for="id_bate_volta_ida_saida_hora">Saída da ida</label>
-                  <input type="time" class="form-control" id="id_bate_volta_ida_saida_hora" name="bate_volta_ida_saida_hora" value="{{ step3_state_json.bate_volta_diario.ida_saida_hora|default:'' }}">
-                </div>
-                <div class="col-md-3 col-sm-6">
-                  <label class="roteiro-editor__field-label" for="id_bate_volta_ida_tempo_hhmm">Tempo da ida</label>
-                  <input type="text" class="form-control" id="id_bate_volta_ida_tempo_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
-                  <input type="hidden" id="id_bate_volta_ida_tempo_min" name="bate_volta_ida_tempo_min" value="{{ step3_state_json.bate_volta_diario.ida_tempo_min|default:'' }}">
-                </div>
-                <div class="col-md-3 col-sm-6">
-                  <label class="roteiro-editor__field-label" for="id_bate_volta_volta_saida_hora">Saída da volta</label>
-                  <input type="time" class="form-control" id="id_bate_volta_volta_saida_hora" name="bate_volta_volta_saida_hora" value="{{ step3_state_json.bate_volta_diario.volta_saida_hora|default:'' }}">
-                </div>
-                <div class="col-md-3 col-sm-6">
-                  <label class="roteiro-editor__field-label" for="id_bate_volta_volta_tempo_hhmm">Tempo da volta</label>
-                  <input type="text" class="form-control" id="id_bate_volta_volta_tempo_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
-                  <input type="hidden" id="id_bate_volta_volta_tempo_min" name="bate_volta_volta_tempo_min" value="{{ step3_state_json.bate_volta_diario.volta_tempo_min|default:'' }}">
-                </div>
-                <div class="col-12">
-                  <p class="roteiro-editor__helper mb-0">Use exatamente um destino operacional quando este modo estiver ativo. O retorno final também será refletido no bloco de retorno abaixo.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {# SEÇÃO 5: TRECHOS #}
-          <section class="roteiro-editor__section" aria-labelledby="sec-trechos">
-            <header class="roteiro-editor__section-header" id="sec-trechos">
-              <h3 class="roteiro-editor__section-title">5. Trechos</h3>
-              <p class="roteiro-editor__section-desc">Informe tempos de viagem e adicionais; chegada e totais são calculados conforme as regras do fluxo.</p>
-            </header>
-            <div id="trechos-gerados-container" class="roteiro-editor__trechos-wrap">
-              <div class="roteiro-editor__empty">
-                <p class="roteiro-editor__empty-title">Trechos ainda não disponíveis</p>
-                <p class="roteiro-editor__empty-text">Selecione a sede e ao menos um destino para editar os trechos.</p>
-              </div>
-            </div>
-          </section>
-
-          {# SEÇÃO 6: RETORNO #}
-          <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--retorno" aria-labelledby="sec-retorno">
-            <div class="roteiro-editor__reference-top" aria-hidden="true">
-              <span class="roteiro-editor__reference-eyebrow">ROTEIROS</span>
-              <span class="roteiro-editor__reference-title">Novo roteiro</span>
-            </div>
-            <div class="roteiro-editor__reference-body">
-            <header class="roteiro-editor__section-header roteiro-editor__section-header--sr" id="sec-retorno">
-              <h3 class="roteiro-editor__section-title">6. Retorno</h3>
-              <p class="roteiro-editor__section-desc">Mesma lógica da ida: tempo de viagem + tempo adicional = tempo total.</p>
-            </header>
-            <div class="rota-bloco" id="retorno-card">
-              <div class="row g-3">
-                <div class="col-lg-6">
-                  <div class="roteiro-editor__subpanel h-100">
-                    <div class="roteiro-editor__subpanel-title">Saída</div>
-                    <div class="row g-2">
-                      <div class="col-12">
-                        <label class="roteiro-editor__field-label" for="id_retorno_saida_cidade">Cidade de saída</label>
-                        <input type="text" id="id_retorno_saida_cidade" class="form-control" value="{{ retorno_state.saida_cidade|default:'' }}" readonly>
-                      </div>
-                      <div class="col-md-6">
-                        <label class="roteiro-editor__field-label" for="id_retorno_saida_data">Data</label>
-                        <input type="date" name="retorno_saida_data" id="id_retorno_saida_data" class="form-control" value="{{ retorno_state.saida_data|default:'' }}">
-                      </div>
-                      <div class="col-md-6">
-                        <label class="roteiro-editor__field-label" for="id_retorno_saida_hora">Hora</label>
-                        <input type="time" name="retorno_saida_hora" id="id_retorno_saida_hora" class="form-control" value="{{ retorno_state.saida_hora|default:'' }}">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-6">
-                  <div class="roteiro-editor__subpanel h-100">
-                    <div class="roteiro-editor__subpanel-title">Chegada</div>
-                    <div class="row g-2">
-                      <div class="col-12">
-                        <label class="roteiro-editor__field-label" for="id_retorno_chegada_cidade">Cidade de chegada</label>
-                        <input type="text" id="id_retorno_chegada_cidade" class="form-control" value="{{ retorno_state.chegada_cidade|default:'' }}" readonly>
-                      </div>
-                      <div class="col-md-6">
-                        <label class="roteiro-editor__field-label" for="id_retorno_chegada_data">Data</label>
-                        <input type="date" name="retorno_chegada_data" id="id_retorno_chegada_data" class="form-control" value="{{ retorno_state.chegada_data|default:'' }}">
-                      </div>
-                      <div class="col-md-6">
-                        <label class="roteiro-editor__field-label" for="id_retorno_chegada_hora">Hora</label>
-                        <input type="time" name="retorno_chegada_hora" id="id_retorno_chegada_hora" class="form-control" value="{{ retorno_state.chegada_hora|default:'' }}">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <div class="roteiro-editor__grid oficio-step3-time-calc-grid align-items-end">
-                    <div class="field-span-4">
-                      <label class="roteiro-editor__field-label" for="id_retorno_tempo_viagem_hhmm">Tempo de viagem</label>
-                      <input type="text" class="form-control" id="id_retorno_tempo_viagem_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
-                      <input type="hidden" name="retorno_tempo_cru_estimado_min" id="id_retorno_tempo_cru_estimado_min" value="{{ retorno_state.tempo_cru_estimado_min|default:'' }}">
-                    </div>
-                    <div class="field-span-4">
-                      <label class="roteiro-editor__field-label" for="id_retorno_tempo_adicional_min">Tempo adicional</label>
-                      <input type="number" min="0" step="15" class="form-control" name="retorno_tempo_adicional_min" id="id_retorno_tempo_adicional_min" value="{{ retorno_state.tempo_adicional_min|default:0 }}">
-                    </div>
-                    <div class="field-span-4">
-                      <label class="roteiro-editor__field-label" for="id_retorno_tempo_total">Tempo total</label>
-                      <input type="text" class="form-control" id="id_retorno_tempo_total" value="" readonly>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <input type="hidden" name="retorno_distancia_km" id="id_retorno_distancia_km" value="{{ retorno_state.distancia_km|default:'' }}">
-                  <input type="hidden" name="retorno_duracao_estimada_min" id="id_retorno_duracao_estimada_min" value="{{ retorno_state.duracao_estimada_min|default:'' }}">
-                  <input type="hidden" name="retorno_rota_fonte" id="id_retorno_rota_fonte" value="{{ retorno_state.rota_fonte|default:'' }}">
-                  <div class="roteiro-editor__helper text-danger d-none" id="retorno-erro"></div>
-                </div>
-              </div>
-            </div>
-            </div>
-          </section>
-
-          {# SEÇÃO 7: CALCULADORA DE DIÁRIAS #}
-          <section class="roteiro-editor__section" aria-labelledby="sec-diarias">
-            <div class="roteiro-editor__diarias">
-              <div class="roteiro-editor__diarias-head">
-                <div>
-                  <span class="roteiro-editor__diarias-eyebrow">Resumo financeiro</span>
-                  <header class="roteiro-editor__section-header mb-0" id="sec-diarias">
-                    <h3 class="roteiro-editor__section-title">7. Calculadora de diárias</h3>
-                    <p class="roteiro-editor__section-desc">Atualização reativa conforme trechos e retorno completos.</p>
-                  </header>
-                </div>
-                <div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending" role="status">Aguardando dados para cálculo.</div>
-              </div>
-              <p class="roteiro-editor__diarias-note">Cálculo considerando <strong>1 servidor</strong> (regra fixa do roteiro avulso).</p>
-              <div id="diarias-error" class="alert alert-danger py-2 d-none" role="alert"></div>
-              <div class="roteiro-editor__summary-grid">
-                <div class="roteiro-editor__summary-item">
-                  <span class="roteiro-editor__summary-label">Valor total</span>
-                  <span class="roteiro-editor__summary-value" id="diarias-valor">{{ step3_diarias_resultado.totais.total_valor|default:"—" }}</span>
-                </div>
-                <div class="roteiro-editor__summary-item">
-                  <span class="roteiro-editor__summary-label">Valor por extenso</span>
-                  <span id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"Não informado" }}</span>
-                </div>
-                <div class="roteiro-editor__summary-item">
-                  <span class="roteiro-editor__summary-label">Tipo destino</span>
-                  <span class="roteiro-editor__summary-value" id="diarias-tipo">{{ step3_diarias_resultado.tipo_destino|default:"—" }}</span>
-                </div>
-                <div class="roteiro-editor__summary-item">
-                  <span class="roteiro-editor__summary-label">Quantidade de diárias</span>
-                  <span class="roteiro-editor__summary-value" id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"—" }}</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <div class="roteiro-editor__actions oficio-wizard-footer-actions {% if is_avulso %}roteiro-editor__actions--avulso{% endif %}" data-oficio-footer-actions="1">
-            {% if is_avulso %}
-            <a href="{% url 'roteiros:index' %}" class="btn btn-outline-secondary">Voltar para lista</a>
-            <button type="submit" class="btn btn-primary">{% if object %}Salvar roteiro{% else %}Cadastrar roteiro{% endif %}</button>
-            {% else %}
-            <a href="{% url 'eventos:guiado-etapa-2' evento.pk %}" class="btn btn-outline-secondary">Voltar</a>
-            <a href="{% url 'eventos:guiado-etapa-1' evento.pk %}" class="btn btn-outline-secondary">Dados do evento</a>
-            <button type="submit" class="btn btn-primary">Salvar roteiro</button>
             {% endif %}
-          </div>
-        </form>
+            {% if step3_seed_source_label %}<div class="alert alert-info py-2" role="status">{{ step3_seed_source_label }}</div>{% endif %}
+
+            {# SEÇÃO 1: FONTE DO ROTEIRO #}
+            <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--source" aria-labelledby="sec-fonte-roteiro">
+              <div class="roteiro-editor__reference-top" aria-hidden="true">
+                <span class="roteiro-editor__reference-eyebrow">ROTEIROS</span>
+                <span class="roteiro-editor__reference-title">Novo roteiro</span>
+              </div>
+              <div class="roteiro-editor__reference-body">
+              <header class="roteiro-editor__section-header" id="sec-fonte-roteiro">
+                <h3 class="roteiro-editor__section-title">1. Fonte do roteiro</h3>
+                <p class="roteiro-editor__section-desc">Escolha um roteiro salvo ou monte um roteiro novo.</p>
+              </header>
+              <div class="roteiro-editor__choice-grid mb-1">
+                <label class="roteiro-editor__choice-card">
+                  <input class="form-check-input roteiro-editor__choice-input" type="radio" name="roteiro_modo" id="id_roteiro_modo_evento" value="EVENTO_EXISTENTE" {% if roteiro_modo == 'EVENTO_EXISTENTE' %}checked{% endif %} {% if not has_event_routes %}disabled{% endif %}>
+                  <span class="roteiro-editor__choice-body">
+                    <span class="roteiro-editor__choice-title">Usar roteiro salvo</span>
+                    <span class="roteiro-editor__choice-desc">Reaproveita um roteiro já validado para acelerar o preenchimento.</span>
+                  </span>
+                </label>
+                <label class="roteiro-editor__choice-card">
+                  <input class="form-check-input roteiro-editor__choice-input" type="radio" name="roteiro_modo" id="id_roteiro_modo_proprio" value="ROTEIRO_PROPRIO" {% if roteiro_modo != 'EVENTO_EXISTENTE' %}checked{% endif %}>
+                  <span class="roteiro-editor__choice-body">
+                    <span class="roteiro-editor__choice-title">{% if object %}Editar roteiro{% else %}Montar roteiro novo{% endif %}</span>
+                    <span class="roteiro-editor__choice-desc">Permite ajustar destinos e trechos de forma totalmente livre.</span>
+                  </span>
+                </label>
+              </div>
+              <div id="roteiro-selector-wrapper" class="roteiro-editor__routes-panel {% if roteiro_modo != 'EVENTO_EXISTENTE' %}d-none{% endif %}">
+                <label class="roteiro-editor__field-label" for="id_roteiro_busca">Roteiros salvos</label>
+                <div class="roteiro-editor__grid">
+                  <div class="field-span-12">
+                    <input type="search" id="id_roteiro_busca" class="form-control roteiro-editor__input" placeholder="Buscar por destino, tipo ou trecho..." {% if not has_event_routes %}disabled{% endif %} autocomplete="off">
+                  </div>
+                </div>
+                <select name="roteiro_evento_id" id="id_roteiro_evento_id" class="d-none" {% if not has_event_routes %}disabled{% endif %} aria-hidden="true" tabindex="-1">
+                  <option value="">Selecione</option>
+                  {% for roteiro in roteiros_evento %}
+                  <option value="{{ roteiro.id }}" {% if roteiro_evento_id == roteiro.id %}selected{% endif %}>{{ roteiro.label }}</option>
+                  {% endfor %}
+                </select>
+                <p class="roteiro-editor__helper">{% if has_event_routes %}Filtre e selecione um roteiro para carregar os trechos no editor. As edições não alteram o original salvo.{% else %}Nenhum roteiro salvo válido está disponível.{% endif %}</p>
+                <div id="roteiro-lista" class="roteiro-editor__route-list oficio-step3-route-list"></div>
+                <div class="roteiro-editor__helper" id="roteiro-selector-resumo"></div>
+              </div>
+              </div>
+            </section>
+
+            {# SEÇÃO 2: SEDE #}
+            <section class="roteiro-editor__section" aria-labelledby="sec-sede">
+              <header class="roteiro-editor__section-header" id="sec-sede">
+                <h3 class="roteiro-editor__section-title">2. Sede</h3>
+                <p class="roteiro-editor__section-desc">Defina a unidade de origem da viagem (UF e cidade).</p>
+              </header>
+              <div class="roteiro-editor__grid">
+                <div class="field-span-6">
+                  <label class="roteiro-editor__field-label" for="id_origem_estado">UF</label>
+                  <select name="origem_estado" id="id_origem_estado" class="form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">
+                    <option value="">---------</option>
+                    {% for estado in estados %}
+                    <option value="{{ estado.pk }}" {% if sede_estado_id == estado.pk %}selected{% endif %}>{{ estado.nome }} ({{ estado.sigla }})</option>
+                    {% endfor %}
+                  </select>
+                  {% if form.origem_estado.errors %}<div class="invalid-feedback d-block">{{ form.origem_estado.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="field-span-6">
+                  <label class="roteiro-editor__field-label" for="id_origem_cidade">Cidade</label>
+                  <select name="origem_cidade" id="id_origem_cidade" class="form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade...">
+                    <option value="">---------</option>
+                    {% for cidade in sede_cidades_qs %}
+                    <option value="{{ cidade.pk }}" {% if sede_cidade_id == cidade.pk %}selected{% endif %}>{{ cidade.nome }}</option>
+                    {% endfor %}
+                  </select>
+                  {% if form.origem_cidade.errors %}<div class="invalid-feedback d-block">{{ form.origem_cidade.errors.0 }}</div>{% endif %}
+                </div>
+              </div>
+            </section>
+
+            {# SEÇÃO 3: DESTINOS #}
+            <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--destinos" aria-labelledby="sec-destinos">
+              <div class="roteiro-editor__reference-top" aria-hidden="true">
+                <span class="roteiro-editor__reference-eyebrow">ROTEIROS</span>
+                <span class="roteiro-editor__reference-title">Novo roteiro</span>
+              </div>
+              <div class="roteiro-editor__reference-body">
+              <header class="roteiro-editor__section-header" id="sec-destinos">
+                <h3 class="roteiro-editor__section-title">3. Destinos</h3>
+                <p class="roteiro-editor__section-desc">Reordene por arrastar e soltar para atualizar automaticamente a sequência dos trechos.</p>
+              </header>
+              <div id="destinos-container" class="roteiro-editor__destinos-stack oficio-step3-destinos-stack"></div>
+              <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary roteiro-editor__add-btn mt-2 w-100">Adicionar destino</button>
+              </div>
+            </section>
+
+            {# SEÇÃO 4: BATE-VOLTA #}
+            <section class="roteiro-editor__section" aria-labelledby="sec-bate-volta">
+              <header class="roteiro-editor__section-header" id="sec-bate-volta">
+                <h3 class="roteiro-editor__section-title">4. Modo bate-volta diário</h3>
+                <p class="roteiro-editor__section-desc">Gera automaticamente o loop sede → destino → sede em cada dia do período.</p>
+              </header>
+              <div class="roteiro-editor__panel-surface">
+                <div class="roteiro-editor__bate-volta-head">
+                  <div>
+                    <div class="roteiro-editor__bate-volta-title">Gerador automático de loop diário</div>
+                    <span class="roteiro-editor__chip" id="bate-volta-status-chip" aria-hidden="true">Inativo</span>
+                    <p class="roteiro-editor__helper mb-0 mt-2" id="bate-volta-status-text">Modo inativo.</p>
+                  </div>
+                  <div class="roteiro-editor__switch-row">
+                    <div class="form-check form-switch m-0">
+                      <input class="form-check-input" type="checkbox" role="switch" id="id_bate_volta_diario_ativo" name="bate_volta_diario_ativo" {% if step3_state_json.bate_volta_diario.ativo %}checked{% endif %}>
+                      <label class="form-check-label" for="id_bate_volta_diario_ativo">Ativar bate-volta diário</label>
+                    </div>
+                  </div>
+                </div>
+                <div id="bate-volta-panel" class="row g-3">
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_data_inicio">Data inicial</label>
+                    <input type="date" class="form-control" id="id_bate_volta_data_inicio" name="bate_volta_data_inicio" value="{{ step3_state_json.bate_volta_diario.data_inicio|default:'' }}">
+                  </div>
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_data_fim">Data final</label>
+                    <input type="date" class="form-control" id="id_bate_volta_data_fim" name="bate_volta_data_fim" value="{{ step3_state_json.bate_volta_diario.data_fim|default:'' }}">
+                  </div>
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_ida_saida_hora">Saída da ida</label>
+                    <input type="time" class="form-control" id="id_bate_volta_ida_saida_hora" name="bate_volta_ida_saida_hora" value="{{ step3_state_json.bate_volta_diario.ida_saida_hora|default:'' }}">
+                  </div>
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_ida_tempo_hhmm">Tempo da ida</label>
+                    <input type="text" class="form-control" id="id_bate_volta_ida_tempo_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
+                    <input type="hidden" id="id_bate_volta_ida_tempo_min" name="bate_volta_ida_tempo_min" value="{{ step3_state_json.bate_volta_diario.ida_tempo_min|default:'' }}">
+                  </div>
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_volta_saida_hora">Saída da volta</label>
+                    <input type="time" class="form-control" id="id_bate_volta_volta_saida_hora" name="bate_volta_volta_saida_hora" value="{{ step3_state_json.bate_volta_diario.volta_saida_hora|default:'' }}">
+                  </div>
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_volta_tempo_hhmm">Tempo da volta</label>
+                    <input type="text" class="form-control" id="id_bate_volta_volta_tempo_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
+                    <input type="hidden" id="id_bate_volta_volta_tempo_min" name="bate_volta_volta_tempo_min" value="{{ step3_state_json.bate_volta_diario.volta_tempo_min|default:'' }}">
+                  </div>
+                  <div class="col-12">
+                    <p class="roteiro-editor__helper mb-0">Use exatamente um destino operacional quando este modo estiver ativo. O retorno final também será refletido no bloco de retorno abaixo.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {# SEÇÃO 5: TRECHOS #}
+            <section class="roteiro-editor__section" aria-labelledby="sec-trechos">
+              <header class="roteiro-editor__section-header" id="sec-trechos">
+                <h3 class="roteiro-editor__section-title">5. Trechos</h3>
+                <p class="roteiro-editor__section-desc">Informe tempos de viagem e adicionais; chegada e totais são calculados conforme as regras do fluxo.</p>
+              </header>
+              <div id="trechos-gerados-container" class="roteiro-editor__trechos-wrap">
+                <div class="roteiro-editor__empty">
+                  <p class="roteiro-editor__empty-title">Trechos ainda não disponíveis</p>
+                  <p class="roteiro-editor__empty-text">Selecione a sede e ao menos um destino para editar os trechos.</p>
+                </div>
+              </div>
+            </section>
+
+            {# SEÇÃO 6: RETORNO #}
+            <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--retorno" aria-labelledby="sec-retorno">
+              <div class="roteiro-editor__reference-top" aria-hidden="true">
+                <span class="roteiro-editor__reference-eyebrow">ROTEIROS</span>
+                <span class="roteiro-editor__reference-title">Novo roteiro</span>
+              </div>
+              <div class="roteiro-editor__reference-body">
+              <header class="roteiro-editor__section-header roteiro-editor__section-header--sr" id="sec-retorno">
+                <h3 class="roteiro-editor__section-title">6. Retorno</h3>
+                <p class="roteiro-editor__section-desc">Mesma lógica da ida: tempo de viagem + tempo adicional = tempo total.</p>
+              </header>
+              <div class="rota-bloco" id="retorno-card">
+                <div class="row g-3">
+                  <div class="col-lg-6">
+                    <div class="roteiro-editor__subpanel h-100">
+                      <div class="roteiro-editor__subpanel-title">Saída</div>
+                      <div class="row g-2">
+                        <div class="col-12">
+                          <label class="roteiro-editor__field-label" for="id_retorno_saida_cidade">Cidade de saída</label>
+                          <input type="text" id="id_retorno_saida_cidade" class="form-control" value="{{ retorno_state.saida_cidade|default:'' }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="roteiro-editor__field-label" for="id_retorno_saida_data">Data</label>
+                          <input type="date" name="retorno_saida_data" id="id_retorno_saida_data" class="form-control" value="{{ retorno_state.saida_data|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="roteiro-editor__field-label" for="id_retorno_saida_hora">Hora</label>
+                          <input type="time" name="retorno_saida_hora" id="id_retorno_saida_hora" class="form-control" value="{{ retorno_state.saida_hora|default:'' }}">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div class="roteiro-editor__subpanel h-100">
+                      <div class="roteiro-editor__subpanel-title">Chegada</div>
+                      <div class="row g-2">
+                        <div class="col-12">
+                          <label class="roteiro-editor__field-label" for="id_retorno_chegada_cidade">Cidade de chegada</label>
+                          <input type="text" id="id_retorno_chegada_cidade" class="form-control" value="{{ retorno_state.chegada_cidade|default:'' }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="roteiro-editor__field-label" for="id_retorno_chegada_data">Data</label>
+                          <input type="date" name="retorno_chegada_data" id="id_retorno_chegada_data" class="form-control" value="{{ retorno_state.chegada_data|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="roteiro-editor__field-label" for="id_retorno_chegada_hora">Hora</label>
+                          <input type="time" name="retorno_chegada_hora" id="id_retorno_chegada_hora" class="form-control" value="{{ retorno_state.chegada_hora|default:'' }}">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="roteiro-editor__grid oficio-step3-time-calc-grid align-items-end">
+                      <div class="field-span-4">
+                        <label class="roteiro-editor__field-label" for="id_retorno_tempo_viagem_hhmm">Tempo de viagem</label>
+                        <input type="text" class="form-control" id="id_retorno_tempo_viagem_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
+                        <input type="hidden" name="retorno_tempo_cru_estimado_min" id="id_retorno_tempo_cru_estimado_min" value="{{ retorno_state.tempo_cru_estimado_min|default:'' }}">
+                      </div>
+                      <div class="field-span-4">
+                        <label class="roteiro-editor__field-label" for="id_retorno_tempo_adicional_min">Tempo adicional</label>
+                        <input type="number" min="0" step="15" class="form-control" name="retorno_tempo_adicional_min" id="id_retorno_tempo_adicional_min" value="{{ retorno_state.tempo_adicional_min|default:0 }}">
+                      </div>
+                      <div class="field-span-4">
+                        <label class="roteiro-editor__field-label" for="id_retorno_tempo_total">Tempo total</label>
+                        <input type="text" class="form-control" id="id_retorno_tempo_total" value="" readonly>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <input type="hidden" name="retorno_distancia_km" id="id_retorno_distancia_km" value="{{ retorno_state.distancia_km|default:'' }}">
+                    <input type="hidden" name="retorno_duracao_estimada_min" id="id_retorno_duracao_estimada_min" value="{{ retorno_state.duracao_estimada_min|default:'' }}">
+                    <input type="hidden" name="retorno_rota_fonte" id="id_retorno_rota_fonte" value="{{ retorno_state.rota_fonte|default:'' }}">
+                    <div class="roteiro-editor__helper text-danger d-none" id="retorno-erro"></div>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </section>
+
+            {# SEÇÃO 7: CALCULADORA DE DIÁRIAS #}
+            <section class="roteiro-editor__section" aria-labelledby="sec-diarias">
+              <div class="roteiro-editor__diarias">
+                <div class="roteiro-editor__diarias-head">
+                  <div>
+                    <span class="roteiro-editor__diarias-eyebrow">Resumo financeiro</span>
+                    <header class="roteiro-editor__section-header mb-0" id="sec-diarias">
+                      <h3 class="roteiro-editor__section-title">7. Calculadora de diárias</h3>
+                      <p class="roteiro-editor__section-desc">Atualização reativa conforme trechos e retorno completos.</p>
+                    </header>
+                  </div>
+                  <div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending" role="status">Aguardando dados para cálculo.</div>
+                </div>
+                <p class="roteiro-editor__diarias-note">Cálculo considerando <strong>1 servidor</strong> (regra fixa do roteiro avulso).</p>
+                <div id="diarias-error" class="alert alert-danger py-2 d-none" role="alert"></div>
+                <div class="roteiro-editor__summary-grid">
+                  <div class="roteiro-editor__summary-item">
+                    <span class="roteiro-editor__summary-label">Valor total</span>
+                    <span class="roteiro-editor__summary-value" id="diarias-valor">{{ step3_diarias_resultado.totais.total_valor|default:"—" }}</span>
+                  </div>
+                  <div class="roteiro-editor__summary-item">
+                    <span class="roteiro-editor__summary-label">Valor por extenso</span>
+                    <span id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"Não informado" }}</span>
+                  </div>
+                  <div class="roteiro-editor__summary-item">
+                    <span class="roteiro-editor__summary-label">Tipo destino</span>
+                    <span class="roteiro-editor__summary-value" id="diarias-tipo">{{ step3_diarias_resultado.tipo_destino|default:"—" }}</span>
+                  </div>
+                  <div class="roteiro-editor__summary-item">
+                    <span class="roteiro-editor__summary-label">Quantidade de diárias</span>
+                    <span class="roteiro-editor__summary-value" id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"—" }}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="roteiro-editor__actions oficio-wizard-footer-actions {% if is_avulso %}roteiro-editor__actions--avulso{% endif %}" data-oficio-footer-actions="1">
+              {% if is_avulso %}
+              <a href="{% url 'roteiros:index' %}" class="btn btn-outline-secondary">Voltar para lista</a>
+              <button type="submit" class="btn btn-primary">{% if object %}Salvar roteiro{% else %}Cadastrar roteiro{% endif %}</button>
+              {% else %}
+              <a href="{% url 'eventos:guiado-etapa-2' evento.pk %}" class="btn btn-outline-secondary">Voltar</a>
+              <a href="{% url 'eventos:guiado-etapa-1' evento.pk %}" class="btn btn-outline-secondary">Dados do evento</a>
+              <button type="submit" class="btn btn-primary">Salvar roteiro</button>
+              {% endif %}
+            </div>
+          </form>
+        </section>
       </div>
     </div>
   </div>
