@@ -1339,18 +1339,18 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--bate-volta > .roteiro-editor__panel-surface {
-  border-radius: 0 0 14px 14px;
-  margin: 0 18px 18px;
+  border-radius: var(--radius-md);
+  margin: 18px 18px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--trechos > .roteiro-editor__trechos-wrap {
-  border-radius: 0 0 14px 14px;
-  margin: 0 18px 18px;
+  border-radius: var(--radius-md);
+  margin: 18px 18px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__diarias {
-  border-radius: 14px;
-  margin: 0 18px 18px;
+  border-radius: var(--radius-md);
+  margin: 18px 18px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__bate-volta-head {
