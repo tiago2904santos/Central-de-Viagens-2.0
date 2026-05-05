@@ -51,8 +51,8 @@
     radial-gradient(ellipse 100% 80% at 6% 0%, rgba(216, 162, 27, 0.12), transparent 55%),
     radial-gradient(ellipse 90% 60% at 100% 0%, rgba(21, 91, 154, 0.1), transparent 50%),
     linear-gradient(165deg, #eef3fb 0%, #e0eaf6 45%, #d2e0f0 100%);
-  --app-hero-stage-start: #2a5580;
-  --app-hero-stage-end: #4f7caf;
+  --app-hero-stage-start: #071a2e;
+  --app-hero-stage-end: #0f4d82;
   --app-hero-eyebrow: rgba(255, 243, 207, 0.95);
   --app-hero-title: #ffffff;
   --app-hero-body-bg: linear-gradient(180deg, #ffffff 0%, #f6f9fd 100%);
@@ -95,8 +95,8 @@ html[data-theme="variant-b"] {
     radial-gradient(ellipse 100% 80% at 6% 0%, rgba(216, 162, 27, 0.12), transparent 55%),
     radial-gradient(ellipse 90% 60% at 100% 0%, rgba(21, 91, 154, 0.1), transparent 50%),
     linear-gradient(165deg, #eef3fb 0%, #e0eaf6 45%, #d2e0f0 100%);
-  --app-hero-stage-start: #2d5a82;
-  --app-hero-stage-end: #4f84b8;
+  --app-hero-stage-start: #071a2e;
+  --app-hero-stage-end: #0f4d82;
   --app-hero-eyebrow: rgba(255, 248, 230, 0.98);
   --app-hero-title: #ffffff;
   --app-hero-body-bg: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
