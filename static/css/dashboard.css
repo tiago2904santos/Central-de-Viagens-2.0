@@ -5,12 +5,12 @@
   background-image: var(--app-featured-bg);
   box-sizing: border-box;
   min-height: 100vh;
-  padding: 0;
+  padding: 28px 0 0;
 }
 
 @media (max-width: 840px) {
   .app-main:has(.dashboard-login-inspired) {
-    padding: 0;
+    padding: 20px 0 0;
   }
 }
 
@@ -22,7 +22,7 @@
   box-sizing: border-box;
   color: var(--color-text);
   min-height: min(100vh, 100%);
-  padding: var(--space-6) var(--space-7);
+  padding: var(--space-2) var(--space-7) var(--space-6);
   width: 100%;
 }
 
@@ -210,7 +210,7 @@
 }
 
 .dashboard-login-inspired__stat-value {
-  color: var(--color-primary-bright);
+  color: var(--color-primary);
   font-size: 2.05rem;
   font-weight: 800;
   letter-spacing: 0.04em;

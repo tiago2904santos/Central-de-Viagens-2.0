@@ -5,7 +5,13 @@
   background-image: var(--app-featured-bg);
   box-sizing: border-box;
   min-height: 100vh;
-  padding: 0;
+  padding: 28px 0 0;
+}
+
+@media (max-width: 840px) {
+  .app-main:has(.cargos-page) {
+    padding: 20px 0 0;
+  }
 }
 
 .content-wrap:has(.cargos-page) {
@@ -16,7 +22,7 @@
   box-sizing: border-box;
   color: var(--color-text);
   min-height: min(100vh, 100%);
-  padding: var(--space-6) var(--space-7);
+  padding: var(--space-2) var(--space-7) var(--space-6);
   width: 100%;
 }
 

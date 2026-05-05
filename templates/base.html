@@ -6,18 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script>
     (function () {
+      function norm(v) {
+        if (v === "variant-a" || v === "variant-b") return v;
+        if (v === "dark") return "variant-a";
+        if (v === "light") return "variant-b";
+        return null;
+      }
       try {
         var k = "cv-theme";
         var s = localStorage.getItem(k);
-        var t;
-        if (s === "light" || s === "dark") {
-          t = s;
-        } else {
-          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        var t = norm(s);
+        if (!t) {
+          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "variant-a" : "variant-b";
         }
         document.documentElement.setAttribute("data-theme", t);
       } catch (e) {
-        document.documentElement.setAttribute("data-theme", "light");
+        document.documentElement.setAttribute("data-theme", "variant-b");
       }
     })();
   </script>

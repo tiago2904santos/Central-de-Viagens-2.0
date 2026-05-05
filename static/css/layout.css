@@ -8,7 +8,7 @@
 .app-main {
   box-sizing: border-box;
   min-width: 0;
-  padding: 28px 32px;
+  padding: 40px 32px 32px;
   width: 100%;
 }
 
@@ -119,7 +119,7 @@
   }
 
   .app-main {
-    padding: 16px;
+    padding: 24px 16px 20px;
   }
 
   .page-header {
