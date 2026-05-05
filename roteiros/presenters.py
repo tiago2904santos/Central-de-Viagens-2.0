@@ -27,8 +27,9 @@ def apresentar_roteiro_card(roteiro):
     if quantidade_trechos is None:
         quantidade_trechos = roteiro.trechos.count()
 
-    change_url = reverse("admin:roteiros_roteiro_change", args=[roteiro.pk])
-    delete_url = reverse("admin:roteiros_roteiro_delete", args=[roteiro.pk])
+    detail_url = reverse("roteiros:detalhe", args=[roteiro.pk])
+    edit_url = reverse("roteiros:editar", args=[roteiro.pk])
+    delete_url = reverse("roteiros:excluir", args=[roteiro.pk])
 
     return {
         "title": roteiro.nome,
@@ -43,8 +44,8 @@ def apresentar_roteiro_card(roteiro):
         ],
         "body": roteiro.descricao or "Roteiro disponível para uso administrativo nos fluxos de viagem.",
         "actions": [
-            {"label": "Abrir", "href": change_url, "variant": "secondary"},
-            {"label": "Editar", "href": change_url, "variant": "secondary"},
+            {"label": "Abrir", "href": detail_url, "variant": "secondary"},
+            {"label": "Editar", "href": edit_url, "variant": "secondary"},
             {"label": "Excluir", "href": delete_url, "variant": "danger"},
         ],
     }

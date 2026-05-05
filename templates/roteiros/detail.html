@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+  <div class="app-page">
+    <div class="app-page__shell">
+      <header class="app-page-hero app-page-hero--hybrid app-page-hero--compact" aria-labelledby="roteiros-detail-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Roteiros</span>
+          <h1 class="app-page-hero__title" id="roteiros-detail-title">{{ page_title }}</h1>
+        </div>
+        <div class="app-page-hero__body">
+          <div class="app-page__hero-top">
+            <div class="app-page__brand">
+              <div class="app-page__brand-mark" aria-hidden="true">RT</div>
+              <div class="app-page__brand-copy">
+                <p class="app-page__subtitle">{{ page_description }}</p>
+              </div>
+            </div>
+            <div class="app-page__hero-actions">
+              {% include "components/buttons/action_button.html" with href=edit_url label="Editar" variant="primary" only %}
+              {% include "components/buttons/action_button.html" with href=delete_url label="Excluir" variant="danger" only %}
+            </div>
+          </div>
+        </div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
+      </header>
+
+      <section class="app-page__form-card roteiro-detail">
+        <div class="form-section">
+          {% include "components/forms/form_section.html" with title="Identificação" description="Dados principais do trajeto cadastrado." only %}
+          <dl class="roteiro-detail__grid">
+            <div class="roteiro-detail__item roteiro-detail__item--wide">
+              <dt>Nome</dt>
+              <dd>{{ roteiro.nome }}</dd>
+            </div>
+            <div class="roteiro-detail__item">
+              <dt>Origem</dt>
+              <dd>{{ roteiro.origem }}</dd>
+            </div>
+            <div class="roteiro-detail__item">
+              <dt>Destino principal</dt>
+              <dd>{{ roteiro.destino }}</dd>
+            </div>
+            <div class="roteiro-detail__item">
+              <dt>Data inicial</dt>
+              <dd>{{ roteiro.data_inicio|date:"d/m/Y"|default:"Não informado" }}</dd>
+            </div>
+            <div class="roteiro-detail__item">
+              <dt>Data final</dt>
+              <dd>{{ roteiro.data_fim|date:"d/m/Y"|default:"Não informado" }}</dd>
+            </div>
+            <div class="roteiro-detail__item roteiro-detail__item--wide">
+              <dt>Descrição</dt>
+              <dd>{{ roteiro.descricao|default:"Não informado" }}</dd>
+            </div>
+            <div class="roteiro-detail__item roteiro-detail__item--wide">
+              <dt>Observações</dt>
+              <dd>{{ roteiro.observacoes|default:"Não informado" }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="form-section">
+          {% include "components/forms/form_section.html" with title="Trechos e paradas" description="Trechos cadastrados para este roteiro, quando existirem." only %}
+          {% if trechos %}
+            <div class="roteiro-steps" role="list">
+              {% for trecho in trechos %}
+                <article class="roteiro-steps__item" role="listitem">
+                  <span class="roteiro-steps__order">{{ trecho.ordem }}</span>
+                  <div class="roteiro-steps__content">
+                    <h3>{{ trecho.origem }} &rarr; {{ trecho.destino }}</h3>
+                    <p>
+                      Saída: {{ trecho.data_saida|date:"d/m/Y H:i"|default:"Não informada" }}
+                      &middot; Chegada: {{ trecho.data_chegada|date:"d/m/Y H:i"|default:"Não informada" }}
+                    </p>
+                    {% if trecho.observacoes %}<p>{{ trecho.observacoes }}</p>{% endif %}
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state roteiro-detail__empty">
+              <h3>Nenhum trecho cadastrado</h3>
+              <p>Este roteiro usa apenas origem e destino principal nesta etapa.</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="form-actions">
+          {% include "components/buttons/action_button.html" with href=back_url label="Voltar" variant="secondary" only %}
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

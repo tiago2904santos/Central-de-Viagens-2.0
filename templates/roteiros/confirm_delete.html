@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+  <div class="app-page">
+    <div class="app-page__shell">
+      <header class="app-page-hero app-page-hero--hybrid app-page-hero--compact" aria-labelledby="roteiros-delete-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Roteiros</span>
+          <h1 class="app-page-hero__title" id="roteiros-delete-title">{{ page_title }}</h1>
+        </div>
+        <div class="app-page-hero__body">
+          <div class="app-page__hero-single">
+            <div class="app-page__brand-mark" aria-hidden="true">RT</div>
+            <p class="app-page__subtitle">{{ page_description }}</p>
+          </div>
+        </div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
+      </header>
+
+      <div class="app-page__form-card">
+        <form method="post">
+          {% csrf_token %}
+          {% include "components/feedback/confirm_delete_block.html" with object_label=object.nome message="Esta ação excluirá o roteiro e seus trechos cadastrados. Se houver vínculos com outros registros, a exclusão será bloqueada." primary_label="Excluir roteiro" back_url=back_url only %}
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

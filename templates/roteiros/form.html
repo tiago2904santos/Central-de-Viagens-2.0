@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+  <div class="app-page">
+    <div class="app-page__shell">
+      <header class="app-page-hero app-page-hero--hybrid app-page-hero--compact" aria-labelledby="roteiros-form-title">
+        <div class="app-page-hero__stage">
+          <span class="app-page-hero__eyebrow">Roteiros</span>
+          <h1 class="app-page-hero__title" id="roteiros-form-title">{{ page_title }}</h1>
+        </div>
+        <div class="app-page-hero__body">
+          <div class="app-page__hero-top">
+            <div class="app-page__brand">
+              <div class="app-page__brand-mark" aria-hidden="true">RT</div>
+              <div class="app-page__brand-copy">
+                <p class="app-page__subtitle">{{ page_description }}</p>
+              </div>
+            </div>
+            {% if is_edit and delete_url %}
+              <div class="app-page__hero-actions">
+                {% include "components/buttons/action_button.html" with href=delete_url label="Excluir" variant="danger" only %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="app-page-hero__ribbon" aria-hidden="true"></div>
+      </header>
+
+      <div class="app-page__form-card">
+        <form class="form-shell" method="post" novalidate>
+          {% csrf_token %}
+          <div class="form-section">
+            {% include "components/forms/form_section.html" with title="Dados do roteiro" description="Informe a identificação, origem, destino principal e período do trajeto." only %}
+            <div class="form-grid">
+              <div class="field-span-12">
+                {% include "components/forms/form_field.html" with field=form.nome only %}
+              </div>
+              <div class="field-span-12">
+                {% include "components/forms/form_field.html" with field=form.descricao only %}
+              </div>
+              {% include "components/forms/form_field.html" with field=form.origem only %}
+              {% include "components/forms/form_field.html" with field=form.destino only %}
+              {% include "components/forms/form_field.html" with field=form.data_inicio label="Data inicial" only %}
+              {% include "components/forms/form_field.html" with field=form.data_fim label="Data final" only %}
+              <div class="field-span-12">
+                {% include "components/forms/form_field.html" with field=form.observacoes only %}
+              </div>
+            </div>
+          </div>
+          {% include "components/forms/form_actions.html" with primary_label=submit_label secondary_label="Voltar" secondary_url=back_url only %}
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

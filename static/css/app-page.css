@@ -402,6 +402,17 @@
   padding: var(--space-5);
 }
 
+.app-page__list-card--flush {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.app-page__list-card--flush .list-grid {
+  padding: 0;
+}
+
 .app-page__list-card--grid .document-card {
   background: linear-gradient(
     180deg,
@@ -452,6 +463,93 @@
   background: var(--theme-btn-secondary-hover-bg);
   border-color: var(--theme-btn-secondary-hover-border);
   color: var(--theme-btn-secondary-text);
+}
+
+.roteiro-detail {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.roteiro-detail__grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.roteiro-detail__item {
+  background: var(--theme-form-section-bg);
+  border: 1px solid var(--theme-form-section-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.roteiro-detail__item--wide {
+  grid-column: 1 / -1;
+}
+
+.roteiro-detail__item dt {
+  color: var(--theme-text-subtle);
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  margin-bottom: var(--space-1);
+  text-transform: uppercase;
+}
+
+.roteiro-detail__item dd {
+  color: var(--theme-text-heading);
+  font-weight: 650;
+  margin: 0;
+}
+
+.roteiro-steps {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.roteiro-steps__item {
+  align-items: flex-start;
+  background: var(--theme-form-section-bg);
+  border: 1px solid var(--theme-form-section-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.roteiro-steps__order {
+  align-items: center;
+  background: linear-gradient(180deg, #0e5088 0%, #0b3a66 100%);
+  border-radius: var(--radius-pill);
+  color: #ffffff;
+  display: inline-flex;
+  flex: 0 0 36px;
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  height: 36px;
+  justify-content: center;
+}
+
+.roteiro-steps__content {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.roteiro-steps__content h3 {
+  color: var(--theme-text-heading);
+  font-size: var(--font-size-md);
+  margin: 0;
+}
+
+.roteiro-steps__content p {
+  color: var(--theme-text-muted);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.roteiro-detail__empty {
+  margin: 0;
 }
 
 /* Exclusão: page-card interno */
@@ -533,5 +631,9 @@
 
   .app-page__form-card {
     padding: var(--space-5);
+  }
+
+  .roteiro-detail__grid {
+    grid-template-columns: 1fr;
   }
 }

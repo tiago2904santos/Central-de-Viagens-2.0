@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse
@@ -12,6 +13,9 @@ from roteiros.selectors import listar_trechos_do_roteiro
 @override_settings(ALLOWED_HOSTS=["testserver", "localhost"])
 class RoteirosBaseTests(TestCase):
     def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="roteiros_tester", password="teste")
+        self.client.force_login(self.user)
         self.estado_origem, _ = Estado.objects.get_or_create(sigla="PR", defaults={"nome": "PARANA"})
         self.estado_destino, _ = Estado.objects.get_or_create(sigla="SC", defaults={"nome": "SANTA CATARINA"})
         self.origem, _ = Cidade.objects.get_or_create(nome="CURITIBA", estado=self.estado_origem)
@@ -29,6 +33,74 @@ class RoteirosBaseTests(TestCase):
     def test_get_roteiros_retorna_200(self):
         response = self.client.get(reverse("roteiros:index"))
         self.assertEqual(response.status_code, 200)
+
+    def test_get_novo_roteiro_retorna_200(self):
+        response = self.client.get(reverse("roteiros:novo"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Novo roteiro")
+
+    def test_post_valido_cria_roteiro(self):
+        response = self.client.post(
+            reverse("roteiros:novo"),
+            {
+                "nome": "Roteiro institucional",
+                "descricao": "Trajeto de teste",
+                "origem": self.origem.pk,
+                "destino": self.destino.pk,
+                "data_inicio": "2026-05-05",
+                "data_fim": "2026-05-06",
+                "observacoes": "Observacao",
+            },
+        )
+
+        roteiro = Roteiro.objects.get(nome="Roteiro institucional")
+        self.assertRedirects(response, reverse("roteiros:detalhe", args=[roteiro.pk]))
+        self.assertEqual(roteiro.origem, self.origem)
+        self.assertEqual(roteiro.destino, self.destino)
+
+    def test_get_detalhe_roteiro_retorna_200(self):
+        roteiro = self.criar_roteiro()
+        response = self.client.get(reverse("roteiros:detalhe", args=[roteiro.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Roteiro litoral sul")
+
+    def test_get_editar_roteiro_retorna_200(self):
+        roteiro = self.criar_roteiro()
+        response = self.client.get(reverse("roteiros:editar", args=[roteiro.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Editar roteiro")
+
+    def test_post_editar_atualiza_roteiro(self):
+        roteiro = self.criar_roteiro()
+        response = self.client.post(
+            reverse("roteiros:editar", args=[roteiro.pk]),
+            {
+                "nome": "Roteiro litoral atualizado",
+                "descricao": "Descricao atualizada",
+                "origem": self.origem.pk,
+                "destino": self.destino.pk,
+                "data_inicio": "",
+                "data_fim": "",
+                "observacoes": "",
+            },
+        )
+
+        roteiro.refresh_from_db()
+        self.assertRedirects(response, reverse("roteiros:detalhe", args=[roteiro.pk]))
+        self.assertEqual(roteiro.nome, "Roteiro litoral atualizado")
+        self.assertEqual(roteiro.descricao, "Descricao atualizada")
+
+    def test_get_excluir_roteiro_retorna_confirmacao(self):
+        roteiro = self.criar_roteiro()
+        response = self.client.get(reverse("roteiros:excluir", args=[roteiro.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Excluir roteiro")
+
+    def test_post_excluir_remove_roteiro(self):
+        roteiro = self.criar_roteiro()
+        response = self.client.post(reverse("roteiros:excluir", args=[roteiro.pk]))
+        self.assertRedirects(response, reverse("roteiros:index"))
+        self.assertFalse(Roteiro.objects.filter(pk=roteiro.pk).exists())
 
     def test_listagem_vazia_retorna_200(self):
         response = self.client.get(reverse("roteiros:index"))
