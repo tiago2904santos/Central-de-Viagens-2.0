@@ -61,7 +61,7 @@
 
 .field {
   display: grid;
-  gap: 6px;
+  gap: var(--space-field-gap);
 }
 
 .field-check {
@@ -79,19 +79,19 @@
 .form-control {
   background: var(--color-input-bg);
   border-color: var(--color-input-border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-inner);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-inner-light);
   color: var(--color-input-text);
-  min-height: 44px;
+  min-height: var(--control-height-md);
   width: 100%;
 }
 
 .form-select {
   background: var(--color-input-bg);
   border-color: var(--color-input-border);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   color: var(--color-input-text);
-  min-height: 44px;
+  min-height: var(--control-height-md);
   width: 100%;
 }
 
@@ -144,7 +144,7 @@
   min-height: 84px;
   padding: var(--space-4);
   position: relative;
-  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  transition: background var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
   width: 100%;
 }
 
@@ -170,7 +170,7 @@
   align-items: center;
   background: rgba(180, 35, 24, 0.1);
   border: 1px solid rgba(180, 35, 24, 0.18);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   color: #9b2c22;
   display: inline-flex;
   font-size: var(--font-size-sm);
@@ -230,7 +230,7 @@
     linear-gradient(135deg, rgba(227, 240, 251, 0.98), rgba(255, 243, 207, 0.82)),
     var(--color-info-soft);
   border-color: rgba(21, 91, 154, 0.48);
-  box-shadow: 0 10px 24px rgba(11, 58, 102, 0.12);
+  box-shadow: var(--shadow-soft);
 }
 
 .app-card-toggle.is-checked .app-card-toggle__icon {

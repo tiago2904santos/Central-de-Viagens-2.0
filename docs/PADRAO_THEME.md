@@ -26,6 +26,16 @@ Garantir alternancia de tema com persistencia e sem piscar tema incorreto no car
 - Nao mover regra de tema para JS inline em template.
 - Nao alterar visual de `roteiros/novo/` ao mexer em tokens/tema.
 - Sidebar institucional deve manter identidade azul + destaque dourado.
+- Priorizar troca de valor por tema no token (`theme.css`) em vez de override de componente por seletor de tema.
+- Override especifico de tema so permanece para casos excepcionais (Leaflet/componentes externos/contraste especial).
+
+## Tokens semanticos obrigatorios por tema
+
+- Superficie: `--color-bg`, `--color-shell`, `--color-surface`, `--color-card`, `--color-panel`.
+- Borda: `--color-border`, `--color-border-soft`, `--color-border-strong`.
+- Texto: `--color-text`, `--color-text-muted`, `--color-text-soft`, `--color-heading`, `--color-label`, `--color-help`.
+- Formulario: `--color-input-bg`, `--color-input-border`, `--color-input-text`, `--color-input-placeholder`, `--color-input-disabled-bg`, `--color-input-disabled-text`.
+- Estados: `--color-primary`, `--color-primary-dark`, `--color-accent`, `--color-danger`, `--color-danger-bg`, `--color-danger-text`, `--color-info-bg`, `--color-info-border`, `--color-info-text`.
 
 ## Checklist visual por tema
 

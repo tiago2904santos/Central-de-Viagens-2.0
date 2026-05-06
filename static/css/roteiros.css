@@ -1,10 +1,17 @@
-/* Roteiros — editor step 3 alinhado ao design system (--theme-*) e aos 4 temas */
+/* ==========================================================================
+   ROTEIROS — EDITOR AVULSO
+   Engenharia de CSS: tokenizacao sem alterar contrato visual da tela.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Shell principal
+   -------------------------------------------------------------------------- */
 
 /* Superfície principal do formulário (página novo roteiro): entre o hero e os cards internos */
 .app-page__shell > .roteiro-form-shell {
   background: var(--color-card);
   border: 1px solid var(--color-border);
-  border-radius: 22px;
+  border-radius: var(--radius-shell);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.65) inset,
     0 20px 44px rgba(15, 34, 54, 0.1);
@@ -16,15 +23,15 @@
 .roteiro-form--legacy-step3 .oficio-wizard-footer-actions .btn,
 .oficio-step3-page .oficio-wizard-footer-actions .btn,
 .roteiro-editor__actions .btn {
-  border-radius: 999px;
-  min-height: 44px;
+  border-radius: var(--radius-pill);
+  min-height: var(--control-height-md);
   padding-left: var(--space-5);
   padding-right: var(--space-5);
 }
 
 .roteiro-form--legacy-step3 .btn-adicionar-destino,
 .oficio-step3-page #btn-adicionar-destino {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 /* Shell do wizard: sem “buraco” visual; intro legível em todos os temas */
@@ -41,6 +48,10 @@
 .roteiro-editor .app-page-shell__inner.oficio-wizard-shell {
   gap: var(--space-4);
 }
+
+/* --------------------------------------------------------------------------
+   2. Cabecalhos de secao
+   -------------------------------------------------------------------------- */
 
 /* Intro compacto */
 .roteiro-editor__intro {
@@ -74,7 +85,7 @@
   display: block;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--letter-spacing-eyebrow);
   margin-bottom: var(--space-2);
   text-transform: uppercase;
 }
@@ -182,7 +193,7 @@
 }
 
 .roteiro-editor--avulso .oficio-stage-form {
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .roteiro-editor--avulso .roteiro-editor__section {
@@ -198,9 +209,9 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-block {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid rgba(11, 58, 102, 0.14);
-  border-radius: 18px;
+  border-radius: var(--radius-section);
   box-shadow: 0 18px 36px rgba(15, 34, 54, 0.08);
   overflow: hidden;
   padding: 0;
@@ -219,16 +230,16 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-eyebrow {
-  color: #ffffff;
+  color: var(--color-white);
   font-size: 10px;
   font-weight: 900;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--letter-spacing-eyebrow);
   line-height: 1;
   margin-bottom: 12px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-title {
-  color: #ffffff;
+  color: var(--color-white);
   font-size: clamp(1rem, 2.1vw, 1.15rem);
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -247,7 +258,7 @@
 .roteiro-mapa__city-tooltip {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(15, 95, 143, 0.25);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
   color: #073b5c;
   font-size: 11px;
@@ -275,7 +286,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__section-title {
-  color: #1c3148;
+  color: var(--color-heading);
   font-size: 16px;
   font-weight: 900;
   letter-spacing: 0;
@@ -283,7 +294,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__section-desc {
-  color: #58708a;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
@@ -307,6 +318,10 @@
   margin-bottom: 8px;
   text-transform: uppercase;
 }
+
+/* --------------------------------------------------------------------------
+   3. Fonte do roteiro e estrutura de campos
+   -------------------------------------------------------------------------- */
 
 /* Grid de campos */
 .roteiro-editor__grid {
@@ -432,7 +447,7 @@
 
 .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-grid {
   align-items: stretch;
-  gap: 12px;
+  gap: var(--space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-bottom: 14px !important;
 }
@@ -443,7 +458,7 @@
   border: 1px solid #d2deea;
   border-radius: var(--radius-md);
   box-shadow: 0 8px 18px rgba(28, 49, 72, 0.05);
-  gap: 12px;
+  gap: var(--space-3);
   height: 100%;
   transition:
     border-color 150ms ease,
@@ -511,7 +526,7 @@
     0 1px 0 rgba(255, 255, 255, 0.7) inset,
     0 8px 18px rgba(28, 49, 72, 0.05);
   margin-top: 6px;
-  padding: 16px;
+  padding: var(--space-card-y);
 }
 
 .roteiro-editor--avulso .roteiro-editor__routes-panel-title {
@@ -542,12 +557,12 @@
   border-radius: var(--radius-sm);
   color: var(--theme-input-text);
   font-size: 14px;
-  min-height: 44px;
+  min-height: var(--control-height-md);
   padding: 0 var(--space-4);
 }
 
 .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__input {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid #cfddeb;
   border-radius: var(--radius-sm);
   min-height: 42px;
@@ -595,7 +610,7 @@
 }
 
 .roteiro-editor--avulso .oficio-step3-route-item {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid #d7e2ee;
   border-radius: var(--radius-md);
   padding: 12px 13px;
@@ -612,7 +627,7 @@
 }
 
 .roteiro-editor--avulso .oficio-step3-route-item:hover {
-  background: #ffffff;
+  background: var(--color-card);
   border-color: #afc8dc;
   box-shadow: 0 8px 14px rgba(23, 50, 77, 0.08);
 }
@@ -696,7 +711,7 @@
 .roteiro-editor__chip {
   background: rgba(11, 58, 102, 0.08);
   border: 1px solid var(--theme-border-card);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--theme-text-muted-strong);
   display: inline-block;
   font-size: 11px;
@@ -741,6 +756,10 @@
   opacity: 0.55;
   pointer-events: none;
 }
+
+/* --------------------------------------------------------------------------
+   4. Sede e destinos
+   -------------------------------------------------------------------------- */
 
 /* Destinos */
 .roteiro-editor__destinos-stack {
@@ -792,7 +811,7 @@
   align-items: center;
   background: var(--theme-surface-card-soft);
   border: 1px solid var(--theme-border-card);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--theme-text-muted);
   cursor: grab;
   display: inline-flex;
@@ -830,8 +849,8 @@
   align-items: center;
   background: #c93636;
   border: 1px solid #b72a2a;
-  border-radius: 999px;
-  color: #ffffff;
+  border-radius: var(--radius-pill);
+  color: var(--color-white);
   display: inline-flex;
   font-size: 18px;
   font-weight: 700;
@@ -880,7 +899,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__nest-title {
-  color: #1c3148;
+  color: var(--color-heading);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.04em;
@@ -889,7 +908,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__nest-desc {
-  color: #58708a;
+  color: var(--color-text-muted);
   font-size: 12px;
   line-height: 1.45;
   margin: 0 0 12px;
@@ -897,11 +916,11 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-stack {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid #dbe4ef;
-  border-radius: 14px;
+  border-radius: var(--radius-control-lg);
   box-shadow: 0 10px 22px rgba(28, 49, 72, 0.04);
-  gap: 14px;
+  gap: calc(var(--space-3) + 2px);
   padding: 16px 18px 10px;
 }
 
@@ -950,12 +969,12 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__drag-handle {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid #d8e1ec;
   border-radius: var(--radius-md);
   color: #17324d;
   font-size: 0;
-  height: 44px;
+  height: var(--control-height-md);
   width: 150px;
 }
 
@@ -973,10 +992,10 @@
 
 .roteiro-editor--avulso .roteiro-editor__destination-fields .form-select,
 .roteiro-editor--avulso .roteiro-editor__destination-fields select {
-  border-radius: 14px;
+  border-radius: var(--radius-control-lg);
   font-size: 13px;
   font-weight: 800;
-  min-height: 44px;
+  min-height: var(--control-height-md);
   padding-left: 16px;
 }
 
@@ -984,10 +1003,10 @@
   background: #c93636;
   border: 1px solid #b72a2a;
   border-radius: var(--radius-md);
-  color: #ffffff;
+  color: var(--color-white);
   font-size: 0;
   font-weight: 900;
-  height: 44px;
+  height: var(--control-height-md);
   min-width: 0;
   width: 150px;
 }
@@ -1037,6 +1056,10 @@
     width: 100%;
   }
 }
+
+/* --------------------------------------------------------------------------
+   5. Bate-volta diário
+   -------------------------------------------------------------------------- */
 
 /* Trechos */
 .roteiro-editor__trechos-wrap {
@@ -1109,6 +1132,10 @@
 }
 
 
+/* --------------------------------------------------------------------------
+   7. Retorno final
+   -------------------------------------------------------------------------- */
+
 /* Retorno */
 #retorno-card .roteiro-editor__grid {
   align-items: start;
@@ -1122,7 +1149,7 @@
   --bs-gutter-x: 16px;
   --bs-gutter-y: 16px;
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
 }
@@ -1158,7 +1185,7 @@
 }
 
 .roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid #d8e1ec;
   border-radius: var(--radius-md);
   box-shadow: none;
@@ -1173,12 +1200,12 @@
 }
 
 .roteiro-editor--avulso #retorno-card .form-control {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid #d8e1ec;
-  border-radius: 14px;
+  border-radius: var(--radius-control-lg);
   color: #17324d;
   font-size: 14px;
-  min-height: 44px;
+  min-height: var(--control-height-md);
   padding-left: 14px;
   padding-right: 14px;
 }
@@ -1192,12 +1219,12 @@
   background: #f7fbff;
   border: solid 1px var(--theme-border-card);
   border-radius: var(--radius-md);
-  gap: 14px;
-  padding: 20px;
+  gap: calc(var(--space-3) + 2px);
+  padding: var(--space-5);
 }
 
 .roteiro-editor--avulso #retorno-card .oficio-step3-time-calc-grid .form-control {
-  background: #ffffff;
+  background: var(--color-card);
 }
 
 .roteiro-editor--avulso .oficio-step3-trecho-card .card-header {
@@ -1211,7 +1238,7 @@
   --bs-gutter-x: 16px;
   --bs-gutter-y: 16px;
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-left: 0;
   margin-right: 0;
@@ -1248,7 +1275,7 @@
 }
 
 .roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid #d8e1ec;
   border-radius: var(--radius-md);
   box-shadow: none;
@@ -1263,12 +1290,12 @@
 }
 
 .roteiro-editor--avulso .oficio-step3-trecho-card .form-control {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid #d8e1ec;
-  border-radius: 14px;
+  border-radius: var(--radius-control-lg);
   color: #17324d;
   font-size: 14px;
-  min-height: 44px;
+  min-height: var(--control-height-md);
   padding-left: 14px;
   padding-right: 14px;
 }
@@ -1282,12 +1309,12 @@
   background: #f7fbff;
   border: solid 1px var(--theme-border-card);
   border-radius: var(--radius-md);
-  gap: 14px;
-  padding: 20px;
+  gap: calc(var(--space-3) + 2px);
+  padding: var(--space-5);
 }
 
 .roteiro-editor--avulso .oficio-step3-trecho-card .oficio-step3-time-calc-grid .form-control {
-  background: #ffffff;
+  background: var(--color-card);
 }
 
 
@@ -1299,6 +1326,10 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* --------------------------------------------------------------------------
+   8. Calculadora de diarias
+   -------------------------------------------------------------------------- */
 
 /* Calculadora */
 .roteiro-editor__diarias {
@@ -1320,7 +1351,7 @@
   display: block;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--letter-spacing-eyebrow);
   margin-bottom: var(--space-2);
   text-transform: uppercase;
 }
@@ -1422,6 +1453,10 @@
   display: none !important;
 }
 
+/* --------------------------------------------------------------------------
+   9. Acoes do formulario
+   -------------------------------------------------------------------------- */
+
 /* Barra de ações */
 .roteiro-editor__actions {
   align-items: center;
@@ -1495,7 +1530,7 @@
 .roteiro-editor--avulso .roteiro-editor__section {
   background: #f8fbff;
   border: 1px solid rgba(210, 224, 238, 0.95);
-  border-radius: 18px;
+  border-radius: var(--radius-section);
   box-shadow: 0 14px 30px rgba(15, 34, 54, 0.08);
   border-bottom: 0;
   overflow: hidden;
@@ -1580,7 +1615,7 @@
 
 .roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header .roteiro-editor__section-title,
 .roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header .roteiro-editor__section-desc {
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .roteiro-editor--avulso .roteiro-editor__section:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header .roteiro-editor__section-desc {
@@ -1608,18 +1643,18 @@
 .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid,
 .roteiro-editor--avulso .roteiro-editor__section--bate-volta > .roteiro-editor__panel-surface,
 .roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__diarias {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid #dbe4ef;
   border-radius: var(--radius-md);
   box-shadow: 0 8px 20px rgba(28, 49, 72, 0.05);
   margin: 0;
-  padding: 16px;
+  padding: var(--space-card-y);
 }
 
 .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid {
   column-gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  row-gap: 12px;
+  row-gap: var(--space-3);
 }
 
 .roteiro-editor--avulso .roteiro-editor__nest-block--sede .roteiro-editor__sede-card-header {
@@ -1681,7 +1716,7 @@
 
 .roteiro-editor--avulso #bate-volta-panel.row {
   display: grid;
-  gap: 14px;
+  gap: calc(var(--space-3) + 2px);
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-left: 0;
   margin-right: 0;
@@ -1702,7 +1737,7 @@
   align-items: flex-start;
   background: linear-gradient(180deg, #f9fcff 0%, #f4f9ff 100%);
   border: 1px dashed #d8e3ef;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   gap: 0;
   min-height: 0;
   padding: 13px 15px;
@@ -1726,7 +1761,7 @@
 
 .roteiro-editor--avulso .roteiro-editor__diarias-head {
   align-items: center;
-  gap: 14px;
+  gap: calc(var(--space-3) + 2px);
 
 }
 
@@ -1745,7 +1780,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__diarias-subtitle {
-  color: #58708a;
+  color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.35;
@@ -1780,19 +1815,19 @@
 
 .roteiro-editor--avulso .roteiro-editor__diarias-finance-grid {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .roteiro-editor--avulso .roteiro-editor__summary-stack {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
   grid-template-columns: 1fr;
 }
 
 .roteiro-editor--avulso .roteiro-editor__summary-item {
   border: 1px solid #d7e4ef;
-  border-radius: 14px;
+  border-radius: var(--radius-control-lg);
   box-shadow: 0 10px 20px rgba(15, 34, 54, 0.05);
   padding: 14px 16px;
 }
@@ -1931,11 +1966,15 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
   }
 }
 
+/* --------------------------------------------------------------------------
+   6. Mapa da rota
+   -------------------------------------------------------------------------- */
+
 /* Mapa do roteiro (Leaflet) */
 .roteiro-editor__map-card {
   margin-top: 2px;
   margin-bottom: var(--space-3);
-  border-radius: 18px;
+  border-radius: var(--radius-section);
   border: 1px solid rgba(11, 58, 102, 0.14);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.82) inset,
@@ -1975,7 +2014,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
 }
 
 .roteiro-mapa__section-head .roteiro-editor__section-title {
-  color: #ffffff;
+  color: var(--color-white);
   margin: 0;
   font-size: clamp(1.08rem, 1.6vw, 1.22rem);
   letter-spacing: -0.01em;
@@ -2004,7 +2043,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
   margin-bottom: 16px;
   padding: 0 2px;
 }
@@ -2019,7 +2058,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
 .roteiro-mapa__title-icon {
   align-items: center;
   background: rgba(32, 126, 191, 0.1);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: #0f5f8f;
   display: inline-flex;
   flex: 0 0 auto;
@@ -2087,7 +2126,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
 }
 
 .roteiro-mapa__action-btn {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.01em;
@@ -2110,7 +2149,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.18) inset,
     0 10px 22px rgba(11, 58, 102, 0.24);
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .roteiro-mapa__action-btn--primary:hover,
@@ -2120,7 +2159,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.22) inset,
     0 12px 24px rgba(11, 58, 102, 0.28);
-  color: #ffffff;
+  color: var(--color-white);
   transform: translateY(-1px);
 }
 
@@ -2133,7 +2172,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
 
 .roteiro-mapa__action-btn--secondary:hover,
 .roteiro-mapa__action-btn--secondary:focus-visible {
-  background: #ffffff;
+  background: var(--color-card);
   border-color: rgba(255, 255, 255, 0.72);
   color: #0b3457;
   transform: translateY(-1px);
@@ -2176,7 +2215,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
   margin: 18px 18px;
   padding: 18px 18px;
   border: 1px solid rgba(191, 211, 229, 0.78);
-  border-radius: 14px;
+  border-radius: var(--radius-control-lg);
   background:
     linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   box-shadow: 0 8px 18px rgba(28, 49, 72, 0.05);
@@ -2223,7 +2262,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
     0 12px 24px rgba(30, 66, 99, 0.1);
-  padding: 18px;
+  padding: var(--space-section-y);
   margin: 18px 18px;
 }
 
@@ -2247,7 +2286,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
   .roteiro-mapa__section-head {
     align-items: flex-start;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-3);
     padding: 14px 16px 16px;
   }
 

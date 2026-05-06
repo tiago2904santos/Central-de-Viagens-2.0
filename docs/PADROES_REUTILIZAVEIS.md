@@ -36,6 +36,9 @@ Centralizar contratos reutilizaveis para evitar duplicacao entre modulos.
 ### 3) Tokens e tema
 - Usar variaveis CSS em `tokens.css` + `theme.css`.
 - Evitar hardcode de cor quando existir token equivalente.
+- Se valor repetir, criar token semantico (nao criar nome tecnico sem significado).
+- Organizar CSS por secoes documentadas com comentarios de intencao.
+- Em `roteiros.css`, preservar contrato visual do wizard: refactor so de organizacao/tokenizacao.
 
 ## Regras de nao regressao
 

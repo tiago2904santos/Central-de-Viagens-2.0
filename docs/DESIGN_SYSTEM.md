@@ -11,6 +11,15 @@
 - Proibido `href="#"` para acao visual.
 - Inicializacao de tema deve ocorrer por `static/js/core/theme-init.js` (sem `<script>` inline no `base.html`).
 - A **tela de login** usa layout proprio (sem sidebar): classes em `static/css/auth.css` (prefixo `auth-`), importado tambem em `style.css`; ver `docs/AUTENTICACAO.md`.
+- Se um valor CSS aparece em mais de um ponto relevante, ele deve virar token semantico (`--color-*`, `--radius-*`, `--space-*`, `--shadow-*`, `--control-*`, `--font-*`).
+- Evitar valor bruto em componente (`999px`, `#ffffff`, sombras repetidas); usar token semantico equivalente.
+
+## Tokenizacao semantica (refactor)
+
+- Tokens globais vivem em `static/css/tokens.css`.
+- Variacao por tema vive em `static/css/theme.css`.
+- Compatibilidade com legado `--theme-*` deve ser mantida via alias quando necessario (sem quebra abrupta).
+- Cada arquivo CSS deve ser organizado por secoes com comentarios de contexto (shell, secoes, mapa, overrides, responsividade).
 
 ## Padrao visual premium
 

@@ -11,10 +11,24 @@
  */
 
 :root {
+  /* --------------------------------------------------------------------------
+     Tokens semanticos globais (default: light-light)
+     -------------------------------------------------------------------------- */
+  --color-shell: var(--color-bg);
   --color-card: var(--color-surface);
+  --color-card-soft: var(--color-surface-soft);
   --color-card-muted: var(--color-surface-soft);
+  --color-panel: var(--color-surface);
+  --color-panel-strong: var(--color-surface-strong);
   --color-text-muted: var(--color-muted);
   --color-text-soft: var(--color-subtle);
+  --color-label: var(--color-muted-strong);
+  --color-help: var(--color-subtle);
+  --color-danger-bg: var(--color-danger-soft);
+  --color-danger-text: var(--color-danger);
+  --color-info-bg: var(--color-info-soft);
+  --color-info-border: rgba(21, 91, 154, 0.24);
+  --color-info-text: var(--color-primary);
   --shadow-card: var(--shadow-md);
   --shadow-soft: var(--shadow-sm);
   --color-surface-strong: var(--color-surface-muted);
@@ -23,6 +37,7 @@
   --color-input-text: var(--color-text);
   --color-input-placeholder: var(--color-text-soft);
   --color-input-border: var(--color-border);
+  --color-primary-dark: var(--color-primary-strong);
 
   /* Aliases estáveis (tokens.css) — não dependem do tema visual featured */
   --color-bg-app: var(--color-bg);
@@ -34,6 +49,8 @@
   --color-text-muted: var(--color-muted);
   --color-border-ui: var(--color-border);
   --color-border-ui-soft: var(--color-border-soft);
+  --theme-surface-card: var(--color-card);
+  --theme-border-card: var(--color-border);
 
   /* Sidebar institucional — idêntica nos 4 temas */
   --sidebar-surface: linear-gradient(180deg, #062847 0%, #031c33 100%);
