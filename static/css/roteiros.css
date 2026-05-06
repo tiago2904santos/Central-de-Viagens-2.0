@@ -1108,9 +1108,6 @@
   margin: 0 0 var(--space-3);
 }
 
-.roteiro-editor__btn-pill.btn-calcular-km {
-  border-radius: 999px;
-}
 
 /* Retorno */
 #retorno-card .roteiro-editor__grid {
@@ -1293,18 +1290,6 @@
   background: #ffffff;
 }
 
-.roteiro-editor--avulso .oficio-step3-trecho-card .btn-calcular-km {
-  background: #f3f8fc;
-  border-color: #bdd0e2;
-  border-radius: var(--radius-md);
-  color: #173e66;
-  font-size: 13px;
-  font-weight: 900;
-  margin-top: 10px;
-  min-height: 38px;
-  padding-left: 14px;
-  padding-right: 14px;
-}
 
 @media (max-width: 991.98px) {
   .roteiro-editor--avulso #retorno-card .row.g-3,
