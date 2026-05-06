@@ -1,5 +1,12 @@
 (function () {
   'use strict';
+  var DEBUG_AUTOSAVE = !!window.DEBUG_AUTOSAVE;
+  function debug() {
+    if (!DEBUG_AUTOSAVE) return;
+    var args = Array.prototype.slice.call(arguments);
+    args.unshift('[autosave]');
+    console.debug.apply(console, args);
+  }
 
   function csrfFromForm(form) {
     var tokenInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
@@ -90,6 +97,7 @@
       if (!url) return Promise.resolve(false);
 
       var payload = buildPayload();
+      debug('enviando payload', payload);
       if (!payload.dirty_fields.length && !dirtySnapshots.size) return Promise.resolve(false);
       if (!shouldCreate(payload)) return Promise.resolve(false);
       if (inFlight) {
@@ -111,18 +119,24 @@
         body: JSON.stringify(payload),
         signal: abortController.signal
       }).then(function (response) {
+        var contentType = (response.headers && response.headers.get('content-type')) || '';
+        if (contentType.indexOf('application/json') === -1) {
+          throw new Error('Resposta inválida do servidor de autosave.');
+        }
         return response.json().then(function (data) {
           if (!response.ok || !data.ok) throw new Error((data && data.message) || 'Falha no autosave.');
           dirtyFields.clear();
           dirtySnapshots.clear();
           applyCreation(data);
           setState('saved');
+          debug('resposta sucesso', response.status, data);
           emit('autosave:success', data);
           return true;
         });
       }).catch(function (error) {
         if (error && error.name === 'AbortError') return false;
         setState('error');
+        console.error('[autosave] erro', error);
         emit('autosave:error', { message: error && error.message ? error.message : 'Falha no autosave.' });
         return false;
       }).finally(function () {
@@ -139,6 +153,11 @@
     function schedule(delay) {
       if (paused || submitting) return;
       window.clearTimeout(inputTimer);
+      debug('agendando save', {
+        formId: form.id || '',
+        dirtyFields: Array.from(dirtyFields),
+        dirtySnapshots: Array.from(dirtySnapshots)
+      });
       inputTimer = window.setTimeout(send, typeof delay === 'number' ? delay : 1200);
     }
 
@@ -155,14 +174,16 @@
       var target = event.target;
       if (!target || !target.name || target.type === 'hidden') return;
       markDirty(target.name);
+      debug('campo alterado', { name: target.name, id: target.id || '', value: fieldValue(target) });
       schedule(1200);
-    });
+    }, true);
     form.addEventListener('change', function (event) {
       var target = event.target;
       if (!target || !target.name) return;
       markDirty(target.name);
+      debug('campo alterado', { name: target.name, id: target.id || '', value: fieldValue(target) });
       schedule(900);
-    });
+    }, true);
     form.addEventListener('blur', function (event) {
       var target = event.target;
       if (!target || !target.name) return;
@@ -187,6 +208,7 @@
       if (!shouldCreate(payload)) return;
       var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
       navigator.sendBeacon(url, blob);
+      debug('sendBeacon disparado');
     });
 
     return {
@@ -205,9 +227,19 @@
   var forms = new WeakMap();
   window.AppAutosave = {
     init: function () {
+      debug('arquivo carregado');
+      debug('init executado');
       var nodes = document.querySelectorAll('form[data-autosave="true"]');
+      debug('forms encontrados', nodes.length);
       nodes.forEach(function (form) {
         if (forms.has(form)) return;
+        debug('registrando form', {
+          id: form.id || '',
+          model: form.dataset.autosaveModel || '',
+          objectId: form.dataset.autosaveObjectId || '',
+          url: form.dataset.autosaveUrl || '',
+          createUrl: form.dataset.autosaveCreateUrl || ''
+        });
         forms.set(form, createFormAutosave(form, {}));
       });
     },

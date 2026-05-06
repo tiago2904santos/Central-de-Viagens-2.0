@@ -17,6 +17,40 @@
   var urlCalcularRotaPreview = form.dataset.apiCalcularRotaPreviewUrl || '';
   var autosaveIdInput = $('id_autosave_obj_id');
   var autosaveStatus = $('roteiro-autosave-status');
+  window.AppAutosaveSnapshots = window.AppAutosaveSnapshots || {};
+  window.AppAutosaveValidators = window.AppAutosaveValidators || {};
+  window.AppAutosaveSnapshots.roteiro = function() {
+    return {
+      roteiro_state: captureCurrentState(),
+      mapa: {
+        geometry_json: (($('id_map_route_geometry_json') || {}).value || ''),
+        points_json: (($('id_map_route_points_json') || {}).value || ''),
+        distance_km: (($('id_map_route_distance_km') || {}).value || ''),
+        duration_minutes: (($('id_map_route_duration_minutes') || {}).value || ''),
+        provider: (($('id_map_route_provider') || {}).value || ''),
+        calculated_at: (($('id_map_route_calculated_at') || {}).value || '')
+      },
+      diarias: {
+        quantidade_diarias: (($('id_quantidade_diarias') || {}).value || ''),
+        valor_diarias: (($('id_valor_diarias') || {}).value || ''),
+        valor_diarias_extenso: (($('id_valor_diarias_extenso') || {}).value || '')
+      }
+    };
+  };
+  window.AppAutosaveValidators.roteiro = function(payload) {
+    if (payload.object_id) return true;
+    var fields = payload.fields || {};
+    var state = ((payload.snapshots || {}).roteiro_state) || {};
+    var destinos = state.destinos_atuais || [];
+    var trechos = state.trechos || [];
+    return !!(
+      String(fields.observacoes || '').trim() ||
+      String(fields.origem_cidade || '').trim() ||
+      String(fields.origem_estado || '').trim() ||
+      destinos.length ||
+      trechos.length
+    );
+  };
   function readJsonResponse(resp) {
     var contentType = (resp.headers && resp.headers.get('content-type')) || '';
     if (contentType.indexOf('application/json') !== -1) {
@@ -1200,40 +1234,6 @@
       window.history.replaceState({}, '', editPath);
     }
   });
-  window.AppAutosaveSnapshots = window.AppAutosaveSnapshots || {};
-  window.AppAutosaveValidators = window.AppAutosaveValidators || {};
-  window.AppAutosaveSnapshots.roteiro = function() {
-    return {
-      roteiro_state: captureCurrentState(),
-      mapa: {
-        geometry_json: (($('id_map_route_geometry_json') || {}).value || ''),
-        points_json: (($('id_map_route_points_json') || {}).value || ''),
-        distance_km: (($('id_map_route_distance_km') || {}).value || ''),
-        duration_minutes: (($('id_map_route_duration_minutes') || {}).value || ''),
-        provider: (($('id_map_route_provider') || {}).value || ''),
-        calculated_at: (($('id_map_route_calculated_at') || {}).value || '')
-      },
-      diarias: {
-        quantidade_diarias: (($('id_quantidade_diarias') || {}).value || ''),
-        valor_diarias: (($('id_valor_diarias') || {}).value || ''),
-        valor_diarias_extenso: (($('id_valor_diarias_extenso') || {}).value || '')
-      }
-    };
-  };
-  window.AppAutosaveValidators.roteiro = function(payload) {
-    if (payload.object_id) return true;
-    var fields = payload.fields || {};
-    var state = ((payload.snapshots || {}).roteiro_state) || {};
-    var destinos = state.destinos_atuais || [];
-    var trechos = state.trechos || [];
-    return !!(
-      String(fields.observacoes || '').trim() ||
-      String(fields.origem_cidade || '').trim() ||
-      String(fields.origem_estado || '').trim() ||
-      destinos.length ||
-      trechos.length
-    );
-  };
   window.RoteirosStep3 = {
     canCalculateRoutePreview: canCalculateRoutePreview,
     buildRoutePreviewPayload: buildRoutePreviewPayload,
