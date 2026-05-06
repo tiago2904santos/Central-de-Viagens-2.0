@@ -370,13 +370,26 @@
     var tvInput = card.querySelector('.trecho-tempo-viagem-hhmm');
     var addInput = card.querySelector('[name="trecho_' + o + '_tempo_adicional_min"]');
     var durInput = card.querySelector('[name="trecho_' + o + '_duracao_estimada_min"]');
-    if (tvInput) { var norm = normalizeDurationInput(tvInput.value); if (document.activeElement !== tvInput) tvInput.value = norm; var parsed = parseDurationInput(norm); if (cruInput) cruInput.value = parsed != null ? String(parsed) : ''; }
+    if (tvInput) {
+      var norm = normalizeDurationInput(tvInput.value);
+      var parsed = parseDurationInput(norm);
+      var cruAtual = parseInt((cruInput || {}).value || 0, 10) || 0;
+      if (document.activeElement === tvInput) {
+        if (cruInput) cruInput.value = parsed != null ? String(parsed) : '';
+      } else if (cruAtual > 0) {
+        tvInput.value = formatDurationInput(cruAtual);
+      } else if (parsed != null && parsed > 0) {
+        if (cruInput) cruInput.value = String(parsed);
+      } else {
+        tvInput.value = '';
+      }
+    }
     var cru = parseInt((cruInput || {}).value || 0, 10) || 0;
     var add = parseInt((addInput || {}).value || 0, 10); if (Number.isNaN(add) || add < 0) add = 0; if (addInput) addInput.value = String(add);
     var total = cru + add;
     card.dataset.tempoCruMin = cru ? String(cru) : ''; card.dataset.tempoTotalMin = total ? String(total) : '';
     if (durInput) durInput.value = total ? String(total) : '';
-    if (tvInput && document.activeElement !== tvInput) tvInput.value = formatDurationInput(cru);
+    if (tvInput && document.activeElement !== tvInput) tvInput.value = cru > 0 ? formatDurationInput(cru) : '';
     var totEl = card.querySelector('.trecho-tempo-total');     if (totEl) totEl.value = total ? hhmm(total) : '';
     var sdEl = card.querySelector('[name="trecho_' + o + '_saida_data"]');
     var shEl = card.querySelector('[name="trecho_' + o + '_saida_hora"]');
@@ -401,7 +414,20 @@
   function recalcRetorno(suggestArrival) {
     var cruI = $('id_retorno_tempo_cru_estimado_min'); var tvI = $('id_retorno_tempo_viagem_hhmm');
     var addI = $('id_retorno_tempo_adicional_min'); var durI = $('id_retorno_duracao_estimada_min');
-    if (tvI) { var n2 = normalizeDurationInput(tvI.value); if (document.activeElement !== tvI) tvI.value = n2; var p2 = parseDurationInput(n2); if (cruI) cruI.value = p2 != null ? String(p2) : ''; }
+    if (tvI) {
+      var n2 = normalizeDurationInput(tvI.value);
+      var p2 = parseDurationInput(n2);
+      var cruAtual2 = parseInt((cruI || {}).value || 0, 10) || 0;
+      if (document.activeElement === tvI) {
+        if (cruI) cruI.value = p2 != null ? String(p2) : '';
+      } else if (cruAtual2 > 0) {
+        tvI.value = formatDurationInput(cruAtual2);
+      } else if (p2 != null && p2 > 0) {
+        if (cruI) cruI.value = String(p2);
+      } else {
+        tvI.value = '';
+      }
+    }
     if (cruI && String(cruI.value || '').trim() === '') {
       var sd = $('id_retorno_saida_data').value || ''; var sh = $('id_retorno_saida_hora').value || '';
       var cd = $('id_retorno_chegada_data').value || ''; var ch = $('id_retorno_chegada_hora').value || '';
@@ -410,7 +436,7 @@
     var cru2 = parseInt((cruI || {}).value || 0, 10) || 0;
     var add2 = parseInt((addI || {}).value || 0, 10); if (Number.isNaN(add2) || add2 < 0) add2 = 0; if (addI) addI.value = String(add2);
     var tot2 = cru2 + add2; if (durI) durI.value = tot2 ? String(tot2) : '';
-    if (tvI && document.activeElement !== tvI) tvI.value = formatDurationInput(cru2);
+    if (tvI && document.activeElement !== tvI) tvI.value = cru2 > 0 ? formatDurationInput(cru2) : '';
     if ($('id_retorno_tempo_total')) $('id_retorno_tempo_total').value = tot2 ? hhmm(tot2) : '';
     if (suggestArrival && $('id_retorno_saida_data') && $('id_retorno_saida_hora') && $('id_retorno_chegada_data') && $('id_retorno_chegada_hora')) {
       var rsd = $('id_retorno_saida_data').value;
@@ -471,8 +497,12 @@
       if (leg.kind === 'retorno') {
         if ($('id_retorno_distancia_km') && leg.distance_km != null) $('id_retorno_distancia_km').value = String(leg.distance_km);
         if ($('id_retorno_tempo_cru_estimado_min') && travelMinutes > 0) $('id_retorno_tempo_cru_estimado_min').value = String(travelMinutes);
+        if ($('id_retorno_tempo_viagem_hhmm') && travelMinutes > 0 && document.activeElement !== $('id_retorno_tempo_viagem_hhmm')) {
+          $('id_retorno_tempo_viagem_hhmm').value = leg.travel_hhmm || formatDurationInput(travelMinutes);
+        }
         if ($('id_retorno_rota_fonte') && leg.provider) $('id_retorno_rota_fonte').value = leg.provider;
         if ($('id_retorno_duracao_estimada_min') && totalMinutes > 0) $('id_retorno_duracao_estimada_min').value = String(totalMinutes);
+        if ($('id_retorno_tempo_total') && totalMinutes > 0) $('id_retorno_tempo_total').value = leg.total_hhmm || hhmm(totalMinutes);
         var addRet = $('id_retorno_tempo_adicional_min');
         if (addRet && (overwriteAdditional || String(addRet.value || '').trim() === '' || addRet.dataset.manual !== '1')) {
           addRet.value = String(additionalMinutes);
@@ -495,13 +525,19 @@
       var ord = card.dataset.ordem;
       var distInp = card.querySelector('[name="trecho_' + ord + '_distancia_km"]');
       var cruInp = card.querySelector('[name="trecho_' + ord + '_tempo_cru_estimado_min"]');
+      var tvInp = card.querySelector('.trecho-tempo-viagem-hhmm');
       var fonteInp = card.querySelector('[name="trecho_' + ord + '_rota_fonte"]');
       var durInp = card.querySelector('[name="trecho_' + ord + '_duracao_estimada_min"]');
       var addInp = card.querySelector('[name="trecho_' + ord + '_tempo_adicional_min"]');
+      var totalInp = card.querySelector('.trecho-tempo-total');
       if (distInp && leg.distance_km != null) distInp.value = String(leg.distance_km);
       if (cruInp && travelMinutes > 0) cruInp.value = String(travelMinutes);
+      if (tvInp && travelMinutes > 0 && document.activeElement !== tvInp) {
+        tvInp.value = leg.travel_hhmm || formatDurationInput(travelMinutes);
+      }
       if (fonteInp && leg.provider) fonteInp.value = leg.provider;
       if (durInp && totalMinutes > 0) durInp.value = String(totalMinutes);
+      if (totalInp && totalMinutes > 0) totalInp.value = leg.total_hhmm || hhmm(totalMinutes);
       if (addInp && (overwriteAdditional || String(addInp.value || '').trim() === '' || addInp.dataset.manual !== '1')) {
         addInp.value = String(additionalMinutes);
         if (overwriteAdditional) addInp.dataset.manual = '0';
