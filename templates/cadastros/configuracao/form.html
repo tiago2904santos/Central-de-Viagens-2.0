@@ -21,7 +21,13 @@
       </header>
 
       <div class="app-page__form-card">
-        <form class="form-shell" method="post" novalidate data-configuracoes-form>
+        <form
+          class="form-shell"
+          method="post"
+          novalidate
+          data-configuracoes-form
+          data-cep-lookup-url-template="{% url 'cadastros:api_consulta_cep' '00000000' %}"
+        >
           {% csrf_token %}
 
           <div class="form-section">
@@ -33,9 +39,32 @@
           </div>
 
           <div class="form-section">
-            {% include "components/forms/form_section.html" with title="Endereço dos documentos" description="Cidade utilizada no rodapé e referências dos documentos." only %}
+            {% include "components/forms/form_section.html" with title="Endereço dos documentos" description="Dados institucionais utilizados no rodapé dos documentos gerados pelo sistema." only %}
             <div class="form-grid">
-              {% include "components/forms/form_field.html" with field=form.cidade_endereco only %}
+              <div class="field-span-4">
+                {% include "components/forms/form_field.html" with field=form.cep only %}
+              </div>
+              <div class="field-span-6">
+                {% include "components/forms/form_field.html" with field=form.logradouro only %}
+              </div>
+              <div class="field-span-2">
+                {% include "components/forms/form_field.html" with field=form.numero only %}
+              </div>
+              <div class="field-span-4">
+                {% include "components/forms/form_field.html" with field=form.bairro only %}
+              </div>
+              <div class="field-span-6">
+                {% include "components/forms/form_field.html" with field=form.cidade_endereco only %}
+              </div>
+              <div class="field-span-2">
+                {% include "components/forms/form_field.html" with field=form.uf only %}
+              </div>
+              <div class="field-span-4">
+                {% include "components/forms/form_field.html" with field=form.telefone only %}
+              </div>
+              <div class="field-span-8">
+                {% include "components/forms/form_field.html" with field=form.email only %}
+              </div>
             </div>
           </div>
 

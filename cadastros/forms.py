@@ -384,18 +384,72 @@ class ConfiguracaoSistemaForm(forms.ModelForm):
 
     class Meta:
         model = ConfiguracaoSistema
-        fields = ["divisao", "unidade", "cidade_endereco"]
+        fields = [
+            "divisao",
+            "unidade",
+            "cep",
+            "logradouro",
+            "numero",
+            "bairro",
+            "cidade_endereco",
+            "uf",
+            "telefone",
+            "email",
+        ]
         widgets = {
             "divisao": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
             "unidade": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
+            "cep": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "data-mask": "cep",
+                    "inputmode": "numeric",
+                    "placeholder": "00000-000",
+                    "autocomplete": "off",
+                }
+            ),
+            "logradouro": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
+            "numero": forms.TextInput(attrs={"class": "form-control", "autocomplete": "off"}),
+            "bairro": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
             "cidade_endereco": forms.TextInput(attrs={"class": "form-control", "data-mask": "upper"}),
+            "uf": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "data-mask": "upper",
+                    "maxlength": "2",
+                    "autocomplete": "off",
+                }
+            ),
+            "telefone": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "data-mask": "telefone",
+                    "inputmode": "numeric",
+                    "placeholder": "(00) 00000-0000",
+                    "autocomplete": "off",
+                }
+            ),
+            "email": forms.EmailInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "email",
+                    "autocomplete": "off",
+                }
+            ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["divisao"].label = "Divisão"
         self.fields["unidade"].label = "Unidade"
-        self.fields["cidade_endereco"].label = "Cidade endereço"
+        self.fields["cidade_endereco"].label = "Cidade"
+        self.fields["cep"].label = "CEP"
+        self.fields["uf"].label = "UF"
+        self.fields["email"].label = "E-mail"
+
+        if self.instance and self.instance.pk and not self.data:
+            self.initial["cep"] = format_cep(self.instance.cep)
+            self.initial["telefone"] = format_telefone(self.instance.telefone)
 
         extra_ids = []
         if self.instance and self.instance.pk:
@@ -437,4 +491,32 @@ class ConfiguracaoSistemaForm(forms.ModelForm):
     def clean_cidade_endereco(self):
         raw = (self.cleaned_data.get("cidade_endereco") or "").strip()
         return " ".join(raw.split()).upper() if raw else ""
+
+    def clean_cep(self):
+        digits = only_digits(self.cleaned_data.get("cep", ""))
+        if not digits:
+            return ""
+        if len(digits) != 8:
+            raise forms.ValidationError("CEP deve conter 8 dígitos.")
+        return digits
+
+    def clean_telefone(self):
+        digits = only_digits(self.cleaned_data.get("telefone", ""))
+        if not digits:
+            return ""
+        if len(digits) not in (10, 11):
+            raise forms.ValidationError("Telefone deve ter 10 ou 11 dígitos.")
+        return digits
+
+    def clean_email(self):
+        email = (self.cleaned_data.get("email") or "").strip()
+        return email
+
+    def clean_uf(self):
+        uf = (self.cleaned_data.get("uf") or "").strip().upper()
+        if not uf:
+            return ""
+        if len(uf) != 2 or not uf.isalpha():
+            raise forms.ValidationError("UF deve conter 2 letras.")
+        return uf
 
