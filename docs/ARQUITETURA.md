@@ -77,6 +77,44 @@ Os proximos modulos devem seguir o mesmo desenho (views magras, `selectors`, `se
 Views orquestram `forms + selectors + services + presenters + messages`.
 Templates usam apenas components globais. CSS/JS por pagina seguem proibidos.
 
+## Contrato arquitetural global definitivo
+
+### Camadas obrigatorias
+
+- `models.py`: estrutura de dados, relacoes, constraints e metodos simples de dominio.
+- `forms.py`: validacao, normalizacao e widgets/classes de campos.
+- `selectors.py`: consultas reutilizaveis, `get_object_or_404`, filtros por `q`, `select_related`/`prefetch_related`.
+- `services.py` ou `services/`: criacao, atualizacao, exclusao, transacoes e regras funcionais.
+- `presenters.py`: dados para tela (titulo, subtitulo, meta, badges, actions) sem HTML.
+- `views.py`: orquestracao de request/form/selectors/services/presenters/messages/redirect/render.
+
+### Regras negativas (proibicoes)
+
+- Nao colocar regra funcional pesada em `forms.py`.
+- Nao colocar HTML em `services.py` ou `presenters.py`.
+- Nao colocar query relevante em templates.
+- Nao usar `href="#"` como acao.
+- Nao usar CSS inline/JS inline em templates.
+- Nao importar `legacy/` em runtime.
+
+### Frontend global
+
+- `templates/` com composicao por components e includes.
+- `static/css/` com tokens + base + layout + sidebar + forms + buttons + cards + lists + domain + auth + themes.
+- `static/js/` com `core`, `components` e `pages` (sem script inline no template).
+
+### Preservacao obrigatoria de Roteiros
+
+- O visual de `/roteiros/novo/` e referencia congelada.
+- Evolucoes arquiteturais podem reorganizar includes, services, selectors e presenters.
+- Nao alterar layout percebido, cores, espacamentos ou comportamento visual do wizard.
+
+### Preservacao obrigatoria de Cadastros
+
+- Manter regras atuais de CRUD, validacoes e bloqueio por `ProtectedError`.
+- Manter exclusao fisica e sem ativo/inativo publico.
+- Manter mascaras via `data-mask` e padrao de components.
+
 ## Configuracoes do sistema
 
 A tela de configuracao segue o mesmo padrao arquitetural dos cadastros:

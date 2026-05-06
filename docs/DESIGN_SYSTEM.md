@@ -9,6 +9,7 @@
 - Proibido `style=""` em templates.
 - Proibido JS inline em templates.
 - Proibido `href="#"` para acao visual.
+- Inicializacao de tema deve ocorrer por `static/js/core/theme-init.js` (sem `<script>` inline no `base.html`).
 - A **tela de login** usa layout proprio (sem sidebar): classes em `static/css/auth.css` (prefixo `auth-`), importado tambem em `style.css`; ver `docs/AUTENTICACAO.md`.
 
 ## Padrao visual premium
