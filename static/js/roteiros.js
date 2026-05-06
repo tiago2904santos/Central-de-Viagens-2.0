@@ -59,7 +59,7 @@
   var autoEstimarTimer = null;
   var citiesCache = {};
   var lastTrechosSignature = null;
-  var TRECHOS_EMPTY_HTML = '<div class="roteiro-editor__empty"><p class="roteiro-editor__empty-title">Trechos ainda não disponíveis</p><p class="roteiro-editor__empty-text">Selecione a sede e ao menos um destino para editar os trechos.</p></div>';
+  var TRECHOS_EMPTY_HTML = '<div class="roteiro-editor__empty"><p class="roteiro-editor__empty-title">Trechos ainda não disponíveis</p><p class="roteiro-editor__empty-text">Os trechos aparecem aqui após definir os destinos.</p></div>';
   function refreshSelectPickers(root) {
     if (window.OficioWizard && typeof window.OficioWizard.refreshSelectPickers === 'function') {
       window.OficioWizard.refreshSelectPickers(root || form);

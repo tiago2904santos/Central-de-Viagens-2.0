@@ -659,9 +659,7 @@ class RoteirosRoutingTests(TestCase):
         self.assertRegex(html, r'id="btn-recalcular-rota-mapa"[^>]*hidden')
         self.assertRegex(html, r'id="roteiro-mapa-loading"[^>]*hidden')
         self.assertRegex(html, r'id="roteiro-mapa-stale-hint"[^>]*hidden')
-        self.assertIn(
-            "Selecione a sede e os destinos para calcular a rota.", html
-        )
+        self.assertNotIn("Selecione a sede e os destinos para calcular a rota.", html)
 
     def test_round_trip_minutes_to_15_arredonda_para_cima(self):
         cases = [

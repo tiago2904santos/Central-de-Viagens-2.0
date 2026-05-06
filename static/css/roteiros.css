@@ -1499,12 +1499,12 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--trechos {
-  order: 4;
+  order: 5;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--retorno,
 .roteiro-editor--avulso .roteiro-editor__reference-block--retorno {
-  order: 5;
+  order: 6;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--diarias {
@@ -1512,7 +1512,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--mapa {
-  order: 6;
+  order: 4;
 }
 
 .roteiro-editor--avulso .roteiro-editor__section--diarias {
@@ -1874,6 +1874,31 @@
   overflow: hidden;
 }
 
+.roteiro-mapa__section-head {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%),
+    linear-gradient(180deg, #124872 0%, #0c3558 100%);
+  margin: 0;
+  min-height: 50px;
+  padding: 9px 20px;
+}
+
+.roteiro-mapa__section-kicker {
+  color: rgba(255, 255, 255, 0.72);
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.roteiro-mapa__section-head .roteiro-editor__section-title {
+  color: #ffffff;
+  margin: 0;
+}
+
 .roteiro-editor__map-card .card-body {
   padding: var(--space-4);
 }
@@ -1887,18 +1912,8 @@
   margin-bottom: 12px;
 }
 
-.roteiro-mapa__kicker {
-  color: var(--theme-accent-eyebrow);
-  display: block;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-}
-
 .roteiro-mapa__title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 800;
   color: var(--theme-text-heading);
   margin: 0;
@@ -1944,8 +1959,8 @@
 }
 
 .roteiro-mapa__frame {
-  min-height: 720px;
-  height: 720px;
+  min-height: 660px;
+  height: 660px;
   width: 100%;
   border-radius: 12px;
   overflow: hidden;
@@ -1956,8 +1971,8 @@
 
 .roteiro-mapa__frame #map,
 .roteiro-mapa__frame .leaflet-container {
-  min-height: 720px;
-  height: 720px;
+  min-height: 660px;
+  height: 660px;
 }
 
 .roteiro-mapa__frame--placeholder {
@@ -1968,12 +1983,6 @@
 .roteiro-mapa__btn--blocked {
   opacity: 0.65;
   cursor: not-allowed;
-}
-
-.roteiro-mapa__novo-hint {
-  color: #3d566d !important;
-  background: #f4f8fc !important;
-  border-color: #dce8f3 !important;
 }
 
 @media (max-width: 991.98px) {

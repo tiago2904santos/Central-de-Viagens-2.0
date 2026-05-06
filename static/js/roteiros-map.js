@@ -321,7 +321,7 @@
     var hasSaved = !!rid;
     var step3 = window.RoteirosStep3;
     if (!hasSaved && (!step3 || !step3.canCalculateRoutePreview || !step3.canCalculateRoutePreview())) {
-      showError('Selecione a sede e os destinos para calcular a rota.');
+      showError('Defina origem e destinos antes de calcular a rota.');
       return;
     }
     var targetUrl = hasSaved ? urlPersistido : (urlPreview || (step3 && step3.getPreviewEndpointUrl && step3.getPreviewEndpointUrl()));
@@ -340,7 +340,7 @@
       : ((step3 && step3.buildRoutePreviewPayload && step3.buildRoutePreviewPayload()) || null);
     if (!payload) {
       setLoading(false);
-      showError('Selecione a sede e os destinos para calcular a rota.');
+      showError('Defina origem e destinos antes de calcular a rota.');
       return;
     }
 
@@ -386,8 +386,6 @@
 
         toggleRecalc(true);
         hideElement($('roteiro-mapa-stale-hint'));
-        hideElement($('roteiro-mapa-novo-hint'));
-        hideElement($('roteiro-mapa-ready-hint'));
       })
       .catch(function () {
         showError('Falha de rede ao calcular a rota. Tente novamente.');
@@ -399,23 +397,12 @@
   }
 
   function refreshRouteReadyState() {
-    var hintNovo = $('roteiro-mapa-novo-hint');
-    var hintReady = $('roteiro-mapa-ready-hint');
     var step3 = window.RoteirosStep3;
     var canPreview = !!(step3 && step3.canCalculateRoutePreview && step3.canCalculateRoutePreview());
     if (rid || canPreview) {
       setCalcularEnabled(true);
-      if (!rid && canPreview) {
-        hideElement(hintNovo);
-        showElement(hintReady);
-      } else {
-        hideElement(hintNovo);
-        hideElement(hintReady);
-      }
     } else {
       setCalcularEnabled(false);
-      showElement(hintNovo);
-      hideElement(hintReady);
     }
   }
 
@@ -427,21 +414,17 @@
     hideElement($('roteiro-mapa-loading'));
     hideElement($('roteiro-mapa-error'));
 
-    var hintNovo = $('roteiro-mapa-novo-hint');
     var stale = $('roteiro-mapa-stale-hint');
 
     if (!rid) {
       setCalcularEnabled(false);
       hideElement($('btn-recalcular-rota-mapa'));
       hideElement(stale);
-      showElement(hintNovo);
-      hideElement($('roteiro-mapa-ready-hint'));
       hideElement($('roteiro-mapa-summary'));
       ensureMap();
       setFramePlaceholder(true);
       toggleRecalc(false);
     } else {
-      hideElement(hintNovo);
       setCalcularEnabled(true);
       if (initial.route) {
         updateSummary(initial.route, { status: initial.status });

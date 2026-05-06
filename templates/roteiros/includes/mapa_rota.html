@@ -1,9 +1,12 @@
 <section class="roteiro-mapa card roteiro-editor__map-card roteiro-editor__section roteiro-editor__section--mapa" aria-labelledby="roteiro-mapa-titulo">
+  <header class="roteiro-editor__section-header roteiro-mapa__section-head" id="sec-mapa-rota">
+    <span class="roteiro-mapa__section-kicker">ROTEIRO</span>
+    <h3 class="roteiro-editor__section-title" id="roteiro-mapa-titulo">4. Mapa da rota</h3>
+  </header>
   <div class="card-body">
     <header class="roteiro-mapa__header">
       <div>
-        <span class="roteiro-mapa__kicker">Mapa da rota</span>
-        <h3 class="roteiro-mapa__title" id="roteiro-mapa-titulo">Visualização do trajeto</h3>
+        <h4 class="roteiro-mapa__title">Visualização do trajeto</h4>
       </div>
       <div class="roteiro-mapa__actions">
         <button type="button"
@@ -19,19 +22,6 @@
         </button>
       </div>
     </header>
-
-    <p class="roteiro-mapa__novo-hint alert alert-light border py-2 small mb-2"
-       id="roteiro-mapa-novo-hint"
-       {% if object and object.pk %}hidden{% endif %}
-       role="status">
-      Selecione a sede e os destinos para calcular a rota.
-    </p>
-    <p class="roteiro-mapa__novo-hint alert alert-light border py-2 small mb-2"
-       id="roteiro-mapa-ready-hint"
-       hidden
-       role="status">
-      Rota pronta para cálculo. Ao calcular, os trechos serão preenchidos automaticamente.
-    </p>
 
     <p class="roteiro-mapa__stale-hint text-warning-emphasis small mb-2"
        id="roteiro-mapa-stale-hint"
