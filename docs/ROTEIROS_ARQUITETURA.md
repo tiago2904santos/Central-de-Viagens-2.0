@@ -1,5 +1,18 @@
 # Roteiros Arquitetura
 
+## Pendencias controladas
+
+Itens conhecidos que **nao bloqueiam** o uso de Roteiros como referencia arquitetural, enquanto o fluxo em producao estiver correto:
+
+1. **`roteiro_logic`** ainda concentra montagem pesada de contexto do wizard (diarias, JSON, URLs de API). Evolucao: fatiar sem mudar contrato de template quando houver necessidade.
+2. **Components de dominio** ainda sao wrappers finos sobre `roteiros/partials/roteiro/` em varios blocos. Evolucao: extrair HTML compartilhado quando o **segundo** modulo (ex.: Oficios) reutilizar o mesmo bloco.
+3. **`roteiros.css`** mantem o visual denso e especifico do wizard avulso (`roteiro-editor__*`, temas). **`domain.css`** cobre tokens semanticos; migracao em massa de regras nao e obrigatoria antes do aceite.
+4. **Extração adicional** so deve ser feita quando Oficios/Planos/OS forem efetivamente reutilizar os mesmos blocos — evitar refatoracao antecipada.
+
+Outras observacoes de validacao:
+
+- **`bate_volta.html`** usa `form-check-input` / switch nativo para `bate_volta_diario_ativo`. O design system prefere **card-toggle** para booleanos visiveis; padronizar em etapa futura se quiser aderencia 100% ao DS sem mudar regra POST.
+
 ## Revisao critica pos-refatoracao
 
 ### 1. O que ficou bom

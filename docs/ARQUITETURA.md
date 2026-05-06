@@ -58,6 +58,18 @@ A interface publica em `/roteiros/` inclui listagem (busca `q`), criacao, edicao
 
 Regras transversais: sem `href="#"`, sem CSS/JS inline nos blocos de dominio, sem exibir "Atualizado em" como metadado de lista; JS de pagina em `static/js/` (ex.: `roteiros.js`) e tokens de dominio em `static/css/domain.css`.
 
+### Congelamento provisorio (referencia para outros apps)
+
+Ate nova decisao de arquitetura, **Roteiros** e o modulo **referencia provisorio** para blocos de:
+
+- destinos;
+- trechos;
+- retorno;
+- calculadora (diarias no fluxo de roteiro);
+- resumo de rota.
+
+Os proximos modulos devem seguir o mesmo desenho (views magras, `selectors`, `services`, `presenters`, components em `templates/components/domain/`, `static/css/domain.css`). Quando um segundo modulo **passar a usar** o mesmo bloco em producao, pode ser necessaria **extração adicional** de HTML/CSS a partir dos partials atuais de Roteiros; isso e esperado e nao descaracteriza este aceite.
+
 ## Padrao tecnico
 
 Views orquestram `forms + selectors + services + presenters + messages`.

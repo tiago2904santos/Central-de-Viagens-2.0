@@ -1,5 +1,21 @@
 # Componentes de dominio
 
+## Congelamento provisorio (aceite arquitetural)
+
+**Roteiros** e o modulo **referencia provisorio** para estes blocos de dominio:
+
+- destinos (sede + pernas);
+- trechos;
+- retorno;
+- calculadora / diarias no wizard;
+- resumo de rota (leitura).
+
+Proximos modulos devem **reaproveitar este padrao** (selectors/services/presenters + `templates/components/domain/` + `domain.css`) onde o conceito for o mesmo.
+
+**Regra:** quando o **segundo** modulo passar a usar o mesmo bloco na pratica, pode ser necessaria **nova extracao** (HTML/CSS) a partir dos partials de Roteiros — isso nao invalida o padrao atual; apenas marca o momento de fundir duplicacao real.
+
+---
+
 Roteiros e o **modulo referencia**: os blocos abaixo devem ser reutilizados por Oficios, Planos, OS, etc., quando o fluxo exigir os mesmos conceitos (sem acoplar modelo `Roteiro` na camada de template além do contrato documentado).
 
 Convencoes globais:
