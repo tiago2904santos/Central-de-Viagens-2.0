@@ -53,11 +53,16 @@ Nos temas `dark-dark` e `light-dark`, o objetivo nao e clarear o layout: e separ
 Regra de contraste:
 
 - Labels usam `--color-label`.
+- Labels de destaque usam `--color-label-strong`.
 - Texto auxiliar usa `--color-help`.
+- Descricao secundaria usa `--color-description`.
+- Titulos internos usam `--color-heading`, `--color-section-title` ou `--color-card-title`.
 - Placeholder usa `--color-input-placeholder`.
 - Disabled/read-only usa `--color-input-disabled-text` com `opacity: 1`.
 - Estado vazio/info em painel escuro usa `--color-info-bg` + `--color-info-border` + `--color-info-text` (sem branco chapado).
 - Leaflet pode manter tiles claros, mas container/painel/metricas devem respeitar tokens escuros.
+- Icones usam `--color-icon`, `--color-icon-muted` e `--color-icon-strong` (nunca preto bruto no painel escuro).
+- Radios/checkboxes em painel escuro usam `accent-color: var(--color-accent)`.
 
 ## Checklist visual por tema
 

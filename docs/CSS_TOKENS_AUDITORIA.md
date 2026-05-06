@@ -58,3 +58,15 @@
   - disabled/read-only -> `--color-input-disabled-text` com `opacity: 1`
 - Estados vazios e info em painel escuro migrados para `--color-info-bg`, `--color-info-border`, `--color-info-text`.
 - Leaflet mantido claro (tiles), com emolduramento escuro coerente no container e metricas.
+
+## Ajuste de contraste (textos e icones)
+
+- Problema observado: titulos/labels/hints e icones com contraste insuficiente em `dark-dark`/`light-dark`.
+- Tokens adicionados/reforcados:
+  - `--color-heading-soft`, `--color-section-title`, `--color-card-title`
+  - `--color-label`, `--color-label-strong`
+  - `--color-help`, `--color-description`
+  - `--color-icon`, `--color-icon-muted`, `--color-icon-strong`
+- Regra operacional:
+  - radio/checkbox em tema escuro usa `accent-color: var(--color-accent)`;
+  - proibido texto hardcoded azul escuro em componente que participa de dark mode.

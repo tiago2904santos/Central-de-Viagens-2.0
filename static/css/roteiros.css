@@ -354,7 +354,7 @@
 }
 
 .roteiro-editor__field-label {
-  color: var(--theme-text-muted-strong);
+  color: var(--color-label);
   display: block;
   font-size: var(--font-size-sm);
   font-weight: 700;
@@ -363,7 +363,7 @@
 }
 
 .roteiro-editor__helper {
-  color: var(--theme-text-muted);
+  color: var(--color-help);
   font-size: 12px;
   line-height: 1.4;
   margin-top: var(--space-2);
@@ -414,7 +414,7 @@
 }
 
 .roteiro-editor__choice-input {
-  accent-color: #0b3a66;
+  accent-color: var(--color-accent);
   flex-shrink: 0;
   height: 18px;
   margin-top: 2px;
@@ -430,7 +430,7 @@
 }
 
 .roteiro-editor__choice-title {
-  color: var(--theme-text-heading);
+  color: var(--color-card-title);
   display: block;
   font-size: 15px;
   font-weight: 800;
@@ -439,7 +439,7 @@
 }
 
 .roteiro-editor__choice-desc {
-  color: var(--theme-text-muted);
+  color: var(--color-description);
   display: block;
   font-size: 13px;
   line-height: 1.45;
@@ -1946,7 +1946,7 @@ html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-pan
 html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel-title,
 html[data-theme="dark-dark"] .roteiro-editor--avulso .route-title,
 html[data-theme="light-dark"] .roteiro-editor--avulso .route-title {
-  color: var(--color-text);
+  color: var(--color-section-title);
 }
 
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__section-desc,
@@ -1959,7 +1959,7 @@ html[data-theme="dark-dark"] .roteiro-editor--avulso .route-periodo,
 html[data-theme="light-dark"] .roteiro-editor--avulso .route-periodo,
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__helper,
 html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
-  color: var(--color-help);
+  color: var(--color-description);
 }
 
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__field-label,
@@ -1968,7 +1968,7 @@ html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-pan
 html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel-title,
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__field-label,
 html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__field-label {
-  color: var(--color-label);
+  color: var(--color-label-strong);
 }
 
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source,
@@ -2058,13 +2058,34 @@ html[data-theme="dark-dark"] .roteiro-mapa__stats dd,
 html[data-theme="light-dark"] .roteiro-mapa__stats dd,
 html[data-theme="dark-dark"] .roteiro-mapa__subtitle,
 html[data-theme="light-dark"] .roteiro-mapa__subtitle {
-  color: var(--color-help);
+  color: var(--color-description);
 }
 
 html[data-theme="dark-dark"] .roteiro-mapa__frame,
 html[data-theme="light-dark"] .roteiro-mapa__frame {
   border-color: var(--color-border-soft);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset;
+}
+
+html[data-theme="dark-dark"] .roteiro-editor svg,
+html[data-theme="light-dark"] .roteiro-editor svg,
+html[data-theme="dark-dark"] .roteiro-editor i,
+html[data-theme="light-dark"] .roteiro-editor i,
+html[data-theme="dark-dark"] .roteiro-editor .icon,
+html[data-theme="light-dark"] .roteiro-editor .icon {
+  color: var(--color-icon);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor .btn-icon,
+html[data-theme="light-dark"] .roteiro-editor .btn-icon {
+  color: var(--color-icon-strong);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor input[type="radio"],
+html[data-theme="light-dark"] .roteiro-editor input[type="radio"],
+html[data-theme="dark-dark"] .roteiro-editor input[type="checkbox"],
+html[data-theme="light-dark"] .roteiro-editor input[type="checkbox"] {
+  accent-color: var(--color-accent);
 }
 
 /* --------------------------------------------------------------------------

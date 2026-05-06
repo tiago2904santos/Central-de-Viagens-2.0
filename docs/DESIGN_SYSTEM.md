@@ -30,6 +30,12 @@
 - Bem desenhado: hierarquia entre secoes/cards/inputs, contraste de label/help e estados vazios coerentes.
 - Em painel escuro, evitar blocos brancos de estado vazio; preferir `--color-info-*`.
 - Em inputs disabled/read-only, manter `opacity: 1` e reduzir contraste por token, nao por opacidade global.
+- Em componentes que existem em dark mode, e proibido texto em azul escuro hardcoded (`#0b3a66` e similares).
+- Hierarquia de texto recomendada:
+  - titulo interno: `--color-heading` / `--color-section-title`
+  - label: `--color-label` / `--color-label-strong`
+  - ajuda/descricao: `--color-help` / `--color-description`
+- Icones em painel escuro usam `--color-icon-*`; radio/checkbox usam `accent-color` por token.
 
 ## Padrao visual premium
 

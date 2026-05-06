@@ -140,5 +140,12 @@
 .status-chip--muted {
   background: var(--color-surface-soft);
   border-color: var(--color-border);
-  color: var(--color-muted);
+  color: var(--color-description);
+}
+
+html[data-theme="dark-dark"] .status-chip--muted,
+html[data-theme="light-dark"] .status-chip--muted {
+  background: var(--color-info-bg);
+  border-color: var(--color-info-border);
+  color: var(--color-info-text);
 }

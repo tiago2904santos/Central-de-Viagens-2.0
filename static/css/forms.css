@@ -106,6 +106,7 @@
 }
 
 .form-check-input {
+  accent-color: var(--color-accent);
   height: 18px;
   min-height: 18px;
   width: 18px;
@@ -212,7 +213,7 @@
 }
 
 .app-card-toggle__description {
-  color: var(--color-muted);
+  color: var(--color-description);
   font-size: var(--font-size-sm);
   font-weight: 600;
   line-height: 1.35;
@@ -223,7 +224,7 @@
   background: rgba(180, 35, 24, 0.11);
   border: 1px solid rgba(180, 35, 24, 0.24);
   border-radius: var(--radius-pill);
-  color: #8e1f17;
+  color: var(--color-danger-text);
   display: inline-flex;
   font-size: var(--font-size-xs);
   font-weight: 900;
@@ -341,8 +342,17 @@ textarea[readonly] {
 }
 
 .field-rg-wrap.field--locked label::after {
-  color: var(--color-muted);
+  color: var(--color-help);
   content: " — bloqueado";
   font-size: var(--font-size-xs);
   font-weight: 700;
+}
+
+html[data-theme="dark-dark"] .form-check-input,
+html[data-theme="light-dark"] .form-check-input,
+html[data-theme="dark-dark"] input[type="radio"],
+html[data-theme="light-dark"] input[type="radio"],
+html[data-theme="dark-dark"] input[type="checkbox"],
+html[data-theme="light-dark"] input[type="checkbox"] {
+  accent-color: var(--color-accent);
 }

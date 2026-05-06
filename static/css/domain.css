@@ -17,6 +17,7 @@
 }
 
 .domain-block__title {
+  color: var(--color-section-title);
   font-size: 1rem;
   font-weight: 700;
   margin: 0;
@@ -25,7 +26,7 @@
 .domain-block__description {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--color-text-muted);
+  color: var(--color-description);
 }
 
 /* --------------------------------------------------------------------------
@@ -64,7 +65,7 @@
 
 .route-card__meta {
   font-size: 0.875rem;
-  color: var(--color-text-muted);
+  color: var(--color-description);
 }
 
 .route-card__actions {
