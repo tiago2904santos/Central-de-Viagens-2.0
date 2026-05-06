@@ -93,6 +93,18 @@ A listagem de `roteiros` usa `components/lists/list_page.html`, `components/list
 
 O presenter `apresentar_roteiro_card` entrega `title`, `subtitle`, `meta` e `actions` sem HTML. A view apenas le `q`, chama selector, aplica presenter e renderiza o template.
 
+### Componentes de dominio
+
+Blocos reutilizaveis de dominio ficam em `templates/components/domain/` e devem ser usados por Roteiros e futuros modulos:
+
+- `sede_destinos.html`
+- `destinos.html`
+- `trechos.html`
+- `trecho_card.html`
+- `retorno.html`
+- `calculadora_rota.html`
+- `resumo_rota.html`
+
 ## Alerts e feedback
 
 - Component: `templates/components/feedback/alerts.html`.

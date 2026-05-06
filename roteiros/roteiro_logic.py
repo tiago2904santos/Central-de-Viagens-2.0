@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Logica de roteiro step 3 portada do legacy `eventos/views.py`."""
+"""Regras de negocio e montagem de contexto do formulario de roteiros."""
 from __future__ import annotations
 
 import json
@@ -359,6 +359,7 @@ def _step3_trecho_duplica_retorno(trecho, retorno, sede_estado_id=None, sede_cid
 
 
 def _dedupe_step3_loop_retorno_final(state):
+    """Remove do payload de ida o deslocamento que ja esta representado no bloco Retorno."""
     bate_volta_diario = _build_step3_bate_volta_diario_state((state or {}).get('bate_volta_diario'))
     trechos = (state or {}).get('trechos') or []
     if not bate_volta_diario['ativo'] or not trechos:
@@ -1554,6 +1555,7 @@ def _build_roteiro_diarias_fallback(roteiro):
 
 
 def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated, diarias_resultado=None):
+    """Persiste o step 3 preservando trechos existentes por id e retorno em bloco proprio."""
     destinos_post = []
     for item in (step3_state.get('destinos_atuais') or []):
         estado_id = _parse_int(item.get('estado_id'))
@@ -1597,6 +1599,8 @@ def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated, dia
     }
     trechos_mantidos = set()
     for ordem, trecho in enumerate(trechos_validated):
+        # Reordenacao muda a ordem e as pontas do trecho, mas nao deve limpar campos manuais
+        # quando o payload omite valores que ja existem no banco.
         tempo_adicional = trecho.get('tempo_adicional_min') or 0
         tempo_cru = trecho.get('tempo_cru_estimado_min')
         duracao_estimada = trecho.get('duracao_estimada_min')

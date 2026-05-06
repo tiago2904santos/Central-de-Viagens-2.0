@@ -14,7 +14,7 @@ from cadastros.models import Estado
 from roteiros.models import Roteiro
 from roteiros.models import RoteiroDestino
 from roteiros.models import RoteiroTrecho
-from roteiros import step3_logic
+from roteiros import roteiro_logic
 
 
 @override_settings(ALLOWED_HOSTS=["testserver", "localhost"])
@@ -91,7 +91,7 @@ class RoteirosBaseTests(TestCase):
         request = RequestFactory().post(
             reverse("roteiros:novo"),
             data={
-                "roteiro_modo": step3_logic.ROTEIRO_MODO_EVENTO,
+                "roteiro_modo": roteiro_logic.ROTEIRO_MODO_EVENTO,
                 "roteiro_id": str(r.pk),
                 "origem_estado": str(self.estado.pk),
                 "origem_cidade": str(self.cidade_sede.pk),
@@ -100,7 +100,7 @@ class RoteirosBaseTests(TestCase):
             },
         )
 
-        route_options, _, _, _ = step3_logic._build_roteiro_diarias_from_request(
+        route_options, _, _, _ = roteiro_logic._build_roteiro_diarias_from_request(
             request,
             roteiro=r,
         )
@@ -150,7 +150,7 @@ class RoteirosBaseTests(TestCase):
             duracao_estimada_min=135,
         )
 
-        step3_logic._salvar_roteiro_avulso_from_step3_state(
+        roteiro_logic._salvar_roteiro_avulso_from_step3_state(
             roteiro,
             {
                 "destinos_atuais": [
@@ -244,7 +244,7 @@ class RoteirosBaseTests(TestCase):
             duracao_estimada_min=195,
         )
 
-        step3_logic._salvar_roteiro_avulso_from_step3_state(
+        roteiro_logic._salvar_roteiro_avulso_from_step3_state(
             roteiro,
             {
                 "destinos_atuais": [
@@ -272,14 +272,113 @@ class RoteirosBaseTests(TestCase):
         self.assertIsNotNone(trecho.saida_dt)
         self.assertIsNotNone(trecho.chegada_dt)
 
+    def test_remover_e_adicionar_destino_apos_reordenar_preserva_item_correto(self):
+        roteiro = Roteiro.objects.create(
+            tipo=Roteiro.TIPO_AVULSO,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+        )
+        RoteiroDestino.objects.create(
+            roteiro=roteiro,
+            estado=self.estado_destino,
+            cidade=self.cidade_dest,
+            ordem=0,
+        )
+        RoteiroDestino.objects.create(
+            roteiro=roteiro,
+            estado=self.estado,
+            cidade=self.cidade_dest_2,
+            ordem=1,
+        )
+        trecho_removido = RoteiroTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=0,
+            tipo=RoteiroTrecho.TIPO_IDA,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+            destino_estado=self.estado_destino,
+            destino_cidade=self.cidade_dest,
+            saida_dt="2026-05-01 08:00",
+            chegada_dt="2026-05-01 10:00",
+            tempo_cru_estimado_min=120,
+            tempo_adicional_min=30,
+            duracao_estimada_min=150,
+        )
+        trecho_preservado = RoteiroTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=1,
+            tipo=RoteiroTrecho.TIPO_IDA,
+            origem_estado=self.estado_destino,
+            origem_cidade=self.cidade_dest,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_dest_2,
+            saida_dt="2026-05-02 09:00",
+            chegada_dt="2026-05-02 11:00",
+            tempo_cru_estimado_min=90,
+            tempo_adicional_min=45,
+            duracao_estimada_min=135,
+        )
+
+        roteiro_logic._salvar_roteiro_avulso_from_step3_state(
+            roteiro,
+            {
+                "destinos_atuais": [
+                    {"estado_id": self.estado.pk, "cidade_id": self.cidade_dest_2.pk},
+                    {"estado_id": self.estado.pk, "cidade_id": self.cidade_dest_3.pk},
+                ],
+                "retorno": {},
+            },
+            {
+                "trechos": [
+                    {
+                        "id": trecho_preservado.pk,
+                        "origem_estado_id": self.estado.pk,
+                        "origem_cidade_id": self.cidade_sede.pk,
+                        "destino_estado_id": self.estado.pk,
+                        "destino_cidade_id": self.cidade_dest_2.pk,
+                    },
+                    {
+                        "origem_estado_id": self.estado.pk,
+                        "origem_cidade_id": self.cidade_dest_2.pk,
+                        "destino_estado_id": self.estado.pk,
+                        "destino_cidade_id": self.cidade_dest_3.pk,
+                        "saida_data": date(2026, 5, 3),
+                        "saida_hora": time(7, 0),
+                        "chegada_data": date(2026, 5, 3),
+                        "chegada_hora": time(9, 0),
+                        "tempo_cru_estimado_min": 120,
+                        "tempo_adicional_min": 15,
+                    },
+                ],
+            },
+        )
+
+        self.assertFalse(RoteiroTrecho.objects.filter(pk=trecho_removido.pk).exists())
+        trecho_preservado.refresh_from_db()
+        self.assertEqual(trecho_preservado.ordem, 0)
+        self.assertEqual(trecho_preservado.tempo_cru_estimado_min, 90)
+        self.assertEqual(trecho_preservado.tempo_adicional_min, 45)
+        self.assertEqual(trecho_preservado.duracao_estimada_min, 135)
+        self.assertIsNotNone(trecho_preservado.saida_dt)
+        self.assertIsNotNone(trecho_preservado.chegada_dt)
+        novo_trecho = roteiro.trechos.get(tipo=RoteiroTrecho.TIPO_IDA, destino_cidade=self.cidade_dest_3)
+        self.assertEqual(novo_trecho.ordem, 1)
+        self.assertEqual(novo_trecho.tempo_cru_estimado_min, 120)
+        self.assertEqual(novo_trecho.tempo_adicional_min, 15)
+        self.assertEqual(novo_trecho.duracao_estimada_min, 135)
+        self.assertEqual(
+            list(roteiro.destinos.order_by("ordem").values_list("cidade_id", flat=True)),
+            [self.cidade_dest_2.pk, self.cidade_dest_3.pk],
+        )
+
     def test_bate_volta_diario_remove_retorno_final_duplicado_do_post(self):
         request = RequestFactory().post(
             reverse("roteiros:novo"),
             data=self._loop_diario_post_data(),
         )
 
-        state = step3_logic._build_avulso_step3_state_from_post(request)
-        validated = step3_logic._validate_step3_state(state)
+        state = roteiro_logic._build_avulso_step3_state_from_post(request)
+        validated = roteiro_logic._validate_step3_state(state)
 
         self.assertTrue(validated["ok"], validated["errors"])
         self.assertEqual(len(state["trechos"]), 5)
@@ -306,10 +405,10 @@ class RoteirosBaseTests(TestCase):
             reverse("roteiros:novo"),
             data=self._loop_diario_post_data(),
         )
-        state = step3_logic._build_avulso_step3_state_from_post(request)
-        validated = step3_logic._validate_step3_state(state)
+        state = roteiro_logic._build_avulso_step3_state_from_post(request)
+        validated = roteiro_logic._validate_step3_state(state)
 
-        step3_logic._salvar_roteiro_avulso_from_step3_state(roteiro, state, validated)
+        roteiro_logic._salvar_roteiro_avulso_from_step3_state(roteiro, state, validated)
 
         self.assertEqual(roteiro.trechos.filter(tipo=RoteiroTrecho.TIPO_IDA).count(), 5)
         self.assertEqual(roteiro.trechos.filter(tipo=RoteiroTrecho.TIPO_RETORNO).count(), 1)
@@ -342,11 +441,11 @@ class RoteirosBaseTests(TestCase):
             reverse("roteiros:novo"),
             data=self._loop_diario_post_data(),
         )
-        state = step3_logic._build_avulso_step3_state_from_post(request)
-        validated = step3_logic._validate_step3_state(state)
-        step3_logic._salvar_roteiro_avulso_from_step3_state(roteiro, state, validated)
+        state = roteiro_logic._build_avulso_step3_state_from_post(request)
+        validated = roteiro_logic._validate_step3_state(state)
+        roteiro_logic._salvar_roteiro_avulso_from_step3_state(roteiro, state, validated)
 
-        reopened = step3_logic._build_step3_state_from_roteiro_evento(roteiro)
+        reopened = roteiro_logic._build_step3_state_from_roteiro_evento(roteiro)
 
         self.assertEqual(len(reopened["trechos"]), 5)
         self.assertTrue(reopened["bate_volta_diario"]["ativo"])
@@ -357,10 +456,10 @@ class RoteirosBaseTests(TestCase):
 
     def test_calculo_diarias_ignora_retorno_final_duplicado_no_loop_diario(self):
         base_state = self._loop_diario_state_com_retorno_duplicado()
-        deduped_state = step3_logic._dedupe_step3_loop_retorno_final(dict(base_state))
+        deduped_state = roteiro_logic._dedupe_step3_loop_retorno_final(dict(base_state))
 
-        markers_com_duplicado, _, chegada_com_duplicado, _, _ = step3_logic._collect_step3_markers_payload(base_state)
-        markers_sem_duplicado, _, chegada_sem_duplicado, _, _ = step3_logic._collect_step3_markers_payload(deduped_state)
+        markers_com_duplicado, _, chegada_com_duplicado, _, _ = roteiro_logic._collect_step3_markers_payload(base_state)
+        markers_sem_duplicado, _, chegada_sem_duplicado, _, _ = roteiro_logic._collect_step3_markers_payload(deduped_state)
 
         self.assertEqual(len(markers_com_duplicado), len(markers_sem_duplicado))
         self.assertEqual(len(markers_com_duplicado), 5)
@@ -369,7 +468,7 @@ class RoteirosBaseTests(TestCase):
     def _loop_diario_post_data(self):
         state = self._loop_diario_state_com_retorno_duplicado()
         data = {
-            "roteiro_modo": step3_logic.ROTEIRO_MODO_PROPRIO,
+            "roteiro_modo": roteiro_logic.ROTEIRO_MODO_PROPRIO,
             "origem_estado": str(self.estado.pk),
             "origem_cidade": str(self.cidade_sede.pk),
             "destino_estado_0": str(self.estado_destino.pk),
@@ -433,7 +532,7 @@ class RoteirosBaseTests(TestCase):
                 }
             )
         return {
-            "roteiro_modo": step3_logic.ROTEIRO_MODO_PROPRIO,
+            "roteiro_modo": roteiro_logic.ROTEIRO_MODO_PROPRIO,
             "sede_estado_id": self.estado.pk,
             "sede_cidade_id": self.cidade_sede.pk,
             "destinos_atuais": [

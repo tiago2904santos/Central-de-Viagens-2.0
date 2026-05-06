@@ -1,0 +1,11 @@
+<article class="roteiro-steps__item" role="listitem">
+  <span class="roteiro-steps__order">{{ trecho.ordem }}</span>
+  <div class="roteiro-steps__content">
+    <h3>{{ trecho.get_tipo_display }} — {{ trecho.origem_cidade|default:trecho.origem_estado }} → {{ trecho.destino_cidade|default:trecho.destino_estado }}</h3>
+    <p>
+      Saída: {{ trecho.saida_dt|date:"d/m/Y H:i"|default:"—" }}
+      · Chegada: {{ trecho.chegada_dt|date:"d/m/Y H:i"|default:"—" }}
+      {% if trecho.distancia_km %} · {{ trecho.distancia_km }} km{% endif %}
+    </p>
+  </div>
+</article>

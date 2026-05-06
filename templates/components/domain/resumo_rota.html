@@ -1,0 +1,20 @@
+<div class="route-summary" data-route-summary>
+  <dl class="roteiro-detail__grid">
+    <div class="roteiro-detail__item">
+      <dt>Origem</dt>
+      <dd>{{ roteiro.origem_cidade|default:roteiro.origem_estado|default:"—" }}</dd>
+    </div>
+    <div class="roteiro-detail__item">
+      <dt>Trechos</dt>
+      <dd>{{ trechos|length }}</dd>
+    </div>
+    <div class="roteiro-detail__item">
+      <dt>Diárias</dt>
+      <dd>{{ roteiro.quantidade_diarias|default:"—" }}</dd>
+    </div>
+    <div class="roteiro-detail__item roteiro-detail__item--wide">
+      <dt>Observações</dt>
+      <dd>{{ roteiro.observacoes|default:"—" }}</dd>
+    </div>
+  </dl>
+</div>

@@ -281,7 +281,8 @@
 /* Grid de campos */
 .roteiro-editor__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
 }
 
 .roteiro-editor__grid.align-items-end {
@@ -1263,7 +1264,16 @@
 }
 
 .roteiro-editor--avulso .oficio-step3-trecho-card .btn-calcular-km {
+  background: #f3f8fc;
+  border-color: #bdd0e2;
+  border-radius: var(--radius-md);
+  color: #173e66;
+  font-size: 13px;
+  font-weight: 900;
   margin-top: 10px;
+  min-height: 38px;
+  padding-left: 14px;
+  padding-right: 14px;
 }
 
 @media (max-width: 991.98px) {

@@ -1,0 +1,49 @@
+{# SEÇÃO 2: SEDE E DESTINOS #}
+            <section class="roteiro-editor__section roteiro-editor__reference-block roteiro-editor__reference-block--sede-destinos roteiro-editor__section--sede-destinos" aria-label="2. Sede e destinos" data-destinos-component>
+              <div class="roteiro-editor__reference-top" aria-hidden="true">
+                <span class="roteiro-editor__reference-title">2. Sede e destinos</span>
+              </div>
+              <div class="roteiro-editor__reference-body">
+                <header class="roteiro-editor__section-header">
+                  <h3 class="roteiro-editor__section-title">2. Sede e destinos</h3>
+                </header>
+                <div id="sec-sede" class="roteiro-editor__nest-block roteiro-editor__nest-block--sede">
+                  <div class="roteiro-editor__grid">
+                    <div class="field-span-12 roteiro-editor__sede-card-header">
+                      <h4 class="roteiro-editor__nest-title">Sede</h4>
+                      <p class="roteiro-editor__nest-desc">Defina a unidade de origem da viagem (UF e cidade).</p>
+                    </div>
+                    <div class="field-span-6">
+                      <label class="roteiro-editor__field-label" for="id_origem_estado">UF</label>
+                      <select name="origem_estado" id="id_origem_estado" class="form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">
+                        <option value="">---------</option>
+                        {% for estado in estados %}
+                        <option value="{{ estado.pk }}" {% if sede_estado_id == estado.pk %}selected{% endif %}>{{ estado.nome }} ({{ estado.sigla }})</option>
+                        {% endfor %}
+                      </select>
+                      {% if form.origem_estado.errors %}<div class="invalid-feedback d-block">{{ form.origem_estado.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="field-span-6">
+                      <label class="roteiro-editor__field-label" for="id_origem_cidade">Cidade</label>
+                      <select name="origem_cidade" id="id_origem_cidade" class="form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar cidade...">
+                        <option value="">---------</option>
+                        {% for cidade in sede_cidades_qs %}
+                        <option value="{{ cidade.pk }}" {% if sede_cidade_id == cidade.pk %}selected{% endif %}>{{ cidade.nome }}</option>
+                        {% endfor %}
+                      </select>
+                      {% if form.origem_cidade.errors %}<div class="invalid-feedback d-block">{{ form.origem_cidade.errors.0 }}</div>{% endif %}
+                    </div>
+                  </div>
+                </div>
+                <div id="sec-destinos" class="roteiro-editor__nest-block roteiro-editor__nest-block--destinos">
+                  <div class="roteiro-editor__destinos-stack oficio-step3-destinos-stack">
+                    <div class="roteiro-editor__destinos-card-header">
+                      <h4 class="roteiro-editor__nest-title">Destinos</h4>
+                      <p class="roteiro-editor__nest-desc">Reordene por arrastar e soltar para atualizar automaticamente a sequência dos trechos.</p>
+                    </div>
+                    <div id="destinos-container" class="roteiro-editor__destinos-list"></div>
+                  </div>
+                  <button type="button" id="btn-adicionar-destino" class="btn btn-outline-primary roteiro-editor__add-btn mt-2 w-100">Adicionar destino</button>
+                </div>
+              </div>
+            </section>

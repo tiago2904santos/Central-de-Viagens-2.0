@@ -2,7 +2,10 @@ from django.db.models import Count
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
+from cadastros.models import Cidade
+
 from .models import Roteiro
+from .models import RoteiroTrecho
 
 
 def listar_roteiros(q=None):
@@ -53,3 +56,20 @@ def listar_trechos_do_roteiro(roteiro):
         )
         .order_by("ordem", "pk")
     )
+
+
+def get_trecho_by_id(pk):
+    return get_object_or_404(
+        RoteiroTrecho.objects.select_related(
+            "roteiro",
+            "origem_estado",
+            "origem_cidade",
+            "destino_estado",
+            "destino_cidade",
+        ),
+        pk=pk,
+    )
+
+
+def listar_cidades_para_select(estado_id):
+    return Cidade.objects.filter(estado_id=estado_id).order_by("nome")

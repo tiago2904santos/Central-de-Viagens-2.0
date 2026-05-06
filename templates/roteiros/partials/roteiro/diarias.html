@@ -1,0 +1,38 @@
+{# SEÇÃO 6: CALCULADORA DE DIÁRIAS #}
+            <section class="roteiro-editor__section roteiro-editor__section--diarias" aria-labelledby="sec-diarias" data-calculadora-rota>
+              <header class="roteiro-editor__section-header" id="sec-diarias">
+                <h3 class="roteiro-editor__section-title">6. Calculadora de diárias</h3>
+              </header>
+
+              <div class="roteiro-editor__diarias">
+                <div class="roteiro-editor__diarias-head">
+                  <div class="roteiro-editor__diarias-top">
+                    <div class="roteiro-editor__diarias-title">Cálculo de diárias</div>
+                  </div>
+
+                  <div id="diarias-status" class="oficio-step3-diarias-status" data-state="pending" role="status">Aguardando dados para cálculo.</div>
+                </div>
+
+                <div id="diarias-error" class="alert alert-danger py-2 d-none" role="alert"></div>
+
+                <div class="roteiro-editor__diarias-finance-grid">
+                  <div class="roteiro-editor__summary-item roteiro-editor__summary-item--principal">
+                    <span class="roteiro-editor__summary-label">Valor total</span>
+                    <span class="roteiro-editor__summary-value roteiro-editor__summary-value--principal" id="diarias-valor">{{ step3_diarias_resultado.totais.total_valor|default:"â€”" }}</span>
+                    <span class="roteiro-editor__summary-label">Valor por extenso</span>
+                    <span id="diarias-extenso">{{ step3_diarias_resultado.totais.valor_extenso|default:"Não informado" }}</span>
+                  </div>
+
+                  <div class="roteiro-editor__summary-stack">
+                    <div class="roteiro-editor__summary-item roteiro-editor__summary-item--secondary">
+                      <span class="roteiro-editor__summary-label">Tipo destino</span>
+                      <span class="roteiro-editor__summary-value" id="diarias-tipo">{{ step3_diarias_resultado.tipo_destino|default:"â€”" }}</span>
+                    </div>
+                    <div class="roteiro-editor__summary-item roteiro-editor__summary-item--secondary">
+                      <span class="roteiro-editor__summary-label">Quantidade de diárias</span>
+                      <span class="roteiro-editor__summary-value" id="diarias-qtd">{{ step3_diarias_resultado.totais.total_diarias|default:"â€”" }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>

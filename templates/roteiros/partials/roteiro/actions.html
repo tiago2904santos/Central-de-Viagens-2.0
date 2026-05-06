@@ -1,0 +1,10 @@
+<div class="roteiro-editor__actions oficio-wizard-footer-actions {% if is_avulso %}roteiro-editor__actions--avulso{% endif %}" data-oficio-footer-actions="1">
+              {% if is_avulso %}
+              <a href="{% url 'roteiros:index' %}" class="btn btn-outline-secondary">Voltar para lista</a>
+              <button type="submit" class="btn btn-primary">{% if object %}Salvar roteiro{% else %}Cadastrar roteiro{% endif %}</button>
+              {% else %}
+              <a href="{% url 'eventos:guiado-etapa-2' evento.pk %}" class="btn btn-outline-secondary">Voltar</a>
+              <a href="{% url 'eventos:guiado-etapa-1' evento.pk %}" class="btn btn-outline-secondary">Dados do evento</a>
+              <button type="submit" class="btn btn-primary">Salvar roteiro</button>
+              {% endif %}
+            </div>

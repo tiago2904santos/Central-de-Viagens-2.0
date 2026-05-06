@@ -1,0 +1,54 @@
+{# SEÇÃO 3: BATE-VOLTA #}
+            <section class="roteiro-editor__section roteiro-editor__section--bate-volta" aria-labelledby="sec-bate-volta">
+              <header class="roteiro-editor__section-header" id="sec-bate-volta">
+                <h3 class="roteiro-editor__section-title">3. Modo bate-volta diário</h3>
+              </header>
+              <div class="roteiro-editor__panel-surface">
+                <div class="roteiro-editor__bate-volta-head">
+                  <div>
+                    <div class="roteiro-editor__bate-volta-title">
+                      Gerador automático de loop diário
+                      <span class="roteiro-editor__chip" id="bate-volta-status-chip" aria-hidden="true">Inativo</span>
+                    </div>
+                  </div>
+                  <div class="roteiro-editor__switch-row">
+                    <div class="form-check form-switch m-0">
+                      <input class="form-check-input" type="checkbox" role="switch" id="id_bate_volta_diario_ativo" name="bate_volta_diario_ativo" {% if step3_state_json.bate_volta_diario.ativo %}checked{% endif %}>
+                      <label class="form-check-label" for="id_bate_volta_diario_ativo">Ativar bate-volta diário</label>
+                    </div>
+                  </div>
+                </div>
+                <div id="bate-volta-panel" class="row g-3">
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_data_inicio">Data inicial</label>
+                    <input type="date" class="form-control" id="id_bate_volta_data_inicio" name="bate_volta_data_inicio" value="{{ step3_state_json.bate_volta_diario.data_inicio|default:'' }}">
+                  </div>
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_ida_saida_hora">Saída da ida</label>
+                    <input type="time" class="form-control" id="id_bate_volta_ida_saida_hora" name="bate_volta_ida_saida_hora" value="{{ step3_state_json.bate_volta_diario.ida_saida_hora|default:'' }}">
+                  </div>
+                 
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_ida_tempo_hhmm">Tempo da ida</label>
+                    <input type="text" class="form-control" id="id_bate_volta_ida_tempo_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
+                    <input type="hidden" id="id_bate_volta_ida_tempo_min" name="bate_volta_ida_tempo_min" value="{{ step3_state_json.bate_volta_diario.ida_tempo_min|default:'' }}">
+                  </div>
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_data_fim">Data final</label>
+                    <input type="date" class="form-control" id="id_bate_volta_data_fim" name="bate_volta_data_fim" value="{{ step3_state_json.bate_volta_diario.data_fim|default:'' }}">
+                  </div>
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_volta_saida_hora">Saída da volta</label>
+                    <input type="time" class="form-control" id="id_bate_volta_volta_saida_hora" name="bate_volta_volta_saida_hora" value="{{ step3_state_json.bate_volta_diario.volta_saida_hora|default:'' }}">
+                  </div>
+                  <div class="col-md-3 col-sm-6">
+                    <label class="roteiro-editor__field-label" for="id_bate_volta_volta_tempo_hhmm">Tempo da volta</label>
+                    <input type="text" class="form-control" id="id_bate_volta_volta_tempo_hhmm" value="" placeholder="00:00" inputmode="numeric" maxlength="5" autocomplete="off">
+                    <input type="hidden" id="id_bate_volta_volta_tempo_min" name="bate_volta_volta_tempo_min" value="{{ step3_state_json.bate_volta_diario.volta_tempo_min|default:'' }}">
+                  </div>
+                  <div class="col-12">
+                    <p class="roteiro-editor__helper mb-0">Use exatamente um destino operacional quando este modo estiver ativo. O retorno final também será refletido no bloco de retorno abaixo.</p>
+                  </div>
+                </div>
+              </div>
+            </section>

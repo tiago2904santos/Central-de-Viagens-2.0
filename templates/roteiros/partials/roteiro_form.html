@@ -1,0 +1,54 @@
+{% load static %}
+
+<div class="app-page-shell app-page-shell--wizard oficio-wizard-page oficio-step3-page roteiro-form--legacy-step3 roteiro-editor {% if is_avulso %}roteiro-editor--avulso{% endif %}" data-glance-state="closed">
+  <div class="app-page-shell__inner oficio-wizard-shell">
+    <div class="roteiro-editor__intro" role="region" aria-labelledby="roteiro-editor-intro-title">
+      <span class="roteiro-editor__intro-kicker" id="roteiro-editor-intro-kicker">{% if is_avulso %}Cadastro avulso{% else %}Etapa 2{% endif %}</span>
+      <h2 class="roteiro-editor__intro-title" id="roteiro-editor-intro-title">Roteiro e trechos</h2>
+      <p class="roteiro-editor__intro-text">Organize sede, destinos, trechos, retorno e diárias em um fluxo único e contínuo.</p>
+    </div>
+
+    <div class="card roteiro-editor__main oficio-stage-panel">
+      <div class="card-body">
+        <section class="card-section">
+          <form method="post" id="oficio-step3-form" novalidate class="oficio-stage-form"
+                data-api-cidades-url="{{ api_cidades_por_estado_url }}"
+                data-api-diarias-url="{{ api_calcular_diarias_url }}"
+                data-destino-estado-default-id="{{ destino_estado_fixo_id|default:'' }}"
+                data-url-trechos-estimar="{% url 'roteiros:trechos_estimar' %}">
+            {% csrf_token %}
+            <input type="hidden" name="autosave_obj_id" id="id_autosave_obj_id" value="{{ object.pk|default:'' }}">
+            <input type="hidden" name="tipo_destino" id="id_tipo_destino" value="{{ step3_diarias_resultado.tipo_destino|default:'' }}">
+            <input type="hidden" name="quantidade_diarias" id="id_quantidade_diarias" value="{{ step3_diarias_resultado.totais.total_diarias|default:'' }}">
+            <input type="hidden" name="valor_diarias" id="id_valor_diarias" value="{{ step3_diarias_resultado.totais.total_valor|default:'' }}">
+            <input type="hidden" name="valor_diarias_extenso" id="id_valor_diarias_extenso" value="{{ step3_diarias_resultado.totais.valor_extenso|default:'' }}">
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2" role="alert">
+              {% for err in form.non_field_errors %}
+                {% if err %}<div>{{ err }}</div>{% endif %}
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if step3_seed_source_label %}<div class="alert alert-info py-2" role="status">{{ step3_seed_source_label }}</div>{% endif %}
+
+            {% include "roteiros/partials/roteiro/source.html" %}
+            {% include "components/domain/sede_destinos.html" %}
+            {% include "roteiros/partials/roteiro/bate_volta.html" %}
+            {% include "components/domain/trechos.html" %}
+            {% include "components/domain/retorno.html" %}
+            {% include "components/domain/calculadora_rota.html" %}
+            {% include "roteiros/partials/roteiro/actions.html" %}
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ step3_state_json|default:'{}'|json_script:"step3-state-data" }}
+{{ roteiros_evento_json|default_if_none:''|json_script:"step3-routes-data" }}
+{{ step3_diarias_resultado|default_if_none:''|json_script:"step3-diarias-data" }}
+
+<script src="{% static 'js/roteiros_wizard.js' %}"></script>
+<script src="{% static 'js/roteiros.js' %}"></script>

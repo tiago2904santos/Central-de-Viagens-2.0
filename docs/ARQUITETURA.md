@@ -46,6 +46,14 @@ Origem e destino de `Roteiro` e `TrechoRoteiro` apontam para `cadastros.Cidade`;
 
 O app segue a arquitetura ja validada em `cadastros`: views chamam selectors, presenters formatam dados para listagem, templates usam components globais e consultas nao ficam no template.
 
+Padrao interno do app:
+
+- `views.py` apenas orquestra request/response e mensagens.
+- `services.py` concentra persistencia e fluxo funcional.
+- `selectors.py` concentra consultas e querysets.
+- `presenters.py` prepara dados de tela sem HTML.
+- `templates/components/domain/` contem blocos de dominio reutilizaveis.
+
 Nesta etapa existem apenas listagem em `/roteiros/` (busca por texto) e cadastro via admin; nao ha CRUD completo na interface publica, nem calculo de distancia, tempo ou diarias.
 
 ## Padrao tecnico

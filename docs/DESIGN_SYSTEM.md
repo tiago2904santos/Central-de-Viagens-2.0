@@ -6,6 +6,9 @@
 - JS centralizado em `static/js/`.
 - Proibido CSS e JS soltos por pagina.
 - Nao criar estilo especifico por CRUD; corrigir no component global reutilizavel.
+- Proibido `style=""` em templates.
+- Proibido JS inline em templates.
+- Proibido `href="#"` para acao visual.
 - A **tela de login** usa layout proprio (sem sidebar): classes em `static/css/auth.css` (prefixo `auth-`), importado tambem em `style.css`; ver `docs/AUTENTICACAO.md`.
 
 ## Padrao visual premium
@@ -73,6 +76,7 @@ As telas de `Unidade`, `Cidade`, `Cargo`, `Combustivel`, `Servidor` e `Viatura` 
 - Ajustes de cards em `templates/components/cards/*.html` e `static/css/cards.css`.
 - Ajustes de feedback em `templates/components/feedback/*.html` e `static/css/utilities.css`.
 - Nunca copiar CSS bruto do legado em bloco; extrair o conceito e reconstruir no sistema atual.
+- Blocos de dominio reutilizavel devem viver em `static/css/domain.css` e `templates/components/domain/`.
 
 ## Layout do shell
 

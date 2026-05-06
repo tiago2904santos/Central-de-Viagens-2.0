@@ -28,48 +28,7 @@
       <section class="app-page__form-card roteiro-detail">
         <div class="form-section">
           {% include "components/forms/form_section.html" with title="Sede e resumo" description="Dados persistidos conforme o fluxo legacy (sedes, trechos e diárias)." only %}
-          <dl class="roteiro-detail__grid">
-            <div class="roteiro-detail__item">
-              <dt>Status</dt>
-              <dd>{{ roteiro.get_status_display }}</dd>
-            </div>
-            <div class="roteiro-detail__item">
-              <dt>Sede (UF)</dt>
-              <dd>{{ roteiro.origem_estado|default:"—" }}</dd>
-            </div>
-            <div class="roteiro-detail__item">
-              <dt>Sede (cidade)</dt>
-              <dd>{{ roteiro.origem_cidade|default:"—" }}</dd>
-            </div>
-            <div class="roteiro-detail__item">
-              <dt>Saída</dt>
-              <dd>{{ roteiro.saida_dt|date:"d/m/Y H:i"|default:"—" }}</dd>
-            </div>
-            <div class="roteiro-detail__item">
-              <dt>Chegada</dt>
-              <dd>{{ roteiro.chegada_dt|date:"d/m/Y H:i"|default:"—" }}</dd>
-            </div>
-            <div class="roteiro-detail__item">
-              <dt>Retorno — saída</dt>
-              <dd>{{ roteiro.retorno_saida_dt|date:"d/m/Y H:i"|default:"—" }}</dd>
-            </div>
-            <div class="roteiro-detail__item">
-              <dt>Retorno — chegada</dt>
-              <dd>{{ roteiro.retorno_chegada_dt|date:"d/m/Y H:i"|default:"—" }}</dd>
-            </div>
-            <div class="roteiro-detail__item">
-              <dt>Quantidade de diárias</dt>
-              <dd>{{ roteiro.quantidade_diarias|default:"—" }}</dd>
-            </div>
-            <div class="roteiro-detail__item">
-              <dt>Valor diárias</dt>
-              <dd>{{ roteiro.valor_diarias|default:"—" }}</dd>
-            </div>
-            <div class="roteiro-detail__item roteiro-detail__item--wide">
-              <dt>Observações</dt>
-              <dd>{{ roteiro.observacoes|default:"—" }}</dd>
-            </div>
-          </dl>
+          {% include "components/domain/resumo_rota.html" with roteiro=roteiro trechos=trechos %}
         </div>
 
         <div class="form-section">
@@ -90,17 +49,7 @@
           {% if trechos %}
             <div class="roteiro-steps" role="list">
               {% for trecho in trechos %}
-                <article class="roteiro-steps__item" role="listitem">
-                  <span class="roteiro-steps__order">{{ trecho.ordem }}</span>
-                  <div class="roteiro-steps__content">
-                    <h3>{{ trecho.get_tipo_display }} — {{ trecho.origem_cidade|default:trecho.origem_estado }} → {{ trecho.destino_cidade|default:trecho.destino_estado }}</h3>
-                    <p>
-                      Saída: {{ trecho.saida_dt|date:"d/m/Y H:i"|default:"—" }}
-                      · Chegada: {{ trecho.chegada_dt|date:"d/m/Y H:i"|default:"—" }}
-                      {% if trecho.distancia_km %} · {{ trecho.distancia_km }} km{% endif %}
-                    </p>
-                  </div>
-                </article>
+                {% include "components/domain/trecho_card.html" with trecho=trecho %}
               {% endfor %}
             </div>
           {% else %}
