@@ -32,6 +32,7 @@ from roteiros.services.routing.route_time_rules import (
     round_trip_minutes_to_15,
 )
 from roteiros.services.routing.route_stale import mark_stale_when_signature_changed
+from roteiros.services.roteiro_editor import _apply_saved_map_route_from_post
 
 
 @override_settings(
@@ -676,6 +677,32 @@ class RoteirosRoutingTests(TestCase):
         self.assertIn("points", serialized)
         self.assertTrue(any(p.get("kind") == "origem" for p in serialized["points"]))
         self.assertTrue(any(p.get("kind") == "destino" for p in serialized["points"]))
+
+    def test_apply_saved_map_route_from_post_persiste_geometry_preview(self):
+        roteiro = Roteiro.objects.create(
+            tipo=Roteiro.TIPO_AVULSO,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+        )
+        payload = {
+            "map_route_geometry_json": json.dumps(
+                {
+                    "type": "LineString",
+                    "coordinates": [[-49.2733, -25.4284], [-51.1628, -23.3103]],
+                }
+            ),
+            "map_route_distance_km": "100.55",
+            "map_route_duration_minutes": "150",
+            "map_route_provider": "openrouteservice",
+            "map_route_calculated_at": "2026-05-06T13:40:00-03:00",
+        }
+        _apply_saved_map_route_from_post(roteiro, payload)
+        roteiro.refresh_from_db()
+        self.assertIsNotNone(roteiro.rota_geojson)
+        self.assertEqual(roteiro.rota_geojson.get("type"), "LineString")
+        self.assertEqual(str(roteiro.rota_distancia_calculada_km), "100.55")
+        self.assertEqual(roteiro.rota_duracao_calculada_min, 150)
+        self.assertEqual(roteiro.rota_fonte, "openrouteservice")
 
     def test_calcular_rota_geometria_invalida_nao_quebra_json(self):
         roteiro = Roteiro.objects.create(

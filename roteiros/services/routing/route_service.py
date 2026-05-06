@@ -32,6 +32,13 @@ def _format_calculada_em(dt) -> str:
     return local.strftime("%d/%m/%Y %H:%M")
 
 
+def _format_calculada_em_iso(dt) -> str:
+    if not dt:
+        return ""
+    local = timezone.localtime(dt)
+    return local.isoformat()
+
+
 def _points_for_provider(points: List[dict]) -> List[Dict[str, Any]]:
     out = []
     for p in points:
@@ -109,6 +116,7 @@ def _route_payload_from_roteiro(
         "duration_human_auto": _duration_human(dur_auto) if dur_auto is not None else "",
         "geometry": roteiro.rota_geojson,
         "calculated_at": _format_calculada_em(roteiro.rota_calculada_em),
+        "calculated_at_iso": _format_calculada_em_iso(roteiro.rota_calculada_em),
         "from_cache": from_cache,
         "status": status or roteiro.rota_status,
         "assinatura": roteiro.rota_assinatura,

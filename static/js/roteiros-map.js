@@ -62,6 +62,35 @@
     return document.getElementById(id);
   }
 
+  function persistRouteInForm(route, points) {
+    var geometryInput = $('id_map_route_geometry_json');
+    var pointsInput = $('id_map_route_points_json');
+    var distanceInput = $('id_map_route_distance_km');
+    var durationInput = $('id_map_route_duration_minutes');
+    var providerInput = $('id_map_route_provider');
+    var calculatedAtInput = $('id_map_route_calculated_at');
+    if (!geometryInput || !pointsInput) return;
+
+    var geometry = route && route.geometry ? route.geometry : null;
+    geometryInput.value = geometry ? JSON.stringify(geometry) : '';
+    pointsInput.value = Array.isArray(points) ? JSON.stringify(points) : '';
+    if (distanceInput) {
+      distanceInput.value =
+        route && route.distance_km != null ? String(route.distance_km) : '';
+    }
+    if (durationInput) {
+      durationInput.value =
+        route && route.duration_minutes != null ? String(route.duration_minutes) : '';
+    }
+    if (providerInput) {
+      providerInput.value = route && route.provider ? String(route.provider) : '';
+    }
+    if (calculatedAtInput) {
+      var calculatedAt = route && (route.calculated_at_iso || route.calculated_at);
+      calculatedAtInput.value = calculatedAt ? String(calculatedAt) : '';
+    }
+  }
+
   function setLoading(on) {
     var el = $('roteiro-mapa-loading');
     if (!el) return;
@@ -449,6 +478,7 @@
         initial.route = route;
         initial.legs = Array.isArray(res.body.legs) ? res.body.legs : [];
         initial.points = Array.isArray(res.body.points) ? res.body.points : [];
+        persistRouteInForm(route, initial.points);
         initial.status = route.status || 'calculada';
         hadGeometry = !!(route.geometry && route.geometry.type === 'LineString');
         updateSummary(route, { status: initial.status });
@@ -512,6 +542,7 @@
     } else {
       setCalcularEnabled(true);
       if (initial.route) {
+        persistRouteInForm(initial.route, initial.points);
         updateSummary(initial.route, { status: initial.status });
         var gwInit = initial.route.geometry_warning;
         var drew = drawRoute(initial.route.geometry, gwInit, initial.legs, initial.points);

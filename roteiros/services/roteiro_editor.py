@@ -1,12 +1,76 @@
+import json
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from types import SimpleNamespace
 
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
+from django.utils import timezone
 
 from cadastros.models import ConfiguracaoSistema
 
 from roteiros import roteiro_logic
 from roteiros.models import Roteiro
+
+
+def _apply_saved_map_route_from_post(roteiro, post):
+    raw_geometry = (post.get("map_route_geometry_json") or "").strip()
+    if not raw_geometry:
+        return
+    try:
+        geometry = json.loads(raw_geometry)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return
+    if not isinstance(geometry, dict) or geometry.get("type") != "LineString":
+        return
+    if not isinstance(geometry.get("coordinates"), list) or not geometry.get("coordinates"):
+        return
+
+    distance_raw = (post.get("map_route_distance_km") or "").strip()
+    duration_raw = (post.get("map_route_duration_minutes") or "").strip()
+    provider = (post.get("map_route_provider") or "").strip()
+    calculated_at_raw = (post.get("map_route_calculated_at") or "").strip()
+
+    distance = None
+    if distance_raw:
+        try:
+            distance = Decimal(distance_raw)
+        except (InvalidOperation, ValueError, TypeError):
+            distance = None
+    duration = None
+    if duration_raw:
+        try:
+            duration = int(duration_raw)
+        except (TypeError, ValueError):
+            duration = None
+    calculated_at = None
+    if calculated_at_raw:
+        try:
+            calculated_at = datetime.fromisoformat(calculated_at_raw)
+            if timezone.is_naive(calculated_at):
+                calculated_at = timezone.make_aware(
+                    calculated_at, timezone.get_current_timezone()
+                )
+        except (TypeError, ValueError):
+            calculated_at = None
+
+    roteiro.rota_geojson = geometry
+    roteiro.rota_distancia_calculada_km = distance
+    roteiro.rota_duracao_calculada_min = duration
+    roteiro.rota_fonte = provider or Roteiro.ROTA_FONTE_OPENROUTESERVICE
+    roteiro.rota_status = Roteiro.ROTA_STATUS_CALCULADA
+    roteiro.rota_calculada_em = calculated_at or timezone.now()
+    roteiro.save(
+        update_fields=[
+            "rota_geojson",
+            "rota_distancia_calculada_km",
+            "rota_duracao_calculada_min",
+            "rota_fonte",
+            "rota_status",
+            "rota_calculada_em",
+            "updated_at",
+        ]
+    )
 
 
 def obter_initial_roteiro():
@@ -111,6 +175,7 @@ def criar_roteiro(form, step3_state, validated, diarias_resultado):
     roteiro_logic._salvar_roteiro_avulso_from_step3_state(
         roteiro, step3_state, validated, diarias_resultado=diarias_resultado
     )
+    _apply_saved_map_route_from_post(roteiro, form.data)
     return roteiro
 
 
@@ -124,6 +189,7 @@ def atualizar_roteiro(instance, form, step3_state, validated, diarias_resultado)
     roteiro_logic._salvar_roteiro_avulso_from_step3_state(
         roteiro, step3_state, validated, diarias_resultado=diarias_resultado
     )
+    _apply_saved_map_route_from_post(roteiro, form.data)
     return roteiro
 
 

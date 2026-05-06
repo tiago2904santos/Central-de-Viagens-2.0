@@ -227,6 +227,7 @@ def calculate_route_preview(payload: Dict[str, Any]) -> Dict[str, Any]:
         "geometry": normalized.get("geometry"),
         "status": "calculada",
         "calculated_at": _format_calculated_at(calculated_at),
+        "calculated_at_iso": timezone.localtime(calculated_at).isoformat(),
         "calculated_at_display": _format_calculated_at(calculated_at),
     }
     if normalized.get("geometry_warning"):

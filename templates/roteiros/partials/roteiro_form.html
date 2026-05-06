@@ -24,6 +24,12 @@
             <input type="hidden" name="quantidade_diarias" id="id_quantidade_diarias" value="{{ step3_diarias_resultado.totais.total_diarias|default:'' }}">
             <input type="hidden" name="valor_diarias" id="id_valor_diarias" value="{{ step3_diarias_resultado.totais.total_valor|default:'' }}">
             <input type="hidden" name="valor_diarias_extenso" id="id_valor_diarias_extenso" value="{{ step3_diarias_resultado.totais.valor_extenso|default:'' }}">
+            <input type="hidden" name="map_route_geometry_json" id="id_map_route_geometry_json" value="">
+            <input type="hidden" name="map_route_points_json" id="id_map_route_points_json" value="">
+            <input type="hidden" name="map_route_distance_km" id="id_map_route_distance_km" value="">
+            <input type="hidden" name="map_route_duration_minutes" id="id_map_route_duration_minutes" value="">
+            <input type="hidden" name="map_route_provider" id="id_map_route_provider" value="">
+            <input type="hidden" name="map_route_calculated_at" id="id_map_route_calculated_at" value="">
 
             {% if form.non_field_errors %}
             <div class="alert alert-danger py-2" role="alert">
