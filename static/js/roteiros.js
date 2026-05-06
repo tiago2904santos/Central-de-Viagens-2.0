@@ -384,6 +384,9 @@
           cdEl.value = cheg.data;
           chEl.value = cheg.hora;
         }
+      } else {
+        cdEl.value = '';
+        chEl.value = '';
       }
     }
   }
@@ -435,6 +438,24 @@
       csh.value = pch.value;
       recalcCard(cur, true);
     }
+  }
+  /** Se o bloco Retorno existe e saída ainda vazia, usa chegada do último trecho IDA (fluxo multi-destino). */
+  function chainRetornoSaidaFromLastTrecho() {
+    if (isLoopModeActive()) return;
+    var cards = Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]'));
+    if (!cards.length) return;
+    var last = cards[cards.length - 1];
+    var o = last.dataset.ordem;
+    var pcd = last.querySelector('[name="trecho_' + o + '_chegada_data"]');
+    var pch = last.querySelector('[name="trecho_' + o + '_chegada_hora"]');
+    var rsd = $('id_retorno_saida_data');
+    var rsh = $('id_retorno_saida_hora');
+    if (!pcd || !pch || !rsd || !rsh) return;
+    if (!(pcd.value && pch.value)) return;
+    if (rsd.value || rsh.value) return;
+    rsd.value = pcd.value;
+    rsh.value = pch.value;
+    recalcRetorno(true);
   }
   function applyEstimarPayloadToRetorno(data) {
     if ($('id_retorno_distancia_km') && data.distancia_km != null) $('id_retorno_distancia_km').value = String(data.distancia_km);
@@ -501,6 +522,7 @@
           if (!data || !data.ok) return;
           applyEstimarPayloadToTrechoCard(card, data);
           chainSuggestedDepartures();
+          chainRetornoSaidaFromLastTrecho();
           updateResumo();
           scheduleRealtimeDiarias();
           scheduleAutosave();
@@ -664,6 +686,7 @@
       } else {
         updateRetornoCities();
       }
+      chainRetornoSaidaFromLastTrecho();
       recalcRetorno(false);
       updateResumo();
       scheduleAutoEstimarTrechos();
@@ -713,6 +736,7 @@
     $('trechos-gerados-container').querySelectorAll('.card[data-key]').forEach(function(c) { recalcCard(c, false); });
     chainSuggestedDepartures();
     updateRetornoCities();
+    chainRetornoSaidaFromLastTrecho();
     recalcRetorno(false);
     updateResumo();
     scheduleAutoEstimarTrechos();
@@ -1026,6 +1050,7 @@
       }
       applyEstimarPayloadToTrechoCard(card, data);
       chainSuggestedDepartures();
+      chainRetornoSaidaFromLastTrecho();
       updateResumo();
       scheduleRealtimeDiarias();
       scheduleAutosave();
@@ -1085,13 +1110,21 @@
   $('trechos-gerados-container').addEventListener('input', function(e) {
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';
-    if (n.indexOf('_saida_')!==-1||n.indexOf('_tempo_adicional_min')!==-1||n.indexOf('_tempo_cru_estimado_min')!==-1||e.target.classList.contains('trecho-tempo-viagem-hhmm')) recalcCard(c, true);
+    if (n.indexOf('_saida_')!==-1||n.indexOf('_tempo_adicional_min')!==-1||n.indexOf('_tempo_cru_estimado_min')!==-1||e.target.classList.contains('trecho-tempo-viagem-hhmm')) {
+      recalcCard(c, true);
+      chainSuggestedDepartures();
+      chainRetornoSaidaFromLastTrecho();
+    }
     updateResumo(); scheduleRealtimeDiarias(); scheduleAutosave();
   });
   $('trechos-gerados-container').addEventListener('change', function(e) {
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';
-    if (n.indexOf('_tempo_adicional_min')!==-1||n.indexOf('_tempo_cru_estimado_min')!==-1||e.target.classList.contains('trecho-tempo-viagem-hhmm')) recalcCard(c, true);
+    if (n.indexOf('_saida_')!==-1||n.indexOf('_tempo_adicional_min')!==-1||n.indexOf('_tempo_cru_estimado_min')!==-1||e.target.classList.contains('trecho-tempo-viagem-hhmm')) {
+      recalcCard(c, true);
+      chainSuggestedDepartures();
+      chainRetornoSaidaFromLastTrecho();
+    }
     updateResumo(); scheduleRealtimeDiarias(); scheduleAutosave();
   });
   ['id_retorno_saida_data','id_retorno_saida_hora','id_retorno_chegada_data','id_retorno_chegada_hora','id_retorno_tempo_viagem_hhmm','id_retorno_tempo_adicional_min'].forEach(function(id) {
