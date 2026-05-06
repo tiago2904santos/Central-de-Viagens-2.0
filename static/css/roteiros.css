@@ -1511,6 +1511,14 @@
   order: 6;
 }
 
+.roteiro-editor--avulso .roteiro-editor__section--mapa {
+  order: 6;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section--diarias {
+  order: 7;
+}
+
 .roteiro-editor--avulso .roteiro-editor__actions {
   order: 8;
 }
@@ -1854,11 +1862,20 @@
 
 /* Mapa do roteiro (Leaflet) */
 .roteiro-editor__map-card {
-  margin-top: 1rem;
-  border-radius: 16px;
-  border: 1px solid #dce8f3;
-  box-shadow: 0 12px 40px rgba(15, 54, 93, 0.08);
-  background: #fbfdff;
+  margin-top: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--theme-border-card);
+  box-shadow: var(--theme-shadow-block);
+  background: linear-gradient(
+    180deg,
+    var(--theme-surface-card) 0%,
+    var(--theme-surface-card-soft) 100%
+  );
+  overflow: hidden;
+}
+
+.roteiro-editor__map-card .card-body {
+  padding: var(--space-4);
 }
 
 .roteiro-mapa__header {
@@ -1870,10 +1887,20 @@
   margin-bottom: 12px;
 }
 
-.roteiro-mapa__title {
-  font-size: 1.05rem;
+.roteiro-mapa__kicker {
+  color: var(--theme-accent-eyebrow);
+  display: block;
+  font-size: 10px;
   font-weight: 800;
-  color: #0f365d;
+  letter-spacing: 0.12em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.roteiro-mapa__title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--theme-text-heading);
   margin: 0;
 }
 
@@ -1917,13 +1944,20 @@
 }
 
 .roteiro-mapa__frame {
-  height: 320px;
+  min-height: 720px;
+  height: 720px;
   width: 100%;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #e3edf6;
+  border: 1px solid var(--theme-border-card);
   margin-top: 12px;
   background: #eef4fa;
+}
+
+.roteiro-mapa__frame #map,
+.roteiro-mapa__frame .leaflet-container {
+  min-height: 720px;
+  height: 720px;
 }
 
 .roteiro-mapa__frame--placeholder {
@@ -1942,8 +1976,11 @@
   border-color: #dce8f3 !important;
 }
 
-.roteiro-mapa__manual-fields {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #e8f0f7;
+@media (max-width: 991.98px) {
+  .roteiro-mapa__frame,
+  .roteiro-mapa__frame #map,
+  .roteiro-mapa__frame .leaflet-container {
+    min-height: 520px;
+    height: 520px;
+  }
 }

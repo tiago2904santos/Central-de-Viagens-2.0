@@ -55,6 +55,13 @@
   var markerLayer = null;
   var LEG_COLORS = ['#0f365d', '#d08a28'];
   var initial = readJsonScript('roteiro-mapa-inicial') || {};
+  var mapConfig = window.ROTEIRO_MAP_CONFIG || {};
+  var defaultCenter = Array.isArray(mapConfig.defaultCenter)
+    ? mapConfig.defaultCenter
+    : (Array.isArray(initial.default_center) ? initial.default_center : [-24.89, -51.55]);
+  var defaultZoom = Number.isFinite(Number(mapConfig.defaultZoom))
+    ? Number(mapConfig.defaultZoom)
+    : (Number.isFinite(Number(initial.default_zoom)) ? Number(initial.default_zoom) : 7);
   var rid = initial.roteiro_id;
   var hadGeometry = !!(initial.route && initial.route.geometry && initial.route.geometry.type === 'LineString');
 
@@ -103,7 +110,6 @@
     var fonte = $('roteiro-mapa-fonte');
     var em = $('roteiro-mapa-calculada-em');
     var st = $('roteiro-mapa-status');
-    var manual = $('roteiro-mapa-manual-blurb');
     if (dist) {
       var dAuto = route.distance_km_auto;
       var dShow = route.distance_km;
@@ -129,17 +135,6 @@
     if (fonte) fonte.textContent = route.provider || '—';
     if (em) em.textContent = route.calculated_at || '—';
     if (st) st.textContent = statusLabel((route && route.status) || (extra && extra.status));
-    if (manual) {
-      var j = (route.ajuste_justificativa || '').trim();
-      if (j) {
-        manual.hidden = false;
-        manual.removeAttribute('hidden');
-        manual.textContent = 'Justificativa registrada: ' + j;
-      } else {
-        manual.hidden = true;
-        manual.textContent = '';
-      }
-    }
   }
 
   function setFramePlaceholder(on) {
@@ -153,7 +148,7 @@
     var container = $('roteiro-mapa-container');
     if (!container || typeof L === 'undefined') return;
     if (!mapInstance) {
-      mapInstance = L.map(container, { scrollWheelZoom: false }).setView([-14.235, -51.9253], 4);
+      mapInstance = L.map(container, { scrollWheelZoom: false }).setView(defaultCenter, defaultZoom);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; OpenStreetMap',
@@ -324,7 +319,7 @@
     var hasSaved = !!rid;
     var step3 = window.RoteirosStep3;
     if (!hasSaved && (!step3 || !step3.canCalculateRoutePreview || !step3.canCalculateRoutePreview())) {
-      showError('Selecione a sede e ao menos um destino para calcular a rota.');
+      showError('Selecione a sede e os destinos para calcular a rota.');
       return;
     }
     var targetUrl = hasSaved ? urlPersistido : (urlPreview || (step3 && step3.getPreviewEndpointUrl && step3.getPreviewEndpointUrl()));
@@ -343,7 +338,7 @@
       : ((step3 && step3.buildRoutePreviewPayload && step3.buildRoutePreviewPayload()) || null);
     if (!payload) {
       setLoading(false);
-      showError('Selecione a sede e ao menos um destino para calcular a rota.');
+      showError('Selecione a sede e os destinos para calcular a rota.');
       return;
     }
 

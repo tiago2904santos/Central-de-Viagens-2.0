@@ -37,7 +37,7 @@ class RoteiroForm(forms.ModelForm):
                 attrs={"class": "form-control", "step": "1", "min": "0"}
             ),
             "rota_ajuste_justificativa": forms.Textarea(
-                attrs={"class": "form-control", "rows": 2, "placeholder": "Obrigatório se houver ajuste manual de distância ou tempo."}
+                attrs={"class": "form-control", "rows": 2}
             ),
         }
 

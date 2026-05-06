@@ -1,9 +1,9 @@
-<section class="roteiro-mapa card roteiro-editor__map-card" aria-labelledby="roteiro-mapa-titulo">
+<section class="roteiro-mapa card roteiro-editor__map-card roteiro-editor__section roteiro-editor__section--mapa" aria-labelledby="roteiro-mapa-titulo">
   <div class="card-body">
     <header class="roteiro-mapa__header">
       <div>
-        <h3 class="roteiro-mapa__title" id="roteiro-mapa-titulo">Mapa do roteiro</h3>
-        <p class="roteiro-mapa__subtitle">Visão geral da rota completa no mapa (OpenStreetMap via OpenRouteService). Distância e tempo por trecho vêm do botão Estimar em cada trecho.</p>
+        <span class="roteiro-mapa__kicker">Mapa da rota</span>
+        <h3 class="roteiro-mapa__title" id="roteiro-mapa-titulo">Visualização do trajeto</h3>
       </div>
       <div class="roteiro-mapa__actions">
         <button type="button"
@@ -24,7 +24,7 @@
        id="roteiro-mapa-novo-hint"
        {% if object and object.pk %}hidden{% endif %}
        role="status">
-      Selecione a sede e ao menos um destino para calcular a rota.
+      Selecione a sede e os destinos para calcular a rota.
     </p>
     <p class="roteiro-mapa__novo-hint alert alert-light border py-2 small mb-2"
        id="roteiro-mapa-ready-hint"
@@ -63,28 +63,6 @@
           <dd id="roteiro-mapa-status">—</dd>
         </div>
       </dl>
-      <p class="roteiro-mapa__manual small text-muted" id="roteiro-mapa-manual-blurb" hidden></p>
-    </div>
-
-    <p class="roteiro-mapa__disclaimer small text-muted">
-      Distância e tempo são estimativas automáticas. Preencha a data/hora de saída para calcular a chegada.
-    </p>
-
-    <div class="roteiro-mapa__manual-fields">
-      <div class="row g-2">
-        <div class="col-md-4">
-          <label class="roteiro-editor__field-label" for="id_rota_distancia_manual_km">Distância ajustada manualmente (km)</label>
-          {{ form.rota_distancia_manual_km }}
-        </div>
-        <div class="col-md-4">
-          <label class="roteiro-editor__field-label" for="id_rota_duracao_manual_min">Duração ajustada manualmente (min)</label>
-          {{ form.rota_duracao_manual_min }}
-        </div>
-        <div class="col-12">
-          <label class="roteiro-editor__field-label" for="id_rota_ajuste_justificativa">Justificativa do ajuste</label>
-          {{ form.rota_ajuste_justificativa }}
-        </div>
-      </div>
     </div>
 
     <div class="roteiro-mapa__frame roteiro-mapa__frame--placeholder" id="roteiro-mapa-container" data-testid="roteiro-mapa-container"></div>
