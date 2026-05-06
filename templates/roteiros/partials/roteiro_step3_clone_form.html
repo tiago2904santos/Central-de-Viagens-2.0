@@ -596,6 +596,10 @@
   }
   function selectedText(el) { return el && el.selectedIndex >= 0 && el.options[el.selectedIndex] ? String(el.options[el.selectedIndex].text || '').trim() : ''; }
   function esc(value) { return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function makeStableKey(prefix) {
+    if (window.crypto && window.crypto.randomUUID) return prefix + '-' + window.crypto.randomUUID();
+    return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+  }
   function loadCities(select, estadoId, selectedId) {
     if (!estadoId) { select.innerHTML = '<option value="">---------</option>'; select.disabled = true; refreshSelectPickers(select); return Promise.resolve(); }
     function applyCities(cidades) {
@@ -625,7 +629,7 @@
     var map = {};
     $('trechos-gerados-container').querySelectorAll('.card[data-key]').forEach(function(card) {
       var o = card.dataset.ordem;
-      map[card.dataset.key] = { ordem: parseInt(o, 10) || 0, origem_nome: card.dataset.origemNome || '', destino_nome: card.dataset.destinoNome || '',
+      map[card.dataset.key] = { id: card.dataset.trechoId || '', ordem: parseInt(o, 10) || 0, origem_nome: card.dataset.origemNome || '', destino_nome: card.dataset.destinoNome || '',
         origem_estado_id: card.dataset.origemEstadoId || '', origem_cidade_id: card.dataset.origemCidadeId || '',
         destino_estado_id: card.dataset.destinoEstadoId || '', destino_cidade_id: card.dataset.destinoCidadeId || '',
         saida_data: (card.querySelector('[name="trecho_' + o + '_saida_data"]') || {}).value || '',
@@ -639,7 +643,20 @@
         rota_fonte: (card.querySelector('[name="trecho_' + o + '_rota_fonte"]') || {}).value || '' };
     }); return map;
   }
-  function stateTrechosMap(state) { var map = {}; ((state && state.trechos) || []).forEach(function(t) { map[String(t.origem_cidade_id || '') + '->' + String(t.destino_cidade_id || '')] = t; }); return map; }
+  function stateTrechosMap(state) {
+    var map = {};
+    ((state && state.trechos) || []).forEach(function(t) {
+      var keys = [
+        t.key,
+        t.destino_key,
+        t.id,
+        t.destino_cidade_id,
+        String(t.origem_cidade_id || '') + '->' + String(t.destino_cidade_id || '')
+      ];
+      keys.forEach(function(key) { if (key != null && String(key) !== '') map[String(key)] = t; });
+    });
+    return map;
+  }
   function recalcCard(card, suggestArrival) {
     var o = card.dataset.ordem;
     var cruInput = card.querySelector('[name="trecho_' + o + '_tempo_cru_estimado_min"]');
@@ -688,10 +705,12 @@
     var o = trecho.ordem; var dist = value.distancia_km || ''; var cru = value.tempo_cru_estimado_min || '';
     var add = (value.tempo_adicional_min != null && value.tempo_adicional_min !== '') ? value.tempo_adicional_min : 0;
     var fonte = value.rota_fonte || '';
-    return '<div class="card roteiro-editor__trecho-card oficio-step3-trecho-card" data-key="'+esc(trecho.key)+'" data-ordem="'+o+'" data-origem-nome="'+esc(trecho.origem_nome)+'" data-destino-nome="'+esc(trecho.destino_nome)+'" data-origem-estado-id="'+esc(trecho.origem_estado_id)+'" data-origem-cidade-id="'+esc(trecho.origem_cidade_id)+'" data-destino-estado-id="'+esc(trecho.destino_estado_id)+'" data-destino-cidade-id="'+esc(trecho.destino_cidade_id)+'">' +
+    var trechoId = value.id || trecho.id || '';
+    return '<div class="card roteiro-editor__trecho-card oficio-step3-trecho-card" data-key="'+esc(trecho.key)+'" data-trecho-id="'+esc(trechoId)+'" data-ordem="'+o+'" data-origem-nome="'+esc(trecho.origem_nome)+'" data-destino-nome="'+esc(trecho.destino_nome)+'" data-origem-estado-id="'+esc(trecho.origem_estado_id)+'" data-origem-cidade-id="'+esc(trecho.origem_cidade_id)+'" data-destino-estado-id="'+esc(trecho.destino_estado_id)+'" data-destino-cidade-id="'+esc(trecho.destino_cidade_id)+'">' +
       '<div class="card-header py-3"><span class="fw-semibold">Trecho '+(o+1)+' — '+esc(trecho.origem_nome)+' → '+esc(trecho.destino_nome)+'</span></div>' +
       '<div class="card-body">' +
         '<input type="hidden" name="trecho_'+o+'_origem_nome" value="'+esc(trecho.origem_nome)+'">' +
+        '<input type="hidden" name="trecho_'+o+'_id" value="'+esc(trechoId)+'">' +
         '<input type="hidden" name="trecho_'+o+'_destino_nome" value="'+esc(trecho.destino_nome)+'">' +
         '<input type="hidden" name="trecho_'+o+'_origem_estado_id" value="'+esc(trecho.origem_estado_id)+'">' +
         '<input type="hidden" name="trecho_'+o+'_origem_cidade_id" value="'+esc(trecho.origem_cidade_id)+'">' +
@@ -743,6 +762,7 @@
   function addDestinoRow(destino) {
     var idx = getDestinoRows().length; var row = document.createElement('div');
     row.className = 'destino-row roteiro-editor__destination-card'; row.draggable = true; row.dataset.index = String(idx);
+    row.dataset.key = (destino && (destino.key || destino.destino_key || destino.id)) ? String(destino.key || destino.destino_key || destino.id) : makeStableKey('destino');
     var selE = destino && destino.estado_id ? destino.estado_id : (destinoEstadoDefaultId || '');
     row.innerHTML = '<div class="roteiro-editor__drag-col"><button type="button" class="roteiro-editor__drag-handle destino-drag-handle" aria-label="Arrastar para reordenar">&#8942;</button></div>' +
       '<div class="roteiro-editor__destination-fields"><div><label class="roteiro-editor__field-label"></label><select name="destino_estado_'+idx+'" class="destino-estado form-select" data-oficio-picker-search="always" data-oficio-picker-search-placeholder="Filtrar UF...">'+estadoOptionsMarkup(selE)+'</select></div>' +
@@ -758,7 +778,7 @@
     var items = Array.isArray(destinos) && destinos.length ? destinos : [{ estado_id: destinoEstadoDefaultId || null, cidade_id: null }];
     var p = Promise.resolve(); items.forEach(function(d) { p = p.then(function() { return addDestinoRow(d || { estado_id: null, cidade_id: null }); }); }); return p;
   }
-  function getDestinos() { return getDestinoRows().map(function(row) { var es = row.querySelector('.destino-estado'); var ci = row.querySelector('.destino-cidade'); return { estado_id: es ? es.value||null : null, cidade_id: ci ? ci.value||null : null, cidade_nome: selectedText(ci) }; }); }
+  function getDestinos() { return getDestinoRows().map(function(row) { var es = row.querySelector('.destino-estado'); var ci = row.querySelector('.destino-cidade'); return { key: row.dataset.key || '', estado_id: es ? es.value||null : null, cidade_id: ci ? ci.value||null : null, cidade_nome: selectedText(ci) }; }); }
   function updateRetornoCities() {
     var cards = Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]'));
     var sede = selectedText($('id_origem_cidade')); var ultima = cards.length ? (cards[cards.length-1].dataset.destinoNome||'') : '';
@@ -798,7 +818,8 @@
         return buildTrechoCard(
           {
             ordem: idx,
-            key: 'explicit-' + idx + '-' + String(trecho.origem_cidade_id || '') + '->' + String(trecho.destino_cidade_id || ''),
+            key: String(trecho.key || trecho.destino_key || trecho.id || ('explicit-' + idx + '-' + String(trecho.origem_cidade_id || '') + '->' + String(trecho.destino_cidade_id || ''))),
+            id: trecho.id || '',
             origem_estado_id: trecho.origem_estado_id,
             origem_cidade_id: trecho.origem_cidade_id,
             destino_estado_id: trecho.destino_estado_id,
@@ -840,7 +861,7 @@
     var ocId = sedeCid;
     var oNome = sedeNome;
     destinos.forEach(function(d, idx) {
-      var key = String(ocId || '') + '->' + String(d.cidade_id || '');
+      var key = String(d.key || d.cidade_id || (String(ocId || '') + '->' + String(d.cidade_id || '')));
       trechos.push({
         ordem: idx,
         key: key,
@@ -857,7 +878,7 @@
     });
     $('trechos-gerados-container').innerHTML = trechos.map(function(t) {
       var cv = cm[t.key] || {};
-      var sv = sm[t.key] || {};
+      var sv = sm[t.key] || sm[String(t.destino_cidade_id || '')] || {};
       return buildTrechoCard(t, preferSeed ? Object.assign({}, cv, sv) : Object.assign({}, sv, cv));
     }).join('');
     $('trechos-gerados-container').querySelectorAll('.card[data-key]').forEach(function(c) { recalcCard(c, false); });
@@ -891,7 +912,7 @@
       roteiro_modo: $('id_roteiro_modo_evento').checked ? 'EVENTO_EXISTENTE' : 'ROTEIRO_PROPRIO',
       roteiro_id: $('id_roteiro_modo_evento').checked ? (getSelectedRouteId() || null) : null,
       sede_estado_id: $('id_origem_estado').value||null, sede_cidade_id: $('id_origem_cidade').value||null,
-      destinos_atuais: getDestinos().map(function(d) { return { estado_id: d.estado_id, cidade_id: d.cidade_id }; }),
+      destinos_atuais: getDestinos().map(function(d) { return { key: d.key, estado_id: d.estado_id, cidade_id: d.cidade_id }; }),
       bate_volta_diario: {
         ativo: !!($('id_bate_volta_diario_ativo') && $('id_bate_volta_diario_ativo').checked),
         data_inicio: ($('id_bate_volta_data_inicio') || {}).value || '',
@@ -903,7 +924,7 @@
       },
       trechos: Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]')).map(function(c) {
         var o = parseInt(c.dataset.ordem||'0',10)||0;
-        return { ordem: o, origem_nome: c.dataset.origemNome||'', destino_nome: c.dataset.destinoNome||'',
+        return { id: c.dataset.trechoId||'', key: c.dataset.key||'', ordem: o, origem_nome: c.dataset.origemNome||'', destino_nome: c.dataset.destinoNome||'',
           origem_estado_id: c.dataset.origemEstadoId||null, origem_cidade_id: c.dataset.origemCidadeId||null,
           destino_estado_id: c.dataset.destinoEstadoId||null, destino_cidade_id: c.dataset.destinoCidadeId||null,
           saida_data: (c.querySelector('[name="trecho_'+o+'_saida_data"]')||{}).value||'',

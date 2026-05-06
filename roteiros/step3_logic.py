@@ -440,6 +440,8 @@ def _build_step3_state_from_estrutura(estrutura, destinos_atuais, sede_estado_id
         chegada_data, chegada_hora = _split_route_datetime(item.get('chegada_dt'))
         tempo_adicional = item.get('tempo_adicional_min') or 0
         mapped = {
+            'id': item.get('id'),
+            'key': item.get('key') or item.get('destino_key') or item.get('id'),
             'ordem': item.get('ordem', 0),
             'origem_nome': item.get('origem_nome') or '',
             'destino_nome': item.get('destino_nome') or '',
@@ -555,11 +557,15 @@ def _serialize_step3_state(state):
             {
                 'estado_id': item.get('estado_id'),
                 'cidade_id': item.get('cidade_id'),
+                'id': item.get('id'),
+                'key': item.get('key') or item.get('destino_key') or item.get('id'),
             }
             for item in (state.get('destinos_atuais') or [])
         ],
         'trechos': [
             {
+                'id': trecho.get('id'),
+                'key': trecho.get('key') or trecho.get('destino_key') or trecho.get('id'),
                 'ordem': trecho.get('ordem', 0),
                 'origem_nome': trecho.get('origem_nome') or '',
                 'destino_nome': trecho.get('destino_nome') or '',
@@ -744,6 +750,8 @@ def _build_step3_state_from_saved_trechos(roteiro, seed_source_label=''):
         if tempo_cru is None and trecho.duracao_estimada_min is not None:
             tempo_cru = max((trecho.duracao_estimada_min or 0) - tempo_adicional, 0)
         trecho_payload = {
+            'id': trecho.pk,
+            'key': trecho.pk,
             'ordem': ordem,
             'origem_estado_id': trecho.origem_estado_id,
             'origem_cidade_id': trecho.origem_cidade_id,
@@ -1129,6 +1137,8 @@ def _validate_step3_state(state, oficio=None):
 
         cleaned_trechos.append(
             {
+                'id': _parse_int(trecho.get('id')),
+                'key': trecho.get('key') or trecho.get('destino_key') or trecho.get('id') or '',
                 'ordem': idx - 1,
                 'origem_estado_id': trecho.get('origem_estado_id'),
                 'origem_cidade_id': trecho.get('origem_cidade_id'),
@@ -1284,7 +1294,7 @@ def _destinos_roteiro_para_template(objeto):
     """Lista de dicts {estado_id, cidade_id, cidade, estado} a partir de objeto com .destinos (Evento ou Roteiro)."""
     destinos_qs = objeto.destinos.select_related('estado', 'cidade').order_by('ordem', 'id')
     return [
-        {'estado_id': d.estado_id, 'cidade_id': d.cidade_id, 'cidade': getattr(d, 'cidade', None), 'estado': getattr(d, 'estado', None)}
+        {'id': d.pk, 'key': d.pk, 'estado_id': d.estado_id, 'cidade_id': d.cidade_id, 'cidade': getattr(d, 'cidade', None), 'estado': getattr(d, 'estado', None)}
         for d in destinos_qs
     ]
 
@@ -1457,8 +1467,12 @@ def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated, dia
             ordem=ordem,
         )
 
-    roteiro.trechos.all().delete()
     trechos_validated = validated.get('trechos') or []
+    trechos_existentes = {
+        trecho.pk: trecho
+        for trecho in roteiro.trechos.all()
+    }
+    trechos_mantidos = set()
     for ordem, trecho in enumerate(trechos_validated):
         tempo_adicional = trecho.get('tempo_adicional_min') or 0
         tempo_cru = trecho.get('tempo_cru_estimado_min')
@@ -1466,23 +1480,32 @@ def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated, dia
         if duracao_estimada is None and ((tempo_cru or 0) + tempo_adicional) > 0:
             duracao_estimada = (tempo_cru or 0) + tempo_adicional
         distancia = _parse_step3_decimal(trecho.get('distancia_km'))
-        RoteiroTrecho.objects.create(
-            roteiro=roteiro,
-            ordem=ordem,
-            tipo=RoteiroTrecho.TIPO_IDA,
-            origem_estado_id=trecho.get('origem_estado_id'),
-            origem_cidade_id=trecho.get('origem_cidade_id'),
-            destino_estado_id=trecho.get('destino_estado_id'),
-            destino_cidade_id=trecho.get('destino_cidade_id'),
-            saida_dt=_step3_combine_date_time(trecho.get('saida_data'), trecho.get('saida_hora')),
-            chegada_dt=_step3_combine_date_time(trecho.get('chegada_data'), trecho.get('chegada_hora')),
-            distancia_km=distancia,
-            duracao_estimada_min=duracao_estimada,
-            tempo_cru_estimado_min=tempo_cru,
-            tempo_adicional_min=tempo_adicional,
-            rota_fonte=(trecho.get('rota_fonte') or '').strip(),
-            rota_calculada_em=timezone.now() if (distancia is not None or tempo_cru is not None) else None,
-        )
+        trecho_id = _parse_int(trecho.get('id'))
+        trecho_obj = trechos_existentes.get(trecho_id) if trecho_id else None
+        if trecho_obj is None:
+            trecho_obj = RoteiroTrecho(roteiro=roteiro)
+        trecho_obj.ordem = ordem
+        trecho_obj.tipo = RoteiroTrecho.TIPO_IDA
+        trecho_obj.origem_estado_id = trecho.get('origem_estado_id') or trecho_obj.origem_estado_id
+        trecho_obj.origem_cidade_id = trecho.get('origem_cidade_id') or trecho_obj.origem_cidade_id
+        trecho_obj.destino_estado_id = trecho.get('destino_estado_id') or trecho_obj.destino_estado_id
+        trecho_obj.destino_cidade_id = trecho.get('destino_cidade_id') or trecho_obj.destino_cidade_id
+        trecho_obj.saida_dt = _step3_combine_date_time(trecho.get('saida_data'), trecho.get('saida_hora')) or trecho_obj.saida_dt
+        trecho_obj.chegada_dt = _step3_combine_date_time(trecho.get('chegada_data'), trecho.get('chegada_hora')) or trecho_obj.chegada_dt
+        if distancia is not None:
+            trecho_obj.distancia_km = distancia
+        if duracao_estimada is not None:
+            trecho_obj.duracao_estimada_min = duracao_estimada
+        if tempo_cru is not None:
+            trecho_obj.tempo_cru_estimado_min = tempo_cru
+        if trecho.get('tempo_adicional_min') is not None:
+            trecho_obj.tempo_adicional_min = tempo_adicional
+        if 'rota_fonte' in trecho:
+            trecho_obj.rota_fonte = (trecho.get('rota_fonte') or '').strip()
+        if distancia is not None or tempo_cru is not None:
+            trecho_obj.rota_calculada_em = timezone.now()
+        trecho_obj.save()
+        trechos_mantidos.add(trecho_obj.pk)
 
     retorno_state = step3_state.get('retorno') or {}
     retorno_tempo_cru = _parse_int(retorno_state.get('tempo_cru_estimado_min'))
@@ -1498,23 +1521,34 @@ def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated, dia
     origem_retorno_cidade_id = (ultimo_trecho or {}).get('destino_cidade_id') or roteiro.origem_cidade_id
     distancia_retorno = _parse_step3_decimal(retorno_state.get('distancia_km'))
 
-    RoteiroTrecho.objects.create(
-        roteiro=roteiro,
-        ordem=len(trechos_validated),
-        tipo=RoteiroTrecho.TIPO_RETORNO,
-        origem_estado_id=origem_retorno_estado_id,
-        origem_cidade_id=origem_retorno_cidade_id,
-        destino_estado_id=roteiro.origem_estado_id,
-        destino_cidade_id=roteiro.origem_cidade_id,
-        saida_dt=_step3_combine_date_time(validated.get('retorno_saida_data'), validated.get('retorno_saida_hora')),
-        chegada_dt=_step3_combine_date_time(validated.get('retorno_chegada_data'), validated.get('retorno_chegada_hora')),
-        distancia_km=distancia_retorno,
-        duracao_estimada_min=retorno_duracao,
-        tempo_cru_estimado_min=retorno_tempo_cru,
-        tempo_adicional_min=retorno_tempo_adicional,
-        rota_fonte=(retorno_state.get('rota_fonte') or '').strip(),
-        rota_calculada_em=timezone.now() if (distancia_retorno is not None or retorno_tempo_cru is not None) else None,
+    retorno_obj = (
+        roteiro.trechos.filter(tipo=RoteiroTrecho.TIPO_RETORNO).order_by('ordem', 'id').first()
     )
+    if retorno_obj is None:
+        retorno_obj = RoteiroTrecho(roteiro=roteiro, tipo=RoteiroTrecho.TIPO_RETORNO)
+    retorno_obj.ordem = len(trechos_validated)
+    retorno_obj.tipo = RoteiroTrecho.TIPO_RETORNO
+    retorno_obj.origem_estado_id = origem_retorno_estado_id
+    retorno_obj.origem_cidade_id = origem_retorno_cidade_id
+    retorno_obj.destino_estado_id = roteiro.origem_estado_id
+    retorno_obj.destino_cidade_id = roteiro.origem_cidade_id
+    retorno_obj.saida_dt = _step3_combine_date_time(validated.get('retorno_saida_data'), validated.get('retorno_saida_hora')) or retorno_obj.saida_dt
+    retorno_obj.chegada_dt = _step3_combine_date_time(validated.get('retorno_chegada_data'), validated.get('retorno_chegada_hora')) or retorno_obj.chegada_dt
+    if distancia_retorno is not None:
+        retorno_obj.distancia_km = distancia_retorno
+    if retorno_duracao is not None:
+        retorno_obj.duracao_estimada_min = retorno_duracao
+    if retorno_tempo_cru is not None:
+        retorno_obj.tempo_cru_estimado_min = retorno_tempo_cru
+    if retorno_state.get('tempo_adicional_min') is not None:
+        retorno_obj.tempo_adicional_min = retorno_tempo_adicional
+    if 'rota_fonte' in retorno_state:
+        retorno_obj.rota_fonte = (retorno_state.get('rota_fonte') or '').strip()
+    if distancia_retorno is not None or retorno_tempo_cru is not None:
+        retorno_obj.rota_calculada_em = timezone.now()
+    retorno_obj.save()
+    trechos_mantidos.add(retorno_obj.pk)
+    roteiro.trechos.exclude(pk__in=trechos_mantidos).delete()
 
     _atualizar_datas_roteiro_apos_salvar_trechos(roteiro)
     _persistir_diarias_roteiro(roteiro, diarias_resultado)
