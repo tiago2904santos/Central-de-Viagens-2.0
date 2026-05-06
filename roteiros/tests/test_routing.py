@@ -729,9 +729,18 @@ class RoteirosRoutingTests(TestCase):
         leg = out["legs"][0]
         self.assertEqual(leg["from_cidade_id"], self.cidade_sede.pk)
         self.assertEqual(leg["to_cidade_id"], self.cidade_a.pk)
+        self.assertEqual(leg["distance_km"], 423.5)
+        self.assertEqual(leg["raw_duration_minutes"], 304)
         self.assertEqual(leg["travel_minutes"], 315)
+        self.assertEqual(leg["travel_hhmm"], "05:15")
         self.assertEqual(leg["additional_minutes"], 60)
+        self.assertEqual(leg["additional_hhmm"], "01:00")
         self.assertEqual(leg["total_minutes"], 375)
+        self.assertEqual(leg["total_hhmm"], "06:15")
+        self.assertEqual(leg["color_index"], 0)
+        self.assertIn("points", out)
+        self.assertGreaterEqual(len(out["points"]), 2)
+        self.assertEqual(out["points"][0]["label"], f"{self.cidade_sede.nome}/{self.estado.sigla}")
 
     def test_preview_multiplos_destinos_e_retorno(self):
         mock_fc = {
@@ -769,6 +778,9 @@ class RoteirosRoutingTests(TestCase):
         self.assertEqual(out["legs"][0]["uuid"], "tmp-1")
         self.assertEqual(out["legs"][1]["uuid"], "tmp-2")
         self.assertEqual(out["legs"][2]["kind"], "retorno")
+        self.assertEqual(out["legs"][0]["color_index"], 0)
+        self.assertEqual(out["legs"][1]["color_index"], 1)
+        self.assertEqual(out["legs"][2]["color_index"], 0)
 
     def test_preview_fallback_quando_segments_incompativeis(self):
         mock_fc = {
@@ -806,6 +818,9 @@ class RoteirosRoutingTests(TestCase):
         self.assertEqual(trecho_calc.call_count, 2)
         self.assertEqual(out["legs"][0]["travel_minutes"], 105)
         self.assertEqual(out["legs"][1]["travel_minutes"], 135)
+        # Confirma que não houve "divisão por 2" no trecho: veio do cálculo por leg.
+        self.assertEqual(out["legs"][0]["distance_km"], 100.0)
+        self.assertEqual(out["legs"][1]["distance_km"], 200.0)
 
     def test_preview_endpoint_sem_sede_ou_destino_rejeita(self):
         url = reverse("roteiros:calcular_rota_preview")

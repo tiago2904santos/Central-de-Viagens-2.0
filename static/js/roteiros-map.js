@@ -52,6 +52,8 @@
 
   var mapInstance = null;
   var routeLayer = null;
+  var markerLayer = null;
+  var LEG_COLORS = ['#0f365d', '#d08a28'];
   var initial = readJsonScript('roteiro-mapa-inicial') || {};
   var rid = initial.roteiro_id;
   var hadGeometry = !!(initial.route && initial.route.geometry && initial.route.geometry.type === 'LineString');
@@ -166,43 +168,135 @@
     }
   }
 
+  function clearMapLayers() {
+    if (routeLayer && mapInstance) {
+      mapInstance.removeLayer(routeLayer);
+      routeLayer = null;
+    }
+    if (markerLayer && mapInstance) {
+      mapInstance.removeLayer(markerLayer);
+      markerLayer = null;
+    }
+  }
+
+  function buildLatLngBounds() {
+    return L.latLngBounds([]);
+  }
+
+  function addPointMarkers(points, bounds) {
+    if (!Array.isArray(points) || !points.length || !mapInstance) return;
+    if (!markerLayer) markerLayer = L.layerGroup().addTo(mapInstance);
+    var seen = {};
+    points.forEach(function (p) {
+      if (p == null) return;
+      var lat = Number(p.lat);
+      var lng = Number(p.lng);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+      var label = String(p.label || '');
+      var key = lat.toFixed(6) + '|' + lng.toFixed(6) + '|' + label;
+      if (seen[key]) return;
+      seen[key] = true;
+      var marker = L.circleMarker([lat, lng], {
+        radius: 5,
+        color: '#0f365d',
+        weight: 2,
+        fillColor: '#ffffff',
+        fillOpacity: 1,
+      });
+      if (label) {
+        marker.bindTooltip(label, {
+          permanent: true,
+          direction: 'top',
+          offset: [0, -8],
+          className: 'roteiro-mapa__city-tooltip',
+        });
+      }
+      marker.addTo(markerLayer);
+      if (bounds) bounds.extend([lat, lng]);
+    });
+  }
+
   /**
-   * Desenha geometria LineString normalizada. Retorna true se desenhou.
+   * Desenha rota (segmentada por leg quando disponível). Retorna true se desenhou algo.
    */
-  function drawRoute(geometry, geomWarning) {
+  function drawRoute(geometry, geomWarning, legs, points) {
     ensureMap();
     var container = $('roteiro-mapa-container');
     if (!container || typeof L === 'undefined') return false;
 
-    if (routeLayer) {
-      mapInstance.removeLayer(routeLayer);
-      routeLayer = null;
-    }
+    clearMapLayers();
 
     var warn = geomWarning || '';
+    var bounds = buildLatLngBounds();
+    var drewSomething = false;
+    routeLayer = L.layerGroup().addTo(mapInstance);
 
-    if (
-      !geometry ||
-      geometry.type !== 'LineString' ||
-      !geometry.coordinates ||
-      !geometry.coordinates.length
-    ) {
-      setFramePlaceholder(true);
-      if (warn) showError(warn);
-      return false;
+    var legsWithGeometry = Array.isArray(legs)
+      ? legs.filter(function (leg) {
+          return (
+            leg &&
+            leg.geometry &&
+            leg.geometry.type === 'LineString' &&
+            Array.isArray(leg.geometry.coordinates) &&
+            leg.geometry.coordinates.length
+          );
+        })
+      : [];
+
+    if (legsWithGeometry.length) {
+      legsWithGeometry.forEach(function (leg, idx) {
+        try {
+          var color = LEG_COLORS[(Number(leg.color_index) || idx) % LEG_COLORS.length];
+          var layer = L.geoJSON(
+            { type: 'Feature', properties: {}, geometry: leg.geometry },
+            { style: { color: color, weight: 5, opacity: 0.92 } }
+          );
+          layer.addTo(routeLayer);
+          if (layer.getBounds && layer.getBounds().isValid()) bounds.extend(layer.getBounds());
+          drewSomething = true;
+        } catch (e) {
+          /* ignore leg geometry error and continue */
+        }
+      });
     }
 
-    try {
-      routeLayer = L.geoJSON(
-        { type: 'Feature', properties: {}, geometry: geometry },
-        {
-          style: { color: '#0f365d', weight: 5, opacity: 0.9 },
-        }
-      ).addTo(mapInstance);
-      setFramePlaceholder(false);
+    if (!drewSomething) {
+      if (
+        !geometry ||
+        geometry.type !== 'LineString' ||
+        !geometry.coordinates ||
+        !geometry.coordinates.length
+      ) {
+        setFramePlaceholder(true);
+        addPointMarkers(points, bounds);
+        if (bounds.isValid()) mapInstance.fitBounds(bounds, { padding: [24, 24], maxZoom: 12 });
+        if (warn) showError(warn);
+        return false;
+      }
       try {
-        mapInstance.fitBounds(routeLayer.getBounds(), { padding: [24, 24], maxZoom: 12 });
+        var single = L.geoJSON(
+          { type: 'Feature', properties: {}, geometry: geometry },
+          {
+            style: { color: '#0f365d', weight: 5, opacity: 0.9 },
+          }
+        );
+        single.addTo(routeLayer);
+        if (single.getBounds && single.getBounds().isValid()) bounds.extend(single.getBounds());
+        drewSomething = true;
       } catch (e) {
+        showError(MSG_GEOM_DESENHO);
+        setFramePlaceholder(true);
+        return false;
+      }
+    }
+
+    addPointMarkers(points, bounds);
+
+    try {
+      setFramePlaceholder(false);
+      if (bounds.isValid()) {
+        mapInstance.fitBounds(bounds, { padding: [24, 24], maxZoom: 12 });
+      } else {
         showError(MSG_GEOM_DESENHO);
         setFramePlaceholder(true);
         return false;
@@ -277,12 +371,14 @@
           step3.applyRoutePreviewResult(res.body, { overwriteAdditional: !!force });
         }
         initial.route = route;
+        initial.legs = Array.isArray(res.body.legs) ? res.body.legs : [];
+        initial.points = Array.isArray(res.body.points) ? res.body.points : [];
         initial.status = route.status || 'calculada';
         hadGeometry = !!(route.geometry && route.geometry.type === 'LineString');
         updateSummary(route, { status: initial.status });
 
         var gw = route.geometry_warning || res.body.geometry_warning;
-        var drew = drawRoute(route.geometry, gw);
+        var drew = drawRoute(route.geometry, gw, res.body.legs, res.body.points);
         if (!drew && route.distance_km != null && !gw) {
           showError(MSG_GEOM_DESENHO);
         } else if (!drew && gw) {
@@ -353,7 +449,7 @@
       if (initial.route) {
         updateSummary(initial.route, { status: initial.status });
         var gwInit = initial.route.geometry_warning;
-        var drew = drawRoute(initial.route.geometry, gwInit);
+        var drew = drawRoute(initial.route.geometry, gwInit, initial.legs, initial.points);
         if (!drew && initial.route.geometry_warning) {
           showError(initial.route.geometry_warning);
         } else if (!drew && initial.route.distance_km != null && !initial.route.geometry) {

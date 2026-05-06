@@ -460,14 +460,22 @@
     var overwriteAdditional = !!opts.overwriteAdditional;
     var legs = (result && result.legs) || [];
     legs.forEach(function(leg) {
+      var travelMinutes = parseInt(leg.travel_minutes, 10);
+      if (Number.isNaN(travelMinutes)) {
+        travelMinutes = parseDurationInput(leg.travel_hhmm || '') || 0;
+      }
+      var additionalMinutes = parseInt(leg.additional_minutes, 10);
+      if (Number.isNaN(additionalMinutes)) additionalMinutes = 0;
+      var totalMinutes = parseInt(leg.total_minutes, 10);
+      if (Number.isNaN(totalMinutes)) totalMinutes = travelMinutes + additionalMinutes;
       if (leg.kind === 'retorno') {
         if ($('id_retorno_distancia_km') && leg.distance_km != null) $('id_retorno_distancia_km').value = String(leg.distance_km);
-        if ($('id_retorno_tempo_cru_estimado_min') && leg.travel_minutes != null) $('id_retorno_tempo_cru_estimado_min').value = String(leg.travel_minutes);
+        if ($('id_retorno_tempo_cru_estimado_min') && travelMinutes > 0) $('id_retorno_tempo_cru_estimado_min').value = String(travelMinutes);
         if ($('id_retorno_rota_fonte') && leg.provider) $('id_retorno_rota_fonte').value = leg.provider;
-        if ($('id_retorno_duracao_estimada_min') && leg.total_minutes != null) $('id_retorno_duracao_estimada_min').value = String(leg.total_minutes);
+        if ($('id_retorno_duracao_estimada_min') && totalMinutes > 0) $('id_retorno_duracao_estimada_min').value = String(totalMinutes);
         var addRet = $('id_retorno_tempo_adicional_min');
-        if (addRet && leg.additional_minutes != null && (overwriteAdditional || String(addRet.value || '').trim() === '' || addRet.dataset.manual !== '1')) {
-          addRet.value = String(leg.additional_minutes);
+        if (addRet && (overwriteAdditional || String(addRet.value || '').trim() === '' || addRet.dataset.manual !== '1')) {
+          addRet.value = String(additionalMinutes);
           if (overwriteAdditional) addRet.dataset.manual = '0';
         }
         recalcRetorno(true);
@@ -480,6 +488,9 @@
             String(c.dataset.destinoCidadeId || '') === String(leg.to_cidade_id || '');
         });
       }
+      if (!card && Number.isInteger(leg.index)) {
+        card = $('trechos-gerados-container').querySelector('.card[data-ordem="' + String(leg.index) + '"]');
+      }
       if (!card) return;
       var ord = card.dataset.ordem;
       var distInp = card.querySelector('[name="trecho_' + ord + '_distancia_km"]');
@@ -488,11 +499,11 @@
       var durInp = card.querySelector('[name="trecho_' + ord + '_duracao_estimada_min"]');
       var addInp = card.querySelector('[name="trecho_' + ord + '_tempo_adicional_min"]');
       if (distInp && leg.distance_km != null) distInp.value = String(leg.distance_km);
-      if (cruInp && leg.travel_minutes != null) cruInp.value = String(leg.travel_minutes);
+      if (cruInp && travelMinutes > 0) cruInp.value = String(travelMinutes);
       if (fonteInp && leg.provider) fonteInp.value = leg.provider;
-      if (durInp && leg.total_minutes != null) durInp.value = String(leg.total_minutes);
-      if (addInp && leg.additional_minutes != null && (overwriteAdditional || String(addInp.value || '').trim() === '' || addInp.dataset.manual !== '1')) {
-        addInp.value = String(leg.additional_minutes);
+      if (durInp && totalMinutes > 0) durInp.value = String(totalMinutes);
+      if (addInp && (overwriteAdditional || String(addInp.value || '').trim() === '' || addInp.dataset.manual !== '1')) {
+        addInp.value = String(additionalMinutes);
         if (overwriteAdditional) addInp.dataset.manual = '0';
       }
       recalcCard(card, true);
@@ -621,7 +632,7 @@
     var fonte = value.rota_fonte || '';
     var trechoId = value.id || trecho.id || '';
     return '<div class="card roteiro-editor__trecho-card oficio-step3-trecho-card" data-key="'+esc(trecho.key)+'" data-trecho-id="'+esc(trechoId)+'" data-ordem="'+o+'" data-origem-nome="'+esc(trecho.origem_nome)+'" data-destino-nome="'+esc(trecho.destino_nome)+'" data-origem-estado-id="'+esc(trecho.origem_estado_id)+'" data-origem-cidade-id="'+esc(trecho.origem_cidade_id)+'" data-destino-estado-id="'+esc(trecho.destino_estado_id)+'" data-destino-cidade-id="'+esc(trecho.destino_cidade_id)+'">' +
-      '<div class="card-header py-3"><span class="fw-semibold">Trecho '+(o+1)+' â€” '+esc(trecho.origem_nome)+' â†’ '+esc(trecho.destino_nome)+'</span></div>' +
+      '<div class="card-header py-3"><span class="fw-semibold">Trecho '+(o+1)+' \u2014 '+esc(trecho.origem_nome)+' \u2192 '+esc(trecho.destino_nome)+'</span></div>' +
       '<div class="card-body">' +
         '<input type="hidden" name="trecho_'+o+'_origem_nome" value="'+esc(trecho.origem_nome)+'">' +
         '<input type="hidden" name="trecho_'+o+'_id" value="'+esc(trechoId)+'">' +

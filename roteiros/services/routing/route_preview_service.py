@@ -158,7 +158,14 @@ def build_operational_legs(points: List[PreviewPoint]) -> List[dict]:
     return legs
 
 
-def _build_leg_payload(base_leg: dict, distance_km: float, raw_minutes: int, provider: str) -> dict:
+def _build_leg_payload(
+    base_leg: dict,
+    distance_km: float,
+    raw_minutes: int,
+    provider: str,
+    *,
+    geometry: dict | None = None,
+) -> dict:
     travel_minutes = round_trip_minutes_to_15(raw_minutes)
     additional_minutes = calculate_additional_time_minutes(travel_minutes)
     total_minutes = travel_minutes + additional_minutes
@@ -174,6 +181,8 @@ def _build_leg_payload(base_leg: dict, distance_km: float, raw_minutes: int, pro
             "total_minutes": total_minutes,
             "total_hhmm": _hhmm(total_minutes),
             "provider": provider,
+            "geometry": geometry if isinstance(geometry, dict) else None,
+            "color_index": int(base_leg.get("index", 0)) % 2,
         }
     )
     return out
@@ -211,12 +220,33 @@ def calculate_route_preview(payload: Dict[str, Any]) -> Dict[str, Any]:
     if len(segments) == len(legs_base):
         for idx, leg_base in enumerate(legs_base):
             seg = segments[idx] or {}
+            seg_duration = int(seg.get("duration_minutes") or 0)
+            seg_distance = float(seg.get("distance_km") or 0.0)
+            if seg_duration <= 0 or seg_distance <= 0:
+                fallback_used = True
+                trecho = calcular_rota_trecho(leg_base["from_cidade_id"], leg_base["to_cidade_id"])
+                if not trecho.get("ok"):
+                    raise RouteServiceError(
+                        user_message=trecho.get("erro")
+                        or "Não foi possível estimar um dos trechos da rota."
+                    )
+                legs_payload.append(
+                    _build_leg_payload(
+                        leg_base,
+                        float(trecho.get("distancia_km") or 0.0),
+                        int(trecho.get("tempo_cru_estimado_min") or 0),
+                        str(trecho.get("rota_fonte") or "estimativa_local"),
+                        geometry=seg.get("geometry") if isinstance(seg.get("geometry"), dict) else None,
+                    )
+                )
+                continue
             legs_payload.append(
                 _build_leg_payload(
                     leg_base,
-                    float(seg.get("distance_km") or 0.0),
-                    int(seg.get("duration_minutes") or 0),
+                    seg_distance,
+                    seg_duration,
                     str(normalized.get("provider") or "openrouteservice"),
+                    geometry=seg.get("geometry") if isinstance(seg.get("geometry"), dict) else None,
                 )
             )
     else:
@@ -234,12 +264,26 @@ def calculate_route_preview(payload: Dict[str, Any]) -> Dict[str, Any]:
                     float(trecho.get("distancia_km") or 0.0),
                     int(trecho.get("tempo_cru_estimado_min") or 0),
                     str(trecho.get("rota_fonte") or "estimativa_local"),
+                    geometry=None,
                 )
             )
+
+    points_payload = [
+        {
+            "kind": p.kind,
+            "label": p.label,
+            "lat": p.lat,
+            "lng": p.lng,
+            "cidade_id": p.cidade_id,
+            "index": p.idx,
+        }
+        for p in points
+    ]
 
     return {
         "ok": True,
         "route": route_payload,
         "legs": legs_payload,
+        "points": points_payload,
         "fallback_per_leg_used": fallback_used,
     }
