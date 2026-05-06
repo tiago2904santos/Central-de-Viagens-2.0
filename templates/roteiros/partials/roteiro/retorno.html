@@ -69,6 +69,9 @@
                     <input type="hidden" name="retorno_duracao_estimada_min" id="id_retorno_duracao_estimada_min" value="{{ retorno_state.duracao_estimada_min|default:'' }}">
                     <input type="hidden" name="retorno_rota_fonte" id="id_retorno_rota_fonte" value="{{ retorno_state.rota_fonte|default:'' }}">
                     <div class="roteiro-editor__helper text-danger d-none" id="retorno-erro"></div>
+                    <div class="mt-2">
+                      <button type="button" class="btn btn-outline-primary btn-sm roteiro-editor__btn-pill" id="btn-retorno-estimar">Estimar km/tempo</button>
+                    </div>
                   </div>
                 </div>
               </div>

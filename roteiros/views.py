@@ -34,7 +34,6 @@ from .selectors import (
     listar_cidades_para_select,
     listar_roteiros,
     listar_trechos_do_roteiro,
-    obter_cidades_origem_destino_estimativa,
 )
 from .services import (
     atualizar_roteiro,
@@ -47,7 +46,8 @@ from .services import (
     preparar_querysets_formulario_roteiro,
     validar_submissao_editor_roteiro,
 )
-from .services.estimativa_local import ROTA_FONTE_ESTIMATIVA_LOCAL, estimar_distancia_duracao
+from .services.estimativa_local import ROTA_FONTE_ESTIMATIVA_LOCAL
+from .services.routing.trecho_route_service import calcular_rota_trecho
 
 
 def index(request):
@@ -295,6 +295,7 @@ def calcular_rota(request):
 
 @require_http_methods(["POST"])
 def trechos_estimar(request):
+    """Estima um trecho operacional (origem → destino). Usa OpenRouteService se configurado; senão estimativa local."""
     try:
         body = json.loads(request.body or "{}")
         origem_id = body.get("origem_cidade_id")
@@ -311,66 +312,57 @@ def trechos_estimar(request):
                 "tempo_cru_estimado_min": None,
                 "tempo_adicional_sugerido_min": None,
                 "rota_fonte": ROTA_FONTE_ESTIMATIVA_LOCAL,
+                "ors_fallback": False,
                 "erro": "Informe origem_cidade_id e destino_cidade_id.",
             }
         )
-    origem, destino = obter_cidades_origem_destino_estimativa(origem_id, destino_id)
-    if not origem or not destino:
+    raw = calcular_rota_trecho(origem_id, destino_id)
+    if not raw.get("ok"):
         return JsonResponse(
             {
                 "ok": False,
-                "erro": "Cidade de origem ou destino não encontrada.",
-                "rota_fonte": ROTA_FONTE_ESTIMATIVA_LOCAL,
+                "distancia_km": None,
+                "duracao_estimada_min": None,
+                "duracao_estimada_hhmm": "",
+                "tempo_cru_estimado_min": None,
+                "tempo_adicional_sugerido_min": None,
+                "rota_fonte": raw.get("rota_fonte") or ROTA_FONTE_ESTIMATIVA_LOCAL,
+                "ors_fallback": raw.get("ors_fallback", False),
+                "erro": raw.get("erro") or "Não foi possível estimar o trecho.",
             }
         )
-    if origem.latitude is None or origem.longitude is None:
-        return JsonResponse(
-            {
-                "ok": False,
-                "erro": f"Cidade de origem sem coordenadas: {origem.nome}",
-                "rota_fonte": ROTA_FONTE_ESTIMATIVA_LOCAL,
-            }
-        )
-    if destino.latitude is None or destino.longitude is None:
-        return JsonResponse(
-            {
-                "ok": False,
-                "erro": f"Cidade de destino sem coordenadas: {destino.nome}",
-                "rota_fonte": ROTA_FONTE_ESTIMATIVA_LOCAL,
-            }
-        )
-    out = estimar_distancia_duracao(
-        origem_lat=origem.latitude,
-        origem_lon=origem.longitude,
-        destino_lat=destino.latitude,
-        destino_lon=destino.longitude,
-    )
+
+    dist_km = raw.get("distancia_km")
     return JsonResponse(
         {
-            "ok": out["ok"],
-            "distancia_km": float(out["distancia_km"]) if out["distancia_km"] is not None else None,
-            "distancia_linha_reta_km": out.get("distancia_linha_reta_km"),
-            "distancia_rodoviaria_km": out.get("distancia_rodoviaria_km"),
-            "duracao_estimada_min": out["duracao_estimada_min"],
-            "duracao_estimada_hhmm": out["duracao_estimada_hhmm"],
-            "tempo_viagem_estimado_min": out.get("tempo_viagem_estimado_min"),
-            "tempo_viagem_estimado_hhmm": out.get("tempo_viagem_estimado_hhmm"),
-            "buffer_operacional_sugerido_min": out.get("buffer_operacional_sugerido_min"),
-            "tempo_cru_estimado_min": out.get("tempo_cru_estimado_min"),
-            "tempo_adicional_sugerido_min": out.get("tempo_adicional_sugerido_min"),
-            "correcao_final_min": out.get("correcao_final_min"),
-            "velocidade_media_kmh": out.get("velocidade_media_kmh"),
-            "perfil_rota": out.get("perfil_rota"),
-            "corredor": out.get("corredor"),
-            "corredor_macro": out.get("corredor_macro"),
-            "corredor_fino": out.get("corredor_fino"),
-            "rota_fonte": out.get("rota_fonte", ROTA_FONTE_ESTIMATIVA_LOCAL),
-            "fallback_usado": out.get("fallback_usado"),
-            "confianca_estimativa": out.get("confianca_estimativa"),
-            "refs_predominantes": out.get("refs_predominantes") or [],
-            "pedagio_presente": out.get("pedagio_presente", False),
-            "travessia_urbana_presente": out.get("travessia_urbana_presente", False),
-            "serra_presente": out.get("serra_presente", False),
-            "erro": out["erro"],
+            "ok": True,
+            "origem": raw.get("origem"),
+            "destino": raw.get("destino"),
+            "distancia_km": float(dist_km) if dist_km is not None else None,
+            "distancia_linha_reta_km": raw.get("distancia_linha_reta_km"),
+            "distancia_rodoviaria_km": raw.get("distancia_rodoviaria_km"),
+            "duracao_estimada_min": raw.get("duracao_estimada_min"),
+            "duracao_estimada_hhmm": raw.get("duracao_estimada_hhmm"),
+            "tempo_viagem_estimado_min": raw.get("tempo_viagem_estimado_min"),
+            "tempo_viagem_estimado_hhmm": raw.get("tempo_viagem_estimado_hhmm"),
+            "buffer_operacional_sugerido_min": raw.get("buffer_operacional_sugerido_min"),
+            "tempo_cru_estimado_min": raw.get("tempo_cru_estimado_min"),
+            "tempo_adicional_sugerido_min": raw.get("tempo_adicional_sugerido_min"),
+            "correcao_final_min": raw.get("correcao_final_min"),
+            "velocidade_media_kmh": raw.get("velocidade_media_kmh"),
+            "perfil_rota": raw.get("perfil_rota"),
+            "corredor": raw.get("corredor"),
+            "corredor_macro": raw.get("corredor_macro"),
+            "corredor_fino": raw.get("corredor_fino"),
+            "rota_fonte": raw.get("rota_fonte"),
+            "fallback_usado": raw.get("fallback_usado"),
+            "ors_fallback": raw.get("ors_fallback"),
+            "confianca_estimativa": raw.get("confianca_estimativa"),
+            "refs_predominantes": raw.get("refs_predominantes") or [],
+            "pedagio_presente": raw.get("pedagio_presente", False),
+            "travessia_urbana_presente": raw.get("travessia_urbana_presente", False),
+            "serra_presente": raw.get("serra_presente", False),
+            "erro": raw.get("erro") or "",
+            "duration_human": raw.get("duration_human"),
         }
     )

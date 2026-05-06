@@ -55,6 +55,7 @@
   var diariasNeedsRerun = false;
   var routeSearchTimer = null;
   var loopRenderTimer = null;
+  var autoEstimarTimer = null;
   var citiesCache = {};
   var lastTrechosSignature = null;
   var TRECHOS_EMPTY_HTML = '<div class="roteiro-editor__empty"><p class="roteiro-editor__empty-title">Trechos ainda não disponíveis</p><p class="roteiro-editor__empty-text">Selecione a sede e ao menos um destino para editar os trechos.</p></div>';
@@ -157,6 +158,15 @@
       data: formatDateInputValue(end),
       hora: pad(end.getHours()) + ':' + pad(end.getMinutes())
     };
+  }
+  /** chegada = saída + tempo_viagem + tempo_adicional (cruza meia-noite conforme Date). */
+  function calcularChegada(saidaData, saidaHora, tempoViagemMin, tempoAdicionalMin) {
+    var cru = parseInt(tempoViagemMin || 0, 10) || 0;
+    var add = parseInt(tempoAdicionalMin || 0, 10);
+    if (Number.isNaN(add) || add < 0) add = 0;
+    var total = cru + add;
+    if (!saidaData || !saidaHora || total <= 0) return null;
+    return addMinutes(saidaData, saidaHora, total);
   }
   function buildLoopTrechosFromInputs() {
     if (!isLoopModeActive()) return [];
@@ -359,15 +369,21 @@
     card.dataset.tempoCruMin = cru ? String(cru) : ''; card.dataset.tempoTotalMin = total ? String(total) : '';
     if (durInput) durInput.value = total ? String(total) : '';
     if (tvInput && document.activeElement !== tvInput) tvInput.value = formatDurationInput(cru);
-    var totEl = card.querySelector('.trecho-tempo-total'); if (totEl) totEl.value = total ? hhmm(total) : '';
-    if (suggestArrival && total > 0) {
-      var sdEl = card.querySelector('[name="trecho_' + o + '_saida_data"]');
-      var shEl = card.querySelector('[name="trecho_' + o + '_saida_hora"]');
-      var cdEl = card.querySelector('[name="trecho_' + o + '_chegada_data"]');
-      var chEl = card.querySelector('[name="trecho_' + o + '_chegada_hora"]');
-      if (sdEl && shEl && cdEl && chEl && sdEl.value && shEl.value) {
-        var start = new Date(sdEl.value + 'T' + shEl.value);
-        if (!Number.isNaN(start.getTime())) { var end = new Date(start.getTime() + total * 60000); cdEl.value = end.getFullYear() + '-' + pad(end.getMonth()+1) + '-' + pad(end.getDate()); chEl.value = pad(end.getHours()) + ':' + pad(end.getMinutes()); }
+    var totEl = card.querySelector('.trecho-tempo-total');     if (totEl) totEl.value = total ? hhmm(total) : '';
+    var sdEl = card.querySelector('[name="trecho_' + o + '_saida_data"]');
+    var shEl = card.querySelector('[name="trecho_' + o + '_saida_hora"]');
+    var cdEl = card.querySelector('[name="trecho_' + o + '_chegada_data"]');
+    var chEl = card.querySelector('[name="trecho_' + o + '_chegada_hora"]');
+    if (suggestArrival && sdEl && shEl && cdEl && chEl) {
+      if (!sdEl.value || !shEl.value) {
+        cdEl.value = '';
+        chEl.value = '';
+      } else if (total > 0) {
+        var cheg = calcularChegada(sdEl.value, shEl.value, cru, add);
+        if (cheg) {
+          cdEl.value = cheg.data;
+          chEl.value = cheg.hora;
+        }
       }
     }
   }
@@ -385,10 +401,112 @@
     var tot2 = cru2 + add2; if (durI) durI.value = tot2 ? String(tot2) : '';
     if (tvI && document.activeElement !== tvI) tvI.value = formatDurationInput(cru2);
     if ($('id_retorno_tempo_total')) $('id_retorno_tempo_total').value = tot2 ? hhmm(tot2) : '';
-    if (suggestArrival && tot2 > 0 && $('id_retorno_saida_data').value && $('id_retorno_saida_hora').value) {
-      var s3 = new Date($('id_retorno_saida_data').value + 'T' + $('id_retorno_saida_hora').value);
-      if (!Number.isNaN(s3.getTime())) { var e3 = new Date(s3.getTime() + tot2 * 60000); $('id_retorno_chegada_data').value = e3.getFullYear() + '-' + pad(e3.getMonth()+1) + '-' + pad(e3.getDate()); $('id_retorno_chegada_hora').value = pad(e3.getHours()) + ':' + pad(e3.getMinutes()); }
+    if (suggestArrival && $('id_retorno_saida_data') && $('id_retorno_saida_hora') && $('id_retorno_chegada_data') && $('id_retorno_chegada_hora')) {
+      var rsd = $('id_retorno_saida_data').value;
+      var rsh = $('id_retorno_saida_hora').value;
+      if (!rsd || !rsh || tot2 <= 0) {
+        $('id_retorno_chegada_data').value = '';
+        $('id_retorno_chegada_hora').value = '';
+      } else {
+        var rCheg = calcularChegada(rsd, rsh, cru2, add2);
+        if (rCheg) {
+          $('id_retorno_chegada_data').value = rCheg.data;
+          $('id_retorno_chegada_hora').value = rCheg.hora;
+        }
+      }
     }
+  }
+  function chainSuggestedDepartures() {
+    if (isLoopModeActive()) return;
+    var cards = Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]'));
+    for (var i = 1; i < cards.length; i++) {
+      var prev = cards[i - 1];
+      var cur = cards[i];
+      var po = prev.dataset.ordem;
+      var co = cur.dataset.ordem;
+      var pcd = prev.querySelector('[name="trecho_' + po + '_chegada_data"]');
+      var pch = prev.querySelector('[name="trecho_' + po + '_chegada_hora"]');
+      var csd = cur.querySelector('[name="trecho_' + co + '_saida_data"]');
+      var csh = cur.querySelector('[name="trecho_' + co + '_saida_hora"]');
+      if (!pcd || !pch || !csd || !csh) continue;
+      if (!(pcd.value && pch.value)) continue;
+      if (csd.value || csh.value) continue;
+      csd.value = pcd.value;
+      csh.value = pch.value;
+      recalcCard(cur, true);
+    }
+  }
+  function applyEstimarPayloadToRetorno(data) {
+    if ($('id_retorno_distancia_km') && data.distancia_km != null) $('id_retorno_distancia_km').value = String(data.distancia_km);
+    if ($('id_retorno_tempo_cru_estimado_min') && data.tempo_cru_estimado_min != null) {
+      $('id_retorno_tempo_cru_estimado_min').value = String(data.tempo_cru_estimado_min);
+    }
+    if ($('id_retorno_duracao_estimada_min') && data.duracao_estimada_min != null) {
+      $('id_retorno_duracao_estimada_min').value = String(data.duracao_estimada_min);
+    }
+    if ($('id_retorno_rota_fonte') && data.rota_fonte) $('id_retorno_rota_fonte').value = data.rota_fonte;
+    var addI = $('id_retorno_tempo_adicional_min');
+    if (addI && data.tempo_adicional_sugerido_min != null && String(addI.value || '').trim() === '') {
+      addI.value = String(data.tempo_adicional_sugerido_min);
+    }
+    recalcRetorno(true);
+  }
+  function applyEstimarPayloadToTrechoCard(card, data) {
+    var ord = card.dataset.ordem;
+    var distInp = card.querySelector('[name="trecho_' + ord + '_distancia_km"]');
+    if (distInp && data.distancia_km != null) distInp.value = String(data.distancia_km);
+    var cruInp = card.querySelector('[name="trecho_' + ord + '_tempo_cru_estimado_min"]');
+    if (cruInp && data.tempo_cru_estimado_min != null) cruInp.value = String(data.tempo_cru_estimado_min);
+    var fonteInp = card.querySelector('[name="trecho_' + ord + '_rota_fonte"]');
+    if (fonteInp && data.rota_fonte) fonteInp.value = data.rota_fonte;
+    var durInp = card.querySelector('[name="trecho_' + ord + '_duracao_estimada_min"]');
+    if (durInp && data.duracao_estimada_min != null) durInp.value = String(data.duracao_estimada_min);
+    var addInp = card.querySelector('[name="trecho_' + ord + '_tempo_adicional_min"]');
+    if (addInp && data.tempo_adicional_sugerido_min != null && String(addInp.value || '').trim() === '') {
+      addInp.value = String(data.tempo_adicional_sugerido_min);
+    }
+    recalcCard(card, true);
+  }
+  function scheduleAutoEstimarTrechos() {
+    clearTimeout(autoEstimarTimer);
+    autoEstimarTimer = setTimeout(runAutoEstimarTrechos, 450);
+  }
+  function runAutoEstimarTrechos() {
+    if (!urlTrechosEstimar || applyingState || isLoopModeActive()) return;
+    var cards = Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]'));
+    var pending = cards.filter(function(card) {
+      var distInp = card.querySelector('[name^="trecho_"][name$="_distancia_km"]');
+      var cruInp = card.querySelector('[name^="trecho_"][name$="_tempo_cru_estimado_min"]');
+      if (distInp && String(distInp.value || '').trim() !== '') return false;
+      if (cruInp && String(cruInp.value || '').trim() !== '') return false;
+      var ocid = card.dataset.origemCidadeId;
+      var dcid = card.dataset.destinoCidadeId;
+      return !!(ocid && dcid);
+    });
+    pending.reduce(function(seq, card) {
+      return seq.then(function() {
+        var ocid = card.dataset.origemCidadeId;
+        var dcid = card.dataset.destinoCidadeId;
+        return fetch(urlTrechosEstimar, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf,
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({ origem_cidade_id: parseInt(ocid, 10), destino_cidade_id: parseInt(dcid, 10) })
+        }).then(readJsonResponse).then(function(result) {
+          var data = result && result.data;
+          if (!data || !data.ok) return;
+          applyEstimarPayloadToTrechoCard(card, data);
+          chainSuggestedDepartures();
+          updateResumo();
+          scheduleRealtimeDiarias();
+          scheduleAutosave();
+        });
+      });
+    }, Promise.resolve());
   }
   function buildTrechoCard(trecho, value) {
     var o = trecho.ordem; var dist = value.distancia_km || ''; var cru = value.tempo_cru_estimado_min || '';
@@ -474,9 +592,17 @@
   function getDestinos() { return getDestinoRows().map(function(row) { var es = row.querySelector('.destino-estado'); var ci = row.querySelector('.destino-cidade'); return { key: row.dataset.key || '', estado_id: es ? es.value||null : null, cidade_id: ci ? ci.value||null : null, cidade_nome: selectedText(ci) }; }); }
   function updateRetornoCities() {
     var cards = Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]'));
-    var sede = selectedText($('id_origem_cidade')); var ultima = cards.length ? (cards[cards.length-1].dataset.destinoNome||'') : '';
+    var sede = selectedText($('id_origem_cidade'));
+    var sedeId = ($('id_origem_cidade') || {}).value || '';
+    var ultima = cards.length ? (cards[cards.length-1].dataset.destinoNome||'') : '';
+    var lastDestId = cards.length ? (cards[cards.length-1].dataset.destinoCidadeId||'') : '';
     if ($('id_retorno_saida_cidade')) $('id_retorno_saida_cidade').value = ultima;
     if ($('id_retorno_chegada_cidade')) $('id_retorno_chegada_cidade').value = sede;
+    var rc = $('retorno-card');
+    if (rc) {
+      rc.dataset.origemCidadeId = lastDestId || '';
+      rc.dataset.destinoCidadeId = sedeId || '';
+    }
   }
   function renderTrechos(seedState, options) {
     // Re-renderizar trechos nao pode sobrescrever data/hora/tempo manual com vazio/default.
@@ -532,6 +658,7 @@
         );
       }).join('');
       $('trechos-gerados-container').querySelectorAll('.card[data-key]').forEach(function(card) { recalcCard(card, false); });
+      chainSuggestedDepartures();
       if (isLoopModeActive(seedState)) {
         syncRetornoFromLoopTrechos(loopRetorno ? [loopRetorno] : [], seedState && seedState.retorno);
       } else {
@@ -539,6 +666,7 @@
       }
       recalcRetorno(false);
       updateResumo();
+      scheduleAutoEstimarTrechos();
       lastTrechosSignature = signature;
       return;
     }
@@ -583,9 +711,11 @@
       return buildTrechoCard(t, preferSeed ? Object.assign({}, cv, sv) : Object.assign({}, sv, cv));
     }).join('');
     $('trechos-gerados-container').querySelectorAll('.card[data-key]').forEach(function(c) { recalcCard(c, false); });
+    chainSuggestedDepartures();
     updateRetornoCities();
     recalcRetorno(false);
     updateResumo();
+    scheduleAutoEstimarTrechos();
     lastTrechosSignature = signature;
   }
   function updateResumo() {
@@ -894,17 +1024,9 @@
         if (err) { err.textContent = (data && data.erro) ? data.erro : 'Não foi possível estimar.'; err.classList.remove('d-none'); }
         return;
       }
-      var distInp = card.querySelector('[name="trecho_' + ord + '_distancia_km"]');
-      if (distInp && data.distancia_km != null) distInp.value = String(data.distancia_km);
-      var cruInp = card.querySelector('[name="trecho_' + ord + '_tempo_cru_estimado_min"]');
-      if (cruInp && data.tempo_cru_estimado_min != null) cruInp.value = String(data.tempo_cru_estimado_min);
-      var fonteInp = card.querySelector('[name="trecho_' + ord + '_rota_fonte"]');
-      if (fonteInp && data.rota_fonte) fonteInp.value = data.rota_fonte;
-      var durInp = card.querySelector('[name="trecho_' + ord + '_duracao_estimada_min"]');
-      if (durInp && data.duracao_estimada_min != null) durInp.value = String(data.duracao_estimada_min);
-      var addInp = card.querySelector('[name="trecho_' + ord + '_tempo_adicional_min"]');
-      if (addInp && data.tempo_adicional_sugerido_min != null) addInp.value = String(data.tempo_adicional_sugerido_min);
-      recalcCard(card, false);
+      applyEstimarPayloadToTrechoCard(card, data);
+      chainSuggestedDepartures();
+      updateResumo();
       scheduleRealtimeDiarias();
       scheduleAutosave();
     }).catch(function () {
@@ -912,6 +1034,54 @@
       if (err) { err.textContent = 'Falha na requisição.'; err.classList.remove('d-none'); }
     });
   });
+  var btnRetornoEstimar = $('btn-retorno-estimar');
+  if (btnRetornoEstimar) {
+    btnRetornoEstimar.addEventListener('click', function() {
+      if (applyingState) return;
+      var rc = $('retorno-card');
+      var err = $('retorno-erro');
+      var ocid = rc ? rc.dataset.origemCidadeId : '';
+      var dcid = rc ? rc.dataset.destinoCidadeId : '';
+      if (err) { err.classList.add('d-none'); err.textContent = ''; }
+      if (!urlTrechosEstimar || !ocid || !dcid) {
+        if (err) {
+          err.textContent = 'Defina trechos e sede para estimar o retorno.';
+          err.classList.remove('d-none');
+        }
+        return;
+      }
+      btnRetornoEstimar.disabled = true;
+      fetch(urlTrechosEstimar, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrf,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ origem_cidade_id: parseInt(ocid, 10), destino_cidade_id: parseInt(dcid, 10) })
+      }).then(readJsonResponse).then(function(result) {
+        btnRetornoEstimar.disabled = false;
+        var data = result && result.data;
+        if (!data || !data.ok) {
+          if (err) {
+            err.textContent = (data && data.erro) ? data.erro : 'Não foi possível estimar.';
+            err.classList.remove('d-none');
+          }
+          return;
+        }
+        applyEstimarPayloadToRetorno(data);
+        scheduleRealtimeDiarias();
+        scheduleAutosave();
+      }).catch(function() {
+        btnRetornoEstimar.disabled = false;
+        if (err) {
+          err.textContent = 'Falha na requisição.';
+          err.classList.remove('d-none');
+        }
+      });
+    });
+  }
   $('trechos-gerados-container').addEventListener('input', function(e) {
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';

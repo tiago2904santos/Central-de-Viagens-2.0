@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from roteiros.models import Roteiro, RoteiroTrecho
+from roteiros.models import Roteiro
 
 from .openrouteservice import get_openrouteservice_provider
 from .route_exceptions import RouteConfigurationError
@@ -94,52 +94,13 @@ def _route_payload_from_roteiro(
     }
 
 
-def _apply_segments_to_trechos(
-    roteiro: Roteiro, segments: List[dict], *, bate_volta_diario: bool
-) -> None:
-    if bate_volta_diario or not segments:
-        return
-    ida = list(roteiro.trechos.filter(tipo=RoteiroTrecho.TIPO_IDA).order_by("ordem", "id"))
-    retorno = (
-        roteiro.trechos.filter(tipo=RoteiroTrecho.TIPO_RETORNO).order_by("ordem", "id").first()
-    )
-    ordered = ida + ([retorno] if retorno else [])
-    now = timezone.now()
-    for idx, seg in enumerate(segments):
-        if idx >= len(ordered):
-            break
-        trecho = ordered[idx]
-        if (trecho.rota_fonte or "").strip().lower() == "manual":
-            continue
-        cru = int(seg.get("duration_minutes") or 0)
-        adic = trecho.tempo_adicional_min or 0
-        if adic < 0:
-            adic = 0
-        dist = seg.get("distance_km")
-        trecho.tempo_cru_estimado_min = cru
-        trecho.duracao_estimada_min = cru + adic
-        if dist is not None:
-            trecho.distancia_km = Decimal(str(round(float(dist), 2)))
-        trecho.rota_fonte = Roteiro.ROTA_FONTE_OPENROUTESERVICE
-        trecho.rota_calculada_em = now
-        trecho.save(
-            update_fields=[
-                "tempo_cru_estimado_min",
-                "duracao_estimada_min",
-                "distancia_km",
-                "rota_fonte",
-                "rota_calculada_em",
-                "updated_at",
-            ]
-        )
-
-
 @transaction.atomic
 def calcular_rota_para_roteiro(
     roteiro: Roteiro, *, force_recalculate: bool = False
 ) -> Dict[str, Any]:
     """
-    Calcula rota consolidada, persiste em `Roteiro` e opcionalmente reparte tempos nos trechos.
+    Calcula rota consolidada para mapa e campos agregados em `Roteiro`.
+    Tempos/distâncias por trecho operacional vêm de `/trechos/estimar/` (par origem→destino), não deste fluxo.
     Respeita cache por assinatura quando `ROUTE_CACHE_ENABLED` e não há `force_recalculate`.
     """
     profile = "driving-car"
@@ -191,8 +152,6 @@ def calcular_rota_para_roteiro(
             "updated_at",
         ]
     )
-
-    _apply_segments_to_trechos(roteiro, normalized.get("segments") or [], bate_volta_diario=bate)
 
     roteiro.refresh_from_db()
     route_payload = _route_payload_from_roteiro(roteiro, from_cache=False)
