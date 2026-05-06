@@ -1709,7 +1709,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__bate-volta-title {
-  color: #142b42;
+  color: var(--color-section-title);
   font-size: 16px;
   font-weight: 900;
 }
@@ -2626,4 +2626,30 @@ html[data-theme="light-dark"] .roteiro-editor select option:disabled,
 html[data-theme="dark-dark"] .roteiro-editor select optgroup,
 html[data-theme="light-dark"] .roteiro-editor select optgroup {
   color: var(--color-text-muted);
+}
+
+/* Hotfix de contraste: títulos e descrições internos de Sede/Destinos/Loop */
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede .roteiro-editor__sede-card-header,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede .roteiro-editor__sede-card-header,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-card-header,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-card-header {
+  color: var(--color-label-strong);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede .roteiro-editor__sede-card-header .roteiro-editor__nest-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede .roteiro-editor__sede-card-header .roteiro-editor__nest-title,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-card-header .roteiro-editor__nest-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-card-header .roteiro-editor__nest-title,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel-title {
+  color: var(--color-section-title);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede .roteiro-editor__sede-card-header .roteiro-editor__nest-desc,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede .roteiro-editor__sede-card-header .roteiro-editor__nest-desc,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-card-header .roteiro-editor__nest-desc,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-card-header .roteiro-editor__nest-desc,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__helper,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__helper {
+  color: var(--color-description);
 }
