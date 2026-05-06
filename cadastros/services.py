@@ -1,8 +1,9 @@
-import unicodedata
-
 from django.db import transaction
-from django.db.models import ProtectedError
 
+from core.deletion import DelecaoProtegidaError
+from core.deletion import excluir_com_protecao
+from core.normalizers import normalize_spaces
+from core.normalizers import remove_accents
 from .models import AssinaturaConfiguracao
 from .models import Cargo
 from .models import Cidade
@@ -15,9 +16,14 @@ class CadastroVinculadoError(Exception):
 
 
 def _normalize_for_match(value):
-    value = (value or "").strip().lower()
-    nfd = unicodedata.normalize("NFD", value)
-    return "".join(char for char in nfd if unicodedata.category(char) != "Mn")
+    return remove_accents(normalize_spaces(value).lower())
+
+
+def _traduz_delecao_protegida(instance):
+    try:
+        excluir_com_protecao(instance)
+    except DelecaoProtegidaError as exc:
+        raise CadastroVinculadoError from exc
 
 
 def resolver_cidade_sede_por_endereco(uf, cidade_endereco):
@@ -114,10 +120,7 @@ def atualizar_estado(instance, form):
 
 
 def excluir_estado(instance):
-    try:
-        instance.delete()
-    except ProtectedError as exc:
-        raise CadastroVinculadoError from exc
+    _traduz_delecao_protegida(instance)
 
 
 def criar_unidade(form):
@@ -129,10 +132,7 @@ def atualizar_unidade(instance, form):
 
 
 def excluir_unidade(instance):
-    try:
-        instance.delete()
-    except ProtectedError as exc:
-        raise CadastroVinculadoError from exc
+    _traduz_delecao_protegida(instance)
 
 
 def criar_cidade(form):
@@ -144,10 +144,7 @@ def atualizar_cidade(instance, form):
 
 
 def excluir_cidade(instance):
-    try:
-        instance.delete()
-    except ProtectedError as exc:
-        raise CadastroVinculadoError from exc
+    _traduz_delecao_protegida(instance)
 
 
 def criar_cargo(form):
@@ -159,10 +156,7 @@ def atualizar_cargo(instance, form):
 
 
 def excluir_cargo(instance):
-    try:
-        instance.delete()
-    except ProtectedError as exc:
-        raise CadastroVinculadoError from exc
+    _traduz_delecao_protegida(instance)
 
 
 def criar_combustivel(form):
@@ -174,10 +168,7 @@ def atualizar_combustivel(instance, form):
 
 
 def excluir_combustivel(instance):
-    try:
-        instance.delete()
-    except ProtectedError as exc:
-        raise CadastroVinculadoError from exc
+    _traduz_delecao_protegida(instance)
 
 
 def criar_servidor(form):
@@ -189,10 +180,7 @@ def atualizar_servidor(instance, form):
 
 
 def excluir_servidor(instance):
-    try:
-        instance.delete()
-    except ProtectedError as exc:
-        raise CadastroVinculadoError from exc
+    _traduz_delecao_protegida(instance)
 
 
 def criar_viatura(form):
@@ -204,7 +192,4 @@ def atualizar_viatura(instance, form):
 
 
 def excluir_viatura(instance):
-    try:
-        instance.delete()
-    except ProtectedError as exc:
-        raise CadastroVinculadoError from exc
+    _traduz_delecao_protegida(instance)

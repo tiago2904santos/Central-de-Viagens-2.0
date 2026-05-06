@@ -4,6 +4,10 @@ from django.db import models, transaction
 from django.db.models import Q, UniqueConstraint
 from django.utils import timezone
 
+from core.normalizers import normalize_digits
+from core.normalizers import normalize_plate
+from core.normalizers import normalize_spaces
+from core.normalizers import normalize_upper
 from core.utils.masks import RG_NAO_POSSUI_CANONICAL, format_masked_display, format_placa
 
 
@@ -28,8 +32,8 @@ class Unidade(TimeStampedModel):
         return self.sigla or self.nome
 
     def save(self, *args, **kwargs):
-        self.nome = " ".join((self.nome or "").strip().split()).upper()
-        self.sigla = " ".join((self.sigla or "").strip().split()).upper()
+        self.nome = normalize_upper(self.nome)
+        self.sigla = normalize_upper(self.sigla)
         super().save(*args, **kwargs)
 
 
@@ -50,7 +54,7 @@ class Estado(TimeStampedModel):
         return f"{self.nome} ({self.sigla})"
 
     def save(self, *args, **kwargs):
-        self.nome = " ".join((self.nome or "").strip().split()).upper()
+        self.nome = normalize_upper(self.nome)
         self.sigla = (self.sigla or "").strip().upper()[:2]
         super().save(*args, **kwargs)
 
@@ -81,7 +85,7 @@ class Cidade(TimeStampedModel):
         return f"{self.nome}/{self.uf}"
 
     def save(self, *args, **kwargs):
-        self.nome = " ".join((self.nome or "").strip().split()).upper()
+        self.nome = normalize_upper(self.nome)
         if self.estado_id:
             self.uf = self.estado.sigla
         else:
@@ -101,7 +105,7 @@ class Cargo(TimeStampedModel):
     @transaction.atomic
     def save(self, *args, **kwargs):
         if self.nome:
-            self.nome = " ".join(self.nome.strip().upper().split())
+            self.nome = normalize_upper(self.nome)
         super().save(*args, **kwargs)
         if self.is_padrao:
             Cargo.objects.select_for_update().exclude(pk=self.pk).filter(is_padrao=True).update(is_padrao=False)
@@ -122,7 +126,7 @@ class Combustivel(TimeStampedModel):
     @transaction.atomic
     def save(self, *args, **kwargs):
         if self.nome:
-            self.nome = " ".join(self.nome.strip().upper().split())
+            self.nome = normalize_upper(self.nome)
         super().save(*args, **kwargs)
         if self.is_padrao:
             Combustivel.objects.select_for_update().exclude(pk=self.pk).filter(is_padrao=True).update(is_padrao=False)
@@ -207,13 +211,13 @@ class Servidor(TimeStampedModel):
         return bool(rg and rg != RG_NAO_POSSUI_CANONICAL)
 
     def save(self, *args, **kwargs):
-        self.nome = " ".join((self.nome or "").strip().split()).upper()
-        self.cpf = "".join(c for c in (self.cpf or "") if c.isdigit())
+        self.nome = normalize_upper(self.nome)
+        self.cpf = normalize_digits(self.cpf)
         if self.sem_rg:
             self.rg = RG_NAO_POSSUI_CANONICAL
         else:
             self.rg = "".join(c for c in (self.rg or "").upper() if c.isalnum())
-        self.telefone = "".join(c for c in (self.telefone or "") if c.isdigit())
+        self.telefone = normalize_digits(self.telefone)
         super().save(*args, **kwargs)
 
 
@@ -272,8 +276,8 @@ class Viatura(TimeStampedModel):
         return bool((self.tipo or "").strip())
 
     def save(self, *args, **kwargs):
-        self.placa = "".join(c for c in (self.placa or "").upper() if c.isalnum())
-        self.modelo = " ".join((self.modelo or "").strip().split()).upper()
+        self.placa = normalize_plate(self.placa)
+        self.modelo = normalize_upper(self.modelo)
         self.tipo = (self.tipo or "").strip().upper()
         super().save(*args, **kwargs)
 
@@ -338,8 +342,7 @@ class ConfiguracaoSistema(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         def norm_upper_words(val):
-            val = (val or "").strip()
-            return " ".join(val.split()).upper() if val else ""
+            return normalize_upper(val)
 
         self.nome_orgao = norm_upper_words(self.nome_orgao)
         self.sigla_orgao = norm_upper_words(self.sigla_orgao)
@@ -353,8 +356,8 @@ class ConfiguracaoSistema(TimeStampedModel):
         self.bairro = norm_upper_words(self.bairro)
         self.numero = norm_upper_words(self.numero)
         self.uf = (self.uf or "").strip().upper()[:2]
-        self.cep = "".join(c for c in (self.cep or "") if c.isdigit())
-        self.telefone = "".join(c for c in (self.telefone or "") if c.isdigit())
+        self.cep = normalize_digits(self.cep)
+        self.telefone = normalize_digits(self.telefone)
         # Mantém compatível com código que ainda lê `sede`: mesmo valor que cidade_endereco.
         self.sede = self.cidade_endereco
         super().save(*args, **kwargs)

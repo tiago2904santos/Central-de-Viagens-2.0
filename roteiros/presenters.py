@@ -1,5 +1,8 @@
 from django.urls import reverse
 
+from core.presenters.actions import build_delete_action
+from core.presenters.actions import build_edit_action
+from core.presenters.actions import build_open_action
 from . import roteiro_logic
 
 
@@ -68,11 +71,7 @@ def apresentar_roteiro_card(roteiro):
             {"label": "Diárias", "value": roteiro.quantidade_diarias or "—"},
         ],
         "body": (roteiro.observacoes or "").strip() or "Roteiro cadastrado para reutilização nos documentos.",
-        "actions": [
-            {"label": "Abrir", "href": detail_url, "variant": "secondary"},
-            {"label": "Editar", "href": edit_url, "variant": "secondary"},
-            {"label": "Excluir", "href": delete_url, "variant": "danger"},
-        ],
+        "actions": [build_open_action(detail_url), build_edit_action(edit_url), build_delete_action(delete_url)],
     }
 
 

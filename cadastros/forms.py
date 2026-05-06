@@ -3,6 +3,8 @@
 from django import forms
 from django.db.models import Q
 
+from core.normalizers import normalize_plate
+from core.normalizers import normalize_upper
 from core.utils.masks import (
     RG_NAO_POSSUI_CANONICAL,
     RG_NAO_POSSUI_DISPLAY,
@@ -35,6 +37,13 @@ def _servidores_assinantes_queryset(extra_ids=None):
     if completos_ids:
         return Servidor.objects.filter(Q(pk__in=completos_ids) | Q(pk__in=extra_ids)).order_by("nome")
     return Servidor.objects.order_by("nome")
+
+
+def _normalize_nome_obrigatorio(value):
+    nome = normalize_upper(value)
+    if not nome:
+        raise forms.ValidationError("Este campo é obrigatório.")
+    return nome
 
 
 class BaseCadastroForm(forms.ModelForm):
@@ -122,9 +131,7 @@ class CargoForm(BaseCadastroForm):
         self.fields["is_padrao"].label = "Cargo padrão"
 
     def clean_nome(self):
-        nome = " ".join(self.cleaned_data.get("nome", "").strip().split()).upper()
-        if not nome:
-            raise forms.ValidationError("Este campo é obrigatório.")
+        nome = _normalize_nome_obrigatorio(self.cleaned_data.get("nome", ""))
         qs = Cargo.objects.filter(nome=nome)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
@@ -147,9 +154,7 @@ class CombustivelForm(BaseCadastroForm):
         self.fields["is_padrao"].label = "Combustível padrão"
 
     def clean_nome(self):
-        nome = " ".join(self.cleaned_data.get("nome", "").strip().split()).upper()
-        if not nome:
-            raise forms.ValidationError("Este campo é obrigatório.")
+        nome = _normalize_nome_obrigatorio(self.cleaned_data.get("nome", ""))
         qs = Combustivel.objects.filter(nome=nome)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
@@ -238,9 +243,7 @@ class ServidorForm(BaseCadastroForm):
                 self.initial["rg"] = format_rg(self.instance.rg)
 
     def clean_nome(self):
-        nome = " ".join(self.cleaned_data.get("nome", "").strip().split()).upper()
-        if not nome:
-            raise forms.ValidationError("Este campo é obrigatório.")
+        nome = _normalize_nome_obrigatorio(self.cleaned_data.get("nome", ""))
         qs = Servidor.objects.filter(nome=nome)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
@@ -333,7 +336,7 @@ class ViaturaForm(BaseCadastroForm):
             self.initial["placa"] = format_placa(self.instance.placa)
 
     def clean_placa(self):
-        raw = "".join(c for c in self.cleaned_data.get("placa", "").upper() if c.isalnum())
+        raw = normalize_plate(self.cleaned_data.get("placa", ""))
         if not PLACA_RE.match(raw):
             raise forms.ValidationError("Placa deve estar no formato AAA1234 ou AAA1A23.")
         qs = Viatura.objects.filter(placa=raw)
@@ -344,7 +347,7 @@ class ViaturaForm(BaseCadastroForm):
         return raw
 
     def clean_modelo(self):
-        modelo = " ".join(self.cleaned_data.get("modelo", "").strip().split()).upper()
+        modelo = normalize_upper(self.cleaned_data.get("modelo", ""))
         if not modelo:
             raise forms.ValidationError("Informe o modelo.")
         return modelo

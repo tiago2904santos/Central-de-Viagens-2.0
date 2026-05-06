@@ -88,6 +88,15 @@ Templates usam apenas components globais. CSS/JS por pagina seguem proibidos.
 - `presenters.py`: dados para tela (titulo, subtitulo, meta, badges, actions) sem HTML.
 - `views.py`: orquestracao de request/form/selectors/services/presenters/messages/redirect/render.
 
+### Reuso global recém padronizado
+
+- Normalização de strings/dígitos/placa/acento em `core/normalizers.py`.
+- Exclusão protegida em `core/deletion.py`.
+- Builders de presenter em `core/presenters/actions.py`, `core/presenters/badges.py`, `core/presenters/meta.py`.
+- Auditorias automáticas:
+  - `python scripts/audit_frontend_standards.py`
+  - `python scripts/audit_django_architecture.py`
+
 ### Regras negativas (proibicoes)
 
 - Nao colocar regra funcional pesada em `forms.py`.

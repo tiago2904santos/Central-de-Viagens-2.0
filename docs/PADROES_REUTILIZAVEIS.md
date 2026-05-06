@@ -15,6 +15,22 @@ Centralizar contratos reutilizaveis para evitar duplicacao entre modulos.
 ### 2) Exclusao protegida
 - Tratamento padrao de `ProtectedError` com mensagem unica:
   - `Não foi possível excluir este cadastro porque ele está vinculado a outros registros.`
+- Helper centralizado: `core/deletion.py`.
+
+### 2.1) Normalizacao reutilizavel
+
+- Funções globais em `core/normalizers.py`:
+  - `normalize_upper`
+  - `normalize_spaces`
+  - `normalize_digits`
+  - `normalize_plate`
+  - `remove_accents`
+
+### 2.2) Presenters reutilizaveis
+
+- Ações: `core/presenters/actions.py`
+- Badges: `core/presenters/badges.py`
+- Meta: `core/presenters/meta.py`
 
 ### 3) Configuracao do sistema
 - Fonte de verdade em `cadastros`.
@@ -51,3 +67,8 @@ Centralizar contratos reutilizaveis para evitar duplicacao entre modulos.
 - Sem JS inline.
 - Sem dependencia runtime de `legacy/`.
 - Sem alterar visual da tela `roteiros/novo/`.
+
+## Auditoria automatica
+
+- `python scripts/audit_frontend_standards.py`
+- `python scripts/audit_django_architecture.py`

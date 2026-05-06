@@ -2,13 +2,15 @@
 from core.utils.masks import format_placa as _format_placa_masked
 from core.utils.masks import format_rg_display as _format_rg_masked
 from core.utils.masks import format_telefone as _format_telefone_masked
+from core.presenters.actions import build_delete_action
+from core.presenters.actions import build_edit_action
+from core.presenters.badges import build_badge
+from core.presenters.meta import build_meta
 
 
-def _actions(edit_url="#", delete_url="#"):
-    return [
-        {"label": "Editar", "href": edit_url, "variant": "secondary"},
-        {"label": "Excluir", "href": delete_url, "variant": "danger"},
-    ]
+def _actions(edit_url=None, delete_url=None):
+    actions = [build_edit_action(edit_url), build_delete_action(delete_url)]
+    return [action for action in actions if action]
 
 
 def _format_cpf(cpf):
@@ -36,7 +38,7 @@ def apresentar_unidade_card(unidade, edit_url="#", delete_url="#"):
         "title": unidade.nome,
         "subtitle": unidade.sigla or "Sem sigla",
         "meta": [
-            {"label": "Sigla", "value": unidade.sigla or "-"},
+            build_meta("Sigla", unidade.sigla or "-"),
         ],
         "actions": _actions(edit_url, delete_url),
     }
@@ -47,7 +49,7 @@ def apresentar_cidade_card(cidade, edit_url="#", delete_url="#"):
         "title": cidade.nome,
         "subtitle": cidade.uf,
         "meta": [
-            {"label": "UF", "value": cidade.uf},
+            build_meta("UF", cidade.uf),
         ],
         "actions": _actions(edit_url, delete_url),
     }
@@ -79,10 +81,10 @@ def apresentar_servidor_card(servidor, edit_url="#", delete_url="#"):
         "title": servidor.nome,
         "subtitle": servidor.cargo.nome if servidor.cargo else "Cargo não informado",
         "meta": [
-            {"label": "CPF", "value": _format_cpf(servidor.cpf)},
-            {"label": "RG", "value": _format_rg(servidor.rg, sem_rg=servidor.sem_rg)},
-            {"label": "Telefone", "value": _format_telefone(servidor.telefone)},
-            {"label": "Unidade", "value": unidade_label},
+            build_meta("CPF", _format_cpf(servidor.cpf)),
+            build_meta("RG", _format_rg(servidor.rg, sem_rg=servidor.sem_rg)),
+            build_meta("Telefone", _format_telefone(servidor.telefone)),
+            build_meta("Unidade", unidade_label),
         ],
         "actions": _actions(edit_url, delete_url),
     }
@@ -104,9 +106,9 @@ def apresentar_viatura_card(viatura, edit_url="#", delete_url="#"):
         "title": title,
         "subtitle": subt,
         "meta": [
-            {"label": "Combustível", "value": viatura.combustivel.nome if viatura.combustivel else "-"},
-            {"label": "Tipo", "value": viatura.get_tipo_display() if viatura.tipo else "-"},
-            {"label": "Motoristas", "value": _motoristas_label(viatura)},
+            build_meta("Combustível", viatura.combustivel.nome if viatura.combustivel else "-"),
+            build_meta("Tipo", viatura.get_tipo_display() if viatura.tipo else "-"),
+            build_meta("Motoristas", _motoristas_label(viatura)),
         ],
         "actions": _actions(edit_url, delete_url),
     }
@@ -122,7 +124,7 @@ def apresentar_linha_lista_simples_cargo(cargo, edit_url="#", delete_url="#", se
         "set_default_url": set_default_url,
     }
     if getattr(cargo, "is_padrao", False):
-        row["badges"].append({"text": "Padrão", "variant": "accent"})
+        row["badges"].append(build_badge("Padrão", "accent"))
         row["set_default_url"] = None
     return row
 
@@ -137,7 +139,7 @@ def apresentar_linha_lista_simples_combustivel(combustivel, edit_url="#", delete
         "set_default_url": set_default_url,
     }
     if getattr(combustivel, "is_padrao", False):
-        row["badges"].append({"text": "Padrão", "variant": "accent"})
+        row["badges"].append(build_badge("Padrão", "accent"))
         row["set_default_url"] = None
     return row
 
