@@ -39,21 +39,10 @@
     el.classList.add('d-none');
   }
 
-  function statusLabel(status) {
-    var map = {
-      pendente: 'Pendente',
-      calculada: 'Calculada',
-      manual: 'Manual',
-      erro: 'Erro',
-      desatualizada: 'Desatualizada',
-    };
-    return map[status] || status || '—';
-  }
-
   var mapInstance = null;
   var routeLayer = null;
   var markerLayer = null;
-  var LEG_COLORS = ['#0f365d', '#d08a28'];
+  var LEG_COLORS = ['#0f5f8f', '#1d74a3'];
   var initial = readJsonScript('roteiro-mapa-inicial') || {};
   var mapConfig = window.ROTEIRO_MAP_CONFIG || {};
   // Prioriza sempre o valor resolvido no backend (CEP/configuração do sistema).
@@ -99,19 +88,41 @@
     else b.classList.add('roteiro-mapa__btn--blocked');
   }
 
+  function currentDateTimeBr() {
+    try {
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(new Date());
+    } catch (e) {
+      return '—';
+    }
+  }
+
+  function resolveCalculatedAt(route) {
+    if (!route) return '—';
+    return route.calculated_at_display || route.calculated_at || currentDateTimeBr();
+  }
+
   function updateSummary(route, extra) {
     var box = $('roteiro-mapa-summary');
     if (!box) return;
-    if (!route) {
-      hideElement(box);
-      return;
-    }
     showElement(box);
     var dist = $('roteiro-mapa-distancia');
     var tempo = $('roteiro-mapa-tempo');
     var fonte = $('roteiro-mapa-fonte');
     var em = $('roteiro-mapa-calculada-em');
-    var st = $('roteiro-mapa-status');
+    if (!route) {
+      if (dist) dist.textContent = '—';
+      if (tempo) tempo.textContent = '—';
+      if (fonte) fonte.textContent = '—';
+      if (em) em.textContent = '—';
+      return;
+    }
     if (dist) {
       var dAuto = route.distance_km_auto;
       var dShow = route.distance_km;
@@ -135,8 +146,7 @@
       tempo.textContent = txtT;
     }
     if (fonte) fonte.textContent = route.provider || '—';
-    if (em) em.textContent = route.calculated_at || '—';
-    if (st) st.textContent = statusLabel((route && route.status) || (extra && extra.status));
+    if (em) em.textContent = resolveCalculatedAt(route);
   }
 
   function setFramePlaceholder(on) {
@@ -193,10 +203,14 @@
       var key = lat.toFixed(6) + '|' + lng.toFixed(6) + '|' + label;
       if (seen[key]) return;
       seen[key] = true;
+      var pointId = String(p.id || '');
+      var inferredKind = pointId.indexOf('origem-') === 0 ? 'origem' : (pointId.indexOf('destino-') === 0 ? 'destino' : '');
+      var kind = String(p.kind || inferredKind).toLowerCase();
+      var isSede = kind === 'origem';
       var marker = L.circleMarker([lat, lng], {
-        radius: 5,
-        color: '#0f365d',
-        weight: 2,
+        radius: isSede ? 7 : 6,
+        color: isSede ? '#0b3f67' : '#0f6e8f',
+        weight: isSede ? 3 : 2,
         fillColor: '#ffffff',
         fillOpacity: 1,
       });
@@ -204,13 +218,29 @@
         marker.bindTooltip(label, {
           permanent: true,
           direction: 'top',
-          offset: [0, -8],
-          className: 'roteiro-mapa__city-tooltip',
+          offset: [0, -12],
+          className:
+            'roteiro-mapa__city-tooltip ' +
+            (isSede ? 'roteiro-mapa__city-tooltip--sede' : 'roteiro-mapa__city-tooltip--destino'),
         });
       }
       marker.addTo(markerLayer);
       if (bounds) bounds.extend([lat, lng]);
     });
+  }
+
+  function addStyledLine(layerParent, geometry, color) {
+    var halo = L.geoJSON(
+      { type: 'Feature', properties: {}, geometry: geometry },
+      { style: { color: '#ffffff', weight: 9, opacity: 0.85, lineCap: 'round', lineJoin: 'round' } }
+    );
+    var line = L.geoJSON(
+      { type: 'Feature', properties: {}, geometry: geometry },
+      { style: { color: color, weight: 5, opacity: 0.96, lineCap: 'round', lineJoin: 'round' } }
+    );
+    halo.addTo(layerParent);
+    line.addTo(layerParent);
+    return line;
   }
 
   /**
@@ -244,11 +274,7 @@
       legsWithGeometry.forEach(function (leg, idx) {
         try {
           var color = LEG_COLORS[(Number(leg.color_index) || idx) % LEG_COLORS.length];
-          var layer = L.geoJSON(
-            { type: 'Feature', properties: {}, geometry: leg.geometry },
-            { style: { color: color, weight: 5, opacity: 0.92 } }
-          );
-          layer.addTo(routeLayer);
+          var layer = addStyledLine(routeLayer, leg.geometry, color);
           if (layer.getBounds && layer.getBounds().isValid()) bounds.extend(layer.getBounds());
           drewSomething = true;
         } catch (e) {
@@ -266,18 +292,12 @@
       ) {
         setFramePlaceholder(true);
         addPointMarkers(points, bounds);
-        if (bounds.isValid()) mapInstance.fitBounds(bounds, { padding: [24, 24], maxZoom: 12 });
+        if (bounds.isValid()) mapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
         if (warn) showError(warn);
         return false;
       }
       try {
-        var single = L.geoJSON(
-          { type: 'Feature', properties: {}, geometry: geometry },
-          {
-            style: { color: '#0f365d', weight: 5, opacity: 0.9 },
-          }
-        );
-        single.addTo(routeLayer);
+        var single = addStyledLine(routeLayer, geometry, '#0f5f8f');
         if (single.getBounds && single.getBounds().isValid()) bounds.extend(single.getBounds());
         drewSomething = true;
       } catch (e) {
@@ -292,7 +312,7 @@
     try {
       setFramePlaceholder(false);
       if (bounds.isValid()) {
-        mapInstance.fitBounds(bounds, { padding: [24, 24], maxZoom: 12 });
+        mapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
       } else {
         showError(MSG_GEOM_DESENHO);
         setFramePlaceholder(true);
@@ -420,7 +440,7 @@
       setCalcularEnabled(false);
       hideElement($('btn-recalcular-rota-mapa'));
       hideElement(stale);
-      hideElement($('roteiro-mapa-summary'));
+      updateSummary(null, null);
       ensureMap();
       setFramePlaceholder(true);
       toggleRecalc(false);
@@ -443,7 +463,7 @@
           toggleRecalc(!!hasLine);
         }
       } else {
-        hideElement($('roteiro-mapa-summary'));
+        updateSummary(null, null);
         toggleRecalc(false);
         ensureMap();
         setFramePlaceholder(true);

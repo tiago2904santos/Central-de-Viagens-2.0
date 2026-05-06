@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from cadastros.models import Cidade
+from django.utils import timezone
 
 from .openrouteservice import get_openrouteservice_provider
 from .route_exceptions import RouteServiceError, RouteValidationError
@@ -36,6 +37,13 @@ def _hhmm(minutes: int) -> str:
     m = max(0, int(minutes or 0))
     h, mm = divmod(m, 60)
     return f"{h:02d}:{mm:02d}"
+
+
+def _format_calculated_at(dt) -> str:
+    if not dt:
+        return ""
+    local = timezone.localtime(dt)
+    return local.strftime("%d/%m/%Y %H:%M")
 
 
 def _label_cidade(cidade: Cidade) -> str:
@@ -204,6 +212,7 @@ def calculate_route_preview(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     route_raw_minutes = int(normalized.get("duration_minutes") or 0)
     route_rounded = round_trip_minutes_to_15(route_raw_minutes)
+    calculated_at = timezone.now()
     route_payload = {
         "provider": normalized.get("provider") or "openrouteservice",
         "distance_km": normalized.get("distance_km"),
@@ -211,6 +220,8 @@ def calculate_route_preview(payload: Dict[str, Any]) -> Dict[str, Any]:
         "duration_human": _duration_human(route_rounded),
         "geometry": normalized.get("geometry"),
         "status": "calculada",
+        "calculated_at": _format_calculated_at(calculated_at),
+        "calculated_at_display": _format_calculated_at(calculated_at),
     }
     if normalized.get("geometry_warning"):
         route_payload["geometry_warning"] = normalized.get("geometry_warning")
