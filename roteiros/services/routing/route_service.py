@@ -91,7 +91,6 @@ def _route_payload_from_roteiro(
         else None,
         "duracao_manual_min": roteiro.rota_duracao_manual_min,
         "ajuste_justificativa": (roteiro.rota_ajuste_justificativa or "").strip(),
-        "status": status or roteiro.rota_status,
     }
 
 
@@ -196,9 +195,13 @@ def calcular_rota_para_roteiro(
     _apply_segments_to_trechos(roteiro, normalized.get("segments") or [], bate_volta_diario=bate)
 
     roteiro.refresh_from_db()
+    route_payload = _route_payload_from_roteiro(roteiro, from_cache=False)
+    gw = normalized.get("geometry_warning")
+    if gw:
+        route_payload["geometry_warning"] = gw
     return {
         "ok": True,
-        "route": _route_payload_from_roteiro(roteiro, from_cache=False),
+        "route": route_payload,
     }
 
 

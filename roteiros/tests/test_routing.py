@@ -68,7 +68,44 @@ class RoteirosRoutingTests(TestCase):
             HTTP_X_CSRFTOKEN=csrf,
         )
 
-    def test_openrouteservice_provider_converte_coordenadas_e_normaliza(self):
+    def test_openrouteservice_usa_endpoint_geojson(self):
+        provider = OpenRouteServiceProvider("k", timeout_seconds=5)
+        mock_fc = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[-49.0, -25.0], [-48.0, -24.0]],
+                    },
+                    "properties": {
+                        "summary": {"distance": 100000, "duration": 7200},
+                        "segments": [{"distance": 100000, "duration": 7200}],
+                    },
+                }
+            ],
+        }
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 200
+            post.return_value.json.return_value = mock_fc
+            out = provider.calculate_route(
+                [
+                    {"id": "a", "lat": -25.0, "lng": -49.0, "label": "A"},
+                    {"id": "b", "lat": -24.0, "lng": -48.0, "label": "B"},
+                ],
+                profile="driving-car",
+            )
+        called = post.call_args
+        self.assertIn("/geojson", called[0][0])
+        body = called[1]["json"]
+        self.assertEqual(body["coordinates"][0], [-49.0, -25.0])
+        self.assertEqual(out["distance_km"], 100.0)
+        self.assertEqual(out["duration_minutes"], 120)
+        self.assertEqual(out["geometry"]["type"], "LineString")
+        self.assertNotIn("EncodedPolyline", json.dumps(out["geometry"]))
+
+    def test_openrouteservice_resposta_json_legada_ainda_funciona(self):
         provider = OpenRouteServiceProvider("k", timeout_seconds=5)
         mock_resp = {
             "routes": [
@@ -94,12 +131,32 @@ class RoteirosRoutingTests(TestCase):
                 ],
                 profile="driving-car",
             )
-        called = post.call_args
-        body = called[1]["json"]
-        self.assertEqual(body["coordinates"][0], [-49.0, -25.0])
-        self.assertEqual(out["distance_km"], 100.0)
-        self.assertEqual(out["duration_minutes"], 120)
         self.assertEqual(out["geometry"]["type"], "LineString")
+
+    def test_openrouteservice_polyline_encoded_nao_vai_no_geometry(self):
+        provider = OpenRouteServiceProvider("k", timeout_seconds=5)
+        mock_resp = {
+            "routes": [
+                {
+                    "summary": {"distance": 1000, "duration": 120},
+                    "geometry": "encoded_polyline_placeholder",
+                }
+            ]
+        }
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 200
+            post.return_value.json.return_value = mock_resp
+            out = provider.calculate_route(
+                [
+                    {"id": "a", "lat": -25.0, "lng": -49.0, "label": "A"},
+                    {"id": "b", "lat": -24.0, "lng": -48.0, "label": "B"},
+                ],
+                profile="driving-car",
+            )
+        self.assertIsNone(out.get("geometry"))
+        self.assertIn("geometry_warning", out)
+        blob = json.dumps(out)
+        self.assertNotIn("EncodedPolyline", blob)
 
     def test_calcular_rota_endpoint_recusa_get(self):
         url = reverse("roteiros:calcular_rota")
@@ -332,3 +389,125 @@ class RoteirosRoutingTests(TestCase):
         roteiro.refresh_from_db()
         self.assertEqual(roteiro.rota_status, Roteiro.ROTA_STATUS_CALCULADA)
         self.assertIsNotNone(roteiro.rota_geojson)
+
+    def test_calcular_rota_endpoint_sem_roteiro_id(self):
+        url = reverse("roteiros:calcular_rota")
+        resp = self._csrf_post_json(url, {})
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("Salve o roteiro", resp.json()["message"])
+
+    def test_calcular_rota_endpoint_retorna_linestring_quando_api_ok(self):
+        roteiro = Roteiro.objects.create(
+            tipo=Roteiro.TIPO_AVULSO,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+        )
+        RoteiroDestino.objects.create(
+            roteiro=roteiro, estado=self.estado, cidade=self.cidade_a, ordem=0
+        )
+        RoteiroTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=0,
+            tipo=RoteiroTrecho.TIPO_IDA,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_a,
+        )
+        RoteiroTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=1,
+            tipo=RoteiroTrecho.TIPO_RETORNO,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_a,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_sede,
+        )
+        mock_fc = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[-49.0, -25.0], [-48.0, -24.0]],
+                    },
+                    "properties": {
+                        "summary": {"distance": 50000, "duration": 3600},
+                        "segments": [],
+                    },
+                }
+            ],
+        }
+        url = reverse("roteiros:calcular_rota")
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 200
+            post.return_value.json.return_value = mock_fc
+            resp = self._csrf_post_json(url, {"roteiro_id": roteiro.pk})
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["route"]["geometry"]["type"], "LineString")
+        roteiro.refresh_from_db()
+        self.assertIsNotNone(roteiro.rota_geojson)
+        self.assertEqual(roteiro.rota_geojson.get("type"), "LineString")
+
+    def test_calcular_rota_geometria_invalida_nao_quebra_json(self):
+        roteiro = Roteiro.objects.create(
+            tipo=Roteiro.TIPO_AVULSO,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+        )
+        RoteiroDestino.objects.create(
+            roteiro=roteiro, estado=self.estado, cidade=self.cidade_a, ordem=0
+        )
+        RoteiroTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=0,
+            tipo=RoteiroTrecho.TIPO_IDA,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_a,
+        )
+        RoteiroTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=1,
+            tipo=RoteiroTrecho.TIPO_RETORNO,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_a,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_sede,
+        )
+        mock_bad = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {"type": "Point", "coordinates": [-49.0, -25.0]},
+                    "properties": {
+                        "summary": {"distance": 1000, "duration": 60},
+                    },
+                }
+            ],
+        }
+        url = reverse("roteiros:calcular_rota")
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 200
+            post.return_value.json.return_value = mock_bad
+            resp = self._csrf_post_json(url, {"roteiro_id": roteiro.pk})
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertTrue(body["ok"])
+        self.assertIn("geometry_warning", body["route"])
+        roteiro.refresh_from_db()
+        self.assertIsNone(roteiro.rota_geojson)
+
+    def test_novo_roteiro_html_oculta_controles_iniciais_do_mapa(self):
+        response = self.client.get(reverse("roteiros:novo"))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode("utf-8")
+        self.assertRegex(html, r'id="btn-recalcular-rota-mapa"[^>]*hidden')
+        self.assertRegex(html, r'id="roteiro-mapa-loading"[^>]*hidden')
+        self.assertRegex(html, r'id="roteiro-mapa-stale-hint"[^>]*hidden')
+        self.assertIn("Salve o roteiro antes de calcular a rota no mapa.", html)

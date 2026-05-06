@@ -6,16 +6,32 @@
         <p class="roteiro-mapa__subtitle">Visualização estimada com base em OpenStreetMap (via OpenRouteService).</p>
       </div>
       <div class="roteiro-mapa__actions">
-        <button type="button" class="btn btn-primary roteiro-editor__btn-pill" id="btn-calcular-rota-mapa">
+        <button type="button"
+                class="btn btn-primary roteiro-editor__btn-pill{% if not object or not object.pk %} roteiro-mapa__btn--blocked{% endif %}"
+                id="btn-calcular-rota-mapa"
+                {% if not object or not object.pk %}disabled aria-disabled="true"{% endif %}>
           Calcular rota
         </button>
-        <button type="button" class="btn btn-outline-secondary roteiro-editor__btn-pill d-none" id="btn-recalcular-rota-mapa">
+        <button type="button"
+                class="btn btn-outline-secondary roteiro-editor__btn-pill"
+                id="btn-recalcular-rota-mapa"
+                hidden>
           Recalcular rota
         </button>
       </div>
     </header>
 
-    <p class="roteiro-mapa__stale-hint text-warning-emphasis small d-none" id="roteiro-mapa-stale-hint" role="status">
+    <p class="roteiro-mapa__novo-hint alert alert-light border py-2 small mb-2"
+       id="roteiro-mapa-novo-hint"
+       {% if object and object.pk %}hidden{% endif %}
+       role="status">
+      Salve o roteiro antes de calcular a rota no mapa.
+    </p>
+
+    <p class="roteiro-mapa__stale-hint text-warning-emphasis small mb-2"
+       id="roteiro-mapa-stale-hint"
+       hidden
+       role="status">
       A ordem dos destinos mudou. Recalcule a rota para atualizar distância e tempo estimados.
     </p>
 
@@ -66,9 +82,16 @@
       </div>
     </div>
 
-    <div class="roteiro-mapa__frame" id="roteiro-mapa-container" data-testid="roteiro-mapa-container"></div>
-    <div class="roteiro-mapa__error alert alert-warning py-2 d-none small" id="roteiro-mapa-error" role="alert"></div>
-    <div class="roteiro-mapa__loading small text-muted d-none" id="roteiro-mapa-loading">Calculando rota…</div>
+    <div class="roteiro-mapa__frame roteiro-mapa__frame--placeholder" id="roteiro-mapa-container" data-testid="roteiro-mapa-container"></div>
+    <div class="roteiro-mapa__error alert alert-warning py-2 small"
+         id="roteiro-mapa-error"
+         hidden
+         role="alert"></div>
+    <div class="roteiro-mapa__loading small text-muted"
+         id="roteiro-mapa-loading"
+         hidden>
+      Calculando rota…
+    </div>
   </div>
 </section>
 

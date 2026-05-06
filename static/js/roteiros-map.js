@@ -2,6 +2,9 @@
 (function () {
   'use strict';
 
+  var MSG_GEOM_DESENHO =
+    'Rota calculada, mas a geometria retornada não pôde ser desenhada no mapa.';
+
   function readJsonScript(id) {
     var el = document.getElementById(id);
     if (!el || !el.textContent) return null;
@@ -22,6 +25,20 @@
     return '';
   }
 
+  function showElement(el) {
+    if (!el) return;
+    el.hidden = false;
+    el.removeAttribute('hidden');
+    el.classList.remove('d-none');
+  }
+
+  function hideElement(el) {
+    if (!el) return;
+    el.hidden = true;
+    el.setAttribute('hidden', 'hidden');
+    el.classList.add('d-none');
+  }
+
   function statusLabel(status) {
     var map = {
       pendente: 'Pendente',
@@ -36,7 +53,8 @@
   var mapInstance = null;
   var routeLayer = null;
   var initial = readJsonScript('roteiro-mapa-inicial') || {};
-  var hadGeometry = !!(initial.route && initial.route.geometry);
+  var rid = initial.roteiro_id;
+  var hadGeometry = !!(initial.route && initial.route.geometry && initial.route.geometry.type === 'LineString');
 
   function $(id) {
     return document.getElementById(id);
@@ -44,7 +62,9 @@
 
   function setLoading(on) {
     var el = $('roteiro-mapa-loading');
-    if (el) el.classList.toggle('d-none', !on);
+    if (!el) return;
+    if (on) showElement(el);
+    else hideElement(el);
   }
 
   function showError(msg) {
@@ -52,21 +72,30 @@
     if (!el) return;
     if (msg) {
       el.textContent = msg;
-      el.classList.remove('d-none');
+      showElement(el);
     } else {
       el.textContent = '';
-      el.classList.add('d-none');
+      hideElement(el);
     }
+  }
+
+  function setCalcularEnabled(on) {
+    var b = $('btn-calcular-rota-mapa');
+    if (!b) return;
+    b.disabled = !on;
+    b.setAttribute('aria-disabled', on ? 'false' : 'true');
+    if (on) b.classList.remove('roteiro-mapa__btn--blocked');
+    else b.classList.add('roteiro-mapa__btn--blocked');
   }
 
   function updateSummary(route, extra) {
     var box = $('roteiro-mapa-summary');
     if (!box) return;
     if (!route) {
-      box.hidden = true;
+      hideElement(box);
       return;
     }
-    box.hidden = false;
+    showElement(box);
     var dist = $('roteiro-mapa-distancia');
     var tempo = $('roteiro-mapa-tempo');
     var fonte = $('roteiro-mapa-fonte');
@@ -102,6 +131,7 @@
       var j = (route.ajuste_justificativa || '').trim();
       if (j) {
         manual.hidden = false;
+        manual.removeAttribute('hidden');
         manual.textContent = 'Justificativa registrada: ' + j;
       } else {
         manual.hidden = true;
@@ -110,51 +140,86 @@
     }
   }
 
-  function drawRoute(geometry) {
+  function setFramePlaceholder(on) {
+    var container = $('roteiro-mapa-container');
+    if (!container) return;
+    if (on) container.classList.add('roteiro-mapa__frame--placeholder');
+    else container.classList.remove('roteiro-mapa__frame--placeholder');
+  }
+
+  function ensureMap() {
     var container = $('roteiro-mapa-container');
     if (!container || typeof L === 'undefined') return;
-
     if (!mapInstance) {
       mapInstance = L.map(container, { scrollWheelZoom: false }).setView([-14.235, -51.9253], 4);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; OpenStreetMap',
       }).addTo(mapInstance);
+      setTimeout(function () {
+        try {
+          mapInstance.invalidateSize();
+        } catch (e) {
+          /* ignore */
+        }
+      }, 0);
     }
+  }
+
+  /**
+   * Desenha geometria LineString normalizada. Retorna true se desenhou.
+   */
+  function drawRoute(geometry, geomWarning) {
+    ensureMap();
+    var container = $('roteiro-mapa-container');
+    if (!container || typeof L === 'undefined') return false;
 
     if (routeLayer) {
       mapInstance.removeLayer(routeLayer);
       routeLayer = null;
     }
 
-    if (!geometry || geometry.type !== 'LineString' || !geometry.coordinates || !geometry.coordinates.length) {
-      return;
+    var warn = geomWarning || '';
+
+    if (
+      !geometry ||
+      geometry.type !== 'LineString' ||
+      !geometry.coordinates ||
+      !geometry.coordinates.length
+    ) {
+      setFramePlaceholder(true);
+      if (warn) showError(warn);
+      return false;
     }
 
-    routeLayer = L.geoJSON(
-      { type: 'Feature', properties: {}, geometry: geometry },
-      {
-        style: { color: '#0f365d', weight: 5, opacity: 0.9 },
-      }
-    ).addTo(mapInstance);
-
     try {
-      mapInstance.fitBounds(routeLayer.getBounds(), { padding: [24, 24], maxZoom: 12 });
+      routeLayer = L.geoJSON(
+        { type: 'Feature', properties: {}, geometry: geometry },
+        {
+          style: { color: '#0f365d', weight: 5, opacity: 0.9 },
+        }
+      ).addTo(mapInstance);
+      setFramePlaceholder(false);
+      try {
+        mapInstance.fitBounds(routeLayer.getBounds(), { padding: [24, 24], maxZoom: 12 });
+      } catch (e) {
+        showError(MSG_GEOM_DESENHO);
+        setFramePlaceholder(true);
+        return false;
+      }
+      return true;
     } catch (e) {
-      /* ignore */
+      showError(MSG_GEOM_DESENHO);
+      setFramePlaceholder(true);
+      return false;
     }
   }
 
-  function toggleRecalc(hasRoute) {
-    var b1 = $('btn-calcular-rota-mapa');
+  function toggleRecalc(show) {
     var b2 = $('btn-recalcular-rota-mapa');
-    if (b1 && b2) {
-      if (hasRoute) {
-        b2.classList.remove('d-none');
-      } else {
-        b2.classList.add('d-none');
-      }
-    }
+    if (!b2) return;
+    if (show) showElement(b2);
+    else hideElement(b2);
   }
 
   function postCalcular(force) {
@@ -162,19 +227,26 @@
     if (!form) return;
     var url = form.getAttribute('data-api-calcular-rota-url');
     if (!url) return;
-    var rid = initial.roteiro_id;
+
     if (!rid) {
       showError('Salve o roteiro antes de calcular a rota no mapa.');
       return;
     }
+
     showError('');
     setLoading(true);
+
+    var token =
+      getCookie('csrftoken') ||
+      (form.querySelector('[name=csrfmiddlewaretoken]') &&
+        form.querySelector('[name=csrfmiddlewaretoken]').value);
+
     fetch(url, {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken') || form.querySelector('[name=csrfmiddlewaretoken]').value,
+        'X-CSRFToken': token || '',
       },
       body: JSON.stringify({ roteiro_id: rid, force_recalculate: !!force }),
     })
@@ -184,7 +256,6 @@
         });
       })
       .then(function (res) {
-        setLoading(false);
         if (!res.body || !res.body.ok) {
           showError((res.body && res.body.message) || 'Não foi possível calcular a rota.');
           return;
@@ -192,19 +263,27 @@
         var route = res.body.route;
         initial.route = route;
         initial.status = route.status || 'calculada';
-        hadGeometry = true;
+        hadGeometry = !!(route.geometry && route.geometry.type === 'LineString');
         updateSummary(route, { status: initial.status });
-        drawRoute(route.geometry);
-        toggleRecalc(true);
-        var stale = $('roteiro-mapa-stale-hint');
-        if (stale) stale.classList.add('d-none');
-        if (route.from_cache) {
+
+        var gw = route.geometry_warning || res.body.geometry_warning;
+        var drew = drawRoute(route.geometry, gw);
+        if (!drew && route.distance_km != null && !gw) {
+          showError(MSG_GEOM_DESENHO);
+        } else if (!drew && gw) {
+          showError(gw);
+        } else if (drew) {
           showError('');
         }
+
+        toggleRecalc(true);
+        hideElement($('roteiro-mapa-stale-hint'));
       })
       .catch(function () {
-        setLoading(false);
         showError('Falha de rede ao calcular a rota. Tente novamente.');
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }
 
@@ -213,41 +292,77 @@
     var container = $('roteiro-mapa-container');
     if (!form || !container) return;
 
+    hideElement($('roteiro-mapa-loading'));
+    hideElement($('roteiro-mapa-error'));
+
+    var hintNovo = $('roteiro-mapa-novo-hint');
+    var stale = $('roteiro-mapa-stale-hint');
+
+    if (!rid) {
+      setCalcularEnabled(false);
+      hideElement($('btn-recalcular-rota-mapa'));
+      hideElement(stale);
+      showElement(hintNovo);
+      hideElement($('roteiro-mapa-summary'));
+      ensureMap();
+      setFramePlaceholder(true);
+      toggleRecalc(false);
+    } else {
+      hideElement(hintNovo);
+      setCalcularEnabled(true);
+      if (initial.route) {
+        updateSummary(initial.route, { status: initial.status });
+        var gwInit = initial.route.geometry_warning;
+        var drew = drawRoute(initial.route.geometry, gwInit);
+        if (!drew && initial.route.geometry_warning) {
+          showError(initial.route.geometry_warning);
+        } else if (!drew && initial.route.distance_km != null && !initial.route.geometry) {
+          showError(MSG_GEOM_DESENHO);
+        }
+        var hasLine =
+          initial.route.geometry && initial.route.geometry.type === 'LineString';
+        if (initial.status === 'desatualizada') {
+          toggleRecalc(true);
+        } else {
+          toggleRecalc(!!hasLine);
+        }
+      } else {
+        hideElement($('roteiro-mapa-summary'));
+        toggleRecalc(false);
+        ensureMap();
+        setFramePlaceholder(true);
+      }
+
+      if (
+        rid &&
+        initial.status === 'desatualizada' &&
+        (hadGeometry || (initial.route && (initial.route.distance_km != null || initial.route.geometry)))
+      ) {
+        showElement(stale);
+      } else {
+        hideElement(stale);
+      }
+    }
+
     var bCalc = $('btn-calcular-rota-mapa');
     var bRecalc = $('btn-recalcular-rota-mapa');
     if (bCalc) {
       bCalc.addEventListener('click', function () {
+        if (!rid || bCalc.disabled) return;
         postCalcular(false);
       });
     }
     if (bRecalc) {
       bRecalc.addEventListener('click', function () {
+        if (!rid) return;
         postCalcular(true);
       });
-    }
-
-    if (!initial.roteiro_id && bCalc) {
-      bCalc.setAttribute('title', 'Salve o roteiro para habilitar o cálculo.');
-    }
-
-    if (initial.route) {
-      updateSummary(initial.route, { status: initial.status });
-      drawRoute(initial.route.geometry);
-      toggleRecalc(!!initial.route.geometry);
-    } else {
-      toggleRecalc(false);
-    }
-
-    if (initial.status === 'desatualizada') {
-      var stale = $('roteiro-mapa-stale-hint');
-      if (stale) stale.classList.remove('d-none');
     }
   }
 
   function onDestinosReordered() {
-    if (!hadGeometry) return;
-    var stale = $('roteiro-mapa-stale-hint');
-    if (stale) stale.classList.remove('d-none');
+    if (!rid || !hadGeometry) return;
+    showElement($('roteiro-mapa-stale-hint'));
   }
 
   if (document.readyState === 'loading') {

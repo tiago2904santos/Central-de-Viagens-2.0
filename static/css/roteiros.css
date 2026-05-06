@@ -1895,6 +1895,11 @@
   color: #1f3a54;
 }
 
+.roteiro-mapa [hidden],
+.roteiro-mapa .d-none {
+  display: none !important;
+}
+
 .roteiro-mapa__frame {
   height: 320px;
   width: 100%;
@@ -1903,6 +1908,22 @@
   border: 1px solid #e3edf6;
   margin-top: 12px;
   background: #eef4fa;
+}
+
+.roteiro-mapa__frame--placeholder {
+  background: linear-gradient(145deg, #eef4fa 0%, #e4edf6 45%, #dce8f3 100%);
+  min-height: 200px;
+}
+
+.roteiro-mapa__btn--blocked {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.roteiro-mapa__novo-hint {
+  color: #3d566d !important;
+  background: #f4f8fc !important;
+  border-color: #dce8f3 !important;
 }
 
 .roteiro-mapa__manual-fields {
