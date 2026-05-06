@@ -316,6 +316,64 @@ def _build_step3_bate_volta_diario_state(data=None):
     }
 
 
+def _step3_values_equal(a, b):
+    return str(a or '').strip() == str(b or '').strip()
+
+
+def _step3_minutes_equal(a, b):
+    parsed_a = _parse_int(a)
+    parsed_b = _parse_int(b)
+    if parsed_a is None or parsed_b is None:
+        return True
+    return parsed_a == parsed_b
+
+
+def _step3_trecho_duplica_retorno(trecho, retorno, sede_estado_id=None, sede_cidade_id=None):
+    if not trecho or not retorno:
+        return False
+    if sede_estado_id and _parse_int(trecho.get('destino_estado_id')) != _parse_int(sede_estado_id):
+        return False
+    if sede_cidade_id and _parse_int(trecho.get('destino_cidade_id')) != _parse_int(sede_cidade_id):
+        return False
+    checks = (
+        ('saida_data', 'saida_data'),
+        ('saida_hora', 'saida_hora'),
+        ('chegada_data', 'chegada_data'),
+        ('chegada_hora', 'chegada_hora'),
+    )
+    if any(not _step3_values_equal(trecho.get(a), retorno.get(b)) for a, b in checks):
+        return False
+    if not _step3_minutes_equal(trecho.get('tempo_cru_estimado_min'), retorno.get('tempo_cru_estimado_min')):
+        return False
+    if not _step3_minutes_equal(trecho.get('tempo_adicional_min'), retorno.get('tempo_adicional_min')):
+        return False
+    if not _step3_minutes_equal(trecho.get('duracao_estimada_min'), retorno.get('duracao_estimada_min')):
+        return False
+    retorno_saida = str(retorno.get('saida_cidade') or retorno.get('origem_nome') or '').strip()
+    retorno_chegada = str(retorno.get('chegada_cidade') or retorno.get('destino_nome') or '').strip()
+    if retorno_saida and not _step3_values_equal(trecho.get('origem_nome'), retorno_saida):
+        return False
+    if retorno_chegada and not _step3_values_equal(trecho.get('destino_nome'), retorno_chegada):
+        return False
+    return True
+
+
+def _dedupe_step3_loop_retorno_final(state):
+    bate_volta_diario = _build_step3_bate_volta_diario_state((state or {}).get('bate_volta_diario'))
+    trechos = (state or {}).get('trechos') or []
+    if not bate_volta_diario['ativo'] or not trechos:
+        return state
+    retorno = (state or {}).get('retorno') or {}
+    if _step3_trecho_duplica_retorno(
+        trechos[-1],
+        retorno,
+        sede_estado_id=(state or {}).get('sede_estado_id'),
+        sede_cidade_id=(state or {}).get('sede_cidade_id'),
+    ):
+        state['trechos'] = trechos[:-1]
+    return state
+
+
 def _extract_step3_posted_trechos(request):
     pattern = re.compile(r'^trecho_(\d+)_(.+)$')
     indexed = {}
@@ -797,8 +855,9 @@ def _infer_step3_bate_volta_diario_from_state(state):
         for item in (state.get('destinos_atuais') or [])
         if _parse_int(item.get('estado_id')) and _parse_int(item.get('cidade_id'))
     ]
-    trechos = state.get('trechos') or []
-    if len(destinos) != 1 or len(trechos) < 2 or (len(trechos) % 2) != 0:
+    trechos = list(state.get('trechos') or [])
+    retorno = state.get('retorno') or {}
+    if len(destinos) != 1:
         return fallback
 
     sede_estado_id = _parse_int(state.get('sede_estado_id'))
@@ -806,6 +865,24 @@ def _infer_step3_bate_volta_diario_from_state(state):
     destino_estado_id = _parse_int(destinos[0].get('estado_id'))
     destino_cidade_id = _parse_int(destinos[0].get('cidade_id'))
     if not all([sede_estado_id, sede_cidade_id, destino_estado_id, destino_cidade_id]):
+        return fallback
+    if (len(trechos) % 2) == 1 and retorno.get('saida_data') and retorno.get('saida_hora'):
+        trechos.append(
+            {
+                'origem_estado_id': destino_estado_id,
+                'origem_cidade_id': destino_cidade_id,
+                'destino_estado_id': sede_estado_id,
+                'destino_cidade_id': sede_cidade_id,
+                'saida_data': retorno.get('saida_data'),
+                'saida_hora': retorno.get('saida_hora'),
+                'chegada_data': retorno.get('chegada_data'),
+                'chegada_hora': retorno.get('chegada_hora'),
+                'tempo_cru_estimado_min': retorno.get('tempo_cru_estimado_min'),
+                'tempo_adicional_min': retorno.get('tempo_adicional_min'),
+                'duracao_estimada_min': retorno.get('duracao_estimada_min'),
+            }
+        )
+    if len(trechos) < 2 or (len(trechos) % 2) != 0:
         return fallback
 
     ida_hora_ref = None
@@ -959,6 +1036,8 @@ def _build_step3_state_from_post(request, oficio=None, route_state_map=None):
         for idx, trecho in enumerate(posted_trechos):
             state['trechos'].append(
                 {
+                    'id': _parse_int(trecho.get('id')),
+                    'key': trecho.get('key') or trecho.get('destino_key') or trecho.get('id') or '',
                     'ordem': idx,
                     'origem_nome': (trecho.get('origem_nome') or '').strip(),
                     'destino_nome': (trecho.get('destino_nome') or '').strip(),
@@ -1045,6 +1124,7 @@ def _build_step3_state_from_post(request, oficio=None, route_state_map=None):
             'volta_tempo_min': (request.POST.get('bate_volta_volta_tempo_min') or '').strip(),
         }
     )
+    _dedupe_step3_loop_retorno_final(state)
     state['seed_source_label'] = ''
     state['roteiro_modo'] = roteiro_modo
     if roteiro_modo == ROTEIRO_MODO_EVENTO and roteiro_evento_id and roteiro_evento_id in route_state_map:
@@ -1168,6 +1248,28 @@ def _validate_step3_state(state, oficio=None):
     if retorno_saida_data and retorno_saida_hora and retorno_chegada_data and retorno_chegada_hora:
         if datetime.combine(retorno_chegada_data, retorno_chegada_hora) < datetime.combine(retorno_saida_data, retorno_saida_hora):
             errors.append('O retorno deve chegar no mesmo momento ou apÃ³s a saÃ­da.')
+    retorno_validado = {
+        'saida_cidade': retorno.get('saida_cidade') or retorno.get('origem_nome') or '',
+        'chegada_cidade': retorno.get('chegada_cidade') or retorno.get('destino_nome') or '',
+        'saida_data': retorno_saida_data,
+        'saida_hora': retorno_saida_hora,
+        'chegada_data': retorno_chegada_data,
+        'chegada_hora': retorno_chegada_hora,
+        'tempo_cru_estimado_min': _parse_int(retorno.get('tempo_cru_estimado_min')),
+        'tempo_adicional_min': _parse_int(retorno.get('tempo_adicional_min')) or 0,
+        'duracao_estimada_min': _parse_int(retorno.get('duracao_estimada_min')),
+    }
+    if (
+        bate_volta_diario['ativo']
+        and cleaned_trechos
+        and _step3_trecho_duplica_retorno(
+            cleaned_trechos[-1],
+            retorno_validado,
+            sede_estado_id=sede_estado_id,
+            sede_cidade_id=sede_cidade_id,
+        )
+    ):
+        cleaned_trechos = cleaned_trechos[:-1]
     ultimo_trecho = cleaned_trechos[-1] if cleaned_trechos else None
     ultimo_trecho_retorna_sede = False
     if ultimo_trecho and sede_cidade:
@@ -1208,6 +1310,7 @@ def _validate_step3_state(state, oficio=None):
 
 
 def _collect_step3_markers_payload(state, oficio=None):
+    state = _dedupe_step3_loop_retorno_final(deepcopy(state))
     roteiro_modo = state.get('roteiro_modo') or ROTEIRO_MODO_PROPRIO
     roteiro_evento_id = state.get('roteiro_evento_id')
     if roteiro_modo == ROTEIRO_MODO_EVENTO and not roteiro_evento_id:
@@ -1467,7 +1570,27 @@ def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated, dia
             ordem=ordem,
         )
 
-    trechos_validated = validated.get('trechos') or []
+    retorno_state = step3_state.get('retorno') or {}
+    trechos_validated = list(validated.get('trechos') or [])
+    if _build_step3_bate_volta_diario_state(step3_state.get('bate_volta_diario'))['ativo'] and trechos_validated:
+        retorno_validado = {
+            'saida_cidade': retorno_state.get('saida_cidade') or retorno_state.get('origem_nome') or '',
+            'chegada_cidade': retorno_state.get('chegada_cidade') or retorno_state.get('destino_nome') or '',
+            'saida_data': validated.get('retorno_saida_data'),
+            'saida_hora': validated.get('retorno_saida_hora'),
+            'chegada_data': validated.get('retorno_chegada_data'),
+            'chegada_hora': validated.get('retorno_chegada_hora'),
+            'tempo_cru_estimado_min': _parse_int(retorno_state.get('tempo_cru_estimado_min')),
+            'tempo_adicional_min': _parse_int(retorno_state.get('tempo_adicional_min')) or 0,
+            'duracao_estimada_min': _parse_int(retorno_state.get('duracao_estimada_min')),
+        }
+        if _step3_trecho_duplica_retorno(
+            trechos_validated[-1],
+            retorno_validado,
+            sede_estado_id=roteiro.origem_estado_id,
+            sede_cidade_id=roteiro.origem_cidade_id,
+        ):
+            trechos_validated = trechos_validated[:-1]
     trechos_existentes = {
         trecho.pk: trecho
         for trecho in roteiro.trechos.all()
@@ -1507,7 +1630,6 @@ def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated, dia
         trecho_obj.save()
         trechos_mantidos.add(trecho_obj.pk)
 
-    retorno_state = step3_state.get('retorno') or {}
     retorno_tempo_cru = _parse_int(retorno_state.get('tempo_cru_estimado_min'))
     retorno_tempo_adicional = _parse_int(retorno_state.get('tempo_adicional_min')) or 0
     if retorno_tempo_adicional < 0:

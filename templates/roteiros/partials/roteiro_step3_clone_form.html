@@ -550,8 +550,9 @@
     return trechos;
   }
   function syncRetornoFromLoopTrechos(trechos, fallbackRetorno) {
-    if (!trechos.length) return;
-    var last = trechos[trechos.length - 1];
+    var last = trechos && trechos.length ? trechos[trechos.length - 1] : null;
+    if (!last && !fallbackRetorno) return;
+    last = last || fallbackRetorno || {};
     $('id_retorno_saida_cidade').value = last.origem_nome || (fallbackRetorno && fallbackRetorno.saida_cidade) || '';
     $('id_retorno_chegada_cidade').value = last.destino_nome || (fallbackRetorno && fallbackRetorno.chegada_cidade) || '';
     $('id_retorno_saida_data').value = last.saida_data || (fallbackRetorno && fallbackRetorno.saida_data) || '';
@@ -561,6 +562,11 @@
     $('id_retorno_tempo_cru_estimado_min').value = last.tempo_cru_estimado_min || '';
     $('id_retorno_tempo_adicional_min').value = last.tempo_adicional_min || '0';
     $('id_retorno_duracao_estimada_min').value = last.duracao_estimada_min || '';
+  }
+  function splitLoopTrechosAndRetorno(trechos) {
+    var items = Array.isArray(trechos) ? trechos.slice() : [];
+    if (!items.length) return { trechos: [], retorno: null };
+    return { trechos: items.slice(0, -1), retorno: items[items.length - 1] };
   }
   function computeTrechosSignature(seedState) {
     var destinos = getDestinos().map(function(destino) {
@@ -799,6 +805,12 @@
 
     if (shouldUseExactTrechos(seedState)) {
       var explicitTrechos = isLoopModeActive(seedState) ? buildLoopTrechosFromInputs() : [];
+      var loopRetorno = null;
+      if (isLoopModeActive(seedState) && explicitTrechos.length) {
+        var splitLoop = splitLoopTrechosAndRetorno(explicitTrechos);
+        explicitTrechos = splitLoop.trechos;
+        loopRetorno = splitLoop.retorno;
+      }
       if (!explicitTrechos.length) {
         explicitTrechos = ((seedState && seedState.trechos) || []).map(function(trecho, idx) {
           var copy = Object.assign({}, trecho);
@@ -832,7 +844,7 @@
       }).join('');
       $('trechos-gerados-container').querySelectorAll('.card[data-key]').forEach(function(card) { recalcCard(card, false); });
       if (isLoopModeActive(seedState)) {
-        syncRetornoFromLoopTrechos(explicitTrechos, seedState && seedState.retorno);
+        syncRetornoFromLoopTrechos(loopRetorno ? [loopRetorno] : [], seedState && seedState.retorno);
       } else {
         updateRetornoCities();
       }
