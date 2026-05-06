@@ -14,7 +14,10 @@ from roteiros.services.routing.openrouteservice import (
     _extract_ors_error_message,
 )
 from roteiros.services.routing.route_point_builder import build_route_points_for_roteiro
-from roteiros.services.routing.route_service import calcular_rota_para_roteiro
+from roteiros.services.routing.route_service import (
+    calcular_rota_para_roteiro,
+    serialize_existing_route,
+)
 from roteiros.services.routing.route_signature import build_route_signature
 from roteiros.services.routing.route_preview_service import (
     calculate_route_preview,
@@ -597,9 +600,42 @@ class RoteirosRoutingTests(TestCase):
         data = resp.json()
         self.assertTrue(data["ok"])
         self.assertEqual(data["route"]["geometry"]["type"], "LineString")
+        self.assertIn("points", data)
+        self.assertTrue(any(p.get("kind") == "origem" for p in data["points"]))
+        self.assertTrue(any(p.get("kind") == "destino" for p in data["points"]))
         roteiro.refresh_from_db()
         self.assertIsNotNone(roteiro.rota_geojson)
         self.assertEqual(roteiro.rota_geojson.get("type"), "LineString")
+
+    def test_serialize_existing_route_inclui_points_para_renderizar_mapa_salvo(self):
+        roteiro = Roteiro.objects.create(
+            tipo=Roteiro.TIPO_AVULSO,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+            rota_geojson={"type": "LineString", "coordinates": [[-49.2733, -25.4284], [-51.1628, -23.3103]]},
+            rota_distancia_calculada_km=Decimal("100.55"),
+            rota_duracao_calculada_min=150,
+            rota_fonte=Roteiro.ROTA_FONTE_OPENROUTESERVICE,
+            rota_status=Roteiro.ROTA_STATUS_CALCULADA,
+        )
+        RoteiroDestino.objects.create(
+            roteiro=roteiro, estado=self.estado, cidade=self.cidade_a, ordem=0
+        )
+        RoteiroTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=0,
+            tipo=RoteiroTrecho.TIPO_IDA,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_a,
+        )
+        serialized = serialize_existing_route(roteiro)
+        self.assertIsNotNone(serialized)
+        self.assertTrue(serialized["route"])
+        self.assertIn("points", serialized)
+        self.assertTrue(any(p.get("kind") == "origem" for p in serialized["points"]))
+        self.assertTrue(any(p.get("kind") == "destino" for p in serialized["points"]))
 
     def test_calcular_rota_geometria_invalida_nao_quebra_json(self):
         roteiro = Roteiro.objects.create(
