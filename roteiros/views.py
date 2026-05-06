@@ -1,12 +1,26 @@
 import json
+import logging
 
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from .forms import RoteiroForm
+from .services.routing.route_exceptions import (
+    RouteConfigurationError,
+    RouteCoordinateError,
+    RouteNotFoundError,
+    RouteProviderUnavailable,
+    RouteRateLimitError,
+    RouteServiceError,
+    RouteTimeoutError,
+    RouteValidationError,
+)
+from .services.routing.route_service import calcular_rota_para_roteiro
+
+logger = logging.getLogger(__name__)
 from .models import Roteiro
 from . import roteiro_logic
 from .presenters import (
@@ -207,6 +221,73 @@ def calcular_diarias(request):
     payload = {"ok": True, "quantidade_servidores_fixo": 1, "roteiros_disponiveis": 0}
     payload.update(resultado)
     return JsonResponse(payload)
+
+
+@require_http_methods(["POST"])
+def calcular_rota(request):
+    """Calcula rota consolidada via backend (OpenRouteService); nunca expõe chave de API."""
+    try:
+        body = json.loads(request.body or "{}")
+    except (json.JSONDecodeError, TypeError):
+        body = {}
+    if "openrouteservice_api_key" in body or "api_key" in body:
+        logger.warning("calcular_rota: tentativa de enviar chave de API no payload.")
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Requisição inválida.",
+            },
+            status=400,
+        )
+    roteiro_id = body.get("roteiro_id")
+    force = bool(body.get("force_recalculate"))
+    try:
+        rid = int(roteiro_id)
+    except (TypeError, ValueError):
+        rid = None
+    if not rid:
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Salve o roteiro antes de calcular a rota no mapa.",
+            },
+            status=400,
+        )
+    try:
+        roteiro = get_roteiro_by_id(rid)
+    except Http404:
+        return JsonResponse(
+            {"ok": False, "message": "Roteiro não encontrado."},
+            status=404,
+        )
+    try:
+        payload = calcular_rota_para_roteiro(roteiro, force_recalculate=force)
+        return JsonResponse(payload)
+    except RouteConfigurationError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=503)
+    except RouteCoordinateError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=400)
+    except RouteValidationError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=400)
+    except RouteTimeoutError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=504)
+    except RouteRateLimitError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=429)
+    except RouteNotFoundError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=404)
+    except RouteProviderUnavailable as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=502)
+    except RouteServiceError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=400)
+    except Exception as exc:
+        logger.exception("calcular_rota falhou: %s", exc)
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Não foi possível calcular a rota automaticamente. Você pode preencher a distância e o tempo manualmente.",
+            },
+            status=500,
+        )
 
 
 @require_http_methods(["POST"])

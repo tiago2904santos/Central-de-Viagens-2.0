@@ -1670,6 +1670,10 @@ def _salvar_roteiro_avulso_from_step3_state(roteiro, step3_state, validated, dia
     _atualizar_datas_roteiro_apos_salvar_trechos(roteiro)
     _persistir_diarias_roteiro(roteiro, diarias_resultado)
 
+    from roteiros.services.routing.route_stale import mark_stale_when_signature_changed
+
+    mark_stale_when_signature_changed(roteiro)
+
 
 def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_list, is_avulso=False, step3_state=None, route_options=None, seed_source_label=''):
     """
@@ -1718,6 +1722,13 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         for route_option in route_options_json:
             state = route_option.get('state') or {}
             state.pop('roteiro_evento_id', None)
+    from roteiros.services.routing.route_service import serialize_existing_route
+
+    roteiro_mapa_inicial = (
+        serialize_existing_route(obj)
+        if obj and getattr(obj, "pk", None)
+        else {"roteiro_id": None, "status": "pendente", "route": None}
+    )
     return {
         'evento': evento,
         'object': obj,
@@ -1732,6 +1743,8 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         'step3_diarias_resultado': diarias_resultado,
         'step3_seed_source_label': step3_state.get('seed_source_label', ''),
         'api_calcular_diarias_url': reverse('roteiros:calcular_diarias'),
+        'api_calcular_rota_url': reverse('roteiros:calcular_rota'),
+        'roteiro_mapa_inicial': roteiro_mapa_inicial,
         'roteiro_modo': step3_state.get('roteiro_modo', 'ROTEIRO_PROPRIO'),
         'roteiro_id': step3_state.get('roteiro_evento_id'),
         'roteiro_evento_id': step3_state.get('roteiro_evento_id'),

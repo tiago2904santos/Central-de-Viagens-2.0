@@ -578,3 +578,14 @@ class RoteirosApiAuthTests(TestCase):
         payload = response.json()
         self.assertEqual(payload["ok"], False)
         self.assertIn("Sessao expirada", payload["error"])
+
+    def test_calcular_rota_sem_login_retorna_json_401(self):
+        client = Client()
+        response = client.post(
+            reverse("roteiros:calcular_rota"),
+            data=json.dumps({"roteiro_id": 1}),
+            content_type="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response["Content-Type"], "application/json")

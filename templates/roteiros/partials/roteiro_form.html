@@ -14,6 +14,7 @@
           <form method="post" id="oficio-step3-form" novalidate class="oficio-stage-form"
                 data-api-cidades-url="{{ api_cidades_por_estado_url }}"
                 data-api-diarias-url="{{ api_calcular_diarias_url }}"
+                data-api-calcular-rota-url="{{ api_calcular_rota_url }}"
                 data-destino-estado-default-id="{{ destino_estado_fixo_id|default:'' }}"
                 data-url-trechos-estimar="{% url 'roteiros:trechos_estimar' %}">
             {% csrf_token %}
@@ -38,6 +39,7 @@
             {% include "components/domain/trechos.html" %}
             {% include "components/domain/retorno.html" %}
             {% include "components/domain/calculadora_rota.html" %}
+            {% include "roteiros/includes/mapa_rota.html" %}
             {% include "roteiros/partials/roteiro/actions.html" %}
           </form>
         </section>

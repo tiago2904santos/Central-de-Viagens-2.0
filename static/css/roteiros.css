@@ -1835,3 +1835,78 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Mapa do roteiro (Leaflet) */
+.roteiro-editor__map-card {
+  margin-top: 1rem;
+  border-radius: 16px;
+  border: 1px solid #dce8f3;
+  box-shadow: 0 12px 40px rgba(15, 54, 93, 0.08);
+  background: #fbfdff;
+}
+
+.roteiro-mapa__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.roteiro-mapa__title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f365d;
+  margin: 0;
+}
+
+.roteiro-mapa__subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #5b748d;
+}
+
+.roteiro-mapa__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roteiro-mapa__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px 16px;
+  margin: 0 0 12px;
+}
+
+.roteiro-mapa__stats dt {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5b748d;
+  margin: 0;
+}
+
+.roteiro-mapa__stats dd {
+  margin: 2px 0 0;
+  font-weight: 700;
+  color: #1f3a54;
+}
+
+.roteiro-mapa__frame {
+  height: 320px;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e3edf6;
+  margin-top: 12px;
+  background: #eef4fa;
+}
+
+.roteiro-mapa__manual-fields {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e8f0f7;
+}

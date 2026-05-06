@@ -49,12 +49,14 @@ O app segue a arquitetura ja validada em `cadastros`: views chamam selectors, pr
 Padrao interno do app (**modulo referencia** para os demais):
 
 - `views.py` apenas orquestra request/response e mensagens.
-- `services/` concentra calculos legacy (`diarias`, estimativa, etc.) e `services/roteiro_editor.py` concentra persistencia e fluxo do editor avulso.
+- `services/` concentra calculos legacy (`diarias`, estimativa, etc.), `services/roteiro_editor.py` (persistencia e fluxo do editor avulso) e `services/routing/` (provedor OpenRouteService, assinatura/cache da rota consolidada, montagem de pontos a partir de `Cidade` com lat/lon no cadastro).
 - `selectors.py` concentra consultas e querysets.
 - `presenters.py` prepara dados de tela sem HTML.
 - `templates/components/domain/` contem blocos de dominio reutilizaveis; ver `docs/COMPONENTES_DOMINIO.md` e `docs/ROTEIROS_ARQUITETURA.md`.
 
-A interface publica em `/roteiros/` inclui listagem (busca `q`), criacao, edicao, detalhe, exclusao com confirmacao, wizard de trechos/destinos e endpoints de apoio (cidades, diarias, estimativa de trecho), sem alterar regras do legado ja portadas.
+A interface publica em `/roteiros/` inclui listagem (busca `q`), criacao, edicao, detalhe, exclusao com confirmacao, wizard de trechos/destinos e endpoints de apoio (cidades, diarias, estimativa de trecho, **calculo de rota no mapa** via `POST /roteiros/api/calcular-rota/` que chama OpenRouteService no servidor — chave `OPENROUTESERVICE_API_KEY` apenas no `.env`), sem alterar regras do legado ja portadas.
+
+**Mapa:** Leaflet + tiles OpenStreetMap no formulario (`static/js/roteiros-map.js`, estilos em `static/css/roteiros.css`). Variaveis: `ROUTE_PROVIDER`, `ROUTE_CACHE_ENABLED`, `ROUTE_REQUEST_TIMEOUT_SECONDS` (ver `.env.example`). Testes: `python manage.py test roteiros`.
 
 Regras transversais: sem `href="#"`, sem CSS/JS inline nos blocos de dominio, sem exibir "Atualizado em" como metadado de lista; JS de pagina em `static/js/` (ex.: `roteiros.js`) e tokens de dominio em `static/css/domain.css`.
 

@@ -20,6 +20,23 @@ class Roteiro(models.Model):
         (STATUS_FINALIZADO, "Finalizado"),
     ]
 
+    ROTA_STATUS_PENDENTE = "pendente"
+    ROTA_STATUS_CALCULADA = "calculada"
+    ROTA_STATUS_MANUAL = "manual"
+    ROTA_STATUS_ERRO = "erro"
+    ROTA_STATUS_DESATUALIZADA = "desatualizada"
+    ROTA_STATUS_CHOICES = [
+        (ROTA_STATUS_PENDENTE, "Pendente"),
+        (ROTA_STATUS_CALCULADA, "Calculada"),
+        (ROTA_STATUS_MANUAL, "Manual"),
+        (ROTA_STATUS_ERRO, "Erro"),
+        (ROTA_STATUS_DESATUALIZADA, "Desatualizada"),
+    ]
+
+    ROTA_FONTE_OPENROUTESERVICE = "openrouteservice"
+    ROTA_FONTE_MANUAL = "manual"
+    ROTA_FONTE_CACHE = "cache"
+
     TIPO_EVENTO = "EVENTO"
     TIPO_AVULSO = "AVULSO"
     TIPO_CHOICES = [
@@ -55,6 +72,48 @@ class Roteiro(models.Model):
     )
     valor_diarias_extenso = models.TextField("Valor das diárias por extenso", blank=True, default="")
     observacoes = models.TextField("Observações", blank=True, default="")
+    rota_geojson = models.JSONField("Geometria da rota (GeoJSON)", null=True, blank=True)
+    rota_distancia_calculada_km = models.DecimalField(
+        "Distância calculada (km)",
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    rota_duracao_calculada_min = models.PositiveIntegerField(
+        "Duração calculada (min)", null=True, blank=True
+    )
+    rota_fonte = models.CharField(
+        "Fonte do cálculo da rota",
+        max_length=40,
+        blank=True,
+        default="",
+    )
+    rota_status = models.CharField(
+        "Status da rota no mapa",
+        max_length=20,
+        choices=ROTA_STATUS_CHOICES,
+        default=ROTA_STATUS_PENDENTE,
+    )
+    rota_assinatura = models.CharField(
+        "Assinatura para cache da rota", max_length=128, blank=True, default=""
+    )
+    rota_calculada_em = models.DateTimeField(
+        "Rota consolidada calculada em", null=True, blank=True
+    )
+    rota_distancia_manual_km = models.DecimalField(
+        "Distância ajustada manualmente (km)",
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    rota_duracao_manual_min = models.PositiveIntegerField(
+        "Duração ajustada manualmente (min)", null=True, blank=True
+    )
+    rota_ajuste_justificativa = models.TextField(
+        "Justificativa do ajuste manual da rota", blank=True, default=""
+    )
     status = models.CharField(
         "Status", max_length=20, choices=STATUS_CHOICES, default=STATUS_RASCUNHO
     )

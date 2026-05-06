@@ -446,6 +446,9 @@
       var c = $('destinos-container'); var all = getDestinoRows(); var ti = all.indexOf(row); var di = all.indexOf(dr);
       if (di < ti) c.insertBefore(dr, row.nextSibling); else c.insertBefore(dr, row);
       row.classList.remove('is-drop-target'); reindexDestinoRows(); renderTrechos(captureCurrentState(), { force: true }); scheduleRealtimeDiarias(); scheduleAutosave();
+      if (window.RoteirosMap && typeof window.RoteirosMap.onDestinosReordered === 'function') {
+        window.RoteirosMap.onDestinosReordered();
+      }
     });
   }
   function addDestinoRow(destino) {

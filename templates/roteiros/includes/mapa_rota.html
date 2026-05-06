@@ -1,0 +1,75 @@
+<section class="roteiro-mapa card roteiro-editor__map-card" aria-labelledby="roteiro-mapa-titulo">
+  <div class="card-body">
+    <header class="roteiro-mapa__header">
+      <div>
+        <h3 class="roteiro-mapa__title" id="roteiro-mapa-titulo">Mapa do roteiro</h3>
+        <p class="roteiro-mapa__subtitle">Visualização estimada com base em OpenStreetMap (via OpenRouteService).</p>
+      </div>
+      <div class="roteiro-mapa__actions">
+        <button type="button" class="btn btn-primary roteiro-editor__btn-pill" id="btn-calcular-rota-mapa">
+          Calcular rota
+        </button>
+        <button type="button" class="btn btn-outline-secondary roteiro-editor__btn-pill d-none" id="btn-recalcular-rota-mapa">
+          Recalcular rota
+        </button>
+      </div>
+    </header>
+
+    <p class="roteiro-mapa__stale-hint text-warning-emphasis small d-none" id="roteiro-mapa-stale-hint" role="status">
+      A ordem dos destinos mudou. Recalcule a rota para atualizar distância e tempo estimados.
+    </p>
+
+    <div class="roteiro-mapa__summary" id="roteiro-mapa-summary" hidden>
+      <dl class="roteiro-mapa__stats">
+        <div>
+          <dt>Distância estimada</dt>
+          <dd id="roteiro-mapa-distancia">—</dd>
+        </div>
+        <div>
+          <dt>Tempo estimado</dt>
+          <dd id="roteiro-mapa-tempo">—</dd>
+        </div>
+        <div>
+          <dt>Fonte do cálculo</dt>
+          <dd id="roteiro-mapa-fonte">—</dd>
+        </div>
+        <div>
+          <dt>Cálculo realizado em</dt>
+          <dd id="roteiro-mapa-calculada-em">—</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd id="roteiro-mapa-status">—</dd>
+        </div>
+      </dl>
+      <p class="roteiro-mapa__manual small text-muted" id="roteiro-mapa-manual-blurb" hidden></p>
+    </div>
+
+    <p class="roteiro-mapa__disclaimer small text-muted">
+      Distância e tempo são estimativas automáticas. Ajustes manuais podem ser registrados quando necessário.
+    </p>
+
+    <div class="roteiro-mapa__manual-fields">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <label class="roteiro-editor__field-label" for="id_rota_distancia_manual_km">Distância ajustada manualmente (km)</label>
+          {{ form.rota_distancia_manual_km }}
+        </div>
+        <div class="col-md-4">
+          <label class="roteiro-editor__field-label" for="id_rota_duracao_manual_min">Duração ajustada manualmente (min)</label>
+          {{ form.rota_duracao_manual_min }}
+        </div>
+        <div class="col-12">
+          <label class="roteiro-editor__field-label" for="id_rota_ajuste_justificativa">Justificativa do ajuste</label>
+          {{ form.rota_ajuste_justificativa }}
+        </div>
+      </div>
+    </div>
+
+    <div class="roteiro-mapa__frame" id="roteiro-mapa-container" data-testid="roteiro-mapa-container"></div>
+    <div class="roteiro-mapa__error alert alert-warning py-2 d-none small" id="roteiro-mapa-error" role="alert"></div>
+    <div class="roteiro-mapa__loading small text-muted d-none" id="roteiro-mapa-loading">Calculando rota…</div>
+  </div>
+</section>
+
+{{ roteiro_mapa_inicial|json_script:"roteiro-mapa-inicial" }}
