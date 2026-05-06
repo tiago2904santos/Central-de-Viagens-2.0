@@ -30,6 +30,12 @@ Em `config/settings/base.py`:
 
 Rotas internas (dashboard, cadastros, roteiros, documentos, demais apps) exigem usuario autenticado via middleware. Acesso nao autenticado redireciona para `/login/?next=...` com o caminho original em `next` (validado pelo Django apos o login).
 
+## Contrato para testes automatizados
+
+- Testes de paginas internas devem autenticar o `client` com `client.force_login(user)`.
+- Testes de acesso anonimo devem esperar `302` para `/login/?next=...`.
+- Esse contrato evita falso negativo `302 != 200` em suites de CRUD protegidas por autenticacao.
+
 ## Tela de login
 
 - Template: `templates/core/login.html`.
