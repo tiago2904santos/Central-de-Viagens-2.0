@@ -5,17 +5,18 @@
   </header>
   <div class="card-body">
     <header class="roteiro-mapa__header">
-      <div>
+      <div class="roteiro-mapa__heading">
         <h4 class="roteiro-mapa__title">Visualização do trajeto</h4>
+        <p class="roteiro-mapa__subtitle">Acompanhe o desenho da rota e o resumo automático do percurso.</p>
       </div>
       <div class="roteiro-mapa__actions">
         <button type="button"
-                class="btn btn-primary roteiro-editor__btn-pill"
+                class="btn btn-primary roteiro-editor__btn-pill roteiro-mapa__action-btn roteiro-mapa__action-btn--primary"
                 id="btn-calcular-rota-mapa">
           Calcular rota
         </button>
         <button type="button"
-                class="btn btn-outline-secondary roteiro-editor__btn-pill"
+                class="btn btn-outline-secondary roteiro-editor__btn-pill roteiro-mapa__action-btn roteiro-mapa__action-btn--secondary"
                 id="btn-recalcular-rota-mapa"
                 hidden>
           Recalcular rota
@@ -55,7 +56,9 @@
       </dl>
     </div>
 
-    <div class="roteiro-mapa__frame roteiro-mapa__frame--placeholder" id="roteiro-mapa-container" data-testid="roteiro-mapa-container"></div>
+    <div class="roteiro-mapa__canvas-shell">
+      <div class="roteiro-mapa__frame roteiro-mapa__frame--placeholder" id="roteiro-mapa-container" data-testid="roteiro-mapa-container"></div>
+    </div>
     <div class="roteiro-mapa__error alert alert-warning py-2 small"
          id="roteiro-mapa-error"
          hidden

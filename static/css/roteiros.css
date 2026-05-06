@@ -1863,11 +1863,14 @@
 /* Mapa do roteiro (Leaflet) */
 .roteiro-editor__map-card {
   margin-top: 0;
+  margin-bottom: var(--space-2);
   border-radius: var(--radius-lg);
   border: 1px solid var(--theme-border-card);
-  box-shadow: var(--theme-shadow-block);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 18px 34px rgba(15, 34, 54, 0.08);
   background: linear-gradient(
-    180deg,
+    165deg,
     var(--theme-surface-card) 0%,
     var(--theme-surface-card-soft) 100%
   );
@@ -1879,8 +1882,9 @@
     linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%),
     linear-gradient(180deg, #124872 0%, #0c3558 100%);
   margin: 0;
-  min-height: 50px;
-  padding: 9px 20px;
+  min-height: 58px;
+  padding: 12px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .roteiro-mapa__section-kicker {
@@ -1897,45 +1901,102 @@
 .roteiro-mapa__section-head .roteiro-editor__section-title {
   color: #ffffff;
   margin: 0;
+  font-size: clamp(1rem, 1.5vw, 1.12rem);
 }
 
 .roteiro-editor__map-card .card-body {
-  padding: var(--space-4);
+  padding: clamp(14px, 1.7vw, 20px);
 }
 
 .roteiro-mapa__header {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.roteiro-mapa__heading {
+  min-width: min(100%, 420px);
 }
 
 .roteiro-mapa__title {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--theme-text-heading);
   margin: 0;
 }
 
 .roteiro-mapa__subtitle {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: #5b748d;
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #607a95;
 }
 
 .roteiro-mapa__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
+  align-items: center;
+}
+
+.roteiro-mapa__action-btn {
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  min-height: 38px;
+  padding: 0 16px;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease,
+    background-color 140ms ease;
+}
+
+.roteiro-mapa__action-btn--primary {
+  background: linear-gradient(180deg, #1d68a8 0%, #0f4f86 100%);
+  border-color: rgba(10, 58, 102, 0.42);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 10px 18px rgba(11, 58, 102, 0.22);
+}
+
+.roteiro-mapa__action-btn--primary:hover,
+.roteiro-mapa__action-btn--primary:focus-visible {
+  background: linear-gradient(180deg, #2272b6 0%, #12558f 100%);
+  border-color: rgba(10, 58, 102, 0.5);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 12px 20px rgba(11, 58, 102, 0.26);
+  transform: translateY(-1px);
+}
+
+.roteiro-mapa__action-btn--secondary {
+  background: #f4f8fc;
+  border-color: #cadcec;
+  color: #204b72;
+}
+
+.roteiro-mapa__action-btn--secondary:hover,
+.roteiro-mapa__action-btn--secondary:focus-visible {
+  background: #edf4fb;
+  border-color: #b6cfe5;
+  color: #123e67;
+  transform: translateY(-1px);
 }
 
 .roteiro-mapa__stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px 16px;
-  margin: 0 0 12px;
+  gap: 12px 16px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(191, 211, 229, 0.7);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
 }
 
 .roteiro-mapa__stats dt {
@@ -1959,14 +2020,25 @@
 }
 
 .roteiro-mapa__frame {
+  box-sizing: border-box;
   min-height: 660px;
   height: 660px;
   width: 100%;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  border: 1px solid var(--theme-border-card);
-  margin-top: 12px;
+  border: 1px solid #d7e6f4;
+  margin-top: 0;
   background: #eef4fa;
+}
+
+.roteiro-mapa__canvas-shell {
+  background: linear-gradient(180deg, #f5f9fd 0%, #edf4fb 100%);
+  border: 1px solid #d6e4f2;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 10px 20px rgba(30, 66, 99, 0.08);
+  padding: 10px;
 }
 
 .roteiro-mapa__frame #map,
@@ -1986,6 +2058,18 @@
 }
 
 @media (max-width: 991.98px) {
+  .roteiro-mapa__actions {
+    width: 100%;
+  }
+
+  .roteiro-mapa__action-btn {
+    min-height: 36px;
+  }
+
+  .roteiro-mapa__canvas-shell {
+    padding: 8px;
+  }
+
   .roteiro-mapa__frame,
   .roteiro-mapa__frame #map,
   .roteiro-mapa__frame .leaflet-container {
