@@ -1,4 +1,12 @@
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Respeita .env; se LOGIN_ENFORCED nao estiver definido, desliga login obrigatorio em dev (testes manuais / agentes).
+load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=False)
+if "LOGIN_ENFORCED" not in os.environ:
+    os.environ["LOGIN_ENFORCED"] = "false"
 
 from .base import *
 

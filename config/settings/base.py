@@ -41,16 +41,26 @@ INSTALLED_APPS = [
     "integracoes.google_drive",
 ]
 
-MIDDLEWARE = [
+_MIDDLEWARE_CORE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "core.middleware.AjaxAwareLoginRequiredMiddleware",
+]
+_MIDDLEWARE_TAIL = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# Exige login em todas as rotas (exceto as isentas pelo Django) quando True.
+# Em desenvolvimento, `config.settings.dev` define LOGIN_ENFORCED=false por padrao para facilitar testes.
+_LOGIN_ENFORCED = os.getenv("LOGIN_ENFORCED", "true").lower() in ("1", "true", "yes")
+
+MIDDLEWARE = list(_MIDDLEWARE_CORE)
+if _LOGIN_ENFORCED:
+    MIDDLEWARE.append("core.middleware.AjaxAwareLoginRequiredMiddleware")
+MIDDLEWARE.extend(_MIDDLEWARE_TAIL)
 
 LOGIN_URL = "core:login"
 LOGIN_REDIRECT_URL = "core:dashboard"
