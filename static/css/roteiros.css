@@ -1864,6 +1864,8 @@ html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__section,
 html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__section,
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source,
 html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__reference-body,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__reference-body,
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-stack,
 html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-stack,
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid,
@@ -2350,6 +2352,10 @@ html[data-theme="light-dark"] #diarias-extenso {
 
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__input,
 html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__input,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card:has(input:checked),
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card:has(input:checked),
 html[data-theme="dark-dark"] .roteiro-editor--avulso #retorno-card .form-control,
 html[data-theme="light-dark"] .roteiro-editor--avulso #retorno-card .form-control,
 html[data-theme="dark-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .form-control,
@@ -2373,4 +2379,27 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__section--
   background: var(--color-card-muted);
   border-color: var(--color-border);
   color: var(--color-text-muted);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card:hover,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-soft);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-title {
+  color: var(--color-text);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-desc,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-desc {
+  color: var(--color-text-muted);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__add-btn#btn-adicionar-destino,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__add-btn#btn-adicionar-destino {
+  background: var(--color-card-muted);
+  border-color: var(--color-border);
+  color: var(--color-text);
 }
