@@ -21,12 +21,6 @@
     </div>
   </header>
   <div class="card-body">
-    <header class="roteiro-mapa__header">
-      <div class="roteiro-mapa__heading">
-        <h4 class="roteiro-mapa__title">Visualização do trajeto</h4>
-        <p class="roteiro-mapa__subtitle">Acompanhe o desenho da rota e o resumo automático do percurso.</p>
-      </div>
-    </header>
 
     <p class="roteiro-mapa__stale-hint text-warning-emphasis small mb-2"
        id="roteiro-mapa-stale-hint"
@@ -61,6 +55,12 @@
     </div>
 
     <div class="roteiro-mapa__canvas-shell">
+      <div class="roteiro-mapa__canvas-head">
+        <div class="roteiro-mapa__heading">
+          <h4 class="roteiro-mapa__title">Widget do mapa</h4>
+          <p class="roteiro-mapa__subtitle">Visualização interativa do trajeto com zoom e navegação.</p>
+        </div>
+      </div>
       <div class="roteiro-mapa__frame roteiro-mapa__frame--placeholder" id="roteiro-mapa-container" data-testid="roteiro-mapa-container"></div>
     </div>
     <div class="roteiro-mapa__error alert alert-warning py-2 small"
