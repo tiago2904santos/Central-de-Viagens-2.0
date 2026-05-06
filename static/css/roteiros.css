@@ -2282,3 +2282,95 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
     height: 460px;
   }
 }
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-stack,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-stack,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__diarias,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__diarias,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__summary-item,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__summary-item,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__summary-item--principal,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__summary-item--principal,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__summary-item--secondary,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__summary-item--secondary,
+html[data-theme="dark-dark"] .roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel,
+html[data-theme="light-dark"] .roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel,
+html[data-theme="dark-dark"] .roteiro-editor--avulso #retorno-card .oficio-step3-time-calc-grid,
+html[data-theme="light-dark"] .roteiro-editor--avulso #retorno-card .oficio-step3-time-calc-grid,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel,
+html[data-theme="light-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .oficio-step3-time-calc-grid,
+html[data-theme="light-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .oficio-step3-time-calc-grid,
+html[data-theme="dark-dark"] .roteiro-mapa__stats,
+html[data-theme="light-dark"] .roteiro-mapa__stats,
+html[data-theme="dark-dark"] .roteiro-mapa__canvas-shell,
+html[data-theme="light-dark"] .roteiro-mapa__canvas-shell {
+  background: var(--color-card);
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-soft);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel-title,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-title,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__diarias-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__diarias-title,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__summary-value,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__summary-value,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__summary-value--principal,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__summary-value--principal,
+html[data-theme="dark-dark"] .roteiro-mapa__stats dd,
+html[data-theme="light-dark"] .roteiro-mapa__stats dd,
+html[data-theme="dark-dark"] .roteiro-mapa__title,
+html[data-theme="light-dark"] .roteiro-mapa__title {
+  color: var(--color-text);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-desc,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-desc,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__diarias-subtitle,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__diarias-subtitle,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__diarias-note,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__diarias-note,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__summary-label,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__summary-label,
+html[data-theme="dark-dark"] .roteiro-mapa__stats dt,
+html[data-theme="light-dark"] .roteiro-mapa__stats dt,
+html[data-theme="dark-dark"] .roteiro-mapa__subtitle,
+html[data-theme="light-dark"] .roteiro-mapa__subtitle,
+html[data-theme="dark-dark"] #diarias-extenso,
+html[data-theme="light-dark"] #diarias-extenso {
+  color: var(--color-text-muted);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__input,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__input,
+html[data-theme="dark-dark"] .roteiro-editor--avulso #retorno-card .form-control,
+html[data-theme="light-dark"] .roteiro-editor--avulso #retorno-card .form-control,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .form-control,
+html[data-theme="light-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .form-control {
+  background: var(--color-input-bg);
+  border-color: var(--color-input-border);
+  color: var(--color-input-text);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso #retorno-card .form-control[readonly],
+html[data-theme="light-dark"] .roteiro-editor--avulso #retorno-card .form-control[readonly],
+html[data-theme="dark-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .form-control[readonly],
+html[data-theme="light-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .form-control[readonly] {
+  background: var(--color-input-disabled-bg);
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__section--diarias #diarias-status,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__section--diarias #diarias-status {
+  background: var(--color-card-muted);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
