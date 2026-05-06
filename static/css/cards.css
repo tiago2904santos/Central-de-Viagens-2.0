@@ -39,7 +39,6 @@
 .card p,
 .module-card p {
   color: var(--color-muted);
-  margin-bottom: var(--space-4);
 }
 
 .module-card {

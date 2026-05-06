@@ -42,6 +42,8 @@
   var mapInstance = null;
   var routeLayer = null;
   var markerLayer = null;
+  var lastRouteBounds = null;
+  var lastFocusedPointKey = null;
   var LEG_COLORS = ['#0f5f8f', '#1d74a3'];
   var initial = readJsonScript('roteiro-mapa-inicial') || {};
   var mapConfig = window.ROTEIRO_MAP_CONFIG || {};
@@ -184,6 +186,8 @@
       mapInstance.removeLayer(markerLayer);
       markerLayer = null;
     }
+    lastRouteBounds = null;
+    lastFocusedPointKey = null;
   }
 
   function buildLatLngBounds() {
@@ -217,6 +221,7 @@
       if (label) {
         marker.bindTooltip(label, {
           permanent: true,
+          interactive: true,
           direction: 'top',
           offset: [0, -12],
           className:
@@ -224,8 +229,38 @@
             (isSede ? 'roteiro-mapa__city-tooltip--sede' : 'roteiro-mapa__city-tooltip--destino'),
         });
       }
+      marker.on('click', function () {
+        focusMapPoint(lat, lng, { zoom: 12 });
+      });
       marker.addTo(markerLayer);
       if (bounds) bounds.extend([lat, lng]);
+    });
+  }
+
+  function focusMapPoint(lat, lng, options) {
+    ensureMap();
+    if (!mapInstance) return;
+    var zoom = (options && Number(options.zoom)) || 12;
+    var pointKey = lat.toFixed(6) + '|' + lng.toFixed(6);
+    var center = mapInstance.getCenter();
+    var alreadyFocused =
+      lastFocusedPointKey === pointKey &&
+      mapInstance.getZoom() >= zoom &&
+      Math.abs(center.lat - lat) < 0.00005 &&
+      Math.abs(center.lng - lng) < 0.00005;
+    if (alreadyFocused) return;
+    lastFocusedPointKey = pointKey;
+    mapInstance.flyTo([lat, lng], zoom, {
+      animate: true,
+      duration: 0.75,
+    });
+  }
+
+  function fitFullRoute() {
+    if (!mapInstance || !lastRouteBounds || !lastRouteBounds.isValid()) return;
+    mapInstance.fitBounds(lastRouteBounds, {
+      padding: [40, 40],
+      maxZoom: 12,
     });
   }
 
@@ -312,7 +347,8 @@
     try {
       setFramePlaceholder(false);
       if (bounds.isValid()) {
-        mapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+        lastRouteBounds = bounds;
+        fitFullRoute();
       } else {
         showError(MSG_GEOM_DESENHO);
         setFramePlaceholder(true);
@@ -331,6 +367,13 @@
     if (!b2) return;
     if (show) showElement(b2);
     else hideElement(b2);
+  }
+
+  function toggleFit(show) {
+    var b3 = $('btn-fit-rota-mapa');
+    if (!b3) return;
+    if (show) showElement(b3);
+    else hideElement(b3);
   }
 
   function postCalcular(force) {
@@ -405,6 +448,7 @@
         }
 
         toggleRecalc(true);
+        toggleFit(!!lastRouteBounds);
         hideElement($('roteiro-mapa-stale-hint'));
       })
       .catch(function () {
@@ -439,6 +483,7 @@
     if (!rid) {
       setCalcularEnabled(false);
       hideElement($('btn-recalcular-rota-mapa'));
+      hideElement($('btn-fit-rota-mapa'));
       hideElement(stale);
       updateSummary(null, null);
       ensureMap();
@@ -462,9 +507,11 @@
         } else {
           toggleRecalc(!!hasLine);
         }
+        toggleFit(!!lastRouteBounds);
       } else {
         updateSummary(null, null);
         toggleRecalc(false);
+        toggleFit(false);
         ensureMap();
         setFramePlaceholder(true);
       }
@@ -482,6 +529,7 @@
 
     var bCalc = $('btn-calcular-rota-mapa');
     var bRecalc = $('btn-recalcular-rota-mapa');
+    var bFit = $('btn-fit-rota-mapa');
     if (bCalc) {
       bCalc.addEventListener('click', function () {
         if (bCalc.disabled) return;
@@ -493,6 +541,27 @@
         postCalcular(true);
       });
     }
+    if (bFit) {
+      bFit.addEventListener('click', function () {
+        fitFullRoute();
+      });
+    }
+    document.addEventListener('click', function (event) {
+      var trigger = event.target && event.target.closest
+        ? event.target.closest('[data-map-focus-lat][data-map-focus-lng]')
+        : null;
+      if (!trigger) return;
+      var lat = Number(trigger.getAttribute('data-map-focus-lat'));
+      var lng = Number(trigger.getAttribute('data-map-focus-lng'));
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+      var mapSection = document.getElementById('sec-mapa-rota');
+      if (mapSection && mapSection.scrollIntoView) {
+        mapSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      setTimeout(function () {
+        focusMapPoint(lat, lng, { zoom: 12 });
+      }, 350);
+    });
     window.addEventListener('roteiros:route-state-changed', refreshRouteReadyState);
     refreshRouteReadyState();
   }

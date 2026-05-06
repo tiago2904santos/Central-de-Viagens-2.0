@@ -693,14 +693,10 @@
             '<div class="field-span-4"><label class="roteiro-editor__field-label">Tempo adicional</label><input type="number" min="0" step="15" class="form-control" name="trecho_'+o+'_tempo_adicional_min" value="'+esc(add)+'" ></div>' +
             '<div class="field-span-4"><label class="roteiro-editor__field-label">Tempo total</label><input type="text" class="form-control trecho-tempo-total" value="" readonly></div>' +
           '</div></div>' +
-          '<div class="col-12"><div class="roteiro-editor__helper text-danger d-none trecho-erro"></div></div>' +
         '</div>' +
         '<input type="hidden" name="trecho_'+o+'_distancia_km" value="'+esc(dist)+'">' +
         '<input type="hidden" name="trecho_'+o+'_duracao_estimada_min" value="'+esc(value.duracao_estimada_min||'')+'">' +
         '<input type="hidden" name="trecho_'+o+'_rota_fonte" value="'+esc(fonte)+'">' +
-        '<div class="mt-3">' +
-          '<button type="button" class="btn btn-outline-primary btn-sm btn-calcular-km roteiro-editor__btn-pill">Estimar km/tempo</button>' +
-        '</div>' +
       '</div></div>';
   }
   function getDestinoRows() { return Array.from($('destinos-container').querySelectorAll('.destino-row')); }
@@ -1150,97 +1146,6 @@
   $('btn-adicionar-destino').addEventListener('click', function() { addDestinoRow({ estado_id: destinoEstadoDefaultId||null, cidade_id: null }).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); }); });
   $('id_origem_estado').addEventListener('change', function() { if (applyingState) return; loadCities($('id_origem_cidade'), $('id_origem_estado').value, null).then(function() { renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); }); });
   $('id_origem_cidade').addEventListener('change', function() { if (applyingState) return; renderTrechos(captureCurrentState()); scheduleRealtimeDiarias(); scheduleAutosave(); });
-  $('trechos-gerados-container').addEventListener('click', function (e) {
-    var btn = e.target.closest('.btn-calcular-km');
-    if (!btn || applyingState) return;
-    e.preventDefault();
-    var card = btn.closest('.card[data-key]');
-    if (!card) return;
-    var ord = card.dataset.ordem;
-    var ocid = card.dataset.origemCidadeId;
-    var dcid = card.dataset.destinoCidadeId;
-    var err = card.querySelector('.trecho-erro');
-    if (err) { err.classList.add('d-none'); err.textContent = ''; }
-    if (!urlTrechosEstimar || !ocid || !dcid) {
-      if (err) { err.textContent = 'Defina origem e destino do trecho para estimar.'; err.classList.remove('d-none'); }
-      return;
-    }
-    btn.disabled = true;
-    fetch(urlTrechosEstimar, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrf,
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      credentials: 'same-origin',
-      body: JSON.stringify({ origem_cidade_id: parseInt(ocid, 10), destino_cidade_id: parseInt(dcid, 10) })
-    }).then(readJsonResponse).then(function (result) {
-      var data = result && result.data;
-      btn.disabled = false;
-      if (!data || !data.ok) {
-        if (err) { err.textContent = (data && data.erro) ? data.erro : 'Não foi possível estimar.'; err.classList.remove('d-none'); }
-        return;
-      }
-      applyEstimarPayloadToTrechoCard(card, data);
-      chainSuggestedDepartures();
-      chainRetornoSaidaFromLastTrecho();
-      updateResumo();
-      scheduleRealtimeDiarias();
-      scheduleAutosave();
-    }).catch(function () {
-      btn.disabled = false;
-      if (err) { err.textContent = 'Falha na requisição.'; err.classList.remove('d-none'); }
-    });
-  });
-  var btnRetornoEstimar = $('btn-retorno-estimar');
-  if (btnRetornoEstimar) {
-    btnRetornoEstimar.addEventListener('click', function() {
-      if (applyingState) return;
-      var rc = $('retorno-card');
-      var err = $('retorno-erro');
-      var ocid = rc ? rc.dataset.origemCidadeId : '';
-      var dcid = rc ? rc.dataset.destinoCidadeId : '';
-      if (err) { err.classList.add('d-none'); err.textContent = ''; }
-      if (!urlTrechosEstimar || !ocid || !dcid) {
-        if (err) {
-          err.textContent = 'Defina trechos e sede para estimar o retorno.';
-          err.classList.remove('d-none');
-        }
-        return;
-      }
-      btnRetornoEstimar.disabled = true;
-      fetch(urlTrechosEstimar, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrf,
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({ origem_cidade_id: parseInt(ocid, 10), destino_cidade_id: parseInt(dcid, 10) })
-      }).then(readJsonResponse).then(function(result) {
-        btnRetornoEstimar.disabled = false;
-        var data = result && result.data;
-        if (!data || !data.ok) {
-          if (err) {
-            err.textContent = (data && data.erro) ? data.erro : 'Não foi possível estimar.';
-            err.classList.remove('d-none');
-          }
-          return;
-        }
-        applyEstimarPayloadToRetorno(data);
-        scheduleRealtimeDiarias();
-        scheduleAutosave();
-      }).catch(function() {
-        btnRetornoEstimar.disabled = false;
-        if (err) {
-          err.textContent = 'Falha na requisição.';
-          err.classList.remove('d-none');
-        }
-      });
-    });
-  }
   $('trechos-gerados-container').addEventListener('input', function(e) {
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';

@@ -46,6 +46,32 @@ def _points_for_provider(points: List[dict]) -> List[Dict[str, Any]]:
     return out
 
 
+def _infer_point_kind(point_id: str) -> str:
+    pid = str(point_id or "")
+    if pid.startswith("origem-"):
+        return "origem"
+    if pid.startswith("destino-"):
+        return "destino"
+    if pid.startswith("retorno-"):
+        return "retorno"
+    return ""
+
+
+def _points_for_frontend(points: List[dict]) -> List[Dict[str, Any]]:
+    out = []
+    for p in points or []:
+        out.append(
+            {
+                "id": p.get("id"),
+                "lat": p.get("lat"),
+                "lng": p.get("lng"),
+                "label": p.get("label") or "",
+                "kind": _infer_point_kind(p.get("id")),
+            }
+        )
+    return out
+
+
 def _effective_distance_km(roteiro: Roteiro) -> float | None:
     if roteiro.rota_distancia_manual_km is not None:
         return float(roteiro.rota_distancia_manual_km)
@@ -128,6 +154,7 @@ def calcular_rota_para_roteiro(
         return {
             "ok": True,
             "route": _route_payload_from_roteiro(roteiro, from_cache=True),
+            "points": _points_for_frontend(points),
         }
 
     payload_points = _points_for_provider(points)
@@ -161,6 +188,7 @@ def calcular_rota_para_roteiro(
     return {
         "ok": True,
         "route": route_payload,
+        "points": _points_for_frontend(points),
     }
 
 
@@ -175,8 +203,15 @@ def serialize_existing_route(roteiro: Roteiro) -> Dict[str, Any] | None:
         or roteiro.rota_distancia_manual_km is not None
         or roteiro.rota_duracao_manual_min is not None
     )
+    points = []
+    try:
+        built_points, _ = build_route_points_for_roteiro(roteiro)
+        points = _points_for_frontend(built_points)
+    except Exception:
+        points = []
     return {
         "roteiro_id": roteiro.pk,
         "status": roteiro.rota_status,
         "route": _route_payload_from_roteiro(roteiro, from_cache=False) if has_route_data else None,
+        "points": points,
     }
