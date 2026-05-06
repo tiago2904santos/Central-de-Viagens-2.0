@@ -35,14 +35,26 @@
         credentials: "same-origin",
         headers: { "X-Requested-With": "XMLHttpRequest" },
       });
-      const contentType = response.headers.get("content-type") || "";
-      if (!contentType.includes("application/json")) {
-        setFieldError(cepInput, "Não foi possível consultar o CEP agora.");
+      let payload = {};
+      try {
+        payload = await response.json();
+      } catch (_jsonError) {
+        payload = {};
+      }
+      if (response.redirected) {
+        setFieldError(cepInput, "Sessão expirada. Atualize a página e tente novamente.");
         return false;
       }
-      const payload = await response.json();
       if (!response.ok) {
+        if (response.status === 401) {
+          setFieldError(cepInput, "Sessão expirada. Atualize a página e tente novamente.");
+          return false;
+        }
         setFieldError(cepInput, payload.erro || "CEP inválido.");
+        return false;
+      }
+      if (!payload || typeof payload !== "object" || (!payload.logradouro && !payload.bairro && !payload.cidade && !payload.uf)) {
+        setFieldError(cepInput, "Não foi possível consultar o CEP agora.");
         return false;
       }
 

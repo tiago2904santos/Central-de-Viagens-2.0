@@ -3,7 +3,6 @@ from urllib.parse import urlencode
 import requests
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import redirect
@@ -759,7 +758,6 @@ def configuracao_sistema(request):
     )
 
 
-@login_required
 def api_consulta_cep(request, cep):
     cep_limpo = only_digits(cep)
     if len(cep_limpo) != 8:
