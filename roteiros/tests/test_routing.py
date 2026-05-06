@@ -661,19 +661,24 @@ class RoteirosRoutingTests(TestCase):
         self.assertRegex(html, r'id="roteiro-mapa-stale-hint"[^>]*hidden')
         self.assertNotIn("Selecione a sede e os destinos para calcular a rota.", html)
 
-    def test_round_trip_minutes_to_15_arredonda_para_cima(self):
+    def test_round_trip_minutes_to_15_regra_resto_5(self):
         cases = [
-            (1, 15),
+            (1, 0),
+            (5, 0),
+            (6, 15),
             (14, 15),
             (15, 15),
-            (16, 30),
+            (16, 15),
+            (20, 15),
             (29, 30),
             (30, 30),
             (44, 45),
             (45, 45),
-            (46, 60),
-            (61, 75),
-            (98, 105),
+            (46, 45),
+            (61, 60),   # 01:01 -> 01:00
+            (66, 75),   # 01:06 -> 01:15
+            (76, 75),   # 01:16 -> 01:15
+            (98, 105),  # 01:38 -> 01:45
         ]
         for raw, expected in cases:
             self.assertEqual(round_trip_minutes_to_15(raw), expected)
@@ -729,12 +734,12 @@ class RoteirosRoutingTests(TestCase):
         self.assertEqual(leg["to_cidade_id"], self.cidade_a.pk)
         self.assertEqual(leg["distance_km"], 423.5)
         self.assertEqual(leg["raw_duration_minutes"], 304)
-        self.assertEqual(leg["travel_minutes"], 315)
-        self.assertEqual(leg["travel_hhmm"], "05:15")
+        self.assertEqual(leg["travel_minutes"], 300)
+        self.assertEqual(leg["travel_hhmm"], "05:00")
         self.assertEqual(leg["additional_minutes"], 60)
         self.assertEqual(leg["additional_hhmm"], "01:00")
-        self.assertEqual(leg["total_minutes"], 375)
-        self.assertEqual(leg["total_hhmm"], "06:15")
+        self.assertEqual(leg["total_minutes"], 360)
+        self.assertEqual(leg["total_hhmm"], "06:00")
         self.assertEqual(leg["color_index"], 0)
         self.assertIn("points", out)
         self.assertGreaterEqual(len(out["points"]), 2)
@@ -815,7 +820,7 @@ class RoteirosRoutingTests(TestCase):
         self.assertTrue(out["fallback_per_leg_used"])
         self.assertEqual(trecho_calc.call_count, 2)
         self.assertEqual(out["legs"][0]["travel_minutes"], 105)
-        self.assertEqual(out["legs"][1]["travel_minutes"], 135)
+        self.assertEqual(out["legs"][1]["travel_minutes"], 120)
         # Confirma que não houve "divisão por 2" no trecho: veio do cálculo por leg.
         self.assertEqual(out["legs"][0]["distance_km"], 100.0)
         self.assertEqual(out["legs"][1]["distance_km"], 200.0)

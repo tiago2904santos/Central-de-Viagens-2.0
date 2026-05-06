@@ -4,7 +4,14 @@ from __future__ import annotations
 
 def round_trip_minutes_to_15(minutes: int | float | None) -> int:
     """
-    Arredonda SEMPRE para cima no próximo múltiplo de 15 minutos.
+    Arredonda em blocos de 15 com tolerância operacional:
+    - resto <= 5: arredonda para baixo (mantém o bloco atual)
+    - resto > 5: arredonda para cima (próximo bloco de 15)
+
+    Exemplos:
+    65 -> 60
+    66 -> 75
+    76 -> 75
     """
     try:
         m = int(minutes or 0)
@@ -12,7 +19,13 @@ def round_trip_minutes_to_15(minutes: int | float | None) -> int:
         m = 0
     if m <= 0:
         return 0
-    return ((m + 14) // 15) * 15
+    base = (m // 15) * 15
+    resto = m - base
+    if resto == 0:
+        return m
+    if resto <= 5:
+        return base
+    return base + 15
 
 
 def calculate_additional_time_minutes(rounded_travel_minutes: int | float | None) -> int:
