@@ -90,6 +90,18 @@
     else b.classList.add('roteiro-mapa__btn--blocked');
   }
 
+  function isDailyRoundTripActive() {
+    var toggle = document.getElementById('id_bate_volta_diario_ativo');
+    return !!(toggle && toggle.checked);
+  }
+
+  function setRecalcularEnabled(on) {
+    var b = $('btn-recalcular-rota-mapa');
+    if (!b) return;
+    b.disabled = !on;
+    b.setAttribute('aria-disabled', on ? 'false' : 'true');
+  }
+
   function currentDateTimeBr() {
     try {
       return new Intl.DateTimeFormat('pt-BR', {
@@ -383,6 +395,10 @@
     var urlPreview = form.getAttribute('data-api-calcular-rota-preview-url');
     var hasSaved = !!rid;
     var step3 = window.RoteirosStep3;
+    if (isDailyRoundTripActive()) {
+      showError('Desative o modo bate-volta diário para calcular a rota pelo mapa.');
+      return;
+    }
     if (!hasSaved && (!step3 || !step3.canCalculateRoutePreview || !step3.canCalculateRoutePreview())) {
       showError('Defina origem e destinos antes de calcular a rota.');
       return;
@@ -463,10 +479,14 @@
   function refreshRouteReadyState() {
     var step3 = window.RoteirosStep3;
     var canPreview = !!(step3 && step3.canCalculateRoutePreview && step3.canCalculateRoutePreview());
-    if (rid || canPreview) {
-      setCalcularEnabled(true);
-    } else {
-      setCalcularEnabled(false);
+    var blockedByLoop = isDailyRoundTripActive();
+    var canCalculate = !blockedByLoop && (rid || canPreview);
+    setCalcularEnabled(canCalculate);
+    setRecalcularEnabled(!blockedByLoop && !!rid);
+    if (blockedByLoop) {
+      showError('Desative o modo bate-volta diário para calcular a rota pelo mapa.');
+    } else if (($('roteiro-mapa-error') || {}).textContent === 'Desative o modo bate-volta diário para calcular a rota pelo mapa.') {
+      showError('');
     }
   }
 

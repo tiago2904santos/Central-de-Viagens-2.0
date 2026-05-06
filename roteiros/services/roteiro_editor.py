@@ -86,9 +86,18 @@ def validar_submissao_editor_roteiro(post, route_state_map, roteiro=None):
     )
     fake_oficio = SimpleNamespace(evento_id=None, roteiro_evento_id=None, evento=None)
     validated = roteiro_logic._validate_step3_state(step3_state, oficio=fake_oficio)
-    _, _, _, diarias_resultado = roteiro_logic._build_roteiro_diarias_from_request(
-        fake_request, roteiro=roteiro
-    )
+    try:
+        _, _, _, diarias_resultado = roteiro_logic._build_roteiro_diarias_from_request(
+            fake_request, roteiro=roteiro
+        )
+    except ValueError as exc:
+        mensagem = str(exc) or "Revise os dados de datas e horas para calcular as diárias."
+        errors = list(validated.get("errors") or [])
+        if mensagem not in errors:
+            errors.append(mensagem)
+        validated["ok"] = False
+        validated["errors"] = errors
+        diarias_resultado = None
     return step3_state, validated, diarias_resultado
 
 

@@ -548,6 +548,46 @@ class RoteirosRoutingTests(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertIn("Salve o roteiro", resp.json()["message"])
 
+    def test_calcular_rota_endpoint_bloqueia_modo_bate_volta(self):
+        roteiro = Roteiro.objects.create(
+            tipo=Roteiro.TIPO_AVULSO,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+        )
+        url = reverse("roteiros:calcular_rota")
+        with patch(
+            "roteiros.services.routing.route_service.build_route_points_for_roteiro",
+            return_value=([{"id": "origem-1", "lat": -25.0, "lng": -49.0, "label": "CURITIBA/PR"}], True),
+        ), patch(
+            "roteiros.services.routing.route_service.get_openrouteservice_provider"
+        ) as provider_factory:
+            resp = self._csrf_post_json(url, {"roteiro_id": roteiro.pk})
+
+        self.assertEqual(resp.status_code, 400)
+        payload = resp.json()
+        self.assertFalse(payload["ok"])
+        self.assertTrue(payload["blocked"])
+        self.assertEqual(payload["reason"], "daily_round_trip_mode")
+        provider_factory.assert_not_called()
+
+    def test_calcular_rota_preview_endpoint_bloqueia_modo_bate_volta(self):
+        url = reverse("roteiros:calcular_rota_preview")
+        resp = self._csrf_post_json(
+            url,
+            {
+                "modo": "bate_volta",
+                "origem_cidade_id": self.cidade_sede.pk,
+                "destinos": [{"uuid": "x", "cidade_id": self.cidade_a.pk}],
+                "retorno_cidade_id": self.cidade_sede.pk,
+                "incluir_retorno": True,
+            },
+        )
+        self.assertEqual(resp.status_code, 400)
+        payload = resp.json()
+        self.assertFalse(payload["ok"])
+        self.assertTrue(payload["blocked"])
+        self.assertEqual(payload["reason"], "daily_round_trip_mode")
+
     def test_calcular_rota_endpoint_retorna_linestring_quando_api_ok(self):
         roteiro = Roteiro.objects.create(
             tipo=Roteiro.TIPO_AVULSO,

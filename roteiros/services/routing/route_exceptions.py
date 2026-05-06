@@ -28,6 +28,12 @@ class RouteValidationError(RouteServiceError):
     user_message = "Dados do roteiro insuficientes ou inválidos para calcular a rota."
 
 
+class RouteDailyRoundTripBlockedError(RouteServiceError):
+    user_message = "Desative o modo bate-volta diário para calcular a rota pelo mapa."
+    blocked = True
+    reason = "daily_round_trip_mode"
+
+
 class RouteProviderUnavailable(RouteServiceError):
     user_message = "O serviço de rotas está temporariamente indisponível. Tente novamente mais tarde."
 

@@ -201,17 +201,24 @@ def build_periods(
     periodos = []
     servidores = max(0, int(quantidade_servidores or 0))
 
+    total_markers = len(sorted_markers)
     for idx, marker in enumerate(sorted_markers):
         start = marker.saida
         end = sorted_markers[idx + 1].saida if idx + 1 < len(sorted_markers) else chegada_final_sede
         if end <= start:
             raise ValueError('Preencha datas e horas para calcular.')
 
-        if sede_cidade and sede_uf and locations_equivalent(
+        is_last_marker = idx == (total_markers - 1)
+        if (
+            not is_last_marker
+            and sede_cidade
+            and sede_uf
+            and locations_equivalent(
             marker.destino_cidade,
             marker.destino_uf,
             sede_cidade,
             sede_uf,
+            )
         ):
             continue
 

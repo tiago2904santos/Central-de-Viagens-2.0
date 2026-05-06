@@ -11,7 +11,7 @@ from django.utils import timezone
 from roteiros.models import Roteiro
 
 from .openrouteservice import get_openrouteservice_provider
-from .route_exceptions import RouteConfigurationError
+from .route_exceptions import RouteConfigurationError, RouteDailyRoundTripBlockedError
 from .route_point_builder import build_route_points_for_roteiro
 from .route_signature import build_route_signature
 
@@ -130,6 +130,10 @@ def calcular_rota_para_roteiro(
     Respeita cache por assinatura quando `ROUTE_CACHE_ENABLED` e não há `force_recalculate`.
     """
     profile = "driving-car"
+    points, bate = build_route_points_for_roteiro(roteiro)
+    if bate:
+        raise RouteDailyRoundTripBlockedError()
+
     provider = get_openrouteservice_provider()
     if provider is None:
         raise RouteConfigurationError()
@@ -138,7 +142,6 @@ def calcular_rota_para_roteiro(
     if route_provider != "openrouteservice":
         raise RouteConfigurationError("Provedor de rotas não suportado nesta versão.")
 
-    points, bate = build_route_points_for_roteiro(roteiro)
     signature = build_route_signature(
         _points_for_provider(points), profile=profile, bate_volta_diario=bate
     )

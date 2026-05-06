@@ -8,7 +8,11 @@ from cadastros.models import Cidade
 from django.utils import timezone
 
 from .openrouteservice import get_openrouteservice_provider
-from .route_exceptions import RouteServiceError, RouteValidationError
+from .route_exceptions import (
+    RouteDailyRoundTripBlockedError,
+    RouteServiceError,
+    RouteValidationError,
+)
 from .route_time_rules import calculate_additional_time_minutes, round_trip_minutes_to_15
 from .trecho_route_service import calcular_rota_trecho
 
@@ -197,6 +201,8 @@ def _build_leg_payload(
 
 
 def calculate_route_preview(payload: Dict[str, Any]) -> Dict[str, Any]:
+    if str(payload.get("modo") or "").strip().lower() in {"bate_volta", "bate-volta"}:
+        raise RouteDailyRoundTripBlockedError()
     points = build_preview_points(payload)
     legs_base = build_operational_legs(points)
     provider = get_openrouteservice_provider()
