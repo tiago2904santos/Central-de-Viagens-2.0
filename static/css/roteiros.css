@@ -1862,77 +1862,134 @@
 
 /* Mapa do roteiro (Leaflet) */
 .roteiro-editor__map-card {
-  margin-top: 0;
-  margin-bottom: var(--space-2);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--theme-border-card);
+  margin-top: 2px;
+  margin-bottom: var(--space-3);
+  border-radius: 18px;
+  border: 1px solid rgba(11, 58, 102, 0.14);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.75) inset,
-    0 18px 34px rgba(15, 34, 54, 0.08);
+    0 1px 0 rgba(255, 255, 255, 0.82) inset,
+    0 18px 38px rgba(15, 34, 54, 0.1);
   background: linear-gradient(
     165deg,
-    var(--theme-surface-card) 0%,
-    var(--theme-surface-card-soft) 100%
+    #ffffff 0%,
+    #f7fbff 100%
   );
   overflow: hidden;
 }
 
 .roteiro-mapa__section-head {
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%),
-    linear-gradient(180deg, #124872 0%, #0c3558 100%);
+    radial-gradient(circle at 96% 8%, rgba(255, 255, 255, 0.2), transparent 28%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 48%),
+    linear-gradient(180deg, #15547f 0%, #0b3457 100%);
   margin: 0;
-  min-height: 58px;
-  padding: 12px 22px;
+  min-height: 72px;
+  padding: 14px 20px 14px 22px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
 }
 
 .roteiro-mapa__section-kicker {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.7);
   display: block;
   font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-weight: 900;
+  letter-spacing: 0.16em;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   text-transform: uppercase;
 }
 
 .roteiro-mapa__section-head .roteiro-editor__section-title {
   color: #ffffff;
   margin: 0;
-  font-size: clamp(1rem, 1.5vw, 1.12rem);
+  font-size: clamp(1.08rem, 1.6vw, 1.22rem);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.roteiro-mapa__section-title-group {
+  min-width: 0;
+}
+
+.roteiro-editor--avulso .roteiro-editor__section.roteiro-editor__section--mapa:not(.roteiro-editor__reference-block) > .roteiro-editor__section-header.roteiro-mapa__section-head::before {
+  content: none;
+  display: none;
 }
 
 .roteiro-editor__map-card .card-body {
-  padding: clamp(14px, 1.7vw, 20px);
+  background:
+    radial-gradient(circle at 0 0, rgba(21, 84, 127, 0.06), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  padding: clamp(16px, 2vw, 22px);
 }
 
 .roteiro-mapa__header {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 0 2px;
 }
 
 .roteiro-mapa__heading {
-  min-width: min(100%, 420px);
+  min-width: min(100%, 440px);
+  position: relative;
+  padding-left: 30px;
+}
+
+.roteiro-mapa__heading::before {
+  align-items: center;
+  background: linear-gradient(180deg, #eef6ff 0%, #dfeefa 100%);
+  border: 1px solid #c9ddec;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(21, 84, 127, 0.08);
+  color: #16527c;
+  content: "";
+  display: flex;
+  height: 22px;
+  justify-content: center;
+  left: 0;
+  position: absolute;
+  top: 1px;
+  width: 22px;
+}
+
+.roteiro-mapa__heading::after {
+  background:
+    radial-gradient(circle at 2px 2px, #16527c 0 2px, transparent 2.2px),
+    radial-gradient(circle at 9px 8px, #16527c 0 2px, transparent 2.2px);
+  border-bottom: 2px solid #16527c;
+  border-left: 2px solid #16527c;
+  border-radius: 0 0 0 7px;
+  content: "";
+  height: 10px;
+  left: 6px;
+  position: absolute;
+  top: 6px;
+  width: 12px;
 }
 
 .roteiro-mapa__title {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--theme-text-heading);
+  font-size: 1rem;
+  font-weight: 900;
+  color: #17324c;
+  line-height: 1.25;
   margin: 0;
 }
 
 .roteiro-mapa__subtitle {
-  margin: 5px 0 0;
+  margin: 4px 0 0;
   font-size: 12px;
   line-height: 1.45;
-  color: #607a95;
+  color: #617b95;
+  font-weight: 600;
 }
 
 .roteiro-mapa__actions {
@@ -1942,61 +1999,106 @@
   align-items: center;
 }
 
+.roteiro-mapa__actions--header {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
 .roteiro-mapa__action-btn {
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0.01em;
-  min-height: 38px;
-  padding: 0 16px;
+  min-height: 40px;
+  padding: 0 17px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   transition:
     transform 140ms ease,
     box-shadow 140ms ease,
     border-color 140ms ease,
-    background-color 140ms ease;
+    background-color 140ms ease,
+    color 140ms ease;
 }
 
 .roteiro-mapa__action-btn--primary {
-  background: linear-gradient(180deg, #1d68a8 0%, #0f4f86 100%);
-  border-color: rgba(10, 58, 102, 0.42);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.22) inset,
-    0 10px 18px rgba(11, 58, 102, 0.22);
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 10px 22px rgba(2, 23, 40, 0.18);
+  color: #ffffff;
+  backdrop-filter: blur(6px);
 }
 
 .roteiro-mapa__action-btn--primary:hover,
 .roteiro-mapa__action-btn--primary:focus-visible {
-  background: linear-gradient(180deg, #2272b6 0%, #12558f 100%);
-  border-color: rgba(10, 58, 102, 0.5);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.46);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.25) inset,
-    0 12px 20px rgba(11, 58, 102, 0.26);
+    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 12px 24px rgba(2, 23, 40, 0.22);
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
 .roteiro-mapa__action-btn--secondary {
-  background: #f4f8fc;
-  border-color: #cadcec;
-  color: #204b72;
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #123e67;
+  box-shadow: 0 8px 18px rgba(2, 23, 40, 0.16);
 }
 
 .roteiro-mapa__action-btn--secondary:hover,
 .roteiro-mapa__action-btn--secondary:focus-visible {
-  background: #edf4fb;
-  border-color: #b6cfe5;
-  color: #123e67;
+  background: #ffffff;
+  border-color: rgba(255, 255, 255, 0.72);
+  color: #0b3457;
   transform: translateY(-1px);
+}
+
+.roteiro-mapa__action-icon {
+  border: 1.8px solid currentColor;
+  border-radius: 50%;
+  display: inline-block;
+  height: 14px;
+  opacity: 0.9;
+  position: relative;
+  width: 14px;
+}
+
+.roteiro-mapa__action-icon::before,
+.roteiro-mapa__action-icon::after {
+  background: currentColor;
+  content: "";
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.roteiro-mapa__action-icon::before {
+  height: 7px;
+  width: 1.8px;
+}
+
+.roteiro-mapa__action-icon::after {
+  height: 1.8px;
+  width: 7px;
 }
 
 .roteiro-mapa__stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px 16px;
-  margin: 0 0 14px;
-  padding: 10px 12px;
-  border: 1px solid rgba(191, 211, 229, 0.7);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(191, 211, 229, 0.78);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 8px 18px rgba(28, 49, 72, 0.05);
 }
 
 .roteiro-mapa__stats dt {
@@ -2021,30 +2123,32 @@
 
 .roteiro-mapa__frame {
   box-sizing: border-box;
-  min-height: 660px;
-  height: 660px;
+  min-height: 330px;
+  height: 330px;
   width: 100%;
-  border-radius: 14px;
+  border-radius: 13px;
   overflow: hidden;
-  border: 1px solid #d7e6f4;
+  border: 1px solid #cadbea;
   margin-top: 0;
   background: #eef4fa;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
 }
 
 .roteiro-mapa__canvas-shell {
-  background: linear-gradient(180deg, #f5f9fd 0%, #edf4fb 100%);
-  border: 1px solid #d6e4f2;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(242, 247, 252, 0.94) 100%);
+  border: 1px solid #d2e1ef;
   border-radius: 16px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 10px 20px rgba(30, 66, 99, 0.08);
-  padding: 10px;
+    0 12px 24px rgba(30, 66, 99, 0.1);
+  padding: 9px;
 }
 
 .roteiro-mapa__frame #map,
 .roteiro-mapa__frame .leaflet-container {
-  min-height: 660px;
-  height: 660px;
+  min-height: 330px;
+  height: 330px;
 }
 
 .roteiro-mapa__frame--placeholder {
@@ -2058,12 +2162,23 @@
 }
 
 @media (max-width: 991.98px) {
+  .roteiro-mapa__section-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px 16px;
+  }
+
   .roteiro-mapa__actions {
     width: 100%;
   }
 
+  .roteiro-mapa__actions--header {
+    justify-content: flex-start;
+  }
+
   .roteiro-mapa__action-btn {
-    min-height: 36px;
+    min-height: 38px;
   }
 
   .roteiro-mapa__canvas-shell {
@@ -2073,7 +2188,7 @@
   .roteiro-mapa__frame,
   .roteiro-mapa__frame #map,
   .roteiro-mapa__frame .leaflet-container {
-    min-height: 520px;
-    height: 520px;
+    min-height: 300px;
+    height: 300px;
   }
 }

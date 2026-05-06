@@ -1,26 +1,30 @@
 <section class="roteiro-mapa card roteiro-editor__map-card roteiro-editor__section roteiro-editor__section--mapa" aria-labelledby="roteiro-mapa-titulo">
   <header class="roteiro-editor__section-header roteiro-mapa__section-head" id="sec-mapa-rota">
-    <span class="roteiro-mapa__section-kicker">ROTEIRO</span>
-    <h3 class="roteiro-editor__section-title" id="roteiro-mapa-titulo">4. Mapa da rota</h3>
+    <div class="roteiro-mapa__section-title-group">
+      <span class="roteiro-mapa__section-kicker">ROTEIRO</span>
+      <h3 class="roteiro-editor__section-title" id="roteiro-mapa-titulo">4. Mapa da rota</h3>
+    </div>
+    <div class="roteiro-mapa__actions roteiro-mapa__actions--header">
+      <button type="button"
+              class="btn roteiro-editor__btn-pill roteiro-mapa__action-btn roteiro-mapa__action-btn--primary"
+              id="btn-calcular-rota-mapa">
+        <span class="roteiro-mapa__action-icon" aria-hidden="true"></span>
+        Calcular rota
+      </button>
+      <button type="button"
+              class="btn roteiro-editor__btn-pill roteiro-mapa__action-btn roteiro-mapa__action-btn--secondary"
+              id="btn-recalcular-rota-mapa"
+              hidden>
+        <span class="roteiro-mapa__action-icon" aria-hidden="true"></span>
+        Recalcular rota
+      </button>
+    </div>
   </header>
   <div class="card-body">
     <header class="roteiro-mapa__header">
       <div class="roteiro-mapa__heading">
         <h4 class="roteiro-mapa__title">Visualização do trajeto</h4>
         <p class="roteiro-mapa__subtitle">Acompanhe o desenho da rota e o resumo automático do percurso.</p>
-      </div>
-      <div class="roteiro-mapa__actions">
-        <button type="button"
-                class="btn btn-primary roteiro-editor__btn-pill roteiro-mapa__action-btn roteiro-mapa__action-btn--primary"
-                id="btn-calcular-rota-mapa">
-          Calcular rota
-        </button>
-        <button type="button"
-                class="btn btn-outline-secondary roteiro-editor__btn-pill roteiro-mapa__action-btn roteiro-mapa__action-btn--secondary"
-                id="btn-recalcular-rota-mapa"
-                hidden>
-          Recalcular rota
-        </button>
       </div>
     </header>
 
