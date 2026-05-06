@@ -88,7 +88,10 @@ class TrechoRouteServiceTests(TestCase):
         self.assertEqual(out.get("rota_fonte"), ROTA_FONTE_TRECHO_ORS)
         body = post.call_args[1]["json"]
         self.assertEqual(len(body["coordinates"]), 2)
-        self.assertEqual(out.get("tempo_cru_estimado_min"), 100)
+        self.assertEqual(out.get("raw_duration_minutes"), 100)
+        self.assertEqual(out.get("tempo_cru_estimado_min"), 105)
+        self.assertEqual(out.get("tempo_adicional_sugerido_min"), 30)
+        self.assertEqual(out.get("duracao_estimada_min"), 135)
 
     def test_calcular_rota_consolidada_nao_atualiza_distancia_trecho_ida(self):
         roteiro = Roteiro.objects.create(

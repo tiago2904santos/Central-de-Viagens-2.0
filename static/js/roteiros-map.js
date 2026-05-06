@@ -225,13 +225,16 @@
   function postCalcular(force) {
     var form = document.getElementById('oficio-step3-form');
     if (!form) return;
-    var url = form.getAttribute('data-api-calcular-rota-url');
-    if (!url) return;
-
-    if (!rid) {
-      showError('Salve o roteiro antes de calcular a rota no mapa.');
+    var urlPersistido = form.getAttribute('data-api-calcular-rota-url');
+    var urlPreview = form.getAttribute('data-api-calcular-rota-preview-url');
+    var hasSaved = !!rid;
+    var step3 = window.RoteirosStep3;
+    if (!hasSaved && (!step3 || !step3.canCalculateRoutePreview || !step3.canCalculateRoutePreview())) {
+      showError('Selecione a sede e ao menos um destino para calcular a rota.');
       return;
     }
+    var targetUrl = hasSaved ? urlPersistido : (urlPreview || (step3 && step3.getPreviewEndpointUrl && step3.getPreviewEndpointUrl()));
+    if (!targetUrl) return;
 
     showError('');
     setLoading(true);
@@ -241,14 +244,23 @@
       (form.querySelector('[name=csrfmiddlewaretoken]') &&
         form.querySelector('[name=csrfmiddlewaretoken]').value);
 
-    fetch(url, {
+    var payload = hasSaved
+      ? { roteiro_id: rid, force_recalculate: !!force }
+      : ((step3 && step3.buildRoutePreviewPayload && step3.buildRoutePreviewPayload()) || null);
+    if (!payload) {
+      setLoading(false);
+      showError('Selecione a sede e ao menos um destino para calcular a rota.');
+      return;
+    }
+
+    fetch(targetUrl, {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': token || '',
       },
-      body: JSON.stringify({ roteiro_id: rid, force_recalculate: !!force }),
+      body: JSON.stringify(payload),
     })
       .then(function (r) {
         return r.json().then(function (body) {
@@ -261,6 +273,9 @@
           return;
         }
         var route = res.body.route;
+        if (!hasSaved && step3 && typeof step3.applyRoutePreviewResult === 'function') {
+          step3.applyRoutePreviewResult(res.body, { overwriteAdditional: !!force });
+        }
         initial.route = route;
         initial.status = route.status || 'calculada';
         hadGeometry = !!(route.geometry && route.geometry.type === 'LineString');
@@ -278,13 +293,37 @@
 
         toggleRecalc(true);
         hideElement($('roteiro-mapa-stale-hint'));
+        hideElement($('roteiro-mapa-novo-hint'));
+        hideElement($('roteiro-mapa-ready-hint'));
       })
       .catch(function () {
         showError('Falha de rede ao calcular a rota. Tente novamente.');
       })
       .finally(function () {
         setLoading(false);
+        refreshRouteReadyState();
       });
+  }
+
+  function refreshRouteReadyState() {
+    var hintNovo = $('roteiro-mapa-novo-hint');
+    var hintReady = $('roteiro-mapa-ready-hint');
+    var step3 = window.RoteirosStep3;
+    var canPreview = !!(step3 && step3.canCalculateRoutePreview && step3.canCalculateRoutePreview());
+    if (rid || canPreview) {
+      setCalcularEnabled(true);
+      if (!rid && canPreview) {
+        hideElement(hintNovo);
+        showElement(hintReady);
+      } else {
+        hideElement(hintNovo);
+        hideElement(hintReady);
+      }
+    } else {
+      setCalcularEnabled(false);
+      showElement(hintNovo);
+      hideElement(hintReady);
+    }
   }
 
   function init() {
@@ -303,6 +342,7 @@
       hideElement($('btn-recalcular-rota-mapa'));
       hideElement(stale);
       showElement(hintNovo);
+      hideElement($('roteiro-mapa-ready-hint'));
       hideElement($('roteiro-mapa-summary'));
       ensureMap();
       setFramePlaceholder(true);
@@ -348,16 +388,17 @@
     var bRecalc = $('btn-recalcular-rota-mapa');
     if (bCalc) {
       bCalc.addEventListener('click', function () {
-        if (!rid || bCalc.disabled) return;
+        if (bCalc.disabled) return;
         postCalcular(false);
       });
     }
     if (bRecalc) {
       bRecalc.addEventListener('click', function () {
-        if (!rid) return;
         postCalcular(true);
       });
     }
+    window.addEventListener('roteiros:route-state-changed', refreshRouteReadyState);
+    refreshRouteReadyState();
   }
 
   function onDestinosReordered() {

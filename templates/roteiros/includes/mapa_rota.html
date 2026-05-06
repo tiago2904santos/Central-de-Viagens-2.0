@@ -7,9 +7,8 @@
       </div>
       <div class="roteiro-mapa__actions">
         <button type="button"
-                class="btn btn-primary roteiro-editor__btn-pill{% if not object or not object.pk %} roteiro-mapa__btn--blocked{% endif %}"
-                id="btn-calcular-rota-mapa"
-                {% if not object or not object.pk %}disabled aria-disabled="true"{% endif %}>
+                class="btn btn-primary roteiro-editor__btn-pill"
+                id="btn-calcular-rota-mapa">
           Calcular rota
         </button>
         <button type="button"
@@ -25,7 +24,13 @@
        id="roteiro-mapa-novo-hint"
        {% if object and object.pk %}hidden{% endif %}
        role="status">
-      Salve o roteiro antes de calcular a rota no mapa.
+      Selecione a sede e ao menos um destino para calcular a rota.
+    </p>
+    <p class="roteiro-mapa__novo-hint alert alert-light border py-2 small mb-2"
+       id="roteiro-mapa-ready-hint"
+       hidden
+       role="status">
+      Rota pronta para cálculo. Ao calcular, os trechos serão preenchidos automaticamente.
     </p>
 
     <p class="roteiro-mapa__stale-hint text-warning-emphasis small mb-2"
@@ -62,7 +67,7 @@
     </div>
 
     <p class="roteiro-mapa__disclaimer small text-muted">
-      Distância e tempo são estimativas automáticas. Ajustes manuais podem ser registrados quando necessário.
+      Distância e tempo são estimativas automáticas. Preencha a data/hora de saída para calcular a chegada.
     </p>
 
     <div class="roteiro-mapa__manual-fields">

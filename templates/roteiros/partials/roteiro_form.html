@@ -15,6 +15,7 @@
                 data-api-cidades-url="{{ api_cidades_por_estado_url }}"
                 data-api-diarias-url="{{ api_calcular_diarias_url }}"
                 data-api-calcular-rota-url="{{ api_calcular_rota_url }}"
+                data-api-calcular-rota-preview-url="{{ api_calcular_rota_preview_url }}"
                 data-destino-estado-default-id="{{ destino_estado_fixo_id|default:'' }}"
                 data-url-trechos-estimar="{% url 'roteiros:trechos_estimar' %}">
             {% csrf_token %}

@@ -16,9 +16,17 @@ from roteiros.services.routing.openrouteservice import (
 from roteiros.services.routing.route_point_builder import build_route_points_for_roteiro
 from roteiros.services.routing.route_service import calcular_rota_para_roteiro
 from roteiros.services.routing.route_signature import build_route_signature
+from roteiros.services.routing.route_preview_service import (
+    calculate_route_preview,
+)
 from roteiros.services.routing.route_exceptions import (
     RouteAuthenticationError,
     RouteProviderUnavailable,
+    RouteValidationError,
+)
+from roteiros.services.routing.route_time_rules import (
+    calculate_additional_time_minutes,
+    round_trip_minutes_to_15,
 )
 from roteiros.services.routing.route_stale import mark_stale_when_signature_changed
 
@@ -651,4 +659,185 @@ class RoteirosRoutingTests(TestCase):
         self.assertRegex(html, r'id="btn-recalcular-rota-mapa"[^>]*hidden')
         self.assertRegex(html, r'id="roteiro-mapa-loading"[^>]*hidden')
         self.assertRegex(html, r'id="roteiro-mapa-stale-hint"[^>]*hidden')
-        self.assertIn("Salve o roteiro antes de calcular a rota no mapa.", html)
+        self.assertIn(
+            "Selecione a sede e ao menos um destino para calcular a rota.", html
+        )
+
+    def test_round_trip_minutes_to_15_arredonda_para_cima(self):
+        cases = [
+            (1, 15),
+            (14, 15),
+            (15, 15),
+            (16, 30),
+            (29, 30),
+            (30, 30),
+            (44, 45),
+            (45, 45),
+            (46, 60),
+            (61, 75),
+            (98, 105),
+        ]
+        for raw, expected in cases:
+            self.assertEqual(round_trip_minutes_to_15(raw), expected)
+
+    def test_calculate_additional_time_minutes_tabela_operacional(self):
+        cases = [
+            (20, 0),
+            (30, 15),
+            (45, 15),
+            (60, 15),
+            (75, 30),
+            (180, 30),
+            (181, 45),
+            (270, 45),
+            (271, 60),
+        ]
+        for travel, expected in cases:
+            self.assertEqual(calculate_additional_time_minutes(travel), expected)
+
+    def test_preview_sem_salvar_retorna_line_string_e_legs(self):
+        mock_fc = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[-49.27, -25.42], [-51.16, -23.31]],
+                    },
+                    "properties": {
+                        "summary": {"distance": 423500, "duration": 18240},
+                        "segments": [{"distance": 423500, "duration": 18240}],
+                    },
+                }
+            ],
+        }
+        payload = {
+            "origem_cidade_id": self.cidade_sede.pk,
+            "destinos": [{"uuid": "tmp-1", "cidade_id": self.cidade_a.pk}],
+            "retorno_cidade_id": self.cidade_sede.pk,
+            "incluir_retorno": False,
+            "modo": "normal",
+        }
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 200
+            post.return_value.json.return_value = mock_fc
+            out = calculate_route_preview(payload)
+        self.assertTrue(out["ok"])
+        self.assertEqual(out["route"]["geometry"]["type"], "LineString")
+        self.assertEqual(len(out["legs"]), 1)
+        leg = out["legs"][0]
+        self.assertEqual(leg["from_cidade_id"], self.cidade_sede.pk)
+        self.assertEqual(leg["to_cidade_id"], self.cidade_a.pk)
+        self.assertEqual(leg["travel_minutes"], 315)
+        self.assertEqual(leg["additional_minutes"], 60)
+        self.assertEqual(leg["total_minutes"], 375)
+
+    def test_preview_multiplos_destinos_e_retorno(self):
+        mock_fc = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {"type": "LineString", "coordinates": [[-49, -25], [-51, -23], [-48, -27], [-49, -25]]},
+                    "properties": {
+                        "summary": {"distance": 700000, "duration": 30000},
+                        "segments": [
+                            {"distance": 100000, "duration": 3600},
+                            {"distance": 200000, "duration": 7200},
+                            {"distance": 400000, "duration": 14400},
+                        ],
+                    },
+                }
+            ],
+        }
+        payload = {
+            "origem_cidade_id": self.cidade_sede.pk,
+            "destinos": [
+                {"uuid": "tmp-1", "cidade_id": self.cidade_a.pk},
+                {"uuid": "tmp-2", "cidade_id": self.cidade_b.pk},
+            ],
+            "retorno_cidade_id": self.cidade_sede.pk,
+            "incluir_retorno": True,
+            "modo": "normal",
+        }
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 200
+            post.return_value.json.return_value = mock_fc
+            out = calculate_route_preview(payload)
+        self.assertEqual(len(out["legs"]), 3)
+        self.assertEqual(out["legs"][0]["uuid"], "tmp-1")
+        self.assertEqual(out["legs"][1]["uuid"], "tmp-2")
+        self.assertEqual(out["legs"][2]["kind"], "retorno")
+
+    def test_preview_fallback_quando_segments_incompativeis(self):
+        mock_fc = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {"type": "LineString", "coordinates": [[-49, -25], [-51, -23], [-48, -27]]},
+                    "properties": {
+                        "summary": {"distance": 300000, "duration": 10000},
+                        "segments": [{"distance": 300000, "duration": 10000}],
+                    },
+                }
+            ],
+        }
+        payload = {
+            "origem_cidade_id": self.cidade_sede.pk,
+            "destinos": [
+                {"uuid": "tmp-1", "cidade_id": self.cidade_a.pk},
+                {"uuid": "tmp-2", "cidade_id": self.cidade_b.pk},
+            ],
+            "incluir_retorno": False,
+        }
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post, patch(
+            "roteiros.services.routing.route_preview_service.calcular_rota_trecho"
+        ) as trecho_calc:
+            post.return_value.status_code = 200
+            post.return_value.json.return_value = mock_fc
+            trecho_calc.side_effect = [
+                {"ok": True, "distancia_km": 100.0, "tempo_cru_estimado_min": 98, "rota_fonte": "openrouteservice"},
+                {"ok": True, "distancia_km": 200.0, "tempo_cru_estimado_min": 121, "rota_fonte": "openrouteservice"},
+            ]
+            out = calculate_route_preview(payload)
+        self.assertTrue(out["fallback_per_leg_used"])
+        self.assertEqual(trecho_calc.call_count, 2)
+        self.assertEqual(out["legs"][0]["travel_minutes"], 105)
+        self.assertEqual(out["legs"][1]["travel_minutes"], 135)
+
+    def test_preview_endpoint_sem_sede_ou_destino_rejeita(self):
+        url = reverse("roteiros:calcular_rota_preview")
+        resp = self._csrf_post_json(url, {"origem_cidade_id": self.cidade_sede.pk, "destinos": []})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()["ok"])
+
+    def test_preview_endpoint_nao_expoe_api_key(self):
+        url = reverse("roteiros:calcular_rota_preview")
+        mock_fc = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {"type": "LineString", "coordinates": [[-49, -25], [-51, -23]]},
+                    "properties": {
+                        "summary": {"distance": 100000, "duration": 3600},
+                        "segments": [{"distance": 100000, "duration": 3600}],
+                    },
+                }
+            ],
+        }
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 200
+            post.return_value.json.return_value = mock_fc
+            resp = self._csrf_post_json(
+                url,
+                {
+                    "origem_cidade_id": self.cidade_sede.pk,
+                    "destinos": [{"uuid": "tmp-1", "cidade_id": self.cidade_a.pk}],
+                },
+            )
+        self.assertEqual(resp.status_code, 200)
+        blob = json.dumps(resp.json())
+        self.assertNotIn("test-key", blob)

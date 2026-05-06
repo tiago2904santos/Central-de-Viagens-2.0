@@ -20,6 +20,7 @@ from .services.routing.route_exceptions import (
     RouteValidationError,
 )
 from .services.routing.route_service import calcular_rota_para_roteiro
+from .services.routing.route_preview_service import calculate_route_preview
 
 logger = logging.getLogger(__name__)
 from .models import Roteiro
@@ -366,3 +367,46 @@ def trechos_estimar(request):
             "duration_human": raw.get("duration_human"),
         }
     )
+
+
+@require_http_methods(["POST"])
+def calcular_rota_preview(request):
+    """
+    Preview de rota sem persistência para rascunho de tela (novo roteiro sem salvar).
+    """
+    try:
+        body = json.loads(request.body or "{}")
+    except (json.JSONDecodeError, TypeError):
+        body = {}
+    if "openrouteservice_api_key" in body or "api_key" in body:
+        logger.warning("calcular_rota_preview: tentativa de enviar chave de API no payload.")
+        return JsonResponse({"ok": False, "message": "Requisição inválida."}, status=400)
+    try:
+        return JsonResponse(calculate_route_preview(body))
+    except RouteAuthenticationError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=401)
+    except RouteConfigurationError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=503)
+    except RouteCoordinateError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=400)
+    except RouteValidationError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=400)
+    except RouteTimeoutError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=504)
+    except RouteRateLimitError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=429)
+    except RouteNotFoundError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=404)
+    except RouteProviderUnavailable as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=502)
+    except RouteServiceError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=400)
+    except Exception as exc:
+        logger.exception("calcular_rota_preview falhou: %s", exc)
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Não foi possível calcular a rota automaticamente. Você pode preencher a distância e o tempo manualmente.",
+            },
+            status=500,
+        )

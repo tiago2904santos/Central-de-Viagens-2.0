@@ -1744,6 +1744,7 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         'step3_seed_source_label': step3_state.get('seed_source_label', ''),
         'api_calcular_diarias_url': reverse('roteiros:calcular_diarias'),
         'api_calcular_rota_url': reverse('roteiros:calcular_rota'),
+        'api_calcular_rota_preview_url': reverse('roteiros:calcular_rota_preview'),
         'roteiro_mapa_inicial': roteiro_mapa_inicial,
         'roteiro_modo': step3_state.get('roteiro_modo', 'ROTEIRO_PROPRIO'),
         'roteiro_id': step3_state.get('roteiro_evento_id'),

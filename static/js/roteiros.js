@@ -14,6 +14,7 @@
   var apiDiarias = form.dataset.apiDiariasUrl || '';
   var csrf = (form.querySelector('input[name="csrfmiddlewaretoken"]') || {}).value || '';
   var urlTrechosEstimar = form.dataset.urlTrechosEstimar || '';
+  var urlCalcularRotaPreview = form.dataset.apiCalcularRotaPreviewUrl || '';
   var autosaveIdInput = $('id_autosave_obj_id');
   var autosaveStatus = $('roteiro-autosave-status');
   function readJsonResponse(resp) {
@@ -66,6 +67,13 @@
   }
   function scheduleAutosave() {
     if (autosave) autosave.schedule();
+  }
+  function notifyRouteStateChanged() {
+    try {
+      window.dispatchEvent(new CustomEvent('roteiros:route-state-changed'));
+    } catch (e) {
+      /* ignore */
+    }
   }
   function cidadesUrl(estadoId) { return apiCidades.replace(/\/0\/?$/, '/' + estadoId + '/'); }
   function pad(v) { return v < 10 ? '0' + v : String(v); }
@@ -419,6 +427,83 @@
       }
     }
   }
+  function canCalculateRoutePreview() {
+    var sedeCidade = ($('id_origem_cidade') || {}).value || '';
+    var destinos = getDestinos().filter(function(d) { return d && d.cidade_id; });
+    return !!(sedeCidade && destinos.length);
+  }
+  function buildRoutePreviewPayload() {
+    var origemCidadeId = parseInt((($('id_origem_cidade') || {}).value || ''), 10);
+    if (!origemCidadeId) return null;
+    var destinos = getDestinos()
+      .filter(function(d) { return d && d.cidade_id; })
+      .map(function(d, idx) {
+        return {
+          uuid: String(d.key || ('tmp-' + (idx + 1))),
+          cidade_id: parseInt(d.cidade_id, 10),
+        };
+      });
+    if (!destinos.length) return null;
+    var retornoCard = $('retorno-card');
+    var retornoCidadeId = retornoCard ? parseInt(retornoCard.dataset.destinoCidadeId || '', 10) : NaN;
+    var incluirRetorno = !!(retornoCard && retornoCard.dataset.origemCidadeId && retornoCard.dataset.destinoCidadeId);
+    return {
+      origem_cidade_id: origemCidadeId,
+      destinos: destinos,
+      retorno_cidade_id: Number.isNaN(retornoCidadeId) ? null : retornoCidadeId,
+      incluir_retorno: incluirRetorno,
+      modo: isLoopModeActive() ? 'bate_volta' : 'normal',
+    };
+  }
+  function applyRoutePreviewResult(result, options) {
+    var opts = options || {};
+    var overwriteAdditional = !!opts.overwriteAdditional;
+    var legs = (result && result.legs) || [];
+    legs.forEach(function(leg) {
+      if (leg.kind === 'retorno') {
+        if ($('id_retorno_distancia_km') && leg.distance_km != null) $('id_retorno_distancia_km').value = String(leg.distance_km);
+        if ($('id_retorno_tempo_cru_estimado_min') && leg.travel_minutes != null) $('id_retorno_tempo_cru_estimado_min').value = String(leg.travel_minutes);
+        if ($('id_retorno_rota_fonte') && leg.provider) $('id_retorno_rota_fonte').value = leg.provider;
+        if ($('id_retorno_duracao_estimada_min') && leg.total_minutes != null) $('id_retorno_duracao_estimada_min').value = String(leg.total_minutes);
+        var addRet = $('id_retorno_tempo_adicional_min');
+        if (addRet && leg.additional_minutes != null && (overwriteAdditional || String(addRet.value || '').trim() === '' || addRet.dataset.manual !== '1')) {
+          addRet.value = String(leg.additional_minutes);
+          if (overwriteAdditional) addRet.dataset.manual = '0';
+        }
+        recalcRetorno(true);
+        return;
+      }
+      var card = $('trechos-gerados-container').querySelector('.card[data-key="' + String(leg.uuid || '') + '"]');
+      if (!card) {
+        card = Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]')).find(function(c) {
+          return String(c.dataset.origemCidadeId || '') === String(leg.from_cidade_id || '') &&
+            String(c.dataset.destinoCidadeId || '') === String(leg.to_cidade_id || '');
+        });
+      }
+      if (!card) return;
+      var ord = card.dataset.ordem;
+      var distInp = card.querySelector('[name="trecho_' + ord + '_distancia_km"]');
+      var cruInp = card.querySelector('[name="trecho_' + ord + '_tempo_cru_estimado_min"]');
+      var fonteInp = card.querySelector('[name="trecho_' + ord + '_rota_fonte"]');
+      var durInp = card.querySelector('[name="trecho_' + ord + '_duracao_estimada_min"]');
+      var addInp = card.querySelector('[name="trecho_' + ord + '_tempo_adicional_min"]');
+      if (distInp && leg.distance_km != null) distInp.value = String(leg.distance_km);
+      if (cruInp && leg.travel_minutes != null) cruInp.value = String(leg.travel_minutes);
+      if (fonteInp && leg.provider) fonteInp.value = leg.provider;
+      if (durInp && leg.total_minutes != null) durInp.value = String(leg.total_minutes);
+      if (addInp && leg.additional_minutes != null && (overwriteAdditional || String(addInp.value || '').trim() === '' || addInp.dataset.manual !== '1')) {
+        addInp.value = String(leg.additional_minutes);
+        if (overwriteAdditional) addInp.dataset.manual = '0';
+      }
+      recalcCard(card, true);
+    });
+    chainSuggestedDepartures();
+    chainRetornoSaidaFromLastTrecho();
+    updateResumo();
+    scheduleRealtimeDiarias();
+    scheduleAutosave();
+    notifyRouteStateChanged();
+  }
   function chainSuggestedDepartures() {
     if (isLoopModeActive()) return;
     var cards = Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]'));
@@ -691,6 +776,7 @@
       updateResumo();
       scheduleAutoEstimarTrechos();
       lastTrechosSignature = signature;
+      notifyRouteStateChanged();
       return;
     }
 
@@ -741,6 +827,7 @@
     updateResumo();
     scheduleAutoEstimarTrechos();
     lastTrechosSignature = signature;
+    notifyRouteStateChanged();
   }
   function updateResumo() {
     var cards = Array.from($('trechos-gerados-container').querySelectorAll('.card[data-key]'));
@@ -1111,6 +1198,7 @@
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';
     if (n.indexOf('_saida_')!==-1||n.indexOf('_tempo_adicional_min')!==-1||n.indexOf('_tempo_cru_estimado_min')!==-1||e.target.classList.contains('trecho-tempo-viagem-hhmm')) {
+      if (n.indexOf('_tempo_adicional_min') !== -1) e.target.dataset.manual = '1';
       recalcCard(c, true);
       chainSuggestedDepartures();
       chainRetornoSaidaFromLastTrecho();
@@ -1121,6 +1209,7 @@
     var c = e.target.closest('.card[data-key]'); if (!c || applyingState) return;
     var n = e.target.name||'';
     if (n.indexOf('_saida_')!==-1||n.indexOf('_tempo_adicional_min')!==-1||n.indexOf('_tempo_cru_estimado_min')!==-1||e.target.classList.contains('trecho-tempo-viagem-hhmm')) {
+      if (n.indexOf('_tempo_adicional_min') !== -1) e.target.dataset.manual = '1';
       recalcCard(c, true);
       chainSuggestedDepartures();
       chainRetornoSaidaFromLastTrecho();
@@ -1128,7 +1217,7 @@
     updateResumo(); scheduleRealtimeDiarias(); scheduleAutosave();
   });
   ['id_retorno_saida_data','id_retorno_saida_hora','id_retorno_chegada_data','id_retorno_chegada_hora','id_retorno_tempo_viagem_hhmm','id_retorno_tempo_adicional_min'].forEach(function(id) {
-    $(id).addEventListener('input', function() { if (applyingState) return; recalcRetorno(id.indexOf('saida_')!==-1||id.indexOf('tempo_')!==-1); scheduleRealtimeDiarias(); scheduleAutosave(); });
+    $(id).addEventListener('input', function() { if (applyingState) return; if (id === 'id_retorno_tempo_adicional_min') this.dataset.manual = '1'; recalcRetorno(id.indexOf('saida_')!==-1||id.indexOf('tempo_')!==-1); scheduleRealtimeDiarias(); scheduleAutosave(); notifyRouteStateChanged(); });
     $(id).addEventListener('change', function() { if (applyingState) return; recalcRetorno(true); scheduleRealtimeDiarias(); scheduleAutosave(); });
   });
   if ($('id_roteiro_busca')) {
@@ -1202,5 +1291,12 @@
     } else {
       scheduleRealtimeDiarias();
     }
+    notifyRouteStateChanged();
   });
+  window.RoteirosStep3 = {
+    canCalculateRoutePreview: canCalculateRoutePreview,
+    buildRoutePreviewPayload: buildRoutePreviewPayload,
+    applyRoutePreviewResult: applyRoutePreviewResult,
+    getPreviewEndpointUrl: function() { return urlCalcularRotaPreview; },
+  };
 })();

@@ -13,6 +13,7 @@ from roteiros.services.estimativa_local import estimar_distancia_duracao, minuto
 
 from .openrouteservice import get_openrouteservice_provider
 from .route_exceptions import RouteServiceError, RouteValidationError
+from .route_time_rules import calculate_additional_time_minutes, round_trip_minutes_to_15
 
 logger = logging.getLogger(__name__)
 
@@ -104,8 +105,11 @@ def calcular_rota_trecho(origem_cidade_id: int, destino_cidade_id: int) -> Dict[
             ]
             normalized = provider.calculate_route(points, profile="driving-car")
             cru = int(normalized["duration_minutes"])
+            travel_min = round_trip_minutes_to_15(cru)
+            additional_min = calculate_additional_time_minutes(travel_min)
+            total_min = travel_min + additional_min
             dist = float(normalized["distance_km"])
-            hh = minutos_para_hhmm(cru)
+            hh = minutos_para_hhmm(travel_min)
             return {
                 "ok": True,
                 "erro": "",
@@ -114,13 +118,13 @@ def calcular_rota_trecho(origem_cidade_id: int, destino_cidade_id: int) -> Dict[
                 "distancia_km": dist,
                 "distancia_linha_reta_km": None,
                 "distancia_rodoviaria_km": dist,
-                "duracao_estimada_min": cru,
+                "duracao_estimada_min": total_min,
                 "duracao_estimada_hhmm": hh,
-                "tempo_viagem_estimado_min": cru,
+                "tempo_viagem_estimado_min": travel_min,
                 "tempo_viagem_estimado_hhmm": hh,
-                "tempo_cru_estimado_min": cru,
+                "tempo_cru_estimado_min": travel_min,
                 "buffer_operacional_sugerido_min": 0,
-                "tempo_adicional_sugerido_min": 0,
+                "tempo_adicional_sugerido_min": additional_min,
                 "correcao_final_min": 0,
                 "velocidade_media_kmh": None,
                 "perfil_rota": None,
@@ -135,7 +139,8 @@ def calcular_rota_trecho(origem_cidade_id: int, destino_cidade_id: int) -> Dict[
                 "travessia_urbana_presente": False,
                 "serra_presente": False,
                 "ors_fallback": False,
-                "duration_human": normalized.get("duration_human") or _duration_human(cru),
+                "duration_human": normalized.get("duration_human") or _duration_human(travel_min),
+                "raw_duration_minutes": cru,
             }
         except RouteValidationError:
             logger.info("OpenRouteService trecho: validação — usando estimativa local.")
@@ -154,11 +159,22 @@ def calcular_rota_trecho(origem_cidade_id: int, destino_cidade_id: int) -> Dict[
         destino_lon=destino_lon,
     )
     merged: Dict[str, Any] = dict(out)
+    raw_min = int(merged.get("tempo_viagem_estimado_min") or merged.get("tempo_cru_estimado_min") or 0)
+    travel_min = round_trip_minutes_to_15(raw_min)
+    additional_min = calculate_additional_time_minutes(travel_min)
+    total_min = travel_min + additional_min
     merged["ok"] = bool(out.get("ok"))
     merged["origem"] = _label_cidade(origem)
     merged["destino"] = _label_cidade(destino)
     merged["rota_fonte"] = ROTA_FONTE_TRECHO_LOCAL
     merged["ors_fallback"] = ors_attempted
+    merged["raw_duration_minutes"] = raw_min
+    merged["tempo_cru_estimado_min"] = travel_min
+    merged["tempo_viagem_estimado_min"] = travel_min
+    merged["tempo_viagem_estimado_hhmm"] = minutos_para_hhmm(travel_min)
+    merged["tempo_adicional_sugerido_min"] = additional_min
+    merged["duracao_estimada_min"] = total_min
+    merged["duracao_estimada_hhmm"] = minutos_para_hhmm(total_min)
     if merged.get("distancia_km") is not None:
         try:
             merged["distancia_km"] = float(merged["distancia_km"])
