@@ -670,8 +670,8 @@ def _get_step3_saved_routes(oficio, include_ids=None):
     return sorted(
         routes,
         key=lambda roteiro: (
-            0 if roteiro.pk == oficio.roteiro_evento_id else 1,
-            0 if roteiro.evento_id and roteiro.evento_id in oficio_event_ids else 1,
+            0 if roteiro.pk == getattr(oficio, 'roteiro_evento_id', None) else 1,
+            0 if getattr(roteiro, 'evento_id', None) and getattr(roteiro, 'evento_id', None) in oficio_event_ids else 1,
             0 if roteiro.tipo == Roteiro.TIPO_AVULSO else 1,
             -(roteiro.created_at.timestamp() if roteiro.created_at else 0),
         ),
@@ -1392,7 +1392,7 @@ def _build_roteiro_diarias_from_request(request, *, roteiro=None, evento=None):
     if evento is not None:
         evento_id = evento.pk
     elif roteiro is not None:
-        evento_id = roteiro.evento_id
+        evento_id = getattr(roteiro, 'evento_id', None)
     route_context = SimpleNamespace(
         roteiro_evento_id=roteiro_evento_id,
         evento_id=evento_id,

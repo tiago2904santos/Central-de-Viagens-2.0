@@ -338,6 +338,23 @@
   var urlTrechosEstimar = '{% url "roteiros:trechos_estimar" %}';
   var autosaveIdInput = $('id_autosave_obj_id');
   var autosaveStatus = $('roteiro-autosave-status');
+  function readJsonResponse(resp) {
+    var contentType = (resp.headers && resp.headers.get('content-type')) || '';
+    if (contentType.indexOf('application/json') !== -1) {
+      return resp.json().then(function(data) { return { ok: resp.ok, data: data }; });
+    }
+    return resp.text().then(function() {
+      return {
+        ok: false,
+        data: {
+          ok: false,
+          error: resp.status === 401
+            ? 'Sessao expirada. Faca login novamente para continuar.'
+            : 'O servidor retornou uma resposta invalida para a calculadora.'
+        }
+      };
+    });
+  }
   var autosave = window.OficioWizard ? window.OficioWizard.createAutosave({
     form: form,
     statusElement: autosaveStatus,
@@ -985,7 +1002,7 @@
       },
       credentials: 'same-origin',
       body: collectDiariasFormData()
-    }).then(function(resp) { return resp.json().then(function(data) { return { ok: resp.ok, data: data }; }); })
+    }).then(readJsonResponse)
       .then(function(result) {
         if (!result.ok || !result.data || !result.data.ok) {
           var errs = (result.data && result.data.errors) || [];
@@ -1141,9 +1158,15 @@
     btn.disabled = true;
     fetch(urlTrechosEstimar, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrf,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      credentials: 'same-origin',
       body: JSON.stringify({ origem_cidade_id: parseInt(ocid, 10), destino_cidade_id: parseInt(dcid, 10) })
-    }).then(function (r) { return r.json(); }).then(function (data) {
+    }).then(readJsonResponse).then(function (result) {
+      var data = result && result.data;
       btn.disabled = false;
       if (!data || !data.ok) {
         if (err) { err.textContent = (data && data.erro) ? data.erro : 'Não foi possível estimar.'; err.classList.remove('d-none'); }
