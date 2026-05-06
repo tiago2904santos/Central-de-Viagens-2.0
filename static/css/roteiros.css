@@ -281,8 +281,7 @@
 /* Grid de campos */
 .roteiro-editor__grid {
   display: grid;
-  gap: var(--space-4);
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .roteiro-editor__grid.align-items-end {
@@ -719,6 +718,12 @@
   gap: var(--space-3);
 }
 
+.roteiro-editor__destinos-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .roteiro-editor__destination-card.destino-row {
   align-items: stretch;
   background: var(--theme-surface-card);
@@ -792,10 +797,10 @@
 
 .roteiro-editor__icon-btn.btn-remover-destino {
   align-items: center;
-  background: var(--theme-surface-card-soft);
-  border: 1px solid rgba(183, 42, 42, 0.35);
+  background: #c93636;
+  border: 1px solid #b72a2a;
   border-radius: 999px;
-  color: #b72a2a;
+  color: #ffffff;
   display: inline-flex;
   font-size: 18px;
   font-weight: 700;
@@ -807,7 +812,7 @@
 }
 
 .roteiro-editor__icon-btn.btn-remover-destino:disabled {
-  opacity: 0.45;
+  opacity: 0.75;
   pointer-events: none;
 }
 
@@ -865,8 +870,34 @@
   border: 1px solid #dbe4ef;
   border-radius: 14px;
   box-shadow: 0 10px 22px rgba(28, 49, 72, 0.04);
-  gap: 0;
+  gap: 14px;
   padding: 16px 18px 10px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-card-header {
+  color: #1f3650;
+  margin: 0 2px -2px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-card-header .roteiro-editor__nest-title {
+  color: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0 0 4px;
+  text-transform: none;
+}
+
+.roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-card-header .roteiro-editor__nest-desc {
+  color: #5f7791;
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 0;
+  max-width: 68ch;
+}
+
+.roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-list {
+  gap: 0;
 }
 
 .roteiro-editor--avulso .roteiro-editor__destination-card.destino-row {
@@ -876,7 +907,7 @@
   border-radius: 0;
   display: grid;
   gap: 8px;
-  grid-template-columns: 96px minmax(0, 1fr) 200px;
+  grid-template-columns: 150px minmax(0, 1fr) 150px;
   padding: 0;
   margin-bottom: 8px;
 }
@@ -890,11 +921,11 @@
 .roteiro-editor--avulso .roteiro-editor__drag-handle {
   background: #ffffff;
   border: 1px solid #d8e1ec;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   color: #17324d;
   font-size: 0;
   height: 44px;
-  width: 92px;
+  width: 150px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__drag-handle::before {
@@ -906,7 +937,7 @@
 
 .roteiro-editor--avulso .roteiro-editor__destination-fields {
   gap: 8px;
-  grid-template-columns: minmax(180px, 0.34fr) minmax(280px, 0.66fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .roteiro-editor--avulso .roteiro-editor__destination-fields .form-select,
@@ -919,14 +950,15 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__icon-btn.btn-remover-destino {
-  background: #fff6f6;
-  border: 1px solid #f1d7d7;
-  border-radius: 999px;
-  color: #d86a62;
+  background: #c93636;
+  border: 1px solid #b72a2a;
+  border-radius: var(--radius-md);
+  color: #ffffff;
   font-size: 0;
   font-weight: 900;
   height: 44px;
-  min-width: 190px;
+  min-width: 0;
+  width: 150px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__icon-btn.btn-remover-destino::after {
@@ -951,15 +983,15 @@
 
 @media (max-width: 920px) {
   .roteiro-editor--avulso .roteiro-editor__destination-card.destino-row {
-    grid-template-columns: 72px minmax(0, 1fr) 140px;
+    grid-template-columns: 132px minmax(0, 1fr) 132px;
   }
 
   .roteiro-editor--avulso .roteiro-editor__drag-handle {
-    width: 68px;
+    width: 132px;
   }
 
   .roteiro-editor--avulso .roteiro-editor__icon-btn.btn-remover-destino {
-    min-width: 132px;
+    width: 132px;
   }
 }
 
@@ -1526,14 +1558,38 @@
 .roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__diarias {
   background: #ffffff;
   border: 1px solid #dbe4ef;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   box-shadow: 0 8px 20px rgba(28, 49, 72, 0.05);
   margin: 0;
   padding: 16px;
 }
 
 .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid {
+  column-gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 12px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__nest-block--sede .roteiro-editor__sede-card-header {
+  color: #1f3650;
+  grid-column: 1 / -1;
+  margin: 0 2px -2px;
+}
+
+.roteiro-editor--avulso .roteiro-editor__nest-block--sede .roteiro-editor__sede-card-header .roteiro-editor__nest-title {
+  color: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0 0 4px;
+  text-transform: none;
+}
+
+.roteiro-editor--avulso .roteiro-editor__nest-block--sede .roteiro-editor__sede-card-header .roteiro-editor__nest-desc {
+  color: #5f7791;
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 0;
 }
 
 .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid > .field-span-6 {
