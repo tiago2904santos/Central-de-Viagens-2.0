@@ -3,10 +3,10 @@
 .document-card,
 .summary-card,
 .page-card {
-  background: #ffffff;
+  background: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  box-shadow: 0 10px 26px rgba(7, 26, 51, 0.1);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
@@ -67,8 +67,8 @@
 }
 
 .document-meta > div {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 253, 0.92));
-  border: 1px solid rgba(175, 192, 211, 0.45);
+  background: var(--color-card-muted);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 8px 10px;
 }

@@ -11,6 +11,19 @@
  */
 
 :root {
+  --color-card: var(--color-surface);
+  --color-card-muted: var(--color-surface-soft);
+  --color-text-muted: var(--color-muted);
+  --color-text-soft: var(--color-subtle);
+  --shadow-card: var(--shadow-md);
+  --shadow-soft: var(--shadow-sm);
+  --color-surface-strong: var(--color-surface-muted);
+  --color-input-bg: var(--color-surface-soft);
+  --color-input-disabled-bg: var(--color-surface-muted);
+  --color-input-text: var(--color-text);
+  --color-input-placeholder: var(--color-text-soft);
+  --color-input-border: var(--color-border);
+
   /* Aliases estáveis (tokens.css) — não dependem do tema visual featured */
   --color-bg-app: var(--color-bg);
   --color-bg-content: var(--color-bg);
@@ -18,7 +31,7 @@
   --color-bg-card-soft: var(--color-surface-muted);
   --color-text-primary: var(--color-text);
   --color-text-secondary: var(--color-muted);
-  --color-text-muted: var(--color-subtle);
+  --color-text-muted: var(--color-muted);
   --color-border-ui: var(--color-border);
   --color-border-ui-soft: var(--color-border-soft);
 
@@ -119,6 +132,25 @@
 
 /* ========== 1 dark-light — fundo escuro + div clara ========== */
 html[data-theme="dark-light"] {
+  --color-bg: #0f1a29;
+  --color-surface: #ffffff;
+  --color-surface-strong: #f8fafd;
+  --color-surface-soft: #f8fafd;
+  --color-card: #ffffff;
+  --color-card-muted: #f8fafd;
+  --color-border: #cbd8e6;
+  --color-border-strong: #afc0d3;
+  --color-text: #132238;
+  --color-text-muted: #52657a;
+  --color-text-soft: #71839a;
+  --shadow-card: 0 14px 34px rgba(7, 26, 51, 0.16);
+  --shadow-soft: 0 6px 16px rgba(7, 26, 51, 0.1);
+  --color-input-bg: #ffffff;
+  --color-input-disabled-bg: #edf3f9;
+  --color-input-text: #132238;
+  --color-input-placeholder: #71839a;
+  --color-input-border: rgba(31, 76, 125, 0.22);
+
   --app-body-bg:
     radial-gradient(ellipse 70% 50% at 50% 0%, rgba(21, 91, 154, 0.14), transparent 55%),
     linear-gradient(180deg, #0e1928 0%, #081018 100%);
@@ -187,6 +219,25 @@ html[data-theme="dark-light"] {
 
 /* ========== 2 dark-dark — fundo escuro + div escura ========== */
 html[data-theme="dark-dark"] {
+  --color-bg: #0e1928;
+  --color-surface: #1a2638;
+  --color-surface-strong: #142133;
+  --color-surface-soft: #243447;
+  --color-card: #1a2638;
+  --color-card-muted: #243447;
+  --color-border: rgba(255, 255, 255, 0.2);
+  --color-border-strong: rgba(255, 255, 255, 0.3);
+  --color-text: #e8eef5;
+  --color-text-muted: #b8c4d6;
+  --color-text-soft: #97a7bc;
+  --shadow-card: 0 14px 34px rgba(0, 0, 0, 0.38);
+  --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.28);
+  --color-input-bg: rgba(255, 255, 255, 0.08);
+  --color-input-disabled-bg: rgba(0, 0, 0, 0.24);
+  --color-input-text: #f0f4fa;
+  --color-input-placeholder: #b8c4d6;
+  --color-input-border: rgba(255, 255, 255, 0.28);
+
   --app-body-bg:
     radial-gradient(ellipse 70% 50% at 50% 0%, rgba(21, 91, 154, 0.14), transparent 55%),
     linear-gradient(180deg, #0e1928 0%, #081018 100%);
@@ -255,6 +306,25 @@ html[data-theme="dark-dark"] {
 
 /* ========== 3 light-light — fundo claro + div clara ========== */
 html[data-theme="light-light"] {
+  --color-bg: #f2f6fb;
+  --color-surface: #ffffff;
+  --color-surface-strong: #f8fafd;
+  --color-surface-soft: #f8fafd;
+  --color-card: #ffffff;
+  --color-card-muted: #f8fafd;
+  --color-border: #cbd8e6;
+  --color-border-strong: #afc0d3;
+  --color-text: #132238;
+  --color-text-muted: #52657a;
+  --color-text-soft: #71839a;
+  --shadow-card: 0 14px 34px rgba(7, 26, 51, 0.16);
+  --shadow-soft: 0 6px 16px rgba(7, 26, 51, 0.1);
+  --color-input-bg: #ffffff;
+  --color-input-disabled-bg: #edf3f9;
+  --color-input-text: #132238;
+  --color-input-placeholder: #71839a;
+  --color-input-border: rgba(31, 76, 125, 0.22);
+
   --app-body-bg: linear-gradient(180deg, #f8fbff 0%, #eef4fb 48%, #e3ecf6 100%);
   --app-featured-bg-fallback: #d8e4f2;
   --app-featured-bg:
@@ -321,6 +391,25 @@ html[data-theme="light-light"] {
 
 /* ========== 4 light-dark — fundo claro + div escura ========== */
 html[data-theme="light-dark"] {
+  --color-bg: #f2f6fb;
+  --color-surface: #1e2d3f;
+  --color-surface-strong: #182637;
+  --color-surface-soft: #2a3d52;
+  --color-card: #1e2d3f;
+  --color-card-muted: #2a3d52;
+  --color-border: rgba(255, 255, 255, 0.22);
+  --color-border-strong: rgba(255, 255, 255, 0.34);
+  --color-text: #e8eef5;
+  --color-text-muted: #b8c4d6;
+  --color-text-soft: #97a7bc;
+  --shadow-card: 0 14px 34px rgba(7, 26, 51, 0.22);
+  --shadow-soft: 0 10px 26px rgba(7, 26, 51, 0.14);
+  --color-input-bg: rgba(255, 255, 255, 0.08);
+  --color-input-disabled-bg: rgba(0, 0, 0, 0.2);
+  --color-input-text: #f0f4fa;
+  --color-input-placeholder: #b8c4d6;
+  --color-input-border: rgba(255, 255, 255, 0.26);
+
   --app-body-bg: linear-gradient(180deg, #f8fbff 0%, #eef4fb 48%, #e3ecf6 100%);
   --app-featured-bg-fallback: #d8e4f2;
   --app-featured-bg:

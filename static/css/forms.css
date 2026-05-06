@@ -12,10 +12,10 @@
    deve envolver cabeçalho + .form-grid; dois .form-section seguidos para a mesma seção geram faixa vazia. */
 
 .form-section {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 255, 0.96));
-  border: 1px solid rgba(214, 224, 234, 0.9);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-soft);
   padding: var(--space-5);
 }
 
@@ -77,19 +77,20 @@
 }
 
 .form-control {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(243, 249, 254, 0.95));
-  border-color: rgba(31, 76, 125, 0.2);
+  background: var(--color-input-bg);
+  border-color: var(--color-input-border);
   border-radius: 12px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(16, 36, 63, 0.06);
+  box-shadow: var(--shadow-inner);
+  color: var(--color-input-text);
   min-height: 44px;
   width: 100%;
 }
 
 .form-select {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(243, 249, 254, 0.95));
-  border-color: rgba(31, 76, 125, 0.2);
+  background: var(--color-input-bg);
+  border-color: var(--color-input-border);
   border-radius: 12px;
-  color: var(--color-text);
+  color: var(--color-input-text);
   min-height: 44px;
   width: 100%;
 }
@@ -293,9 +294,28 @@
 
 /* RG travado quando "Não possui RG" */
 .field-rg-wrap.field--locked .form-control {
-  background: rgba(227, 234, 242, 0.65);
-  color: var(--color-muted-strong);
+  background: var(--color-input-disabled-bg);
+  color: var(--color-text-muted);
   cursor: not-allowed;
+}
+
+.form-control::placeholder,
+.form-select::placeholder,
+textarea.form-control::placeholder {
+  color: var(--color-input-placeholder);
+  opacity: 1;
+}
+
+.form-control:disabled,
+.form-select:disabled,
+textarea:disabled,
+input[readonly],
+select[readonly],
+textarea[readonly] {
+  background: var(--color-input-disabled-bg);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  opacity: 1;
 }
 
 .field-rg-wrap.field--locked label::after {

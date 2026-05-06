@@ -2,8 +2,8 @@
 
 /* Superfície principal do formulário (página novo roteiro): entre o hero e os cards internos */
 .app-page__shell > .roteiro-form-shell {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(11, 58, 102, 0.12);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 22px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.65) inset,
@@ -1458,10 +1458,10 @@
 .roteiro-editor .form-control,
 .roteiro-editor .form-select,
 .roteiro-editor select {
-  background: var(--theme-input-bg);
-  border-color: var(--theme-input-border);
+  background: var(--color-input-bg);
+  border-color: var(--color-input-border);
   border-radius: var(--radius-sm);
-  color: var(--theme-input-text);
+  color: var(--color-input-text);
 }
 
 .roteiro-editor .form-control:focus,
@@ -1470,6 +1470,25 @@
   border-color: rgba(11, 58, 102, 0.55);
   box-shadow: 0 0 0 3px rgba(21, 91, 154, 0.15);
   outline: none;
+}
+
+.roteiro-editor .form-control::placeholder,
+.roteiro-editor .form-select::placeholder,
+.roteiro-editor textarea::placeholder {
+  color: var(--color-input-placeholder);
+  opacity: 1;
+}
+
+.roteiro-editor input:disabled,
+.roteiro-editor select:disabled,
+.roteiro-editor textarea:disabled,
+.roteiro-editor input[readonly],
+.roteiro-editor select[readonly],
+.roteiro-editor textarea[readonly] {
+  background: var(--color-input-disabled-bg);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  opacity: 1;
 }
 
 /* Roteiro avulso: sections internas com titulo real da etapa. */
@@ -1837,6 +1856,68 @@
   .roteiro-editor--avulso .roteiro-editor__summary-stack {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__section,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__section,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-stack,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--destinos .roteiro-editor__destinos-stack,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__section--bate-volta > .roteiro-editor__panel-surface,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__section--bate-volta > .roteiro-editor__panel-surface,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__diarias,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__section--diarias > .roteiro-editor__diarias,
+html[data-theme="dark-dark"] .roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel,
+html[data-theme="light-dark"] .roteiro-editor--avulso #retorno-card .roteiro-editor__subpanel,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel,
+html[data-theme="light-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .roteiro-editor__subpanel {
+  background: var(--color-card);
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-soft);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__input,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__input,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .oficio-step3-route-item,
+html[data-theme="light-dark"] .roteiro-editor--avulso .oficio-step3-route-item,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__drag-handle,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__drag-handle,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .form-control,
+html[data-theme="light-dark"] .roteiro-editor--avulso .oficio-step3-trecho-card .form-control,
+html[data-theme="dark-dark"] .roteiro-editor--avulso #retorno-card .form-control,
+html[data-theme="light-dark"] .roteiro-editor--avulso #retorno-card .form-control {
+  background: var(--color-input-bg);
+  border-color: var(--color-input-border);
+  color: var(--color-input-text);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__section-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__section-title,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-title,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__routes-panel-title,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .route-title,
+html[data-theme="light-dark"] .roteiro-editor--avulso .route-title {
+  color: var(--color-text);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__section-desc,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__section-desc,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__nest-desc,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__nest-desc,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .route-destinos,
+html[data-theme="light-dark"] .roteiro-editor--avulso .route-destinos,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .route-periodo,
+html[data-theme="light-dark"] .roteiro-editor--avulso .route-periodo,
+html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__helper,
+html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 720px) {
