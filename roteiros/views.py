@@ -8,6 +8,12 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from .forms import RoteiroForm
+from core.autosave import (
+    AutosavePayloadError,
+    autosave_json_response,
+    filter_allowed_fields,
+    parse_autosave_payload,
+)
 from .services.routing.route_exceptions import (
     RouteAuthenticationError,
     RouteConfigurationError,
@@ -47,6 +53,12 @@ from .services import (
     preparar_estado_editor_roteiro_para_get,
     preparar_querysets_formulario_roteiro,
     validar_submissao_editor_roteiro,
+)
+from .services.autosave import (
+    ROTEIRO_AUTOSAVE_FIELDS,
+    apply_roteiro_autosave,
+    build_roteiro_draft,
+    has_minimum_roteiro_content,
 )
 from .services.estimativa_local import ROTA_FONTE_ESTIMATIVA_LOCAL
 from .services.routing.trecho_route_service import calcular_rota_trecho
@@ -441,3 +453,32 @@ def calcular_rota_preview(request):
             },
             status=500,
         )
+
+
+@require_http_methods(["POST"])
+def roteiro_autosave_create(request):
+    try:
+        payload = parse_autosave_payload(request, expected_model="roteiro")
+    except AutosavePayloadError as exc:
+        return autosave_json_response(ok=False, message=str(exc))
+
+    clean_fields = filter_allowed_fields(payload.fields, payload.dirty_fields, ROTEIRO_AUTOSAVE_FIELDS)
+    if not has_minimum_roteiro_content(clean_fields, payload.snapshots):
+        return autosave_json_response(ok=False, message="Conteúdo insuficiente para criar rascunho.")
+
+    roteiro = build_roteiro_draft()
+    version = apply_roteiro_autosave(roteiro, clean_fields, payload.snapshots)
+    return autosave_json_response(ok=True, object_id=roteiro.pk, created=True, version=version)
+
+
+@require_http_methods(["POST"])
+def roteiro_autosave(request, pk):
+    roteiro = get_roteiro_by_id(pk)
+    try:
+        payload = parse_autosave_payload(request, expected_model="roteiro")
+    except AutosavePayloadError as exc:
+        return autosave_json_response(ok=False, message=str(exc))
+
+    clean_fields = filter_allowed_fields(payload.fields, payload.dirty_fields, ROTEIRO_AUTOSAVE_FIELDS)
+    version = apply_roteiro_autosave(roteiro, clean_fields, payload.snapshots)
+    return autosave_json_response(ok=True, object_id=roteiro.pk, created=False, version=version)

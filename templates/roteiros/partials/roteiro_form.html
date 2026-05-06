@@ -12,6 +12,12 @@
       <div class="card-body">
         <section class="card-section">
           <form method="post" id="oficio-step3-form" novalidate class="oficio-stage-form"
+                data-autosave="true"
+                data-autosave-model="roteiro"
+                data-autosave-url="{% if object %}{% url 'roteiros:roteiro-autosave' object.pk %}{% endif %}"
+                data-autosave-create-url="{% url 'roteiros:roteiro-autosave-create' %}"
+                data-autosave-edit-url-template="/roteiros/__ID__/autosave/"
+                data-autosave-object-id="{{ object.pk|default:'' }}"
                 data-api-cidades-url="{{ api_cidades_por_estado_url }}"
                 data-api-diarias-url="{{ api_calcular_diarias_url }}"
                 data-api-calcular-rota-url="{{ api_calcular_rota_url }}"
@@ -20,6 +26,7 @@
                 data-url-trechos-estimar="{% url 'roteiros:trechos_estimar' %}">
             {% csrf_token %}
             <input type="hidden" name="autosave_obj_id" id="id_autosave_obj_id" value="{{ object.pk|default:'' }}">
+            <span class="visually-hidden" id="roteiro-autosave-status" aria-live="polite"></span>
             <input type="hidden" name="tipo_destino" id="id_tipo_destino" value="{{ step3_diarias_resultado.tipo_destino|default:'' }}">
             <input type="hidden" name="quantidade_diarias" id="id_quantidade_diarias" value="{{ step3_diarias_resultado.totais.total_diarias|default:'' }}">
             <input type="hidden" name="valor_diarias" id="id_valor_diarias" value="{{ step3_diarias_resultado.totais.total_valor|default:'' }}">
