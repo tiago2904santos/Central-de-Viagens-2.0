@@ -1787,17 +1787,6 @@
   position: relative;
 }
 
-.roteiro-editor--avulso .roteiro-editor__summary-item--principal::before {
-  background: linear-gradient(180deg, #d7a532 0%, #b68719 100%);
-  border-radius: 14px 14px 0 0;
-  content: "";
-  height: 3px;
-  left: 0;
-  position: absolute;
-  right: 0;
-  top: 0;
-}
-
 .roteiro-editor--avulso .roteiro-editor__summary-item--secondary {
   background: #fbfdff;
   min-height: 92px;
