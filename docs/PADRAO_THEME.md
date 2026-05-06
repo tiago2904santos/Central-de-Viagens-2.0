@@ -39,6 +39,26 @@ Garantir alternancia de tema com persistencia e sem piscar tema incorreto no car
 - Formulario: `--color-input-bg`, `--color-input-border`, `--color-input-text`, `--color-input-placeholder`, `--color-input-disabled-bg`, `--color-input-disabled-text`.
 - Estados: `--color-primary`, `--color-primary-dark`, `--color-accent`, `--color-danger`, `--color-danger-bg`, `--color-danger-text`, `--color-info-bg`, `--color-info-border`, `--color-info-text`.
 
+## Hierarquia de superficies (painel escuro)
+
+Nos temas `dark-dark` e `light-dark`, o objetivo nao e clarear o layout: e separar planos de leitura.
+
+- Plano 1: `--color-bg` (fundo global mais profundo).
+- Plano 2: `--color-shell` (casca da pagina).
+- Plano 3: `--color-surface` / `--color-panel` (secao externa).
+- Plano 4: `--color-card` / `--color-card-soft` (card interno).
+- Plano 5: `--color-input-bg` (camada de controle ativo).
+- Plano 6: `--color-input-bg-disabled` (controle desabilitado/read-only legivel).
+
+Regra de contraste:
+
+- Labels usam `--color-label`.
+- Texto auxiliar usa `--color-help`.
+- Placeholder usa `--color-input-placeholder`.
+- Disabled/read-only usa `--color-input-disabled-text` com `opacity: 1`.
+- Estado vazio/info em painel escuro usa `--color-info-bg` + `--color-info-border` + `--color-info-text` (sem branco chapado).
+- Leaflet pode manter tiles claros, mas container/painel/metricas devem respeitar tokens escuros.
+
 ## Checklist visual por tema
 
 ### light-light

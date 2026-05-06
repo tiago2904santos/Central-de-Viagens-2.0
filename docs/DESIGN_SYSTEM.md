@@ -23,6 +23,14 @@
 - Compatibilidade com legado `--theme-*` deve ser mantida via alias quando necessario (sem quebra abrupta).
 - Cada arquivo CSS deve ser organizado por secoes com comentarios de contexto (shell, secoes, mapa, overrides, responsividade).
 
+## Dark mode bem resolvido
+
+- Tema escuro funcional != tema escuro bem desenhado.
+- Funcional: tudo escuro e legivel no minimo.
+- Bem desenhado: hierarquia entre secoes/cards/inputs, contraste de label/help e estados vazios coerentes.
+- Em painel escuro, evitar blocos brancos de estado vazio; preferir `--color-info-*`.
+- Em inputs disabled/read-only, manter `opacity: 1` e reduzir contraste por token, nao por opacidade global.
+
 ## Padrao visual premium
 
 - Superficies em camadas claras, com bordas suaves e sombra controlada.

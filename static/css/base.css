@@ -85,8 +85,8 @@ textarea:disabled,
 input[readonly],
 select[readonly],
 textarea[readonly] {
-  background: var(--color-input-disabled-bg, var(--color-surface-muted));
+  background: var(--color-input-bg-disabled, var(--color-input-disabled-bg, var(--color-surface-muted)));
   border-color: var(--color-border);
-  color: var(--color-text-muted, var(--color-muted));
+  color: var(--color-input-disabled-text, var(--color-text-muted, var(--color-muted)));
   opacity: 1;
 }

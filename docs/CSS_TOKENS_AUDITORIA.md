@@ -47,3 +47,14 @@
 - Sombra repetida deve virar token (`--shadow-*`).
 - Transição repetida deve virar token (`--transition-*`).
 - CSS deve ser organizado por seções com comentários de intenção.
+
+## Ajuste visual de temas escuros (fase de refino)
+
+- Causa do problema visual: camadas escuras com luminancia muito proxima (`surface/card/input`) e texto auxiliar abaixo do contraste ideal.
+- Acao aplicada: hierarquia de superficie reforcada em `dark-dark` e `light-dark` via `--color-surface-*`, `--color-card-*`, `--color-panel-*`, `--color-input-*`.
+- Contraste aplicado:
+  - labels -> `--color-label`
+  - help/hint -> `--color-help`
+  - disabled/read-only -> `--color-input-disabled-text` com `opacity: 1`
+- Estados vazios e info em painel escuro migrados para `--color-info-bg`, `--color-info-border`, `--color-info-text`.
+- Leaflet mantido claro (tiles), com emolduramento escuro coerente no container e metricas.

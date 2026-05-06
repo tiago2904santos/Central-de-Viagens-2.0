@@ -39,7 +39,7 @@
 
 .form-section-header p,
 .field-help {
-  color: var(--color-muted);
+  color: var(--color-help);
   font-size: var(--font-size-sm);
   margin-bottom: 0;
 }
@@ -80,7 +80,7 @@
 }
 
 .field label {
-  color: var(--color-muted-strong);
+  color: var(--color-label);
   font-size: var(--font-size-sm);
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -317,7 +317,7 @@
 /* RG travado quando "Não possui RG" */
 .field-rg-wrap.field--locked .form-control {
   background: var(--color-input-disabled-bg);
-  color: var(--color-text-muted);
+  color: var(--color-input-disabled-text);
   cursor: not-allowed;
 }
 
@@ -336,7 +336,7 @@ select[readonly],
 textarea[readonly] {
   background: var(--color-input-disabled-bg);
   border-color: var(--color-border);
-  color: var(--color-text-muted);
+  color: var(--color-input-disabled-text);
   opacity: 1;
 }
 

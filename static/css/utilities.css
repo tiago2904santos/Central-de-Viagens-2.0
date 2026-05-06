@@ -67,7 +67,7 @@
 
 .alert-error,
 .alert-danger {
-  background: var(--color-danger-soft);
+  background: var(--color-danger-bg);
   border-color: rgba(180, 35, 24, 0.32);
   color: var(--color-danger-text);
 }
@@ -88,8 +88,8 @@
 }
 
 .alert-info {
-  background: var(--color-info-soft);
-  border-color: rgba(37, 99, 168, 0.32);
+  background: var(--color-info-bg);
+  border-color: var(--color-info-border);
   color: var(--color-info-text);
 }
 

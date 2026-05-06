@@ -34,8 +34,10 @@
   --color-surface-strong: var(--color-surface-muted);
   --color-input-bg: var(--color-surface-soft);
   --color-input-disabled-bg: var(--color-surface-muted);
+  --color-input-bg-disabled: var(--color-input-disabled-bg);
   --color-input-text: var(--color-text);
   --color-input-placeholder: var(--color-text-soft);
+  --color-input-disabled-text: var(--color-text-muted);
   --color-input-border: var(--color-border);
   --color-primary-dark: var(--color-primary-strong);
 
@@ -236,24 +238,40 @@ html[data-theme="dark-light"] {
 
 /* ========== 2 dark-dark — fundo escuro + div escura ========== */
 html[data-theme="dark-dark"] {
-  --color-bg: #0e1928;
+  --color-bg: #091321;
+  --color-shell: #0e1928;
   --color-surface: #1a2638;
-  --color-surface-strong: #142133;
-  --color-surface-soft: #243447;
-  --color-card: #1a2638;
-  --color-card-muted: #243447;
-  --color-border: rgba(255, 255, 255, 0.2);
-  --color-border-strong: rgba(255, 255, 255, 0.3);
-  --color-text: #e8eef5;
-  --color-text-muted: #b8c4d6;
-  --color-text-soft: #97a7bc;
+  --color-surface-soft: #223348;
+  --color-surface-muted: #172638;
+  --color-surface-strong: #111e2f;
+  --color-card: #1b2a3d;
+  --color-card-soft: #24384e;
+  --color-card-muted: #213246;
+  --color-panel: #162435;
+  --color-panel-strong: #101b2b;
+  --color-border: rgba(191, 211, 234, 0.28);
+  --color-border-soft: rgba(191, 211, 234, 0.2);
+  --color-border-strong: rgba(214, 227, 244, 0.38);
+  --color-text: #edf4ff;
+  --color-heading: #f7fbff;
+  --color-label: #d3dfef;
+  --color-help: #bdcce0;
+  --color-text-muted: #c4d1e3;
+  --color-text-soft: #a7b8ce;
   --shadow-card: 0 14px 34px rgba(0, 0, 0, 0.38);
   --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.28);
-  --color-input-bg: rgba(255, 255, 255, 0.08);
-  --color-input-disabled-bg: rgba(0, 0, 0, 0.24);
-  --color-input-text: #f0f4fa;
-  --color-input-placeholder: #b8c4d6;
-  --color-input-border: rgba(255, 255, 255, 0.28);
+  --color-input-bg: #24384d;
+  --color-input-disabled-bg: #152233;
+  --color-input-bg-disabled: #152233;
+  --color-input-text: #f2f7ff;
+  --color-input-placeholder: #b7c7dc;
+  --color-input-disabled-text: #9fb1c8;
+  --color-input-border: rgba(197, 213, 233, 0.34);
+  --color-danger-bg: rgba(180, 35, 24, 0.22);
+  --color-danger-text: #ffc8c2;
+  --color-info-bg: rgba(40, 96, 148, 0.24);
+  --color-info-border: rgba(116, 170, 224, 0.45);
+  --color-info-text: #d7eaff;
 
   --app-body-bg:
     radial-gradient(ellipse 70% 50% at 50% 0%, rgba(21, 91, 154, 0.14), transparent 55%),
@@ -274,9 +292,9 @@ html[data-theme="dark-dark"] {
     rgba(60, 120, 180, 0.75) 100%
   );
 
-  --theme-surface-card: #1a2638;
-  --theme-surface-card-soft: #243447;
-  --theme-border-card: rgba(255, 255, 255, 0.12);
+  --theme-surface-card: var(--color-card);
+  --theme-surface-card-soft: var(--color-card-soft);
+  --theme-border-card: var(--color-border-soft);
   --theme-text-heading: #f4f7fc;
   --theme-text-body: #e8eef5;
   --theme-text-muted: #a8b8cc;
@@ -294,9 +312,9 @@ html[data-theme="dark-dark"] {
   --theme-shadow-hero: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 12px 36px rgba(0, 0, 0, 0.45), 0 4px 14px rgba(0, 0, 0, 0.28);
   --theme-shadow-block: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 14px 34px rgba(0, 0, 0, 0.38);
   --theme-shadow-stat: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 22px rgba(0, 0, 0, 0.32);
-  --theme-input-bg: rgba(255, 255, 255, 0.08);
-  --theme-input-border: rgba(255, 255, 255, 0.22);
-  --theme-input-text: #f0f4fa;
+  --theme-input-bg: var(--color-input-bg);
+  --theme-input-border: var(--color-input-border);
+  --theme-input-text: var(--color-input-text);
   --theme-list-row-hover: rgba(255, 255, 255, 0.06);
   --theme-list-border: rgba(255, 255, 255, 0.1);
   --theme-btn-secondary-bg: rgba(255, 255, 255, 0.1);
@@ -309,10 +327,10 @@ html[data-theme="dark-dark"] {
   --theme-btn-muted-text: #f0f6ff;
   --theme-btn-muted-hover-bg: rgba(255, 255, 255, 0.18);
   --theme-btn-muted-hover-border: rgba(255, 255, 255, 0.45);
-  --theme-form-section-bg: rgba(0, 0, 0, 0.2);
-  --theme-form-section-border: rgba(255, 255, 255, 0.12);
-  --theme-empty-bg: linear-gradient(180deg, rgba(30, 42, 58, 0.96), rgba(36, 52, 71, 0.94));
-  --theme-empty-border: rgba(255, 255, 255, 0.22);
+  --theme-form-section-bg: rgba(17, 32, 50, 0.82);
+  --theme-form-section-border: rgba(181, 201, 225, 0.22);
+  --theme-empty-bg: linear-gradient(180deg, rgba(24, 41, 60, 0.96), rgba(29, 47, 67, 0.96));
+  --theme-empty-border: rgba(124, 166, 210, 0.42);
   --theme-quick-icon-bg: linear-gradient(165deg, rgba(216, 162, 27, 0.22), rgba(185, 135, 18, 0.28));
   --theme-quick-icon-border: rgba(216, 162, 27, 0.45);
   --theme-quick-icon-fg: #e8f4ff;
@@ -409,23 +427,39 @@ html[data-theme="light-light"] {
 /* ========== 4 light-dark — fundo claro + div escura ========== */
 html[data-theme="light-dark"] {
   --color-bg: #f2f6fb;
+  --color-shell: #eef3fb;
   --color-surface: #1e2d3f;
-  --color-surface-strong: #182637;
-  --color-surface-soft: #2a3d52;
-  --color-card: #1e2d3f;
-  --color-card-muted: #2a3d52;
-  --color-border: rgba(255, 255, 255, 0.22);
-  --color-border-strong: rgba(255, 255, 255, 0.34);
-  --color-text: #e8eef5;
-  --color-text-muted: #b8c4d6;
-  --color-text-soft: #97a7bc;
+  --color-surface-soft: #273a50;
+  --color-surface-muted: #1a2a3d;
+  --color-surface-strong: #162436;
+  --color-card: #1f2f42;
+  --color-card-soft: #2a3f56;
+  --color-card-muted: #24384d;
+  --color-panel: #1a2a3d;
+  --color-panel-strong: #142234;
+  --color-border: rgba(203, 221, 243, 0.28);
+  --color-border-soft: rgba(203, 221, 243, 0.2);
+  --color-border-strong: rgba(220, 232, 246, 0.4);
+  --color-text: #ecf3ff;
+  --color-heading: #f8fbff;
+  --color-label: #d4e1f2;
+  --color-help: #bdcde2;
+  --color-text-muted: #c3d1e3;
+  --color-text-soft: #a6b9d0;
   --shadow-card: 0 14px 34px rgba(7, 26, 51, 0.22);
   --shadow-soft: 0 10px 26px rgba(7, 26, 51, 0.14);
-  --color-input-bg: rgba(255, 255, 255, 0.08);
-  --color-input-disabled-bg: rgba(0, 0, 0, 0.2);
-  --color-input-text: #f0f4fa;
-  --color-input-placeholder: #b8c4d6;
-  --color-input-border: rgba(255, 255, 255, 0.26);
+  --color-input-bg: #273d53;
+  --color-input-disabled-bg: #18283b;
+  --color-input-bg-disabled: #18283b;
+  --color-input-text: #f2f7ff;
+  --color-input-placeholder: #b8c9df;
+  --color-input-disabled-text: #a0b3ca;
+  --color-input-border: rgba(200, 217, 238, 0.34);
+  --color-danger-bg: rgba(180, 35, 24, 0.2);
+  --color-danger-text: #ffc8c2;
+  --color-info-bg: rgba(40, 96, 148, 0.22);
+  --color-info-border: rgba(116, 170, 224, 0.42);
+  --color-info-text: #d8ebff;
 
   --app-body-bg: linear-gradient(180deg, #f8fbff 0%, #eef4fb 48%, #e3ecf6 100%);
   --app-featured-bg-fallback: #d8e4f2;
@@ -444,9 +478,9 @@ html[data-theme="light-dark"] {
     rgba(35, 85, 130, 0.82) 100%
   );
 
-  --theme-surface-card: #1e2d3f;
-  --theme-surface-card-soft: #2a3d52;
-  --theme-border-card: rgba(255, 255, 255, 0.14);
+  --theme-surface-card: var(--color-card);
+  --theme-surface-card-soft: var(--color-card-soft);
+  --theme-border-card: var(--color-border-soft);
   --theme-text-heading: #f4f7fc;
   --theme-text-body: #e8eef5;
   --theme-text-muted: #a8b8cc;
@@ -464,9 +498,9 @@ html[data-theme="light-dark"] {
   --theme-shadow-hero: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 16px 40px rgba(7, 26, 51, 0.22), 0 6px 16px rgba(7, 26, 51, 0.14);
   --theme-shadow-block: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 14px 34px rgba(7, 26, 51, 0.18);
   --theme-shadow-stat: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 26px rgba(7, 26, 51, 0.14);
-  --theme-input-bg: rgba(255, 255, 255, 0.08);
-  --theme-input-border: rgba(255, 255, 255, 0.22);
-  --theme-input-text: #f0f4fa;
+  --theme-input-bg: var(--color-input-bg);
+  --theme-input-border: var(--color-input-border);
+  --theme-input-text: var(--color-input-text);
   --theme-list-row-hover: rgba(255, 255, 255, 0.06);
   --theme-list-border: rgba(255, 255, 255, 0.1);
   --theme-btn-secondary-bg: rgba(255, 255, 255, 0.1);
@@ -479,10 +513,10 @@ html[data-theme="light-dark"] {
   --theme-btn-muted-text: #f0f6ff;
   --theme-btn-muted-hover-bg: rgba(255, 255, 255, 0.18);
   --theme-btn-muted-hover-border: rgba(255, 255, 255, 0.45);
-  --theme-form-section-bg: rgba(0, 0, 0, 0.18);
-  --theme-form-section-border: rgba(255, 255, 255, 0.12);
-  --theme-empty-bg: linear-gradient(180deg, rgba(32, 46, 64, 0.97), rgba(42, 61, 82, 0.95));
-  --theme-empty-border: rgba(255, 255, 255, 0.24);
+  --theme-form-section-bg: rgba(20, 35, 53, 0.82);
+  --theme-form-section-border: rgba(181, 201, 225, 0.22);
+  --theme-empty-bg: linear-gradient(180deg, rgba(25, 44, 64, 0.96), rgba(31, 52, 74, 0.96));
+  --theme-empty-border: rgba(124, 166, 210, 0.4);
   --theme-quick-icon-bg: linear-gradient(165deg, rgba(216, 162, 27, 0.22), rgba(185, 135, 18, 0.28));
   --theme-quick-icon-border: rgba(216, 162, 27, 0.45);
   --theme-quick-icon-fg: #e8f4ff;
