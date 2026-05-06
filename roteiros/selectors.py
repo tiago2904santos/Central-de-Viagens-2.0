@@ -2,7 +2,7 @@ from django.db.models import Count
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
-from cadastros.models import Cidade
+from cadastros.models import Cidade, Estado
 
 from .models import Roteiro
 from .models import RoteiroTrecho
@@ -71,5 +71,39 @@ def get_trecho_by_id(pk):
     )
 
 
-def listar_cidades_para_select(estado_id):
-    return Cidade.objects.filter(estado_id=estado_id).order_by("nome")
+def listar_estados_para_select():
+    return Estado.objects.order_by("nome")
+
+
+def listar_cidades_para_select(estado_id=None, q=None):
+    if not estado_id:
+        return Cidade.objects.none()
+    qs = Cidade.objects.filter(estado_id=estado_id).select_related("estado").order_by("nome")
+    if q and str(q).strip():
+        qs = qs.filter(nome__icontains=q.strip())
+    return qs
+
+
+def queryset_roteiros_avulsos_para_mapa_rotas(limit=50):
+    """Roteiros avulsos com relacionamentos para duplicar estado no editor (mesmo limite do legacy)."""
+    return (
+        Roteiro.objects.filter(tipo=Roteiro.TIPO_AVULSO)
+        .select_related("origem_cidade", "origem_estado")
+        .prefetch_related(
+            "destinos",
+            "destinos__estado",
+            "destinos__cidade",
+            "trechos",
+            "trechos__origem_estado",
+            "trechos__origem_cidade",
+            "trechos__destino_estado",
+            "trechos__destino_cidade",
+        )
+        .order_by("-pk")[:limit]
+    )
+
+
+def obter_cidades_origem_destino_estimativa(origem_id, destino_id):
+    origem = Cidade.objects.filter(pk=origem_id).select_related("estado").first()
+    destino = Cidade.objects.filter(pk=destino_id).select_related("estado").first()
+    return origem, destino

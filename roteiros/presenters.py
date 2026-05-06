@@ -1,5 +1,7 @@
 from django.urls import reverse
 
+from . import roteiro_logic
+
 
 def _label_cidade_uf(cidade, estado):
     if cidade:
@@ -32,10 +34,11 @@ def _periodo_resumo(roteiro):
 
 def apresentar_roteiro_card(roteiro):
     origem_txt = _label_cidade_uf(roteiro.origem_cidade, roteiro.origem_estado)
-    destinos = list(roteiro.destinos.all()[:3]) if roteiro.pk else []
+    destinos_todos = list(roteiro.destinos.all()) if roteiro.pk else []
+    destinos = destinos_todos[:3]
     if destinos:
         destino_txt = ", ".join(_label_cidade_uf(d.cidade, d.estado) for d in destinos)
-        if roteiro.destinos.count() > 3:
+        if len(destinos_todos) > 3:
             destino_txt += "…"
     else:
         destino_txt = "—"
@@ -70,4 +73,46 @@ def apresentar_roteiro_card(roteiro):
             {"label": "Editar", "href": edit_url, "variant": "secondary"},
             {"label": "Excluir", "href": delete_url, "variant": "danger"},
         ],
+    }
+
+
+def apresentar_contexto_formulario_roteiro_avulso(
+    *,
+    evento,
+    form,
+    obj,
+    destinos_atuais,
+    trechos_list,
+    step3_state,
+    route_options,
+):
+    """Contexto do wizard de roteiro avulso (dict para template); sem HTML."""
+    return roteiro_logic._build_roteiro_form_context(
+        evento=evento,
+        form=form,
+        obj=obj,
+        destinos_atuais=destinos_atuais,
+        trechos_list=trechos_list,
+        is_avulso=True,
+        step3_state=step3_state,
+        route_options=route_options,
+    )
+
+
+def apresentar_pagina_detalhe_roteiro(roteiro, trechos):
+    pk = roteiro.pk
+    destinos = list(roteiro.destinos.all())
+    destinos_detalhe = [
+        {"ordem": idx + 1, "label": _label_cidade_uf(d.cidade, d.estado)}
+        for idx, d in enumerate(destinos)
+    ]
+    return {
+        "page_title": f"Roteiro #{pk}",
+        "page_description": "Resumo do roteiro, trechos e diárias calculadas.",
+        "roteiro": roteiro,
+        "trechos": trechos,
+        "destinos_detalhe": destinos_detalhe,
+        "edit_url": reverse("roteiros:editar", args=[pk]),
+        "delete_url": reverse("roteiros:excluir", args=[pk]),
+        "back_url": reverse("roteiros:index"),
     }

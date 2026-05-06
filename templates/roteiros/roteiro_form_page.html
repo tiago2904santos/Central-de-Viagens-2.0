@@ -2,10 +2,16 @@
 {% load static %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/domain.css' %}">
 <link rel="stylesheet" href="{% static 'css/roteiros.css' %}">
 {% endblock %}
 
 {% block title %}{% if object %}Editar roteiro{% else %}Novo roteiro{% endif %}{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/roteiros_wizard.js' %}"></script>
+<script src="{% static 'js/roteiros.js' %}"></script>
+{% endblock %}
 
 {% block content %}
   <div class="app-page">

@@ -95,7 +95,7 @@ O presenter `apresentar_roteiro_card` entrega `title`, `subtitle`, `meta` e `act
 
 ### Componentes de dominio
 
-Blocos reutilizaveis de dominio ficam em `templates/components/domain/` e devem ser usados por Roteiros e futuros modulos:
+Blocos reutilizaveis de dominio ficam em `templates/components/domain/`, estilos compartilhados em `static/css/domain.css`, e devem ser usados por Roteiros (**referencia**) e futuros modulos. Contrato, parametros e limites: `docs/COMPONENTES_DOMINIO.md`.
 
 - `sede_destinos.html`
 - `destinos.html`

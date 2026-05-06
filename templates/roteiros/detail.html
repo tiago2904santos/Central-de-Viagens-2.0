@@ -1,4 +1,8 @@
 {% extends "base.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/domain.css' %}">
+{% endblock %}
 {% block title %}{{ page_title }}{% endblock %}
 {% block content %}
   <div class="app-page">
@@ -33,10 +37,10 @@
 
         <div class="form-section">
           {% include "components/forms/form_section.html" with title="Destinos (ordem)" only %}
-          {% if roteiro.destinos.exists %}
+          {% if destinos_detalhe %}
             <ol class="roteiro-steps">
-              {% for d in roteiro.destinos.all %}
-                <li>{{ forloop.counter }}. {{ d.cidade }} / {{ d.estado.sigla }}</li>
+              {% for d in destinos_detalhe %}
+                <li>{{ d.ordem }}. {{ d.label }}</li>
               {% endfor %}
             </ol>
           {% else %}

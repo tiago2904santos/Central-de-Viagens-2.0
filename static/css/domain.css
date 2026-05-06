@@ -1,15 +1,77 @@
-.domain-block {}
-.domain-block__header {}
-.domain-block__title {}
-.domain-block__description {}
-.domain-grid {}
-.destination-panel {}
-.destination-list {}
-.destination-item {}
-.route-section {}
-.route-card {}
-.route-card__meta {}
-.route-card__actions {}
-.calculator-panel {}
-.return-panel {}
-.route-summary {}
+/**
+ * Blocos de dominio reutilizaveis (destinos, trechos, retorno, calculadora, resumo).
+ * Incluir junto com o CSS da pagina quando usar templates em components/domain/.
+ * Estilos finos do editor avulso continuam em roteiros.css; aqui ficam tokens e aliases semanticos.
+ */
+
+.domain-block {
+  margin-block-end: 1.25rem;
+}
+
+.domain-block__header {
+  margin-block-end: 0.5rem;
+}
+
+.domain-block__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.domain-block__description {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--app-muted, #5b748d);
+}
+
+.domain-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .domain-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.destination-panel,
+.destination-list,
+.destination-item {
+  /* Herdam layout do roteiro-editor / Bootstrap dentro do form; classe para contrato semantico. */
+}
+
+.route-section {
+  margin-block: 1rem;
+}
+
+.route-card {
+  border-radius: var(--app-radius-md, 10px);
+  border: 1px solid var(--app-border, #dce8f3);
+  padding: 0.75rem 1rem;
+  background: var(--app-surface, #fff);
+}
+
+.route-card__meta {
+  font-size: 0.875rem;
+  color: var(--app-muted, #5b748d);
+}
+
+.route-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.calculator-panel,
+.return-panel {
+  /* Superficies do wizard usam roteiro-editor__section; estas classes marcam o bloco no DOM. */
+}
+
+.route-summary {
+  /* Conteudo interno: .roteiro-detail__grid (app-page.css) ate migrarmos grid para ca. */
+}
+
+.route-summary[data-route-summary] {
+  scroll-margin-top: 0.5rem;
+}

@@ -1,20 +1,37 @@
 import json
-from types import SimpleNamespace
 
 from django.contrib import messages
-from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
-
-from cadastros.models import Cidade, ConfiguracaoSistema, Estado
 
 from .forms import RoteiroForm
 from .models import Roteiro
 from . import roteiro_logic
-from .presenters import apresentar_roteiro_card
-from .selectors import get_roteiro_by_id, listar_roteiros, listar_trechos_do_roteiro
+from .presenters import (
+    apresentar_contexto_formulario_roteiro_avulso,
+    apresentar_pagina_detalhe_roteiro,
+    apresentar_roteiro_card,
+)
+from .selectors import (
+    get_roteiro_by_id,
+    listar_cidades_para_select,
+    listar_roteiros,
+    listar_trechos_do_roteiro,
+    obter_cidades_origem_destino_estimativa,
+)
+from .services import (
+    atualizar_roteiro,
+    carregar_opcoes_rotas_avulsas_salvas,
+    criar_roteiro,
+    excluir_roteiro,
+    normalizar_destinos_e_trechos_apos_erro_post,
+    obter_initial_roteiro,
+    preparar_estado_editor_roteiro_para_get,
+    preparar_querysets_formulario_roteiro,
+    validar_submissao_editor_roteiro,
+)
 from .services.estimativa_local import ROTA_FONTE_ESTIMATIVA_LOCAL, estimar_distancia_duracao
 
 
@@ -36,73 +53,40 @@ def index(request):
 
 
 def novo(request):
-    initial = {}
-    config = ConfiguracaoSistema.get_singleton()
-    if getattr(config, "cidade_sede_padrao", None):
-        initial["origem_cidade"] = config.cidade_sede_padrao_id
-        if config.cidade_sede_padrao.estado_id:
-            initial["origem_estado"] = config.cidade_sede_padrao.estado_id
+    initial = obter_initial_roteiro()
     form = RoteiroForm(request.POST or None, initial=initial)
     form.instance.tipo = Roteiro.TIPO_AVULSO
     if request.method != "POST" and initial:
         form.instance.origem_cidade_id = initial.get("origem_cidade")
         form.instance.origem_estado_id = initial.get("origem_estado")
-    roteiro_logic._setup_roteiro_querysets(form, request, None)
-    route_options, route_state_map = roteiro_logic._build_roteiro_avulso_route_options()
-    destinos_atuais = [
-        {"estado_id": None, "cidade_id": None, "cidade": None, "estado": None}
-    ]
-    trechos_list = []
+
+    preparar_querysets_formulario_roteiro(
+        form, method=request.method, post=request.POST, instance=None
+    )
+    route_options, route_state_map = carregar_opcoes_rotas_avulsas_salvas()
+
     if request.method == "POST":
-        step3_state = roteiro_logic._build_avulso_step3_state_from_post(
-            request, route_state_map=route_state_map
+        step3_state, validated, diarias_resultado = validar_submissao_editor_roteiro(
+            request.POST, route_state_map, roteiro=None
         )
-        fake = SimpleNamespace(evento_id=None, roteiro_evento_id=None, evento=None)
-        validated = roteiro_logic._validate_step3_state(step3_state, oficio=fake)
-        _, _, _, diarias_resultado = roteiro_logic._build_roteiro_diarias_from_request(request)
         if form.is_valid() and validated["ok"]:
-            roteiro = form.save(commit=False)
-            roteiro.tipo = Roteiro.TIPO_AVULSO
-            roteiro.origem_estado = validated.get("sede_estado")
-            roteiro.origem_cidade = validated.get("sede_cidade")
-            roteiro.save()
-            roteiro_logic._salvar_roteiro_avulso_from_step3_state(
-                roteiro, step3_state, validated, diarias_resultado=diarias_resultado
-            )
+            roteiro = criar_roteiro(form, step3_state, validated, diarias_resultado)
             messages.success(request, "Roteiro cadastrado com sucesso.")
             return redirect("roteiros:detalhe", pk=roteiro.pk)
         for error in validated.get("errors", []):
             form.add_error(None, error)
-        destinos_atuais = [
-            {
-                "estado_id": item.get("estado_id"),
-                "cidade_id": item.get("cidade_id"),
-                "cidade": None,
-                "estado": None,
-            }
-            for item in (step3_state.get("destinos_atuais") or [])
-        ]
-        if not destinos_atuais:
-            destinos_atuais = [
-                {"estado_id": None, "cidade_id": None, "cidade": None, "estado": None}
-            ]
-        trechos_list = step3_state.get("trechos", [])
+        destinos_atuais, trechos_list = normalizar_destinos_e_trechos_apos_erro_post(step3_state)
     else:
-        step3_state = roteiro_logic._build_step3_state_from_estrutura(
-            trechos_list,
-            [{"estado_id": None, "cidade_id": None}],
-            initial.get("origem_estado"),
-            initial.get("origem_cidade"),
-            "",
+        destinos_atuais, trechos_list, step3_state = preparar_estado_editor_roteiro_para_get(
+            initial=initial
         )
-        step3_state["roteiro_modo"] = "ROTEIRO_PROPRIO"
-    context = roteiro_logic._build_roteiro_form_context(
+
+    context = apresentar_contexto_formulario_roteiro_avulso(
         evento=None,
         form=form,
         obj=None,
         destinos_atuais=destinos_atuais,
         trechos_list=trechos_list,
-        is_avulso=True,
         step3_state=step3_state,
         route_options=route_options,
     )
@@ -124,94 +108,41 @@ def detalhe(request, pk):
     return render(
         request,
         "roteiros/detail.html",
-        {
-            "page_title": f"Roteiro #{roteiro.pk}",
-            "page_description": "Resumo do roteiro, trechos e diárias calculadas.",
-            "roteiro": roteiro,
-            "trechos": trechos,
-            "edit_url": reverse("roteiros:editar", args=[roteiro.pk]),
-            "delete_url": reverse("roteiros:excluir", args=[roteiro.pk]),
-            "back_url": reverse("roteiros:index"),
-        },
+        apresentar_pagina_detalhe_roteiro(roteiro, trechos),
     )
 
 
 def editar(request, pk):
-    roteiro = get_object_or_404(
-        Roteiro.objects.prefetch_related(
-            "destinos",
-            "destinos__estado",
-            "destinos__cidade",
-            "trechos",
-            "trechos__origem_estado",
-            "trechos__origem_cidade",
-            "trechos__destino_estado",
-            "trechos__destino_cidade",
-        ).select_related("origem_estado", "origem_cidade"),
-        pk=pk,
-    )
+    roteiro = get_roteiro_by_id(pk)
     form = RoteiroForm(request.POST or None, instance=roteiro)
-    roteiro_logic._setup_roteiro_querysets(form, request, roteiro)
-    route_options, route_state_map = roteiro_logic._build_roteiro_avulso_route_options()
+
+    preparar_querysets_formulario_roteiro(
+        form, method=request.method, post=request.POST, instance=roteiro
+    )
+    route_options, route_state_map = carregar_opcoes_rotas_avulsas_salvas()
+
     if request.method == "POST":
-        step3_state = roteiro_logic._build_avulso_step3_state_from_post(
-            request, route_state_map=route_state_map
-        )
-        fake = SimpleNamespace(evento_id=None, roteiro_evento_id=None, evento=None)
-        validated = roteiro_logic._validate_step3_state(step3_state, oficio=fake)
-        _, _, _, diarias_resultado = roteiro_logic._build_roteiro_diarias_from_request(
-            request, roteiro=roteiro
+        step3_state, validated, diarias_resultado = validar_submissao_editor_roteiro(
+            request.POST, route_state_map, roteiro=roteiro
         )
         if form.is_valid() and validated["ok"]:
-            roteiro_salvo = form.save(commit=False)
-            roteiro_salvo.tipo = roteiro.tipo or Roteiro.TIPO_AVULSO
-            roteiro_salvo.origem_estado = validated.get("sede_estado")
-            roteiro_salvo.origem_cidade = validated.get("sede_cidade")
-            roteiro_salvo.save()
-            roteiro_logic._salvar_roteiro_avulso_from_step3_state(
-                roteiro_salvo, step3_state, validated, diarias_resultado=diarias_resultado
-            )
+            atualizar_roteiro(roteiro, form, step3_state, validated, diarias_resultado)
             messages.success(request, "Roteiro atualizado com sucesso.")
             return redirect("roteiros:detalhe", pk=roteiro.pk)
         for error in validated.get("errors", []):
             form.add_error(None, error)
-        destinos_atuais = [
-            {
-                "estado_id": item.get("estado_id"),
-                "cidade_id": item.get("cidade_id"),
-                "cidade": None,
-                "estado": None,
-            }
-            for item in (step3_state.get("destinos_atuais") or [])
-        ]
-        if not destinos_atuais:
-            destinos_atuais = [
-                {"estado_id": None, "cidade_id": None, "cidade": None, "estado": None}
-            ]
-        trechos_list = step3_state.get("trechos", [])
+        destinos_atuais, trechos_list = normalizar_destinos_e_trechos_apos_erro_post(step3_state)
     else:
-        destinos_atuais = roteiro_logic._destinos_roteiro_para_template(roteiro)
-        if not destinos_atuais:
-            destinos_atuais = [
-                {"estado_id": None, "cidade_id": None, "cidade": None, "estado": None}
-            ]
-        destinos_list = [
-            (d.get("estado_id"), d.get("cidade_id"))
-            for d in destinos_atuais
-            if d.get("estado_id") and d.get("cidade_id")
-        ]
-        trechos_list = (
-            roteiro_logic._estrutura_trechos(roteiro, destinos_list) if destinos_list else []
+        destinos_atuais, trechos_list, step3_state = preparar_estado_editor_roteiro_para_get(
+            roteiro=roteiro
         )
-        step3_state = roteiro_logic._build_step3_state_from_roteiro_evento(roteiro)
-        step3_state["roteiro_modo"] = "ROTEIRO_PROPRIO"
-    context = roteiro_logic._build_roteiro_form_context(
+
+    context = apresentar_contexto_formulario_roteiro_avulso(
         evento=None,
         form=form,
         obj=roteiro,
         destinos_atuais=destinos_atuais,
         trechos_list=trechos_list,
-        is_avulso=True,
         step3_state=step3_state,
         route_options=route_options,
     )
@@ -231,9 +162,7 @@ def editar(request, pk):
 def excluir(request, pk):
     roteiro = get_roteiro_by_id(pk)
     if request.method == "POST":
-        try:
-            roteiro.delete()
-        except ProtectedError:
+        if not excluir_roteiro(roteiro):
             messages.error(request, "Este roteiro possui vínculos e não pode ser excluído.")
             return redirect("roteiros:detalhe", pk=roteiro.pk)
         messages.success(request, "Roteiro excluído com sucesso.")
@@ -252,7 +181,8 @@ def excluir(request, pk):
 
 
 def api_cidades_por_estado(request, estado_id):
-    cidades = Cidade.objects.filter(estado_id=estado_id).order_by("nome")
+    q = request.GET.get("q", "").strip()
+    cidades = listar_cidades_para_select(estado_id=estado_id, q=q or None)
     payload = [{"id": c.pk, "nome": str(c.nome)} for c in cidades]
     return JsonResponse(payload, safe=False)
 
@@ -300,8 +230,7 @@ def trechos_estimar(request):
                 "erro": "Informe origem_cidade_id e destino_cidade_id.",
             }
         )
-    origem = Cidade.objects.filter(pk=origem_id).select_related("estado").first()
-    destino = Cidade.objects.filter(pk=destino_id).select_related("estado").first()
+    origem, destino = obter_cidades_origem_destino_estimativa(origem_id, destino_id)
     if not origem or not destino:
         return JsonResponse(
             {

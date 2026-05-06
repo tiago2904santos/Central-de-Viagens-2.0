@@ -6,13 +6,13 @@ No app `cadastros`, o padrao CRUD esta consolidado para `Unidade`, `Cargo`, `Com
 
 `Motorista` nao e entidade de cadastro.
 
-O app `roteiros` ainda nao possui CRUD completo. Nesta etapa existe apenas a base real com models, admin, selectors, presenters e listagem componentizada. A criacao manual inicial acontece pelo Django Admin.
+O app `roteiros` possui CRUD publico em `/roteiros/` (listagem, novo, editar, detalhe, excluir) como **modulo referencia** de arquitetura (`selectors`, `services/roteiro_editor`, `presenters`, components de dominio). O Django Admin permanece disponivel.
 
 ## Estrutura
 
 - `forms.py`: validacao, normalizacao e mascaras de entrada.
 - `selectors.py`: consultas e busca por `q`.
-- `services.py`: criacao, atualizacao e exclusao fisica.
+- `services.py` ou `services/`: criacao, atualizacao e exclusao fisica (ex.: `roteiros/services/roteiro_editor.py`).
 - `presenters.py`: dados dos cards sem HTML.
 - `views.py`: fluxo request/form/service/messages/redirect.
 - `urls.py`: rotas nomeadas padronizadas.
@@ -20,14 +20,15 @@ O app `roteiros` ainda nao possui CRUD completo. Nesta etapa existe apenas a bas
 
 ## Roteiros base
 
-- `models.py`: `Roteiro` e `TrechoRoteiro`.
-- `admin.py`: cadastro manual de roteiros e trechos.
-- `selectors.py`: `listar_roteiros`, `get_roteiro_by_id`, `listar_trechos_do_roteiro`.
-- `presenters.py`: `apresentar_roteiro_card`.
-- `views.py`: listagem `index`, sem acesso direto aos models.
-- `templates/roteiros/index.html`: lista rica com components globais.
+- `models.py`: `Roteiro` e trechos associados.
+- `admin.py`: cadastro manual auxiliar.
+- `selectors.py`: listagem, detalhe, trechos, cidades para select, estimativa.
+- `services/roteiro_editor.py`: fluxo do wizard avulso e exclusao com `ProtectedError`.
+- `presenters.py`: card, contexto de formulario (delega montagem profunda ao `roteiro_logic`), pagina de detalhe.
+- `views.py`: orquestracao magra; endpoints de diarias e estimativa.
+- `templates/roteiros/` + `templates/components/domain/`: UI componentizada.
 
-CRUD de roteiro, calculos e vinculos documentais ficam para etapas futuras.
+Vinculos documentais em Oficios/Planos/OS usam o roteiro como referencia; esses modulos nao foram alterados nesta etapa.
 
 ## Regras de exclusao
 

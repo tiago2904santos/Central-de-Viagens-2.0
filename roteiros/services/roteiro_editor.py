@@ -5,8 +5,8 @@ from django.db.models.deletion import ProtectedError
 
 from cadastros.models import ConfiguracaoSistema
 
-from . import roteiro_logic
-from .models import Roteiro
+from roteiros import roteiro_logic
+from roteiros.models import Roteiro
 
 
 def obter_initial_roteiro():
@@ -19,13 +19,18 @@ def obter_initial_roteiro():
     return initial
 
 
-def montar_contexto_formulario(form, instance=None, request=None):
-    roteiro_logic._setup_roteiro_querysets(form, request, instance)
-    route_options, route_state_map = roteiro_logic._build_roteiro_avulso_route_options()
-    return route_options, route_state_map
+def preparar_querysets_formulario_roteiro(form, *, method, post, instance=None):
+    """Limita-se a preencher querysets do form (sede); não monta contexto de template."""
+    fake_request = SimpleNamespace(method=method.upper(), POST=post)
+    roteiro_logic._setup_roteiro_querysets(form, fake_request, instance)
 
 
-def construir_estado_get(initial=None, roteiro=None):
+def carregar_opcoes_rotas_avulsas_salvas():
+    """Lista opções de duplicação de roteiros avulsos e mapa de estado serializável (step3)."""
+    return roteiro_logic._build_roteiro_avulso_route_options()
+
+
+def preparar_estado_editor_roteiro_para_get(initial=None, roteiro=None):
     if roteiro:
         destinos_atuais = roteiro_logic._destinos_roteiro_para_template(roteiro) or [
             {"estado_id": None, "cidade_id": None, "cidade": None, "estado": None}
@@ -54,14 +59,35 @@ def construir_estado_get(initial=None, roteiro=None):
     return destinos_atuais, trechos_list, step3_state
 
 
-def validar_payload_roteiro(request, route_state_map, roteiro=None):
+def normalizar_destinos_e_trechos_apos_erro_post(step3_state):
+    """Após POST inválido, reconstrói listas exibidas no form a partir do step3 parseado."""
+    destinos_atuais = [
+        {
+            "estado_id": item.get("estado_id"),
+            "cidade_id": item.get("cidade_id"),
+            "cidade": None,
+            "estado": None,
+        }
+        for item in (step3_state.get("destinos_atuais") or [])
+    ]
+    if not destinos_atuais:
+        destinos_atuais = [
+            {"estado_id": None, "cidade_id": None, "cidade": None, "estado": None}
+        ]
+    trechos_list = step3_state.get("trechos", [])
+    return destinos_atuais, trechos_list
+
+
+def validar_submissao_editor_roteiro(post, route_state_map, roteiro=None):
+    """Validação e cálculo de diárias a partir do POST; sem render nem redirect."""
+    fake_request = SimpleNamespace(method="POST", POST=post)
     step3_state = roteiro_logic._build_avulso_step3_state_from_post(
-        request, route_state_map=route_state_map
+        fake_request, route_state_map=route_state_map
     )
-    fake = SimpleNamespace(evento_id=None, roteiro_evento_id=None, evento=None)
-    validated = roteiro_logic._validate_step3_state(step3_state, oficio=fake)
+    fake_oficio = SimpleNamespace(evento_id=None, roteiro_evento_id=None, evento=None)
+    validated = roteiro_logic._validate_step3_state(step3_state, oficio=fake_oficio)
     _, _, _, diarias_resultado = roteiro_logic._build_roteiro_diarias_from_request(
-        request, roteiro=roteiro
+        fake_request, roteiro=roteiro
     )
     return step3_state, validated, diarias_resultado
 
@@ -99,16 +125,3 @@ def excluir_roteiro(instance):
     except ProtectedError:
         return False
     return True
-
-
-def montar_contexto_roteiro_form(*, evento, form, obj, destinos_atuais, trechos_list, step3_state, route_options):
-    return roteiro_logic._build_roteiro_form_context(
-        evento=evento,
-        form=form,
-        obj=obj,
-        destinos_atuais=destinos_atuais,
-        trechos_list=trechos_list,
-        is_avulso=True,
-        step3_state=step3_state,
-        route_options=route_options,
-    )

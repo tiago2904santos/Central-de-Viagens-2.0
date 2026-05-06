@@ -1374,10 +1374,12 @@ def _step3_combine_date_time(data_value, hora_value):
 
 def _setup_roteiro_querysets(form, request, instance=None):
     """Preenche querysets de estado/cidade para sede (origem). No cadastro novo usa initial da config."""
-    form.fields['origem_estado'].queryset = Estado.objects.order_by('nome')
+    from roteiros import selectors
+
+    form.fields["origem_estado"].queryset = selectors.listar_estados_para_select()
     estado_id = None
-    if request.method == 'POST':
-        estado_id = request.POST.get('origem_estado')
+    if request.method == "POST":
+        estado_id = request.POST.get("origem_estado")
         if estado_id:
             try:
                 estado_id = int(estado_id)
@@ -1387,13 +1389,10 @@ def _setup_roteiro_querysets(form, request, instance=None):
         estado_id = instance.origem_estado_id
     else:
         # Cadastro novo: usar initial (ex.: cidade_sede_padrao da config)
-        est = form.initial.get('origem_estado')
+        est = form.initial.get("origem_estado")
         if est is not None:
-            estado_id = getattr(est, 'pk', est)
-    if estado_id:
-        form.fields['origem_cidade'].queryset = Cidade.objects.filter(estado_id=estado_id).order_by('nome')
-    else:
-        form.fields['origem_cidade'].queryset = Cidade.objects.none()
+            estado_id = getattr(est, "pk", est)
+    form.fields["origem_cidade"].queryset = selectors.listar_cidades_para_select(estado_id=estado_id)
 def _destinos_roteiro_para_template(objeto):
     """Lista de dicts {estado_id, cidade_id, cidade, estado} a partir de objeto com .destinos (Evento ou Roteiro)."""
     destinos_qs = objeto.destinos.select_related('estado', 'cidade').order_by('ordem', 'id')
@@ -1426,23 +1425,15 @@ def _build_roteiro_avulso_route_options():
     Build route_options from all avulso roteiros.
     Returns (options_list, state_map) mirroring _build_step3_route_options.
     """
+    from roteiros import selectors
+
     options = []
     state_map = {}
-    roteiros = (
-        Roteiro.objects
-        .filter(tipo=Roteiro.TIPO_AVULSO)
-        .prefetch_related(
-            'destinos', 'destinos__estado', 'destinos__cidade',
-            'trechos', 'trechos__origem_estado', 'trechos__origem_cidade',
-            'trechos__destino_estado', 'trechos__destino_cidade',
-            'origem_cidade', 'origem_estado',
-        )
-        .order_by('-pk')[:50]
-    )
+    roteiros = selectors.queryset_roteiros_avulsos_para_mapa_rotas()
     for roteiro in roteiros:
         destinos = [
             _step3_local_label(destino.cidade, destino.estado)
-            for destino in roteiro.destinos.select_related('cidade', 'estado').order_by('ordem', 'id')
+            for destino in roteiro.destinos.select_related("cidade", "estado").order_by("ordem", "id")
         ]
         resumo = ' -> '.join(destinos[:3]) if destinos else 'Sem destinos'
         if len(destinos) > 3:
@@ -1699,14 +1690,12 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         )
         step3_state['roteiro_modo'] = 'ROTEIRO_PROPRIO'
 
-    sede_estado_id = step3_state.get('sede_estado_id')
-    sede_cidade_id = step3_state.get('sede_cidade_id')
-    estados_qs = Estado.objects.order_by('nome')
-    sede_cidades_qs = (
-        Cidade.objects.filter(estado_id=sede_estado_id).order_by('nome')
-        if sede_estado_id
-        else Cidade.objects.none()
-    )
+    from roteiros import selectors
+
+    sede_estado_id = step3_state.get("sede_estado_id")
+    sede_cidade_id = step3_state.get("sede_cidade_id")
+    estados_qs = selectors.listar_estados_para_select()
+    sede_cidades_qs = selectors.listar_cidades_para_select(estado_id=sede_estado_id)
     diarias_resultado = None
     try:
         diarias_resultado = _calculate_avulso_diarias_from_state(step3_state)
@@ -1758,6 +1747,6 @@ def _build_roteiro_form_context(*, evento, form, obj, destinos_atuais, trechos_l
         'destino_estado_fixo_nome': (
             f'{destino_estado_fixo.nome} ({destino_estado_fixo.sigla})'
             if destino_estado_fixo
-            else 'ParanÃ¡ (PR)'
+            else 'Paraná (PR)'
         ),
     }

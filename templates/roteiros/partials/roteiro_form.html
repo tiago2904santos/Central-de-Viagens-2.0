@@ -49,6 +49,3 @@
 {{ step3_state_json|default:'{}'|json_script:"step3-state-data" }}
 {{ roteiros_evento_json|default_if_none:''|json_script:"step3-routes-data" }}
 {{ step3_diarias_resultado|default_if_none:''|json_script:"step3-diarias-data" }}
-
-<script src="{% static 'js/roteiros_wizard.js' %}"></script>
-<script src="{% static 'js/roteiros.js' %}"></script>

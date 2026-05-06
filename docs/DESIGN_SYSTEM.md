@@ -76,7 +76,14 @@ As telas de `Unidade`, `Cidade`, `Cargo`, `Combustivel`, `Servidor` e `Viatura` 
 - Ajustes de cards em `templates/components/cards/*.html` e `static/css/cards.css`.
 - Ajustes de feedback em `templates/components/feedback/*.html` e `static/css/utilities.css`.
 - Nunca copiar CSS bruto do legado em bloco; extrair o conceito e reconstruir no sistema atual.
-- Blocos de dominio reutilizavel devem viver em `static/css/domain.css` e `templates/components/domain/`.
+
+## CSS de dominio (`domain.css`)
+
+- Arquivo: `static/css/domain.css`.
+- Uso: blocos compartilhados de **roteiros, trechos, destinos, retorno, calculadora e resumo de rota** — classes semanticas como `.domain-block`, `.domain-block__title`, `.route-summary`, `.route-card`.
+- Regra: estilos que servem a **qualquer modulo** com o mesmo tipo de bloco ficam aqui; o que for **exclusivo do wizard avulso** (densidade, hero, grids do `roteiro-editor`) permanece em `static/css/roteiros.css`.
+- Paginas que incluem `templates/components/domain/*` devem importar `domain.css` no `extra_css` (alem de `style.css` via `base.html`).
+- Proibido `style=""` nos templates; proibido variar o mesmo tipo de bloco com classes duplicadas em outro arquivo sem motivo.
 
 ## Layout do shell
 
