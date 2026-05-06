@@ -18,6 +18,12 @@ class RouteConfigurationError(RouteServiceError):
     )
 
 
+class RouteAuthenticationError(RouteServiceError):
+    user_message = (
+        "Chave da API de rotas inválida ou sem autorização. Verifique OPENROUTESERVICE_API_KEY no .env."
+    )
+
+
 class RouteValidationError(RouteServiceError):
     user_message = "Dados do roteiro insuficientes ou inválidos para calcular a rota."
 

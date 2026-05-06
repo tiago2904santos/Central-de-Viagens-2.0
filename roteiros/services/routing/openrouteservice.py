@@ -9,6 +9,7 @@ from django.conf import settings
 
 from .providers_base import RouteProvider
 from .route_exceptions import (
+    RouteAuthenticationError,
     RouteNotFoundError,
     RouteProviderUnavailable,
     RouteRateLimitError,
@@ -17,6 +18,16 @@ from .route_exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_ors_error_message(data: Any) -> str:
+    """Extrai mensagem de erro da ORS sem assumir que `error` é sempre dict."""
+    if isinstance(data, dict):
+        err = data.get("error") or data.get("message") or ""
+        if isinstance(err, dict):
+            return str(err.get("message") or err.get("code") or "")
+        return str(err)
+    return str(data or "")
 
 
 def _duration_human(total_minutes: int) -> str:
@@ -193,10 +204,11 @@ class OpenRouteServiceProvider(RouteProvider):
 
         coords = [[float(p["lng"]), float(p["lat"])] for p in points]
         url = f"https://api.openrouteservice.org/v2/directions/{profile}/geojson"
-        auth = self._api_key
-        if not auth.lower().startswith("bearer "):
-            auth = f"Bearer {auth}"
-        headers = {"Authorization": auth, "Content-Type": "application/json"}
+        headers = {
+            "Authorization": self._api_key,
+            "Content-Type": "application/json; charset=utf-8",
+            "Accept": "application/geo+json, application/json",
+        }
         body: Dict[str, Any] = {
             "coordinates": coords,
             "preference": "recommended",
@@ -213,22 +225,41 @@ class OpenRouteServiceProvider(RouteProvider):
             logger.warning("OpenRouteService request error: %s", exc)
             raise RouteProviderUnavailable() from exc
 
-        if resp.status_code == 429:
-            raise RouteRateLimitError()
-        if resp.status_code >= 500:
-            raise RouteProviderUnavailable()
-
+        data: Any = {}
         try:
-            data = resp.json()
+            if resp.content:
+                data = resp.json()
         except ValueError as exc:
             logger.warning("OpenRouteService JSON inválido: %s", exc)
-            raise RouteProviderUnavailable() from exc
+            data = {}
 
-        if resp.status_code >= 400:
-            err = (data.get("error") or {}) if isinstance(data, dict) else {}
-            msg = err.get("message") or data.get("message") or ""
-            logger.info("OpenRouteService erro HTTP %s: %s", resp.status_code, msg)
-            if resp.status_code == 404 or "not found" in str(msg).lower():
+        sc = resp.status_code
+        if sc == 429:
+            raise RouteRateLimitError()
+        if sc in (401, 403):
+            msg = _extract_ors_error_message(data)
+            logger.warning(
+                "OpenRouteService HTTP %s (sanitizado): %s",
+                sc,
+                (msg or "")[:500],
+            )
+            raise RouteAuthenticationError()
+        if sc >= 500:
+            msg = _extract_ors_error_message(data)
+            logger.warning(
+                "OpenRouteService HTTP %s (sanitizado): %s",
+                sc,
+                (msg or "")[:500],
+            )
+            raise RouteProviderUnavailable()
+        if sc >= 400:
+            msg = _extract_ors_error_message(data)
+            logger.warning(
+                "OpenRouteService HTTP %s (sanitizado): %s",
+                sc,
+                (msg or "")[:500],
+            )
+            if sc == 404 or "not found" in str(msg).lower():
                 raise RouteNotFoundError()
             raise RouteProviderUnavailable()
 

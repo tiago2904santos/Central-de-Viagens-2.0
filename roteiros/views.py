@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 
 from .forms import RoteiroForm
 from .services.routing.route_exceptions import (
+    RouteAuthenticationError,
     RouteConfigurationError,
     RouteCoordinateError,
     RouteNotFoundError,
@@ -263,6 +264,8 @@ def calcular_rota(request):
     try:
         payload = calcular_rota_para_roteiro(roteiro, force_recalculate=force)
         return JsonResponse(payload)
+    except RouteAuthenticationError as exc:
+        return JsonResponse({"ok": False, "message": exc.user_message}, status=401)
     except RouteConfigurationError as exc:
         return JsonResponse({"ok": False, "message": exc.user_message}, status=503)
     except RouteCoordinateError as exc:

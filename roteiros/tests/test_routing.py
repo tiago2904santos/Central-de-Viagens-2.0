@@ -9,11 +9,17 @@ from django.urls import reverse
 
 from cadastros.models import Cidade, Estado
 from roteiros.models import Roteiro, RoteiroDestino, RoteiroTrecho
-from roteiros.services.routing.openrouteservice import OpenRouteServiceProvider
+from roteiros.services.routing.openrouteservice import (
+    OpenRouteServiceProvider,
+    _extract_ors_error_message,
+)
 from roteiros.services.routing.route_point_builder import build_route_points_for_roteiro
 from roteiros.services.routing.route_service import calcular_rota_para_roteiro
 from roteiros.services.routing.route_signature import build_route_signature
-from roteiros.services.routing.route_exceptions import RouteProviderUnavailable
+from roteiros.services.routing.route_exceptions import (
+    RouteAuthenticationError,
+    RouteProviderUnavailable,
+)
 from roteiros.services.routing.route_stale import mark_stale_when_signature_changed
 
 
@@ -157,6 +163,141 @@ class RoteirosRoutingTests(TestCase):
         self.assertIn("geometry_warning", out)
         blob = json.dumps(out)
         self.assertNotIn("EncodedPolyline", blob)
+
+    def test_openrouteservice_authorization_sem_bearer_e_accept_geojson(self):
+        provider = OpenRouteServiceProvider("minha-chave-crua", timeout_seconds=5)
+        mock_fc = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[-49.0, -25.0], [-48.0, -24.0]],
+                    },
+                    "properties": {
+                        "summary": {"distance": 1000, "duration": 60},
+                        "segments": [],
+                    },
+                }
+            ],
+        }
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 200
+            post.return_value.content = b"{}"
+            post.return_value.json.return_value = mock_fc
+            provider.calculate_route(
+                [
+                    {"id": "a", "lat": -25.0, "lng": -49.0, "label": "A"},
+                    {"id": "b", "lat": -24.0, "lng": -48.0, "label": "B"},
+                ],
+                profile="driving-car",
+            )
+        kwargs = post.call_args[1]
+        headers = kwargs["headers"]
+        self.assertEqual(headers["Authorization"], "minha-chave-crua")
+        self.assertFalse(headers["Authorization"].lower().startswith("bearer "))
+        accept = headers.get("Accept", "")
+        self.assertIn("application/geo+json", accept)
+        self.assertIn("application/json", accept)
+        self.assertIn("charset=utf-8", headers.get("Content-Type", "").lower())
+
+    def test_openrouteservice_http401_error_string_nao_quebra(self):
+        provider = OpenRouteServiceProvider("k", timeout_seconds=5)
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 401
+            post.return_value.content = b"{}"
+            post.return_value.json.return_value = {"error": "Access token could not be verified"}
+            with self.assertRaises(RouteAuthenticationError):
+                provider.calculate_route(
+                    [
+                        {"id": "a", "lat": -25.0, "lng": -49.0, "label": "A"},
+                        {"id": "b", "lat": -24.0, "lng": -48.0, "label": "B"},
+                    ],
+                    profile="driving-car",
+                )
+
+    def test_openrouteservice_http403_error_dict_nao_quebra(self):
+        provider = OpenRouteServiceProvider("k", timeout_seconds=5)
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 403
+            post.return_value.content = b"{}"
+            post.return_value.json.return_value = {"error": {"message": "Forbidden"}}
+            with self.assertRaises(RouteAuthenticationError):
+                provider.calculate_route(
+                    [
+                        {"id": "a", "lat": -25.0, "lng": -49.0, "label": "A"},
+                        {"id": "b", "lat": -24.0, "lng": -48.0, "label": "B"},
+                    ],
+                    profile="driving-car",
+                )
+
+    def test_extract_ors_error_message_varios_formatos(self):
+        self.assertEqual(
+            _extract_ors_error_message({"error": "Access token could not be verified"}),
+            "Access token could not be verified",
+        )
+        self.assertEqual(
+            _extract_ors_error_message({"error": {"message": "Forbidden"}}),
+            "Forbidden",
+        )
+        self.assertEqual(_extract_ors_error_message({"error": [{"x": 1}]}), "[{'x': 1}]")
+
+    def test_openrouteservice_http400_corpo_inesperado_sem_attributeerror(self):
+        provider = OpenRouteServiceProvider("k", timeout_seconds=5)
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 400
+            post.return_value.content = b"{}"
+            post.return_value.json.return_value = {"error": [{"unexpected": True}]}
+            with self.assertRaises(RouteProviderUnavailable):
+                provider.calculate_route(
+                    [
+                        {"id": "a", "lat": -25.0, "lng": -49.0, "label": "A"},
+                        {"id": "b", "lat": -24.0, "lng": -48.0, "label": "B"},
+                    ],
+                    profile="driving-car",
+                )
+
+    def test_calcular_rota_endpoint_401_retorna_mensagem_amigavel_sem_chave(self):
+        roteiro = Roteiro.objects.create(
+            tipo=Roteiro.TIPO_AVULSO,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+        )
+        RoteiroDestino.objects.create(
+            roteiro=roteiro, estado=self.estado, cidade=self.cidade_a, ordem=0
+        )
+        RoteiroTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=0,
+            tipo=RoteiroTrecho.TIPO_IDA,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_sede,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_a,
+        )
+        RoteiroTrecho.objects.create(
+            roteiro=roteiro,
+            ordem=1,
+            tipo=RoteiroTrecho.TIPO_RETORNO,
+            origem_estado=self.estado,
+            origem_cidade=self.cidade_a,
+            destino_estado=self.estado,
+            destino_cidade=self.cidade_sede,
+        )
+        url = reverse("roteiros:calcular_rota")
+        with patch("roteiros.services.routing.openrouteservice.requests.post") as post:
+            post.return_value.status_code = 401
+            post.return_value.content = b"{}"
+            post.return_value.json.return_value = {"error": "Access token could not be verified"}
+            resp = self._csrf_post_json(url, {"roteiro_id": roteiro.pk})
+        self.assertEqual(resp.status_code, 401)
+        body = resp.json()
+        self.assertFalse(body["ok"])
+        self.assertIn("OPENROUTESERVICE_API_KEY", body["message"])
+        self.assertIn("inválida", body["message"].lower())
+        blob = json.dumps(body)
+        self.assertNotIn("test-key", blob)
 
     def test_calcular_rota_endpoint_recusa_get(self):
         url = reverse("roteiros:calcular_rota")
