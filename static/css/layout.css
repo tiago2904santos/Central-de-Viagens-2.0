@@ -1,4 +1,11 @@
-/* Duas colunas: sidebar (--sidebar-width) + area principal (resto, minmax evita overflow). */
+/* ==========================================================================
+   LAYOUT
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Shell principal
+   Sidebar fixa + area principal fluida sem overflow horizontal.
+   -------------------------------------------------------------------------- */
 .app-shell {
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
@@ -19,6 +26,10 @@
   width: 100%;
 }
 
+/* --------------------------------------------------------------------------
+   2. Cabecalho de pagina
+   Gradiente institucional congelado por contrato visual global.
+   -------------------------------------------------------------------------- */
 .eyebrow {
   color: var(--color-accent);
   display: block;
@@ -34,12 +45,12 @@
     linear-gradient(135deg, #0b3a66 0%, #155b9a 100%);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-lg);
-  box-shadow: 0 18px 42px rgba(7, 26, 51, 0.22);
+  box-shadow: var(--shadow-elevated);
   color: var(--color-white);
   display: flex;
   gap: var(--space-6);
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
   overflow: hidden;
   padding: 28px 32px;
   position: relative;
@@ -47,7 +58,7 @@
 
 .page-header::after {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   content: "";
   height: 300px;
   position: absolute;
@@ -84,7 +95,7 @@
 }
 
 .page-header__title {
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .page-header p {
@@ -113,6 +124,9 @@
   justify-content: flex-end;
 }
 
+/* --------------------------------------------------------------------------
+   3. Responsividade
+   -------------------------------------------------------------------------- */
 @media (max-width: 840px) {
   .app-shell {
     grid-template-columns: 1fr;

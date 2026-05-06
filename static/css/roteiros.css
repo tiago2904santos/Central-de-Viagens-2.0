@@ -247,7 +247,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-body {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  background: linear-gradient(180deg, var(--color-white) 0%, #f8fbff 100%);
   padding: 18px 20px 20px;
 }
 
@@ -311,7 +311,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__field-label {
-  color: #24394f;
+  color: var(--color-label);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.06em;
@@ -389,9 +389,9 @@
   padding: var(--space-3);
   position: relative;
   transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    background-color 160ms ease;
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    background-color var(--transition-base);
 }
 
 .roteiro-editor__choice-card:hover {
@@ -454,16 +454,16 @@
 
 .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card {
   align-items: center;
-  background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
+  background: linear-gradient(180deg, var(--color-white) 0%, #f9fcff 100%);
   border: 1px solid #d2deea;
   border-radius: var(--radius-md);
   box-shadow: 0 8px 18px rgba(28, 49, 72, 0.05);
   gap: var(--space-3);
   height: 100%;
   transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease,
-    transform 150ms ease;
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--transition-base);
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card:hover {
@@ -473,7 +473,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-card:has(input:checked) {
-  background: linear-gradient(180deg, #ffffff 0%, #f4f9ff 100%);
+  background: linear-gradient(180deg, var(--color-white) 0%, #f4f9ff 100%);
   border-color: #2f80c9;
   box-shadow:
     0 0 0 2px rgba(47, 128, 201, 0.16),
@@ -491,7 +491,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__reference-block--source .roteiro-editor__choice-title {
-  color: #14304a;
+  color: var(--color-heading);
   font-size: 14px;
   font-weight: 900;
   line-height: 1.3;
@@ -565,7 +565,7 @@
   background: var(--color-card);
   border: 1px solid #cfddeb;
   border-radius: var(--radius-sm);
-  min-height: 42px;
+  min-height: calc(var(--control-height-md) - 2px);
 }
 
 .roteiro-editor--avulso .roteiro-editor__routes-panel--source .roteiro-editor__helper {
@@ -605,8 +605,8 @@
   padding: var(--space-2) var(--space-3);
   text-align: left;
   transition:
-    background-color 140ms ease,
-    border-color 140ms ease;
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .roteiro-editor--avulso .oficio-step3-route-item {
@@ -616,9 +616,9 @@
   padding: 12px 13px;
   width: 100%;
   transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease,
-    background-color 150ms ease;
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    background-color var(--transition-base);
 }
 
 .oficio-step3-route-item:hover {
@@ -854,7 +854,7 @@
   display: inline-flex;
   font-size: 18px;
   font-weight: 700;
-  height: 40px;
+  height: calc(var(--control-height-md) - 4px);
   justify-content: center;
   line-height: 1;
   min-width: 40px;
@@ -972,7 +972,7 @@
   background: var(--color-card);
   border: 1px solid #d8e1ec;
   border-radius: var(--radius-md);
-  color: #17324d;
+  color: var(--color-heading);
   font-size: 0;
   height: var(--control-height-md);
   width: 150px;
@@ -1023,7 +1023,7 @@
   color: #173e66;
   font-size: 13px;
   font-weight: 900;
-  min-height: 40px;
+  min-height: calc(var(--control-height-md) - 4px);
 }
 
 .roteiro-editor--avulso .roteiro-editor__add-btn#btn-adicionar-destino::before {
@@ -1203,7 +1203,7 @@
   background: var(--color-card);
   border: 1px solid #d8e1ec;
   border-radius: var(--radius-control-lg);
-  color: #17324d;
+  color: var(--color-heading);
   font-size: 14px;
   min-height: var(--control-height-md);
   padding-left: 14px;
@@ -1293,7 +1293,7 @@
   background: var(--color-card);
   border: 1px solid #d8e1ec;
   border-radius: var(--radius-control-lg);
-  color: #17324d;
+  color: var(--color-heading);
   font-size: 14px;
   min-height: var(--control-height-md);
   padding-left: 14px;
@@ -1587,7 +1587,7 @@
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%),
     linear-gradient(180deg, #124872 0%, #0c3558 100%);
-  border-radius: 18px 18px 0 0;
+  border-radius: var(--radius-section) var(--radius-section) 0 0;
   margin: 0;
   min-height: 50px;
   padding: 9px 20px;
@@ -1756,7 +1756,7 @@
 .roteiro-editor--avulso .roteiro-editor__diarias {
   background:
     radial-gradient(circle at 0 0, rgba(25, 93, 150, 0.08), transparent 50%),
-    #ffffff;
+    var(--color-white);
 }
 
 .roteiro-editor--avulso .roteiro-editor__diarias-head {
@@ -1833,7 +1833,7 @@
 }
 
 .roteiro-editor--avulso .roteiro-editor__summary-item--principal {
-  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  background: linear-gradient(180deg, var(--color-white) 0%, #f7fbff 100%);
   border-color: #c9dcee;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.88) inset,
@@ -1893,6 +1893,11 @@
   }
 }
 
+/* --------------------------------------------------------------------------
+   10. Overrides por tema
+   Mantidos apenas para blocos legados do wizard que ainda nao receberam
+   estrutura 100% orientada a token sem risco visual.
+   -------------------------------------------------------------------------- */
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block,
 html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__reference-block,
 html[data-theme="dark-dark"] .roteiro-editor--avulso .roteiro-editor__section,
@@ -1957,6 +1962,10 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
   color: var(--color-text-muted);
 }
 
+/* --------------------------------------------------------------------------
+   11. Responsividade
+   Media queries ficam proximas do bloco funcional que ajustam.
+   -------------------------------------------------------------------------- */
 @media (max-width: 720px) {
   .roteiro-editor--avulso .roteiro-editor__nest-block--sede > .roteiro-editor__grid,
   .roteiro-editor--avulso #bate-volta-panel.row,
@@ -1981,7 +1990,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
     0 18px 38px rgba(15, 34, 54, 0.1);
   background: linear-gradient(
     165deg,
-    #ffffff 0%,
+    var(--color-white) 0%,
     #f7fbff 100%
   );
   overflow: hidden;
@@ -2034,7 +2043,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
 .roteiro-editor__map-card .card-body {
   background:
     radial-gradient(circle at 0 0, rgba(21, 84, 127, 0.06), transparent 34%),
-    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    linear-gradient(180deg, var(--color-white) 0%, #f8fbff 100%);
   padding: clamp(16px, 2vw, 22px);
 }
 
@@ -2130,17 +2139,17 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.01em;
-  min-height: 40px;
+  min-height: calc(var(--control-height-md) - 4px);
   padding: 0 17px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   transition:
-    transform 140ms ease,
-    box-shadow 140ms ease,
-    border-color 140ms ease,
-    background-color 140ms ease,
-    color 140ms ease;
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .roteiro-mapa__action-btn--primary {
@@ -2217,7 +2226,7 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__helper {
   border: 1px solid rgba(191, 211, 229, 0.78);
   border-radius: var(--radius-control-lg);
   background:
-    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    linear-gradient(180deg, var(--color-white) 0%, #f8fbff 100%);
   box-shadow: 0 8px 18px rgba(28, 49, 72, 0.05);
 }
 

@@ -28,6 +28,8 @@ Garantir alternancia de tema com persistencia e sem piscar tema incorreto no car
 - Sidebar institucional deve manter identidade azul + destaque dourado.
 - Priorizar troca de valor por tema no token (`theme.css`) em vez de override de componente por seletor de tema.
 - Override especifico de tema so permanece para casos excepcionais (Leaflet/componentes externos/contraste especial).
+- Branco literal em componente deve preferir token (`--color-white` ou semanticos de superficie), nao hex direto.
+- Cores de texto de componente devem usar tokens de texto (`--color-text`, `--color-heading`, `--color-label`, `--color-text-muted`, `--color-text-soft`).
 
 ## Tokens semanticos obrigatorios por tema
 

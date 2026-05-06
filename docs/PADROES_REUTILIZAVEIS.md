@@ -39,6 +39,10 @@ Centralizar contratos reutilizaveis para evitar duplicacao entre modulos.
 - Se valor repetir, criar token semantico (nao criar nome tecnico sem significado).
 - Organizar CSS por secoes documentadas com comentarios de intencao.
 - Em `roteiros.css`, preservar contrato visual do wizard: refactor so de organizacao/tokenizacao.
+- `border-radius: 999px` e proibido; usar `var(--radius-pill)`.
+- Sombra repetida deve virar token `--shadow-*`.
+- Transicao repetida deve virar token `--transition-*`.
+- Hardcode remanescente precisa de justificativa pontual (arquivo + seletor + motivo tecnico).
 
 ## Regras de nao regressao
 

@@ -68,7 +68,7 @@
   --sidebar-icon-bg: rgba(216, 162, 27, 0.18);
   --sidebar-icon-fg: #deebff;
   --sidebar-active-bg: rgba(255, 255, 255, 0.1);
-  --sidebar-active-fg: #ffffff;
+  --sidebar-active-fg: var(--color-white);
   --sidebar-active-border: rgba(216, 162, 27, 0.45);
   --sidebar-panel-border: rgba(216, 162, 27, 0.35);
   --sidebar-footer-fg: rgba(205, 226, 249, 0.84);
@@ -90,8 +90,8 @@
   --app-hero-stage-start: #0a1f35;
   --app-hero-stage-end: #1a4d7a;
   --app-hero-eyebrow: rgba(255, 248, 230, 0.98);
-  --app-hero-title: #ffffff;
-  --app-hero-body-bg: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
+  --app-hero-title: var(--color-white);
+  --app-hero-body-bg: linear-gradient(180deg, var(--color-white) 0%, #f8fafd 100%);
   --app-hero-ribbon: linear-gradient(
     90deg,
     rgba(216, 162, 27, 0.88) 0%,
@@ -100,7 +100,7 @@
   );
 
   /* Superfície / texto featured (default = div clara) */
-  --theme-surface-card: #ffffff;
+  --theme-surface-card: var(--color-white);
   --theme-surface-card-soft: #f8fafd;
   --theme-border-card: #e3eaf2;
   --theme-text-heading: #071a33;
@@ -120,7 +120,7 @@
   --theme-shadow-hero: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 4px 12px rgba(7, 26, 51, 0.07), var(--shadow-lg);
   --theme-shadow-block: 0 1px 0 rgba(255, 255, 255, 0.06) inset, var(--shadow-md);
   --theme-shadow-stat: 0 1px 0 rgba(255, 255, 255, 0.05) inset, var(--shadow-sm);
-  --theme-input-bg: #ffffff;
+  --theme-input-bg: var(--color-white);
   --theme-input-border: rgba(31, 76, 125, 0.22);
   --theme-input-text: #132238;
   --theme-list-row-hover: var(--color-primary-soft);
@@ -150,10 +150,10 @@
 /* ========== 1 dark-light — fundo escuro + div clara ========== */
 html[data-theme="dark-light"] {
   --color-bg: #0f1a29;
-  --color-surface: #ffffff;
+  --color-surface: var(--color-white);
   --color-surface-strong: #f8fafd;
   --color-surface-soft: #f8fafd;
-  --color-card: #ffffff;
+  --color-card: var(--color-white);
   --color-card-muted: #f8fafd;
   --color-border: #cbd8e6;
   --color-border-strong: #afc0d3;
@@ -162,7 +162,7 @@ html[data-theme="dark-light"] {
   --color-text-soft: #71839a;
   --shadow-card: 0 14px 34px rgba(7, 26, 51, 0.16);
   --shadow-soft: 0 6px 16px rgba(7, 26, 51, 0.1);
-  --color-input-bg: #ffffff;
+  --color-input-bg: var(--color-white);
   --color-input-disabled-bg: #edf3f9;
   --color-input-text: #132238;
   --color-input-placeholder: #71839a;
@@ -178,8 +178,8 @@ html[data-theme="dark-light"] {
     linear-gradient(165deg, #041e36 0%, #062847 48%, #031523 100%);
 
   --app-hero-eyebrow: rgba(255, 243, 207, 0.92);
-  --app-hero-title: #ffffff;
-  --app-hero-body-bg: linear-gradient(180deg, #ffffff 0%, #f6f9fd 100%);
+  --app-hero-title: var(--color-white);
+  --app-hero-body-bg: linear-gradient(180deg, var(--color-white) 0%, #f6f9fd 100%);
   --app-hero-ribbon: linear-gradient(
     90deg,
     rgba(216, 162, 27, 0.92) 0%,
@@ -187,7 +187,7 @@ html[data-theme="dark-light"] {
     rgba(90, 160, 230, 0.88) 100%
   );
 
-  --theme-surface-card: #ffffff;
+  --theme-surface-card: var(--color-white);
   --theme-surface-card-soft: #f8fafd;
   --theme-border-card: #e3eaf2;
   --theme-text-heading: #071a33;
@@ -207,7 +207,7 @@ html[data-theme="dark-light"] {
   --theme-shadow-hero: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 4px 12px rgba(7, 26, 51, 0.07), var(--shadow-lg);
   --theme-shadow-block: 0 1px 0 rgba(255, 255, 255, 0.06) inset, var(--shadow-md);
   --theme-shadow-stat: 0 1px 0 rgba(255, 255, 255, 0.05) inset, var(--shadow-sm);
-  --theme-input-bg: #ffffff;
+  --theme-input-bg: var(--color-white);
   --theme-input-border: rgba(31, 76, 125, 0.22);
   --theme-input-text: #132238;
   --theme-list-row-hover: var(--color-primary-soft);
@@ -265,7 +265,7 @@ html[data-theme="dark-dark"] {
     linear-gradient(165deg, #041e36 0%, #062847 48%, #031523 100%);
 
   --app-hero-eyebrow: rgba(255, 236, 180, 0.95);
-  --app-hero-title: #ffffff;
+  --app-hero-title: var(--color-white);
   --app-hero-body-bg: linear-gradient(180deg, #1a2638 0%, #243447 100%);
   --app-hero-ribbon: linear-gradient(
     90deg,
@@ -324,10 +324,10 @@ html[data-theme="dark-dark"] {
 /* ========== 3 light-light — fundo claro + div clara ========== */
 html[data-theme="light-light"] {
   --color-bg: #f2f6fb;
-  --color-surface: #ffffff;
+  --color-surface: var(--color-white);
   --color-surface-strong: #f8fafd;
   --color-surface-soft: #f8fafd;
-  --color-card: #ffffff;
+  --color-card: var(--color-white);
   --color-card-muted: #f8fafd;
   --color-border: #cbd8e6;
   --color-border-strong: #afc0d3;
@@ -336,7 +336,7 @@ html[data-theme="light-light"] {
   --color-text-soft: #71839a;
   --shadow-card: 0 14px 34px rgba(7, 26, 51, 0.16);
   --shadow-soft: 0 6px 16px rgba(7, 26, 51, 0.1);
-  --color-input-bg: #ffffff;
+  --color-input-bg: var(--color-white);
   --color-input-disabled-bg: #edf3f9;
   --color-input-text: #132238;
   --color-input-placeholder: #71839a;
@@ -350,8 +350,8 @@ html[data-theme="light-light"] {
     linear-gradient(165deg, #eef3fb 0%, #e0eaf6 45%, #d2e0f0 100%);
 
   --app-hero-eyebrow: rgba(255, 248, 230, 0.98);
-  --app-hero-title: #ffffff;
-  --app-hero-body-bg: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
+  --app-hero-title: var(--color-white);
+  --app-hero-body-bg: linear-gradient(180deg, var(--color-white) 0%, #f8fafd 100%);
   --app-hero-ribbon: linear-gradient(
     90deg,
     rgba(216, 162, 27, 0.88) 0%,
@@ -359,7 +359,7 @@ html[data-theme="light-light"] {
     rgba(45, 95, 145, 0.85) 100%
   );
 
-  --theme-surface-card: #ffffff;
+  --theme-surface-card: var(--color-white);
   --theme-surface-card-soft: #f8fafd;
   --theme-border-card: #e3eaf2;
   --theme-text-heading: #071a33;
@@ -379,7 +379,7 @@ html[data-theme="light-light"] {
   --theme-shadow-hero: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 4px 12px rgba(7, 26, 51, 0.07), var(--shadow-lg);
   --theme-shadow-block: 0 1px 0 rgba(255, 255, 255, 0.06) inset, var(--shadow-md);
   --theme-shadow-stat: 0 1px 0 rgba(255, 255, 255, 0.05) inset, var(--shadow-sm);
-  --theme-input-bg: #ffffff;
+  --theme-input-bg: var(--color-white);
   --theme-input-border: rgba(31, 76, 125, 0.22);
   --theme-input-text: #132238;
   --theme-list-row-hover: var(--color-primary-soft);
@@ -435,7 +435,7 @@ html[data-theme="light-dark"] {
     linear-gradient(165deg, #eef3fb 0%, #e0eaf6 45%, #d2e0f0 100%);
 
   --app-hero-eyebrow: rgba(255, 243, 207, 0.95);
-  --app-hero-title: #ffffff;
+  --app-hero-title: var(--color-white);
   --app-hero-body-bg: linear-gradient(180deg, #1e2d3f 0%, #2a3d52 100%);
   --app-hero-ribbon: linear-gradient(
     90deg,
@@ -522,14 +522,14 @@ html[data-theme="light-dark"] {
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.25;
-  min-height: 42px;
+  min-height: calc(var(--control-height-md) - 2px);
   padding: 8px 6px;
   text-align: center;
   transition:
-    background-color 160ms ease,
-    color 160ms ease,
-    box-shadow 160ms ease,
-    border-color 160ms ease;
+    background-color var(--transition-base),
+    color var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
 }
 
 .app-theme-grid__btn:hover,
@@ -542,7 +542,7 @@ html[data-theme="light-dark"] {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(216, 162, 27, 0.4);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .app-theme-grid__btn:focus-visible {

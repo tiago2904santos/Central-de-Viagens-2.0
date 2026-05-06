@@ -64,12 +64,12 @@
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.35) inset,
     0 8px 18px rgba(216, 162, 27, 0.22);
-  color: #ffffff;
+  color: var(--color-white);
   display: inline-flex;
   flex-shrink: 0;
   font-size: 12px;
   font-weight: 800;
-  height: 40px;
+  height: calc(var(--control-height-md) - 4px);
   justify-content: center;
   letter-spacing: 0.03em;
   width: 40px;
@@ -240,9 +240,9 @@
   min-height: 0;
   padding: var(--space-5);
   transition:
-    border-color 200ms ease,
+    border-color var(--transition-slow),
     box-shadow 220ms ease,
-    transform 200ms ease;
+    transform var(--transition-slow);
 }
 
 .dashboard-login-inspired__quick-card:hover {
@@ -307,14 +307,14 @@
   justify-content: center;
   letter-spacing: 0.02em;
   margin-top: auto;
-  min-height: 44px;
+  min-height: var(--control-height-md);
   padding: 0 var(--space-5);
   text-decoration: none;
   transition:
-    filter 180ms ease,
-    box-shadow 180ms ease,
-    transform 140ms ease,
-    background 180ms ease;
+    filter var(--transition-slow),
+    box-shadow var(--transition-slow),
+    transform var(--transition-fast),
+    background var(--transition-slow);
 }
 
 .dashboard-login-inspired__button:hover,

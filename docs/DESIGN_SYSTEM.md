@@ -13,6 +13,8 @@
 - A **tela de login** usa layout proprio (sem sidebar): classes em `static/css/auth.css` (prefixo `auth-`), importado tambem em `style.css`; ver `docs/AUTENTICACAO.md`.
 - Se um valor CSS aparece em mais de um ponto relevante, ele deve virar token semantico (`--color-*`, `--radius-*`, `--space-*`, `--shadow-*`, `--control-*`, `--font-*`).
 - Evitar valor bruto em componente (`999px`, `#ffffff`, sombras repetidas); usar token semantico equivalente.
+- `border-radius: 999px` e proibido em componente; usar sempre `var(--radius-pill)`.
+- Hardcode restante so e aceito com justificativa especifica (seletor + motivo tecnico), nunca justificativa generica.
 
 ## Tokenizacao semantica (refactor)
 

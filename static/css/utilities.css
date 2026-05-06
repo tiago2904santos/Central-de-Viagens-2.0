@@ -1,3 +1,10 @@
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Acessibilidade e helpers de layout
+   -------------------------------------------------------------------------- */
 .sr-only {
   clip: rect(0, 0, 0, 0);
   height: 1px;
@@ -27,6 +34,9 @@
   margin-bottom: var(--space-5);
 }
 
+/* --------------------------------------------------------------------------
+   2. Alertas semanticos
+   -------------------------------------------------------------------------- */
 .alert {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -48,7 +58,7 @@
 .alert-success {
   background: var(--color-success-soft);
   border-color: rgba(22, 128, 90, 0.35);
-  color: #106544;
+  color: var(--color-success);
 }
 
 .alert-success::before {
@@ -59,7 +69,7 @@
 .alert-danger {
   background: var(--color-danger-soft);
   border-color: rgba(180, 35, 24, 0.32);
-  color: #8e1f17;
+  color: var(--color-danger-text);
 }
 
 .alert-error::before,
@@ -70,7 +80,7 @@
 .alert-warning {
   background: var(--color-warning-soft);
   border-color: rgba(183, 121, 31, 0.3);
-  color: #8a5f1c;
+  color: var(--color-accent-hover);
 }
 
 .alert-warning::before {
@@ -80,17 +90,20 @@
 .alert-info {
   background: var(--color-info-soft);
   border-color: rgba(37, 99, 168, 0.32);
-  color: #164d84;
+  color: var(--color-info-text);
 }
 
 .alert-info::before {
   background: var(--color-info);
 }
 
+/* --------------------------------------------------------------------------
+   3. Chips de status
+   -------------------------------------------------------------------------- */
 .status-chip {
   align-items: center;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   font-size: var(--font-size-xs);
   font-weight: 800;

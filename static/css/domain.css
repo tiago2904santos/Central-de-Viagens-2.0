@@ -1,8 +1,12 @@
-/**
- * Blocos de dominio reutilizaveis (destinos, trechos, retorno, calculadora, resumo).
- * Incluir junto com o CSS da pagina quando usar templates em components/domain/.
- * Estilos finos do editor avulso continuam em roteiros.css; aqui ficam tokens e aliases semanticos.
- */
+/* ==========================================================================
+   DOMAIN BLOCKS
+   Blocos reutilizaveis compartilhados entre modulos.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Estrutura base
+   Mantem contrato semantico para reuso fora do wizard de roteiros.
+   -------------------------------------------------------------------------- */
 
 .domain-block {
   margin-block-end: 1.25rem;
@@ -21,9 +25,12 @@
 .domain-block__description {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--app-muted, #5b748d);
+  color: var(--color-text-muted);
 }
 
+/* --------------------------------------------------------------------------
+   2. Grid de composicao
+   -------------------------------------------------------------------------- */
 .domain-grid {
   display: grid;
   gap: 0.75rem;
@@ -41,20 +48,23 @@
   /* Herdam layout do roteiro-editor / Bootstrap dentro do form; classe para contrato semantico. */
 }
 
+/* --------------------------------------------------------------------------
+   3. Cards de rota
+   -------------------------------------------------------------------------- */
 .route-section {
   margin-block: 1rem;
 }
 
 .route-card {
-  border-radius: var(--app-radius-md, 10px);
-  border: 1px solid var(--app-border, #dce8f3);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border-soft);
   padding: 0.75rem 1rem;
-  background: var(--app-surface, #fff);
+  background: var(--color-card);
 }
 
 .route-card__meta {
   font-size: 0.875rem;
-  color: var(--app-muted, #5b748d);
+  color: var(--color-text-muted);
 }
 
 .route-card__actions {

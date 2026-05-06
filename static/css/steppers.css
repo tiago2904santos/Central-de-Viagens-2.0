@@ -1,3 +1,10 @@
+/* ==========================================================================
+   STEPPERS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Estrutura base do passo a passo
+   -------------------------------------------------------------------------- */
 .stepper {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -22,13 +29,16 @@
 .stepper-item span {
   align-items: center;
   background: var(--color-bg-subtle);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   height: 28px;
   justify-content: center;
   width: 28px;
 }
 
+/* --------------------------------------------------------------------------
+   2. Estados e acoes
+   -------------------------------------------------------------------------- */
 .stepper-item.is-active {
   color: var(--color-primary-strong);
 }
@@ -44,6 +54,9 @@
   justify-content: flex-end;
 }
 
+/* --------------------------------------------------------------------------
+   3. Responsividade
+   -------------------------------------------------------------------------- */
 @media (max-width: 760px) {
   .stepper {
     grid-template-columns: 1fr;

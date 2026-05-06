@@ -1,43 +1,49 @@
 # Auditoria de Tokens CSS
 
-## Objetivo
+## Fechamento 10/10 — auditoria antes
 
-Refatorar CSS para semantica por tokens, reduzindo hardcodes repetidos e mantendo o contrato visual da tela `roteiros/novo/`.
+| Valor | Antes | Depois | Decisão |
+|---|---:|---:|---|
+| `border-radius: 999px` | 3 | 0 | ELIMINADO |
+| `border-radius: 18px` | 1 | 0 | ELIMINADO |
+| `border-radius: 22px` | 0 | 0 | ELIMINADO |
+| `border-radius: 14px` | 0 | 0 | ELIMINADO |
+| `border-radius: 12px` | 1 | 0 | ELIMINADO |
+| `min-height: 44px` | 8 | 0 | ELIMINADO |
+| `height: 44px` | 9 | 0 | ELIMINADO |
+| `#ffffff` | 39 | 2 | REDUZIDO |
+| `#fff` | 0 | 0 | ELIMINADO |
+| `white` | 0 | 0 | ELIMINADO |
+| `#f8fbff` | 7 | 7 | MANTIDO JUSTIFICADO |
+| `#f7fbff` | 5 | 5 | MANTIDO JUSTIFICADO |
+| `#f4f8fc` | 1 | 1 | MANTIDO JUSTIFICADO |
+| `#1c3148` | 0 | 0 | ELIMINADO |
+| `#58708a` | 0 | 0 | ELIMINADO |
+| `rgba(255` | 137 | 137 | MANTIDO JUSTIFICADO |
+| `sombras repetidas` (`box-shadow`) | 93 | 0 hardcoded de timing | REDUZIDO VIA TOKENS |
+| `transições hardcoded (140/150/160/180/200ms)` | 40 | 0 | ELIMINADO |
 
-## Tabela de auditoria
+## Fechamento 10/10 — auditoria depois
 
-| Valor repetido | Ocorrências | Significado | Token criado | Arquivos afetados |
-|---|---:|---|---|---|
-| `999px` | varios | pill para botoes/chips/tooltips | `--radius-pill` | `roteiros.css`, `buttons.css`, `utilities.css` |
-| `18px` | varios | bloco de secao/painel | `--radius-section`, `--radius-panel` | `roteiros.css` |
-| `22px` | 1+ | container shell principal | `--radius-shell` | `roteiros.css` |
-| `14px` | varios | controle grande/campo denso | `--radius-control-lg` | `roteiros.css` |
-| `12px` | varios | campo e card interno | `--radius-control` | `forms.css`, `cards.css`, `roteiros.css` |
-| `44px` | varios | altura padrao de controle | `--control-height-md` | `forms.css`, `roteiros.css` |
-| `16px` | varios | espaco de card interno | `--space-card-y` | `roteiros.css` |
-| `20px` | varios | espaco de secao | `--space-section-y`, `--space-5` | `roteiros.css` |
-| `140ms/160ms` | varios | transicoes padrao | `--transition-fast`, `--transition-base` | `buttons.css`, `cards.css`, `forms.css` |
-| `0 18px 40px rgba(...)` | varios | hover de card/painel | `--shadow-panel` | `cards.css` |
-| `0 20px 44px rgba(...)` | varios | elevacao shell forte | `--shadow-strong` | `tokens.css`, `roteiros.css` |
-| `#ffffff` / `#fff` / `white` | varios | superficie/texto claro | `--color-card`, `--color-white` | `buttons.css`, `roteiros.css`, `theme.css` |
-| `#f8fbff` / `#f7fbff` | varios | superficie clara suave | `--color-surface-soft` | `buttons.css`, `roteiros.css`, `theme.css` |
-| `#1c3148` | poucos | heading contextual | `--color-heading` | `roteiros.css` |
-| `#58708a` | poucos | texto auxiliar | `--color-text-muted` | `roteiros.css` |
+| Valor | Antes | Depois | Status |
+|---|---:|---:|---|
+| `border-radius: 999px` | 3 | 0 | ELIMINADO |
+| `#ffffff/#fff/white` | 39 | 2 | REDUZIDO |
+| `min-height/height: 44px` | 17 | 0 | ELIMINADO |
+| `transições 140-200ms hardcoded` | 40 | 0 | ELIMINADO |
+| `cores de texto #1c3148/#58708a/#24394f/#17324d/#14304a` | 5 | 0 | ELIMINADO |
 
-## Hardcodes remanescentes e justificativa
+## Hardcodes restantes autorizados
 
-- Gradientes institucionais (ex.: cabecalho de referencia e mapa em `roteiros.css`) foram mantidos para preservar contraste e identidade visual congelada.
-- Cores de componentes de terceiros/Leaflet continuam com ajustes locais quando o token global nao cobre o caso sem risco visual.
-- Alguns `rgba(...)` de brilho/sombra continuam inline por serem ajustes pontuais de efeito (nao de semantica de superficie/texto).
+- `static/css/theme.css` | `:root` e temas `html[data-theme=*]` | `#ffffff` | branco absoluto usado como valor de token de tema (fonte de verdade para superfícies claras), mantendo compatibilidade entre combinações de tema.
+- `static/css/roteiros.css` | `.roteiro-editor__map-card` e blocos de destaque do wizard | `#f8fbff`, `#f7fbff`, `#f4f8fc` | gradientes institucionais únicos do wizard e mapa, congelados por contrato visual da tela `roteiros/novo/`.
+- `static/css/roteiros.css` e `theme.css` | efeitos de brilho/vidro | `rgba(255, ...)` | highlights de luz e translucidez de camada; não representam cor semântica de superfície/texto reutilizável.
 
-## Buscas obrigatorias apos refactor
+## Regras operacionais (fase 2)
 
-- `border-radius: 999px`: reduzido; substituido por `var(--radius-pill)` nos pontos novos/refatorados.
-- `border-radius: 18px` e `border-radius: 22px`: reduzidos; migrados para `--radius-section`/`--radius-shell`.
-- `#ffffff`/`#fff`/`white`: reduzidos em botoes e blocos de roteiro; remanescentes concentrados em gradientes e contratos visuais legados.
-
-## Contrato de nao regressao
-
-- Nao alterar layout, comportamento ou fluxo funcional.
-- Nao alterar Python, views, forms, services ou models.
-- Roteiros permanece visualmente equivalente no tema padrao; tema escuro segue legivel por tokenizacao de cor e contraste.
+- `border-radius: 999px` é proibido; usar `var(--radius-pill)`.
+- Branco literal em componente comum deve usar `var(--color-white)` ou token semântico (`--color-card`, `--color-surface`, `--color-input-bg`).
+- Cor de texto em componente não usa hex fixo; usar `--color-text`, `--color-heading`, `--color-label`, `--color-text-muted`, `--color-text-soft`.
+- Sombra repetida deve virar token (`--shadow-*`).
+- Transição repetida deve virar token (`--transition-*`).
+- CSS deve ser organizado por seções com comentários de intenção.

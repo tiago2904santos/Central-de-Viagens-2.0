@@ -25,7 +25,7 @@
 }
 
 .auth-card {
-  background: var(--color-surface, #ffffff);
+  background: var(--color-surface, var(--color-white));
   border-radius: var(--radius-lg, 20px);
   box-shadow: var(--shadow-lg, 0 24px 60px rgba(7, 26, 51, 0.2));
   box-sizing: border-box;
@@ -46,12 +46,12 @@
   background: linear-gradient(140deg, rgba(216, 162, 27, 0.88), rgba(185, 135, 18, 0.95));
   border: 1px solid rgba(255, 243, 207, 0.55);
   border-radius: var(--radius-pill, 999px);
-  color: #ffffff;
+  color: var(--color-white);
   display: inline-flex;
   flex-shrink: 0;
   font-size: 13px;
   font-weight: 800;
-  height: 44px;
+  height: var(--control-height-md);
   justify-content: center;
   letter-spacing: 0.02em;
   width: 44px;
@@ -127,9 +127,9 @@
   box-sizing: border-box;
   color: var(--color-text, #132238);
   font-size: var(--font-size-md, 15px);
-  min-height: 44px;
+  min-height: var(--control-height-md);
   padding: 10px 14px;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
   width: 100%;
 }
 
@@ -160,7 +160,7 @@
   letter-spacing: 0.01em;
   min-height: 46px;
   width: 100%;
-  transition: filter 160ms ease, transform 120ms ease;
+  transition: filter var(--transition-base), transform 120ms ease;
 }
 
 .auth-submit:hover {

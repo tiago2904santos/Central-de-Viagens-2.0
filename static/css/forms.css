@@ -1,3 +1,10 @@
+/* ==========================================================================
+   FORMS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Estrutura de pagina e secoes
+   -------------------------------------------------------------------------- */
 .form-page {
   display: grid;
   gap: var(--space-6);
@@ -59,6 +66,9 @@
   grid-column: span 4;
 }
 
+/* --------------------------------------------------------------------------
+   2. Campos e controles
+   -------------------------------------------------------------------------- */
 .field {
   display: grid;
   gap: var(--space-field-gap);
@@ -118,12 +128,18 @@
   padding-top: var(--space-4);
 }
 
+/* --------------------------------------------------------------------------
+   3. Responsividade da grade
+   -------------------------------------------------------------------------- */
 @media (max-width: 900px) {
   .form-grid > * {
     grid-column: span 12;
   }
 }
 
+/* --------------------------------------------------------------------------
+   4. Card-toggle (BooleanField)
+   -------------------------------------------------------------------------- */
 /* Card toggle global para BooleanFields visiveis. */
 .field-card-toggle {
   grid-column: span 6;
@@ -175,7 +191,7 @@
   display: inline-flex;
   font-size: var(--font-size-sm);
   font-weight: 900;
-  height: 42px;
+  height: calc(var(--control-height-md) - 2px);
   justify-content: center;
   letter-spacing: 0;
   min-width: 42px;
@@ -276,6 +292,9 @@
   white-space: nowrap;
 }
 
+/* --------------------------------------------------------------------------
+   5. Responsividade de acao lateral
+   -------------------------------------------------------------------------- */
 @media (max-width: 640px) {
   .form-field-with-action__button {
     width: 100%;
@@ -292,6 +311,9 @@
   }
 }
 
+/* --------------------------------------------------------------------------
+   6. Estados de bloqueio e placeholders
+   -------------------------------------------------------------------------- */
 /* RG travado quando "Não possui RG" */
 .field-rg-wrap.field--locked .form-control {
   background: var(--color-input-disabled-bg);

@@ -1,3 +1,10 @@
+/* ==========================================================================
+   LISTS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Shell de listagem e toolbar
+   -------------------------------------------------------------------------- */
 .list-page {
   display: grid;
   gap: var(--space-5);
@@ -27,8 +34,8 @@
 .list-search input {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(243, 249, 254, 0.95));
   border-color: rgba(31, 76, 125, 0.2);
-  border-radius: 12px;
-  min-height: 44px;
+  border-radius: var(--radius-control);
+  min-height: var(--control-height-md);
   padding-left: 64px;
   width: 100%;
 }
@@ -61,6 +68,9 @@
   gap: var(--space-3);
 }
 
+/* --------------------------------------------------------------------------
+   2. Estado vazio
+   -------------------------------------------------------------------------- */
 .empty-state {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 251, 255, 0.95));
   border: 1px dashed rgba(18, 58, 99, 0.26);
@@ -101,12 +111,14 @@
   }
 }
 
-/* Lista simples (cadastros enxutos) */
+/* --------------------------------------------------------------------------
+   3. Lista simples (cadastros enxutos)
+   -------------------------------------------------------------------------- */
 .simple-list {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: 0 10px 26px rgba(7, 26, 51, 0.08);
+  box-shadow: var(--shadow-soft);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -119,9 +131,9 @@
   flex-wrap: wrap;
   gap: var(--space-3);
   justify-content: space-between;
-  min-height: 52px;
+  min-height: var(--control-height-lg);
   padding: var(--space-3) var(--space-4);
-  transition: background-color 140ms ease;
+  transition: background-color var(--transition-fast);
 }
 
 .simple-list__row:last-child {
@@ -135,7 +147,7 @@
 .simple-list__main {
   display: grid;
   flex: 1 1 220px;
-  gap: 4px;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -215,6 +227,9 @@
   justify-content: flex-end;
 }
 
+/* --------------------------------------------------------------------------
+   4. Responsividade
+   -------------------------------------------------------------------------- */
 @media (max-width: 640px) {
   .simple-list__actions {
     justify-content: flex-start;
