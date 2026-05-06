@@ -2403,3 +2403,53 @@ html[data-theme="light-dark"] .roteiro-editor--avulso .roteiro-editor__add-btn#b
   border-color: var(--color-border);
   color: var(--color-text);
 }
+
+html[data-theme="dark-dark"] .roteiro-editor__map-card,
+html[data-theme="light-dark"] .roteiro-editor__map-card,
+html[data-theme="dark-dark"] .roteiro-editor__map-card .card-body,
+html[data-theme="light-dark"] .roteiro-editor__map-card .card-body,
+html[data-theme="dark-dark"] .roteiro-mapa__summary,
+html[data-theme="light-dark"] .roteiro-mapa__summary,
+html[data-theme="dark-dark"] .roteiro-mapa__stats,
+html[data-theme="light-dark"] .roteiro-mapa__stats,
+html[data-theme="dark-dark"] .roteiro-mapa__canvas-shell,
+html[data-theme="light-dark"] .roteiro-mapa__canvas-shell {
+  background: var(--color-card);
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark-dark"] .roteiro-mapa__canvas-head,
+html[data-theme="light-dark"] .roteiro-mapa__canvas-head,
+html[data-theme="dark-dark"] .roteiro-mapa__frame,
+html[data-theme="light-dark"] .roteiro-mapa__frame {
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark-dark"] .roteiro-mapa__action-btn--secondary,
+html[data-theme="light-dark"] .roteiro-mapa__action-btn--secondary {
+  background: var(--color-card-muted);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+html[data-theme="dark-dark"] .roteiro-mapa__action-btn--secondary:hover,
+html[data-theme="light-dark"] .roteiro-mapa__action-btn--secondary:hover,
+html[data-theme="dark-dark"] .roteiro-mapa__action-btn--secondary:focus-visible,
+html[data-theme="light-dark"] .roteiro-mapa__action-btn--secondary:focus-visible {
+  background: var(--color-card);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor select option,
+html[data-theme="light-dark"] .roteiro-editor select option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+html[data-theme="dark-dark"] .roteiro-editor select option:disabled,
+html[data-theme="light-dark"] .roteiro-editor select option:disabled,
+html[data-theme="dark-dark"] .roteiro-editor select optgroup,
+html[data-theme="light-dark"] .roteiro-editor select optgroup {
+  color: var(--color-text-muted);
+}
