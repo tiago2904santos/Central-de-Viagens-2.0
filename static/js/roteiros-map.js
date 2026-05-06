@@ -56,12 +56,14 @@
   var LEG_COLORS = ['#0f365d', '#d08a28'];
   var initial = readJsonScript('roteiro-mapa-inicial') || {};
   var mapConfig = window.ROTEIRO_MAP_CONFIG || {};
-  var defaultCenter = Array.isArray(mapConfig.defaultCenter)
-    ? mapConfig.defaultCenter
-    : (Array.isArray(initial.default_center) ? initial.default_center : [-24.89, -51.55]);
-  var defaultZoom = Number.isFinite(Number(mapConfig.defaultZoom))
-    ? Number(mapConfig.defaultZoom)
-    : (Number.isFinite(Number(initial.default_zoom)) ? Number(initial.default_zoom) : 7);
+  // Prioriza sempre o valor resolvido no backend (CEP/configuração do sistema).
+  // O config global fica como fallback de compatibilidade.
+  var defaultCenter = Array.isArray(initial.default_center)
+    ? initial.default_center
+    : (Array.isArray(mapConfig.defaultCenter) ? mapConfig.defaultCenter : [-24.89, -51.55]);
+  var defaultZoom = Number.isFinite(Number(initial.default_zoom))
+    ? Number(initial.default_zoom)
+    : (Number.isFinite(Number(mapConfig.defaultZoom)) ? Number(mapConfig.defaultZoom) : 7);
   var rid = initial.roteiro_id;
   var hadGeometry = !!(initial.route && initial.route.geometry && initial.route.geometry.type === 'LineString');
 

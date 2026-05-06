@@ -20,11 +20,11 @@
     const cepDigits = onlyDigits(cepInput.value);
     if (!cepDigits) {
       setFieldError(cepInput, "");
-      return;
+      return false;
     }
     if (cepDigits.length !== 8) {
       setFieldError(cepInput, "CEP deve conter 8 dígitos.");
-      return;
+      return false;
     }
 
     setFieldError(cepInput, "");
@@ -32,20 +32,28 @@
 
     try {
       const response = await fetch(endpoint, {
+        credentials: "same-origin",
         headers: { "X-Requested-With": "XMLHttpRequest" },
       });
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        setFieldError(cepInput, "Não foi possível consultar o CEP agora.");
+        return false;
+      }
       const payload = await response.json();
       if (!response.ok) {
         setFieldError(cepInput, payload.erro || "CEP inválido.");
-        return;
+        return false;
       }
 
       if (fields.logradouro) fields.logradouro.value = payload.logradouro || "";
       if (fields.bairro) fields.bairro.value = payload.bairro || "";
       if (fields.cidade) fields.cidade.value = (payload.cidade || "").toUpperCase();
       if (fields.uf) fields.uf.value = (payload.uf || "").toUpperCase();
+      return true;
     } catch (_error) {
       setFieldError(cepInput, "Não foi possível consultar o CEP agora.");
+      return false;
     }
   }
 
@@ -61,7 +69,10 @@
     );
 
     const cepInput = form.querySelector("#id_cep");
-    const lookupUrlTemplate = form.dataset.cepLookupUrlTemplate || "";
+    const lookupUrlTemplate =
+      cepInput?.dataset?.cepLookupUrlTemplate ||
+      form.dataset.cepLookupUrlTemplate ||
+      "/cadastros/api/cep/00000000/";
     if (!cepInput || !lookupUrlTemplate) return;
     cepInput.dataset.cepLookupUrlTemplate = lookupUrlTemplate;
 
@@ -73,13 +84,17 @@
     };
 
     let lastCepLookup = "";
-    const maybeLookup = () => {
+    const maybeLookup = async () => {
       cepInput.value = maskCep(cepInput.value);
       const cepDigits = onlyDigits(cepInput.value);
       if (cepDigits.length !== 8) return;
       if (cepDigits === lastCepLookup) return;
-      lastCepLookup = cepDigits;
-      buscarCep(cepInput, fields);
+      const ok = await buscarCep(cepInput, fields);
+      if (ok) {
+        lastCepLookup = cepDigits;
+      } else {
+        lastCepLookup = "";
+      }
     };
 
     cepInput.addEventListener("input", maybeLookup);
